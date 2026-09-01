@@ -4,6 +4,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 
+import { SplashView } from '@/components/splash-view';
 import { Colors } from '@/constants/theme';
 import { useResolvedScheme } from '@/hooks/use-theme';
 import { queryClient } from '@/lib/query-client';
@@ -53,7 +54,7 @@ function RootNavigator() {
   }, [isLoading]);
 
   // Mantener el splash hasta restaurar la sesión evita el parpadeo de login.
-  if (isLoading) return null;
+  if (isLoading) return <SplashView />;
 
   return (
     <Stack screenOptions={{ headerShown: false }}>
