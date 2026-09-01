@@ -7,7 +7,7 @@ Fuente de verdad del avance. Reglas: trabajar en orden, respetar dependencias, m
 - [x] T001 Crear proyecto Expo SDK 57 con TypeScript strict y Expo Router. (plan §1)
 - [x] T002 Estructura de carpetas de plan §2 (app/, src/, supabase/). Dep: T001
 - [x] T003 Instalar dependencias con `npx expo install`: supabase-js, tanstack-query, zustand, date-fns(-tz), expo-notifications, expo-secure-store, lucide-react-native, react-hook-form, zod. Dep: T001
-- [ ] T004 Cliente Supabase en `src/lib/supabase.ts` con adapter SecureStore (nativo) y default (web); `.env` + `.env.example`; `.gitignore`. (NFR-5, NFR-7) Dep: T003
+- [x] T004 Cliente Supabase en `src/lib/supabase.ts` con adapter SecureStore (nativo) y default (web); `.env` + `.env.example`; `.gitignore`. (NFR-5, NFR-7) Dep: T003
 - [ ] T005 Inicializar Supabase CLI y carpeta `supabase/migrations/`. Dep: T001
 - [ ] T006 Providers raíz en `app/_layout.tsx`: QueryClient + AuthProvider (esqueleto). Dep: T002
 - [ ] T007 Script de verificación: `npx tsc --noEmit` documentado en CLAUDE.md/README. Dep: T001
