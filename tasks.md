@@ -16,7 +16,7 @@ Fuente de verdad del avance. Reglas: trabajar en orden, respetar dependencias, m
 - [x] T010 Migración: tabla `profiles` + RLS + trigger `handle_new_user`. (02 §1) Dep: T005
 - [x] T011 `services/auth.ts`: signUp (con username), signIn, signOut, resetPassword, getSession. Dep: T004, T010
 - [x] T012 AuthProvider real: sesión persistente, auto-refresh, estado de carga. (RF-A4) Dep: T011
-- [ ] T013 Rutas `(auth)`: login, register, forgot-password con react-hook-form+zod y errores en español. (RF-A1, RF-A3, RF-A7) Dep: T012
+- [x] T013 Rutas `(auth)`: login, register, forgot-password con react-hook-form+zod y errores en español. (RF-A1, RF-A3, RF-A7) Dep: T012
 - [ ] T014 Guard de rutas: redirect por sesión entre `(auth)` y `(app)`. (RF-A5) Dep: T012
 - [ ] T015 Tabs `(app)/_layout.tsx`: Calendario, Compartido, Fitness, Perfil (pantallas placeholder). Dep: T014
 - [ ] T016 Pantalla Perfil: ver/editar display_name y username, cerrar sesión. (RF-A6) Dep: T015
