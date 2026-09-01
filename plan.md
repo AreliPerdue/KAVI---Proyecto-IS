@@ -21,21 +21,24 @@ Decisiones de arquitectura para implementar las specs. Si algo aquí contradice 
 Nota de implementación: verificar versiones compatibles con SDK 57 vía `npx expo install` siempre (nunca `npm install` directo para libs con módulo nativo).
 
 ## 2. Arquitectura de la app
-Nota: las rutas viven en `src/app/` (Expo Router SDK 57 le da precedencia sobre `app/` raíz; el template oficial ya usa `src/`).
+Nota: las rutas viven en `src/app/` (Expo Router SDK 57 le da precedencia sobre `app/` raíz; el template oficial ya usa `src/`). Las pestañas van en el grupo `(app)/(tabs)/` como archivos planos para que los triggers de `NativeTabs` referencien rutas hoja; las rutas no-tab de `(app)` (detalle de actividad, workout) cuelgan del Stack padre. Guard de sesión con `Stack.Protected` (rutas protegidas nativas de Expo Router).
 ```
 src/app/
-├── (auth)/login.tsx | register.tsx | forgot-password.tsx
+├── (auth)/_layout.tsx | login.tsx | register.tsx | forgot-password.tsx
 ├── (app)/
-│   ├── _layout.tsx          # tabs: Calendario / Compartido / Fitness / Perfil
-│   ├── calendar/index.tsx   # vistas mes-semana-día (estado interno)
+│   ├── _layout.tsx          # Stack nativo: (tabs) + rutas modales (actividad, workout…)
+│   ├── (tabs)/_layout.tsx   # NativeTabs (iOS/Android): Calendario / Compartido / Fitness / Perfil
+│   ├── (tabs)/_layout.web.tsx # Tabs headless (expo-router/ui) con barra superior en web
+│   ├── (tabs)/calendar.tsx  # vistas mes-semana-día (estado interno) → URL /calendar
+│   ├── (tabs)/shared.tsx    # contactos, solicitudes, invitaciones → URL /shared
+│   ├── (tabs)/fitness.tsx   # historial → URL /fitness
+│   ├── (tabs)/profile.tsx   # perfil → URL /profile
 │   ├── activity/[id].tsx    # detalle (bottom sheet route)
 │   ├── activity/new.tsx     # formulario crear/editar
-│   ├── shared/index.tsx     # contactos, solicitudes, invitaciones
 │   ├── shared/availability.tsx
-│   ├── fitness/index.tsx    # historial
-│   ├── workout/[id].tsx     # captura de entrenamiento
-│   └── profile/index.tsx
-└── _layout.tsx              # AuthProvider + QueryClientProvider + redirect por sesión
+│   └── workout/[id].tsx     # captura de entrenamiento
+├── _layout.tsx              # Providers + Stack.Protected por sesión (RF-A5)
+└── index.tsx                # Redirect a /calendar o /login
 
 src/
 ├── lib/supabase.ts          # cliente con SecureStore adapter (nativo) / default (web)
