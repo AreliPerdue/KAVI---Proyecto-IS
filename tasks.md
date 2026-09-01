@@ -10,7 +10,7 @@ Fuente de verdad del avance. Reglas: trabajar en orden, respetar dependencias, m
 - [x] T004 Cliente Supabase en `src/lib/supabase.ts` con adapter SecureStore (nativo) y default (web); `.env` + `.env.example`; `.gitignore`. (NFR-5, NFR-7) Dep: T003
 - [x] T005 Inicializar Supabase CLI y carpeta `supabase/migrations/`. Dep: T001
 - [x] T006 Providers raíz en `app/_layout.tsx`: QueryClient + AuthProvider (esqueleto). Dep: T002
-- [ ] T007 Script de verificación: `npx tsc --noEmit` documentado en CLAUDE.md/README. Dep: T001
+- [x] T007 Script de verificación: `npx tsc --noEmit` documentado en CLAUDE.md/README. Dep: T001
 
 ## Fase 1 — Auth (Sprint 1) — spec 03
 - [ ] T010 Migración: tabla `profiles` + RLS + trigger `handle_new_user`. (02 §1) Dep: T005
