@@ -16,7 +16,7 @@ const PROFILE_MAX_WIDTH = 560;
 
 export default function ProfileScreen() {
   const theme = useTheme();
-  const { session } = useAuth();
+  const { user } = useAuth();
   const profile = useMyProfile();
   const update = useUpdateMyProfile();
   const signOut = useSignOut();
@@ -58,7 +58,7 @@ export default function ProfileScreen() {
 
       {profile.data ? (
         <View style={styles.form}>
-          <AppText color="textSecondary">{session?.user.email}</AppText>
+          <AppText color="textSecondary">{user?.email}</AppText>
 
           {update.error ? <Banner tone="error" message={update.error.message} /> : null}
           {update.isSuccess && !formState.isDirty ? (

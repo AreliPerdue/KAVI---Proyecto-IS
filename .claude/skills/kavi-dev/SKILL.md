@@ -17,7 +17,8 @@ Para decisiones visuales usa además la skill `kavi-design`.
 
 ## 1. Estructura y capas
 - Rutas Expo Router viven en `src/app/` (tiene precedencia sobre `app/` raíz en SDK 57). Grupos `(auth)` y `(app)`.
-- `src/services/*` es la ÚNICA capa que importa `@/lib/supabase`. Componentes, hooks y pantallas nunca llaman a Supabase directo (NFR-6).
+- `src/services/*.ts` son fachadas (auth, profiles, activities, themes…) sobre `services/backend.ts`, que elige la implementación: `services/supabase/*` (real) o `services/demo/*` (memoria, modo demo). Solo `services/supabase/*` importa `@/lib/supabase`. Componentes, hooks y pantallas nunca llaman a Supabase directo (NFR-6).
+- Toda función nueva de datos se declara en `services/contracts.ts` y se implementa en AMBOS backends (Supabase + demo) para que el frontend siga funcionando sin credenciales.
 - `src/hooks/*` envuelven services con TanStack Query (`useQuery`/`useMutation`), claves de cache por rango de fechas y filtros.
 - `src/lib/*` utilidades sin React: cliente Supabase, fechas (`date-fns` + `date-fns-tz`), notificaciones.
 - `src/components/ui/*` primitivas del sistema de diseño (Button, Chip, Sheet, EmptyState, ErrorState…). `src/components/calendar/*` piezas del calendario.
@@ -74,7 +75,9 @@ Prioridad CRÍTICA → BAJA. Aplica todas.
 - Dependencias con módulo nativo SOLO con `npx expo install` (versiones compatibles con SDK 57). Tras añadir una, si ya existe `ios/`/`android/` local, `npx expo prebuild --clean` cuando toque probar en nativo.
 
 ## 4. Supabase y datos
-- Cliente único en `src/lib/supabase.ts`; storage `expo-secure-store` en nativo y storage por defecto en web; `autoRefreshToken` + `persistSession`; `detectSessionInUrl` solo en web.
+- Cliente único y perezoso en `src/lib/supabase.ts` (`getSupabase()`); storage `expo-secure-store` en nativo (cargado con `require` en el momento de uso) y storage por defecto en web; `autoRefreshToken` + `persistSession`; `detectSessionInUrl` solo en web.
+- Modo demo: `lib/env.ts` expone `env.isDemoMode` (flag `EXPO_PUBLIC_DEMO_MODE=true` o credenciales ausentes). Cuenta demo `demo@kavi.app` / `demo1234`. Los datos viven en `services/demo/store.ts` y se reinician al recargar.
+- Módulos nativos nuevos requieren recompilar la app (`npx expo run:ios` / `run:android`); si `ios/` o `android/` son anteriores a la instalación, aparece "Cannot find native module".
 - Variables `EXPO_PUBLIC_SUPABASE_URL` / `EXPO_PUBLIC_SUPABASE_ANON_KEY` leídas con notación de punto (`process.env.EXPO_PUBLIC_…`), nunca por corchetes ni destructuring (Expo las inyecta estáticamente).
 - Toda tabla nueva: migración en `supabase/migrations/` con `enable row level security` + policies en el mismo archivo. Nunca `service_role` en el cliente.
 - Fechas: guardar `timestamptz` UTC (`toISOString()`); mostrar con `date-fns` + locale `es`.

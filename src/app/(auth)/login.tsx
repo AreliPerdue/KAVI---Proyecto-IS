@@ -1,8 +1,8 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Link } from 'expo-router';
+import { useRef } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { StyleSheet, type TextInput, View } from 'react-native';
-import { useRef } from 'react';
 
 import { AuthHeader } from '@/components/auth-header';
 import { AppText, Banner, Button, Screen, TextField } from '@/components/ui';

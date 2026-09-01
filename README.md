@@ -7,8 +7,10 @@ Stack: Expo SDK 57 · Expo Router · TypeScript strict · Supabase (Auth, Postgr
 ## Empezar
 ```bash
 pnpm install
-cp .env.example .env        # completa EXPO_PUBLIC_SUPABASE_URL y EXPO_PUBLIC_SUPABASE_ANON_KEY
+cp .env.example .env        # por defecto EXPO_PUBLIC_DEMO_MODE=true (sin backend, cuenta demo@kavi.app / demo1234)
+                            # para Supabase: DEMO_MODE=false + EXPO_PUBLIC_SUPABASE_URL y EXPO_PUBLIC_SUPABASE_ANON_KEY
 pnpm start                  # Expo dev server (i = iOS, a = Android, w = web)
+pnpm ios / pnpm android     # recompila la app nativa (necesario tras instalar módulos nativos)
 ```
 
 ## Verificación

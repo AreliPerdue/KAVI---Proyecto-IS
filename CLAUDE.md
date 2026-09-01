@@ -55,6 +55,9 @@ kavi/
 └── tasks.md
 ```
 
+## Modo demo (frontend sin backend)
+`.env` con `EXPO_PUBLIC_DEMO_MODE=true` activa el backend en memoria (`src/services/demo/`). Cuenta: `demo@kavi.app` / `demo1234`. Toda función nueva de datos se implementa en Supabase y en demo (ver skill `kavi-dev`).
+
 ## Comandos
 - `npx expo start` — desarrollo
 - `pnpm typecheck` (= `npx tsc --noEmit`) — verificación de tipos (correr antes de marcar una tarea)

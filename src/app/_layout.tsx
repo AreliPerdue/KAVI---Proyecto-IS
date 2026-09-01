@@ -44,8 +44,8 @@ const navigationThemes = {
 
 /** Rutas protegidas: sin sesión → (auth); con sesión → (app). */
 function RootNavigator() {
-  const { session, isLoading } = useAuth();
-  const isSignedIn = !!session;
+  const { user, isLoading } = useAuth();
+  const isSignedIn = !!user;
 
   useEffect(() => {
     if (!isLoading) {

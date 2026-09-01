@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { useAuth } from '@/providers';
-import { getMyProfile, updateMyProfile, type ProfileUpdate } from '@/services/profiles';
+import { getMyProfile, type ProfileUpdate, updateMyProfile } from '@/services/profiles';
 
 export const profileKeys = {
   me: (userId: string | null) => ['profile', 'me', userId] as const,

@@ -1,51 +1,52 @@
 /**
- * Cliente Supabase único de KAVI (NFR-5, NFR-7).
+ * Cliente Supabase único de KAVI (NFR-5, NFR-7), creado de forma perezosa.
  * - Nativo: sesión persistida en expo-secure-store (Keychain / Keystore).
- * - Web: storage por defecto del SDK (localStorage) y detección de sesión en URL
- *   para los enlaces de recuperación de contraseña.
- * Solo `src/services/*` debe importar este módulo (NFR-6).
+ * - Web: storage por defecto del SDK y detección de sesión en URL.
+ * Solo `src/services/supabase/*` debe importar este módulo (NFR-6).
+ * En modo demo (lib/env.ts) nunca se instancia.
  */
-import { createClient } from '@supabase/supabase-js';
-import * as SecureStore from 'expo-secure-store';
+import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { AppState, Platform } from 'react-native';
 
-// Expo inyecta EXPO_PUBLIC_* en build; deben leerse con notación de punto.
-const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL;
-const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
+import { env } from '@/lib/env';
 
-if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error(
-    'Faltan EXPO_PUBLIC_SUPABASE_URL y/o EXPO_PUBLIC_SUPABASE_ANON_KEY. ' +
-      'Copia .env.example a .env y completa los valores del proyecto Supabase.',
-  );
+let client: SupabaseClient | null = null;
+
+/** Carga expo-secure-store solo cuando hace falta (evita fallar si el binario nativo es viejo). */
+function createSecureStoreAdapter() {
+  const SecureStore = require('expo-secure-store') as typeof import('expo-secure-store');
+  return {
+    getItem: (key: string) => SecureStore.getItemAsync(key),
+    setItem: (key: string, value: string) => SecureStore.setItemAsync(key, value),
+    removeItem: (key: string) => SecureStore.deleteItemAsync(key),
+  };
 }
 
-/** Adapter de storage para @supabase/auth-js sobre expo-secure-store. */
-const secureStoreAdapter = {
-  getItem: (key: string) => SecureStore.getItemAsync(key),
-  setItem: (key: string, value: string) => SecureStore.setItemAsync(key, value),
-  removeItem: (key: string) => SecureStore.deleteItemAsync(key),
-};
+export function getSupabase(): SupabaseClient {
+  if (env.isDemoMode) {
+    throw new Error('Modo demo activo: no hay backend configurado (revisa .env).');
+  }
+  if (client) return client;
 
-const isWeb = Platform.OS === 'web';
-
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-  auth: {
-    ...(isWeb ? {} : { storage: secureStoreAdapter }),
-    autoRefreshToken: true,
-    persistSession: true,
-    detectSessionInUrl: isWeb,
-  },
-});
-
-// En nativo, refrescar el token solo mientras la app está en primer plano
-// (recomendación oficial de Supabase para React Native).
-if (!isWeb) {
-  AppState.addEventListener('change', (state) => {
-    if (state === 'active') {
-      void supabase.auth.startAutoRefresh();
-    } else {
-      void supabase.auth.stopAutoRefresh();
-    }
+  const isWeb = Platform.OS === 'web';
+  client = createClient(env.supabaseUrl, env.supabaseAnonKey, {
+    auth: {
+      ...(isWeb ? {} : { storage: createSecureStoreAdapter() }),
+      autoRefreshToken: true,
+      persistSession: true,
+      detectSessionInUrl: isWeb,
+    },
   });
+
+  if (!isWeb) {
+    const created = client;
+    AppState.addEventListener('change', (state) => {
+      if (state === 'active') {
+        void created.auth.startAutoRefresh();
+      } else {
+        void created.auth.stopAutoRefresh();
+      }
+    });
+  }
+  return client;
 }

@@ -22,7 +22,7 @@ export default function RegisterScreen() {
   });
 
   const onSubmit = handleSubmit((values) => signUp.mutate(values));
-  const needsEmailConfirmation = signUp.isSuccess && !signUp.data.session;
+  const needsEmailConfirmation = signUp.isSuccess && !signUp.data.sessionCreated;
 
   return (
     <Screen scroll centered maxWidth={AUTH_MAX_WIDTH}>
