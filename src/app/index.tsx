@@ -1,29 +1,9 @@
-import { StyleSheet, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { Redirect } from 'expo-router';
 
-import { AppText } from '@/components/ui';
-import { Spacing } from '@/constants/theme';
-import { useTheme } from '@/hooks/use-theme';
+import { useAuth } from '@/providers';
 
+/** Punto de entrada: redirige según sesión (RF-A5). */
 export default function IndexScreen() {
-  const theme = useTheme();
-  return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
-      <View style={styles.content}>
-        <AppText variant="display">KAVI</AppText>
-        <AppText color="textSecondary">Tu calendario, tus 7 dimensiones.</AppText>
-      </View>
-    </SafeAreaView>
-  );
+  const { session } = useAuth();
+  return <Redirect href={session ? '/(app)/(tabs)/calendar' : '/(auth)/login'} />;
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1 },
-  content: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: Spacing.sm,
-    padding: Spacing.xl,
-  },
-});
