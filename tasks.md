@@ -5,7 +5,7 @@ Fuente de verdad del avance. Reglas: trabajar en orden, respetar dependencias, m
 ## Fase 0 — Setup (Sprint 1)
 - [x] T000 Skills de proyecto `kavi-dev` y `kavi-design` (síntesis de vercel-react-native-skills, ui-ux-pro-max y frontend-design) enlazadas como regla en CLAUDE.md; paquete SDD (specs, plan, tasks) en el repo.
 - [x] T001 Crear proyecto Expo SDK 57 con TypeScript strict y Expo Router. (plan §1)
-- [ ] T002 Estructura de carpetas de plan §2 (app/, src/, supabase/). Dep: T001
+- [x] T002 Estructura de carpetas de plan §2 (app/, src/, supabase/). Dep: T001
 - [ ] T003 Instalar dependencias con `npx expo install`: supabase-js, tanstack-query, zustand, date-fns(-tz), expo-notifications, expo-secure-store, lucide-react-native, react-hook-form, zod. Dep: T001
 - [ ] T004 Cliente Supabase en `src/lib/supabase.ts` con adapter SecureStore (nativo) y default (web); `.env` + `.env.example`; `.gitignore`. (NFR-5, NFR-7) Dep: T003
 - [ ] T005 Inicializar Supabase CLI y carpeta `supabase/migrations/`. Dep: T001
