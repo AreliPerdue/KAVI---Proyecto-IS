@@ -1,5 +1,4 @@
-import type { AvailabilityBlock } from '@/types/domain';
-import type { Activity } from '@/types/domain';
+import type { Activity, AvailabilityBlock } from '@/types/domain';
 
 export const OVERLAY_PREFIX = 'overlay-';
 

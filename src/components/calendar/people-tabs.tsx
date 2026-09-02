@@ -14,14 +14,9 @@ export type PeopleTabsProps = {
   onChange: (userId: string | null) => void;
 };
 
-/** Pestañas "Tú · contacto · + Contactos" para superponer el calendario de alguien (RF-S7, RF-S8). */
-export function PeopleTabs({ overlayUserId, onChange }: PeopleTabsProps) {
+function PersonTab({ label, selected, color, onPress }: { label: string; selected: boolean; color?: string; onPress: () => void }) {
   const theme = useTheme();
-  const router = useRouter();
-  const contacts = useContacts();
-  const sharing = (contacts.data ?? []).filter((c) => c.kind === 'accepted' && c.theirCalendarVisibility);
-
-  const Tab = ({ label, selected, color, onPress }: { label: string; selected: boolean; color?: string; onPress: () => void }) => (
+  return (
     <Pressable
       accessibilityRole="tab"
       accessibilityState={{ selected }}
@@ -37,12 +32,20 @@ export function PeopleTabs({ overlayUserId, onChange }: PeopleTabsProps) {
       </AppText>
     </Pressable>
   );
+}
+
+/** Pestañas "Tú · contacto · + Contactos" para superponer el calendario de alguien (RF-S7, RF-S8). */
+export function PeopleTabs({ overlayUserId, onChange }: PeopleTabsProps) {
+  const theme = useTheme();
+  const router = useRouter();
+  const contacts = useContacts();
+  const sharing = (contacts.data ?? []).filter((c) => c.kind === 'accepted' && c.theirCalendarVisibility);
 
   return (
     <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.row} accessibilityRole="tablist">
-      <Tab label="Tú" selected={overlayUserId === null} onPress={() => onChange(null)} />
+      <PersonTab label="Tú" selected={overlayUserId === null} onPress={() => onChange(null)} />
       {sharing.map((c, index) => (
-        <Tab
+        <PersonTab
           key={c.profile.id}
           label={c.profile.display_name?.split(' ')[0] ?? c.profile.username}
           selected={overlayUserId === c.profile.id}

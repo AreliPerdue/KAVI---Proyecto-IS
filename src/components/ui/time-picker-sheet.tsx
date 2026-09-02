@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { FlatList, Pressable, StyleSheet, View } from 'react-native';
 
 import { AppText } from './app-text';
@@ -97,6 +97,30 @@ function Column<T extends number>({
   );
 }
 
+function TimePickerBody({ value, onSelect }: { value: number; onSelect: (minutes: number) => void }) {
+  const [hour, setHour] = useState(() => split(value).hour);
+  const [minute, setMinute] = useState(() => split(value).minute);
+  const [meridiem, setMeridiem] = useState<Meridiem>(() => split(value).meridiem);
+  const current = join(hour, minute, meridiem);
+
+  return (
+    <>
+      <AppText variant="display" tabular style={styles.preview}>
+        {formatMinutes12(current)}
+      </AppText>
+      <View style={styles.columns}>
+        <Column data={HOURS} value={hour} onChange={setHour} format={(h) => String(h)} label="Hora" />
+        <AppText variant="display" color="textTertiary" style={styles.colon}>
+          :
+        </AppText>
+        <Column data={MINUTES} value={minute} onChange={setMinute} format={(m) => m.toString().padStart(2, '0')} label="Minuto" />
+      </View>
+      <Segmented options={MERIDIEM} value={meridiem} onChange={setMeridiem} />
+      <Button title="Listo" onPress={() => onSelect(current)} />
+    </>
+  );
+}
+
 /** Selector de hora en formato 12 h: hora 1–12, minuto 0–59 y AM/PM. `value` en minutos desde medianoche. */
 export function TimePickerSheet({
   visible,
@@ -111,35 +135,10 @@ export function TimePickerSheet({
   onSelect: (minutes: number) => void;
   title?: string;
 }) {
-  const initial = useMemo(() => split(value), [value]);
-  const [hour, setHour] = useState(initial.hour);
-  const [minute, setMinute] = useState(initial.minute);
-  const [meridiem, setMeridiem] = useState<Meridiem>(initial.meridiem);
-
-  useEffect(() => {
-    if (visible) {
-      setHour(initial.hour);
-      setMinute(initial.minute);
-      setMeridiem(initial.meridiem);
-    }
-  }, [visible, initial]);
-
-  const current = join(hour, minute, meridiem);
-
   return (
     <Sheet visible={visible} onClose={onClose} title={title} maxHeightRatio={0.7}>
-      <AppText variant="display" tabular style={styles.preview}>
-        {formatMinutes12(current)}
-      </AppText>
-      <View style={styles.columns}>
-        <Column data={HOURS} value={hour} onChange={setHour} format={(h) => String(h)} label="Hora" />
-        <AppText variant="display" color="textTertiary" style={styles.colon}>
-          :
-        </AppText>
-        <Column data={MINUTES} value={minute} onChange={setMinute} format={(m) => m.toString().padStart(2, '0')} label="Minuto" />
-      </View>
-      <Segmented options={MERIDIEM} value={meridiem} onChange={setMeridiem} />
-      <Button title="Listo" onPress={() => onSelect(current)} />
+      {/* Se remonta al abrir para partir siempre del valor actual. */}
+      {visible ? <TimePickerBody key={value} value={value} onSelect={onSelect} /> : null}
     </Sheet>
   );
 }
