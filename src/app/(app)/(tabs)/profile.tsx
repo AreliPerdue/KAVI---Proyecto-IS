@@ -7,13 +7,21 @@ import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
 import { AppText, Banner, Button, Screen, TextField } from '@/components/ui';
 import { IconSize, IconStroke, Spacing } from '@/constants/theme';
-import { useSignOut } from '@/hooks/use-auth-actions';
+import { useSignIn, useSignOut } from '@/hooks/use-auth-actions';
+import { env } from '@/lib/env';
 import { useMyProfile, useUpdateMyProfile } from '@/hooks/use-profile';
 import { useTheme } from '@/hooks/use-theme';
 import { profileSchema, type ProfileValues } from '@/lib/schemas/auth';
 import { useAuth } from '@/providers';
 
 const PROFILE_MAX_WIDTH = 560;
+
+const DEMO_SWITCH = [
+  { email: 'demo@kavi.app', label: 'Demo' },
+  { email: 'ana@kavi.app', label: 'Ana' },
+  { email: 'luis@kavi.app', label: 'Luis' },
+  { email: 'maria@kavi.app', label: 'María' },
+];
 
 export default function ProfileScreen() {
   const theme = useTheme();
@@ -22,6 +30,7 @@ export default function ProfileScreen() {
   const profile = useMyProfile();
   const update = useUpdateMyProfile();
   const signOut = useSignOut();
+  const signIn = useSignIn();
 
   const { control, handleSubmit, reset, formState } = useForm<ProfileValues>({
     resolver: zodResolver(profileSchema),
@@ -116,6 +125,19 @@ export default function ProfileScreen() {
         <Button title="Mis temas" variant="secondary" onPress={() => router.push('/(app)/themes')} />
       </View>
 
+      {env.isDemoMode ? (
+        <View style={styles.form}>
+          <AppText variant="label" color="textSecondary">
+            Modo demo · cambiar de cuenta para probar el compartido
+          </AppText>
+          <View style={styles.demoRow}>
+            {DEMO_SWITCH.filter((d) => d.email !== user?.email).map((d) => (
+              <Button key={d.email} title={d.label} variant="secondary" onPress={() => signIn.mutate({ email: d.email, password: 'demo1234' })} />
+            ))}
+          </View>
+        </View>
+      ) : null}
+
       <View style={styles.footer}>
         {signOut.error ? <Banner tone="error" message={signOut.error.message} /> : null}
         <Button
@@ -134,4 +156,5 @@ const styles = StyleSheet.create({
   loading: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm },
   form: { gap: Spacing.lg },
   footer: { marginTop: 'auto', gap: Spacing.md, paddingTop: Spacing.xl },
+  demoRow: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm },
 });
