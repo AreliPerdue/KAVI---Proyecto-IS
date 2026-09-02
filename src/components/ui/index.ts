@@ -16,3 +16,4 @@ export { TimePickerSheet } from './time-picker-sheet';
 export { SwitchRow } from './switch-row';
 export { ActionRow } from './action-row';
 export { Chip } from './chip';
+export { Avatar } from './avatar';

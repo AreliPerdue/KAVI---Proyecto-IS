@@ -58,7 +58,7 @@ Fuente de verdad del avance. Reglas: trabajar en orden, respetar dependencias, m
 - [ ] T074 ✅ HITO: notificación local llega en iOS y Android con el título correcto (requiere build nativo recompilado). Dep: T072
 
 ## Fase 5 — Compartido (UI, modo demo) — spec 06
-- [ ] T080 `services/connections.ts` (contrato + demo con varias cuentas seed) + pantalla Contactos: búsqueda, solicitar, aceptar, eliminar. (RF-S1–S3) Dep: T039
+- [x] T080 `services/connections.ts` (contrato + demo con varias cuentas seed) + pantalla Contactos: búsqueda, solicitar, aceptar, eliminar. (RF-S1–S3) Dep: T039
 - [ ] T081 `services/shares.ts` + Compartir actividad desde detalle → shares pending. (RF-S4) Dep: T080, T048
 - [ ] T082 Invitaciones: badge en tab, aceptar/rechazar; estilo distintivo en calendario del invitado. (RF-S5) Dep: T081
 - [ ] T083 Solo-lectura para invitados + salirse del share. (RF-S6) Dep: T082
