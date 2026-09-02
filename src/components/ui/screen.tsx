@@ -1,12 +1,5 @@
 import { type ReactNode } from 'react';
-import {
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  View,
-  type ViewStyle,
-} from 'react-native';
+import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View, type ViewStyle } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { MaxContentWidth, Spacing } from '@/constants/theme';
@@ -23,14 +16,12 @@ export type ScreenProps = {
   contentStyle?: ViewStyle;
 };
 
-/** Contenedor de pantalla: fondo, safe area, ancho máximo y teclado. */
-export function Screen({
-  children,
-  maxWidth = MaxContentWidth,
-  scroll = false,
-  centered = false,
-  contentStyle,
-}: ScreenProps) {
+/**
+ * Contenedor de pantalla: fondo, safe area, ancho máximo y teclado.
+ * El contenido se estira al ancho disponible y se centra solo cuando supera `maxWidth`
+ * (nunca desborda en horizontal, NFR-9).
+ */
+export function Screen({ children, maxWidth = MaxContentWidth, scroll = false, centered = false, contentStyle }: ScreenProps) {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
 
@@ -51,13 +42,12 @@ export function Screen({
   }
 
   return (
-    <KeyboardAvoidingView
-      style={[styles.root, { backgroundColor: theme.background }]}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+    <KeyboardAvoidingView style={[styles.root, { backgroundColor: theme.background }]} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView
-        contentContainerStyle={[styles.scroll, centered ? styles.centered : null]}
+        style={styles.scroll}
+        contentContainerStyle={[styles.scrollContent, centered ? styles.centered : null]}
         keyboardShouldPersistTaps="handled"
-        contentInsetAdjustmentBehavior="automatic">
+        showsHorizontalScrollIndicator={false}>
         {content}
       </ScrollView>
     </KeyboardAvoidingView>
@@ -65,11 +55,13 @@ export function Screen({
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, alignItems: 'center' },
-  scroll: { flexGrow: 1, alignItems: 'center' },
+  root: { flex: 1 },
+  scroll: { flex: 1 },
+  scrollContent: { flexGrow: 1 },
   content: {
     flex: 1,
     width: '100%',
+    alignSelf: 'center',
     paddingHorizontal: Spacing.xl,
     gap: Spacing.lg,
   },
