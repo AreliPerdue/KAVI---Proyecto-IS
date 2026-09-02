@@ -65,7 +65,7 @@ Fuente de verdad del avance. Reglas: trabajar en orden, respetar dependencias, m
 - [x] T084 Compartir calendario por contacto con visibilidad busy/details + revocar. (RF-S7) Dep: T080
 - [x] T085 Vista Disponibilidad (`services/availability.ts`, multi-contacto). (RF-S8) Dep: T084
 - [x] T086 "Encontrar horario": huecos comunes → pre-llenar formulario. (RF-S9) Dep: T085
-- [ ] T087 Suscripción a cambios (demo: emisor en memoria; Supabase Realtime en Fase 8) e invalidación de cache. (RF-S14) Dep: T082
+- [x] T087 Suscripción a cambios (demo: emisor en memoria; Supabase Realtime en Fase 8) e invalidación de cache. (RF-S14) Dep: T082
 - [ ] T088 Reminders compartidos: herencia al aceptar, sync de cambios, silenciar individual, texto "Compartida por…". (RF-S10–S13) Dep: T087, T072
 - [ ] T089 ✅ HITO: criterios de spec 06 recorridos en modo demo cambiando entre cuentas seed. Dep: T083–T088
 
