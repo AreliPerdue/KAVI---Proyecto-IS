@@ -2,8 +2,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { activityKeys } from '@/hooks/use-activities-range';
 import { useAuth } from '@/providers';
-import { createActivity, getActivity, removeActivity, updateActivity } from '@/services/activities';
-import type { Activity, ActivityInput } from '@/types/domain';
+import { createActivity, type CreateActivityInput, getActivity, type RecurrenceScope, removeActivity, updateActivity } from '@/services/activities';
+import type { Activity } from '@/types/domain';
 
 export function useActivity(id: string | undefined) {
   return useQuery<Activity>({
@@ -19,13 +19,13 @@ export function useActivityMutations() {
   const invalidate = () => queryClient.invalidateQueries({ queryKey: activityKeys.all });
 
   const create = useMutation({
-    mutationFn: (input: ActivityInput) => createActivity(userId as string, input),
+    mutationFn: (input: CreateActivityInput) => createActivity(userId as string, input),
     onSuccess: invalidate,
   });
 
   const update = useMutation({
-    mutationFn: ({ id, patch }: { id: string; patch: Partial<ActivityInput> }) =>
-      updateActivity(id, patch),
+    mutationFn: ({ id, patch, scope }: { id: string; patch: Partial<CreateActivityInput>; scope?: RecurrenceScope }) =>
+      updateActivity(id, patch, scope),
     onSuccess: (activity) => {
       queryClient.setQueryData(activityKeys.detail(activity.id), activity);
       void invalidate();
@@ -33,7 +33,7 @@ export function useActivityMutations() {
   });
 
   const remove = useMutation({
-    mutationFn: (id: string) => removeActivity(id),
+    mutationFn: ({ id, scope }: { id: string; scope?: RecurrenceScope }) => removeActivity(id, scope),
     onSuccess: invalidate,
   });
 
