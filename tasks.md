@@ -75,8 +75,8 @@ Fuente de verdad del avance. Reglas: trabajar en orden, respetar dependencias, m
 - [x] T092 Pantalla de entrenamiento: encabezado + tarjetas de ejercicio con campos abiertos; guardado incremental. (RF-F3–F5) Dep: T091
 - [x] T093 Autocompletado de nombres usados antes. (RF-F4) Dep: T092
 - [x] T094 Eliminar ejercicio con undo. (RF-F6) Dep: T092
-- [ ] T095 Historial + detalle lectura + editar + entrenamiento libre. (RF-F2, RF-F7) Dep: T092
-- [ ] T096 Duplicar workout en actividad futura o libre. (RF-F8, HU-F4) Dep: T095
+- [x] T095 Historial + detalle lectura + editar + entrenamiento libre. (RF-F2, RF-F7) Dep: T092
+- [x] T096 Duplicar workout en actividad futura o libre. (RF-F8, HU-F4) Dep: T095
 - [x] T097 Privacidad en UI: invitados no ven el botón ni el contenido del entrenamiento. (regla 07) Dep: T091
 - [ ] T098 ✅ HITO: flujo calendario→entrenamiento→historial completo en modo demo. Dep: T092–T097
 
