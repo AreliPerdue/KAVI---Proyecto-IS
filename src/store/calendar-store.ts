@@ -20,12 +20,15 @@ type CalendarState = {
   /** Día ancla en formato 'yyyy-MM-dd' (zona local). */
   anchorKey: string;
   filters: CalendarFilters;
+  /** Contacto cuyo calendario se superpone al mío (null = solo yo). */
+  overlayUserId: string | null;
   hydrated: boolean;
   setView: (view: CalendarView) => void;
   setAnchorKey: (key: string) => void;
   goToday: () => void;
   setFilters: (filters: CalendarFilters) => void;
   clearFilters: () => void;
+  setOverlayUserId: (id: string | null) => void;
   hydrate: () => Promise<void>;
 };
 
@@ -34,6 +37,7 @@ export const useCalendarStore = create<CalendarState>((set, get) => ({
   view: 'month',
   anchorKey: toDayKey(new Date()),
   filters: EMPTY_FILTERS,
+  overlayUserId: null,
   hydrated: false,
 
   setView: (view) => {
@@ -44,6 +48,7 @@ export const useCalendarStore = create<CalendarState>((set, get) => ({
   goToday: () => set({ anchorKey: toDayKey(new Date()) }),
   setFilters: (filters) => set({ filters }),
   clearFilters: () => set({ filters: EMPTY_FILTERS }),
+  setOverlayUserId: (overlayUserId) => set({ overlayUserId }),
 
   hydrate: async () => {
     if (get().hydrated) return;

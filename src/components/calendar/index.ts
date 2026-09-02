@@ -12,3 +12,5 @@ export { FilterSheet } from './filter-sheet';
 export { applyFilters } from './apply-filters';
 export { RemindersField } from './reminders-field';
 export { DueRemindersBanner } from './due-reminders-banner';
+export { PeopleTabs } from './people-tabs';
+export { blocksToActivities, isOverlayActivity, OVERLAY_COLORS } from './overlay';
