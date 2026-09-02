@@ -51,7 +51,7 @@ Fuente de verdad del avance. Reglas: trabajar en orden, respetar dependencias, m
 - [x] T069 ✅ HITO: calendario personalizable con temas, filtros y recurrencia en modo demo. Dep: T062–T068
 
 ## Fase 4 — Reminders propios — RF-C9/C10
-- [ ] T070 `lib/notifications.ts`: permisos, programar/cancelar, `syncNotifications()` idempotente; expo-notifications cargado perezosamente; no-op en web. (plan §3.4) Dep: T039
+- [x] T070 `lib/notifications.ts`: permisos, programar/cancelar, `syncNotifications()` idempotente; expo-notifications cargado perezosamente; no-op en web. (plan §3.4) Dep: T039
 - [ ] T071 `services/reminders.ts` (contrato + demo) + UI de reminders en formulario/detalle (presets, múltiples). (RF-C9) Dep: T046, T070
 - [ ] T072 Reprogramación al editar horario/eliminar actividad; sync al login y foreground. (RF-C10) Dep: T071
 - [ ] T073 Fallback web: banner in-app de reminders vencidos. (RF-C10, NFR-10) Dep: T071
