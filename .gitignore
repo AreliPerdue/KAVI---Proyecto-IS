@@ -31,9 +31,7 @@ yarn-error.*
 *.pem
 
 # local env files (NFR-5: sin secretos en el repo)
-.env
-.env.*
-!.env.example
+
 
 # typescript
 *.tsbuildinfo
