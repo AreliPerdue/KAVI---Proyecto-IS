@@ -5,3 +5,8 @@ export { MonthView } from './month-view';
 export { WeekView } from './week-view';
 export { activityColor, tint } from './activity-style';
 export { groupByDay } from './group-by-day';
+export { ThemePicker } from './theme-picker';
+export { ThemeField } from './theme-field';
+export { RecurrenceField } from './recurrence-field';
+export { FilterSheet } from './filter-sheet';
+export { applyFilters } from './apply-filters';
