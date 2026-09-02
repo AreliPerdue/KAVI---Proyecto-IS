@@ -1,23 +1,30 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { CalendarDays } from 'lucide-react-native';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+import { runOnJS } from 'react-native-worklets';
 
 import { applyFilters, CalendarHeader, DayView, DueRemindersBanner, FilterSheet, MonthView, WeekView } from '@/components/calendar';
+import { blocksToActivities, isOverlayActivity, OVERLAY_COLORS } from '@/components/calendar/overlay';
+import { PeopleTabs } from '@/components/calendar/people-tabs';
 import { EmptyState, ErrorState, Fab, Screen, Skeleton } from '@/components/ui';
 import { IconStroke, Spacing } from '@/constants/theme';
 import { useActivitiesRange, usePrefetchAdjacentRanges } from '@/hooks/use-activities-range';
+import { useAvailability } from '@/hooks/use-availability';
+import { useContacts } from '@/hooks/use-connections';
 import { useTheme } from '@/hooks/use-theme';
 import { fromDayKey, rangeForView, shiftAnchor, toDayKey } from '@/lib/dates';
-import { useAuth } from '@/providers';
+import { useAuth, useSnackbar } from '@/providers';
 import { extendRecurrenceHorizon } from '@/services/activities';
 import { useCalendarStore } from '@/store/calendar-store';
 import type { Activity } from '@/types/domain';
 
-/** Calendario: la estrella (P1). Vistas mes/semana/día, navegación, FAB (spec 04). */
+/** Calendario: la estrella (P1). Vistas mes/semana/día, personas superpuestas, FAB (spec 04). */
 export default function CalendarScreen() {
   const theme = useTheme();
   const router = useRouter();
+  const showSnackbar = useSnackbar();
   const view = useCalendarStore((s) => s.view);
   const anchorKey = useCalendarStore((s) => s.anchorKey);
   const setView = useCalendarStore((s) => s.setView);
@@ -27,9 +34,10 @@ export default function CalendarScreen() {
   const filters = useCalendarStore((s) => s.filters);
   const setFilters = useCalendarStore((s) => s.setFilters);
   const clearFilters = useCalendarStore((s) => s.clearFilters);
+  const overlayUserId = useCalendarStore((s) => s.overlayUserId);
+  const setOverlayUserId = useCalendarStore((s) => s.setOverlayUserId);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const { userId } = useAuth();
-
   const params = useLocalSearchParams<{ view?: string; date?: string }>();
 
   useEffect(() => {
@@ -52,27 +60,46 @@ export default function CalendarScreen() {
     if (userId) void extendRecurrenceHorizon(userId).then(() => refetchActivities());
   }, [userId, refetchActivities]);
 
-  const openActivity = useCallback(
-    (activity: Activity) => router.push({ pathname: '/(app)/activity/[id]', params: { id: activity.id } }),
-    [router],
-  );
-  const createAt = useCallback(
-    (day: Date, minutes?: number) =>
-      router.push({
-        pathname: '/(app)/activity/new',
-        params: minutes === undefined ? { date: toDayKey(day) } : { date: toDayKey(day), start: String(minutes) },
-      }),
-    [router],
-  );
-  const selectDay = useCallback(
-    (day: Date) => {
-      setAnchorKey(toDayKey(day));
-      setView('day');
-    },
-    [setAnchorKey, setView],
-  );
+  // Calendario superpuesto de un contacto (solo lectura; sin títulos si comparte "busy").
+  const contacts = useContacts();
+  const sharing = (contacts.data ?? []).filter((c) => c.kind === 'accepted' && c.theirCalendarVisibility);
+  const overlayContact = sharing.find((c) => c.profile.id === overlayUserId) ?? null;
+  const overlayIndex = overlayContact ? sharing.indexOf(overlayContact) : -1;
+  const overlay = useAvailability(overlayContact ? [overlayContact.profile.id] : [], range);
+  const overlayActivities = useMemo(() => {
+    if (!overlayContact || !overlay.data) return [];
+    const name = overlayContact.profile.display_name ?? overlayContact.profile.username;
+    return blocksToActivities(overlay.data, name, OVERLAY_COLORS[overlayIndex % OVERLAY_COLORS.length] ?? '#F2A93B');
+  }, [overlayContact, overlay.data, overlayIndex]);
 
-  const data = applyFilters(activities.data ?? [], filters);
+  const openActivity = (activity: Activity) => {
+    if (isOverlayActivity(activity)) {
+      showSnackbar({ message: `${activity.title} · calendario de ${activity.owner_name ?? 'tu contacto'} (solo lectura).` });
+      return;
+    }
+    router.push({ pathname: '/(app)/activity/[id]', params: { id: activity.id } });
+  };
+  const createAt = (day: Date, minutes?: number) =>
+    router.push({
+      pathname: '/(app)/activity/new',
+      params: minutes === undefined ? { date: toDayKey(day) } : { date: toDayKey(day), start: String(minutes) },
+    });
+  const selectDay = (day: Date) => {
+    setAnchorKey(toDayKey(day));
+    setView('day');
+  };
+  const shift = (direction: 1 | -1) => setAnchorKey(toDayKey(shiftAnchor(view, anchor, direction)));
+
+  // Swipe horizontal para cambiar de mes/semana/día (RF-C4).
+  const swipe = Gesture.Pan()
+    .activeOffsetX([-24, 24])
+    .failOffsetY([-16, 16])
+    .onEnd((e) => {
+      if (Math.abs(e.translationX) < 60) return;
+      runOnJS(shift)(e.translationX < 0 ? 1 : -1);
+    });
+
+  const data = [...applyFilters(activities.data ?? [], filters), ...overlayActivities];
   const isShared = (a: Activity) => a.owner_id !== userId;
   const activeFilterCount = filters.dimensions.length + filters.themeIds.length;
   const showEmpty = activities.isSuccess && data.length === 0;
@@ -106,27 +133,33 @@ export default function CalendarScreen() {
 
   return (
     <Screen contentStyle={styles.content}>
-      <CalendarHeader
-        view={view}
-        anchor={anchor}
-        onChangeView={setView}
-        onPrev={() => setAnchorKey(toDayKey(shiftAnchor(view, anchor, -1)))}
-        onNext={() => setAnchorKey(toDayKey(shiftAnchor(view, anchor, 1)))}
-        onToday={goToday}
-        onOpenFilters={() => setFiltersOpen(true)}
-        activeFilterCount={activeFilterCount}
-      />
+      <View style={styles.header}>
+        <CalendarHeader
+          view={view}
+          anchor={anchor}
+          onChangeView={setView}
+          onChangeAnchor={(date) => setAnchorKey(toDayKey(date))}
+          onPrev={() => shift(-1)}
+          onNext={() => shift(1)}
+          onToday={goToday}
+          onOpenFilters={() => setFiltersOpen(true)}
+          activeFilterCount={activeFilterCount}
+        />
+        <PeopleTabs overlayUserId={overlayUserId} onChange={setOverlayUserId} />
+        <DueRemindersBanner />
+      </View>
       <FilterSheet visible={filtersOpen} filters={filters} onClose={() => setFiltersOpen(false)} onChange={setFilters} onClear={clearFilters} />
-      <DueRemindersBanner />
-      <View style={styles.body}>{body}</View>
+      <GestureDetector gesture={swipe}>
+        <View style={styles.body}>{body}</View>
+      </GestureDetector>
       <Fab onPress={() => createAt(anchor)} />
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  content: { paddingHorizontal: Spacing.lg, gap: Spacing.md },
-  body: { flex: 1 },
-  skeleton: { gap: Spacing.sm, paddingTop: Spacing.sm },
+  content: { paddingHorizontal: 0, gap: Spacing.sm },
+  header: { paddingHorizontal: Spacing.lg, gap: Spacing.sm },
+  body: { flex: 1, paddingHorizontal: Spacing.sm },
+  skeleton: { gap: Spacing.sm, paddingTop: Spacing.sm, paddingHorizontal: Spacing.sm },
 });
-
