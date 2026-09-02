@@ -81,7 +81,7 @@ Fuente de verdad del avance. Reglas: trabajar en orden, respetar dependencias, m
 - [x] T098 ✅ HITO: flujo calendario→entrenamiento→historial completo en modo demo. Dep: T092–T097
 
 ## Fase 7 — NFR y pulido del frontend — spec 08
-- [ ] T100 Matriz de pruebas por feature en iOS/Android/web en modo demo; corregir hallazgos. (NFR-8)
+- [ ] T100 Matriz de pruebas por feature en iOS/Android/web en modo demo; corregir hallazgos. (NFR-8) — web verificado con capturas en cada fase; iOS/Android pendientes de build nativo del desarrollador.
 - [x] T102 Revisión de estados carga/vacío/error en todas las pantallas. (NFR-11)
 - [x] T103 Web responsive del calendario (semana completa ≥ 1024 px). (NFR-9)
 - [x] T104 Revisión textos es-MX y confirmaciones/undo. (NFR-12, NFR-13)
