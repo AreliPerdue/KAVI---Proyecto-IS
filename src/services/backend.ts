@@ -13,6 +13,7 @@ import type {
   RemindersApi,
   SharesApi,
   ThemesApi,
+  WorkoutsApi,
 } from '@/services/contracts';
 import { demoActivities } from '@/services/demo/activities';
 import { demoAuth } from '@/services/demo/auth';
@@ -23,12 +24,14 @@ import { demoShares } from '@/services/demo/shares';
 import { demoProfiles } from '@/services/demo/profiles';
 import { demoReminders } from '@/services/demo/reminders';
 import { demoThemes } from '@/services/demo/themes';
+import { demoWorkouts } from '@/services/demo/workouts';
 import { supabaseActivities } from '@/services/supabase/activities';
 import { supabaseAuth } from '@/services/supabase/auth';
 import { supabaseProfiles } from '@/services/supabase/profiles';
 import { supabaseReminders } from '@/services/supabase/reminders';
 import { supabaseAvailability, supabaseConnections, supabaseRealtime, supabaseShares } from '@/services/supabase/shared';
 import { supabaseThemes } from '@/services/supabase/themes';
+import { supabaseWorkouts } from '@/services/supabase/workouts';
 
 export const authApi: AuthApi = env.isDemoMode ? demoAuth : supabaseAuth;
 export const profilesApi: ProfilesApi = env.isDemoMode ? demoProfiles : supabaseProfiles;
@@ -39,3 +42,4 @@ export const connectionsApi: ConnectionsApi = env.isDemoMode ? demoConnections :
 export const sharesApi: SharesApi = env.isDemoMode ? demoShares : supabaseShares;
 export const availabilityApi: AvailabilityApi = env.isDemoMode ? demoAvailability : supabaseAvailability;
 export const realtimeApi: RealtimeApi = env.isDemoMode ? demoRealtime : supabaseRealtime;
+export const workoutsApi: WorkoutsApi = env.isDemoMode ? demoWorkouts : supabaseWorkouts;

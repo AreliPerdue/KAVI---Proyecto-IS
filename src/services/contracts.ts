@@ -14,6 +14,10 @@ import type {
   Theme,
   ThemeInput,
   UpcomingReminder,
+  Workout,
+  WorkoutExercise,
+  WorkoutExerciseInput,
+  WorkoutInput,
 } from '@/types/domain';
 
 export type SignUpInput = {
@@ -114,4 +118,24 @@ export interface AvailabilityApi {
 export interface RealtimeApi {
   /** Avisa cuando cambian datos que me afectan; devuelve la función para desuscribirse (RF-S14). */
   subscribe(userId: string, onChange: () => void): () => void;
+}
+
+export type WorkoutDetail = Workout & { exercises: WorkoutExercise[] };
+
+export interface WorkoutsApi {
+  /** Historial cronológico descendente (RF-F7). */
+  list(userId: string): Promise<Workout[]>;
+  getById(id: string): Promise<WorkoutDetail>;
+  /** Workout de una actividad (1:1) o null (RF-F1). */
+  getByActivity(activityId: string, userId: string): Promise<WorkoutDetail | null>;
+  create(userId: string, input: WorkoutInput): Promise<WorkoutDetail>;
+  update(id: string, patch: Partial<WorkoutInput>): Promise<Workout>;
+  remove(id: string): Promise<void>;
+  addExercise(workoutId: string, input: WorkoutExerciseInput): Promise<WorkoutExercise>;
+  updateExercise(id: string, patch: Partial<WorkoutExerciseInput>): Promise<WorkoutExercise>;
+  removeExercise(id: string): Promise<void>;
+  /** Nombres de ejercicio usados antes por la persona (RF-F4). */
+  exerciseNames(userId: string): Promise<string[]>;
+  /** Duplica en una actividad futura o como entrenamiento libre (RF-F8). */
+  duplicate(userId: string, workoutId: string, target: { activityId: string | null; performedAt: string; keepValues: boolean }): Promise<WorkoutDetail>;
 }

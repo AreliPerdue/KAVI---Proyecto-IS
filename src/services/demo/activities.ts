@@ -12,6 +12,7 @@ import {
 } from '@/lib/recurrence';
 import type { ActivitiesApi, CreateActivityInput } from '@/services/contracts';
 import { removeRemindersForActivities, syncRecipients } from '@/services/demo/reminders';
+import { detachWorkoutsFromActivities } from '@/services/demo/workouts';
 import { delay, demoState, emitDataChange, nextId } from '@/services/demo/store';
 import type { Activity } from '@/types/domain';
 
@@ -146,7 +147,9 @@ export const demoActivities: ActivitiesApi = {
     const before = demoState.activities.map((a) => a.id);
     const finish = () => {
       const remaining = new Set(demoState.activities.map((a) => a.id));
-      removeRemindersForActivities(before.filter((x) => !remaining.has(x)));
+      const removed = before.filter((x) => !remaining.has(x));
+      removeRemindersForActivities(removed);
+      detachWorkoutsFromActivities(removed);
       emitDataChange();
     };
     if (scope === 'series') {

@@ -141,3 +141,37 @@ export type ActivityInput = {
   all_day?: boolean;
   is_gym?: boolean;
 };
+
+export type Workout = {
+  id: string;
+  activity_id: string | null;
+  owner_id: string;
+  performed_at: string;
+  duration_minutes: number | null;
+  notes: string | null;
+  created_at: string;
+  /** Título de la actividad ligada, si existe (RF-F7). */
+  activity_title?: string | null;
+  exercise_count?: number;
+};
+
+export type WorkoutExercise = {
+  id: string;
+  workout_id: string;
+  position: number;
+  name: string;
+  sets: number | null;
+  reps: string | null;
+  weight: string | null;
+  duration_minutes: number | null;
+  notes: string | null;
+};
+
+export type WorkoutInput = {
+  activity_id?: string | null;
+  performed_at: string;
+  duration_minutes?: number | null;
+  notes?: string | null;
+};
+
+export type WorkoutExerciseInput = Omit<WorkoutExercise, 'id' | 'workout_id' | 'position'> & { position?: number };
