@@ -9,6 +9,8 @@ import { env } from '@/lib/env';
 import { SYSTEM_THEMES } from '@/constants/themes';
 import type { Activity, AuthUser, Profile, Theme } from '@/types/domain';
 
+export type DemoConnection = { id: string; requester_id: string; addressee_id: string; status: 'pending' | 'accepted'; created_at: string; responded_at: string | null };
+export type DemoCalendarShare = { id: string; owner_id: string; shared_with_id: string; visibility: 'busy' | 'details'; created_at: string };
 export type DemoActivityShare = { id: string; activity_id: string; shared_with_id: string; status: 'pending' | 'accepted' | 'declined'; created_at: string };
 export type DemoReminder = { id: string; activity_id: string; offset_minutes: number; created_by: string; created_at: string };
 export type DemoRecipient = { id: string; reminder_id: string; user_id: string; enabled: boolean };
@@ -22,6 +24,8 @@ type DemoState = {
   currentUser: AuthUser | null;
   themes: Theme[];
   activities: Activity[];
+  connections: DemoConnection[];
+  calendarShares: DemoCalendarShare[];
   activityShares: DemoActivityShare[];
   reminders: DemoReminder[];
   recipients: DemoRecipient[];
@@ -59,6 +63,7 @@ function activity(
   hour: number,
   durationHours: number,
   extra: Partial<Activity> = {},
+  ownerId: string = DEMO_USER.id,
 ): Activity {
   const start = setMinutes(setHours(startOfDay(day), hour), 0);
   const end = addHours(start, durationHours);
@@ -66,7 +71,7 @@ function activity(
   const now = new Date().toISOString();
   return {
     id: nextId('act'),
-    owner_id: DEMO_USER.id,
+    owner_id: ownerId,
     title,
     description: null,
     theme_id: theme?.id ?? null,
@@ -111,12 +116,64 @@ function seedActivities(): Activity[] {
   ];
 }
 
+/** Otras cuentas para probar el calendario compartido (misma contraseña: demo1234). */
+export const DEMO_CONTACTS = {
+  ana: { id: 'demo-ana', email: 'ana@kavi.app', username: 'ana', display_name: 'Ana Torres' },
+  luis: { id: 'demo-luis', email: 'luis@kavi.app', username: 'luis', display_name: 'Luis Mena' },
+  maria: { id: 'demo-maria', email: 'maria@kavi.app', username: 'maria_g', display_name: 'María García' },
+  pedro: { id: 'demo-pedro', email: 'pedro@kavi.app', username: 'pedro', display_name: 'Pedro Ruiz' },
+} as const;
+
+function contactAccount(c: (typeof DEMO_CONTACTS)[keyof typeof DEMO_CONTACTS]): DemoAccount {
+  return {
+    user: { id: c.id, email: c.email },
+    password: 'demo1234',
+    profile: { id: c.id, username: c.username, display_name: c.display_name, avatar_url: null, created_at: new Date().toISOString() },
+  };
+}
+
+function seedOtherActivities(): Activity[] {
+  const monday = startOfWeek(new Date(), { weekStartsOn: 1 });
+  const d = (offset: number) => addDays(monday, offset);
+  const ana = DEMO_CONTACTS.ana.id;
+  const luis = DEMO_CONTACTS.luis.id;
+  return [
+    activity('Trabajo', 'Trabajo', d(0), 9, 8, {}, ana),
+    activity('Yoga', 'Deporte', d(1), 7, 1, {}, ana),
+    activity('Trabajo', 'Trabajo', d(1), 9, 8, {}, ana),
+    activity('Clase de piano', 'Curso/Clase', d(2), 18, 1.5, {}, ana),
+    activity('Trabajo', 'Trabajo', d(3), 9, 8, {}, ana),
+    activity('Gimnasio juntos', 'Gimnasio', d(3), 19, 1.5, {}, ana),
+    activity('Brunch', 'Amigos', d(6), 11, 2, {}, ana),
+    activity('Guardia', 'Trabajo', d(2), 8, 12, {}, luis),
+    activity('Fútbol', 'Deporte', d(5), 17, 2, {}, luis),
+  ];
+}
+
+const seededOthers = seedOtherActivities();
+const gymTogether = seededOthers.find((a) => a.title === 'Gimnasio juntos') as Activity;
+const brunch = seededOthers.find((a) => a.title === 'Brunch') as Activity;
+
 export const demoState: DemoState = {
-  accounts: [{ user: DEMO_USER, password: 'demo1234', profile: DEMO_PROFILE }],
+  accounts: [
+    { user: DEMO_USER, password: 'demo1234', profile: DEMO_PROFILE },
+    ...Object.values(DEMO_CONTACTS).map(contactAccount),
+  ],
   currentUser: env.demoAutologin ? DEMO_USER : null,
   themes: [...SYSTEM_THEMES],
-  activities: seedActivities(),
-  activityShares: [],
+  activities: [...seedActivities(), ...seededOthers],
+  connections: [
+    { id: 'con-ana', requester_id: DEMO_USER.id, addressee_id: DEMO_CONTACTS.ana.id, status: 'accepted', created_at: new Date().toISOString(), responded_at: new Date().toISOString() },
+    { id: 'con-luis', requester_id: DEMO_CONTACTS.luis.id, addressee_id: DEMO_USER.id, status: 'pending', created_at: new Date().toISOString(), responded_at: null },
+    { id: 'con-maria', requester_id: DEMO_USER.id, addressee_id: DEMO_CONTACTS.maria.id, status: 'pending', created_at: new Date().toISOString(), responded_at: null },
+  ],
+  calendarShares: [
+    { id: 'cs-ana', owner_id: DEMO_CONTACTS.ana.id, shared_with_id: DEMO_USER.id, visibility: 'busy', created_at: new Date().toISOString() },
+  ],
+  activityShares: [
+    { id: 'as-gym', activity_id: gymTogether.id, shared_with_id: DEMO_USER.id, status: 'pending', created_at: new Date().toISOString() },
+    { id: 'as-brunch', activity_id: brunch.id, shared_with_id: DEMO_USER.id, status: 'accepted', created_at: new Date().toISOString() },
+  ],
   reminders: [],
   recipients: [],
   listeners: new Set(),

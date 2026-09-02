@@ -46,6 +46,59 @@ export type Activity = {
   is_gym: boolean;
   created_at: string;
   updated_at: string;
+  /** Solo en actividades compartidas conmigo: nombre visible del dueño (RF-S5, RF-S13). */
+  owner_name?: string;
+};
+
+export type ConnectionStatus = 'pending' | 'accepted';
+
+export type Connection = {
+  id: string;
+  requester_id: string;
+  addressee_id: string;
+  status: ConnectionStatus;
+  created_at: string;
+  responded_at: string | null;
+};
+
+/** Conexión vista desde mí, con el perfil de la otra persona. */
+export type Contact = {
+  connection: Connection;
+  profile: Profile;
+  /** 'incoming' = me la enviaron; 'outgoing' = la envié; 'accepted' = contacto. */
+  kind: 'incoming' | 'outgoing' | 'accepted';
+  /** Cómo comparto MI calendario con esta persona (RF-S7). */
+  myCalendarVisibility: CalendarVisibility | null;
+  /** Cómo comparte esta persona SU calendario conmigo. */
+  theirCalendarVisibility: CalendarVisibility | null;
+};
+
+export type CalendarVisibility = 'busy' | 'details';
+
+export type ActivityShareStatus = 'pending' | 'accepted' | 'declined';
+
+export type ActivityShare = {
+  id: string;
+  activity_id: string;
+  shared_with_id: string;
+  status: ActivityShareStatus;
+  created_at: string;
+};
+
+/** Invitación a una actividad, con lo necesario para mostrarla (RF-S5). */
+export type ActivityInvitation = {
+  share: ActivityShare;
+  activity: Activity;
+  owner: Profile;
+};
+
+/** Bloque ocupado sin detalle (visibility busy) o con título (details). */
+export type AvailabilityBlock = {
+  user_id: string;
+  start_at: string;
+  end_at: string;
+  title: string | null;
+  color: string | null;
 };
 
 export type Reminder = {

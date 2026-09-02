@@ -1,6 +1,20 @@
 /** Contratos que implementan el backend Supabase y el backend demo (memoria). */
 import type { RecurrenceRule } from '@/lib/recurrence';
-import type { Activity, ActivityInput, AuthUser, Profile, Reminder, Theme, ThemeInput, UpcomingReminder } from '@/types/domain';
+import type {
+  Activity,
+  ActivityInput,
+  ActivityInvitation,
+  ActivityShare,
+  AuthUser,
+  AvailabilityBlock,
+  CalendarVisibility,
+  Contact,
+  Profile,
+  Reminder,
+  Theme,
+  ThemeInput,
+  UpcomingReminder,
+} from '@/types/domain';
 
 export type SignUpInput = {
   email: string;
@@ -66,4 +80,38 @@ export interface ThemesApi {
   update(id: string, patch: Partial<ThemeInput>): Promise<Theme>;
   /** Las actividades conservan color/icono copiados y quedan sin tema (RF-T6). */
   remove(id: string): Promise<void>;
+}
+
+export interface ConnectionsApi {
+  /** Búsqueda por username exacto o prefijo, mín. 3 caracteres (RF-S1). Excluye a mí mismo. */
+  searchUsers(userId: string, query: string): Promise<Profile[]>;
+  /** Contactos aceptados + solicitudes recibidas/enviadas (RF-S3). */
+  listContacts(userId: string): Promise<Contact[]>;
+  request(userId: string, addresseeId: string): Promise<void>;
+  accept(userId: string, connectionId: string): Promise<void>;
+  /** Rechazar solicitud o eliminar contacto; revoca todos los shares entre ambos (RF-S2). */
+  remove(userId: string, connectionId: string): Promise<void>;
+  /** Compartir mi calendario con un contacto (null = dejar de compartir) (RF-S7). */
+  setCalendarVisibility(userId: string, contactUserId: string, visibility: CalendarVisibility | null): Promise<void>;
+}
+
+export interface SharesApi {
+  /** Shares de una actividad (solo el dueño ve todos) (RF-S4). */
+  listByActivity(activityId: string): Promise<(ActivityShare & { profile: Profile })[]>;
+  shareActivity(userId: string, activityId: string, contactUserIds: string[]): Promise<void>;
+  /** Invitaciones recibidas pendientes (RF-S5). */
+  listInvitations(userId: string): Promise<ActivityInvitation[]>;
+  respond(userId: string, shareId: string, accept: boolean): Promise<void>;
+  /** Salirse de una actividad compartida o (dueño) revocar el share (RF-S6). */
+  removeShare(userId: string, shareId: string): Promise<void>;
+}
+
+export interface AvailabilityApi {
+  /** Bloques ocupados de los usuarios indicados (yo incluido) en [from, to); sin detalle si visibility=busy (RF-S8). */
+  getAvailability(userId: string, userIds: string[], fromIso: string, toIso: string): Promise<AvailabilityBlock[]>;
+}
+
+export interface RealtimeApi {
+  /** Avisa cuando cambian datos que me afectan; devuelve la función para desuscribirse (RF-S14). */
+  subscribe(userId: string, onChange: () => void): () => void;
 }

@@ -21,6 +21,13 @@ function find(id: string): Activity {
   return found;
 }
 
+/** Añade el nombre del dueño cuando la actividad no es mía (RF-S5, RF-S13). */
+function withOwner(activity: Activity, viewerId: string): Activity {
+  if (activity.owner_id === viewerId) return { ...activity };
+  const owner = demoState.accounts.find((acc) => acc.user.id === activity.owner_id);
+  return { ...activity, owner_name: owner?.profile.display_name ?? owner?.profile.username ?? 'Contacto' };
+}
+
 function seriesRoot(activity: Activity): Activity {
   return activity.recurrence_parent_id ? find(activity.recurrence_parent_id) : activity;
 }
@@ -58,15 +65,19 @@ function applyPatch(activity: Activity, patch: Partial<CreateActivityInput>): Ac
 export const demoActivities: ActivitiesApi = {
   async listByRange(userId, fromIso, toIso) {
     await delay();
+    const sharedIds = new Set(
+      demoState.activityShares.filter((s) => s.shared_with_id === userId && s.status === 'accepted').map((s) => s.activity_id),
+    );
     return demoState.activities
-      .filter((a) => a.owner_id === userId && a.start_at < toIso && a.end_at > fromIso)
-      .map((a) => ({ ...a }))
+      .filter((a) => (a.owner_id === userId || sharedIds.has(a.id)) && a.start_at < toIso && a.end_at > fromIso)
+      .map((a) => withOwner(a, userId))
       .sort((a, b) => a.start_at.localeCompare(b.start_at));
   },
 
   async getById(id) {
     await delay(120);
-    return { ...find(id) };
+    const found = find(id);
+    return withOwner(found, demoState.currentUser?.id ?? found.owner_id);
   },
 
   async create(userId, input) {
