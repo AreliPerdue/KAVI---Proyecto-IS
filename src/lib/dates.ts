@@ -170,3 +170,37 @@ export function clampToDay(startIso: string, endIso: string, day: Date): { start
   const e = end >= dayEnd ? MINUTES_PER_DAY : minutesSinceMidnight(end);
   return { start: s, end: Math.max(e, s + 15) };
 }
+
+export type Interval = { start: Date; end: Date };
+
+/**
+ * Huecos donde nadie está ocupado, dentro de [from, to), de al menos `durationMinutes`,
+ * limitados a la franja [dayStartHour, dayEndHour) de cada día (RF-S9).
+ */
+export function findFreeSlots(
+  busy: readonly Interval[],
+  from: Date,
+  to: Date,
+  durationMinutes: number,
+  dayStartHour = 7,
+  dayEndHour = 22,
+): Interval[] {
+  const sorted = [...busy].sort((a, b) => a.start.getTime() - b.start.getTime());
+  const slots: Interval[] = [];
+  const stepMs = 30 * 60_000;
+  const durationMs = durationMinutes * 60_000;
+
+  for (let day = startOfDay(from); day < to; day = addDays(day, 1)) {
+    const windowStart = new Date(Math.max(setTimeOfDay(day, dayStartHour * 60).getTime(), from.getTime()));
+    const windowEnd = new Date(Math.min(setTimeOfDay(day, dayEndHour * 60).getTime(), to.getTime()));
+    for (let cursor = windowStart; cursor.getTime() + durationMs <= windowEnd.getTime(); cursor = new Date(cursor.getTime() + stepMs)) {
+      const candidateEnd = new Date(cursor.getTime() + durationMs);
+      const conflict = sorted.some((b) => b.start < candidateEnd && b.end > cursor);
+      if (!conflict) {
+        slots.push({ start: cursor, end: candidateEnd });
+        cursor = new Date(candidateEnd.getTime() - stepMs); // salta al final del hueco encontrado
+      }
+    }
+  }
+  return slots;
+}
