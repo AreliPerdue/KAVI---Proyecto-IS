@@ -28,14 +28,14 @@ Fuente de verdad del avance. Reglas: trabajar en orden, respetar dependencias, m
 - [x] T039 Base del calendario: `lib/dates.ts` (rangos mes/semana/día, formatos es-MX, próxima media hora), `lib/storage.ts` (persistencia clave-valor multiplataforma), store Zustand (vista, fecha, filtros) y set de iconos curado `constants/icons.ts` + componente `Icon`. Dep: T018
 - [x] T040 `services/activities.ts`: CRUD + query por rango (contrato + demo). Dep: T039
 - [x] T041 `hooks/useActivitiesRange` con TanStack Query (cache por rango) + prefetch de rangos adyacentes. (NFR-1, NFR-2) Dep: T040
-- [ ] T042 Vista mensual: grid, puntos de color, tocar día→vista diaria. (RF-C1) Dep: T041
-- [ ] T043 Vista diaria: timeline con bloques posicionados. (RF-C3) Dep: T041
-- [ ] T044 Vista semanal: 7 columnas con bloques. (RF-C2) Dep: T043
-- [ ] T045 Navegación de fechas + botón Hoy + selector de vista persistente. (RF-C4) Dep: T042–T044
+- [x] T042 Vista mensual: grid, puntos de color, tocar día→vista diaria. (RF-C1) Dep: T041
+- [x] T043 Vista diaria: timeline con bloques posicionados. (RF-C3) Dep: T041
+- [x] T044 Vista semanal: 7 columnas con bloques. (RF-C2) Dep: T043
+- [x] T045 Navegación de fechas + botón Hoy + selector de vista persistente. (RF-C4) Dep: T042–T044
 - [ ] T046 Formulario de actividad (crear/editar): título, fecha, horas, todo-el-día, descripción; default 1 h. (RF-C5) Dep: T040
 - [ ] T047 Crear desde slot vacío con hora pre-llenada. (RF-C6) Dep: T043, T046
 - [ ] T048 Hoja de detalle: editar, eliminar (con confirmación/undo). (RF-C7 parcial, NFR-12) Dep: T046
-- [ ] T049 Estados carga/vacío/error en las 3 vistas. (RF-C12, NFR-11) Dep: T042–T044
+- [x] T049 Estados carga/vacío/error en las 3 vistas. (RF-C12, NFR-11) Dep: T042–T044
 - [ ] T050 ✅ HITO: CRUD completo visible en 3 vistas en modo demo (web + al menos un móvil). Dep: T045–T049
 
 ## Fase 3 — Temas, filtros y recurrencia (UI, modo demo) — spec 05 + RF-C8

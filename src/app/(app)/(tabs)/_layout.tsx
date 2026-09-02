@@ -1,6 +1,12 @@
+import { ErrorFallback } from '@/components/error-fallback';
+import { type ErrorBoundaryProps } from 'expo-router';
 import { NativeTabs } from 'expo-router/unstable-native-tabs';
 
 import { useTheme } from '@/hooks/use-theme';
+
+export function ErrorBoundary(props: ErrorBoundaryProps) {
+  return <ErrorFallback {...props} />;
+}
 
 /** Tabs nativos (iOS/Android). La versión web vive en _layout.web.tsx. */
 export default function TabsLayout() {

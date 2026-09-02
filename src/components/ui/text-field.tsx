@@ -1,6 +1,6 @@
 import { Eye, EyeOff } from 'lucide-react-native';
 import { forwardRef, useState } from 'react';
-import { Pressable, StyleSheet, TextInput, type TextInputProps, View } from 'react-native';
+import { Platform, Pressable, StyleSheet, TextInput, type TextInputProps, View } from 'react-native';
 
 import { AppText } from './app-text';
 
@@ -52,7 +52,7 @@ export const TextField = forwardRef<TextInput, TextFieldProps>(function TextFiel
             setFocused(false);
             onBlur?.(e);
           }}
-          style={[styles.input, { color: theme.text, fontFamily: Fonts?.sans }, style]}
+          style={[styles.input, webInputReset, { color: theme.text, fontFamily: Fonts?.sans }, style]}
           {...rest}
         />
         {secure ? (
@@ -81,6 +81,9 @@ export const TextField = forwardRef<TextInput, TextFieldProps>(function TextFiel
     </View>
   );
 });
+
+// En web el anillo de foco lo dibuja el contenedor (borde ink), no el outline del navegador.
+const webInputReset = Platform.OS === 'web' ? ({ outlineWidth: 0 } as const) : null;
 
 const styles = StyleSheet.create({
   container: { gap: Spacing.xs },

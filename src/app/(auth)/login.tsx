@@ -8,6 +8,7 @@ import { AuthHeader } from '@/components/auth-header';
 import { AppText, Banner, Button, Screen, TextField } from '@/components/ui';
 import { Spacing } from '@/constants/theme';
 import { useSignIn } from '@/hooks/use-auth-actions';
+import { env } from '@/lib/env';
 import { loginSchema, type LoginValues } from '@/lib/schemas/auth';
 
 const AUTH_MAX_WIDTH = 440;
@@ -27,6 +28,9 @@ export default function LoginScreen() {
       <AuthHeader title="Inicia sesión" subtitle="Tu calendario y tus 7 dimensiones te esperan." />
 
       <View style={styles.form}>
+        {env.isDemoMode ? (
+          <Banner tone="info" message="Modo demo: entra con cualquier correo y una contraseña de 8 o más caracteres (o demo@kavi.app / demo1234)." />
+        ) : null}
         {signIn.error ? <Banner tone="error" message={signIn.error.message} /> : null}
 
         <Controller

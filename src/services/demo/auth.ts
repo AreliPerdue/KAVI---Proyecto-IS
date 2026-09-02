@@ -36,12 +36,30 @@ export const demoAuth: AuthApi = {
 
   async signIn(email, password) {
     await delay();
-    const account = demoState.accounts.find(
-      (a) => a.user.email === email.toLowerCase() && a.password === password,
-    );
-    if (!account) throw new AuthUiError(AUTH_MESSAGES.invalidCredentials);
-    setCurrentUser(account.user);
-    return account.user;
+    const normalizedEmail = email.toLowerCase();
+    const existing = demoState.accounts.find((a) => a.user.email === normalizedEmail);
+    if (existing) {
+      if (existing.password !== password) throw new AuthUiError(AUTH_MESSAGES.invalidCredentials);
+      setCurrentUser(existing.user);
+      return existing.user;
+    }
+    // Modo demo: cualquier correo nuevo entra directo (se crea la cuenta al vuelo).
+    if (password.length < 8) throw new AuthUiError(AUTH_MESSAGES.invalidCredentials);
+    const user = { id: nextId('user'), email: normalizedEmail };
+    const base = normalizedEmail.split('@')[0]?.replace(/[^a-z0-9_]/g, '_') ?? 'usuario';
+    demoState.accounts.push({
+      user,
+      password,
+      profile: {
+        id: user.id,
+        username: base.slice(0, 30).padEnd(3, '_'),
+        display_name: null,
+        avatar_url: null,
+        created_at: new Date().toISOString(),
+      },
+    });
+    setCurrentUser(user);
+    return user;
   },
 
   async signOut() {

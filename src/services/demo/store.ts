@@ -5,6 +5,7 @@
 import { addDays, addHours, setHours, setMinutes, startOfDay, startOfWeek } from 'date-fns';
 
 import { DIMENSION_BY_KEY } from '@/constants/dimensions';
+import { env } from '@/lib/env';
 import { SYSTEM_THEMES } from '@/constants/themes';
 import type { Activity, AuthUser, Profile, Theme } from '@/types/domain';
 
@@ -103,7 +104,7 @@ function seedActivities(): Activity[] {
 
 export const demoState: DemoState = {
   accounts: [{ user: DEMO_USER, password: 'demo1234', profile: DEMO_PROFILE }],
-  currentUser: null,
+  currentUser: env.demoAutologin ? DEMO_USER : null,
   themes: [...SYSTEM_THEMES],
   activities: seedActivities(),
   listeners: new Set(),

@@ -1,14 +1,15 @@
 import { QueryClientProvider } from '@tanstack/react-query';
-import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
+import { DarkTheme, DefaultTheme, type ErrorBoundaryProps, Stack, ThemeProvider } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 
+import { ErrorFallback } from '@/components/error-fallback';
 import { SplashView } from '@/components/splash-view';
 import { Colors } from '@/constants/theme';
 import { useResolvedScheme } from '@/hooks/use-theme';
 import { queryClient } from '@/lib/query-client';
-import { AuthProvider, useAuth } from '@/providers';
+import { AuthProvider, ConfirmProvider, SnackbarProvider, useAuth } from '@/providers';
 
 SplashScreen.preventAutoHideAsync().catch(() => {
   // En web o si ya se ocultó: sin efecto.
@@ -68,6 +69,11 @@ function RootNavigator() {
   );
 }
 
+/** Error boundary raíz de Expo Router. */
+export function ErrorBoundary(props: ErrorBoundaryProps) {
+  return <ErrorFallback {...props} />;
+}
+
 export default function RootLayout() {
   const scheme = useResolvedScheme();
 
@@ -75,7 +81,11 @@ export default function RootLayout() {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <ThemeProvider value={navigationThemes[scheme]}>
-          <RootNavigator />
+          <SnackbarProvider>
+            <ConfirmProvider>
+              <RootNavigator />
+            </ConfirmProvider>
+          </SnackbarProvider>
           <StatusBar style="auto" />
         </ThemeProvider>
       </AuthProvider>
