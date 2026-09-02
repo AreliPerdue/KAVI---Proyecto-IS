@@ -18,7 +18,7 @@ Para decisiones visuales usa además la skill `kavi-design`.
 ## 1. Estructura y capas
 - Rutas Expo Router viven en `src/app/` (tiene precedencia sobre `app/` raíz en SDK 57). Grupos `(auth)` y `(app)`.
 - `src/services/*.ts` son fachadas (auth, profiles, activities, themes…) sobre `services/backend.ts`, que elige la implementación: `services/supabase/*` (real) o `services/demo/*` (memoria, modo demo). Solo `services/supabase/*` importa `@/lib/supabase`. Componentes, hooks y pantallas nunca llaman a Supabase directo (NFR-6).
-- Toda función nueva de datos se declara en `services/contracts.ts` y se implementa en AMBOS backends (Supabase + demo) para que el frontend siga funcionando sin credenciales.
+- Toda función nueva de datos se declara en `services/contracts.ts` y se implementa de inmediato en `services/demo/*`. Mientras dure la etapa frontend-first (Fases 1–7), la implementación Supabase puede ser un stub `notImplemented('nombre')` en `services/supabase/*`; la Fase 8 (T031) los sustituye. Nunca se deja un contrato sin al menos la implementación demo.
 - `src/hooks/*` envuelven services con TanStack Query (`useQuery`/`useMutation`), claves de cache por rango de fechas y filtros.
 - `src/lib/*` utilidades sin React: cliente Supabase, fechas (`date-fns` + `date-fns-tz`), notificaciones.
 - `src/components/ui/*` primitivas del sistema de diseño (Button, Chip, Sheet, EmptyState, ErrorState…). `src/components/calendar/*` piezas del calendario.

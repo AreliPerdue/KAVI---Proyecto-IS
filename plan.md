@@ -66,17 +66,18 @@ src/
 - Editar "solo esta": la instancia se marca `recurrence_parent_id` + campos propios (detached=una fila normal editada).
 
 ## 5. Orden de construcción (fases → tasks.md)
-1. **F0 Setup**: repo, Expo 57, Router, Supabase, CI de tipos.
-2. **F1 Auth** (spec 03) — desbloquea todo.
-3. **F2 Datos**: migraciones completas spec 02 + seeds + tests RLS (antes de UI de calendario, para no rehacer).
-4. **F3 Calendario CRUD + vistas** (spec 04 sin recurrencia ni reminders).
-5. **F4 Temas + filtros** (spec 05) y **recurrencia**.
-6. **F5 Reminders propios** (notificaciones locales).
-7. **F6 Compartido**: conexiones → shares → realtime → disponibilidad → reminders compartidos (spec 06).
-8. **F7 Fitness** (spec 07).
-9. **F8 NFR y hardening**: matriz 3 plataformas, rendimiento, estados, pulido (spec 08).
+Decisión (1-sep-2026): **frontend primero sobre modo demo**, backend real al final.
+1. **F0 Setup**: repo, Expo 57, Router, CI de tipos.
+2. **F1 Auth** (spec 03) — UI completa; backend demo en memoria.
+3. **F2 Calendario CRUD + vistas** (spec 04 sin recurrencia ni reminders).
+4. **F3 Temas + filtros** (spec 05) y **recurrencia** (materialización en cliente demo; en F8 vía RPC).
+5. **F4 Reminders propios** (notificaciones locales, carga perezosa del módulo nativo).
+6. **F5 Compartido**: conexiones → shares → disponibilidad → reminders compartidos (spec 06) con cuentas demo intercambiables.
+7. **F6 Fitness** (spec 07).
+8. **F7 NFR y pulido del frontend** (spec 08).
+9. **F8 Backend e integración**: migraciones completas spec 02 + seeds + tests RLS + tipos generados + `services/supabase/*` + Realtime + hitos con backend real.
 
-Mapa a sprints del documento académico: F0–F1=Sprint 1 · F2–F4=Sprints 2-3 · F5–F6=Sprint 4 · F7=Sprint 5 · F8=Sprint 6. Entrega: 26-sep-2026.
+Regla de arquitectura que hace esto posible: la UI solo conoce `services/contracts.ts`; `services/backend.ts` elige demo o Supabase (ver kavi-dev §1).
 
 ## 6. Riesgos técnicos y mitigación
 | Riesgo | Mitigación |
