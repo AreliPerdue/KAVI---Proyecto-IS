@@ -2,6 +2,7 @@ import { ErrorFallback } from '@/components/error-fallback';
 import { type ErrorBoundaryProps, Stack } from 'expo-router';
 import { Platform } from 'react-native';
 
+import { useRealtimeInvalidation } from '@/hooks/use-realtime';
 import { useReminderSync } from '@/hooks/use-reminders';
 
 export function ErrorBoundary(props: ErrorBoundaryProps) {
@@ -11,6 +12,7 @@ export function ErrorBoundary(props: ErrorBoundaryProps) {
 /** Programa/reprograma notificaciones locales según los reminders (RF-C10). */
 function ReminderSync() {
   useReminderSync();
+  useRealtimeInvalidation();
   return null;
 }
 
@@ -23,6 +25,8 @@ export default function AppLayout() {
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="(tabs)" />
       <Stack.Screen name="activity/new" options={{ presentation: modal }} />
+      <Stack.Screen name="activity/share" options={{ presentation: modal }} />
+      <Stack.Screen name="shared/availability" options={{ presentation: modal }} />
       <Stack.Screen name="themes" options={{ presentation: modal }} />
       <Stack.Screen name="theme/new" options={{ presentation: modal }} />
       <Stack.Screen
