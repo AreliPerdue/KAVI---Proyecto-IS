@@ -48,6 +48,13 @@ export type Activity = {
   updated_at: string;
 };
 
+export type ThemeInput = {
+  name: string;
+  dimension: Dimension;
+  color: string;
+  icon: string;
+};
+
 export type ActivityInput = {
   title: string;
   description?: string | null;

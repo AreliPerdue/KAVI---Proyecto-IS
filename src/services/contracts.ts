@@ -1,5 +1,6 @@
 /** Contratos que implementan el backend Supabase y el backend demo (memoria). */
-import type { Activity, ActivityInput, AuthUser, Profile, Theme } from '@/types/domain';
+import type { RecurrenceRule } from '@/lib/recurrence';
+import type { Activity, ActivityInput, AuthUser, Profile, Theme, ThemeInput } from '@/types/domain';
 
 export type SignUpInput = {
   email: string;
@@ -31,15 +32,27 @@ export interface ProfilesApi {
   updateMyProfile(userId: string, patch: ProfileUpdate): Promise<Profile>;
 }
 
+/** 'this' = solo esta ocurrencia; 'series' = toda la serie (RF-C8). */
+export type RecurrenceScope = 'this' | 'series';
+
+export type CreateActivityInput = ActivityInput & { recurrence?: RecurrenceRule | null };
+
 export interface ActivitiesApi {
   /** Actividades que se traslapan con [from, to) (ISO UTC). */
   listByRange(userId: string, fromIso: string, toIso: string): Promise<Activity[]>;
   getById(id: string): Promise<Activity>;
-  create(userId: string, input: ActivityInput): Promise<Activity>;
-  update(id: string, patch: Partial<ActivityInput>): Promise<Activity>;
-  remove(id: string): Promise<void>;
+  /** Con `recurrence`, crea la madre y materializa instancias a 90 días. */
+  create(userId: string, input: CreateActivityInput): Promise<Activity>;
+  update(id: string, patch: Partial<CreateActivityInput>, scope?: RecurrenceScope): Promise<Activity>;
+  remove(id: string, scope?: RecurrenceScope): Promise<void>;
+  /** Regenera instancias si alguna serie está por quedarse sin horizonte (plan §4). */
+  extendRecurrenceHorizon(userId: string): Promise<void>;
 }
 
 export interface ThemesApi {
   list(userId: string): Promise<Theme[]>;
+  create(userId: string, input: ThemeInput): Promise<Theme>;
+  update(id: string, patch: Partial<ThemeInput>): Promise<Theme>;
+  /** Las actividades conservan color/icono copiados y quedan sin tema (RF-T6). */
+  remove(id: string): Promise<void>;
 }

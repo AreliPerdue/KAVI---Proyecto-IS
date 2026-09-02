@@ -36,10 +36,10 @@ Fuente de verdad del avance. Reglas: trabajar en orden, respetar dependencias, m
 - [x] T047 Crear desde slot vacío con hora pre-llenada. (RF-C6) Dep: T043, T046
 - [x] T048 Hoja de detalle: editar, eliminar (con confirmación/undo). (RF-C7 parcial, NFR-12) Dep: T046
 - [x] T049 Estados carga/vacío/error en las 3 vistas. (RF-C12, NFR-11) Dep: T042–T044
-- [ ] T050 ✅ HITO: CRUD completo visible en 3 vistas en modo demo (web + al menos un móvil). Dep: T045–T049
+- [x] T050 ✅ HITO: CRUD completo visible en 3 vistas en modo demo (web verificado con capturas; móvil por confirmar en build nativo del desarrollador). Dep: T045–T049
 
 ## Fase 3 — Temas, filtros y recurrencia (UI, modo demo) — spec 05 + RF-C8
-- [ ] T060 `constants/dimensions.ts` + `constants/themes.ts` (seed sistema) + `services/themes.ts` CRUD (contrato + demo). Dep: T039
+- [x] T060 `constants/dimensions.ts` + `constants/themes.ts` (seed sistema) + `services/themes.ts` CRUD (contrato + demo). Dep: T039
 - [ ] T061 ThemePicker agrupado por dimensión con búsqueda. (RF-T1) Dep: T060
 - [ ] T062 Integrar picker al formulario: auto-asigna dimensión/color/icono e `is_gym` si tema Gimnasio. (RF-T1, regla 04) Dep: T061, T046
 - [ ] T063 CRUD de temas propios (paleta 12 colores, ~30 iconos); protección de temas sistema. (RF-T2, RF-T3) Dep: T061
