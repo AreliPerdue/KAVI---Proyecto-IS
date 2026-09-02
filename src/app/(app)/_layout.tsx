@@ -13,6 +13,8 @@ export default function AppLayout() {
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="(tabs)" />
       <Stack.Screen name="activity/new" options={{ presentation: modal }} />
+      <Stack.Screen name="themes" options={{ presentation: modal }} />
+      <Stack.Screen name="theme/new" options={{ presentation: modal }} />
       <Stack.Screen
         name="activity/[id]"
         options={{

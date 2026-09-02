@@ -1,4 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useRouter } from 'expo-router';
 import { LogOut } from 'lucide-react-native';
 import { useEffect } from 'react';
 import { Controller, useForm } from 'react-hook-form';
@@ -16,6 +17,7 @@ const PROFILE_MAX_WIDTH = 560;
 
 export default function ProfileScreen() {
   const theme = useTheme();
+  const router = useRouter();
   const { user } = useAuth();
   const profile = useMyProfile();
   const update = useUpdateMyProfile();
@@ -109,6 +111,10 @@ export default function ProfileScreen() {
           />
         </View>
       ) : null}
+
+      <View style={styles.form}>
+        <Button title="Mis temas" variant="secondary" onPress={() => router.push('/(app)/themes')} />
+      </View>
 
       <View style={styles.footer}>
         {signOut.error ? <Banner tone="error" message={signOut.error.message} /> : null}
