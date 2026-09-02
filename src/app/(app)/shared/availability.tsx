@@ -34,6 +34,7 @@ export default function AvailabilityScreen() {
   const [anchor, setAnchor] = useState(new Date());
   const [selected, setSelected] = useState<string[]>([]);
   const [duration, setDuration] = useState<'30' | '60' | '90' | '120'>('60');
+  const [now] = useState(() => Date.now());
 
   const sharing = (contacts.data ?? []).filter((c) => c.kind === 'accepted' && c.theirCalendarVisibility);
   const range = useMemo(() => rangeForView('week', anchor), [anchor]);
@@ -44,9 +45,9 @@ export default function AvailabilityScreen() {
   const slots = useMemo(() => {
     if (!availability.data) return [];
     const busy = availability.data.map((b) => ({ start: fromIso(b.start_at), end: fromIso(b.end_at) }));
-    const from = new Date(Math.max(range.from.getTime(), Date.now()));
+    const from = new Date(Math.max(range.from.getTime(), now));
     return findFreeSlots(busy, from, range.to, Number(duration), DAY_START + 1, DAY_END - 1).slice(0, 12);
-  }, [availability.data, range, duration]);
+  }, [availability.data, range, duration, now]);
 
   const colorFor = (id: string) => {
     if (id === userId) return theme.ink;

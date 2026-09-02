@@ -1,6 +1,6 @@
 import { useRouter } from 'expo-router';
 import { Bell, X } from 'lucide-react-native';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Platform, Pressable, StyleSheet, View } from 'react-native';
 
 import { AppText, IconButton } from '@/components/ui';
@@ -15,11 +15,17 @@ export function DueRemindersBanner() {
   const router = useRouter();
   const upcoming = useUpcomingReminders();
   const [dismissed, setDismissed] = useState<Set<string>>(new Set());
+  const [now, setNow] = useState(() => Date.now());
 
-  const due = useMemo(() => {
-    const now = Date.now();
-    return (upcoming.data ?? []).filter((r) => fromIso(r.fireAt).getTime() <= now && !dismissed.has(r.reminderId));
-  }, [upcoming.data, dismissed]);
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 60_000);
+    return () => clearInterval(id);
+  }, []);
+
+  const due = useMemo(
+    () => (upcoming.data ?? []).filter((r) => fromIso(r.fireAt).getTime() <= now && !dismissed.has(r.reminderId)),
+    [upcoming.data, dismissed, now],
+  );
 
   if (Platform.OS !== 'web' || due.length === 0) return null;
 

@@ -41,16 +41,16 @@ export default function CalendarScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Extiende el horizonte de las series al abrir el calendario (plan §4).
-  useEffect(() => {
-    if (userId) void extendRecurrenceHorizon(userId).then(() => activities.refetch());
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userId]);
-
   const anchor = useMemo(() => fromDayKey(anchorKey), [anchorKey]);
   const range = useMemo(() => rangeForView(view, anchor), [view, anchor]);
   const activities = useActivitiesRange(range);
   usePrefetchAdjacentRanges(view, anchor);
+  const refetchActivities = activities.refetch;
+
+  // Extiende el horizonte de las series al abrir el calendario (plan §4).
+  useEffect(() => {
+    if (userId) void extendRecurrenceHorizon(userId).then(() => refetchActivities());
+  }, [userId, refetchActivities]);
 
   const openActivity = useCallback(
     (activity: Activity) => router.push({ pathname: '/(app)/activity/[id]', params: { id: activity.id } }),
@@ -72,8 +72,8 @@ export default function CalendarScreen() {
     [setAnchorKey, setView],
   );
 
-  const data = useMemo(() => applyFilters(activities.data ?? [], filters), [activities.data, filters]);
-  const isShared = useCallback((a: Activity) => a.owner_id !== userId, [userId]);
+  const data = applyFilters(activities.data ?? [], filters);
+  const isShared = (a: Activity) => a.owner_id !== userId;
   const activeFilterCount = filters.dimensions.length + filters.themeIds.length;
   const showEmpty = activities.isSuccess && data.length === 0;
 

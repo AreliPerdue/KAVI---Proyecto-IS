@@ -28,7 +28,7 @@ export default function WorkoutScreen() {
   const names = useExerciseNames();
   const mutations = useWorkoutMutations();
   const [editing, setEditing] = useState(mode !== 'view');
-  const [savedAt, setSavedAt] = useState<number | null>(null);
+  const [saved, setSaved] = useState(false);
   const [pickingDate, setPickingDate] = useState(false);
   const [duplicateOpen, setDuplicateOpen] = useState(false);
   const [keepValues, setKeepValues] = useState(true);
@@ -36,7 +36,7 @@ export default function WorkoutScreen() {
   const [notes, setNotes] = useState<string | null>(null);
 
   const data = workout.data;
-  const markSaved = () => setSavedAt(Date.now());
+  const markSaved = () => setSaved(true);
 
   const close = () => (router.canGoBack() ? router.back() : router.replace('/(app)/(tabs)/fitness'));
 
@@ -92,7 +92,7 @@ export default function WorkoutScreen() {
         title={editing ? 'Entrenamiento' : 'Entrenamiento'}
         right={
           editing ? (
-            savedAt ? (
+            saved ? (
               <AppText variant="caption" color="textTertiary">
                 Guardado
               </AppText>
