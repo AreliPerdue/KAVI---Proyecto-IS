@@ -1,5 +1,5 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Bell, BellOff, Pencil, Repeat, Trash2 } from 'lucide-react-native';
+import { Bell, BellOff, LogOut, Pencil, Repeat, Share2, Trash2, Users } from 'lucide-react-native';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
@@ -10,13 +10,23 @@ import { describeOffset } from '@/constants/reminders';
 import { IconSize, IconStroke, Radius, Spacing } from '@/constants/theme';
 import { useActivity, useActivityMutations } from '@/hooks/use-activity';
 import { useActivityReminders, useReminderMutations } from '@/hooks/use-reminders';
+import { useActivityShares, useShareMutations } from '@/hooks/use-shares';
 import { useTheme } from '@/hooks/use-theme';
 import { formatDayTitle, formatTimeRange, fromIso } from '@/lib/dates';
 import { describeRecurrence, parseRRule } from '@/lib/recurrence';
-import { useConfirm, useSnackbar } from '@/providers';
+import { useAuth, useConfirm, useSnackbar } from '@/providers';
 import type { RecurrenceScope } from '@/services/activities';
 
 const DETAIL_MAX_WIDTH = 560;
+
+/** Localiza el id de mi share aceptado para poder salirme (RF-S6). */
+async function findMyShare(activityId: string): Promise<string | null> {
+  const { listActivityShares } = await import('@/services/shares');
+  const { getSession } = await import('@/services/auth');
+  const me = await getSession();
+  const all = await listActivityShares(activityId);
+  return all.find((s) => s.shared_with_id === me?.id)?.id ?? null;
+}
 
 type PendingAction = 'edit' | 'delete';
 
@@ -27,11 +37,15 @@ export default function ActivityDetailScreen() {
   const confirm = useConfirm();
   const showSnackbar = useSnackbar();
   const { id } = useLocalSearchParams<{ id: string }>();
+  const { userId } = useAuth();
   const activity = useActivity(id);
   const parent = useActivity(activity.data?.recurrence_parent_id ?? undefined);
   const { remove, create } = useActivityMutations();
   const reminders = useActivityReminders(id);
   const { setEnabled } = useReminderMutations();
+  const isOwner = !!activity.data && activity.data.owner_id === userId;
+  const shares = useActivityShares(id, isOwner);
+  const shareMutations = useShareMutations();
   const [pending, setPending] = useState<PendingAction | null>(null);
 
   const close = () => (router.canGoBack() ? router.back() : router.replace('/(app)/(tabs)/calendar'));
@@ -55,6 +69,8 @@ export default function ActivityDetailScreen() {
 
   const data = activity.data;
   const color = activityColor(data, theme);
+  const acceptedShares = (shares.data ?? []).filter((s) => s.status === 'accepted');
+  const pendingShares = (shares.data ?? []).filter((s) => s.status === 'pending');
   const isSeries = !!data.recurrence_rule || !!data.recurrence_parent_id;
   const rule = parseRRule(data.recurrence_rule ?? parent.data?.recurrence_rule ?? null);
 
@@ -118,6 +134,14 @@ export default function ActivityDetailScreen() {
           <AppText color="textSecondary" tabular>
             {formatTimeRange(data.start_at, data.end_at, data.all_day)}
           </AppText>
+          {!isOwner ? (
+            <View style={styles.inline}>
+              <Users size={14} strokeWidth={IconStroke} color={theme.textTertiary} />
+              <AppText variant="caption" color="textTertiary">
+                Compartida por {data.owner_name ?? 'un contacto'} · solo lectura
+              </AppText>
+            </View>
+          ) : null}
           {isSeries ? (
             <View style={styles.inline}>
               <Repeat size={14} strokeWidth={IconStroke} color={theme.textTertiary} />
@@ -163,19 +187,56 @@ export default function ActivityDetailScreen() {
         )}
       </View>
 
+      {isOwner && (acceptedShares.length > 0 || pendingShares.length > 0) ? (
+        <View style={[styles.card, { backgroundColor: theme.surfaceAlt }]}>
+          <View style={styles.inline}>
+            <Users size={IconSize.inline} strokeWidth={IconStroke} color={theme.textSecondary} />
+            <AppText variant="label" color="textSecondary">
+              Compartida con
+            </AppText>
+          </View>
+          <AppText variant="caption" color="textSecondary">
+            {acceptedShares.map((s) => s.profile.display_name ?? s.profile.username).join(', ') || 'Nadie aún'}
+            {pendingShares.length ? ` · ${pendingShares.length} pendiente${pendingShares.length > 1 ? 's' : ''}` : ''}
+          </AppText>
+        </View>
+      ) : null}
+
       <View style={[styles.actions, { borderTopColor: theme.border }]}>
-        <ActionRow
-          icon={<Pencil size={IconSize.inline} strokeWidth={IconStroke} color={theme.text} />}
-          label="Editar"
-          onPress={() => (isSeries ? setPending('edit') : edit('this'))}
-        />
-        <ActionRow
-          icon={<Trash2 size={IconSize.inline} strokeWidth={IconStroke} color={theme.danger} />}
-          label="Eliminar"
-          color="danger"
-          onPress={() => (isSeries ? setPending('delete') : void doDelete('this'))}
-          disabled={remove.isPending}
-        />
+        {isOwner ? (
+          <>
+            <ActionRow
+              icon={<Pencil size={IconSize.inline} strokeWidth={IconStroke} color={theme.text} />}
+              label="Editar"
+              onPress={() => (isSeries ? setPending('edit') : edit('this'))}
+            />
+            <ActionRow
+              icon={<Share2 size={IconSize.inline} strokeWidth={IconStroke} color={theme.text} />}
+              label="Compartir"
+              onPress={() => router.push({ pathname: '/(app)/activity/share', params: { id: data.id } })}
+            />
+            <ActionRow
+              icon={<Trash2 size={IconSize.inline} strokeWidth={IconStroke} color={theme.danger} />}
+              label="Eliminar"
+              color="danger"
+              onPress={() => (isSeries ? setPending('delete') : void doDelete('this'))}
+              disabled={remove.isPending}
+            />
+          </>
+        ) : (
+          <ActionRow
+            icon={<LogOut size={IconSize.inline} strokeWidth={IconStroke} color={theme.danger} />}
+            label="Salir de esta actividad"
+            color="danger"
+            disabled={shareMutations.remove.isPending}
+            onPress={async () => {
+              const ok = await confirm({ title: 'Salir de la actividad', message: 'Dejará de aparecer en tu calendario.', confirmLabel: 'Salir', destructive: true });
+              if (!ok) return;
+              const myShare = await findMyShare(data.id);
+              if (myShare) shareMutations.remove.mutate(myShare, { onSuccess: () => { showSnackbar({ message: 'Saliste de la actividad.' }); close(); } });
+            }}
+          />
+        )}
       </View>
 
       <Sheet visible={pending !== null} onClose={() => setPending(null)} title="¿Solo esta ocurrencia o toda la serie?">
