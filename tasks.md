@@ -59,10 +59,10 @@ Fuente de verdad del avance. Reglas: trabajar en orden, respetar dependencias, m
 
 ## Fase 5 — Compartido (UI, modo demo) — spec 06
 - [x] T080 `services/connections.ts` (contrato + demo con varias cuentas seed) + pantalla Contactos: búsqueda, solicitar, aceptar, eliminar. (RF-S1–S3) Dep: T039
-- [ ] T081 `services/shares.ts` + Compartir actividad desde detalle → shares pending. (RF-S4) Dep: T080, T048
-- [ ] T082 Invitaciones: badge en tab, aceptar/rechazar; estilo distintivo en calendario del invitado. (RF-S5) Dep: T081
-- [ ] T083 Solo-lectura para invitados + salirse del share. (RF-S6) Dep: T082
-- [ ] T084 Compartir calendario por contacto con visibilidad busy/details + revocar. (RF-S7) Dep: T080
+- [x] T081 `services/shares.ts` + Compartir actividad desde detalle → shares pending. (RF-S4) Dep: T080, T048
+- [x] T082 Invitaciones: badge en tab, aceptar/rechazar; estilo distintivo en calendario del invitado. (RF-S5) Dep: T081
+- [x] T083 Solo-lectura para invitados + salirse del share. (RF-S6) Dep: T082
+- [x] T084 Compartir calendario por contacto con visibilidad busy/details + revocar. (RF-S7) Dep: T080
 - [ ] T085 Vista Disponibilidad (`services/availability.ts`, multi-contacto). (RF-S8) Dep: T084
 - [ ] T086 "Encontrar horario": huecos comunes → pre-llenar formulario. (RF-S9) Dep: T085
 - [ ] T087 Suscripción a cambios (demo: emisor en memoria; Supabase Realtime en Fase 8) e invalidación de cache. (RF-S14) Dep: T082
