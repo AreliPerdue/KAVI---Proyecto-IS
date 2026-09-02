@@ -3,6 +3,8 @@ import { DarkTheme, DefaultTheme, type ErrorBoundaryProps, Stack, ThemeProvider 
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
+import { StyleSheet } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { ErrorFallback } from '@/components/error-fallback';
 import { SplashView } from '@/components/splash-view';
@@ -78,17 +80,21 @@ export default function RootLayout() {
   const scheme = useResolvedScheme();
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <ThemeProvider value={navigationThemes[scheme]}>
-          <SnackbarProvider>
-            <ConfirmProvider>
-              <RootNavigator />
-            </ConfirmProvider>
-          </SnackbarProvider>
-          <StatusBar style="auto" />
-        </ThemeProvider>
-      </AuthProvider>
-    </QueryClientProvider>
+    <GestureHandlerRootView style={styles.root}>
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <ThemeProvider value={navigationThemes[scheme]}>
+            <SnackbarProvider>
+              <ConfirmProvider>
+                <RootNavigator />
+              </ConfirmProvider>
+            </SnackbarProvider>
+            <StatusBar style="auto" />
+          </ThemeProvider>
+        </AuthProvider>
+      </QueryClientProvider>
+    </GestureHandlerRootView>
   );
 }
+
+const styles = StyleSheet.create({ root: { flex: 1 } });

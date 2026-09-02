@@ -87,6 +87,14 @@ Fuente de verdad del avance. Reglas: trabajar en orden, respetar dependencias, m
 - [x] T104 Revisión textos es-MX y confirmaciones/undo. (NFR-12, NFR-13)
 - [x] T106 `tsc --noEmit` limpio, limpieza de código muerto, checklist kavi-design por pantalla. (NFR-14)
 
+## Fase 7b — Refactor UX del calendario y responsive (2-sep-2026, feedback del desarrollador)
+- [x] T110 Selector de hora en formato 12 h: hora 1–12, minuto 0–59 y AM/PM; formato 12 h en toda la UI. (RF-C5)
+- [x] T111 Vista mensual con chips por actividad (título con color), "+N más" y celdas que llenan la pantalla; tocar un día abre el día por horas. (RF-C1, RF-C3)
+- [x] T112 Pestañas de personas "Tú · contacto · + Contactos" para superponer el calendario de un contacto (busy sin títulos, details con títulos). (RF-S7, RF-S8)
+- [x] T113 Header con mes desplegable (ir a fecha), Hoy, menú de vista y filtros; swipe horizontal para cambiar de periodo. (RF-C4)
+- [x] T114 Responsive: `Screen` ya no desborda en nativo (ancho resuelto con alignSelf + maxWidth); verificado en simulador iPhone 17 en todas las pestañas. (NFR-9)
+- [x] T115 `GestureHandlerRootView` en la raíz y `EXPO_PUBLIC_DEMO_START` para abrir cualquier ruta en desarrollo/capturas.
+
 ## Fase 8 — Backend e integración real (al final) — spec 02 + spec 08
 - [ ] T020 Migración: enum `dimension` + tabla `themes` + RLS. Dep: T010
 - [ ] T021 Seed de ~19 temas del sistema (05). Dep: T020
