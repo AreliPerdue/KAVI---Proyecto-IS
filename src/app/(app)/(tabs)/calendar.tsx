@@ -3,7 +3,7 @@ import { CalendarDays } from 'lucide-react-native';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { applyFilters, CalendarHeader, DayView, FilterSheet, MonthView, WeekView } from '@/components/calendar';
+import { applyFilters, CalendarHeader, DayView, DueRemindersBanner, FilterSheet, MonthView, WeekView } from '@/components/calendar';
 import { EmptyState, ErrorState, Fab, Screen, Skeleton } from '@/components/ui';
 import { IconStroke, Spacing } from '@/constants/theme';
 import { useActivitiesRange, usePrefetchAdjacentRanges } from '@/hooks/use-activities-range';
@@ -116,6 +116,7 @@ export default function CalendarScreen() {
         activeFilterCount={activeFilterCount}
       />
       <FilterSheet visible={filtersOpen} filters={filters} onClose={() => setFiltersOpen(false)} onChange={setFilters} onClear={clearFilters} />
+      <DueRemindersBanner />
       <View style={styles.body}>{body}</View>
       <Fab onPress={() => createAt(anchor)} />
     </Screen>
