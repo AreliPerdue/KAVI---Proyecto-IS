@@ -1,6 +1,6 @@
 import { Eye, EyeOff } from 'lucide-react-native';
 import { forwardRef, useState } from 'react';
-import { Platform, Pressable, StyleSheet, TextInput, type TextInputProps, View } from 'react-native';
+import { Platform, Pressable, StyleSheet, TextInput, type TextInputProps, type TextStyle, View } from 'react-native';
 
 import { AppText } from './app-text';
 
@@ -83,7 +83,8 @@ export const TextField = forwardRef<TextInput, TextFieldProps>(function TextFiel
 });
 
 // En web el anillo de foco lo dibuja el contenedor (borde ink), no el outline del navegador.
-const webInputReset = Platform.OS === 'web' ? ({ outlineWidth: 0 } as const) : null;
+// justificación: react-native-web acepta outlineStyle 'none' aunque el tipo de RN no lo declare.
+const webInputReset = Platform.OS === 'web' ? ({ outlineStyle: 'none', outlineWidth: 0 } as unknown as TextStyle) : null;
 
 const styles = StyleSheet.create({
   container: { gap: Spacing.xs },
