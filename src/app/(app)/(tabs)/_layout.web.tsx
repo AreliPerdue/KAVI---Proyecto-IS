@@ -6,6 +6,7 @@ import { Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
 
 import { AppText, DimensionDots } from '@/components/ui';
 import { IconSize, IconStroke, MaxContentWidth, Radius, Spacing } from '@/constants/theme';
+import { useSharedBadgeCount } from '@/hooks/use-shared-badge';
 import { useTheme } from '@/hooks/use-theme';
 
 const TABS = [
@@ -15,9 +16,9 @@ const TABS = [
   { name: 'profile', href: '/(app)/(tabs)/profile', label: 'Perfil', Icon: UserRound },
 ] as const;
 
-type TabButtonProps = TabTriggerSlotProps & { label: string; Icon: typeof CalendarDays };
+type TabButtonProps = TabTriggerSlotProps & { label: string; Icon: typeof CalendarDays; badge?: number };
 
-function TabButton({ label, Icon, isFocused, ...props }: TabButtonProps) {
+function TabButton({ label, Icon, isFocused, badge = 0, ...props }: TabButtonProps) {
   const theme = useTheme();
   const { width } = useWindowDimensions();
   const showLabel = width >= 720;
@@ -26,7 +27,7 @@ function TabButton({ label, Icon, isFocused, ...props }: TabButtonProps) {
     <Pressable
       {...props}
       accessibilityRole="tab"
-      accessibilityLabel={label}
+      accessibilityLabel={badge > 0 ? `${label}, ${badge} pendientes` : label}
       accessibilityState={{ selected: !!isFocused }}
       style={({ pressed }) => [
         styles.tab,
@@ -38,6 +39,13 @@ function TabButton({ label, Icon, isFocused, ...props }: TabButtonProps) {
         <AppText variant="label" color={isFocused ? 'ink' : 'textSecondary'}>
           {label}
         </AppText>
+      ) : null}
+      {badge > 0 ? (
+        <View style={[styles.badge, { backgroundColor: theme.today }]}>
+          <AppText variant="caption" color="onInk">
+            {badge}
+          </AppText>
+        </View>
       ) : null}
     </Pressable>
   );
@@ -68,13 +76,14 @@ function TopBar({ children, ...props }: TopBarProps) {
 
 /** Tabs web: barra superior con ancho máximo (NFR-9). */
 export default function TabsLayoutWeb() {
+  const badge = useSharedBadgeCount();
   return (
     <Tabs>
       <TabList asChild>
         <TopBar>
           {TABS.map(({ name, href, label, Icon }) => (
             <TabTrigger key={name} name={name} href={href} asChild>
-              <TabButton label={label} Icon={Icon} />
+              <TabButton label={label} Icon={Icon} badge={name === 'shared' ? badge : 0} />
             </TabTrigger>
           ))}
         </TopBar>
@@ -112,4 +121,5 @@ const styles = StyleSheet.create({
   },
   pressed: { opacity: 0.7 },
   slot: { flex: 1 },
+  badge: { minWidth: 18, height: 18, paddingHorizontal: 5, borderRadius: 9, alignItems: 'center', justifyContent: 'center' },
 });

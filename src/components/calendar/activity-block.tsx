@@ -27,7 +27,7 @@ export const ActivityBlock = memo(function ActivityBlock({ activity, onPress, co
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={`${activity.title}, ${time}`}
+      accessibilityLabel={shared ? `${activity.title}, ${time}, compartida por ${activity.owner_name ?? 'un contacto'}` : `${activity.title}, ${time}`}
       onPress={() => onPress(activity)}
       style={({ pressed }) => [
         styles.block,
@@ -43,7 +43,7 @@ export const ActivityBlock = memo(function ActivityBlock({ activity, onPress, co
       </View>
       {!compact ? (
         <AppText variant="caption" color="textSecondary" tabular numberOfLines={1}>
-          {time}
+          {shared && activity.owner_name ? `${time} · ${activity.owner_name}` : time}
         </AppText>
       ) : null}
     </Pressable>

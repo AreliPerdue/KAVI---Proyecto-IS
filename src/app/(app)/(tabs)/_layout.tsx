@@ -2,6 +2,7 @@ import { ErrorFallback } from '@/components/error-fallback';
 import { type ErrorBoundaryProps } from 'expo-router';
 import { NativeTabs } from 'expo-router/unstable-native-tabs';
 
+import { useSharedBadgeCount } from '@/hooks/use-shared-badge';
 import { useTheme } from '@/hooks/use-theme';
 
 export function ErrorBoundary(props: ErrorBoundaryProps) {
@@ -11,6 +12,7 @@ export function ErrorBoundary(props: ErrorBoundaryProps) {
 /** Tabs nativos (iOS/Android). La versión web vive en _layout.web.tsx. */
 export default function TabsLayout() {
   const theme = useTheme();
+  const badge = useSharedBadgeCount();
 
   return (
     <NativeTabs
@@ -25,6 +27,7 @@ export default function TabsLayout() {
       <NativeTabs.Trigger name="shared">
         <NativeTabs.Trigger.Label>Compartido</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon sf={{ default: 'person.2', selected: 'person.2.fill' }} md="group" />
+        {badge > 0 ? <NativeTabs.Trigger.Badge>{String(badge)}</NativeTabs.Trigger.Badge> : null}
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="fitness">
         <NativeTabs.Trigger.Label>Fitness</NativeTabs.Trigger.Label>

@@ -73,6 +73,7 @@ export default function CalendarScreen() {
   );
 
   const data = useMemo(() => applyFilters(activities.data ?? [], filters), [activities.data, filters]);
+  const isShared = useCallback((a: Activity) => a.owner_id !== userId, [userId]);
   const activeFilterCount = filters.dimensions.length + filters.themeIds.length;
   const showEmpty = activities.isSuccess && data.length === 0;
 
@@ -90,7 +91,7 @@ export default function CalendarScreen() {
   } else if (view === 'month') {
     body = <MonthView anchor={anchor} activities={data} onSelectDay={selectDay} />;
   } else if (view === 'week') {
-    body = <WeekView anchor={anchor} activities={data} onPressSlot={createAt} onPressActivity={openActivity} />;
+    body = <WeekView anchor={anchor} activities={data} onPressSlot={createAt} onPressActivity={openActivity} isSharedActivity={isShared} />;
   } else if (showEmpty) {
     body = (
       <EmptyState
@@ -100,7 +101,7 @@ export default function CalendarScreen() {
       />
     );
   } else {
-    body = <DayView day={anchor} activities={data} onPressSlot={createAt} onPressActivity={openActivity} />;
+    body = <DayView day={anchor} activities={data} onPressSlot={createAt} onPressActivity={openActivity} isSharedActivity={isShared} />;
   }
 
   return (
