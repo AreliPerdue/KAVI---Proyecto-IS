@@ -25,8 +25,8 @@ Fuente de verdad del avance. Reglas: trabajar en orden, respetar dependencias, m
 - [x] T018 Modo demo sin backend (`EXPO_PUBLIC_DEMO_MODE`, datos en memoria en `services/demo/`) y carga perezosa de módulos nativos. Fachadas `services/*.ts` sobre `services/backend.ts`.
 
 ## Fase 2 — Calendario núcleo (UI, modo demo) — spec 04
-- [ ] T039 Base del calendario: `lib/dates.ts` (rangos mes/semana/día, formatos es-MX, próxima media hora), `lib/storage.ts` (persistencia clave-valor multiplataforma), store Zustand (vista, fecha, filtros) y set de iconos curado `constants/icons.ts` + componente `Icon`. Dep: T018
-- [ ] T040 `services/activities.ts`: CRUD + query por rango (contrato + demo). Dep: T039
+- [x] T039 Base del calendario: `lib/dates.ts` (rangos mes/semana/día, formatos es-MX, próxima media hora), `lib/storage.ts` (persistencia clave-valor multiplataforma), store Zustand (vista, fecha, filtros) y set de iconos curado `constants/icons.ts` + componente `Icon`. Dep: T018
+- [x] T040 `services/activities.ts`: CRUD + query por rango (contrato + demo). Dep: T039
 - [ ] T041 `hooks/useActivitiesRange` con TanStack Query (cache por rango) + prefetch de rangos adyacentes. (NFR-1, NFR-2) Dep: T040
 - [ ] T042 Vista mensual: grid, puntos de color, tocar día→vista diaria. (RF-C1) Dep: T041
 - [ ] T043 Vista diaria: timeline con bloques posicionados. (RF-C3) Dep: T041
