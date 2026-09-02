@@ -16,8 +16,15 @@ pnpm ios / pnpm android     # recompila la app nativa (necesario tras instalar m
 ## Verificación
 ```bash
 pnpm typecheck              # tsc --noEmit — debe quedar limpio antes de marcar una tarea
-pnpm lint                   # expo lint
+pnpm lint                   # expo lint (ESLint + reglas de React Compiler)
 ```
+
+## Modo demo
+Con `EXPO_PUBLIC_DEMO_MODE=true` la app funciona sin backend con datos en memoria (se reinician al recargar).
+- Entra con cualquier correo y una contraseña de 8+ caracteres, o con `demo@kavi.app` / `demo1234`.
+- Cuentas seed para probar el compartido (misma contraseña): `ana@kavi.app`, `luis@kavi.app`, `maria@kavi.app`, `pedro@kavi.app`. Desde Perfil se cambia de cuenta con un toque.
+- `EXPO_PUBLIC_DEMO_AUTOLOGIN=true` arranca ya autenticado (útil para capturas).
+- Deep links web: `/calendar?view=week&date=2026-09-07`, `/activity/new?date=…&start=…`.
 `pnpm typecheck` se ejecuta además en CI (`.github/workflows/typecheck.yml`) en cada push y PR.
 
 ## Base de datos (Supabase CLI)

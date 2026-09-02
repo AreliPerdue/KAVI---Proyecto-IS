@@ -82,10 +82,10 @@ Fuente de verdad del avance. Reglas: trabajar en orden, respetar dependencias, m
 
 ## Fase 7 — NFR y pulido del frontend — spec 08
 - [ ] T100 Matriz de pruebas por feature en iOS/Android/web en modo demo; corregir hallazgos. (NFR-8)
-- [ ] T102 Revisión de estados carga/vacío/error en todas las pantallas. (NFR-11)
-- [ ] T103 Web responsive del calendario (semana completa ≥ 1024 px). (NFR-9)
-- [ ] T104 Revisión textos es-MX y confirmaciones/undo. (NFR-12, NFR-13)
-- [ ] T106 `tsc --noEmit` limpio, limpieza de código muerto, checklist kavi-design por pantalla. (NFR-14)
+- [x] T102 Revisión de estados carga/vacío/error en todas las pantallas. (NFR-11)
+- [x] T103 Web responsive del calendario (semana completa ≥ 1024 px). (NFR-9)
+- [x] T104 Revisión textos es-MX y confirmaciones/undo. (NFR-12, NFR-13)
+- [x] T106 `tsc --noEmit` limpio, limpieza de código muerto, checklist kavi-design por pantalla. (NFR-14)
 
 ## Fase 8 — Backend e integración real (al final) — spec 02 + spec 08
 - [ ] T020 Migración: enum `dimension` + tabla `themes` + RLS. Dep: T010
