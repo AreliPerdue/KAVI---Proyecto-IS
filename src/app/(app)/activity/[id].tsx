@@ -1,5 +1,5 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Bell, BellOff, LogOut, Pencil, Repeat, Share2, Trash2, Users } from 'lucide-react-native';
+import { Bell, BellOff, Dumbbell, LogOut, Pencil, Repeat, Share2, Trash2, Users } from 'lucide-react-native';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
@@ -11,6 +11,7 @@ import { IconSize, IconStroke, Radius, Spacing } from '@/constants/theme';
 import { useActivity, useActivityMutations } from '@/hooks/use-activity';
 import { useActivityReminders, useReminderMutations } from '@/hooks/use-reminders';
 import { useActivityShares, useShareMutations } from '@/hooks/use-shares';
+import { useWorkoutByActivity, useWorkoutMutations } from '@/hooks/use-workouts';
 import { useTheme } from '@/hooks/use-theme';
 import { formatDayTitle, formatTimeRange, fromIso } from '@/lib/dates';
 import { describeRecurrence, parseRRule } from '@/lib/recurrence';
@@ -46,6 +47,9 @@ export default function ActivityDetailScreen() {
   const isOwner = !!activity.data && activity.data.owner_id === userId;
   const shares = useActivityShares(id, isOwner);
   const shareMutations = useShareMutations();
+  // Los entrenamientos son privados: solo el dueño consulta o crea el suyo (regla 07).
+  const workout = useWorkoutByActivity(id, isOwner && !!activity.data?.is_gym);
+  const workoutMutations = useWorkoutMutations();
   const [pending, setPending] = useState<PendingAction | null>(null);
 
   const close = () => (router.canGoBack() ? router.back() : router.replace('/(app)/(tabs)/calendar'));
@@ -200,6 +204,24 @@ export default function ActivityDetailScreen() {
             {pendingShares.length ? ` · ${pendingShares.length} pendiente${pendingShares.length > 1 ? 's' : ''}` : ''}
           </AppText>
         </View>
+      ) : null}
+
+      {isOwner && data.is_gym ? (
+        <Button
+          title={workout.data ? 'Ver entrenamiento' : 'Registrar entrenamiento'}
+          icon={<Dumbbell size={IconSize.inline} strokeWidth={IconStroke} color={theme.onInk} />}
+          loading={workout.isPending || workoutMutations.create.isPending}
+          onPress={() => {
+            if (workout.data) {
+              router.push({ pathname: '/(app)/workout/[id]', params: { id: workout.data.id, mode: 'view' } });
+              return;
+            }
+            workoutMutations.create.mutate(
+              { activity_id: data.id, performed_at: data.start_at },
+              { onSuccess: (created) => router.push({ pathname: '/(app)/workout/[id]', params: { id: created.id, mode: 'edit' } }) },
+            );
+          }}
+        />
       ) : null}
 
       <View style={[styles.actions, { borderTopColor: theme.border }]}>

@@ -27,6 +27,7 @@ export default function AppLayout() {
       <Stack.Screen name="activity/new" options={{ presentation: modal }} />
       <Stack.Screen name="activity/share" options={{ presentation: modal }} />
       <Stack.Screen name="shared/availability" options={{ presentation: modal }} />
+      <Stack.Screen name="workout/[id]" options={{ presentation: modal }} />
       <Stack.Screen name="themes" options={{ presentation: modal }} />
       <Stack.Screen name="theme/new" options={{ presentation: modal }} />
       <Stack.Screen

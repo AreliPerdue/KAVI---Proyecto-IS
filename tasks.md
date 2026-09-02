@@ -71,13 +71,13 @@ Fuente de verdad del avance. Reglas: trabajar en orden, respetar dependencias, m
 
 ## Fase 6 — Fitness (UI, modo demo) — spec 07
 - [x] T090 `services/workouts.ts` (contrato + demo). Dep: T039
-- [ ] T091 Botón "Registrar/Ver entrenamiento" en detalle si is_gym; relación 1:1. (RF-F1) Dep: T090, T062
+- [x] T091 Botón "Registrar/Ver entrenamiento" en detalle si is_gym; relación 1:1. (RF-F1) Dep: T090, T062
 - [ ] T092 Pantalla de entrenamiento: encabezado + tarjetas de ejercicio con campos abiertos; guardado incremental. (RF-F3–F5) Dep: T091
 - [ ] T093 Autocompletado de nombres usados antes. (RF-F4) Dep: T092
 - [ ] T094 Eliminar ejercicio con undo. (RF-F6) Dep: T092
 - [ ] T095 Historial + detalle lectura + editar + entrenamiento libre. (RF-F2, RF-F7) Dep: T092
 - [ ] T096 Duplicar workout en actividad futura o libre. (RF-F8, HU-F4) Dep: T095
-- [ ] T097 Privacidad en UI: invitados no ven el botón ni el contenido del entrenamiento. (regla 07) Dep: T091
+- [x] T097 Privacidad en UI: invitados no ven el botón ni el contenido del entrenamiento. (regla 07) Dep: T091
 - [ ] T098 ✅ HITO: flujo calendario→entrenamiento→historial completo en modo demo. Dep: T092–T097
 
 ## Fase 7 — NFR y pulido del frontend — spec 08
