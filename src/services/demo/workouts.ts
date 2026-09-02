@@ -17,7 +17,7 @@ const exercises: WorkoutExercise[] = [];
   const performedAt = addDays(monday, -7);
   performedAt.setHours(7, 30, 0, 0);
   const workout: StoredWorkout = {
-    id: nextId('wo'),
+    id: 'wo-seed-pierna',
     activity_id: null,
     owner_id: legDay?.owner_id ?? 'demo-user',
     performed_at: performedAt.toISOString(),
