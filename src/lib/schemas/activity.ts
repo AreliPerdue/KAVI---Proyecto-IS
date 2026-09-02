@@ -1,5 +1,13 @@
 import { z } from 'zod';
 
+const recurrenceSchema = z
+  .object({
+    freq: z.enum(['DAILY', 'WEEKLY', 'MONTHLY']),
+    byDay: z.array(z.number().int().min(0).max(6)),
+    until: z.string().nullable(),
+  })
+  .nullable();
+
 export const activityFormSchema = z
   .object({
     title: z.string().trim().min(1, 'Escribe un título.').max(120, 'Máximo 120 caracteres.'),
@@ -12,6 +20,7 @@ export const activityFormSchema = z
     allDay: z.boolean(),
     isGym: z.boolean(),
     themeId: z.string().nullable(),
+    recurrence: recurrenceSchema,
   })
   .refine((v) => v.allDay || v.endMinutes > v.startMinutes, {
     message: 'La hora de fin debe ser posterior a la de inicio.',

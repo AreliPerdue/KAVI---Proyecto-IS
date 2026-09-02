@@ -4,7 +4,11 @@ import { useState } from 'react';
 import { Controller, useForm, useWatch } from 'react-hook-form';
 import { StyleSheet, View } from 'react-native';
 
+import { RecurrenceField } from './recurrence-field';
+import { ThemeField } from './theme-field';
+
 import { Banner, Button, DatePickerSheet, FieldButton, SwitchRow, TextField, TimePickerSheet } from '@/components/ui';
+import { GYM_THEME_ID } from '@/constants/themes';
 import { IconSize, IconStroke, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { formatDate, fromDayKey, toDayKey } from '@/lib/dates';
@@ -22,12 +26,12 @@ export type ActivityFormProps = {
   submitting: boolean;
   error?: string | null;
   onSubmit: (values: ActivityFormValues) => void;
-  /** Selector de tema (Fase 3) inyectado para no acoplar el formulario. */
-  themeField?: (props: { value: string | null; onChange: (id: string | null) => void }) => React.ReactNode;
+  /** Al editar solo una ocurrencia, la repetición no se toca. */
+  recurrenceLocked?: boolean;
 };
 
 /** Formulario de actividad (RF-C5): título, fecha, horas, todo el día, descripción. */
-export function ActivityForm({ defaultValues, submitLabel, submitting, error, onSubmit, themeField }: ActivityFormProps) {
+export function ActivityForm({ defaultValues, submitLabel, submitting, error, onSubmit, recurrenceLocked = false }: ActivityFormProps) {
   const theme = useTheme();
   const { control, handleSubmit, setValue } = useForm<ActivityFormValues>({
     resolver: zodResolver(activityFormSchema),
@@ -63,9 +67,20 @@ export function ActivityForm({ defaultValues, submitLabel, submitting, error, on
         )}
       />
 
-      {themeField ? (
-        <Controller control={control} name="themeId" render={({ field: { onChange, value } }) => <>{themeField({ value, onChange })}</>} />
-      ) : null}
+      <Controller
+        control={control}
+        name="themeId"
+        render={({ field: { onChange, value } }) => (
+          <ThemeField
+            value={value}
+            onChange={(selected) => {
+              onChange(selected?.id ?? null);
+              // Tema Gimnasio activa is_gym (regla 04); se puede alternar manualmente después.
+              if (selected?.id === GYM_THEME_ID) setValue('isGym', true, { shouldDirty: true });
+            }}
+          />
+        )}
+      />
 
       <FieldButton
         label="Fecha"
@@ -113,6 +128,14 @@ export function ActivityForm({ defaultValues, submitLabel, submitting, error, on
             numberOfLines={3}
             style={styles.multiline}
           />
+        )}
+      />
+
+      <Controller
+        control={control}
+        name="recurrence"
+        render={({ field: { onChange, value } }) => (
+          <RecurrenceField value={value} onChange={onChange} baseDayKey={dayKey} disabled={recurrenceLocked} />
         )}
       />
 
