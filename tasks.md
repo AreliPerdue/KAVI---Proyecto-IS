@@ -32,9 +32,9 @@ Fuente de verdad del avance. Reglas: trabajar en orden, respetar dependencias, m
 - [x] T043 Vista diaria: timeline con bloques posicionados. (RF-C3) Dep: T041
 - [x] T044 Vista semanal: 7 columnas con bloques. (RF-C2) Dep: T043
 - [x] T045 Navegación de fechas + botón Hoy + selector de vista persistente. (RF-C4) Dep: T042–T044
-- [ ] T046 Formulario de actividad (crear/editar): título, fecha, horas, todo-el-día, descripción; default 1 h. (RF-C5) Dep: T040
-- [ ] T047 Crear desde slot vacío con hora pre-llenada. (RF-C6) Dep: T043, T046
-- [ ] T048 Hoja de detalle: editar, eliminar (con confirmación/undo). (RF-C7 parcial, NFR-12) Dep: T046
+- [x] T046 Formulario de actividad (crear/editar): título, fecha, horas, todo-el-día, descripción; default 1 h. (RF-C5) Dep: T040
+- [x] T047 Crear desde slot vacío con hora pre-llenada. (RF-C6) Dep: T043, T046
+- [x] T048 Hoja de detalle: editar, eliminar (con confirmación/undo). (RF-C7 parcial, NFR-12) Dep: T046
 - [x] T049 Estados carga/vacío/error en las 3 vistas. (RF-C12, NFR-11) Dep: T042–T044
 - [ ] T050 ✅ HITO: CRUD completo visible en 3 vistas en modo demo (web + al menos un móvil). Dep: T045–T049
 
