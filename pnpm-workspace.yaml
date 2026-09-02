@@ -1,3 +1,5 @@
+allowBuilds:
+
 minimumReleaseAgeExclude:
   - '@expo/cli@57.0.21'
   - '@expo/fingerprint@0.20.12'
@@ -20,3 +22,4 @@ minimumReleaseAgeExclude:
 # Permitir el postinstall que descarga el binario de la CLI de Supabase
 onlyBuiltDependencies:
   - supabase
+  - unrs-resolver
