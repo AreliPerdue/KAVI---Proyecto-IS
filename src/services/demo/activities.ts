@@ -11,7 +11,8 @@ import {
   toRRule,
 } from '@/lib/recurrence';
 import type { ActivitiesApi, CreateActivityInput } from '@/services/contracts';
-import { delay, demoState, nextId } from '@/services/demo/store';
+import { removeRemindersForActivities, syncRecipients } from '@/services/demo/reminders';
+import { delay, demoState, emitDataChange, nextId } from '@/services/demo/store';
 import type { Activity } from '@/types/domain';
 
 function find(id: string): Activity {
@@ -92,6 +93,7 @@ export const demoActivities: ActivitiesApi = {
     };
     demoState.activities.push(created);
     if (recurrence) materialize(created, recurrence, fromIso(created.start_at));
+    emitDataChange();
     return { ...created };
   },
 
@@ -101,6 +103,8 @@ export const demoActivities: ActivitiesApi = {
     if (scope === 'this' || (!current.recurrence_rule && !current.recurrence_parent_id)) {
       const updated = applyPatch(current, patch);
       demoState.activities = demoState.activities.map((a) => (a.id === id ? updated : a));
+      syncRecipients(id);
+      emitDataChange();
       return { ...updated };
     }
 
@@ -121,19 +125,26 @@ export const demoActivities: ActivitiesApi = {
       .filter((a) => !(a.recurrence_parent_id === root.id && fromIso(a.start_at) >= fromDate))
       .map((a) => (a.id === root.id ? updatedRoot : a));
     if (rule) materialize(updatedRoot, rule, new Date(Math.max(fromDate.getTime() - 1, rootStart.getTime())));
+    emitDataChange();
     return { ...(demoState.activities.find((a) => a.id === id) ?? updatedRoot) };
   },
 
   async remove(id, scope = 'this') {
     await delay(150);
     const current = find(id);
+    const before = demoState.activities.map((a) => a.id);
+    const finish = () => {
+      const remaining = new Set(demoState.activities.map((a) => a.id));
+      removeRemindersForActivities(before.filter((x) => !remaining.has(x)));
+      emitDataChange();
+    };
     if (scope === 'series') {
       const root = seriesRoot(current);
       const fromDate = fromIso(current.start_at);
       demoState.activities = demoState.activities.filter(
         (a) => a.id !== root.id && !(a.recurrence_parent_id === root.id && fromIso(a.start_at) >= fromDate),
       );
-      // Si quedan ocurrencias pasadas, la más antigua pasa a ser la nueva madre sin regla.
+      finish();
       return;
     }
     if (current.recurrence_rule) {
@@ -150,9 +161,11 @@ export const demoActivities: ActivitiesApi = {
           return a;
         });
       }
+      finish();
       return;
     }
     demoState.activities = demoState.activities.filter((a) => a.id !== id);
+    finish();
   },
 
   async extendRecurrenceHorizon(userId) {
