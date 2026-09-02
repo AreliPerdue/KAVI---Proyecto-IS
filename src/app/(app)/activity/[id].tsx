@@ -1,13 +1,15 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Pencil, Repeat, Trash2 } from 'lucide-react-native';
+import { Bell, BellOff, Pencil, Repeat, Trash2 } from 'lucide-react-native';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { activityColor } from '@/components/calendar';
 import { ModalHeader } from '@/components/modal-header';
-import { ActionRow, AppText, Button, ErrorState, LoadingState, Screen, Sheet, ThemeIcon } from '@/components/ui';
+import { ActionRow, AppText, Button, ErrorState, LoadingState, Screen, Sheet, SwitchRow, ThemeIcon } from '@/components/ui';
+import { describeOffset } from '@/constants/reminders';
 import { IconSize, IconStroke, Radius, Spacing } from '@/constants/theme';
 import { useActivity, useActivityMutations } from '@/hooks/use-activity';
+import { useActivityReminders, useReminderMutations } from '@/hooks/use-reminders';
 import { useTheme } from '@/hooks/use-theme';
 import { formatDayTitle, formatTimeRange, fromIso } from '@/lib/dates';
 import { describeRecurrence, parseRRule } from '@/lib/recurrence';
@@ -28,6 +30,8 @@ export default function ActivityDetailScreen() {
   const activity = useActivity(id);
   const parent = useActivity(activity.data?.recurrence_parent_id ?? undefined);
   const { remove, create } = useActivityMutations();
+  const reminders = useActivityReminders(id);
+  const { setEnabled } = useReminderMutations();
   const [pending, setPending] = useState<PendingAction | null>(null);
 
   const close = () => (router.canGoBack() ? router.back() : router.replace('/(app)/(tabs)/calendar'));
@@ -130,6 +134,34 @@ export default function ActivityDetailScreen() {
           <AppText>{data.description}</AppText>
         </View>
       ) : null}
+
+      <View style={[styles.card, { backgroundColor: theme.surfaceAlt }]}>
+        <View style={styles.inline}>
+          {reminders.data?.length ? (
+            <Bell size={IconSize.inline} strokeWidth={IconStroke} color={theme.textSecondary} />
+          ) : (
+            <BellOff size={IconSize.inline} strokeWidth={IconStroke} color={theme.textTertiary} />
+          )}
+          <AppText variant="label" color="textSecondary">
+            Recordatorios
+          </AppText>
+        </View>
+        {reminders.data?.length ? (
+          reminders.data.map((r) => (
+            <SwitchRow
+              key={r.id}
+              label={describeOffset(r.offset_minutes)}
+              hint={r.enabled ? undefined : 'Silenciado solo para ti'}
+              value={r.enabled}
+              onValueChange={(enabled) => setEnabled.mutate({ reminderId: r.id, enabled })}
+            />
+          ))
+        ) : (
+          <AppText variant="caption" color="textTertiary">
+            Sin recordatorios. Agrégalos desde Editar.
+          </AppText>
+        )}
+      </View>
 
       <View style={[styles.actions, { borderTopColor: theme.border }]}>
         <ActionRow

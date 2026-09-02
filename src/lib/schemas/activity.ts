@@ -21,6 +21,7 @@ export const activityFormSchema = z
     isGym: z.boolean(),
     themeId: z.string().nullable(),
     recurrence: recurrenceSchema,
+    reminderOffsets: z.array(z.number().int().min(0)),
   })
   .refine((v) => v.allDay || v.endMinutes > v.startMinutes, {
     message: 'La hora de fin debe ser posterior a la de inicio.',

@@ -48,6 +48,27 @@ export type Activity = {
   updated_at: string;
 };
 
+export type Reminder = {
+  id: string;
+  activity_id: string;
+  /** minutos antes de start_at (0 = al momento) */
+  offset_minutes: number;
+  created_by: string;
+  created_at: string;
+  /** Mi fila en reminder_recipients (RF-S12). */
+  enabled: boolean;
+};
+
+/** Notificación pendiente de programar en este dispositivo. */
+export type UpcomingReminder = {
+  reminderId: string;
+  activityId: string;
+  title: string;
+  body: string;
+  fireAt: string;
+  activityStartAt: string;
+};
+
 export type ThemeInput = {
   name: string;
   dimension: Dimension;

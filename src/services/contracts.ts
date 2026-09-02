@@ -1,6 +1,6 @@
 /** Contratos que implementan el backend Supabase y el backend demo (memoria). */
 import type { RecurrenceRule } from '@/lib/recurrence';
-import type { Activity, ActivityInput, AuthUser, Profile, Theme, ThemeInput } from '@/types/domain';
+import type { Activity, ActivityInput, AuthUser, Profile, Reminder, Theme, ThemeInput, UpcomingReminder } from '@/types/domain';
 
 export type SignUpInput = {
   email: string;
@@ -47,6 +47,17 @@ export interface ActivitiesApi {
   remove(id: string, scope?: RecurrenceScope): Promise<void>;
   /** Regenera instancias si alguna serie está por quedarse sin horizonte (plan §4). */
   extendRecurrenceHorizon(userId: string): Promise<void>;
+}
+
+export interface RemindersApi {
+  /** Reminders de una actividad con mi estado enabled. */
+  listByActivity(activityId: string, userId: string): Promise<Reminder[]>;
+  /** Reemplaza el conjunto de offsets de la actividad (solo el dueño). */
+  setForActivity(activityId: string, userId: string, offsets: number[]): Promise<Reminder[]>;
+  /** Silenciar/activar mi copia (RF-S12). */
+  setEnabled(reminderId: string, userId: string, enabled: boolean): Promise<void>;
+  /** Todo lo que debo programar localmente en los próximos `horizonDays` (plan §3.4). */
+  listUpcoming(userId: string, horizonDays: number): Promise<UpcomingReminder[]>;
 }
 
 export interface ThemesApi {

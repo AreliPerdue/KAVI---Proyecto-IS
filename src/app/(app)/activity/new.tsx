@@ -6,6 +6,7 @@ import { activityToFormValues, defaultFormValues, formValuesToInput } from '@/co
 import { ModalHeader } from '@/components/modal-header';
 import { ErrorState, LoadingState, Screen } from '@/components/ui';
 import { useActivity, useActivityMutations } from '@/hooks/use-activity';
+import { useActivityReminders, useReminderMutations } from '@/hooks/use-reminders';
 import { useThemes } from '@/hooks/use-themes';
 import { useSnackbar } from '@/providers';
 import type { RecurrenceScope } from '@/services/activities';
@@ -24,24 +25,28 @@ export default function ActivityFormScreen() {
   const parent = useActivity(activity.data?.recurrence_parent_id ?? undefined);
   const themes = useThemes();
   const { create, update } = useActivityMutations();
+  const reminders = useActivityReminders(id);
+  const { setForActivity } = useReminderMutations();
 
   const isSeriesMember = !!activity.data && (!!activity.data.recurrence_rule || !!activity.data.recurrence_parent_id);
   const seriesRule = activity.data?.recurrence_rule ?? parent.data?.recurrence_rule ?? null;
 
   const defaults = useMemo(() => {
-    if (activity.data) return activityToFormValues(activity.data, scope === 'series' ? seriesRule : null);
+    if (activity.data) {
+      return activityToFormValues(activity.data, scope === 'series' ? seriesRule : null, (reminders.data ?? []).map((r) => r.offset_minutes));
+    }
     return defaultFormValues({
       dayKey: date,
       startMinutes: start ? Number(start) : undefined,
       endMinutes: end ? Number(end) : undefined,
       title,
     });
-  }, [activity.data, date, start, end, title, scope, seriesRule]);
+  }, [activity.data, date, start, end, title, scope, seriesRule, reminders.data]);
 
   const close = () => (router.canGoBack() ? router.back() : router.replace('/(app)/(tabs)/calendar'));
   const headerTitle = editing ? (scope === 'series' ? 'Editar toda la serie' : 'Editar actividad') : 'Nueva actividad';
 
-  if (editing && (activity.isPending || (activity.data?.recurrence_parent_id && parent.isPending))) {
+  if (editing && (activity.isPending || reminders.isPending || (activity.data?.recurrence_parent_id && parent.isPending))) {
     return (
       <Screen maxWidth={FORM_MAX_WIDTH}>
         <ModalHeader title={headerTitle} />
@@ -67,7 +72,7 @@ export default function ActivityFormScreen() {
         key={editing ? `${id}-${scope}` : 'new'}
         defaultValues={defaults}
         submitLabel={editing ? 'Guardar cambios' : 'Crear actividad'}
-        submitting={mutation.isPending}
+        submitting={mutation.isPending || setForActivity.isPending}
         error={mutation.error?.message ?? null}
         recurrenceLocked={editing && isSeriesMember && scope === 'this'}
         onSubmit={(values) => {
@@ -78,17 +83,27 @@ export default function ActivityFormScreen() {
             update.mutate(
               { id, patch: scope === 'series' ? { ...patch, recurrence } : patch, scope },
               {
-                onSuccess: () => {
-                  showSnackbar({ message: scope === 'series' ? 'Serie actualizada.' : 'Cambios guardados.' });
-                  close();
-                },
+                onSuccess: (saved) =>
+                  setForActivity.mutate(
+                    { activityId: saved.id, offsets: values.reminderOffsets },
+                    {
+                      onSettled: () => {
+                        showSnackbar({ message: scope === 'series' ? 'Serie actualizada.' : 'Cambios guardados.' });
+                        close();
+                      },
+                    },
+                  ),
               },
             );
           } else {
             create.mutate(input, {
-              onSuccess: () => {
-                showSnackbar({ message: input.recurrence ? 'Actividad recurrente creada.' : 'Actividad creada.' });
-                close();
+              onSuccess: (saved) => {
+                const finish = () => {
+                  showSnackbar({ message: input.recurrence ? 'Actividad recurrente creada.' : 'Actividad creada.' });
+                  close();
+                };
+                if (values.reminderOffsets.length === 0) return finish();
+                setForActivity.mutate({ activityId: saved.id, offsets: values.reminderOffsets }, { onSettled: finish });
               },
             });
           }

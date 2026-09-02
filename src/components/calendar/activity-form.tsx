@@ -5,6 +5,7 @@ import { Controller, useForm, useWatch } from 'react-hook-form';
 import { StyleSheet, View } from 'react-native';
 
 import { RecurrenceField } from './recurrence-field';
+import { RemindersField } from './reminders-field';
 import { ThemeField } from './theme-field';
 
 import { Banner, Button, DatePickerSheet, FieldButton, SwitchRow, TextField, TimePickerSheet } from '@/components/ui';
@@ -137,6 +138,12 @@ export function ActivityForm({ defaultValues, submitLabel, submitting, error, on
         render={({ field: { onChange, value } }) => (
           <RecurrenceField value={value} onChange={onChange} baseDayKey={dayKey} disabled={recurrenceLocked} />
         )}
+      />
+
+      <Controller
+        control={control}
+        name="reminderOffsets"
+        render={({ field: { onChange, value } }) => <RemindersField value={value} onChange={onChange} />}
       />
 
       <Controller

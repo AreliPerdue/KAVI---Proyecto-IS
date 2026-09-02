@@ -9,6 +9,10 @@ import { env } from '@/lib/env';
 import { SYSTEM_THEMES } from '@/constants/themes';
 import type { Activity, AuthUser, Profile, Theme } from '@/types/domain';
 
+export type DemoActivityShare = { id: string; activity_id: string; shared_with_id: string; status: 'pending' | 'accepted' | 'declined'; created_at: string };
+export type DemoReminder = { id: string; activity_id: string; offset_minutes: number; created_by: string; created_at: string };
+export type DemoRecipient = { id: string; reminder_id: string; user_id: string; enabled: boolean };
+
 export type DemoAccount = { user: AuthUser; password: string; profile: Profile };
 
 type Listener = (user: AuthUser | null) => void;
@@ -18,7 +22,12 @@ type DemoState = {
   currentUser: AuthUser | null;
   themes: Theme[];
   activities: Activity[];
+  activityShares: DemoActivityShare[];
+  reminders: DemoReminder[];
+  recipients: DemoRecipient[];
   listeners: Set<Listener>;
+  /** Suscriptores a cambios de datos (simula Realtime). */
+  dataListeners: Set<() => void>;
 };
 
 let counter = 0;
@@ -107,8 +116,24 @@ export const demoState: DemoState = {
   currentUser: env.demoAutologin ? DEMO_USER : null,
   themes: [...SYSTEM_THEMES],
   activities: seedActivities(),
+  activityShares: [],
+  reminders: [],
+  recipients: [],
   listeners: new Set(),
+  dataListeners: new Set(),
 };
+
+/** Notifica a la app que los datos cambiaron (invalidación de cache, como haría Realtime). */
+export function emitDataChange() {
+  demoState.dataListeners.forEach((listener) => listener());
+}
+
+export function subscribeDataChanges(listener: () => void): () => void {
+  demoState.dataListeners.add(listener);
+  return () => {
+    demoState.dataListeners.delete(listener);
+  };
+}
 
 export function setCurrentUser(user: AuthUser | null) {
   demoState.currentUser = user;

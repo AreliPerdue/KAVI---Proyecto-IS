@@ -10,3 +10,5 @@ export { ThemeField } from './theme-field';
 export { RecurrenceField } from './recurrence-field';
 export { FilterSheet } from './filter-sheet';
 export { applyFilters } from './apply-filters';
+export { RemindersField } from './reminders-field';
+export { DueRemindersBanner } from './due-reminders-banner';

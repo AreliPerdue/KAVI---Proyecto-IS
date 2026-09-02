@@ -20,10 +20,11 @@ export function defaultFormValues(options: { dayKey?: string; startMinutes?: num
     isGym: false,
     themeId: null,
     recurrence: null,
+    reminderOffsets: [],
   };
 }
 
-export function activityToFormValues(activity: Activity, seriesRule: string | null = activity.recurrence_rule): ActivityFormValues {
+export function activityToFormValues(activity: Activity, seriesRule: string | null = activity.recurrence_rule, reminderOffsets: number[] = []): ActivityFormValues {
   const start = fromIso(activity.start_at);
   const end = fromIso(activity.end_at);
   const sameDay = toDayKey(start) === toDayKey(end);
@@ -37,6 +38,7 @@ export function activityToFormValues(activity: Activity, seriesRule: string | nu
     isGym: activity.is_gym,
     themeId: activity.theme_id,
     recurrence: parseRRule(seriesRule),
+    reminderOffsets,
   };
 }
 
