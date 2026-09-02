@@ -40,15 +40,15 @@ Fuente de verdad del avance. Reglas: trabajar en orden, respetar dependencias, m
 
 ## Fase 3 — Temas, filtros y recurrencia (UI, modo demo) — spec 05 + RF-C8
 - [x] T060 `constants/dimensions.ts` + `constants/themes.ts` (seed sistema) + `services/themes.ts` CRUD (contrato + demo). Dep: T039
-- [ ] T061 ThemePicker agrupado por dimensión con búsqueda. (RF-T1) Dep: T060
-- [ ] T062 Integrar picker al formulario: auto-asigna dimensión/color/icono e `is_gym` si tema Gimnasio. (RF-T1, regla 04) Dep: T061, T046
-- [ ] T063 CRUD de temas propios (paleta 12 colores, ~30 iconos); protección de temas sistema. (RF-T2, RF-T3) Dep: T061
-- [ ] T064 Eliminar tema propio: copia de estilo + set null verificado en demo. (RF-T6) Dep: T063
-- [ ] T065 Filtros por dimensión/tema (chips) aplicados a las 3 vistas. (RF-C11) Dep: T062
-- [ ] T066 Recurrencia en formulario: diaria/semanal(días)/mensual + fin. (RF-C8) Dep: T046
-- [ ] T067 `lib/recurrence.ts` (RRULE simplificada) + materialización de instancias a 90 días en demo; extensión de horizonte al abrir app. (plan §4) Dep: T066
-- [ ] T068 Editar/eliminar "solo esta" vs "toda la serie". (RF-C8) Dep: T067
-- [ ] T069 ✅ HITO: calendario personalizable con temas, filtros y recurrencia en modo demo. Dep: T062–T068
+- [x] T061 ThemePicker agrupado por dimensión con búsqueda. (RF-T1) Dep: T060
+- [x] T062 Integrar picker al formulario: auto-asigna dimensión/color/icono e `is_gym` si tema Gimnasio. (RF-T1, regla 04) Dep: T061, T046
+- [x] T063 CRUD de temas propios (paleta 12 colores, ~30 iconos); protección de temas sistema. (RF-T2, RF-T3) Dep: T061
+- [x] T064 Eliminar tema propio: copia de estilo + set null verificado en demo. (RF-T6) Dep: T063
+- [x] T065 Filtros por dimensión/tema (chips) aplicados a las 3 vistas. (RF-C11) Dep: T062
+- [x] T066 Recurrencia en formulario: diaria/semanal(días)/mensual + fin. (RF-C8) Dep: T046
+- [x] T067 `lib/recurrence.ts` (RRULE simplificada) + materialización de instancias a 90 días en demo; extensión de horizonte al abrir app. (plan §4) Dep: T066
+- [x] T068 Editar/eliminar "solo esta" vs "toda la serie". (RF-C8) Dep: T067
+- [x] T069 ✅ HITO: calendario personalizable con temas, filtros y recurrencia en modo demo. Dep: T062–T068
 
 ## Fase 4 — Reminders propios — RF-C9/C10
 - [ ] T070 `lib/notifications.ts`: permisos, programar/cancelar, `syncNotifications()` idempotente; expo-notifications cargado perezosamente; no-op en web. (plan §3.4) Dep: T039
