@@ -12,14 +12,8 @@ import { Banner, Button, DatePickerSheet, FieldButton, SwitchRow, TextField, Tim
 import { GYM_THEME_ID } from '@/constants/themes';
 import { IconSize, IconStroke, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import { formatDate, fromDayKey, toDayKey } from '@/lib/dates';
+import { formatDate, formatMinutes12, fromDayKey, toDayKey } from '@/lib/dates';
 import { activityFormSchema, type ActivityFormValues } from '@/lib/schemas/activity';
-
-function minutesLabel(minutes: number): string {
-  const h = Math.floor(minutes / 60).toString().padStart(2, '0');
-  const m = (minutes % 60).toString().padStart(2, '0');
-  return `${h}:${m}`;
-}
 
 export type ActivityFormProps = {
   defaultValues: ActivityFormValues;
@@ -100,7 +94,7 @@ export function ActivityForm({ defaultValues, submitLabel, submitting, error, on
         <View style={styles.timeRow}>
           <FieldButton
             label="Inicio"
-            value={minutesLabel(startMinutes)}
+            value={formatMinutes12(startMinutes)}
             onPress={() => setPicker('start')}
             leading={<Clock size={IconSize.inline} strokeWidth={IconStroke} color={theme.textSecondary} />}
           />
@@ -108,7 +102,7 @@ export function ActivityForm({ defaultValues, submitLabel, submitting, error, on
             control={control}
             name="endMinutes"
             render={({ fieldState: { error: fieldError } }) => (
-              <FieldButton label="Fin" value={minutesLabel(endMinutes)} onPress={() => setPicker('end')} error={fieldError?.message} />
+              <FieldButton label="Fin" value={formatMinutes12(endMinutes)} onPress={() => setPicker('end')} error={fieldError?.message} />
             )}
           />
         </View>

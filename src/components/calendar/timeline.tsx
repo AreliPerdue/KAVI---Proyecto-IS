@@ -7,7 +7,7 @@ import { layoutDay } from './layout-blocks';
 import { AppText } from '@/components/ui';
 import { Spacing, type ThemeColors } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import { isToday, minutesSinceMidnight, toDayKey, WEEKDAY_SHORT } from '@/lib/dates';
+import { formatHourLabel, isToday, minutesSinceMidnight, toDayKey, WEEKDAY_SHORT } from '@/lib/dates';
 import type { Activity } from '@/types/domain';
 
 const HOURS = Array.from({ length: 24 }, (_, i) => i);
@@ -55,7 +55,7 @@ const DayColumn = memo(function DayColumn({
         <Pressable
           key={hour}
           accessibilityRole="button"
-          accessibilityLabel={`Crear actividad a las ${hour}:00`}
+          accessibilityLabel={`Crear actividad a las ${formatHourLabel(hour)}`}
           onPress={() => onPressSlot(day, hour * 60)}
           style={({ pressed }) => [
             styles.slot,
@@ -172,7 +172,7 @@ export function Timeline({
             <View key={hour} style={{ height: hourHeight }}>
               {hour > 0 ? (
                 <AppText variant="caption" color="textTertiary" tabular style={styles.hourLabel}>
-                  {`${hour.toString().padStart(2, '0')}:00`}
+                  {formatHourLabel(hour)}
                 </AppText>
               ) : null}
             </View>

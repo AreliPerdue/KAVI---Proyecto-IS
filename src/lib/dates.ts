@@ -144,9 +144,24 @@ export function formatDate(date: Date): string {
   return format(date, 'd MMM yyyy', { locale: es });
 }
 
-/** "14:30" */
+/** Minutos desde medianoche → "2:30 pm" (formato 12 h, es-MX). */
+export function formatMinutes12(minutes: number): string {
+  const total = ((minutes % MINUTES_PER_DAY) + MINUTES_PER_DAY) % MINUTES_PER_DAY;
+  const h24 = Math.floor(total / 60);
+  const m = total % 60;
+  const h12 = h24 % 12 === 0 ? 12 : h24 % 12;
+  return `${h12}:${m.toString().padStart(2, '0')} ${h24 < 12 ? 'am' : 'pm'}`;
+}
+
+/** "2:30 pm" */
 export function formatTime(date: Date): string {
-  return format(date, 'HH:mm');
+  return formatMinutes12(minutesSinceMidnight(date));
+}
+
+/** Hora corta para etiquetas de timeline: "2 pm", "12 am". */
+export function formatHourLabel(hour: number): string {
+  const h12 = hour % 12 === 0 ? 12 : hour % 12;
+  return `${h12} ${hour < 12 ? 'am' : 'pm'}`;
 }
 
 /** "14:30 – 15:30" o "Todo el día" */
