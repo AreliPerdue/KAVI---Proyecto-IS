@@ -67,7 +67,7 @@ Fuente de verdad del avance. Reglas: trabajar en orden, respetar dependencias, m
 - [x] T086 "Encontrar horario": huecos comunes → pre-llenar formulario. (RF-S9) Dep: T085
 - [x] T087 Suscripción a cambios (demo: emisor en memoria; Supabase Realtime en Fase 8) e invalidación de cache. (RF-S14) Dep: T082
 - [x] T088 Reminders compartidos: herencia al aceptar, sync de cambios, silenciar individual, texto "Compartida por…". (RF-S10–S13) Dep: T087, T072
-- [ ] T089 ✅ HITO: criterios de spec 06 recorridos en modo demo cambiando entre cuentas seed. Dep: T083–T088
+- [x] T089 ✅ HITO: criterios de spec 06 recorridos en modo demo cambiando entre cuentas seed. Dep: T083–T088
 
 ## Fase 6 — Fitness (UI, modo demo) — spec 07
 - [ ] T090 `services/workouts.ts` (contrato + demo). Dep: T039
