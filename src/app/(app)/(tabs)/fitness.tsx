@@ -10,8 +10,6 @@ import { useWorkoutMutations, useWorkouts } from '@/hooks/use-workouts';
 import { formatShortDate, formatTime, fromIso } from '@/lib/dates';
 import type { Workout } from '@/types/domain';
 
-const MAX_WIDTH = 720;
-
 /** Historial de entrenamientos + entrenamiento libre (RF-F2, RF-F7). */
 export default function FitnessScreen() {
   const theme = useTheme();
@@ -65,7 +63,7 @@ export default function FitnessScreen() {
           onPress={startFree}
         />
         <AppText variant="caption" color="textTertiary">
-          Para registrar una sesión agendada, ábrela en el calendario y toca "Registrar entrenamiento".
+          Para registrar una sesión agendada, ábrela en el calendario y toca “Registrar entrenamiento”.
         </AppText>
       </View>
       {workouts.isPending ? <LoadingState /> : null}

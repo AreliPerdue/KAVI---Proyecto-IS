@@ -54,6 +54,7 @@ function createWebStorage(): KeyValue {
 function createNativeStorage(): KeyValue {
   try {
     const AsyncStorage = (
+      // eslint-disable-next-line @typescript-eslint/no-require-imports -- carga perezosa de módulo nativo
       require('@react-native-async-storage/async-storage') as typeof import('@react-native-async-storage/async-storage')
     ).default;
     return {

@@ -6,7 +6,7 @@ import { AppText } from './app-text';
 import { IconButton } from './icon-button';
 import { Sheet } from './sheet';
 
-import { IconSize, IconStroke, Radius, Spacing } from '@/constants/theme';
+import { IconSize, IconStroke, Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { formatDayTitle, formatMonthTitle, isSameDay, isSameMonth, isToday, monthGridDays, shiftAnchor, toDayKey, WEEKDAY_LABELS } from '@/lib/dates';
 

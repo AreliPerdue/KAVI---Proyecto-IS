@@ -16,6 +16,7 @@ function load(): NotificationsModule | null {
   if (Platform.OS === 'web') return null;
   if (module !== undefined) return module;
   try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports -- carga perezosa de módulo nativo
     module = require('expo-notifications') as NotificationsModule;
   } catch {
     // Binario nativo sin el módulo: sin notificaciones hasta recompilar.

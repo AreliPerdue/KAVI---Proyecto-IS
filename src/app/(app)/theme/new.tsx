@@ -9,7 +9,7 @@ import { ModalHeader } from '@/components/modal-header';
 import { AppText, Banner, Button, Chip, ErrorState, LoadingState, Screen, TextField, ThemeIcon } from '@/components/ui';
 import { DIMENSIONS } from '@/constants/dimensions';
 import { THEME_ICON_NAMES, THEME_PALETTE } from '@/constants/icons';
-import { IconSize, IconStroke, Radius, Spacing } from '@/constants/theme';
+import { IconSize, Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useThemeMutations, useThemes } from '@/hooks/use-themes';
 import { themeFormSchema, type ThemeFormValues } from '@/lib/schemas/theme';

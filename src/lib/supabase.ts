@@ -14,6 +14,7 @@ let client: SupabaseClient | null = null;
 
 /** Carga expo-secure-store solo cuando hace falta (evita fallar si el binario nativo es viejo). */
 function createSecureStoreAdapter() {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports -- carga perezosa de módulo nativo
   const SecureStore = require('expo-secure-store') as typeof import('expo-secure-store');
   return {
     getItem: (key: string) => SecureStore.getItemAsync(key),
