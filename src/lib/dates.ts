@@ -32,6 +32,10 @@ const WEEK = { weekStartsOn: 1 } as const;
 
 export const MINUTES_PER_DAY = 24 * 60;
 
+/** Granularidad del timeline: el día se dibuja en saltos de 30 min (RF-C3, RF-C6). */
+export const SLOT_MINUTES = 30;
+export const SLOTS_PER_DAY = MINUTES_PER_DAY / SLOT_MINUTES;
+
 /** Fecha de calendario en formato estable 'yyyy-MM-dd' (clave de día en zona local). */
 export function toDayKey(date: Date): string {
   return format(date, 'yyyy-MM-dd');
@@ -144,24 +148,22 @@ export function formatDate(date: Date): string {
   return format(date, 'd MMM yyyy', { locale: es });
 }
 
-/** Minutos desde medianoche → "2:30 pm" (formato 12 h, es-MX). */
-export function formatMinutes12(minutes: number): string {
+/** Minutos desde medianoche → "14:30" (formato 24 h, es-MX). */
+export function formatMinutes(minutes: number): string {
   const total = ((minutes % MINUTES_PER_DAY) + MINUTES_PER_DAY) % MINUTES_PER_DAY;
-  const h24 = Math.floor(total / 60);
+  const h = Math.floor(total / 60);
   const m = total % 60;
-  const h12 = h24 % 12 === 0 ? 12 : h24 % 12;
-  return `${h12}:${m.toString().padStart(2, '0')} ${h24 < 12 ? 'am' : 'pm'}`;
+  return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
 }
 
-/** "2:30 pm" */
+/** "14:30" */
 export function formatTime(date: Date): string {
-  return formatMinutes12(minutesSinceMidnight(date));
+  return formatMinutes(minutesSinceMidnight(date));
 }
 
-/** Hora corta para etiquetas de timeline: "2 pm", "12 am". */
+/** Etiqueta de hora para el timeline: "00:00", "14:00". */
 export function formatHourLabel(hour: number): string {
-  const h12 = hour % 12 === 0 ? 12 : hour % 12;
-  return `${h12} ${hour < 12 ? 'am' : 'pm'}`;
+  return formatMinutes(((hour % 24) + 24) % 24 * 60);
 }
 
 /** "14:30 – 15:30" o "Todo el día" */

@@ -29,6 +29,17 @@ export function notificationsAvailable(): boolean {
   return load() !== null;
 }
 
+/**
+ * Estado actual del permiso **sin pedirlo**, para mostrarlo en Perfil.
+ * `null` = no aplica (web, o binario nativo sin el módulo compilado).
+ */
+export async function notificationPermissionGranted(): Promise<boolean | null> {
+  const Notifications = load();
+  if (!Notifications) return null;
+  const current = await Notifications.getPermissionsAsync();
+  return current.granted;
+}
+
 /** Pide permiso la primera vez que hay un reminder (plan §1). */
 export async function ensureNotificationPermission(): Promise<boolean> {
   const Notifications = load();

@@ -56,7 +56,7 @@ export default function ActivityDetailScreen() {
 
   if (activity.isPending) {
     return (
-      <Screen maxWidth={DETAIL_MAX_WIDTH}>
+      <Screen modal maxWidth={DETAIL_MAX_WIDTH}>
         <ModalHeader title="Actividad" />
         <LoadingState />
       </Screen>
@@ -64,7 +64,7 @@ export default function ActivityDetailScreen() {
   }
   if (activity.isError) {
     return (
-      <Screen maxWidth={DETAIL_MAX_WIDTH}>
+      <Screen modal maxWidth={DETAIL_MAX_WIDTH}>
         <ModalHeader title="Actividad" />
         <ErrorState message={activity.error.message} onRetry={() => activity.refetch()} />
       </Screen>
@@ -126,7 +126,7 @@ export default function ActivityDetailScreen() {
   };
 
   return (
-    <Screen scroll maxWidth={DETAIL_MAX_WIDTH}>
+    <Screen modal scroll maxWidth={DETAIL_MAX_WIDTH}>
       <ModalHeader title="Actividad" />
       <View style={styles.hero}>
         <View style={[styles.iconBadge, { backgroundColor: color }]}>
@@ -200,7 +200,7 @@ export default function ActivityDetailScreen() {
             </AppText>
           </View>
           <AppText variant="caption" color="textSecondary">
-            {acceptedShares.map((s) => s.profile.display_name ?? s.profile.username).join(', ') || 'Nadie aún'}
+            {acceptedShares.map((s) => s.profile.display_name ?? 'Contacto').join(', ') || 'Nadie aún'}
             {pendingShares.length ? ` · ${pendingShares.length} pendiente${pendingShares.length > 1 ? 's' : ''}` : ''}
           </AppText>
         </View>

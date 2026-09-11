@@ -14,6 +14,8 @@ import { useAuth } from '@/providers';
 
 const MAX_WIDTH = 1100;
 const HOUR_HEIGHT = 28;
+/** Cabe "00:00" en tabular de 12 px sin recortarse. */
+const GUTTER_WIDTH = 48;
 const DAY_START = 6;
 const DAY_END = 23;
 const HOURS = Array.from({ length: DAY_END - DAY_START }, (_, i) => DAY_START + i);
@@ -60,7 +62,7 @@ export default function AvailabilityScreen() {
   const compact = width < 720;
 
   return (
-    <Screen scroll maxWidth={MAX_WIDTH}>
+    <Screen modal scroll maxWidth={MAX_WIDTH}>
       <ModalHeader title="Disponibilidad" />
 
       {contacts.isPending ? <LoadingState /> : null}
@@ -80,7 +82,7 @@ export default function AvailabilityScreen() {
                 return (
                   <Chip
                     key={c.profile.id}
-                    label={c.profile.display_name ?? c.profile.username}
+                    label={c.profile.display_name ?? 'Contacto'}
                     color={isSelected ? colorFor(c.profile.id) : undefined}
                     selected={isSelected}
                     icon={<Avatar profile={c.profile} size={20} />}
@@ -121,7 +123,7 @@ export default function AvailabilityScreen() {
               </View>
 
               <ScrollView horizontal={compact} showsHorizontalScrollIndicator={false}>
-                <View style={[styles.grid, compact ? { width: 7 * 96 + 40 } : null]}>
+                <View style={[styles.grid, compact ? { width: 7 * 96 + GUTTER_WIDTH } : null]}>
                   <View style={styles.gutter}>
                     <View style={styles.dayHeader} />
                     {HOURS.map((h) => (
@@ -224,7 +226,7 @@ const styles = StyleSheet.create({
   legendItem: { flexDirection: 'row', alignItems: 'center', gap: Spacing.xs },
   legendDot: { width: 10, height: 10, borderRadius: 5 },
   grid: { flexDirection: 'row', width: '100%' },
-  gutter: { width: 40 },
+  gutter: { width: GUTTER_WIDTH },
   dayHeader: { height: 24, alignItems: 'center', justifyContent: 'center' },
   dayColumn: { flex: 1, minWidth: 96, borderLeftWidth: StyleSheet.hairlineWidth },
   hourLine: { position: 'absolute', left: 0, right: 0, borderTopWidth: StyleSheet.hairlineWidth },

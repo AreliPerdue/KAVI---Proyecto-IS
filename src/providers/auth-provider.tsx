@@ -12,6 +12,13 @@ export type AuthState = {
   userId: string | null;
   /** true mientras se restaura la sesión persistida al arrancar. */
   isLoading: boolean;
+  /**
+   * true entre verificar el código del alta y fijar la contraseña (RF-A8).
+   * Verificar el OTP ya abre sesión, así que sin esta bandera el guard entraría
+   * a la app y la persona nunca vería el último paso.
+   */
+  signUpPending: boolean;
+  setSignUpPending: (pending: boolean) => void;
 };
 
 const AuthContext = createContext<AuthState | undefined>(undefined);
@@ -19,6 +26,7 @@ const AuthContext = createContext<AuthState | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [signUpPending, setSignUpPending] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -46,8 +54,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const value = useMemo<AuthState>(
-    () => ({ user, userId: user?.id ?? null, isLoading }),
-    [user, isLoading],
+    () => ({ user, userId: user?.id ?? null, isLoading, signUpPending, setSignUpPending }),
+    [user, isLoading, signUpPending],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -1,4 +1,12 @@
 {
+  "permissions": {
+    "allow": [
+      "Bash(rm -f /private/tmp/claude-501/-Users-zevelow-Documents-dev-projects-KAVI-KAVI---Proyecto-IS/abb492c5-6ca1-4157-b9c7-59aaf6dd6b37/scratchpad/run.log)",
+      "Bash(nohup npx expo run:ios --device A17BFD43-5993-4C0A-90BB-000C14D23B98)",
+      "Bash(xcrun simctl *)",
+      "Bash(node contrast.mjs)"
+    ]
+  },
   "enabledPlugins": {
     "expo@claude-plugins-official": true
   }

@@ -1,160 +1,426 @@
 import { zodResolver } from '@hookform/resolvers/zod';
+import Constants from 'expo-constants';
 import { useRouter } from 'expo-router';
-import { LogOut } from 'lucide-react-native';
-import { useEffect } from 'react';
+import {
+  Bell,
+  BellOff,
+  CalendarSearch,
+  Info,
+  KeyRound,
+  LogOut,
+  Palette,
+  Pencil,
+  Repeat2,
+  Users,
+} from 'lucide-react-native';
+import { useEffect, useMemo, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
-import { AppText, Banner, Button, Screen, TextField } from '@/components/ui';
-import { IconSize, IconStroke, Spacing } from '@/constants/theme';
-import { useSignIn, useSignOut } from '@/hooks/use-auth-actions';
-import { env } from '@/lib/env';
+import {
+  AppText,
+  Avatar,
+  Banner,
+  Button,
+  ErrorState,
+  LoadingState,
+  Screen,
+  SettingsGroup,
+  SettingsRow,
+  Sheet,
+  TextField,
+} from '@/components/ui';
+import { IconSize, IconStroke, Radius, Spacing } from '@/constants/theme';
+import { useActivitiesRange } from '@/hooks/use-activities-range';
+import { useChangePassword, useSignIn, useSignOut } from '@/hooks/use-auth-actions';
+import { useContacts } from '@/hooks/use-connections';
 import { useMyProfile, useUpdateMyProfile } from '@/hooks/use-profile';
 import { useTheme } from '@/hooks/use-theme';
-import { profileSchema, type ProfileValues } from '@/lib/schemas/auth';
-import { useAuth } from '@/providers';
+import { useThemes } from '@/hooks/use-themes';
+import { useWorkouts } from '@/hooks/use-workouts';
+import { rangeForView } from '@/lib/dates';
+import { env } from '@/lib/env';
+import { notificationPermissionGranted } from '@/lib/notifications';
+import { changePasswordSchema, type ChangePasswordValues, profileSchema, type ProfileValues } from '@/lib/schemas/auth';
+import { useAuth, useConfirm, useSnackbar } from '@/providers';
 
 const PROFILE_MAX_WIDTH = 560;
 
 const DEMO_SWITCH = [
   { email: 'demo@kavi.app', label: 'Demo' },
-  { email: 'ana@kavi.app', label: 'Ana' },
-  { email: 'luis@kavi.app', label: 'Luis' },
-  { email: 'maria@kavi.app', label: 'María' },
+  { email: 'ana@kavi.app', label: 'Ana Torres' },
+  { email: 'luis@kavi.app', label: 'Luis Mena' },
+  { email: 'maria@kavi.app', label: 'María García' },
 ];
 
+/** Permiso de notificaciones: `undefined` mientras se consulta, `null` si no aplica. */
+function useNotificationPermission(): boolean | null | undefined {
+  const [granted, setGranted] = useState<boolean | null | undefined>(undefined);
+  useEffect(() => {
+    let alive = true;
+    void notificationPermissionGranted().then((value) => {
+      if (alive) setGranted(value);
+    });
+    return () => {
+      alive = false;
+    };
+  }, []);
+  return granted;
+}
+
+function StatTile({ value, label }: { value: number; label: string }) {
+  const theme = useTheme();
+  return (
+    <View
+      accessible
+      accessibilityLabel={`${value} ${label}`}
+      style={[styles.stat, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+      <AppText variant="title" tabular>
+        {value}
+      </AppText>
+      <AppText variant="caption" color="textSecondary" numberOfLines={2}>
+        {label}
+      </AppText>
+    </View>
+  );
+}
+
+/** Perfil y ajustes: identidad, resumen y accesos agrupados (RF-A6). */
 export default function ProfileScreen() {
   const theme = useTheme();
   const router = useRouter();
+  const confirm = useConfirm();
+  const showSnackbar = useSnackbar();
   const { user } = useAuth();
   const profile = useMyProfile();
   const update = useUpdateMyProfile();
   const signOut = useSignOut();
   const signIn = useSignIn();
+  const themes = useThemes();
+  const contacts = useContacts();
+  const workouts = useWorkouts();
+  const notifications = useNotificationPermission();
+  const [editing, setEditing] = useState(false);
+  const [changingPassword, setChangingPassword] = useState(false);
+  const changePassword = useChangePassword();
+
+  const monthRange = useMemo(() => rangeForView('month', new Date()), []);
+  const monthActivities = useActivitiesRange(monthRange);
+
+  const ownThemes = (themes.data ?? []).filter((t) => !t.is_system).length;
+  const acceptedContacts = (contacts.data ?? []).filter((c) => c.kind === 'accepted').length;
+  const monthCount = monthActivities.data?.length ?? 0;
+  const workoutCount = workouts.data?.length ?? 0;
+  const version = Constants.expoConfig?.version ?? '1.0.0';
 
   const { control, handleSubmit, reset, formState } = useForm<ProfileValues>({
     resolver: zodResolver(profileSchema),
-    defaultValues: { username: '', displayName: '' },
+    defaultValues: { displayName: '' },
   });
 
   useEffect(() => {
-    if (profile.data) {
-      reset({ username: profile.data.username, displayName: profile.data.display_name ?? '' });
-    }
+    if (profile.data) reset({ displayName: profile.data.display_name ?? '' });
   }, [profile.data, reset]);
 
   const onSubmit = handleSubmit((values) =>
-    update.mutate({ username: values.username, display_name: values.displayName || null }),
+    update.mutate(
+      { display_name: values.displayName },
+      {
+        onSuccess: () => {
+          setEditing(false);
+          showSnackbar({ message: 'Perfil actualizado.' });
+        },
+      },
+    ),
   );
 
+  const passwordForm = useForm<ChangePasswordValues>({
+    resolver: zodResolver(changePasswordSchema),
+    defaultValues: { currentPassword: '', password: '', confirmPassword: '' },
+  });
+
+  const submitPassword = passwordForm.handleSubmit((values) =>
+    changePassword.mutate(
+      { email: user?.email ?? '', currentPassword: values.currentPassword, newPassword: values.password },
+      {
+        onSuccess: () => {
+          setChangingPassword(false);
+          passwordForm.reset();
+          showSnackbar({ message: 'Contraseña actualizada.' });
+        },
+      },
+    ),
+  );
+
+  const openPasswordSheet = () => {
+    changePassword.reset();
+    passwordForm.reset();
+    setEditing(false);
+    setChangingPassword(true);
+  };
+
+  const confirmSignOut = async () => {
+    const ok = await confirm({
+      title: 'Cerrar sesión',
+      message: 'Tendrás que volver a entrar con tu correo y contraseña.',
+      confirmLabel: 'Cerrar sesión',
+      destructive: true,
+    });
+    if (ok) signOut.mutate();
+  };
+
+  const notificationsRow = () => {
+    if (notifications === null) {
+      return (
+        <SettingsRow
+          icon={<BellOff size={IconSize.inline} strokeWidth={IconStroke} color={theme.textTertiary} />}
+          label="Recordatorios"
+          hint="No disponibles en web: verás un aviso dentro de la app."
+          disabled
+        />
+      );
+    }
+    if (notifications === undefined) {
+      return (
+        <SettingsRow
+          icon={<Bell size={IconSize.inline} strokeWidth={IconStroke} color={theme.textSecondary} />}
+          label="Recordatorios"
+          value="…"
+          disabled
+        />
+      );
+    }
+    return (
+      <SettingsRow
+        icon={
+          notifications ? (
+            <Bell size={IconSize.inline} strokeWidth={IconStroke} color={theme.success} />
+          ) : (
+            <BellOff size={IconSize.inline} strokeWidth={IconStroke} color={theme.textSecondary} />
+          )
+        }
+        label="Recordatorios"
+        hint={notifications ? undefined : 'Actívalos en Ajustes para recibir tus avisos.'}
+        value={notifications ? 'Activados' : 'Desactivados'}
+      />
+    );
+  };
+
   return (
-    <Screen scroll maxWidth={PROFILE_MAX_WIDTH}>
+    <Screen scroll maxWidth={PROFILE_MAX_WIDTH} contentStyle={styles.content}>
       <AppText variant="title" accessibilityRole="header">
         Perfil
       </AppText>
 
-      {profile.isPending ? (
-        <View style={styles.loading}>
-          <ActivityIndicator color={theme.textSecondary} />
-          <AppText color="textSecondary">Cargando tu perfil…</AppText>
-        </View>
-      ) : null}
-
-      {profile.isError ? (
-        <View style={styles.form}>
-          <Banner tone="error" message={profile.error.message} />
-          <Button title="Reintentar" variant="secondary" onPress={() => profile.refetch()} />
-        </View>
-      ) : null}
+      {profile.isPending ? <LoadingState label="Cargando tu perfil…" /> : null}
+      {profile.isError ? <ErrorState message={profile.error.message} onRetry={() => profile.refetch()} /> : null}
 
       {profile.data ? (
-        <View style={styles.form}>
-          <AppText color="textSecondary">{user?.email}</AppText>
+        <>
+          {/* La identidad y todo lo editable de la cuenta viven en esta tarjeta. */}
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={`Editar perfil de ${profile.data.display_name ?? user?.email}`}
+            onPress={() => setEditing(true)}
+            style={({ pressed }) => [
+              styles.hero,
+              { backgroundColor: theme.surface, borderColor: theme.border },
+              pressed ? { backgroundColor: theme.surfaceAlt } : null,
+            ]}>
+            <Avatar profile={profile.data} size={64} />
+            <View style={styles.heroText}>
+              <AppText variant="heading" numberOfLines={1}>
+                {profile.data.display_name ?? 'Sin nombre'}
+              </AppText>
+              <AppText color="textSecondary" numberOfLines={1}>
+                {user?.email}
+              </AppText>
+            </View>
+            <View style={[styles.editBadge, { borderColor: theme.border }]}>
+              <Pencil size={IconSize.inline} strokeWidth={IconStroke} color={theme.textSecondary} />
+            </View>
+          </Pressable>
 
-          {update.error ? <Banner tone="error" message={update.error.message} /> : null}
-          {update.isSuccess && !formState.isDirty ? (
-            <Banner tone="success" message="Cambios guardados." />
-          ) : null}
-
-          <Controller
-            control={control}
-            name="displayName"
-            render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
-              <TextField
-                label="Nombre visible"
-                value={value}
-                onChangeText={onChange}
-                onBlur={onBlur}
-                error={error?.message}
-                hint="Así te verán tus contactos en el calendario compartido."
-                autoComplete="name"
-                textContentType="name"
-                maxLength={60}
-              />
-            )}
-          />
-          <Controller
-            control={control}
-            name="username"
-            render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
-              <TextField
-                label="Username"
-                value={value}
-                onChangeText={(text) => onChange(text.toLowerCase())}
-                onBlur={onBlur}
-                error={error?.message}
-                autoCapitalize="none"
-                autoCorrect={false}
-                autoComplete="username"
-                textContentType="username"
-                maxLength={30}
-              />
-            )}
-          />
-
-          <Button
-            title="Guardar cambios"
-            onPress={onSubmit}
-            loading={update.isPending}
-            disabled={!formState.isDirty}
-          />
-        </View>
+          <View style={styles.stats}>
+            <StatTile value={monthCount} label="Actividades este mes" />
+            <StatTile value={acceptedContacts} label="Amigos" />
+            <StatTile value={ownThemes} label="Temas propios" />
+            <StatTile value={workoutCount} label="Entrenamientos" />
+          </View>
+        </>
       ) : null}
 
-      <View style={styles.form}>
-        <Button title="Mis temas" variant="secondary" onPress={() => router.push('/(app)/themes')} />
-      </View>
+      <SettingsGroup title="Calendario">
+        <SettingsRow
+          icon={<Palette size={IconSize.inline} strokeWidth={IconStroke} color={theme.textSecondary} />}
+          label="Mis temas"
+          hint="Colores e iconos de tus actividades."
+          value={String(ownThemes)}
+          onPress={() => router.push('/(app)/themes')}
+        />
+        <SettingsRow
+          icon={<Users size={IconSize.inline} strokeWidth={IconStroke} color={theme.textSecondary} />}
+          label="Amigos y compartido"
+          value={String(acceptedContacts)}
+          onPress={() => router.push('/(app)/(tabs)/shared')}
+        />
+        <SettingsRow
+          icon={<CalendarSearch size={IconSize.inline} strokeWidth={IconStroke} color={theme.textSecondary} />}
+          label="Disponibilidad"
+          hint="Horarios en común con tus amigos."
+          onPress={() => router.push('/(app)/shared/availability')}
+        />
+      </SettingsGroup>
+
+      <SettingsGroup title="Avisos">{notificationsRow()}</SettingsGroup>
 
       {env.isDemoMode ? (
-        <View style={styles.form}>
-          <AppText variant="label" color="textSecondary">
-            Modo demo · cambiar de cuenta para probar el compartido
-          </AppText>
-          <View style={styles.demoRow}>
-            {DEMO_SWITCH.filter((d) => d.email !== user?.email).map((d) => (
-              <Button key={d.email} title={d.label} variant="secondary" onPress={() => signIn.mutate({ email: d.email, password: 'demo1234' })} />
-            ))}
-          </View>
-        </View>
+        <SettingsGroup title="Modo demo" footer="Cambia de cuenta para probar el calendario compartido. Los datos se reinician al recargar.">
+          {DEMO_SWITCH.filter((d) => d.email !== user?.email).map((d) => (
+            <SettingsRow
+              key={d.email}
+              icon={<Repeat2 size={IconSize.inline} strokeWidth={IconStroke} color={theme.textSecondary} />}
+              label={`Entrar como ${d.label}`}
+              onPress={() => signIn.mutate({ email: d.email, password: 'demo1234' })}
+              disabled={signIn.isPending}
+            />
+          ))}
+        </SettingsGroup>
       ) : null}
 
-      <View style={styles.footer}>
-        {signOut.error ? <Banner tone="error" message={signOut.error.message} /> : null}
-        <Button
-          title="Cerrar sesión"
-          variant="danger"
-          loading={signOut.isPending}
-          onPress={() => signOut.mutate()}
-          icon={<LogOut size={IconSize.inline} strokeWidth={IconStroke} color={theme.danger} />}
+      <SettingsGroup title="Acerca de">
+        <SettingsRow
+          icon={<Info size={IconSize.inline} strokeWidth={IconStroke} color={theme.textSecondary} />}
+          label="Versión"
+          value={env.isDemoMode ? `${version} · demo` : version}
         />
-      </View>
+      </SettingsGroup>
+
+      {signOut.error ? <Banner tone="error" message={signOut.error.message} /> : null}
+      <SettingsGroup>
+        <SettingsRow
+          icon={<LogOut size={IconSize.inline} strokeWidth={IconStroke} color={theme.danger} />}
+          label="Cerrar sesión"
+          destructive
+          disabled={signOut.isPending}
+          onPress={confirmSignOut}
+        />
+      </SettingsGroup>
+
+      <Sheet visible={editing} onClose={() => setEditing(false)} title="Editar perfil">
+        {update.error ? <Banner tone="error" message={update.error.message} /> : null}
+        <Controller
+          control={control}
+          name="displayName"
+          render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
+            <TextField
+              label="Nombre"
+              value={value}
+              onChangeText={onChange}
+              onBlur={onBlur}
+              error={error?.message}
+              hint="Así te ven tus amigos en el calendario compartido."
+              autoComplete="name"
+              textContentType="name"
+              maxLength={60}
+            />
+          )}
+        />
+        {/* El correo identifica la cuenta: se muestra, pero no se edita (RF-A1). */}
+        <TextField
+          label="Correo"
+          value={user?.email ?? ''}
+          editable={false}
+          hint="Es tu identificador en KAVI y no se puede cambiar."
+        />
+        <Button title="Guardar cambios" onPress={onSubmit} loading={update.isPending} disabled={!formState.isDirty} />
+        <Button
+          title="Cambiar contraseña"
+          variant="secondary"
+          onPress={openPasswordSheet}
+          icon={<KeyRound size={IconSize.inline} strokeWidth={IconStroke} color={theme.text} />}
+        />
+      </Sheet>
+
+      <Sheet visible={changingPassword} onClose={() => setChangingPassword(false)} title="Cambiar contraseña">
+        {changePassword.error ? <Banner tone="error" message={changePassword.error.message} /> : null}
+        <Controller
+          control={passwordForm.control}
+          name="currentPassword"
+          render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
+            <TextField
+              label="Contraseña actual"
+              value={value}
+              onChangeText={onChange}
+              onBlur={onBlur}
+              error={error?.message}
+              secure
+              autoComplete="current-password"
+              textContentType="password"
+            />
+          )}
+        />
+        <Controller
+          control={passwordForm.control}
+          name="password"
+          render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
+            <TextField
+              label="Contraseña nueva"
+              value={value}
+              onChangeText={onChange}
+              onBlur={onBlur}
+              error={error?.message}
+              hint="Mínimo 8 caracteres."
+              secure
+              autoComplete="new-password"
+              textContentType="newPassword"
+            />
+          )}
+        />
+        <Controller
+          control={passwordForm.control}
+          name="confirmPassword"
+          render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
+            <TextField
+              label="Confirmar contraseña nueva"
+              value={value}
+              onChangeText={onChange}
+              onBlur={onBlur}
+              error={error?.message}
+              secure
+              autoComplete="new-password"
+              textContentType="newPassword"
+            />
+          )}
+        />
+        <Button title="Actualizar contraseña" onPress={submitPassword} loading={changePassword.isPending} />
+      </Sheet>
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  loading: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm },
-  form: { gap: Spacing.lg },
-  footer: { marginTop: 'auto', gap: Spacing.md, paddingTop: Spacing.xl },
-  demoRow: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm },
+  content: { gap: Spacing.xl },
+  hero: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.lg,
+    padding: Spacing.lg,
+    borderWidth: 1,
+    borderRadius: Radius.lg,
+    borderCurve: 'continuous',
+  },
+  heroText: { flex: 1, gap: 2 },
+  editBadge: { width: 32, height: 32, borderRadius: Radius.full, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
+  stats: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm },
+  stat: {
+    // Dos por fila: con cuatro tarjetas en una sola fila los números quedaban ilegibles.
+    flexBasis: '47%',
+    flexGrow: 1,
+    gap: 2,
+    padding: Spacing.md,
+    borderWidth: 1,
+    borderRadius: Radius.lg,
+    borderCurve: 'continuous',
+  },
 });

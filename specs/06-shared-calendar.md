@@ -13,7 +13,7 @@ Conectar personas, compartir actividades y calendarios con control de visibilida
 
 ## Requerimientos funcionales
 ### Conexiones
-- RF-S1. Búsqueda de usuarios por username (exacta o prefijo, mín. 3 caracteres).
+- RF-S1. Búsqueda de personas por **correo exacto**: es el identificador único de la cuenta (RF-A1) y exigirlo completo evita enumerar quién está registrado.
 - RF-S2. Solicitud → pending; el destinatario acepta o elimina. Ambos pueden eliminar la conexión después (revoca todos los shares entre ambos — cascada en servicio).
 - RF-S3. Pantalla "Contactos": conexiones aceptadas + solicitudes recibidas/enviadas.
 
@@ -26,6 +26,13 @@ Conectar personas, compartir actividades y calendarios con control de visibilida
 - RF-S7. Por contacto, elegir visibilidad: `busy` (solo bloques ocupados) o `details` (título, tema y horario). Revocable en cualquier momento.
 - RF-S8. Vista "Disponibilidad": elegir 1+ contactos y un rango de fechas → grid que superpone bloques ocupados de todos (vía RPC `get_availability`, sin detalles para `busy`).
 - RF-S9. "Encontrar horario": dado un rango y duración deseada, listar huecos donde todos los seleccionados están libres; tocar un hueco → pre-llena el formulario de nueva actividad (que luego se puede compartir con ellos).
+- RF-S15. **Color por persona.** En el calendario se pueden superponer varios contactos a la vez (pestañas "Tú · contacto…"). Mientras haya al menos uno superpuesto, todas las actividades se pintan con **el color de su dueño** en lugar del color de su dimensión/tema, para distinguir de un vistazo de quién es cada bloque; con "Tú" a solas vuelve el color coding de temas (spec 05). Cada contacto tiene un color asignable a mano desde su ficha; si no se asigna, el sistema reparte el primer color libre de la paleta de personas (`constants/people-colors.ts`, 8 matices distintos de la paleta de dimensiones). "Tú" usa siempre el primer color de la paleta. El color es una preferencia de quien mira, no del contacto.
+
+**Criterio (RF-S15).** *Dado* que Ana y Pedro comparten su calendario conmigo, *cuando* activo ambas pestañas en la vista mensual, *entonces* mis actividades, las de Ana y las de Pedro se ven cada una en un color distinto y estable; *y cuando* dejo solo "Tú", *entonces* mis actividades vuelven a mostrarse con el color de su tema.
+
+- RF-S16. **Aviso de choque de horario al compartir.** Al elegir con quién compartir una actividad, cada contacto que comparta su calendario muestra si ya tiene algo en esa franja ("Ocupado 09:00–17:00", con el título si comparte `details`), si está libre, o que no comparte su disponibilidad. La invitación **no se bloquea**: solo se avisa antes de enviarla, y se resume cuántas de las personas seleccionadas están ocupadas.
+
+**Criterio (RF-S16).** *Dado* que Ana comparte su calendario y tiene trabajo de 09:00 a 17:00, *cuando* voy a compartir con ella una actividad de 16:00 a 17:00, *entonces* su fila avisa de que está ocupada a esa hora y aun así puedo invitarla.
 
 ### Reminders compartidos
 - RF-S10. Al aceptar un activity_share, el invitado hereda los reminders existentes de la actividad (filas en `reminder_recipients`, vía RPC).

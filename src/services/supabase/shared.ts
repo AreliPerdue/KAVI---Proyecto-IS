@@ -9,6 +9,7 @@ export const supabaseConnections: ConnectionsApi = {
   accept: () => notImplemented('connections.accept'),
   remove: () => notImplemented('connections.remove'),
   setCalendarVisibility: () => notImplemented('connections.setCalendarVisibility'),
+  setContactColor: () => notImplemented('connections.setContactColor'),
 };
 
 export const supabaseShares: SharesApi = {

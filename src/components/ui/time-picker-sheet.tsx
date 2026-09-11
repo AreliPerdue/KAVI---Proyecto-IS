@@ -3,44 +3,29 @@ import { FlatList, Pressable, StyleSheet, View } from 'react-native';
 
 import { AppText } from './app-text';
 import { Button } from './button';
-import { Segmented, type SegmentedOption } from './segmented';
 import { Sheet } from './sheet';
 
 import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import { formatMinutes12 } from '@/lib/dates';
+import { formatMinutes } from '@/lib/dates';
 
 const ITEM_HEIGHT = 44;
 const VISIBLE = 5;
-const HOURS = Array.from({ length: 12 }, (_, i) => i + 1);
+const HOURS = Array.from({ length: 24 }, (_, i) => i);
+/** Minuto a minuto: se puede agendar a las 14:07 igual que a las 14:00 (RF-C5). */
 const MINUTES = Array.from({ length: 60 }, (_, i) => i);
-type Meridiem = 'am' | 'pm';
-const MERIDIEM: readonly SegmentedOption<Meridiem>[] = [
-  { value: 'am', label: 'AM' },
-  { value: 'pm', label: 'PM' },
-];
 
-function split(minutes: number): { hour: number; minute: number; meridiem: Meridiem } {
-  const h24 = Math.floor(minutes / 60) % 24;
-  return { hour: h24 % 12 === 0 ? 12 : h24 % 12, minute: minutes % 60, meridiem: h24 < 12 ? 'am' : 'pm' };
-}
-
-function join(hour: number, minute: number, meridiem: Meridiem): number {
-  const h24 = (hour % 12) + (meridiem === 'pm' ? 12 : 0);
-  return h24 * 60 + minute;
-}
+const pad = (value: number) => value.toString().padStart(2, '0');
 
 function Column<T extends number>({
   data,
   value,
   onChange,
-  format,
   label,
 }: {
   data: readonly T[];
   value: T;
   onChange: (v: T) => void;
-  format: (v: T) => string;
   label: string;
 }) {
   const theme = useTheme();
@@ -59,17 +44,17 @@ function Column<T extends number>({
       return (
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel={`${label} ${format(item)}`}
+          accessibilityLabel={`${label} ${pad(item)}`}
           accessibilityState={{ selected }}
           onPress={() => onChange(item)}
           style={styles.item}>
           <AppText variant={selected ? 'heading' : 'body'} color={selected ? 'text' : 'textTertiary'} tabular>
-            {format(item)}
+            {pad(item)}
           </AppText>
         </Pressable>
       );
     },
-    [value, onChange, format, label],
+    [value, onChange, label],
   );
 
   return (
@@ -98,30 +83,28 @@ function Column<T extends number>({
 }
 
 function TimePickerBody({ value, onSelect }: { value: number; onSelect: (minutes: number) => void }) {
-  const [hour, setHour] = useState(() => split(value).hour);
-  const [minute, setMinute] = useState(() => split(value).minute);
-  const [meridiem, setMeridiem] = useState<Meridiem>(() => split(value).meridiem);
-  const current = join(hour, minute, meridiem);
+  const [hour, setHour] = useState(() => Math.floor(value / 60) % 24);
+  const [minute, setMinute] = useState(() => value % 60);
+  const current = hour * 60 + minute;
 
   return (
     <>
       <AppText variant="display" tabular style={styles.preview}>
-        {formatMinutes12(current)}
+        {formatMinutes(current)}
       </AppText>
       <View style={styles.columns}>
-        <Column data={HOURS} value={hour} onChange={setHour} format={(h) => String(h)} label="Hora" />
+        <Column data={HOURS} value={hour} onChange={setHour} label="Hora" />
         <AppText variant="display" color="textTertiary" style={styles.colon}>
           :
         </AppText>
-        <Column data={MINUTES} value={minute} onChange={setMinute} format={(m) => m.toString().padStart(2, '0')} label="Minuto" />
+        <Column data={MINUTES} value={minute} onChange={setMinute} label="Minuto" />
       </View>
-      <Segmented options={MERIDIEM} value={meridiem} onChange={setMeridiem} />
       <Button title="Listo" onPress={() => onSelect(current)} />
     </>
   );
 }
 
-/** Selector de hora en formato 12 h: hora 1–12, minuto 0–59 y AM/PM. `value` en minutos desde medianoche. */
+/** Selector de hora en formato 24 h: hora 00–23 y minuto 00–59. `value` en minutos desde medianoche. */
 export function TimePickerSheet({
   visible,
   value,

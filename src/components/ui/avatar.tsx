@@ -6,7 +6,10 @@ import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import type { Profile } from '@/types/domain';
 
-/** Avatar con iniciales (sin imágenes en V1). */
+/**
+ * Avatar con iniciales (sin imágenes en V1). Si la persona no tiene nombre visible,
+ * el username sirve solo para sacar una inicial: nunca se muestra como texto (RF-A9).
+ */
 export function Avatar({ profile, size = 40 }: { profile: Pick<Profile, 'username' | 'display_name'>; size?: number }) {
   const theme = useTheme();
   const name = profile.display_name?.trim() || profile.username;

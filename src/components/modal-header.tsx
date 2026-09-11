@@ -4,8 +4,15 @@ import { type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { AppText, IconButton } from '@/components/ui';
-import { IconSize, IconStroke, Spacing } from '@/constants/theme';
+import { IconSize, IconStroke, MinTouchTarget, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+
+/**
+ * El botón de icono mide 44/48 con el glifo centrado, así que su caja sobresale del
+ * glifo por este margen. Tirando de la fila hacia fuera, el glifo cae sobre el borde
+ * de contenido de la pantalla y el título deja de verse desplazado hacia dentro.
+ */
+const OPTICAL_INSET = (MinTouchTarget - IconSize.action) / 2;
 
 /** Encabezado de pantallas modales: cerrar + título + acción opcional. */
 export function ModalHeader({ title, right, onClose }: { title: string; right?: ReactNode; onClose?: () => void }) {
@@ -26,7 +33,7 @@ export function ModalHeader({ title, right, onClose }: { title: string; right?: 
 }
 
 const styles = StyleSheet.create({
-  row: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm },
+  row: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm, marginHorizontal: -OPTICAL_INSET },
   title: { flex: 1, textAlign: 'center' },
-  right: { minWidth: 44, alignItems: 'flex-end' },
+  right: { minWidth: MinTouchTarget, alignItems: 'flex-end' },
 });

@@ -3,6 +3,7 @@ import * as Linking from 'expo-linking';
 
 import { AUTH_MESSAGES, AuthUiError, toAuthMessage } from '@/lib/auth-errors';
 import { getSupabase } from '@/lib/supabase';
+import { availableUsername } from '@/lib/username';
 import type { AuthApi } from '@/services/contracts';
 import type { AuthUser } from '@/types/domain';
 
@@ -33,6 +34,59 @@ export const supabaseAuth: AuthApi = {
     });
     if (error) throw new AuthUiError(toAuthMessage(error), error);
     return { user: toAuthUser(data.user), sessionCreated: !!data.session };
+  },
+
+  /**
+   * Alta por pasos, paso 1 (RF-A8): OTP de 6 dígitos al correo. Supabase crea el usuario
+   * al verificar, así que el username y el nombre viajan como metadata para el trigger
+   * `handle_new_user`. Si el correo ya tiene cuenta se corta aquí: es el identificador único.
+   */
+  async startEmailSignUp(email, displayName) {
+    const normalized = email.trim().toLowerCase();
+    const username = await availableUsername(normalized, (candidate) =>
+      supabaseAuth.isUsernameAvailable(candidate),
+    );
+    const { error } = await getSupabase().auth.signInWithOtp({
+      email: normalized,
+      options: {
+        shouldCreateUser: true,
+        data: { username, display_name: displayName.trim() || null },
+      },
+    });
+    if (error) throw new AuthUiError(toAuthMessage(error), error);
+  },
+
+  /** Paso 2: verificar el código deja sesión abierta, todavía sin contraseña (RF-A8). */
+  async verifyEmailOtp(email, code) {
+    const { data, error } = await getSupabase().auth.verifyOtp({
+      email: email.trim().toLowerCase(),
+      token: code.trim(),
+      type: 'email',
+    });
+    if (error) throw new AuthUiError(toAuthMessage(error), error);
+    const user = toAuthUser(data.user);
+    if (!user) throw new AuthUiError(AUTH_MESSAGES.generic);
+    return user;
+  },
+
+  /** Paso 3: fija la contraseña de la sesión ya verificada (RF-A8). */
+  async setPassword(newPassword) {
+    const { error } = await getSupabase().auth.updateUser({ password: newPassword });
+    if (error) throw new AuthUiError(toAuthMessage(error), error);
+  },
+
+  /**
+   * Cambio de contraseña (RF-A9). `updateUser` no comprueba la actual, así que primero
+   * se reautentica: sin eso, cualquiera con el móvil desbloqueado podría cambiarla.
+   */
+  async changePassword(email, currentPassword, newPassword) {
+    const { error: signInError } = await getSupabase().auth.signInWithPassword({
+      email: email.trim().toLowerCase(),
+      password: currentPassword,
+    });
+    if (signInError) throw new AuthUiError(AUTH_MESSAGES.invalidCredentials, signInError);
+    const { error } = await getSupabase().auth.updateUser({ password: newPassword });
+    if (error) throw new AuthUiError(toAuthMessage(error), error);
   },
 
   /** Inicio de sesión (RF-A3). */

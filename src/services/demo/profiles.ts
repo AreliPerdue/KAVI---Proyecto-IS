@@ -14,12 +14,7 @@ export const demoProfiles: ProfilesApi = {
     await delay();
     const account = demoState.accounts.find((a) => a.user.id === userId);
     if (!account) throw new AuthUiError(AUTH_MESSAGES.generic);
-    const username = patch.username.toLowerCase();
-    const taken = demoState.accounts.some(
-      (a) => a.user.id !== userId && a.profile.username === username,
-    );
-    if (taken) throw new AuthUiError(AUTH_MESSAGES.usernameTaken);
-    account.profile = { ...account.profile, username, display_name: patch.display_name };
+    account.profile = { ...account.profile, display_name: patch.display_name };
     return { ...account.profile };
   },
 };

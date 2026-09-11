@@ -72,7 +72,7 @@ export default function ThemeFormScreen() {
 
   if (id && themes.isPending) {
     return (
-      <Screen maxWidth={MAX_WIDTH}>
+      <Screen modal maxWidth={MAX_WIDTH}>
         <ModalHeader title="Editar tema" />
         <LoadingState />
       </Screen>
@@ -80,7 +80,7 @@ export default function ThemeFormScreen() {
   }
   if (id && themes.isSuccess && !editing) {
     return (
-      <Screen maxWidth={MAX_WIDTH}>
+      <Screen modal maxWidth={MAX_WIDTH}>
         <ModalHeader title="Editar tema" />
         <ErrorState message="Ese tema ya no existe." />
       </Screen>
@@ -88,7 +88,7 @@ export default function ThemeFormScreen() {
   }
 
   return (
-    <Screen scroll maxWidth={MAX_WIDTH}>
+    <Screen modal scroll maxWidth={MAX_WIDTH}>
       <ModalHeader title={editing ? 'Editar tema' : 'Nuevo tema'} />
       {mutation.error ? <Banner tone="error" message={mutation.error.message} /> : null}
 

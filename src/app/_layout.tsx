@@ -47,8 +47,9 @@ const navigationThemes = {
 
 /** Rutas protegidas: sin sesión → (auth); con sesión → (app). */
 function RootNavigator() {
-  const { user, isLoading } = useAuth();
-  const isSignedIn = !!user;
+  const { user, isLoading, signUpPending } = useAuth();
+  // Durante el último paso del alta hay sesión pero aún no contraseña (RF-A8).
+  const isSignedIn = !!user && !signUpPending;
 
   useEffect(() => {
     if (!isLoading) {
@@ -89,7 +90,7 @@ export default function RootLayout() {
                 <RootNavigator />
               </ConfirmProvider>
             </SnackbarProvider>
-            <StatusBar style="auto" />
+            <StatusBar style="light" />
           </ThemeProvider>
         </AuthProvider>
       </QueryClientProvider>

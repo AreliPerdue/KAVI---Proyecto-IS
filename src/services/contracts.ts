@@ -35,6 +35,17 @@ export type SignUpResult = {
 
 export interface AuthApi {
   signUp(input: SignUpInput): Promise<SignUpResult>;
+  /**
+   * Paso 1 del alta por pasos (RF-A8): envía un código de un solo uso al correo.
+   * Falla si el correo ya tiene cuenta — el correo es el identificador único.
+   */
+  startEmailSignUp(email: string, displayName: string): Promise<void>;
+  /** Paso 2: valida el código y deja la sesión abierta, todavía sin contraseña (RF-A8). */
+  verifyEmailOtp(email: string, code: string): Promise<AuthUser>;
+  /** Paso 3: fija la contraseña de la sesión recién verificada (RF-A8). */
+  setPassword(newPassword: string): Promise<void>;
+  /** Cambia la contraseña comprobando antes la actual (RF-A9). */
+  changePassword(email: string, currentPassword: string, newPassword: string): Promise<void>;
   signIn(email: string, password: string): Promise<AuthUser>;
   signOut(): Promise<void>;
   resetPassword(email: string): Promise<void>;
@@ -43,7 +54,8 @@ export interface AuthApi {
   isUsernameAvailable(username: string): Promise<boolean>;
 }
 
-export type ProfileUpdate = Pick<Profile, 'username' | 'display_name'>;
+/** El username ya no se edita: se genera al alta y no se muestra (RF-A9). */
+export type ProfileUpdate = Pick<Profile, 'display_name'>;
 
 export interface ProfilesApi {
   getMyProfile(userId: string): Promise<Profile>;
@@ -87,8 +99,12 @@ export interface ThemesApi {
 }
 
 export interface ConnectionsApi {
-  /** Búsqueda por username exacto o prefijo, mín. 3 caracteres (RF-S1). Excluye a mí mismo. */
-  searchUsers(userId: string, query: string): Promise<Profile[]>;
+  /**
+   * Búsqueda de personas por **correo exacto** (RF-S1): el correo es el identificador
+   * único, y exigirlo completo evita que se pueda enumerar a quién hay registrado.
+   * Excluye a mí mismo.
+   */
+  searchUsers(userId: string, email: string): Promise<Profile[]>;
   /** Contactos aceptados + solicitudes recibidas/enviadas (RF-S3). */
   listContacts(userId: string): Promise<Contact[]>;
   request(userId: string, addresseeId: string): Promise<void>;
@@ -97,6 +113,8 @@ export interface ConnectionsApi {
   remove(userId: string, connectionId: string): Promise<void>;
   /** Compartir mi calendario con un contacto (null = dejar de compartir) (RF-S7). */
   setCalendarVisibility(userId: string, contactUserId: string, visibility: CalendarVisibility | null): Promise<void>;
+  /** Color con el que veo a un contacto al superponer calendarios (null = automático) (RF-S15). */
+  setContactColor(userId: string, contactUserId: string, color: string | null): Promise<void>;
 }
 
 export interface SharesApi {

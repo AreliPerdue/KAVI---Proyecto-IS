@@ -14,12 +14,14 @@ export type ActivityBlockProps = {
   onPress: (activity: Activity) => void;
   /** Modo compacto para columnas estrechas (vista semanal en móvil). */
   compact?: boolean;
+  /** Solo el título: en la vista diaria la hora ya la da la posición en el timeline. */
+  titleOnly?: boolean;
   /** Estilo distintivo para actividades compartidas conmigo (RF-S5). */
   shared?: boolean;
 };
 
 /** Bloque de actividad con color de dimensión/tema (RF-C2, RF-C3). */
-export const ActivityBlock = memo(function ActivityBlock({ activity, onPress, compact = false, shared = false }: ActivityBlockProps) {
+export const ActivityBlock = memo(function ActivityBlock({ activity, onPress, compact = false, titleOnly = false, shared = false }: ActivityBlockProps) {
   const theme = useTheme();
   const color = activityColor(activity, theme);
   const time = formatTimeRange(activity.start_at, activity.end_at, activity.all_day);
@@ -41,7 +43,7 @@ export const ActivityBlock = memo(function ActivityBlock({ activity, onPress, co
           {activity.title}
         </AppText>
       </View>
-      {!compact ? (
+      {!compact && !titleOnly ? (
         <AppText variant="caption" color="textSecondary" tabular numberOfLines={1}>
           {shared && activity.owner_name ? `${time} · ${activity.owner_name}` : time}
         </AppText>

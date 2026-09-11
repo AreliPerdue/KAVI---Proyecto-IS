@@ -2,43 +2,52 @@
  * Tokens de diseño de KAVI — fuente única (ver .claude/skills/kavi-design).
  * "La app es monocroma; tu vida trae el color": el chrome usa neutros de tinta,
  * el color saturado proviene solo de las dimensiones/temas de las actividades.
+ *
+ * El sistema se construye sobre dos anclas: tinta `#131313` y blanco contrastante
+ * `#F2F2F2`. En oscuro (tema por defecto, ver `useResolvedScheme`) `#131313` es el
+ * fondo y `#F2F2F2` el texto; en claro se invierten. Los grises intermedios son
+ * pasos neutros entre ambas anclas. Todos los pares texto/fondo verificados ≥ 4.5:1.
  */
 import '@/global.css';
 
 import { Platform } from 'react-native';
 
+/** Anclas del sistema. Todo neutro sale de estas dos. */
+export const INK = '#131313';
+export const PAPER = '#F2F2F2';
+
 export const Colors = {
   light: {
-    background: '#FAFAF8',
+    background: PAPER,
     surface: '#FFFFFF',
-    surfaceAlt: '#F1F1EE',
-    border: '#E4E4DF',
-    text: '#16171A',
-    textSecondary: '#5C5F66',
-    textTertiary: '#8A8D94',
-    ink: '#16171A',
-    onInk: '#FFFFFF',
-    today: '#FF5A3C',
-    danger: '#D62839',
-    success: '#1F9D55',
-    neutralActivity: '#9A9DA5',
-    overlay: 'rgba(15,16,19,0.45)',
+    surfaceAlt: '#E6E6E6',
+    border: '#D4D4D4',
+    text: INK,
+    textSecondary: '#565656',
+    textTertiary: '#6E6E6E',
+    ink: INK,
+    onInk: PAPER,
+    today: '#BC3617',
+    danger: '#B81E2F',
+    success: '#116B36',
+    neutralActivity: '#747474',
+    overlay: 'rgba(19,19,19,0.45)',
   },
   dark: {
-    background: '#0F1013',
-    surface: '#17181C',
-    surfaceAlt: '#1F2126',
-    border: '#2A2C33',
-    text: '#F4F4F1',
-    textSecondary: '#A3A6AE',
-    textTertiary: '#6F727A',
-    ink: '#F4F4F1',
-    onInk: '#0F1013',
+    background: INK,
+    surface: '#1A1A1A',
+    surfaceAlt: '#232323',
+    border: '#303030',
+    text: PAPER,
+    textSecondary: '#ABABAB',
+    textTertiary: '#8C8C8C',
+    ink: PAPER,
+    onInk: INK,
     today: '#FF7A5C',
-    danger: '#FF5C6C',
+    danger: '#FF6B7A',
     success: '#3DD68C',
-    neutralActivity: '#6F727A',
-    overlay: 'rgba(0,0,0,0.6)',
+    neutralActivity: '#7C7C7C',
+    overlay: 'rgba(0,0,0,0.66)',
   },
 } as const;
 

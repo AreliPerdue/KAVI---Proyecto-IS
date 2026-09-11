@@ -71,6 +71,8 @@ export type Contact = {
   myCalendarVisibility: CalendarVisibility | null;
   /** Cómo comparte esta persona SU calendario conmigo. */
   theirCalendarVisibility: CalendarVisibility | null;
+  /** Color con el que veo sus actividades al superponer calendarios; null = automático (RF-S15). */
+  color: string | null;
 };
 
 export type CalendarVisibility = 'busy' | 'details';

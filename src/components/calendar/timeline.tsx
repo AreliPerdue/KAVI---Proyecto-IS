@@ -1,17 +1,45 @@
-import { memo, useEffect, useMemo, useRef } from 'react';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { memo, useEffect, useMemo, useRef, useState } from 'react';
+import { PixelRatio, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import { ActivityBlock } from './activity-block';
 import { layoutDay } from './layout-blocks';
 
 import { AppText } from '@/components/ui';
-import { Spacing, type ThemeColors } from '@/constants/theme';
+import { Radius, Spacing, type ThemeColors } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import { formatHourLabel, isToday, minutesSinceMidnight, toDayKey, WEEKDAY_SHORT } from '@/lib/dates';
+import {
+  formatHourLabel,
+  formatMinutes,
+  isToday,
+  minutesSinceMidnight,
+  SLOT_MINUTES,
+  SLOTS_PER_DAY,
+  toDayKey,
+  WEEKDAY_SHORT,
+} from '@/lib/dates';
 import type { Activity } from '@/types/domain';
 
 const HOURS = Array.from({ length: 24 }, (_, i) => i);
-const GUTTER_WIDTH = 44;
+/** Rejilla de media hora: 48 slots de 00:00 a 23:30 (RF-C3, RF-C6). */
+const SLOTS = Array.from({ length: SLOTS_PER_DAY }, (_, i) => i * SLOT_MINUTES);
+const GUTTER_WIDTH = 54;
+const NOW_TICK_MS = 30_000;
+/**
+ * Alto mínimo de un bloque: una línea de `label` (20) más el relleno vertical.
+ * Por debajo, el título se cortaría; una actividad de un minuto se pinta a este alto.
+ */
+const BASE_MIN_BLOCK_HEIGHT = 28;
+const MAX_FONT_SCALE = 1.5;
+
+/** Minutos transcurridos del día, refrescados mientras el timeline esté montado. */
+function useNowMinutes(): number {
+  const [minutes, setMinutes] = useState(() => minutesSinceMidnight(new Date()));
+  useEffect(() => {
+    const id = setInterval(() => setMinutes(minutesSinceMidnight(new Date())), NOW_TICK_MS);
+    return () => clearInterval(id);
+  }, []);
+  return minutes;
+}
 
 export type TimelineProps = {
   days: Date[];
@@ -20,15 +48,21 @@ export type TimelineProps = {
   onPressActivity: (activity: Activity) => void;
   hourHeight?: number;
   compact?: boolean;
+  /** La vista diaria muestra solo el título en cada bloque. */
+  titleOnly?: boolean;
   isSharedActivity?: (activity: Activity) => boolean;
 };
 
 type ColumnProps = {
   day: Date;
+  /** La vista diaria muestra solo el título; la semanal mantiene la hora. */
+  titleOnly: boolean;
   activities: Activity[];
   hourHeight: number;
   compact: boolean;
   theme: ThemeColors;
+  /** Minutos del día en curso; `null` cuando la columna no es hoy. */
+  nowMinutes: number | null;
   onPressSlot: (day: Date, minutes: number) => void;
   onPressActivity: (activity: Activity) => void;
   isSharedActivity?: (activity: Activity) => boolean;
@@ -36,34 +70,41 @@ type ColumnProps = {
 
 const DayColumn = memo(function DayColumn({
   day,
+  titleOnly,
   activities,
   hourHeight,
   compact,
   theme,
+  nowMinutes,
   onPressSlot,
   onPressActivity,
   isSharedActivity,
 }: ColumnProps) {
-  const blocks = useMemo(() => layoutDay(activities, day), [activities, day]);
   const pxPerMinute = hourHeight / 60;
-  const today = isToday(day);
-  const nowMinutes = minutesSinceMidnight(new Date());
+  const slotHeight = hourHeight / 2;
+  const minBlockHeight = Math.round(BASE_MIN_BLOCK_HEIGHT * Math.min(PixelRatio.getFontScale(), MAX_FONT_SCALE));
+  const minMinutes = minBlockHeight / pxPerMinute;
+  const blocks = useMemo(() => layoutDay(activities, day, minMinutes), [activities, day, minMinutes]);
 
   return (
     <View style={[styles.column, { borderLeftColor: theme.border }]}>
-      {HOURS.map((hour) => (
-        <Pressable
-          key={hour}
-          accessibilityRole="button"
-          accessibilityLabel={`Crear actividad a las ${formatHourLabel(hour)}`}
-          onPress={() => onPressSlot(day, hour * 60)}
-          style={({ pressed }) => [
-            styles.slot,
-            { height: hourHeight, borderTopColor: theme.border },
-            pressed ? { backgroundColor: theme.surfaceAlt } : null,
-          ]}
-        />
-      ))}
+      {SLOTS.map((minutes) => {
+        const onTheHour = minutes % 60 === 0;
+        return (
+          <Pressable
+            key={minutes}
+            accessibilityRole="button"
+            accessibilityLabel={`Crear actividad a las ${formatMinutes(minutes)}`}
+            onPress={() => onPressSlot(day, minutes)}
+            style={({ pressed }) => [
+              styles.slot,
+              // La línea de la hora manda; la de la media hora solo insinúa la subdivisión.
+              { height: slotHeight, borderTopColor: onTheHour ? theme.border : theme.surfaceAlt },
+              pressed ? { backgroundColor: theme.surfaceAlt } : null,
+            ]}
+          />
+        );
+      })}
       {blocks.map((block) => {
         const width = `${100 / block.columns}%` as const;
         const left = `${(100 / block.columns) * block.column}%` as const;
@@ -74,7 +115,7 @@ const DayColumn = memo(function DayColumn({
               styles.blockWrapper,
               {
                 top: block.start * pxPerMinute + 1,
-                height: Math.max((block.end - block.start) * pxPerMinute - 2, 22),
+                height: (block.visualEnd - block.start) * pxPerMinute - 2,
                 left,
                 width,
               },
@@ -83,12 +124,13 @@ const DayColumn = memo(function DayColumn({
               activity={block.activity}
               onPress={onPressActivity}
               compact={compact}
+              titleOnly={titleOnly}
               shared={isSharedActivity?.(block.activity)}
             />
           </View>
         );
       })}
-      {today ? (
+      {nowMinutes !== null ? (
         <View pointerEvents="none" style={[styles.nowLine, { top: nowMinutes * pxPerMinute, backgroundColor: theme.today }]}>
           <View style={[styles.nowDot, { backgroundColor: theme.today }]} />
         </View>
@@ -105,18 +147,26 @@ export function Timeline({
   onPressActivity,
   hourHeight = 56,
   compact = false,
+  titleOnly = false,
   isSharedActivity,
 }: TimelineProps) {
   const theme = useTheme();
   const scrollRef = useRef<ScrollView>(null);
   const multiDay = days.length > 1;
+  const pxPerMinute = hourHeight / 60;
 
-  // Arranca cerca de la hora actual (o de las 7:00) para no empezar en medianoche.
+  const todayKey = toDayKey(new Date());
+  const showsToday = days.some((day) => isToday(day));
+  const nowMinutes = useNowMinutes();
+
+  // Abre centrado en la hora actual cuando hoy está a la vista; si no, en la mañana.
   useEffect(() => {
-    const target = Math.max(0, (Math.min(new Date().getHours(), 20) - 1) * hourHeight - 4);
+    const target = showsToday ? Math.max(0, nowMinutes * pxPerMinute - hourHeight * 2) : 8 * hourHeight;
     const id = setTimeout(() => scrollRef.current?.scrollTo({ y: target, animated: false }), 0);
     return () => clearTimeout(id);
-  }, [hourHeight, days]);
+    // Solo al cambiar de rango o de escala: después el scroll lo controla la persona.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hourHeight, days, showsToday]);
 
   const allDay = useMemo(
     () => days.map((day) => (activitiesByDay.get(toDayKey(day)) ?? []).filter((a) => a.all_day)),
@@ -170,22 +220,33 @@ export function Timeline({
         <View style={[styles.gutter, { width: GUTTER_WIDTH }]}>
           {HOURS.map((hour) => (
             <View key={hour} style={{ height: hourHeight }}>
-              {hour > 0 ? (
-                <AppText variant="caption" color="textTertiary" tabular style={styles.hourLabel}>
-                  {formatHourLabel(hour)}
-                </AppText>
-              ) : null}
+              <AppText variant="caption" color="textTertiary" tabular style={styles.hourLabel}>
+                {formatHourLabel(hour)}
+              </AppText>
             </View>
           ))}
+          {showsToday ? (
+            <View
+              pointerEvents="none"
+              accessible
+              accessibilityLabel={`Hora actual, ${formatMinutes(nowMinutes)}`}
+              style={[styles.nowPill, { top: nowMinutes * pxPerMinute - 9, backgroundColor: theme.today }]}>
+              <AppText variant="caption" tabular color="onInk">
+                {formatMinutes(nowMinutes)}
+              </AppText>
+            </View>
+          ) : null}
         </View>
         {days.map((day) => (
           <DayColumn
             key={toDayKey(day)}
             day={day}
+            titleOnly={titleOnly}
             activities={activitiesByDay.get(toDayKey(day)) ?? []}
             hourHeight={hourHeight}
             compact={compact}
             theme={theme}
+            nowMinutes={toDayKey(day) === todayKey ? nowMinutes : null}
             onPressSlot={onPressSlot}
             onPressActivity={onPressActivity}
             isSharedActivity={isSharedActivity}
@@ -208,6 +269,14 @@ const styles = StyleSheet.create({
   scrollContent: { flexDirection: 'row', paddingTop: 10, paddingBottom: 80 },
   gutter: { paddingRight: Spacing.xs },
   hourLabel: { textAlign: 'right', marginTop: -8 },
+  nowPill: {
+    position: 'absolute',
+    right: Spacing.xs,
+    paddingHorizontal: 5,
+    paddingVertical: 1,
+    borderRadius: Radius.sm,
+    borderCurve: 'continuous',
+  },
   column: { flex: 1, borderLeftWidth: StyleSheet.hairlineWidth, position: 'relative' },
   slot: { borderTopWidth: StyleSheet.hairlineWidth },
   blockWrapper: { position: 'absolute', paddingHorizontal: 1 },

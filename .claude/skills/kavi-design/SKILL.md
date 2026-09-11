@@ -18,22 +18,27 @@ KAVI es un planificador personal donde **el calendario es la estrella** y las **
 Nunca hex sueltos en componentes; todo pasa por tokens semánticos.
 
 ### Color (claro / oscuro)
+**KAVI se entrega en oscuro**: `useResolvedScheme()` devuelve siempre `dark` y `app.json` fija
+`userInterfaceStyle: "dark"`. Los tokens claros quedan definidos para cuando exista un ajuste
+de apariencia en Perfil. Todo el sistema neutro se deriva de dos anclas — tinta `#131313` y
+blanco contrastante `#F2F2F2` — que se intercambian entre temas.
+
 | Token | Claro | Oscuro | Uso |
 |---|---|---|---|
-| `background` | `#FAFAF8` | `#0F1013` | fondo de pantalla |
-| `surface` | `#FFFFFF` | `#17181C` | tarjetas, sheets, inputs |
-| `surfaceAlt` | `#F1F1EE` | `#1F2126` | celdas alternas, chips inactivos |
-| `border` | `#E4E4DF` | `#2A2C33` | separadores, bordes de input |
-| `text` | `#16171A` | `#F4F4F1` | texto primario (≥ 4.5:1) |
-| `textSecondary` | `#5C5F66` | `#A3A6AE` | texto secundario (≥ 4.5:1) |
-| `textTertiary` | `#8A8D94` | `#6F727A` | metadatos (solo ≥ 14px) |
-| `ink` (primario) | `#16171A` | `#F4F4F1` | botón primario, FAB, selección |
-| `onInk` | `#FFFFFF` | `#0F1013` | texto sobre `ink` |
-| `today` | `#FF5A3C` | `#FF7A5C` | indicador "hoy" y línea de hora actual (único acento cálido) |
-| `danger` | `#D62839` | `#FF5C6C` | destructivo, errores |
-| `success` | `#1F9D55` | `#3DD68C` | confirmaciones |
-| `neutralActivity` | `#9A9DA5` | `#6F727A` | actividad sin tema (RF-T4) |
-| `overlay` | `rgba(15,16,19,0.45)` | `rgba(0,0,0,0.6)` | scrim de sheets |
+| `background` | `#F2F2F2` | `#131313` | fondo de pantalla |
+| `surface` | `#FFFFFF` | `#1A1A1A` | tarjetas, sheets, inputs |
+| `surfaceAlt` | `#E6E6E6` | `#232323` | celdas alternas, chips inactivos |
+| `border` | `#D4D4D4` | `#303030` | separadores, bordes de input |
+| `text` | `#131313` | `#F2F2F2` | texto primario (≥ 4.5:1) |
+| `textSecondary` | `#565656` | `#ABABAB` | texto secundario (≥ 4.5:1) |
+| `textTertiary` | `#6E6E6E` | `#8C8C8C` | metadatos (solo ≥ 14px) |
+| `ink` (primario) | `#131313` | `#F2F2F2` | botón primario, FAB, selección |
+| `onInk` | `#F2F2F2` | `#131313` | texto sobre `ink` |
+| `today` | `#BC3617` | `#FF7A5C` | indicador "hoy" y línea de hora actual (único acento cálido) |
+| `danger` | `#B81E2F` | `#FF6B7A` | destructivo, errores |
+| `success` | `#116B36` | `#3DD68C` | confirmaciones |
+| `neutralActivity` | `#747474` | `#7C7C7C` | actividad sin tema (RF-T4) |
+| `overlay` | `rgba(19,19,19,0.45)` | `rgba(0,0,0,0.66)` | scrim de sheets |
 
 Colores de dimensión (spec 05, fijos): física `#4CAF50`, emocional `#E91E63`, social `#FF9800`, intelectual `#2196F3`, espiritual `#9C27B0`, financiera `#009688`, ocupacional `#607D8B`. Sobre estos colores el texto va en blanco; en fondos claros se usan al 100 % para bordes/puntos y al 14 % como relleno de bloque con el texto en `text`.
 

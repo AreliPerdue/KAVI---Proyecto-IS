@@ -13,6 +13,12 @@ export type ScreenProps = {
   scroll?: boolean;
   /** Centra verticalmente el contenido (pantallas de auth). */
   centered?: boolean;
+  /**
+   * La pantalla se presenta como modal/formSheet. En iOS la tarjeta ya arranca por
+   * debajo de la barra de estado, pero `useSafeAreaInsets` sigue devolviendo el inset
+   * de la ventana raíz: aplicarlo abriría una franja vacía sobre el título.
+   */
+  modal?: boolean;
   contentStyle?: ViewStyle;
 };
 
@@ -21,15 +27,16 @@ export type ScreenProps = {
  * El contenido se estira al ancho disponible y se centra solo cuando supera `maxWidth`
  * (nunca desborda en horizontal, NFR-9).
  */
-export function Screen({ children, maxWidth = MaxContentWidth, scroll = false, centered = false, contentStyle }: ScreenProps) {
+export function Screen({ children, maxWidth = MaxContentWidth, scroll = false, centered = false, modal = false, contentStyle }: ScreenProps) {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
+  const paddingTop = (modal && Platform.OS === 'ios' ? 0 : insets.top) + Spacing.lg;
 
   const content = (
     <View
       style={[
         styles.content,
-        { maxWidth, paddingTop: insets.top + Spacing.lg, paddingBottom: insets.bottom + Spacing.lg },
+        { maxWidth, paddingTop, paddingBottom: insets.bottom + Spacing.lg },
         centered ? styles.centered : null,
         contentStyle,
       ]}>

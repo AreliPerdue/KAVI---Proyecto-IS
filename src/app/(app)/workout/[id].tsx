@@ -68,7 +68,7 @@ export default function WorkoutScreen() {
 
   if (workout.isPending) {
     return (
-      <Screen maxWidth={MAX_WIDTH}>
+      <Screen modal maxWidth={MAX_WIDTH}>
         <ModalHeader title="Entrenamiento" />
         <LoadingState />
       </Screen>
@@ -76,7 +76,7 @@ export default function WorkoutScreen() {
   }
   if (workout.isError || !data) {
     return (
-      <Screen maxWidth={MAX_WIDTH}>
+      <Screen modal maxWidth={MAX_WIDTH}>
         <ModalHeader title="Entrenamiento" />
         <ErrorState message={workout.error?.message ?? 'Ese entrenamiento ya no existe.'} onRetry={() => workout.refetch()} />
       </Screen>
@@ -87,7 +87,7 @@ export default function WorkoutScreen() {
   const notesValue = notes ?? data.notes ?? '';
 
   return (
-    <Screen scroll maxWidth={MAX_WIDTH}>
+    <Screen modal scroll maxWidth={MAX_WIDTH}>
       <ModalHeader
         title={editing ? 'Entrenamiento' : 'Entrenamiento'}
         right={

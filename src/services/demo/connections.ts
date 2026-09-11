@@ -25,6 +25,9 @@ function revokeSharesBetween(a: string, b: string) {
     const owner = ownerOf(s.activity_id);
     return !((owner === a && s.shared_with_id === b) || (owner === b && s.shared_with_id === a));
   });
+  demoState.contactColors = demoState.contactColors.filter(
+    (c) => !((c.owner_id === a && c.contact_id === b) || (c.owner_id === b && c.contact_id === a)),
+  );
   demoState.recipients = demoState.recipients.filter((r) => {
     const reminder = demoState.reminders.find((x) => x.id === r.reminder_id);
     const owner = reminder ? ownerOf(reminder.activity_id) : undefined;
@@ -33,12 +36,12 @@ function revokeSharesBetween(a: string, b: string) {
 }
 
 export const demoConnections: ConnectionsApi = {
-  async searchUsers(userId, query) {
+  async searchUsers(userId, email) {
     await delay(150);
-    const q = query.trim().toLowerCase();
-    if (q.length < 3) return [];
+    const q = email.trim().toLowerCase();
+    if (!q.includes('@')) return [];
     return demoState.accounts
-      .filter((a) => a.user.id !== userId && a.profile.username.startsWith(q))
+      .filter((a) => a.user.id !== userId && a.user.email.toLowerCase() === q)
       .map((a) => ({ ...a.profile }));
   },
 
@@ -55,6 +58,7 @@ export const demoConnections: ConnectionsApi = {
           kind,
           myCalendarVisibility: demoState.calendarShares.find((s) => s.owner_id === userId && s.shared_with_id === otherId)?.visibility ?? null,
           theirCalendarVisibility: demoState.calendarShares.find((s) => s.owner_id === otherId && s.shared_with_id === userId)?.visibility ?? null,
+          color: demoState.contactColors.find((c) => c.owner_id === userId && c.contact_id === otherId)?.color ?? null,
         };
       })
       .sort((a, b) => (a.profile.display_name ?? a.profile.username).localeCompare(b.profile.display_name ?? b.profile.username));
@@ -87,6 +91,15 @@ export const demoConnections: ConnectionsApi = {
     const otherId = connection.requester_id === userId ? connection.addressee_id : connection.requester_id;
     demoState.connections = demoState.connections.filter((c) => c.id !== connectionId);
     revokeSharesBetween(userId, otherId);
+    emitDataChange();
+  },
+
+  async setContactColor(userId, contactUserId, color) {
+    await delay();
+    if (!areConnected(userId, contactUserId)) throw new AuthUiError('Solo puedes asignar color a contactos aceptados.');
+    demoState.contactColors = demoState.contactColors.filter((c) => !(c.owner_id === userId && c.contact_id === contactUserId));
+    // null = volver a automático: se recalcula al leer, no se guarda nada.
+    if (color) demoState.contactColors.push({ owner_id: userId, contact_id: contactUserId, color });
     emitDataChange();
   },
 

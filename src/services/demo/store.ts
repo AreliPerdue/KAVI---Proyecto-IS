@@ -19,6 +19,9 @@ export type DemoAccount = { user: AuthUser; password: string; profile: Profile }
 
 type Listener = (user: AuthUser | null) => void;
 
+/** Preferencia de color de `owner_id` sobre `contact_id` (RF-S15). */
+type DemoContactColor = { owner_id: string; contact_id: string; color: string };
+
 type DemoState = {
   accounts: DemoAccount[];
   currentUser: AuthUser | null;
@@ -26,6 +29,8 @@ type DemoState = {
   activities: Activity[];
   connections: DemoConnection[];
   calendarShares: DemoCalendarShare[];
+  /** Color que cada persona asigna a sus contactos al superponer calendarios (RF-S15). */
+  contactColors: DemoContactColor[];
   activityShares: DemoActivityShare[];
   reminders: DemoReminder[];
   recipients: DemoRecipient[];
@@ -137,6 +142,7 @@ function seedOtherActivities(): Activity[] {
   const d = (offset: number) => addDays(monday, offset);
   const ana = DEMO_CONTACTS.ana.id;
   const luis = DEMO_CONTACTS.luis.id;
+  const pedro = DEMO_CONTACTS.pedro.id;
   return [
     activity('Trabajo', 'Trabajo', d(0), 9, 8, {}, ana),
     activity('Yoga', 'Deporte', d(1), 7, 1, {}, ana),
@@ -147,6 +153,10 @@ function seedOtherActivities(): Activity[] {
     activity('Brunch', 'Amigos', d(6), 11, 2, {}, ana),
     activity('Guardia', 'Trabajo', d(2), 8, 12, {}, luis),
     activity('Fútbol', 'Deporte', d(5), 17, 2, {}, luis),
+    activity('Standup', 'Trabajo', d(0), 10, 0.5, {}, pedro),
+    activity('Comida con cliente', 'Trabajo', d(1), 14, 1.5, {}, pedro),
+    activity('Terapia', 'Journaling/Terapia', d(3), 17, 1, {}, pedro),
+    activity('Ciclismo', 'Deporte', d(5), 7, 2, {}, pedro),
   ];
 }
 
@@ -160,15 +170,18 @@ export const demoState: DemoState = {
     ...Object.values(DEMO_CONTACTS).map(contactAccount),
   ],
   currentUser: env.demoAutologin ? DEMO_USER : null,
+  contactColors: [],
   themes: [...SYSTEM_THEMES],
   activities: [...seedActivities(), ...seededOthers],
   connections: [
     { id: 'con-ana', requester_id: DEMO_USER.id, addressee_id: DEMO_CONTACTS.ana.id, status: 'accepted', created_at: new Date().toISOString(), responded_at: new Date().toISOString() },
     { id: 'con-luis', requester_id: DEMO_CONTACTS.luis.id, addressee_id: DEMO_USER.id, status: 'pending', created_at: new Date().toISOString(), responded_at: null },
     { id: 'con-maria', requester_id: DEMO_USER.id, addressee_id: DEMO_CONTACTS.maria.id, status: 'pending', created_at: new Date().toISOString(), responded_at: null },
+    { id: 'con-pedro', requester_id: DEMO_USER.id, addressee_id: DEMO_CONTACTS.pedro.id, status: 'accepted', created_at: new Date().toISOString(), responded_at: new Date().toISOString() },
   ],
   calendarShares: [
     { id: 'cs-ana', owner_id: DEMO_CONTACTS.ana.id, shared_with_id: DEMO_USER.id, visibility: 'busy', created_at: new Date().toISOString() },
+    { id: 'cs-pedro', owner_id: DEMO_CONTACTS.pedro.id, shared_with_id: DEMO_USER.id, visibility: 'details', created_at: new Date().toISOString() },
   ],
   activityShares: [
     { id: 'as-gym', activity_id: gymTogether.id, shared_with_id: DEMO_USER.id, status: 'pending', created_at: new Date().toISOString() },

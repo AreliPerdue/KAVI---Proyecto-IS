@@ -25,7 +25,7 @@ export const supabaseProfiles: ProfilesApi = {
   async updateMyProfile(userId, patch) {
     const { data, error } = await getSupabase()
       .from('profiles')
-      .update({ username: patch.username.toLowerCase(), display_name: patch.display_name })
+      .update({ display_name: patch.display_name })
       .eq('id', userId)
       .select(PROFILE_COLUMNS)
       .single();

@@ -43,3 +43,7 @@ Un gym tracker en miniatura, accedido **desde el calendario**: campos abiertos y
 
 ## UI
 Rutas: `/(app)/workout/[id]`, historial en `/(app)/fitness`. Diseño de tarjetas grandes, teclado numérico donde aplique, cero modales anidados.
+
+- RF-F9. **Rutina desde el calendario.** Al activar "Actividad de gimnasio" en el formulario de actividad aparece ahí mismo el editor de ejercicios (nombre, series, reps, peso, con autocompletado de nombres ya usados). Los ejercicios se guardan junto con la actividad creando su entrenamiento, sin pasar por el módulo Fitness. Si la actividad ya tiene un entrenamiento guardado, en su lugar se ofrece abrirlo para no duplicarlo.
+
+**Criterio (RF-F9).** *Dado* el formulario de nueva actividad, *cuando* activo el gimnasio, añado un ejercicio y creo la actividad, *entonces* el entrenamiento aparece en el historial de Fitness con ese ejercicio.

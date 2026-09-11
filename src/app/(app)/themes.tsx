@@ -45,7 +45,7 @@ export default function ThemesScreen() {
   );
 
   return (
-    <Screen scroll maxWidth={MAX_WIDTH}>
+    <Screen modal scroll maxWidth={MAX_WIDTH}>
       <ModalHeader title="Mis temas" />
       <Button
         title="Nuevo tema"

@@ -1,4 +1,5 @@
 allowBuilds:
+  unrs-resolver: false
 
 minimumReleaseAgeExclude:
   - '@expo/cli@57.0.21'
@@ -23,3 +24,6 @@ minimumReleaseAgeExclude:
 onlyBuiltDependencies:
   - supabase
   - unrs-resolver
+
+patchedDependencies:
+  expo-modules-jsi@57.0.7: patches/expo-modules-jsi@57.0.7.patch

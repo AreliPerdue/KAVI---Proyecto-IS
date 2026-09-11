@@ -1,5 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMemo } from 'react';
 
+import { assignPeopleColors, SELF_COLOR } from '@/constants/people-colors';
 import { useAuth } from '@/providers';
 import {
   acceptConnection,
@@ -10,6 +12,7 @@ import {
   requestConnection,
   searchUsers,
   setCalendarVisibility,
+  setContactColor,
 } from '@/services/connections';
 import type { Profile } from '@/types/domain';
 
@@ -26,6 +29,24 @@ export function useContacts() {
     queryFn: () => listContacts(userId as string),
     enabled: !!userId,
   });
+}
+
+/**
+ * Color de cada persona para el calendario superpuesto (RF-S15): el elegido a mano y,
+ * para el resto, el primero libre de la paleta. Incluye `SELF_COLOR` bajo mi propio id.
+ */
+export function usePeopleColors(): Map<string, string> {
+  const { userId } = useAuth();
+  const contacts = useContacts();
+  const data = contacts.data;
+  return useMemo(() => {
+    const accepted = (data ?? [])
+      .filter((c) => c.kind === 'accepted')
+      .map((c) => ({ userId: c.profile.id, color: c.color }));
+    const colors = assignPeopleColors(accepted);
+    if (userId) colors.set(userId, SELF_COLOR);
+    return colors;
+  }, [data, userId]);
 }
 
 export function useUserSearch(query: string) {
@@ -51,6 +72,11 @@ export function useConnectionMutations() {
     setVisibility: useMutation({
       mutationFn: ({ contactUserId, visibility }: { contactUserId: string; visibility: CalendarVisibility | null }) =>
         setCalendarVisibility(uid(), contactUserId, visibility),
+      onSuccess: invalidate,
+    }),
+    setColor: useMutation({
+      mutationFn: ({ contactUserId, color }: { contactUserId: string; color: string | null }) =>
+        setContactColor(uid(), contactUserId, color),
       onSuccess: invalidate,
     }),
   };

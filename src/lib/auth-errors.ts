@@ -6,6 +6,9 @@ export const AUTH_MESSAGES = {
   usernameTaken: 'Ese username ya está en uso.',
   emailNotConfirmed: 'Confirma tu correo antes de iniciar sesión.',
   tooManyRequests: 'Demasiados intentos. Espera un momento e inténtalo de nuevo.',
+  invalidCode: 'El código no es correcto. Revísalo o pide uno nuevo.',
+  expiredCode: 'El código caducó. Pide uno nuevo.',
+  samePassword: 'La contraseña nueva debe ser distinta de la actual.',
   generic: 'Algo salió mal. Inténtalo de nuevo.',
 } as const;
 
@@ -34,6 +37,9 @@ export function toAuthMessage(error: unknown): string {
   if (/rate limit|too many requests|over_request_rate_limit/i.test(message)) {
     return AUTH_MESSAGES.tooManyRequests;
   }
+  if (/token has expired|otp_expired/i.test(message)) return AUTH_MESSAGES.expiredCode;
+  if (/invalid token|token not found|otp_disabled|invalid_otp/i.test(message)) return AUTH_MESSAGES.invalidCode;
+  if (/should be different from the old password|same_password/i.test(message)) return AUTH_MESSAGES.samePassword;
   return AUTH_MESSAGES.generic;
 }
 

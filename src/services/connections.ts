@@ -9,3 +9,4 @@ export const requestConnection = connectionsApi.request;
 export const acceptConnection = connectionsApi.accept;
 export const removeConnection = connectionsApi.remove;
 export const setCalendarVisibility = connectionsApi.setCalendarVisibility;
+export const setContactColor = connectionsApi.setContactColor;

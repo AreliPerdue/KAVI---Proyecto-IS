@@ -7,12 +7,13 @@ import { StyleSheet, View } from 'react-native';
 import { RecurrenceField } from './recurrence-field';
 import { RemindersField } from './reminders-field';
 import { ThemeField } from './theme-field';
+import { type ExerciseDraft, WorkoutDraft } from './workout-draft';
 
 import { Banner, Button, DatePickerSheet, FieldButton, SwitchRow, TextField, TimePickerSheet } from '@/components/ui';
 import { GYM_THEME_ID } from '@/constants/themes';
 import { IconSize, IconStroke, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import { formatDate, formatMinutes12, fromDayKey, toDayKey } from '@/lib/dates';
+import { formatDate, formatMinutes, fromDayKey, toDayKey } from '@/lib/dates';
 import { activityFormSchema, type ActivityFormValues } from '@/lib/schemas/activity';
 
 export type ActivityFormProps = {
@@ -20,25 +21,39 @@ export type ActivityFormProps = {
   submitLabel: string;
   submitting: boolean;
   error?: string | null;
-  onSubmit: (values: ActivityFormValues) => void;
+  /** Los ejercicios viajan aparte del formulario: se guardan tras crear la actividad. */
+  onSubmit: (values: ActivityFormValues, exercises: ExerciseDraft[]) => void;
   /** Al editar solo una ocurrencia, la repetición no se toca. */
   recurrenceLocked?: boolean;
+  /** Nº de ejercicios del entrenamiento ya guardado, si la actividad tiene uno. */
+  existingWorkoutCount?: number;
+  onOpenExistingWorkout?: () => void;
 };
 
 /** Formulario de actividad (RF-C5): título, fecha, horas, todo el día, descripción. */
-export function ActivityForm({ defaultValues, submitLabel, submitting, error, onSubmit, recurrenceLocked = false }: ActivityFormProps) {
+export function ActivityForm({
+  defaultValues,
+  submitLabel,
+  submitting,
+  error,
+  onSubmit,
+  recurrenceLocked = false,
+  existingWorkoutCount,
+  onOpenExistingWorkout,
+}: ActivityFormProps) {
   const theme = useTheme();
   const { control, handleSubmit, setValue } = useForm<ActivityFormValues>({
     resolver: zodResolver(activityFormSchema),
     defaultValues,
   });
   const [picker, setPicker] = useState<'date' | 'start' | 'end' | null>(null);
+  const [exercises, setExercises] = useState<ExerciseDraft[]>([]);
   const dayKey = useWatch({ control, name: 'dayKey' });
   const startMinutes = useWatch({ control, name: 'startMinutes' });
   const endMinutes = useWatch({ control, name: 'endMinutes' });
   const allDay = useWatch({ control, name: 'allDay' });
 
-  const submit = handleSubmit(onSubmit);
+  const submit = handleSubmit((values) => onSubmit(values, exercises));
 
   return (
     <View style={styles.form}>
@@ -94,7 +109,7 @@ export function ActivityForm({ defaultValues, submitLabel, submitting, error, on
         <View style={styles.timeRow}>
           <FieldButton
             label="Inicio"
-            value={formatMinutes12(startMinutes)}
+            value={formatMinutes(startMinutes)}
             onPress={() => setPicker('start')}
             leading={<Clock size={IconSize.inline} strokeWidth={IconStroke} color={theme.textSecondary} />}
           />
@@ -102,7 +117,7 @@ export function ActivityForm({ defaultValues, submitLabel, submitting, error, on
             control={control}
             name="endMinutes"
             render={({ fieldState: { error: fieldError } }) => (
-              <FieldButton label="Fin" value={formatMinutes12(endMinutes)} onPress={() => setPicker('end')} error={fieldError?.message} />
+              <FieldButton label="Fin" value={formatMinutes(endMinutes)} onPress={() => setPicker('end')} error={fieldError?.message} />
             )}
           />
         </View>
@@ -144,7 +159,22 @@ export function ActivityForm({ defaultValues, submitLabel, submitting, error, on
         control={control}
         name="isGym"
         render={({ field: { onChange, value } }) => (
-          <SwitchRow label="Actividad de gimnasio" hint="Habilita registrar el entrenamiento desde el detalle." value={value} onValueChange={onChange} />
+          <>
+            <SwitchRow
+              label="Actividad de gimnasio"
+              hint="Anota tu rutina aquí mismo, sin salir del calendario."
+              value={value}
+              onValueChange={onChange}
+            />
+            {value ? (
+              <WorkoutDraft
+                exercises={exercises}
+                onChange={setExercises}
+                existingCount={existingWorkoutCount}
+                onOpenExisting={onOpenExistingWorkout}
+              />
+            ) : null}
+          </>
         )}
       />
 

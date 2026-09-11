@@ -24,6 +24,7 @@ export function DayView({ day, activities, onPressSlot, onPressActivity, isShare
       onPressSlot={onPressSlot}
       onPressActivity={onPressActivity}
       hourHeight={64}
+      titleOnly
       isSharedActivity={isSharedActivity}
     />
   );

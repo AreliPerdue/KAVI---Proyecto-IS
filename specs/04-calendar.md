@@ -13,14 +13,15 @@ El calendario es la pantalla principal y el hub de toda la app (P1). Desde él s
 
 ## Requerimientos funcionales
 ### Vistas
-- RF-C1. Vista **mensual**: grid de mes con indicadores (puntos de color por tema) por día; tocar un día abre su lista/vista diaria.
+- RF-C1. Vista **mensual**: grid de 6 semanas × 7 días con indicadores por día; tocar un día abre su lista/vista diaria. Es la **vista por defecto** al abrir el calendario. El grid es **adaptativo** (NFR-8, NFR-9): las 7 columnas y las 6 filas se reparten el espacio disponible, de modo que el mes entra completo en cualquier pantalla sin recortarse; cuántas actividades se listan por día depende del alto real de la celda, con un resumen "+N" con puntos de color para el resto y, cuando no cabe ni un chip, solo puntos de color. La hora se antepone al título cuando la celda es lo bastante ancha. Fines de semana y días fuera del mes se distinguen del resto. Todo escala con el tamaño de fuente del sistema.
 - RF-C2. Vista **semanal**: 7 columnas con bloques horarios posicionados según hora y duración, con color del tema.
-- RF-C3. Vista **diaria**: timeline del día con bloques; es también el detalle al que se llega desde la mensual.
-- RF-C4. Navegación entre fechas (swipe/flechas) y botón "Hoy". Selector de vista persistente (recordar la última usada).
+- RF-C3. Vista **diaria**: timeline del día con bloques que muestran **solo el título** — la hora ya la da su posición en la rejilla. Ningún bloque baja del alto de una línea de texto, así que una actividad de un minuto sigue siendo legible; los traslapes se calculan con ese alto pintado y no con la duración real, de modo que dos actividades muy cortas y cercanas se reparten en columnas en vez de pisarse. Despliega **las 24 horas** (00:00–23:59) —también cuando el día no tiene ninguna actividad, donde la rejilla es además la forma de crear tocando una hora (RF-C6)— y marca la **hora actual** con una línea y su etiqueta, que se refresca mientras la vista está abierta; al abrir, el scroll se sitúa en la hora actual. Es también el detalle al que se llega desde la mensual.
+- RF-C4. Navegación entre fechas (swipe/flechas) y botón "Hoy". Selector de vista persistente: se recuerda la vista **elegida en el menú de vista**; abrir un día desde la mensual navega a la diaria sin cambiar esa preferencia, de modo que el calendario sigue abriendo en mensual (RF-C1).
+- RF-C13. Las horas se muestran en **formato de 24 h** (`14:30`, es-MX, NFR-13). Las rejillas diaria y semanal se dibujan en **saltos de 30 minutos**, con la línea de la hora más marcada que la de la media hora.
 
 ### Creación y edición
 - RF-C5. Botón flotante "+" siempre visible → formulario de actividad: título (requerido), tema (picker de temas predefinidos con icono+color, opcional), fecha, hora inicio/fin (o todo el día), descripción, recurrencia, reminders. Al elegir tema, color/icono/dimensión se auto-asignan; se pueden sobreescribir.
-- RF-C6. Crear también desde la vista diaria/semanal tocando un slot vacío (hora pre-llenada).
+- RF-C6. Crear también desde la vista diaria/semanal tocando un slot vacío (hora pre-llenada, con la precisión de 30 min de la rejilla de RF-C13). El selector de hora del formulario permite cualquier **minuto de 00 a 59**, no solo múltiplos de la rejilla.
 - RF-C7. Tocar una actividad → hoja de detalle con acciones: editar, eliminar, compartir, reminders, y **"Registrar entrenamiento"** si `is_gym` (ver `07-fitness.md`).
 - RF-C8. Recurrencia: sin repetición / diaria / semanal (elige días) / mensual, con fin opcional (fecha o nunca→horizonte 90 días, ver spec 02). Al editar/eliminar una recurrente, preguntar "¿Solo esta ocurrencia o toda la serie?".
 
