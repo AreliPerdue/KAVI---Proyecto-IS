@@ -36,6 +36,14 @@ export function Screen({ children, maxWidth = MaxContentWidth, scroll = false, c
     <View
       style={[
         styles.content,
+        /*
+         * Sin scroll el contenido llena la pantalla; con scroll NO puede llevar
+         * `flex: 1`, porque dentro de un ScrollView eso le quita altura propia: el
+         * contenedor deja de poder medirlo y quien necesite ese alto —una hoja con
+         * detents, por ejemplo— recibe un valor equivocado. `flexGrow` conserva el
+         * alto natural y solo estira cuando sobra espacio, así el centrado sigue igual.
+         */
+        scroll ? styles.contentScroll : styles.contentFill,
         { maxWidth, paddingTop, paddingBottom: insets.bottom + Spacing.lg },
         centered ? styles.centered : null,
         contentStyle,
@@ -66,11 +74,12 @@ const styles = StyleSheet.create({
   scroll: { flex: 1 },
   scrollContent: { flexGrow: 1 },
   content: {
-    flex: 1,
     width: '100%',
     alignSelf: 'center',
     paddingHorizontal: Spacing.xl,
     gap: Spacing.lg,
   },
+  contentFill: { flex: 1 },
+  contentScroll: { flexGrow: 1 },
   centered: { justifyContent: 'center' },
 });

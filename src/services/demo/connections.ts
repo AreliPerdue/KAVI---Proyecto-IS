@@ -36,12 +36,30 @@ function revokeSharesBetween(a: string, b: string) {
 }
 
 export const demoConnections: ConnectionsApi = {
-  async searchUsers(userId, email) {
-    await delay(150);
-    const q = email.trim().toLowerCase();
-    if (!q.includes('@')) return [];
+  /** Equivale a la RPC `search_profiles`: username por prefijo o correo exacto (RF-S1). */
+  async searchUsers(userId, query) {
+    await delay(120);
+    const term = query.trim().toLowerCase().replace(/^@+/, '');
+    if (term.length < 3) return [];
+    const isEmail = term.includes('@');
     return demoState.accounts
-      .filter((a) => a.user.id !== userId && a.user.email.toLowerCase() === q)
+      .filter((a) => {
+        if (a.user.id === userId) return false;
+        return isEmail
+          ? a.user.email.toLowerCase() === term
+          : a.profile.username.toLowerCase().startsWith(term);
+      })
+      // Exacto primero y luego los más cortos, igual que el ORDER BY de la RPC.
+      .sort((a, b) => {
+        const ax = a.profile.username.toLowerCase() === term ? 0 : 1;
+        const bx = b.profile.username.toLowerCase() === term ? 0 : 1;
+        if (ax !== bx) return ax - bx;
+        if (a.profile.username.length !== b.profile.username.length) {
+          return a.profile.username.length - b.profile.username.length;
+        }
+        return a.profile.username.localeCompare(b.profile.username);
+      })
+      .slice(0, 8)
       .map((a) => ({ ...a.profile }));
   },
 

@@ -71,7 +71,7 @@ Prioridad CRÍTICA → BAJA. Aplica todas.
 - Nunca `{valor && <X/>}` cuando `valor` pueda ser `0` o `""`: usa ternario con `null` o `!!valor`.
 
 ### Configuración (BAJA)
-- Fuentes custom vía config plugin de `expo-font` en `app.json`, no `useFonts` en runtime.
+- Fuentes custom: **las dos vías a la vez**. El config plugin de `expo-font` en `app.json` las embebe en la build (es lo que vale en producción) y `useBrandFonts` las carga además en runtime, porque el plugin solo surte efecto al recompilar: sin el cargado en runtime, cualquier binario anterior cae a la fuente del sistema en silencio. El costo de la carga es nulo porque el splash ya se sostiene `SplashMinDuration` (NFR-19). Nunca un `fontFamily` en string suelto: siempre `BrandFonts`.
 - Dependencias con módulo nativo SOLO con `npx expo install` (versiones compatibles con SDK 57). Tras añadir una, si ya existe `ios/`/`android/` local, `npx expo prebuild --clean` cuando toque probar en nativo.
 
 ## 4. Supabase y datos

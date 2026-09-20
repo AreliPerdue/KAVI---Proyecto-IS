@@ -25,8 +25,10 @@ export const Colors = {
     text: INK,
     textSecondary: '#565656',
     textTertiary: '#6E6E6E',
+    /** Primario, FAB, selección y el indicador de hoy / hora actual. */
     ink: INK,
     onInk: PAPER,
+    /** Acento cálido de aviso (recordatorios vencidos, filtros activos, choque de horario). */
     today: '#BC3617',
     danger: '#B81E2F',
     success: '#116B36',
@@ -55,12 +57,43 @@ export type ColorScheme = keyof typeof Colors;
 export type ThemeColors = (typeof Colors)[ColorScheme];
 export type ThemeColor = keyof ThemeColors;
 
-/** Familia tipográfica del sistema (sin fuentes custom en V1). */
+/** Familia tipográfica de la interfaz: la del sistema. */
 export const Fonts = Platform.select({
   ios: { sans: 'system-ui', mono: 'ui-monospace' },
   web: { sans: 'var(--font-sans)', mono: 'var(--font-mono)' },
   default: { sans: 'normal', mono: 'monospace' },
 });
+
+/**
+ * Fuentes de marca. Solo para el wordmark y el eslogan del logo — nunca para
+ * texto de interfaz, que sigue en la fuente del sistema.
+ *
+ * Se embeben en nativo con el config plugin de `expo-font` (`app.json`) y en web
+ * con las reglas `@font-face` de `src/global.css`. Los tres destinos resuelven la
+ * familia por el nombre PostScript, por eso el valor es el mismo en todas.
+ */
+export const BrandFonts = {
+  /** Moirai One: el wordmark "KAVI" con el trazo de contorno del logo. */
+  wordmark: 'MoiraiOne-Regular',
+  /** Poiret One: el eslogan bajo el wordmark. */
+  slogan: 'PoiretOne-Regular',
+} as const;
+
+/** Eslogan de KAVI, tal cual aparece en el logo. */
+export const SLOGAN = 'Plan more. be more.';
+
+/**
+ * Proporciones del logo original (medidas sobre `Kavi_Icon_With_Slogan.jpeg`),
+ * para que el bloque wordmark + eslogan se arme igual a cualquier tamaño.
+ */
+export const Brand = {
+  /** Tracking del wordmark, en múltiplos del tamaño de fuente. */
+  wordmarkTracking: 0.06,
+  /** Tracking del eslogan: el logo lo lleva muy abierto. */
+  sloganTracking: 0.141,
+  /** Tamaño del eslogan respecto al del wordmark. */
+  sloganScale: 0.32,
+} as const;
 
 /** Escala tipográfica: tamaño / peso / interlineado. */
 export const Typography = {
@@ -105,6 +138,12 @@ export const IconStroke = 2;
 
 /** Duraciones de movimiento en ms. */
 export const Motion = { fast: 120, base: 200, slow: 320 } as const;
+
+/**
+ * Piso de permanencia del splash en ms, contado desde el arranque (NFR-19).
+ * No es una transición: es cuánto se sostiene la marca antes de dar paso a la app.
+ */
+export const SplashMinDuration = 3000;
 
 /** Touch target mínimo (iOS 44 / Android 48). */
 export const MinTouchTarget = Platform.select({ android: 48, default: 44 });

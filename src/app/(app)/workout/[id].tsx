@@ -32,7 +32,6 @@ export default function WorkoutScreen() {
   const [pickingDate, setPickingDate] = useState(false);
   const [duplicateOpen, setDuplicateOpen] = useState(false);
   const [keepValues, setKeepValues] = useState(true);
-  const [duration, setDuration] = useState<string | null>(null);
   const [notes, setNotes] = useState<string | null>(null);
 
   const data = workout.data;
@@ -83,7 +82,6 @@ export default function WorkoutScreen() {
     );
   }
 
-  const durationValue = duration ?? data.duration_minutes?.toString() ?? '';
   const notesValue = notes ?? data.notes ?? '';
 
   return (
@@ -117,20 +115,9 @@ export default function WorkoutScreen() {
           <>
             <FieldButton
               label="Fecha"
-              value={`${formatDate(fromIso(data.performed_at))} · ${formatTime(fromIso(data.performed_at))}`}
+              value={formatDate(fromIso(data.performed_at))}
               onPress={() => setPickingDate(true)}
               leading={<CalendarDays size={IconSize.inline} strokeWidth={IconStroke} color={theme.textSecondary} />}
-            />
-            <TextField
-              label="Duración total (min)"
-              value={durationValue}
-              onChangeText={setDuration}
-              onBlur={() => {
-                const n = parseInt(durationValue, 10);
-                mutations.update.mutate({ id: data.id, patch: { duration_minutes: Number.isFinite(n) && n > 0 ? n : null } }, { onSuccess: markSaved });
-              }}
-              keyboardType="number-pad"
-              placeholder="Opcional"
             />
             <TextField
               label="Notas generales"
@@ -144,7 +131,7 @@ export default function WorkoutScreen() {
         ) : (
           <>
             <AppText color="textSecondary">
-              {formatDate(fromIso(data.performed_at))} · {formatTime(fromIso(data.performed_at))}
+              {formatDate(fromIso(data.performed_at))}
               {data.duration_minutes ? ` · ${data.duration_minutes} min` : ''}
             </AppText>
             {data.notes ? <AppText>{data.notes}</AppText> : null}

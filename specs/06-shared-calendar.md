@@ -13,7 +13,9 @@ Conectar personas, compartir actividades y calendarios con control de visibilida
 
 ## Requerimientos funcionales
 ### Conexiones
-- RF-S1. Búsqueda de personas por **correo exacto**: es el identificador único de la cuenta (RF-A1) y exigirlo completo evita enumerar quién está registrado.
+- RF-S1. Búsqueda de personas por **prefijo de `@username`** (mínimo 3 letras) **o correo exacto** (RF-A1). La arroba inicial es opcional y la búsqueda ignora mayúsculas y espacios; lo que decide si el término es correo o username es si queda una arroba tras quitar la inicial.
+  **La asimetría entre ambos es deliberada:** un username es un identificador público —existe para que te encuentren—, así que buscarlo por prefijo no revela nada que su dueño no haya publicado. Un correo sí: aceptar prefijos ahí convertiría el buscador en una herramienta para cosechar direcciones de personas registradas. Aun por prefijo el resultado va acotado (3 letras mínimo, tope de 8 filas, solo username y nombre visible), así que nadie puede recorrer el padrón a base de consultas.
+  Los resultados salen ordenados —coincidencia exacta primero, luego los usernames más cortos— y muestran nombre y `@usuario`, para confirmar que es la persona correcta antes de enviar la solicitud.
 - RF-S2. Solicitud → pending; el destinatario acepta o elimina. Ambos pueden eliminar la conexión después (revoca todos los shares entre ambos — cascada en servicio).
 - RF-S3. Pantalla "Contactos": conexiones aceptadas + solicitudes recibidas/enviadas.
 

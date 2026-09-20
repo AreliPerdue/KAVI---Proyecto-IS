@@ -29,15 +29,17 @@ export default function AppLayout() {
       <Stack.Screen name="shared/availability" options={{ presentation: modal }} />
       <Stack.Screen name="workout/[id]" options={{ presentation: modal }} />
       <Stack.Screen name="themes" options={{ presentation: modal }} />
+      <Stack.Screen name="admin" options={{ presentation: modal }} />
       <Stack.Screen name="theme/new" options={{ presentation: modal }} />
-      <Stack.Screen
-        name="activity/[id]"
-        options={{
-          presentation: Platform.OS === 'ios' ? 'formSheet' : modal,
-          sheetAllowedDetents: 'fitToContents',
-          sheetGrabberVisible: true,
-        }}
-      />
+      {/*
+        * El detalle se presentaba como `formSheet` en iOS y daba problemas: el contenido
+        * abría fuera de la zona visible y desaparecía al desplazar o tocar. La causa es
+        * estructural — dentro lleva un `Sheet` (el de "¿solo esta ocurrencia o toda la
+        * serie?"), que es un `Modal` de React Native, y presentar un Modal desde dentro
+        * de un formSheet desprende el contenido de la hoja. Usa la misma presentación
+        * que el resto de modales de la app, que no tienen ese conflicto.
+        */}
+      <Stack.Screen name="activity/[id]" options={{ presentation: modal }} />
     </Stack>
     </>
   );

@@ -9,6 +9,8 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { ErrorFallback } from '@/components/error-fallback';
 import { SplashView } from '@/components/splash-view';
 import { Colors } from '@/constants/theme';
+import { useBrandFonts } from '@/hooks/use-brand-fonts';
+import { useSplashGate } from '@/hooks/use-splash-gate';
 import { useResolvedScheme } from '@/hooks/use-theme';
 import { queryClient } from '@/lib/query-client';
 import { AuthProvider, ConfirmProvider, SnackbarProvider, useAuth } from '@/providers';
@@ -48,17 +50,21 @@ const navigationThemes = {
 /** Rutas protegidas: sin sesión → (auth); con sesión → (app). */
 function RootNavigator() {
   const { user, isLoading, signUpPending } = useAuth();
+  const fontsReady = useBrandFonts();
+  const showSplash = useSplashGate(isLoading || !fontsReady);
   // Durante el último paso del alta hay sesión pero aún no contraseña (RF-A8).
   const isSignedIn = !!user && !signUpPending;
 
+  // El splash nativo se retira en el mismo momento que `SplashView`, así no se ve
+  // el relevo entre uno y otro.
   useEffect(() => {
-    if (!isLoading) {
+    if (!showSplash) {
       SplashScreen.hideAsync().catch(() => {});
     }
-  }, [isLoading]);
+  }, [showSplash]);
 
   // Mantener el splash hasta restaurar la sesión evita el parpadeo de login.
-  if (isLoading) return <SplashView />;
+  if (showSplash) return <SplashView />;
 
   return (
     <Stack screenOptions={{ headerShown: false }}>

@@ -49,6 +49,7 @@ export const signUpSchema = z
       .min(2, 'Escribe tu nombre.')
       .max(60, 'Máximo 60 caracteres.'),
     email,
+    username,
     code: z
       .string()
       .trim()
@@ -75,5 +76,7 @@ export type ForgotPasswordValues = z.infer<typeof forgotPasswordSchema>;
 /** El perfil solo edita el nombre visible: el username no se usa y el correo es fijo. */
 export const profileSchema = z.object({
   displayName: z.string().trim().min(2, 'Escribe tu nombre.').max(60, 'Máximo 60 caracteres.'),
+  // Se escribe sin la arroba; la interfaz la muestra como prefijo fijo (RF-A9).
+  username,
 });
 export type ProfileValues = z.infer<typeof profileSchema>;

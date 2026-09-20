@@ -1,6 +1,7 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useEffect } from 'react';
 
+import { invalidateSharedData } from '@/lib/query-invalidation';
 import { useAuth } from '@/providers';
 import { subscribeToChanges } from '@/services/realtime';
 
@@ -16,11 +17,7 @@ export function useRealtimeInvalidation() {
       // Agrupa ráfagas de cambios en una sola invalidación.
       if (timer) clearTimeout(timer);
       timer = setTimeout(() => {
-        void queryClient.invalidateQueries({ queryKey: ['activities'] });
-        void queryClient.invalidateQueries({ queryKey: ['reminders'] });
-        void queryClient.invalidateQueries({ queryKey: ['shares'] });
-        void queryClient.invalidateQueries({ queryKey: ['connections'] });
-        void queryClient.invalidateQueries({ queryKey: ['availability'] });
+        invalidateSharedData(queryClient);
       }, 50);
     });
     return () => {

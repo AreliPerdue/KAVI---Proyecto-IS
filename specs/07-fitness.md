@@ -14,7 +14,7 @@ Un gym tracker en miniatura, accedido **desde el calendario**: campos abiertos y
 - RF-F2. Acceso secundario: pestaña/entrada "Historial" dentro del módulo (lista cronológica), también con opción "Entrenamiento libre" sin actividad (activity_id null) para no bloquear a quien no agendó.
 
 ## Pantalla de entrenamiento
-- RF-F3. Encabezado: fecha (default: la de la actividad), duración total (min, opcional), notas generales (texto libre).
+- RF-F3. Encabezado: **fecha** (solo el día, default: la de la actividad; el selector es de día, así que no se muestra hora), **duración total calculada** y **notas generales** (texto libre). La duración total ya no se escribe a mano: es la suma de la duración de los ejercicios registrados. Si ningún ejercicio la lleva anotada, no se muestra duración — es lo esperado en una sesión de fuerza, donde el dato relevante son series y peso, no los minutos.
 - RF-F4. Lista de ejercicios ordenable; botón "+ Ejercicio" agrega una tarjeta con campos **todos opcionales excepto nombre**:
   - Nombre (texto libre con autocompletado de nombres que el usuario ya usó antes)
   - Series (número)

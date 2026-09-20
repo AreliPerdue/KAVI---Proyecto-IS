@@ -4,7 +4,7 @@ import { TabList, type TabListProps, TabSlot, TabTrigger, type TabTriggerSlotPro
 import { CalendarDays, Dumbbell, UserRound, Users } from 'lucide-react-native';
 import { Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
 
-import { AppText, DimensionDots } from '@/components/ui';
+import { AppText, DimensionDots, Wordmark } from '@/components/ui';
 import { IconSize, IconStroke, MaxContentWidth, Radius, Spacing } from '@/constants/theme';
 import { useSharedBadgeCount } from '@/hooks/use-shared-badge';
 import { useTheme } from '@/hooks/use-theme';
@@ -65,7 +65,7 @@ function TopBar({ children, ...props }: TopBarProps) {
     <View {...props} style={[styles.bar, { backgroundColor: theme.surface, borderBottomColor: theme.border }]}>
       <View style={styles.barInner}>
         <View style={styles.brand}>
-          <AppText variant="heading">KAVI</AppText>
+          <Wordmark size={26} />
           {wide ? <DimensionDots size={6} /> : null}
         </View>
         <View style={styles.tabList}>{children}</View>

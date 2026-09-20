@@ -1,7 +1,9 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
 import { assignPeopleColors, SELF_COLOR } from '@/constants/people-colors';
+import { useDebouncedValue } from '@/hooks/use-debounced-value';
+import { invalidateSharedData } from '@/lib/query-invalidation';
 import { useAuth } from '@/providers';
 import {
   acceptConnection,
@@ -49,20 +51,36 @@ export function usePeopleColors(): Map<string, string> {
   }, [data, userId]);
 }
 
+/** Mínimo para buscar: es también el largo mínimo de un username (RF-A1). */
+export const SEARCH_MIN_LENGTH = 3;
+
+/**
+ * Búsqueda de personas mientras se escribe (RF-S1).
+ *
+ * `useDebouncedValue` evita una petición por tecla y `keepPreviousData` deja en pantalla
+ * los resultados anteriores mientras llegan los nuevos: sin eso la lista parpadea a vacío
+ * en cada pulsación y la búsqueda se siente más lenta de lo que es.
+ */
 export function useUserSearch(query: string) {
   const { userId } = useAuth();
   const normalized = query.trim().toLowerCase();
+  const debounced = useDebouncedValue(normalized);
+  const term = debounced.replace(/^@+/, '');
+
   return useQuery<Profile[]>({
-    queryKey: connectionKeys.search(userId, normalized),
-    queryFn: () => searchUsers(userId as string, normalized),
-    enabled: !!userId && normalized.length >= 3,
+    queryKey: connectionKeys.search(userId, debounced),
+    queryFn: () => searchUsers(userId as string, debounced),
+    enabled: !!userId && term.length >= SEARCH_MIN_LENGTH,
+    placeholderData: keepPreviousData,
   });
 }
 
 export function useConnectionMutations() {
   const { userId } = useAuth();
   const queryClient = useQueryClient();
-  const invalidate = () => queryClient.invalidateQueries({ queryKey: connectionKeys.all });
+  // No basta con recargar la lista de contactos: aceptar, eliminar o cambiar la
+  // visibilidad altera también el calendario, la disponibilidad y las invitaciones.
+  const invalidate = () => invalidateSharedData(queryClient);
   const uid = () => userId as string;
 
   return {

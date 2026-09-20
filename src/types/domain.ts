@@ -9,12 +9,41 @@ export type AuthUser = {
   email: string;
 };
 
+/** Rol de la cuenta (spec 09). Solo se cambia con SQL, nunca desde la app. */
+export type UserRole = 'user' | 'adminkavi';
+
 export type Profile = {
   id: string;
   username: string;
   display_name: string | null;
   avatar_url: string | null;
   created_at: string;
+  role: UserRole;
+};
+
+/** Conteos agregados del producto (RF-AD4). Nunca contenido de nadie. */
+export type AdminStats = {
+  total_accounts: number;
+  accounts_7d: number;
+  accounts_30d: number;
+  active_users_30d: number;
+  total_activities: number;
+  activities_30d: number;
+  accepted_connections: number;
+  shared_calendars: number;
+  custom_themes: number;
+  total_workouts: number;
+};
+
+/** Fila del listado de cuentas del panel (RF-AD5). */
+export type AdminAccount = {
+  id: string;
+  email: string;
+  display_name: string | null;
+  role: UserRole;
+  created_at: string;
+  activity_count: number;
+  last_active_at: string | null;
 };
 
 export type Theme = {
@@ -149,6 +178,10 @@ export type Workout = {
   activity_id: string | null;
   owner_id: string;
   performed_at: string;
+  /**
+   * Derivado, no guardado: suma de la duración de sus ejercicios (RF-F3).
+   * `null` cuando ninguno la tiene anotada.
+   */
   duration_minutes: number | null;
   notes: string | null;
   created_at: string;
@@ -172,7 +205,6 @@ export type WorkoutExercise = {
 export type WorkoutInput = {
   activity_id?: string | null;
   performed_at: string;
-  duration_minutes?: number | null;
   notes?: string | null;
 };
 

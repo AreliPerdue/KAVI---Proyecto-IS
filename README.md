@@ -13,6 +13,48 @@ pnpm start                  # Expo dev server (i = iOS, a = Android, w = web)
 pnpm ios / pnpm android     # recompila la app nativa (necesario tras instalar módulos nativos)
 ```
 
+## Backend Supabase
+
+El esquema vive en `supabase/migrations/` (9 migraciones). Todo por consola:
+
+```bash
+npx supabase login                                  # una vez, abre el navegador
+npx supabase link --project-ref evoroilcnsaciusotnqh # pide la contraseña de la BD
+pnpm db:push                                        # aplica las migraciones
+```
+
+A partir del `link`, cada migración nueva se sube solo con `pnpm db:push`.
+
+Sin `login`/`link`, en un comando (la cadena está en Project Settings → Database →
+Connection string → URI, con la contraseña ya dentro):
+
+```bash
+npx supabase db push --db-url "postgresql://postgres.evoroilcnsaciusotnqh:CONTRASENA@aws-0-REGION.pooler.supabase.com:6543/postgres"
+```
+
+Añade `--dry-run` para ver qué aplicaría sin tocar nada.
+
+### Pruebas de RLS
+`supabase/tests/rls.sql` verifica con tres usuarios que nadie ve lo ajeno, que la
+visibilidad `busy` no expone filas, que los recordatorios compartidos se silencian por
+separado y que el rol admin no da acceso a contenido:
+
+```bash
+psql "$DB_URL" -v ON_ERROR_STOP=1 -f supabase/tests/rls.sql
+```
+
+Si termina sin error, pasó. No deja datos: borra sus cuentas de prueba al final.
+
+### Modo administrador
+Regístrate en la app y luego, por consola:
+
+```bash
+psql "$DB_URL" -c "update public.profiles set role='adminkavi' \
+  where id=(select id from auth.users where email='tu-correo@ejemplo.com');"
+```
+
+El panel aparece en Perfil → Administración. Ver `specs/09-admin.md`.
+
 ## Verificación
 ```bash
 pnpm typecheck              # tsc --noEmit — debe quedar limpio antes de marcar una tarea
@@ -23,7 +65,6 @@ pnpm lint                   # expo lint (ESLint + reglas de React Compiler)
 Con `EXPO_PUBLIC_DEMO_MODE=true` la app funciona sin backend con datos en memoria (se reinician al recargar).
 - Entra con cualquier correo y una contraseña de 8+ caracteres, o con `demo@kavi.app` / `demo1234`.
 - Cuentas seed para probar el compartido (misma contraseña): `ana@kavi.app`, `luis@kavi.app`, `maria@kavi.app`, `pedro@kavi.app`. Desde Perfil se cambia de cuenta con un toque.
-- `EXPO_PUBLIC_DEMO_AUTOLOGIN=true` arranca ya autenticado (útil para capturas).
 - Deep links web: `/calendar?view=week&date=2026-09-07`, `/activity/new?date=…&start=…`.
 `pnpm typecheck` se ejecuta además en CI (`.github/workflows/typecheck.yml`) en cada push y PR.
 

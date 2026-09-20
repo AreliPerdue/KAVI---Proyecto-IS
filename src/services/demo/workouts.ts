@@ -5,7 +5,7 @@ import type { WorkoutDetail, WorkoutsApi } from '@/services/contracts';
 import { delay, demoState, emitDataChange, nextId } from '@/services/demo/store';
 import type { Workout, WorkoutExercise } from '@/types/domain';
 
-type StoredWorkout = Omit<Workout, 'activity_title' | 'exercise_count'>;
+type StoredWorkout = Omit<Workout, 'activity_title' | 'exercise_count' | 'duration_minutes'>;
 
 const workouts: StoredWorkout[] = [];
 const exercises: WorkoutExercise[] = [];
@@ -21,7 +21,6 @@ const exercises: WorkoutExercise[] = [];
     activity_id: null,
     owner_id: legDay?.owner_id ?? 'demo-user',
     performed_at: performedAt.toISOString(),
-    duration_minutes: 75,
     notes: 'Buena sesión. Subir peso en sentadilla la próxima.',
     created_at: performedAt.toISOString(),
   };
@@ -41,12 +40,21 @@ function find(id: string): StoredWorkout {
   return found;
 }
 
+/** RF-F3 · La duración total se suma de los ejercicios; no se guarda. */
+function totalMinutes(workoutId: string): number | null {
+  const total = exercises
+    .filter((e) => e.workout_id === workoutId)
+    .reduce((sum, e) => sum + (e.duration_minutes ?? 0), 0);
+  return total > 0 ? total : null;
+}
+
 function enrich(workout: StoredWorkout): Workout {
   const activity = workout.activity_id ? demoState.activities.find((a) => a.id === workout.activity_id) : null;
   return {
     ...workout,
     activity_title: activity?.title ?? null,
     exercise_count: exercises.filter((e) => e.workout_id === workout.id).length,
+    duration_minutes: totalMinutes(workout.id),
   };
 }
 
@@ -96,7 +104,6 @@ export const demoWorkouts: WorkoutsApi = {
       activity_id: input.activity_id ?? null,
       owner_id: userId,
       performed_at: input.performed_at,
-      duration_minutes: input.duration_minutes ?? null,
       notes: input.notes ?? null,
       created_at: new Date().toISOString(),
     };
@@ -110,7 +117,6 @@ export const demoWorkouts: WorkoutsApi = {
     const current = find(id);
     Object.assign(current, {
       ...patch,
-      duration_minutes: patch.duration_minutes === undefined ? current.duration_minutes : patch.duration_minutes,
       notes: patch.notes === undefined ? current.notes : patch.notes,
     });
     emitDataChange();
@@ -172,7 +178,6 @@ export const demoWorkouts: WorkoutsApi = {
     const created = await demoWorkouts.create(userId, {
       activity_id: target.activityId,
       performed_at: target.performedAt,
-      duration_minutes: target.keepValues ? source.duration_minutes : null,
       notes: null,
     });
     for (const e of source.exercises) {

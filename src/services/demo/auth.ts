@@ -1,11 +1,10 @@
 import { DEMO_OTP } from '@/constants/demo';
 import { AUTH_MESSAGES, AuthUiError } from '@/lib/auth-errors';
-import { availableUsername } from '@/lib/username';
 import type { AuthApi } from '@/services/contracts';
 import { delay, demoState, nextId, setCurrentUser } from '@/services/demo/store';
 
 /** Altas a medias: correo verificado pero sin contraseña todavía. */
-const pendingSignUps = new Map<string, { displayName: string }>();
+const pendingSignUps = new Map<string, { displayName: string; username: string }>();
 
 /** Auth demo: cualquier cuenta creada en la sesión, más demo@kavi.app / demo1234. */
 export const demoAuth: AuthApi = {
@@ -33,19 +32,24 @@ export const demoAuth: AuthApi = {
         display_name: displayName ?? null,
         avatar_url: null,
         created_at: new Date().toISOString(),
+        role: 'user',
       },
     });
     setCurrentUser(user);
     return { user, sessionCreated: true };
   },
 
-  async startEmailSignUp(email, displayName) {
+  async startEmailSignUp(email, displayName, username) {
     await delay();
     const normalized = email.trim().toLowerCase();
     if (demoState.accounts.some((a) => a.user.email === normalized)) {
       throw new AuthUiError(AUTH_MESSAGES.emailTaken);
     }
-    pendingSignUps.set(normalized, { displayName: displayName.trim() });
+    const desired = username.trim().toLowerCase();
+    if (!(await demoAuth.isUsernameAvailable(desired))) {
+      throw new AuthUiError(AUTH_MESSAGES.usernameTaken);
+    }
+    pendingSignUps.set(normalized, { displayName: displayName.trim(), username: desired });
   },
 
   async verifyEmailOtp(email, code) {
@@ -56,9 +60,7 @@ export const demoAuth: AuthApi = {
     if (code.trim() !== DEMO_OTP) throw new AuthUiError(AUTH_MESSAGES.invalidCode);
 
     const user = { id: nextId('user'), email: normalized };
-    const username = await availableUsername(normalized, (candidate) =>
-      demoAuth.isUsernameAvailable(candidate),
-    );
+    const username = pending.username;
     demoState.accounts.push({
       user,
       // Sin contraseña hasta el último paso: el alta se completa con `setPassword`.
@@ -69,6 +71,7 @@ export const demoAuth: AuthApi = {
         display_name: pending.displayName || null,
         avatar_url: null,
         created_at: new Date().toISOString(),
+        role: 'user',
       },
     });
     pendingSignUps.delete(normalized);
@@ -119,6 +122,7 @@ export const demoAuth: AuthApi = {
         display_name: null,
         avatar_url: null,
         created_at: new Date().toISOString(),
+        role: 'user',
       },
     });
     setCurrentUser(user);

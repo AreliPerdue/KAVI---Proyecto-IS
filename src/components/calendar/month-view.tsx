@@ -74,7 +74,8 @@ const DayCell = memo(function DayCell({ date, inMonth, weekend, activities, them
           style={[
             styles.dayNumber,
             { minWidth: dayNumberHeight - 2, height: dayNumberHeight - 2, borderRadius: (dayNumberHeight - 2) / 2 },
-            today ? { backgroundColor: theme.today } : null,
+            // Hoy se marca con el bloque de máximo contraste; el número va en `onInk`.
+            today ? { backgroundColor: theme.ink } : null,
           ]}>
           <AppText
             variant="label"

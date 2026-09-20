@@ -5,6 +5,7 @@
 import { env } from '@/lib/env';
 import type {
   ActivitiesApi,
+  AdminApi,
   AuthApi,
   AvailabilityApi,
   ConnectionsApi,
@@ -16,6 +17,7 @@ import type {
   WorkoutsApi,
 } from '@/services/contracts';
 import { demoActivities } from '@/services/demo/activities';
+import { demoAdmin } from '@/services/demo/admin';
 import { demoAuth } from '@/services/demo/auth';
 import { demoAvailability } from '@/services/demo/availability';
 import { demoConnections } from '@/services/demo/connections';
@@ -26,6 +28,7 @@ import { demoReminders } from '@/services/demo/reminders';
 import { demoThemes } from '@/services/demo/themes';
 import { demoWorkouts } from '@/services/demo/workouts';
 import { supabaseActivities } from '@/services/supabase/activities';
+import { supabaseAdmin } from '@/services/supabase/admin';
 import { supabaseAuth } from '@/services/supabase/auth';
 import { supabaseProfiles } from '@/services/supabase/profiles';
 import { supabaseReminders } from '@/services/supabase/reminders';
@@ -43,3 +46,4 @@ export const sharesApi: SharesApi = env.isDemoMode ? demoShares : supabaseShares
 export const availabilityApi: AvailabilityApi = env.isDemoMode ? demoAvailability : supabaseAvailability;
 export const realtimeApi: RealtimeApi = env.isDemoMode ? demoRealtime : supabaseRealtime;
 export const workoutsApi: WorkoutsApi = env.isDemoMode ? demoWorkouts : supabaseWorkouts;
+export const adminApi: AdminApi = env.isDemoMode ? demoAdmin : supabaseAdmin;

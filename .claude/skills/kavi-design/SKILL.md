@@ -32,9 +32,9 @@ blanco contrastante `#F2F2F2` — que se intercambian entre temas.
 | `text` | `#131313` | `#F2F2F2` | texto primario (≥ 4.5:1) |
 | `textSecondary` | `#565656` | `#ABABAB` | texto secundario (≥ 4.5:1) |
 | `textTertiary` | `#6E6E6E` | `#8C8C8C` | metadatos (solo ≥ 14px) |
-| `ink` (primario) | `#131313` | `#F2F2F2` | botón primario, FAB, selección |
+| `ink` (primario) | `#131313` | `#F2F2F2` | botón primario, FAB, selección y el **indicador de hoy / hora actual** (el número del día, la línea de ahora y su píldora van en `ink` con el texto en `onInk`) |
 | `onInk` | `#F2F2F2` | `#131313` | texto sobre `ink` |
-| `today` | `#BC3617` | `#FF7A5C` | indicador "hoy" y línea de hora actual (único acento cálido) |
+| `today` | `#BC3617` | `#FF7A5C` | acento cálido de **aviso**: recordatorio vencido, filtros activos, choque de horario |
 | `danger` | `#B81E2F` | `#FF6B7A` | destructivo, errores |
 | `success` | `#116B36` | `#3DD68C` | confirmaciones |
 | `neutralActivity` | `#747474` | `#7C7C7C` | actividad sin tema (RF-T4) |
@@ -43,7 +43,8 @@ blanco contrastante `#F2F2F2` — que se intercambian entre temas.
 Colores de dimensión (spec 05, fijos): física `#4CAF50`, emocional `#E91E63`, social `#FF9800`, intelectual `#2196F3`, espiritual `#9C27B0`, financiera `#009688`, ocupacional `#607D8B`. Sobre estos colores el texto va en blanco; en fondos claros se usan al 100 % para bordes/puntos y al 14 % como relleno de bloque con el texto en `text`.
 
 ### Tipografía
-- Familia: sistema (SF Pro en iOS, Roboto en Android, Inter/system-ui en web). Sin fuentes custom en V1 (P2, P9).
+- Familia de interfaz: sistema (SF Pro en iOS, Roboto en Android, Inter/system-ui en web). Todo el texto de producto va aquí.
+- **Fuentes de marca (única excepción, NFR-19)**: el wordmark "KAVI" en **Moirai One** y el eslogan "Plan more. be more." en **Poiret One**, ambas solo dentro de `components/ui/Wordmark` y del logo del splash. Nunca en botones, encabezados de pantalla ni cuerpo de texto: son display de contorno y a tamaño de interfaz pierden legibilidad. Se sirven desde `public/fonts/` — embebidas en nativo por el config plugin de `expo-font` y declaradas con `@font-face` en `src/global.css` para web — y se referencian por `BrandFonts` (nombre PostScript, igual en las 3 plataformas), nunca por string suelto.
 - Escala (px / peso / interlineado): `display` 34/700/40 · `title` 28/700/34 · `heading` 20/600/26 · `body` 16/400/24 · `bodyStrong` 16/600/24 · `label` 14/500/20 · `caption` 12/500/16.
 - Jerarquía por peso y color antes que por tamaño. Números tabulares (`fontVariant: ['tabular-nums']`) en horas y fechas.
 - Body mínimo 16; nunca texto < 12.

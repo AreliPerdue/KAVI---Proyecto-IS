@@ -28,8 +28,8 @@ export function useSignUp() {
 export function useEmailSignUp() {
   return {
     start: useMutation({
-      mutationFn: ({ email, displayName }: { email: string; displayName: string }) =>
-        startEmailSignUp(email, displayName),
+      mutationFn: ({ email, displayName, username }: { email: string; displayName: string; username: string }) =>
+        startEmailSignUp(email, displayName, username),
     }),
     verify: useMutation({
       mutationFn: ({ email, code }: { email: string; code: string }) => verifyEmailOtp(email, code),

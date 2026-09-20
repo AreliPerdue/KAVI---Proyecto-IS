@@ -5,7 +5,6 @@
 import { addDays, addHours, setHours, setMinutes, startOfDay, startOfWeek } from 'date-fns';
 
 import { DIMENSION_BY_KEY } from '@/constants/dimensions';
-import { env } from '@/lib/env';
 import { SYSTEM_THEMES } from '@/constants/themes';
 import type { Activity, AuthUser, Profile, Theme } from '@/types/domain';
 
@@ -53,6 +52,8 @@ const DEMO_PROFILE: Profile = {
   display_name: 'Demo KAVI',
   avatar_url: null,
   created_at: new Date().toISOString(),
+  // La cuenta demo es administradora para poder recorrer el panel sin backend (spec 09).
+  role: 'adminkavi',
 };
 
 function themeByName(name: string): Theme {
@@ -133,7 +134,7 @@ function contactAccount(c: (typeof DEMO_CONTACTS)[keyof typeof DEMO_CONTACTS]): 
   return {
     user: { id: c.id, email: c.email },
     password: 'demo1234',
-    profile: { id: c.id, username: c.username, display_name: c.display_name, avatar_url: null, created_at: new Date().toISOString() },
+    profile: { id: c.id, username: c.username, display_name: c.display_name, avatar_url: null, created_at: new Date().toISOString(), role: 'user' },
   };
 }
 
@@ -169,7 +170,7 @@ export const demoState: DemoState = {
     { user: DEMO_USER, password: 'demo1234', profile: DEMO_PROFILE },
     ...Object.values(DEMO_CONTACTS).map(contactAccount),
   ],
-  currentUser: env.demoAutologin ? DEMO_USER : null,
+  currentUser: null,
   contactColors: [],
   themes: [...SYSTEM_THEMES],
   activities: [...seedActivities(), ...seededOthers],

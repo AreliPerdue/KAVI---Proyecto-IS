@@ -61,7 +61,8 @@ src/
 5. **Disponibilidad**: RPC `get_availability(user_ids[], from, to)` → bloques sin detalle → `findFreeSlots()` en `lib/dates.ts` para RF-S9.
 
 ## 4. Recurrencia (implementación)
-- Guardar RRULE simplificada en la madre; al crear/editar serie, generar instancias 90 días con función SQL `generate_recurrences(activity_id)` (mantiene todo consultable por rango).
+- Guardar RRULE simplificada en la madre; al crear/editar serie, materializar instancias a 90 días (mantiene todo consultable por rango).
+- **Revisión (19-sep-2026, T031):** la materialización se hace en el cliente con `lib/recurrence.ts`, no con una función SQL `generate_recurrences`. Esa lógica ya expande la RRULE y es la que el modo demo usa desde la Fase 3; reescribirla en PL/pgSQL habría dejado la misma regla en dos lenguajes, con el riesgo de que la recurrencia se comportara distinto según el backend. Se inserta en lote, así que sigue siendo una sola ida al servidor.
 - Job de extensión de horizonte: al abrir la app, si `max(start_at)` de la serie < hoy+60d → regenerar (client-triggered RPC; sin cron en V1).
 - Editar "solo esta": la instancia se marca `recurrence_parent_id` + campos propios (detached=una fila normal editada).
 

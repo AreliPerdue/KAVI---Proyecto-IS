@@ -13,6 +13,8 @@ import { useEmailSignUp, useSignOut } from '@/hooks/use-auth-actions';
 import { useTheme } from '@/hooks/use-theme';
 import { env } from '@/lib/env';
 import { OTP_LENGTH, signUpSchema, type SignUpValues } from '@/lib/schemas/auth';
+import { availableUsername } from '@/lib/username';
+import { isUsernameAvailable } from '@/services/auth';
 import { useAuth } from '@/providers';
 
 const AUTH_MAX_WIDTH = 440;
@@ -21,6 +23,7 @@ const AUTH_MAX_WIDTH = 440;
 const STEPS = [
   { fields: ['displayName'], title: '¿Cómo te llamas?', subtitle: 'Así te verán tus contactos en el calendario compartido.' },
   { fields: ['email'], title: 'Tu correo', subtitle: 'Será tu identificador en KAVI. Te enviaremos un código para confirmarlo.' },
+  { fields: ['username'], title: 'Elige tu usuario', subtitle: 'Con esto te encuentran tus amigos. Puedes cambiarlo cuando quieras.' },
   { fields: ['code'], title: 'Confirma tu correo', subtitle: null },
   { fields: ['password', 'confirmPassword'], title: 'Crea tu contraseña', subtitle: 'Mínimo 8 caracteres.' },
 ] as const satisfies readonly { fields: readonly (keyof SignUpValues)[]; title: string; subtitle: string | null }[];
@@ -39,7 +42,7 @@ function Progress({ step }: { step: number }) {
   );
 }
 
-/** Alta por pasos: nombre → correo → código → contraseña (RF-A8). */
+/** Alta por pasos: nombre → correo → usuario → código → contraseña (RF-A8). */
 export default function RegisterScreen() {
   const theme = useTheme();
   const [step, setStep] = useState(0);
@@ -63,9 +66,9 @@ export default function RegisterScreen() {
     [],
   );
 
-  const { control, trigger, getValues, setFocus } = useForm<SignUpValues>({
+  const { control, trigger, getValues, setValue, setFocus } = useForm<SignUpValues>({
     resolver: zodResolver(signUpSchema),
-    defaultValues: { displayName: '', email: '', code: '', password: '', confirmPassword: '' },
+    defaultValues: { displayName: '', email: '', username: '', code: '', password: '', confirmPassword: '' },
     mode: 'onSubmit',
   });
 
@@ -78,11 +81,11 @@ export default function RegisterScreen() {
     verify.reset();
     finish.reset();
     // Volver desde la contraseña deshace la verificación: la cuenta se queda sin sesión.
-    if (step === 3 && sessionWithoutPassword.current) {
+    if (step === 4 && sessionWithoutPassword.current) {
       sessionWithoutPassword.current = false;
       setSignUpPending(false);
       signOut.mutate();
-      return setStep(1);
+      return setStep(2);
     }
     setStep((s) => Math.max(0, s - 1));
   };
@@ -94,14 +97,27 @@ export default function RegisterScreen() {
 
     if (step === 0) return setStep(1);
 
+    // Del correo al usuario: se propone el primero libre derivado del correo, y la
+    // persona lo acepta o escribe otro. Proponerlo aquí y no antes es lo que permite
+    // derivarlo de un correo que todavía no existía.
     if (step === 1) {
+      if (!getValues('username')) {
+        const suggestion = await availableUsername(values.email, isUsernameAvailable);
+        setValue('username', suggestion);
+      }
+      return setStep(2);
+    }
+
+    // El código se envía al salir del usuario: la cuenta nace al verificarlo, con el
+    // username ya dentro de sus metadatos.
+    if (step === 2) {
       return start.mutate(
-        { email: values.email, displayName: values.displayName },
-        { onSuccess: () => setStep(2) },
+        { email: values.email, displayName: values.displayName, username: values.username },
+        { onSuccess: () => setStep(3) },
       );
     }
 
-    if (step === 2) {
+    if (step === 3) {
       // La verificación abre sesión: se marca el alta como pendiente para que el guard
       // no salte a la app antes de tener contraseña.
       setSignUpPending(true);
@@ -110,7 +126,7 @@ export default function RegisterScreen() {
         {
           onSuccess: () => {
             sessionWithoutPassword.current = true;
-            setStep(3);
+            setStep(4);
           },
           onError: () => setSignUpPending(false),
         },
@@ -127,7 +143,11 @@ export default function RegisterScreen() {
   };
 
   const resend = () =>
-    start.mutate({ email: getValues('email'), displayName: getValues('displayName') });
+    start.mutate({
+      email: getValues('email'),
+      displayName: getValues('displayName'),
+      username: getValues('username'),
+    });
 
   return (
     <Screen scroll centered maxWidth={AUTH_MAX_WIDTH}>
@@ -147,7 +167,7 @@ export default function RegisterScreen() {
               {current.title}
             </AppText>
             {current.subtitle ? <AppText color="textSecondary">{current.subtitle}</AppText> : null}
-            {step === 2 ? (
+            {step === 3 ? (
               <AppText color="textSecondary">
                 Escribe el código de {OTP_LENGTH} dígitos que enviamos a {getValues('email')}.
               </AppText>
@@ -156,10 +176,10 @@ export default function RegisterScreen() {
         </View>
 
         {error ? <Banner tone="error" message={error.message} /> : null}
-        {step === 2 && env.isDemoMode ? (
+        {step === 3 && env.isDemoMode ? (
           <Banner tone="info" message={`Modo demo: no sale ningún correo, el código es ${DEMO_OTP}.`} />
         ) : null}
-        {step === 2 && start.isSuccess && !verify.error ? (
+        {step === 3 && start.isSuccess && !verify.error ? (
           <Banner tone="success" message="Código enviado." />
         ) : null}
 
@@ -214,6 +234,29 @@ export default function RegisterScreen() {
         {step === 2 ? (
           <Controller
             control={control}
+            name="username"
+            render={({ field: { onChange, onBlur, value }, fieldState: { error: fieldError } }) => (
+              <TextField
+                label="Usuario"
+                value={value}
+                onChangeText={(text) => onChange(text.replace(/^@+/, '').toLowerCase())}
+                onBlur={onBlur}
+                error={fieldError?.message}
+                hint="Solo letras minúsculas, números y guion bajo. Sí puedes cambiarlo después."
+                autoCapitalize="none"
+                autoCorrect={false}
+                autoFocus
+                maxLength={30}
+                returnKeyType="next"
+                onSubmitEditing={next}
+              />
+            )}
+          />
+        ) : null}
+
+        {step === 3 ? (
+          <Controller
+            control={control}
             name="code"
             render={({ field: { onChange, onBlur, value }, fieldState: { error: fieldError } }) => (
               <TextField
@@ -235,7 +278,7 @@ export default function RegisterScreen() {
           />
         ) : null}
 
-        {step === 3 ? (
+        {step === 4 ? (
           <>
             <Controller
               control={control}
@@ -280,7 +323,7 @@ export default function RegisterScreen() {
 
         <Button title={step === STEPS.length - 1 ? 'Crear cuenta' : 'Continuar'} onPress={next} loading={pending} />
 
-        {step === 2 ? (
+        {step === 3 ? (
           <Button title="Enviar otro código" variant="secondary" onPress={resend} disabled={pending} />
         ) : null}
       </View>

@@ -6,7 +6,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { AppText, Avatar, Banner, Button, EmptyState, ErrorState, IconButton, LoadingState, Screen, Sheet, TextField } from '@/components/ui';
 import { PEOPLE_COLORS, SELF_COLOR } from '@/constants/people-colors';
 import { IconSize, IconStroke, Radius, Spacing } from '@/constants/theme';
-import { useConnectionMutations, useContacts, usePeopleColors, useUserSearch } from '@/hooks/use-connections';
+import { useConnectionMutations, useContacts, usePeopleColors, useUserSearch, SEARCH_MIN_LENGTH } from '@/hooks/use-connections';
 import { useShareMutations, useInvitations } from '@/hooks/use-shares';
 import { useTheme } from '@/hooks/use-theme';
 import { formatShortDate, formatTimeRange, fromIso } from '@/lib/dates';
@@ -40,6 +40,9 @@ export default function SharedScreen() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [contactSheetFor, setContactSheetFor] = useState<string | null>(null);
   const search = useUserSearch(query);
+  // Con menos letras que el mínimo no hay búsqueda válida, así que tampoco debe
+  // quedarse en pantalla el resultado de lo que se escribió antes.
+  const canSearch = query.trim().replace(/^@+/, '').length >= SEARCH_MIN_LENGTH;
   const peopleColors = usePeopleColors();
 
   const list = contacts.data ?? [];
@@ -189,22 +192,36 @@ export default function SharedScreen() {
 
       <Sheet visible={searchOpen} onClose={() => setSearchOpen(false)} title="Buscar personas">
         <TextField
-          label="Correo"
+          label="Correo o usuario"
           value={query}
           onChangeText={setQuery}
-          placeholder="nombre@correo.com"
+          placeholder="@usuario  ·  nombre@correo.com"
           keyboardType="email-address"
           autoCapitalize="none"
           autoCorrect={false}
-          hint="Escribe el correo completo de la persona."
+          hint="Escribe las primeras letras del usuario, o el correo completo."
         />
-        {search.isFetching ? <LoadingState label="Buscando…" /> : null}
-        {search.isSuccess && search.data.length === 0 ? <AppText color="textSecondary">Nadie con ese correo.</AppText> : null}
-        {search.data?.map((p) => (
+        {!canSearch && query.trim().length > 0 ? (
+          <AppText variant="caption" color="textTertiary">
+            Escribe al menos {SEARCH_MIN_LENGTH} letras.
+          </AppText>
+        ) : null}
+        {canSearch && search.isFetching ? <LoadingState label="Buscando…" /> : null}
+        {/* Sin esto una búsqueda que falla se ve igual que una sin resultados: en blanco. */}
+        {canSearch && search.isError ? (
+          <ErrorState message={search.error.message} onRetry={() => search.refetch()} />
+        ) : null}
+        {canSearch && search.isSuccess && search.data.length === 0 ? (
+          <AppText color="textSecondary">Nadie con ese usuario o correo.</AppText>
+        ) : null}
+        {(canSearch ? search.data : [])?.map((p) => (
           <View key={p.id} style={[styles.row, { borderColor: theme.border }]}>
             <Avatar profile={p} />
             <View style={styles.cardText}>
               <AppText variant="bodyStrong">{p.display_name ?? 'Sin nombre'}</AppText>
+              <AppText variant="caption" color="textSecondary">
+                @{p.username}
+              </AppText>
             </View>
             {knownIds.has(p.id) ? (
               <AppText variant="caption" color="textTertiary">

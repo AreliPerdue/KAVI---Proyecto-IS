@@ -131,8 +131,8 @@ const DayColumn = memo(function DayColumn({
         );
       })}
       {nowMinutes !== null ? (
-        <View pointerEvents="none" style={[styles.nowLine, { top: nowMinutes * pxPerMinute, backgroundColor: theme.today }]}>
-          <View style={[styles.nowDot, { backgroundColor: theme.today }]} />
+        <View pointerEvents="none" style={[styles.nowLine, { top: nowMinutes * pxPerMinute, backgroundColor: theme.ink }]}>
+          <View style={[styles.nowDot, { backgroundColor: theme.ink }]} />
         </View>
       ) : null}
     </View>
@@ -186,7 +186,7 @@ export function Timeline({
                 <AppText variant="caption" color="textTertiary">
                   {WEEKDAY_SHORT[index]}
                 </AppText>
-                <View style={[styles.headerNumber, today ? { backgroundColor: theme.today } : null]}>
+                <View style={[styles.headerNumber, today ? { backgroundColor: theme.ink } : null]}>
                   <AppText variant="label" tabular color={today ? 'onInk' : 'text'}>
                     {day.getDate()}
                   </AppText>
@@ -230,7 +230,7 @@ export function Timeline({
               pointerEvents="none"
               accessible
               accessibilityLabel={`Hora actual, ${formatMinutes(nowMinutes)}`}
-              style={[styles.nowPill, { top: nowMinutes * pxPerMinute - 9, backgroundColor: theme.today }]}>
+              style={[styles.nowPill, { top: nowMinutes * pxPerMinute - 9, backgroundColor: theme.ink }]}>
               <AppText variant="caption" tabular color="onInk">
                 {formatMinutes(nowMinutes)}
               </AppText>

@@ -2,6 +2,8 @@
 import type { RecurrenceRule } from '@/lib/recurrence';
 import type {
   Activity,
+  AdminAccount,
+  AdminStats,
   ActivityInput,
   ActivityInvitation,
   ActivityShare,
@@ -36,10 +38,12 @@ export type SignUpResult = {
 export interface AuthApi {
   signUp(input: SignUpInput): Promise<SignUpResult>;
   /**
-   * Paso 1 del alta por pasos (RF-A8): envía un código de un solo uso al correo.
+   * Envía el código de un solo uso al correo (RF-A8). El username viaja aquí porque
+   * la cuenta se crea al verificar el código, y es el trigger de la base quien lo
+   * escribe: si se mandara después habría una ventana con el username provisional.
    * Falla si el correo ya tiene cuenta — el correo es el identificador único.
    */
-  startEmailSignUp(email: string, displayName: string): Promise<void>;
+  startEmailSignUp(email: string, displayName: string, username: string): Promise<void>;
   /** Paso 2: valida el código y deja la sesión abierta, todavía sin contraseña (RF-A8). */
   verifyEmailOtp(email: string, code: string): Promise<AuthUser>;
   /** Paso 3: fija la contraseña de la sesión recién verificada (RF-A8). */
@@ -54,8 +58,8 @@ export interface AuthApi {
   isUsernameAvailable(username: string): Promise<boolean>;
 }
 
-/** El username ya no se edita: se genera al alta y no se muestra (RF-A9). */
-export type ProfileUpdate = Pick<Profile, 'display_name'>;
+/** Nombre visible y username, ambos editables desde Perfil (RF-A9). */
+export type ProfileUpdate = Partial<Pick<Profile, 'display_name' | 'username'>>;
 
 export interface ProfilesApi {
   getMyProfile(userId: string): Promise<Profile>;
@@ -100,11 +104,11 @@ export interface ThemesApi {
 
 export interface ConnectionsApi {
   /**
-   * Búsqueda de personas por **correo exacto** (RF-S1): el correo es el identificador
-   * único, y exigirlo completo evita que se pueda enumerar a quién hay registrado.
-   * Excluye a mí mismo.
+   * Búsqueda por **correo exacto o @username exacto** (RF-S1). Exigir la cadena
+   * completa —nunca un prefijo— es lo que impide enumerar quién está registrado.
+   * La arroba inicial es opcional. Excluye a quien busca.
    */
-  searchUsers(userId: string, email: string): Promise<Profile[]>;
+  searchUsers(userId: string, query: string): Promise<Profile[]>;
   /** Contactos aceptados + solicitudes recibidas/enviadas (RF-S3). */
   listContacts(userId: string): Promise<Contact[]>;
   request(userId: string, addresseeId: string): Promise<void>;
@@ -156,4 +160,13 @@ export interface WorkoutsApi {
   exerciseNames(userId: string): Promise<string[]>;
   /** Duplica en una actividad futura o como entrenamiento libre (RF-F8). */
   duplicate(userId: string, workoutId: string, target: { activityId: string | null; performedAt: string; keepValues: boolean }): Promise<WorkoutDetail>;
+}
+
+/**
+ * Spec 09 · Panel de administración. Solo agregados: si algún día hiciera falta
+ * mostrar contenido, sería otra decisión de producto y otra spec.
+ */
+export interface AdminApi {
+  getStats(): Promise<AdminStats>;
+  listAccounts(): Promise<AdminAccount[]>;
 }

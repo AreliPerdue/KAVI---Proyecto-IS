@@ -5,6 +5,7 @@ import {
   Bell,
   BellOff,
   CalendarSearch,
+  ChartNoAxesColumn,
   Info,
   KeyRound,
   LogOut,
@@ -35,6 +36,7 @@ import { useActivitiesRange } from '@/hooks/use-activities-range';
 import { useChangePassword, useSignIn, useSignOut } from '@/hooks/use-auth-actions';
 import { useContacts } from '@/hooks/use-connections';
 import { useMyProfile, useUpdateMyProfile } from '@/hooks/use-profile';
+import { useIsAdmin } from '@/hooks/use-admin';
 import { useTheme } from '@/hooks/use-theme';
 import { useThemes } from '@/hooks/use-themes';
 import { useWorkouts } from '@/hooks/use-workouts';
@@ -93,6 +95,7 @@ export default function ProfileScreen() {
   const showSnackbar = useSnackbar();
   const { user } = useAuth();
   const profile = useMyProfile();
+  const isAdmin = useIsAdmin();
   const update = useUpdateMyProfile();
   const signOut = useSignOut();
   const signIn = useSignIn();
@@ -115,16 +118,16 @@ export default function ProfileScreen() {
 
   const { control, handleSubmit, reset, formState } = useForm<ProfileValues>({
     resolver: zodResolver(profileSchema),
-    defaultValues: { displayName: '' },
+    defaultValues: { displayName: '', username: '' },
   });
 
   useEffect(() => {
-    if (profile.data) reset({ displayName: profile.data.display_name ?? '' });
+    if (profile.data) reset({ displayName: profile.data.display_name ?? '', username: profile.data.username });
   }, [profile.data, reset]);
 
   const onSubmit = handleSubmit((values) =>
     update.mutate(
-      { display_name: values.displayName },
+      { display_name: values.displayName, username: values.username },
       {
         onSuccess: () => {
           setEditing(false);
@@ -233,6 +236,9 @@ export default function ProfileScreen() {
                 {profile.data.display_name ?? 'Sin nombre'}
               </AppText>
               <AppText color="textSecondary" numberOfLines={1}>
+                @{profile.data.username}
+              </AppText>
+              <AppText variant="caption" color="textTertiary" numberOfLines={1}>
                 {user?.email}
               </AppText>
             </View>
@@ -273,6 +279,19 @@ export default function ProfileScreen() {
       </SettingsGroup>
 
       <SettingsGroup title="Avisos">{notificationsRow()}</SettingsGroup>
+
+      {/* Solo existe para cuentas `adminkavi` (RF-AD3). Ocultarlo no es el control de
+          acceso: las funciones del panel comprueban el rol en la base (RF-AD6). */}
+      {isAdmin ? (
+        <SettingsGroup title="Administración" footer="Números agregados del producto. No incluye el contenido de ninguna cuenta.">
+          <SettingsRow
+            icon={<ChartNoAxesColumn size={IconSize.inline} strokeWidth={IconStroke} color={theme.textSecondary} />}
+            label="Estadísticas de KAVI"
+            hint="Cuentas registradas y uso."
+            onPress={() => router.push('/(app)/admin')}
+          />
+        </SettingsGroup>
+      ) : null}
 
       {env.isDemoMode ? (
         <SettingsGroup title="Modo demo" footer="Cambia de cuenta para probar el calendario compartido. Los datos se reinician al recargar.">
@@ -327,6 +346,23 @@ export default function ProfileScreen() {
           )}
         />
         {/* El correo identifica la cuenta: se muestra, pero no se edita (RF-A1). */}
+        <Controller
+          control={control}
+          name="username"
+          render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
+            <TextField
+              label="Usuario"
+              value={value}
+              onChangeText={(text) => onChange(text.replace(/^@+/, '').toLowerCase())}
+              onBlur={onBlur}
+              error={error?.message}
+              hint="Con esto te encuentran tus amigos. Puedes cambiarlo cuando quieras."
+              autoCapitalize="none"
+              autoCorrect={false}
+              maxLength={30}
+            />
+          )}
+        />
         <TextField
           label="Correo"
           value={user?.email ?? ''}

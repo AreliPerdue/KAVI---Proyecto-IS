@@ -3,7 +3,6 @@ import * as Linking from 'expo-linking';
 
 import { AUTH_MESSAGES, AuthUiError, toAuthMessage } from '@/lib/auth-errors';
 import { getSupabase } from '@/lib/supabase';
-import { availableUsername } from '@/lib/username';
 import type { AuthApi } from '@/services/contracts';
 import type { AuthUser } from '@/types/domain';
 
@@ -41,16 +40,18 @@ export const supabaseAuth: AuthApi = {
    * al verificar, así que el username y el nombre viajan como metadata para el trigger
    * `handle_new_user`. Si el correo ya tiene cuenta se corta aquí: es el identificador único.
    */
-  async startEmailSignUp(email, displayName) {
+  async startEmailSignUp(email, displayName, username) {
     const normalized = email.trim().toLowerCase();
-    const username = await availableUsername(normalized, (candidate) =>
-      supabaseAuth.isUsernameAvailable(candidate),
-    );
+    const desired = username.trim().toLowerCase();
+    // Otra persona pudo tomarlo entre que se eligió y se envía el código.
+    if (!(await supabaseAuth.isUsernameAvailable(desired))) {
+      throw new AuthUiError(AUTH_MESSAGES.usernameTaken);
+    }
     const { error } = await getSupabase().auth.signInWithOtp({
       email: normalized,
       options: {
         shouldCreateUser: true,
-        data: { username, display_name: displayName.trim() || null },
+        data: { username: desired, display_name: displayName.trim() || null },
       },
     });
     if (error) throw new AuthUiError(toAuthMessage(error), error);
