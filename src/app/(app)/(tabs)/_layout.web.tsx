@@ -4,7 +4,7 @@ import { TabList, type TabListProps, TabSlot, TabTrigger, type TabTriggerSlotPro
 import { CalendarDays, Dumbbell, UserRound, Users } from 'lucide-react-native';
 import { Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
 
-import { AppText, DimensionDots, Wordmark } from '@/components/ui';
+import { AppText, Wordmark } from '@/components/ui';
 import { IconSize, IconStroke, MaxContentWidth, Radius, Spacing } from '@/constants/theme';
 import { useSharedBadgeCount } from '@/hooks/use-shared-badge';
 import { useTheme } from '@/hooks/use-theme';
@@ -60,13 +60,11 @@ type TopBarProps = TabListProps;
 /** Barra superior web: marca + triggers (TabList con asChild exige un solo hijo). */
 function TopBar({ children, ...props }: TopBarProps) {
   const theme = useTheme();
-  const wide = useWindowDimensions().width >= 720;
   return (
     <View {...props} style={[styles.bar, { backgroundColor: theme.surface, borderBottomColor: theme.border }]}>
       <View style={styles.barInner}>
         <View style={styles.brand}>
           <Wordmark size={26} />
-          {wide ? <DimensionDots size={6} /> : null}
         </View>
         <View style={styles.tabList}>{children}</View>
       </View>
