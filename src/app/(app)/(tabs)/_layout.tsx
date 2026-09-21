@@ -16,8 +16,8 @@ export default function TabsLayout() {
 
   return (
     <NativeTabs
-      backgroundColor={"white"}
-      tintColor={"white"}
+      backgroundColor={theme.background}
+      tintColor={theme.ink}
       iconColor={{ default: "white", selected: "white" }}
       labelVisibilityMode="labeled"
       labelStyle={{

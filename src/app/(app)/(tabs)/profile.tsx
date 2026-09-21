@@ -178,7 +178,7 @@ export default function ProfileScreen() {
         <SettingsRow
           icon={<BellOff size={IconSize.inline} strokeWidth={IconStroke} color={theme.textTertiary} />}
           label="Recordatorios"
-          hint="No disponibles en web: verás un aviso dentro de la app."
+          hint="Los avisos del sistema están deshabilitados: verás el recordatorio dentro de la app."
           disabled
         />
       );

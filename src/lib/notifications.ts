@@ -1,88 +1,38 @@
 /**
- * Notificaciones locales (RF-C10, plan §3.4). expo-notifications se carga de forma
- * perezosa y solo en nativo; en web no hay notificaciones locales (NFR-10: banner in-app).
- * `syncNotifications()` es idempotente: cancela todo lo programado y reprograma.
+ * Notificaciones locales (RF-C10, plan §3.4) — **DESHABILITADAS**.
+ *
+ * `expo-notifications` se retiró del proyecto: el módulo nativo rompía el arranque
+ * en Android. Este archivo conserva la misma API para que reminders y Perfil sigan
+ * funcionando; los reminders se guardan y se ven en la app, pero no se programa
+ * ninguna notificación del sistema (NFR-10: el aviso in-app sigue disponible).
+ *
+ * Para reactivarlas: `npx expo install expo-notifications`, poner
+ * `NOTIFICATIONS_ENABLED` en `true` y restaurar la implementación con
+ * `Notifications.scheduleNotificationAsync` (ver historial de git).
  */
-import { Platform } from 'react-native';
-
 import type { UpcomingReminder } from '@/types/domain';
 
-type NotificationsModule = typeof import('expo-notifications');
-
-let module: NotificationsModule | null | undefined;
-let handlerSet = false;
-
-function load(): NotificationsModule | null {
-  if (Platform.OS === 'web') return null;
-  if (module !== undefined) return module;
-  try {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports -- carga perezosa de módulo nativo
-    module = require('expo-notifications') as NotificationsModule;
-  } catch {
-    // Binario nativo sin el módulo: sin notificaciones hasta recompilar.
-    module = null;
-  }
-  return module;
-}
+/** Interruptor único de la funcionalidad. Mientras sea `false`, todo es no-op. */
+export const NOTIFICATIONS_ENABLED = false;
 
 export function notificationsAvailable(): boolean {
-  return load() !== null;
+  return NOTIFICATIONS_ENABLED;
 }
 
 /**
  * Estado actual del permiso **sin pedirlo**, para mostrarlo en Perfil.
- * `null` = no aplica (web, o binario nativo sin el módulo compilado).
+ * `null` = no aplica (funcionalidad deshabilitada).
  */
 export async function notificationPermissionGranted(): Promise<boolean | null> {
-  const Notifications = load();
-  if (!Notifications) return null;
-  const current = await Notifications.getPermissionsAsync();
-  return current.granted;
+  return null;
 }
 
 /** Pide permiso la primera vez que hay un reminder (plan §1). */
 export async function ensureNotificationPermission(): Promise<boolean> {
-  const Notifications = load();
-  if (!Notifications) return false;
-  const current = await Notifications.getPermissionsAsync();
-  if (current.granted) return true;
-  const requested = await Notifications.requestPermissionsAsync();
-  return requested.granted;
-}
-
-function ensureHandler(Notifications: NotificationsModule) {
-  if (handlerSet) return;
-  Notifications.setNotificationHandler({
-    handleNotification: async () => ({
-      shouldShowBanner: true,
-      shouldShowList: true,
-      shouldPlaySound: true,
-      shouldSetBadge: false,
-    }),
-  });
-  handlerSet = true;
+  return false;
 }
 
 /** Reconstruye todas las notificaciones locales a partir de la lista de reminders. */
-export async function syncNotifications(items: readonly UpcomingReminder[]): Promise<number> {
-  const Notifications = load();
-  if (!Notifications) return 0;
-  ensureHandler(Notifications);
-  const granted = await ensureNotificationPermission();
-  if (!granted) return 0;
-
-  await Notifications.cancelAllScheduledNotificationsAsync();
-  const now = Date.now();
-  let scheduled = 0;
-  for (const item of items) {
-    const fireAt = new Date(item.fireAt);
-    if (fireAt.getTime() <= now) continue;
-    await Notifications.scheduleNotificationAsync({
-      identifier: item.reminderId,
-      content: { title: item.title, body: item.body, data: { activityId: item.activityId } },
-      trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: fireAt },
-    });
-    scheduled += 1;
-  }
-  return scheduled;
+export async function syncNotifications(_items: readonly UpcomingReminder[]): Promise<number> {
+  return 0;
 }
