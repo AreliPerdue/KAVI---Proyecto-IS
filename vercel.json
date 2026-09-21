@@ -1,0 +1,8 @@
+{
+  "cleanUrls": true,
+  "trailingSlash": false,
+  "rewrites": [
+    { "source": "/activity/:id", "destination": "/activity/%5Bid%5D.html" },
+    { "source": "/workout/:id", "destination": "/workout/%5Bid%5D.html" }
+  ]
+}

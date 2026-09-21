@@ -1,0 +1,68 @@
+name: EAS build producción
+
+on:
+  push:
+    branches: [main]
+    # Un cambio solo de documentación no justifica gastar créditos de build.
+    paths-ignore:
+      - '**/*.md'
+      - 'specs/**'
+      - '.vscode/**'
+  # iOS queda fuera del build automatico hasta que existan credenciales de Apple:
+  # sin ellas el job falla en cada push. Se compila a mano desde la pestana
+  # Actions -> Run workflow -> platform: ios (o 'all').
+  workflow_dispatch:
+    inputs:
+      platform:
+        description: Plataforma a compilar
+        type: choice
+        options: [android, ios, all]
+        default: android
+
+# Si llegan varios commits seguidos, solo se compila el último.
+concurrency:
+  group: eas-build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Compilar en EAS
+    runs-on: ubuntu-latest
+    # El secret con el token de Expo vive en este environment, no a nivel
+    # repositorio: sin esta linea el job no puede leerlo.
+    environment: expogithub
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Instalar dependencias
+        run: pnpm install --frozen-lockfile
+
+      # Barrera de calidad: un build de EAS tarda y cuesta, así que no se lanza
+      # con código que ni siquiera compila.
+      - name: Verificar tipos
+        run: pnpm typecheck
+
+      - name: Lint
+        run: pnpm lint
+
+      - uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPOKEY }}
+
+      - name: Lanzar build de producción
+        run: |
+          eas build \
+            --platform ${{ github.event.inputs.platform || 'android' }} \
+            --profile production \
+            --non-interactive \
+            --no-wait
