@@ -6,3 +6,30 @@
     ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New',
     monospace;
 }
+
+/**
+ * Autofill del navegador (web).
+ *
+ * Chrome y Safari pintan los campos autocompletados con su propio fondo claro
+ * mediante `:-webkit-autofill`, y ese fondo NO se puede cambiar con
+ * `background-color`: el navegador lo ignora. La via soportada es taparlo con
+ * una sombra interior solida. `-webkit-text-fill-color` hace lo propio con el
+ * texto, que si no queda oscuro sobre oscuro.
+ *
+ * Los valores replican los tokens `surface` y `text` del tema oscuro de
+ * `src/constants/theme.ts` (fuente unica). Van fijos porque KAVI se entrega
+ * siempre en oscuro (`useResolvedScheme`), sin seguir la preferencia del SO.
+ */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active,
+textarea:-webkit-autofill,
+select:-webkit-autofill {
+  -webkit-box-shadow: 0 0 0 1000px #1a1a1a inset !important;
+  box-shadow: 0 0 0 1000px #1a1a1a inset !important;
+  -webkit-text-fill-color: #f2f2f2 !important;
+  caret-color: #f2f2f2;
+  /* Evita el destello amarillo del primer frame antes de aplicar la sombra. */
+  transition: background-color 600000s 0s, color 600000s 0s;
+}
