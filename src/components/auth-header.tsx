@@ -5,7 +5,7 @@ import { Spacing } from "@/constants/theme";
 
 export type AuthHeaderProps = {
   title: string;
-  subtitle: string;
+  subtitle?: string;
   /** Muestra el eslogan bajo el wordmark (solo la pantalla de entrada). */
   slogan?: boolean;
 };

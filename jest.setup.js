@@ -98,3 +98,60 @@ jest.mock('react-native-reanimated', () => {
  */
 const { notifyManager } = require('@tanstack/react-query');
 notifyManager.setScheduler((callback) => callback());
+
+/**
+ * Expo Router depende del arbol de rutas y del contexto de navegacion, que en
+ * Jest no existen. Se sustituye por lo minimo que usan las pantallas:
+ *  - `Link` con `asChild` devuelve su hijo tal cual, que es lo que hace en la app.
+ *  - `router` y `useRouter` exponen espias, para comprobar la navegacion.
+ *  - `useLocalSearchParams` se configura por prueba con `setParametrosDeRuta`.
+ * Los contenedores de navegacion (`Stack`, `Tabs`) solo pintan a sus hijos.
+ */
+const mockRouter = {
+  push: jest.fn(),
+  replace: jest.fn(),
+  back: jest.fn(),
+  navigate: jest.fn(),
+  dismiss: jest.fn(),
+  dismissAll: jest.fn(),
+  setParams: jest.fn(),
+  canGoBack: jest.fn(() => true),
+};
+let mockParametrosDeRuta = {};
+
+global.mockRouter = mockRouter;
+global.setParametrosDeRuta = (params) => { mockParametrosDeRuta = params ?? {}; };
+
+jest.mock('expo-router', () => {
+  const React = require('react');
+  const { View } = require('react-native');
+  const contenedor = (nombre) => {
+    const C = ({ children }) => React.createElement(View, { testID: nombre }, children);
+    C.displayName = nombre;
+    C.Screen = () => null;
+    C.Protected = ({ children }) => children;
+    return C;
+  };
+  return {
+    __esModule: true,
+    router: mockRouter,
+    useRouter: () => mockRouter,
+    useLocalSearchParams: () => mockParametrosDeRuta,
+    useGlobalSearchParams: () => mockParametrosDeRuta,
+    usePathname: () => '/',
+    useSegments: () => [],
+    useNavigation: () => ({ setOptions: jest.fn() }),
+    useFocusEffect: (efecto) => React.useEffect(efecto, [efecto]),
+    Link: ({ children, asChild }) => (asChild ? children : React.createElement(View, null, children)),
+    Redirect: () => null,
+    Stack: contenedor('stack'),
+    Tabs: contenedor('tabs'),
+    Slot: ({ children }) => children,
+    SplashScreen: { preventAutoHideAsync: jest.fn(), hideAsync: jest.fn() },
+  };
+});
+
+beforeEach(() => {
+  for (const fn of Object.values(mockRouter)) if (typeof fn.mockClear === 'function') fn.mockClear();
+  mockParametrosDeRuta = {};
+});

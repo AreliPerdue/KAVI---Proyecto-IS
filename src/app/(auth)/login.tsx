@@ -28,7 +28,6 @@ export default function LoginScreen() {
       <AuthHeader
         slogan
         title="Inicia sesión"
-        subtitle="Tu calendario y tus 7 dimensiones te esperan."
       />
 
       <View style={styles.form}>
