@@ -24,10 +24,13 @@ const METODOS_CADENA = [
   'contains', 'overlaps', 'match', 'filter', 'order', 'limit', 'range', 'returns',
 ] as const;
 
-export function fakeSupabase(inicial: RespuestaSupabase = { data: null, error: null }) {
+/** Respuesta vacía: se congela para que ninguna prueba la mute sin querer. */
+const SIN_DATOS: RespuestaSupabase = Object.freeze({ data: null, error: null });
+
+export function fakeSupabase(inicial?: RespuestaSupabase) {
   const llamadas: LlamadaRegistrada[] = [];
   const cola: RespuestaSupabase[] = [];
-  let porDefecto = inicial;
+  let porDefecto = inicial ?? SIN_DATOS;
 
   const siguiente = (): Promise<RespuestaSupabase> =>
     Promise.resolve(cola.length > 0 ? (cola.shift() as RespuestaSupabase) : porDefecto);

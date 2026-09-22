@@ -7,26 +7,28 @@
 
 ## Resultado
 
-**1 171 pruebas en 72 archivos, todas en verde.**
+**1 287 pruebas en 79 archivos, todas en verde.**
 
 | Métrica | Cobertura | |
 |---|---|---|
-| **Sentencias** | **80.17 %** | 2701 / 3369 |
-| **Líneas** | **81.56 %** | 2323 / 2848 |
-| Ramas | 72.7 % | 1761 / 2422 |
-| Funciones | 74.13 % | 900 / 1214 |
+| **Sentencias** | **83.32 %** | 2813 / 3376 |
+| **Líneas** | **84.92 %** | 2423 / 2853 |
+| Ramas | 77.58 % | 1879 / 2422 |
+| Funciones | 77.97 % | 949 / 1217 |
 
-Se cumple el objetivo del 80 % en sentencias y líneas.
+Se cumple el objetivo del 80 % en todas las métricas de referencia. La cifra que
+SonarQube publica en portada —**81.6 %**— combina líneas y condiciones en un
+solo número y también queda por encima del objetivo.
 
 ## Por capa
 
 | Capa | Cobertura | Sentencias |
 |---|---|---|
-| `src/services` | 86 % | 972 / 1133 |
-| `src/app` | 72 % | 632 / 876 |
-| `src/components` | 79 % | 519 / 658 |
-| `src/hooks` | 70 % | 190 / 270 |
-| `src/lib` | 84 % | 227 / 270 |
+| `src/services` | 88 % | 1002 / 1133 |
+| `src/app` | 74 % | 649 / 876 |
+| `src/components` | 88 % | 580 / 660 |
+| `src/lib` | 84 % | 231 / 274 |
+| `src/hooks` | 70 % | 190 / 271 |
 | `src/providers` | 99 % | 78 / 79 |
 | `src/constants` | 100 % | 62 / 62 |
 | `src/store` | 100 % | 21 / 21 |
@@ -36,10 +38,15 @@ Se cumple el objetivo del 80 % en sentencias y líneas.
 Las pruebas no verifican que el código haga lo que hace, sino las reglas de
 negocio que no se ven leyéndolo:
 
+- **Privacidad de la disponibilidad.** Quien comparte su calendario en modo
+  `busy` cede sus horas ocupadas, nunca el título ni el color (P4).
 - **Cascadas de permisos.** Eliminar un contacto revoca calendarios compartidos,
   invitaciones a actividades, colores y copias de recordatorios.
 - **Recurrencia.** Editar o eliminar una actividad recurrente distingue entre
-  esta ocurrencia y toda la serie; la expansión se materializa en el cliente.
+  esta ocurrencia y toda la serie; una regla semanal nunca se queda sin días.
+- **Las dos representaciones del tiempo.** La base guarda instantes en UTC y el
+  formulario trabaja en hora local: se prueban los cruces de medianoche, las
+  actividades de todo el día y las que empiezan a las 23:50.
 - **Traslapes del calendario.** Se calculan con el espacio que un bloque ocupa
   en pantalla, no con su duración real.
 - **Alta por pasos.** Verificar el código ya abre sesión, así que el alta queda
@@ -48,13 +55,6 @@ negocio que no se ven leyéndolo:
   Supabase no comprueba la actual.
 - **Accesibilidad.** Estados anunciados, errores con región activa y etiquetas
   en controles que solo tienen icono.
-
-## Sobre la diferencia con SonarQube
-
-SonarQube reporta un porcentaje menor porque su métrica combina líneas y
-condiciones en una sola cifra, mientras que Jest las informa por separado. Ambas
-son correctas: miden cosas distintas. La cifra comparable con el objetivo del
-80 % es la de sentencias y líneas de este reporte.
 
 ## Hallazgos
 

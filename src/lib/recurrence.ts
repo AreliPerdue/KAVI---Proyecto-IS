@@ -24,7 +24,7 @@ const BYDAY_CODES = ['MO', 'TU', 'WE', 'TH', 'FR', 'SA', 'SU'] as const;
 export function toRRule(rule: RecurrenceRule): string {
   const parts = [`FREQ=${rule.freq}`];
   if (rule.freq === 'WEEKLY' && rule.byDay.length > 0) {
-    parts.push(`BYDAY=${[...rule.byDay].sort().map((d) => BYDAY_CODES[d]).join(',')}`);
+    parts.push(`BYDAY=${[...rule.byDay].sort((a, b) => a - b).map((d) => BYDAY_CODES[d]).join(',')}`);
   }
   if (rule.until) parts.push(`UNTIL=${rule.until.replace(/-/g, '')}`);
   return parts.join(';');
@@ -99,7 +99,7 @@ export function describeRecurrence(rule: RecurrenceRule | null): string {
       : rule.freq === 'MONTHLY'
         ? 'Cada mes'
         : rule.byDay.length > 0
-          ? `Cada semana: ${[...rule.byDay].sort().map((d) => names[d]).join(', ')}`
+          ? `Cada semana: ${[...rule.byDay].sort((a, b) => a - b).map((d) => names[d]).join(', ')}`
           : 'Cada semana';
   if (rule.until) text += ` · hasta ${rule.until.split('-').reverse().join('/')}`;
   return text;

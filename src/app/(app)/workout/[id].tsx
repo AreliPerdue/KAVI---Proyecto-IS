@@ -87,7 +87,7 @@ export default function WorkoutScreen() {
   return (
     <Screen modal scroll maxWidth={MAX_WIDTH}>
       <ModalHeader
-        title={editing ? 'Entrenamiento' : 'Entrenamiento'}
+        title="Entrenamiento"
         right={
           editing ? (
             saved ? (

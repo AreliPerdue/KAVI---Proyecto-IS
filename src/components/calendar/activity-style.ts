@@ -10,8 +10,8 @@ export function activityColor(activity: Pick<Activity, 'color'>, theme: ThemeCol
 export function tint(hex: string, alpha = 0.14): string {
   const clean = hex.replace('#', '');
   const value = clean.length === 3 ? clean.split('').map((c) => c + c).join('') : clean;
-  const r = parseInt(value.slice(0, 2), 16);
-  const g = parseInt(value.slice(2, 4), 16);
-  const b = parseInt(value.slice(4, 6), 16);
+  const r = Number.parseInt(value.slice(0, 2), 16);
+  const g = Number.parseInt(value.slice(2, 4), 16);
+  const b = Number.parseInt(value.slice(4, 6), 16);
   return `rgba(${r},${g},${b},${alpha})`;
 }

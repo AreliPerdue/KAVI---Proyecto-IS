@@ -20,7 +20,8 @@ export function suggestUsername(email: string): string {
     .toLowerCase()
     .replace(/[^a-z0-9_]/g, '_')
     .replace(/_{2,}/g, '_')
-    .replace(/^_+|_+$/g, '')
+    .replace(/^_+/, '')
+    .replace(/_+$/, '')
     .slice(0, MAX_LENGTH);
   const candidate = base.length >= MIN_LENGTH ? base : `${base}${FALLBACK}`.slice(0, MAX_LENGTH);
   return USERNAME_PATTERN.test(candidate) ? candidate : FALLBACK;
@@ -42,6 +43,9 @@ export async function availableUsername(
     const candidate = `${base.slice(0, MAX_LENGTH - suffix.length)}${suffix}`;
     if (await isAvailable(candidate)) return candidate;
   }
-  // Último recurso: sufijo aleatorio, mucho menos probable de chocar.
-  return `${base.slice(0, MAX_LENGTH - 5)}${Math.floor(1000 + Math.random() * 9000)}`;
+  // Último recurso tras agotar los sufijos numéricos: marca de tiempo en base 36, que
+  // no puede chocar con los intentos `2..maxAttempts` ya probados. Es un desempate de
+  // unicidad, no un valor secreto: el username es público y se puede cambiar en Perfil.
+  const suffix = Date.now().toString(36).slice(-5);
+  return `${base.slice(0, MAX_LENGTH - suffix.length)}${suffix}`;
 }

@@ -35,7 +35,6 @@ export const TextField = forwardRef<TextInput, TextFieldProps>(function TextFiel
         style={[
           styles.inputRow,
           { backgroundColor: theme.surface, borderColor },
-          focused ? null : null,
           !editable ? styles.inputRowDisabled : null,
         ]}>
         <TextInput

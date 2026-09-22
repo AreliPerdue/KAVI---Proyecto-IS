@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">27.27% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>3/11</span>
+                <span class='fraction'>11/11</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">17.24% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>5/29</span>
+                <span class='fraction'>29/29</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">33.33% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>1/3</span>
+                <span class='fraction'>3/3</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">27.27% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>3/11</span>
+                <span class='fraction'>11/11</span>
             </div>
         
             
@@ -61,7 +61,7 @@
             </div>
         </template>
     </div>
-    <div class='status-line low'></div>
+    <div class='status-line high'></div>
     <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
@@ -136,9 +136,9 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">18x</span>
-<span class="cline-any cline-yes">18x</span>
-<span class="cline-any cline-yes">18x</span>
+<span class="cline-any cline-yes">24x</span>
+<span class="cline-any cline-yes">24x</span>
+<span class="cline-any cline-yes">24x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -153,10 +153,10 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">10x</span>
+<span class="cline-any cline-yes">10x</span>
+<span class="cline-any cline-yes">10x</span>
+<span class="cline-any cline-yes">10x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -172,10 +172,10 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">8x</span>
+<span class="cline-any cline-yes">8x</span>
+<span class="cline-any cline-yes">8x</span>
+<span class="cline-any cline-yes">8x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -198,15 +198,15 @@ import type { CreateActivityInput } from '@/services/contracts';
 import type { Activity, Theme } from '@/types/domain';
 &nbsp;
 /** Valores por defecto: próxima media hora, 1 h de duración (RF-C5). */
-export function defaultFormValues(options: { dayKey?: string; startMinutes?: number; endMinutes?: number; title?: string } = <span class="branch-0 cbranch-no" title="branch not covered" >{})</span>: ActivityFormValues {
+export function defaultFormValues(options: { dayKey?: string; startMinutes?: number; endMinutes?: number; title?: string } = {}): ActivityFormValues {
   const now = nextHalfHour();
-  const startMinutes = Math.min(options.startMinutes ?? <span class="branch-1 cbranch-no" title="branch not covered" >minutesSinceMidnight(now),</span> 1380);
+  const startMinutes = Math.min(options.startMinutes ?? minutesSinceMidnight(now), 1380);
   return {
     title: options.title ?? '',
     description: '',
-    dayKey: options.dayKey ?? <span class="branch-1 cbranch-no" title="branch not covered" >toDayKey(now),</span>
+    dayKey: options.dayKey ?? toDayKey(now),
     startMinutes,
-    endMinutes: Math.min(options.endMinutes ?? <span class="branch-1 cbranch-no" title="branch not covered" >startMinutes + 60,</span> 1440),
+    endMinutes: Math.min(options.endMinutes ?? startMinutes + 60, 1440),
     allDay: false,
     isGym: false,
     themeId: null,
@@ -215,11 +215,11 @@ export function defaultFormValues(options: { dayKey?: string; startMinutes?: num
   };
 }
 &nbsp;
-export function <span class="fstat-no" title="function not covered" >activityToFormValues(</span>activity: Activity, seriesRule: string | null = <span class="branch-0 cbranch-no" title="branch not covered" >activity.recurrence_rule,</span> reminderOffsets: number[] = <span class="branch-0 cbranch-no" title="branch not covered" >[])</span>: ActivityFormValues {
-  const start = <span class="cstat-no" title="statement not covered" >fromIso(activity.start_at);</span>
-  const end = <span class="cstat-no" title="statement not covered" >fromIso(activity.end_at);</span>
-  const sameDay = <span class="cstat-no" title="statement not covered" >toDayKey(start) === toDayKey(end);</span>
-<span class="cstat-no" title="statement not covered" >  return {</span>
+export function activityToFormValues(activity: Activity, seriesRule: string | null = activity.recurrence_rule, reminderOffsets: number[] = []): ActivityFormValues {
+  const start = fromIso(activity.start_at);
+  const end = fromIso(activity.end_at);
+  const sameDay = toDayKey(start) === toDayKey(end);
+  return {
     title: activity.title,
     description: activity.description ?? '',
     dayKey: toDayKey(start),
@@ -234,11 +234,11 @@ export function <span class="fstat-no" title="function not covered" >activityToF
 }
 &nbsp;
 /** Convierte el formulario a UTC y copia el estilo del tema (RF-T1, RF-T6). */
-export function <span class="fstat-no" title="function not covered" >formValuesToInput(</span>values: ActivityFormValues, theme: Theme | null): CreateActivityInput {
-  const day = <span class="cstat-no" title="statement not covered" >fromDayKey(values.dayKey);</span>
-  const start = <span class="cstat-no" title="statement not covered" >values.allDay ? startOfDay(day) : setTimeOfDay(day, values.startMinutes);</span>
-  const end = <span class="cstat-no" title="statement not covered" >values.allDay ? addDays(startOfDay(day), 1) : setTimeOfDay(day, values.endMinutes);</span>
-<span class="cstat-no" title="statement not covered" >  return {</span>
+export function formValuesToInput(values: ActivityFormValues, theme: Theme | null): CreateActivityInput {
+  const day = fromDayKey(values.dayKey);
+  const start = values.allDay ? startOfDay(day) : setTimeOfDay(day, values.startMinutes);
+  const end = values.allDay ? addDays(startOfDay(day), 1) : setTimeOfDay(day, values.endMinutes);
+  return {
     title: values.title,
     description: values.description ? values.description : null,
     start_at: toIso(start),
@@ -259,7 +259,7 @@ export function <span class="fstat-no" title="function not covered" >formValuesT
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-09-22T17:31:43.518Z
+                at 2026-09-22T17:51:24.895Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

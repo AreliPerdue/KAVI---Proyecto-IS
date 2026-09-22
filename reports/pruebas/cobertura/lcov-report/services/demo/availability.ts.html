@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">6.25% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>1/16</span>
+                <span class='fraction'>16/16</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>0/18</span>
+                <span class='fraction'>18/18</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>0/3</span>
+                <span class='fraction'>3/3</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">8.33% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>1/12</span>
+                <span class='fraction'>12/12</span>
             </div>
         
             
@@ -61,7 +61,7 @@
             </div>
         </template>
     </div>
-    <div class='status-line low'></div>
+    <div class='status-line high'></div>
     <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
@@ -96,27 +96,27 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">15x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">12x</span>
+<span class="cline-any cline-yes">12x</span>
+<span class="cline-any cline-yes">12x</span>
+<span class="cline-any cline-yes">14x</span>
+<span class="cline-any cline-yes">25x</span>
+<span class="cline-any cline-yes">14x</span>
+<span class="cline-any cline-yes">12x</span>
+<span class="cline-any cline-yes">12x</span>
+<span class="cline-any cline-yes">20x</span>
+<span class="cline-any cline-yes">10x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">12x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import type { AvailabilityApi } from '@/services/contracts';
@@ -125,17 +125,17 @@ import type { AvailabilityBlock } from '@/types/domain';
 &nbsp;
 /** Equivalente a la RPC get_availability: nunca expone título si la visibilidad es busy (P4). */
 export const demoAvailability: AvailabilityApi = {
-<span class="fstat-no" title="function not covered" >  as</span>ync getAvailability(userId, userIds, fromIso, toIso) {
-<span class="cstat-no" title="statement not covered" >    await delay();</span>
-    const blocks: AvailabilityBlock[] = <span class="cstat-no" title="statement not covered" >[];</span>
-<span class="cstat-no" title="statement not covered" >    for (const targetId of userIds) {</span>
-      const isMe = <span class="cstat-no" title="statement not covered" >targetId === userId;</span>
-      const share = <span class="cstat-no" title="statement not covered" >demoState.calendarShares.find(<span class="fstat-no" title="function not covered" >(s</span>) =&gt; <span class="cstat-no" title="statement not covered" >s.owner_id === targetId &amp;&amp; s.shared_with_id === userId)</span>;</span>
-<span class="cstat-no" title="statement not covered" >      if (!isMe &amp;&amp; !share) <span class="cstat-no" title="statement not covered" >continue;</span></span>
-      const withDetails = <span class="cstat-no" title="statement not covered" >isMe || share?.visibility === 'details';</span>
-<span class="cstat-no" title="statement not covered" >      for (const a of demoState.activities) {</span>
-<span class="cstat-no" title="statement not covered" >        if (a.owner_id !== targetId || !(a.start_at &lt; toIso &amp;&amp; a.end_at &gt; fromIso)) <span class="cstat-no" title="statement not covered" >continue;</span></span>
-<span class="cstat-no" title="statement not covered" >        blocks.push({</span>
+  async getAvailability(userId, userIds, fromIso, toIso) {
+    await delay();
+    const blocks: AvailabilityBlock[] = [];
+    for (const targetId of userIds) {
+      const isMe = targetId === userId;
+      const share = demoState.calendarShares.find((s) =&gt; s.owner_id === targetId &amp;&amp; s.shared_with_id === userId);
+      if (!isMe &amp;&amp; !share) continue;
+      const withDetails = isMe || share?.visibility === 'details';
+      for (const a of demoState.activities) {
+        if (a.owner_id !== targetId || !(a.start_at &lt; toIso &amp;&amp; a.end_at &gt; fromIso)) continue;
+        blocks.push({
           user_id: targetId,
           start_at: a.start_at,
           end_at: a.end_at,
@@ -144,7 +144,7 @@ export const demoAvailability: AvailabilityApi = {
         });
       }
     }
-<span class="cstat-no" title="statement not covered" >    return blocks.sort(<span class="fstat-no" title="function not covered" >(a</span>, b) =&gt; <span class="cstat-no" title="statement not covered" >a.start_at.localeCompare(b.start_at))</span>;</span>
+    return blocks.sort((a, b) =&gt; a.start_at.localeCompare(b.start_at));
   },
 };
 &nbsp;</pre></td></tr></table></pre>
@@ -154,7 +154,7 @@ export const demoAvailability: AvailabilityApi = {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-09-22T17:31:43.518Z
+                at 2026-09-22T17:51:24.895Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

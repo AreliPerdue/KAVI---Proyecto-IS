@@ -17,7 +17,7 @@ export type ExerciseCardProps = {
 };
 
 const toInt = (text: string): number | null => {
-  const n = parseInt(text, 10);
+  const n = Number.parseInt(text, 10);
   return Number.isFinite(n) && n > 0 ? n : null;
 };
 

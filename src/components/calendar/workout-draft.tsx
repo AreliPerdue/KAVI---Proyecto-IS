@@ -14,9 +14,13 @@ import type { WorkoutExerciseInput } from '@/types/domain';
  */
 export type ExerciseDraft = WorkoutExerciseInput & { key: string };
 
+/** Contador de borradores: la `key` solo tiene que ser única dentro de la sesión. */
+let siguienteBorrador = 0;
+
 export function emptyExercise(): ExerciseDraft {
+  siguienteBorrador += 1;
   return {
-    key: `draft-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    key: `draft-${siguienteBorrador}`,
     name: '',
     sets: null,
     reps: null,
@@ -27,7 +31,7 @@ export function emptyExercise(): ExerciseDraft {
 }
 
 const toInt = (text: string): number | null => {
-  const n = parseInt(text, 10);
+  const n = Number.parseInt(text, 10);
   return Number.isFinite(n) && n > 0 ? n : null;
 };
 

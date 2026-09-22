@@ -210,12 +210,17 @@ export function findFreeSlots(
   for (let day = startOfDay(from); day < to; day = addDays(day, 1)) {
     const windowStart = new Date(Math.max(setTimeOfDay(day, dayStartHour * 60).getTime(), from.getTime()));
     const windowEnd = new Date(Math.min(setTimeOfDay(day, dayEndHour * 60).getTime(), to.getTime()));
-    for (let cursor = windowStart; cursor.getTime() + durationMs <= windowEnd.getTime(); cursor = new Date(cursor.getTime() + stepMs)) {
+    // `while` y no `for`: el cursor avanza de dos maneras distintas según haya choque
+    // o no, y expresarlo en la cabecera del bucle obligaba a reasignarlo dentro.
+    let cursor = windowStart;
+    while (cursor.getTime() + durationMs <= windowEnd.getTime()) {
       const candidateEnd = new Date(cursor.getTime() + durationMs);
       const conflict = sorted.some((b) => b.start < candidateEnd && b.end > cursor);
-      if (!conflict) {
+      if (conflict) {
+        cursor = new Date(cursor.getTime() + stepMs);
+      } else {
         slots.push({ start: cursor, end: candidateEnd });
-        cursor = new Date(candidateEnd.getTime() - stepMs); // salta al final del hueco encontrado
+        cursor = candidateEnd; // el siguiente hueco arranca donde termina este
       }
     }
   }
