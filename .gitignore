@@ -46,3 +46,6 @@ example
 
 # Cobertura de pruebas. `reports/` SI se versiona: es un entregable.
 coverage/
+
+# Resultado intermedio de Jest (lo usa `pnpm test:listado`)
+.jest-results.json

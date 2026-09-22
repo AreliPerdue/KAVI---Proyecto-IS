@@ -37,4 +37,13 @@ module.exports = {
     '!src/types/**',
     '!src/**/*.d.ts',
   ],
+  /**
+   * Suelo de cobertura. Se fija por debajo de lo que hay hoy (83 % de sentencias,
+   * 85 % de lineas, 78 % de ramas y funciones) para que un refactor normal no lo
+   * rompa, pero si lo rompa una perdida real de pruebas. Solo aplica cuando se
+   * mide cobertura, asi que `pnpm test` a secas no se ve afectado.
+   */
+  coverageThreshold: {
+    global: { statements: 80, lines: 80, branches: 74, functions: 74 },
+  },
 };

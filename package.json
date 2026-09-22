@@ -63,6 +63,7 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
+    "test:listado": "jest --json --outputFile=.jest-results.json && python3 reports/pruebas/generar-que-se-probo.py .jest-results.json",
     "start": "expo start",
     "android": "expo run:android",
     "ios": "expo run:ios",

@@ -1,0 +1,118 @@
+name: Pruebas
+
+on:
+  # Ejecutar a mano desde la pestana Actions, que es lo que hace falta tras una
+  # tanda de cambios: comprobar que nada se rompio, sin tener que subir nada.
+  workflow_dispatch:
+    inputs:
+      filtro:
+        description: 'Solo las pruebas cuya ruta coincida (p. ej. calendar, auth, profile). Vacio = todas.'
+        required: false
+        type: string
+      sonarqube:
+        description: 'Enviar ademas el analisis a SonarQube'
+        type: boolean
+        default: true
+  push:
+    branches: [main]
+  pull_request:
+
+# Una tanda de commits seguidos no deja corriendo ejecuciones que ya no importan.
+concurrency:
+  group: pruebas-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  pruebas:
+    name: Tipos, lint y pruebas
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      # Los tres pasos siguientes continuan aunque fallen, a proposito: asi una
+      # sola ejecucion ensena todos los problemas de golpe en vez de obligar a
+      # descubrirlos de uno en uno. El paso "Resultado" es el que decide.
+      - name: Verificar tipos
+        id: tipos
+        continue-on-error: true
+        run: pnpm typecheck
+
+      - name: Ejecutar las pruebas
+        id: pruebas
+        continue-on-error: true
+        # El filtro llega por variable de entorno y no interpolado en el shell,
+        # para que su contenido no pueda ejecutarse como comando.
+        env:
+          FILTRO: ${{ inputs.filtro }}
+        run: |
+          if [ -n "$FILTRO" ]; then
+            echo "completa=no" >> "$GITHUB_OUTPUT"
+            npx jest --ci --json --outputFile=jest-results.json --testPathPatterns "$FILTRO"
+          else
+            echo "completa=si" >> "$GITHUB_OUTPUT"
+            npx jest --ci --coverage --json --outputFile=jest-results.json
+          fi
+
+      - name: Lint
+        id: lint
+        continue-on-error: true
+        run: pnpm lint
+
+      - name: Resultado
+        env:
+          ESTADO_TIPOS: ${{ steps.tipos.outcome }}
+          ESTADO_LINT: ${{ steps.lint.outcome }}
+          COMPLETA: ${{ steps.pruebas.outputs.completa }}
+        run: |
+          # La cobertura del repositorio esta versionada, asi que solo se resume
+          # cuando esta ejecucion la ha regenerado; si no, ensenaria cifras viejas.
+          if [ "$COMPLETA" = "si" ]; then
+            node scripts/resumen-pruebas.mjs jest-results.json reports/pruebas/cobertura/coverage-summary.json
+          else
+            node scripts/resumen-pruebas.mjs jest-results.json
+          fi
+
+      - name: Guardar la cobertura
+        if: always() && steps.pruebas.outputs.completa == 'si'
+        uses: actions/upload-artifact@v4
+        with:
+          name: cobertura
+          path: reports/pruebas/cobertura/
+          retention-days: 30
+
+  sonarqube:
+    name: SonarQube
+    # Solo tras una ejecucion completa y en verde: no tiene sentido publicar el
+    # analisis de un build roto ni la cobertura parcial de una corrida filtrada.
+    needs: pruebas
+    if: github.event_name != 'workflow_dispatch' || (inputs.sonarqube && inputs.filtro == '')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # SonarQube necesita el historial completo para fechar el codigo nuevo
+          # y decidir el quality gate; con el checkout superficial lo marca todo
+          # como nuevo.
+          fetch-depth: 0
+
+      - name: Recuperar la cobertura del trabajo anterior
+        uses: actions/download-artifact@v4
+        with:
+          name: cobertura
+          path: reports/pruebas/cobertura
+
+      - name: Analisis de SonarQube Cloud
+        uses: SonarSource/sonarqube-scan-action@v7
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}

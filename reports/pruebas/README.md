@@ -3,7 +3,7 @@
 **Framework:** Jest 30 con el preset `jest-expo` y `@testing-library/react-native`
 **Fecha:** 22 de septiembre de 2026
 **Comando:** `pnpm test:coverage`
-**Ejecución en CI:** [workflow "calidad"](../../.github/workflows/typecheck.yml)
+**Ejecución en CI:** [workflow "Pruebas"](../../.github/workflows/pruebas.yml)
 
 ## Resultado
 

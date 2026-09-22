@@ -59,14 +59,48 @@ El panel aparece en Perfil → Administración. Ver `specs/09-admin.md`.
 ```bash
 pnpm typecheck              # tsc --noEmit — debe quedar limpio antes de marcar una tarea
 pnpm lint                   # expo lint (ESLint + reglas de React Compiler)
+pnpm test                   # las 1 287 pruebas (~20 s)
+pnpm test:watch             # las vuelve a correr al guardar, mientras desarrollas
+pnpm test:coverage          # además mide la cobertura y la escribe en reports/pruebas/
+pnpm test:listado           # regenera reports/pruebas/Listado de pruebas.md
 ```
+
+Solo una parte:
+
+```bash
+npx jest calendar                        # los archivos cuya ruta contenga "calendar"
+npx jest -t "no envia sin contraseña"    # una prueba concreta por su nombre
+```
+
+### En CI
+
+El workflow [**Pruebas**](.github/workflows/pruebas.yml) corre tipos, pruebas y lint
+en cada push a `main` y en cada pull request, y **también a mano**: Actions →
+*Pruebas* → *Run workflow*. Ahí se puede acotar a una parte con el campo *filtro*
+(por ejemplo `calendar`), útil cuando solo hace falta comprobar una zona.
+
+Los tres pasos siguen adelante aunque uno falle, para que una sola ejecución
+enseñe todos los problemas de golpe. El resumen —cuántas pruebas pasaron, cuáles
+se rompieron y con qué error, y la cobertura— aparece en la propia página de la
+ejecución, sin tener que abrir los registros.
+
+La cobertura tiene un suelo del 80 %: si baja de ahí, el build falla. Está en
+`coverageThreshold`, en `jest.config.js`.
+
+### Añadir una prueba
+
+Basta crear el archivo; no hay que registrarlo en ningún sitio. Jest recoge todo
+lo que encaje con `src/**/__tests__/**/*.test.ts(x)`, así que una prueba nueva
+para `src/components/ui/button.tsx` va en
+`src/components/ui/__tests__/button.test.tsx`. Las utilidades compartidas ya
+montadas están en `jest.setup.js` (router, gestos, animaciones) y en
+`src/hooks/__tests__/query-wrapper.tsx`.
 
 ## Modo demo
 Con `EXPO_PUBLIC_DEMO_MODE=true` la app funciona sin backend con datos en memoria (se reinician al recargar).
 - Entra con cualquier correo y una contraseña de 8+ caracteres, o con `demo@kavi.app` / `demo1234`.
 - Cuentas seed para probar el compartido (misma contraseña): `ana@kavi.app`, `luis@kavi.app`, `maria@kavi.app`, `pedro@kavi.app`. Desde Perfil se cambia de cuenta con un toque.
 - Deep links web: `/calendar?view=week&date=2026-09-07`, `/activity/new?date=…&start=…`.
-`pnpm typecheck` se ejecuta además en CI (`.github/workflows/typecheck.yml`) en cada push y PR.
 
 ## Base de datos (Supabase CLI)
 ```bash

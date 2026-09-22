@@ -3,7 +3,7 @@
 **Proyecto:** [AreliPerdue_KAVI---Proyecto-IS](https://sonarcloud.io/summary/overall?id=AreliPerdue_KAVI---Proyecto-IS)
 **Fecha:** 22 de septiembre de 2026
 **Análisis:** vía GitHub Actions (`SonarSource/sonarqube-scan-action@v7`), con la cobertura de Jest conectada
-**Ejecución:** [workflow "calidad"](../../.github/workflows/typecheck.yml)
+**Ejecución:** [workflow "Pruebas"](../../.github/workflows/pruebas.yml)
 
 ## Métricas
 
