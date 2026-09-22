@@ -43,3 +43,6 @@ example
 # generated native folders
 /ios
 /android
+
+# Cobertura de pruebas
+coverage/
