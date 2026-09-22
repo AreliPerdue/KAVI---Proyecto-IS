@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/4</span>
+                <span class='fraction'>4/4</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>0/2</span>
+                <span class='fraction'>2/2</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>0/3</span>
+                <span class='fraction'>3/3</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/3</span>
+                <span class='fraction'>3/3</span>
             </div>
         
             
@@ -61,7 +61,7 @@
             </div>
         </template>
     </div>
-    <div class='status-line low'></div>
+    <div class='status-line high'></div>
     <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
@@ -103,13 +103,10 @@
 <a name='L38'></a><a href='#L38'>38</a>
 <a name='L39'></a><a href='#L39'>39</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">7x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -119,7 +116,10 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">6x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -141,10 +141,10 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import type { Activity, AvailabilityBlock } from '@/types/domain';
 &nbsp;
-export const OVERLAY_PREFIX = <span class="cstat-no" title="statement not covered" >'overlay-';</span>
+export const OVERLAY_PREFIX = 'overlay-';
 &nbsp;
-export function <span class="fstat-no" title="function not covered" >isOverlayActivity(</span>activity: Pick&lt;Activity, 'id'&gt;): boolean {
-<span class="cstat-no" title="statement not covered" >  return activity.id.startsWith(OVERLAY_PREFIX);</span>
+export function isOverlayActivity(activity: Pick&lt;Activity, 'id'&gt;): boolean {
+  return activity.id.startsWith(OVERLAY_PREFIX);
 }
 &nbsp;
 /**
@@ -152,12 +152,12 @@ export function <span class="fstat-no" title="function not covered" >isOverlayAc
  * en las vistas. El color y el nombre salen de quién es su dueño (RF-S15): con `busy`
  * el bloque no trae título, así que el color de persona es la única pista visual.
  */
-export function <span class="fstat-no" title="function not covered" >blocksToActivities(</span>
+export function blocksToActivities(
   blocks: readonly AvailabilityBlock[],
   nameOf: (userId: string) =&gt; string,
   colorOf: (userId: string) =&gt; string,
 ): Activity[] {
-<span class="cstat-no" title="statement not covered" >  return blocks.map(<span class="fstat-no" title="function not covered" >(b</span>, i) =&gt; (<span class="cstat-no" title="statement not covered" >{</span></span>
+  return blocks.map((b, i) =&gt; ({
     id: `${OVERLAY_PREFIX}${b.user_id}-${i}-${b.start_at}`,
     owner_id: b.user_id,
     owner_name: nameOf(b.user_id),
@@ -184,7 +184,7 @@ export function <span class="fstat-no" title="function not covered" >blocksToAct
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-09-22T12:59:58.289Z
+                at 2026-09-22T16:42:41.463Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

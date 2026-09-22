@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/15</span>
+                <span class='fraction'>15/15</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>0/4</span>
+                <span class='fraction'>4/4</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>0/2</span>
+                <span class='fraction'>2/2</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/12</span>
+                <span class='fraction'>12/12</span>
             </div>
         
             
@@ -61,7 +61,7 @@
             </div>
         </template>
     </div>
-    <div class='status-line low'></div>
+    <div class='status-line high'></div>
     <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
@@ -107,21 +107,21 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">14x</span>
+<span class="cline-any cline-yes">14x</span>
+<span class="cline-any cline-yes">11x</span>
+<span class="cline-any cline-yes">11x</span>
+<span class="cline-any cline-yes">11x</span>
+<span class="cline-any cline-yes">15x</span>
+<span class="cline-any cline-yes">15x</span>
+<span class="cline-any cline-yes">15x</span>
+<span class="cline-any cline-yes">12x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">14x</span>
+<span class="cline-any cline-yes">12x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">14x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import { addDays, startOfDay } from 'date-fns';
 &nbsp;
@@ -136,22 +136,22 @@ export type ActivitiesByDay = Map&lt;string, Activity[]&gt;;
  * cae en "+N más", y sin él las actividades superpuestas de otras personas quedaban
  * siempre al final (RF-C1, RF-S15).
  */
-export function <span class="fstat-no" title="function not covered" >groupByDay(</span>activities: readonly Activity[]): ActivitiesByDay {
-  const map: ActivitiesByDay = <span class="cstat-no" title="statement not covered" >new Map();</span>
-<span class="cstat-no" title="statement not covered" >  for (const activity of activities) {</span>
-    const start = <span class="cstat-no" title="statement not covered" >startOfDay(fromIso(activity.start_at));</span>
-    const end = <span class="cstat-no" title="statement not covered" >fromIso(activity.end_at);</span>
-<span class="cstat-no" title="statement not covered" >    for (let day = <span class="cstat-no" title="statement not covered" >start;</span> day &lt; end; day = addDays(day, 1)) {</span>
-      const key = <span class="cstat-no" title="statement not covered" >toDayKey(day);</span>
-      const list = <span class="cstat-no" title="statement not covered" >map.get(key);</span>
-<span class="cstat-no" title="statement not covered" >      if (list) <span class="cstat-no" title="statement not covered" >list.push(activity);</span></span>
-      else <span class="cstat-no" title="statement not covered" >map.set(key, [activity]);</span>
+export function groupByDay(activities: readonly Activity[]): ActivitiesByDay {
+  const map: ActivitiesByDay = new Map();
+  for (const activity of activities) {
+    const start = startOfDay(fromIso(activity.start_at));
+    const end = fromIso(activity.end_at);
+    for (let day = start; day &lt; end; day = addDays(day, 1)) {
+      const key = toDayKey(day);
+      const list = map.get(key);
+      if (list) list.push(activity);
+      else map.set(key, [activity]);
     }
   }
-<span class="cstat-no" title="statement not covered" >  for (const list of map.values()) {</span>
-<span class="cstat-no" title="statement not covered" >    list.sort(<span class="fstat-no" title="function not covered" >(a</span>, b) =&gt; <span class="cstat-no" title="statement not covered" >a.start_at.localeCompare(b.start_at) || a.title.localeCompare(b.title))</span>;</span>
+  for (const list of map.values()) {
+    list.sort((a, b) =&gt; a.start_at.localeCompare(b.start_at) || a.title.localeCompare(b.title));
   }
-<span class="cstat-no" title="statement not covered" >  return map;</span>
+  return map;
 }
 &nbsp;</pre></td></tr></table></pre>
 
@@ -160,7 +160,7 @@ export function <span class="fstat-no" title="function not covered" >groupByDay(
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-09-22T12:59:58.289Z
+                at 2026-09-22T16:42:41.463Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
