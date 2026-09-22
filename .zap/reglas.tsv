@@ -1,0 +1,7 @@
+# Reglas del escaneo ZAP. Formato: ID	accion	comentario
+# accion: WARN (avisar), FAIL (romper el job) o IGNORE (silenciar).
+#
+# Por ahora todo queda en WARN: el objetivo de esta primera pasada es
+# inventariar los hallazgos para el informe, no bloquear el pipeline.
+# Cuando cada aviso este revisado, los aceptados pasan a IGNORE con su
+# justificacion escrita aqui y el resto a FAIL.

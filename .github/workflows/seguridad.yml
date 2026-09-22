@@ -1,0 +1,36 @@
+name: Escaneo de seguridad (OWASP ZAP)
+
+# Manual a proposito: el escaneo tarda varios minutos y apunta al sitio
+# desplegado, no al codigo, asi que no tiene sentido lanzarlo en cada push.
+on:
+  workflow_dispatch:
+    inputs:
+      objetivo:
+        description: URL a escanear
+        type: string
+        default: https://kavi-proyecto-is.vercel.app
+
+permissions:
+  contents: read
+
+jobs:
+  zap:
+    name: ZAP Baseline
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Baseline y no full-scan: el escaneo completo lanza ataques activos
+      # (inyeccion, XSS reflejado) contra el objetivo. Apuntando a un despliegue
+      # con la base de datos real eso escribiria basura en Supabase.
+      - name: Escaneo pasivo con ZAP
+        uses: zaproxy/action-baseline@v0.15.0
+        with:
+          target: ${{ github.event.inputs.objetivo || 'https://kavi-proyecto-is.vercel.app' }}
+          rules_file_name: .zap/reglas.tsv
+          # Los hallazgos se documentan en el reporte, no abriendo issues.
+          allow_issue_writing: false
+          # Un aviso no debe marcar el job en rojo: el entregable es el reporte.
+          fail_action: false
+          artifact_name: reporte-zap
+          cmd_options: '-a'

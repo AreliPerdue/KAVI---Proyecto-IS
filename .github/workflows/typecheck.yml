@@ -1,4 +1,4 @@
-name: typecheck
+name: calidad
 
 on:
   push:
@@ -6,18 +6,38 @@ on:
   pull_request:
 
 jobs:
-  typecheck:
+  calidad:
+    name: Tipos, pruebas, lint y SonarQube
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          # SonarQube necesita el historial completo para fechar el codigo nuevo
+          # y decidir el quality gate; con el checkout superficial lo marca todo
+          # como nuevo.
+          fetch-depth: 0
+
       - uses: pnpm/action-setup@v4
         with:
           version: 11
+
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: pnpm
+
       - run: pnpm install --frozen-lockfile
-      - run: pnpm typecheck
-      - run: pnpm test
-      - run: pnpm lint
+
+      - name: Verificar tipos
+        run: pnpm typecheck
+
+      - name: Pruebas con cobertura
+        run: pnpm test:coverage
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Analisis de SonarQube Cloud
+        uses: SonarSource/sonarqube-scan-action@v7
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
