@@ -1,21 +1,73 @@
-The MIT License (MIT)
+KAVI — Todos los derechos reservados
 
-Copyright (c) 2015-present 650 Industries, Inc. (aka Expo)
+Copyright (c) 2026 Areli Perdue
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+TÉRMINOS
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+Este repositorio se publica con fines de consulta y de evaluación académica,
+como parte del proyecto final de Ingeniería de Software de la Universidad
+Tecmilenio.
+
+La titular del copyright se reserva todos los derechos sobre el código fuente,
+el diseño de la aplicación, la marca «KAVI» y su eslogan. Salvo autorización
+previa y por escrito, no se concede permiso para:
+
+  - usar el software, en todo o en parte, con cualquier fin;
+  - copiarlo, modificarlo, fusionarlo o crear obras derivadas de él;
+  - publicarlo, distribuirlo, sublicenciarlo o venderlo.
+
+Sí se permite, sin necesidad de autorización previa: leer el código, citarlo
+con atribución en contextos académicos o de revisión por pares, y clonarlo
+localmente para evaluarlo.
+
+Que este repositorio sea públicamente visible no concede ninguna licencia. La
+visibilidad pública responde a los requisitos de las herramientas de análisis
+de calidad y seguridad utilizadas en el proyecto.
+
+
+SIN GARANTÍA
+
+EL SOFTWARE SE PROPORCIONA «TAL CUAL», SIN GARANTÍA DE NINGÚN TIPO, EXPRESA O
+IMPLÍCITA, INCLUIDAS ENTRE OTRAS LAS GARANTÍAS DE COMERCIABILIDAD, IDONEIDAD
+PARA UN PROPÓSITO PARTICULAR Y NO INFRACCIÓN. EN NINGÚN CASO LA TITULAR DEL
+COPYRIGHT SERÁ RESPONSABLE DE NINGUNA RECLAMACIÓN, DAÑO U OTRA RESPONSABILIDAD,
+YA SEA EN UNA ACCIÓN CONTRACTUAL, EXTRACONTRACTUAL O DE OTRO TIPO, DERIVADA DE
+O RELACIONADA CON EL SOFTWARE O SU USO.
+
+
+COMPONENTES DE TERCEROS
+
+Lo anterior cubre el código propio de KAVI. No cubre:
+
+  - Las dependencias de npm, que conservan cada una su licencia y no se
+    redistribuyen en este repositorio. Están declaradas en `package.json` y
+    fijadas en `pnpm-lock.yaml`.
+
+  - Las tipografías de `assets/fonts/`, redistribuidas bajo SIL Open Font
+    License 1.1. Sus avisos de copyright y el texto de la licencia están en
+    `assets/fonts/OFL.txt`.
+
+El proyecto se generó inicialmente con `create-expo-app`, cuya plantilla se
+distribuye bajo licencia MIT (Copyright (c) 2015-present 650 Industries, Inc.).
+No queda en el repositorio código sustancial de esa plantilla.
+
+
+-------------------------------------------------------------------------------
+
+ENGLISH SUMMARY
+
+KAVI — All rights reserved. Copyright (c) 2026 Areli Perdue.
+
+Published for reference and academic assessment only. No permission is granted
+to use, copy, modify or distribute this software without prior written consent
+from the copyright holder. Public visibility of this repository grants no
+license; it is required by the code-quality and security analysis tools used in
+the project. Reading the code and citing it with attribution for academic or
+peer-review purposes is permitted.
+
+Third-party components keep their own licenses: npm dependencies (see
+`package.json`) and the typefaces in `assets/fonts/`, which are licensed under
+the SIL Open Font License 1.1 (see `assets/fonts/OFL.txt`).
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.

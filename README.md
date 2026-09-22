@@ -96,3 +96,16 @@ src/providers/    AuthProvider
 src/types/        database.ts generado
 supabase/         config.toml y migrations/
 ```
+
+## Licencia
+
+**Todos los derechos reservados** — Copyright (c) 2026 Areli Perdue.
+
+Este repositorio es públicamente visible por requisitos de las herramientas de
+análisis de calidad y seguridad, lo que **no** concede ninguna licencia de uso.
+Se permite leerlo, citarlo con atribución y clonarlo para evaluarlo; no se
+permite reutilizarlo ni distribuirlo sin autorización escrita. Los términos
+completos están en [`LICENSE`](LICENSE).
+
+Las tipografías de marca (`assets/fonts/`) son de terceros y conservan su propia
+licencia, SIL Open Font License 1.1: ver [`assets/fonts/OFL.txt`](assets/fonts/OFL.txt).
