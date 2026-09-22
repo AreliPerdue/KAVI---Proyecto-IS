@@ -20,6 +20,12 @@ Se cumple el objetivo del 80 % en todas las métricas de referencia. La cifra qu
 SonarQube publica en portada —**81.6 %**— combina líneas y condiciones en un
 solo número y también queda por encima del objetivo.
 
+## Versión sin tecnicismos
+
+Si lo que interesa es **qué se verificó** y no cómo, [`que-se-probo.md`](que-se-probo.md)
+recorre las 1 287 pruebas una por una, agrupadas por zona de la aplicación y
+explicadas en lenguaje llano.
+
 ## Por capa
 
 | Capa | Cobertura | Sentencias |

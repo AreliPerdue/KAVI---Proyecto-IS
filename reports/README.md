@@ -1,27 +1,39 @@
 # Reportes
 
-Evidencia de la fase de **pruebas y calidad**. Los tres se regeneran desde el
+Evidencia de la fase de **pruebas y calidad**. Todos se regeneran desde el
 repositorio; ninguno se escribió a mano.
-
-| Carpeta | Qué contiene | Cómo se regenera |
-|---|---|---|
-| [`pruebas/`](pruebas/) | 687 pruebas unitarias y su cobertura | `pnpm test:coverage` |
-| [`calidad/`](calidad/) | Métricas de SonarQube: deuda técnica, code smells, duplicación | Workflow *calidad*, en cada push |
-| [`seguridad/`](seguridad/) | Escaneo OWASP ZAP del sitio desplegado | Workflow *Escaneo de seguridad*, manual |
-
-El informe de cierre del proyecto está en
-[`Informe-de-cierre-KAVI.docx`](Informe-de-cierre-KAVI.docx) y cita los datos de
-estas tres carpetas.
 
 ## Resumen
 
 | | Resultado |
 |---|---|
-| Pruebas unitarias | 687 en verde, 41.13 % de cobertura |
-| Deuda técnica | 40 minutos · mantenibilidad **A** |
-| Code smells | 8 |
-| Duplicación de código | 0.0 % |
-| Vulnerabilidades de seguridad (ZAP) | 0 altas · 3 medias · 6 bajas |
+| Pruebas automáticas | **1 287 en verde**, 0 fallidas |
+| Cobertura del código | **83.3 %** de sentencias · 84.9 % de líneas |
+| Deuda técnica | **0 minutos** · mantenibilidad **A** |
+| Bugs · vulnerabilidades · code smells | **0 · 0 · 0** · fiabilidad y seguridad **A** |
+| Duplicación de código | **0.0 %** |
+| Escaneo de seguridad (ZAP) | 0 altas · 1 media · 2 bajas |
+
+## Qué hay en cada carpeta
+
+| Carpeta | Qué contiene | Cómo se regenera |
+|---|---|---|
+| [`pruebas/`](pruebas/) | Las 1 287 pruebas y su cobertura | `pnpm test:coverage` |
+| [`calidad/`](calidad/) | Métricas de SonarQube: deuda técnica, code smells, duplicación | Workflow *calidad*, en cada push |
+| [`seguridad/`](seguridad/) | Escaneo OWASP ZAP del sitio desplegado, antes y después de corregirlo | Workflow *Escaneo de seguridad*, manual |
 
 Cada carpeta lleva su propio README con la lectura de los resultados, el alcance
 del análisis y sus limitaciones.
+
+## Para leer sin tecnicismos
+
+**[Qué se probó en KAVI, y qué salió](pruebas/que-se-probo.md)** recorre las
+1 287 pruebas una por una, agrupadas por zona de la aplicación —crear cuenta,
+calendario, compartir, gimnasio…— y explicadas sin lenguaje técnico. Es el
+documento a leer si lo que interesa es *qué se verificó*, no cómo.
+
+## Informe de cierre
+
+El informe de cierre del proyecto está en
+[`Informe-de-cierre-KAVI.docx`](Informe-de-cierre-KAVI.docx) y cita los datos de
+estas tres carpetas. **Pendiente de regenerar** con las cifras actuales.
