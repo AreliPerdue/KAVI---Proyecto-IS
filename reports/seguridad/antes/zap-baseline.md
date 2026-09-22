@@ -8,8 +8,8 @@ ZAP by [Checkmarx](https://checkmarx.com/).
 | Risk Level | Number of Alerts |
 | --- | --- |
 | High | 0 |
-| Medium | 1 |
-| Low | 2 |
+| Medium | 3 |
+| Low | 6 |
 | Informational | 9 |
 
 
@@ -19,7 +19,7 @@ ZAP by [Checkmarx](https://checkmarx.com/).
 
 | Level | Reason | Site | Description | Statistic |
 | --- | --- | --- | --- | --- |
-| Low | Warning |  | ZAP warnings logged - see the zap.log file for details | 1    |
+| Low | Warning |  | ZAP warnings logged - see the zap.log file for details | 2    |
 | Info | Informational | https://kavi-proyecto-is.vercel.app | Percentage of responses with status code 2xx | 80 % |
 | Info | Informational | https://kavi-proyecto-is.vercel.app | Percentage of responses with status code 4xx | 20 % |
 | Info | Informational | https://kavi-proyecto-is.vercel.app | Percentage of endpoints with content type application/javascript | 12 % |
@@ -29,7 +29,7 @@ ZAP by [Checkmarx](https://checkmarx.com/).
 | Info | Informational | https://kavi-proyecto-is.vercel.app | Percentage of endpoints with content type text/plain | 25 % |
 | Info | Informational | https://kavi-proyecto-is.vercel.app | Percentage of endpoints with method GET | 100 % |
 | Info | Informational | https://kavi-proyecto-is.vercel.app | Count of total endpoints | 8    |
-| Info | Informational | https://kavi-proyecto-is.vercel.app | Percentage of slow responses | 100 % |
+| Info | Informational | https://kavi-proyecto-is.vercel.app | Percentage of slow responses | 20 % |
 
 
 
@@ -41,9 +41,15 @@ ZAP by [Checkmarx](https://checkmarx.com/).
 
 | Name | Risk Level | Number of Instances |
 | --- | --- | --- |
-| CSP: style-src unsafe-inline | Medium | 1 |
+| Content Security Policy (CSP) Header Not Set | Medium | 1 |
+| Cross-Domain Misconfiguration | Medium | Systemic |
+| Missing Anti-clickjacking Header | Medium | 1 |
+| Cross-Origin-Embedder-Policy Header Missing or Invalid | Low | 1 |
+| Cross-Origin-Opener-Policy Header Missing or Invalid | Low | 1 |
 | Dangerous JS Functions | Low | 1 |
+| Permissions Policy Header Not Set | Low | 2 |
 | Timestamp Disclosure - Unix | Low | Systemic |
+| X-Content-Type-Options Header Missing | Low | Systemic |
 | Base64 Disclosure | Informational | 2 |
 | Modern Web Application | Informational | 1 |
 | Re-examine Cache-control Directives | Informational | 1 |
@@ -61,7 +67,7 @@ ZAP by [Checkmarx](https://checkmarx.com/).
 
 
 
-### [ CSP: style-src unsafe-inline ](https://www.zaproxy.org/docs/alerts/10055/)
+### [ Content Security Policy (CSP) Header Not Set ](https://www.zaproxy.org/docs/alerts/10038/)
 
 
 
@@ -69,37 +75,224 @@ ZAP by [Checkmarx](https://checkmarx.com/).
 
 ### Description
 
-Content Security Policy (CSP) is an added layer of security that helps to detect and mitigate certain types of attacks. Including (but not limited to) Cross Site Scripting (XSS), and data injection attacks. These attacks are used for everything from data theft to site defacement or distribution of malware. CSP provides a set of standard HTTP headers that allow website owners to declare approved sources of content that browsers should be allowed to load on that page — covered types are JavaScript, CSS, HTML frames, fonts, images and embeddable objects such as Java applets, ActiveX, audio and video files.
+Content Security Policy (CSP) is an added layer of security that helps to detect and mitigate certain types of attacks, including Cross Site Scripting (XSS) and data injection attacks. These attacks are used for everything from data theft to site defacement or distribution of malware. CSP provides a set of standard HTTP headers that allow website owners to declare approved sources of content that browsers should be allowed to load on that page — covered types are JavaScript, CSS, HTML frames, fonts, images and embeddable objects such as Java applets, ActiveX, audio and video files.
 
 * URL: https://kavi-proyecto-is.vercel.app
   * Node Name: `https://kavi-proyecto-is.vercel.app`
   * Method: `GET`
-  * Parameter: `Content-Security-Policy`
+  * Parameter: ``
   * Attack: ``
-  * Evidence: `default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self' 'sha256-67fhrP0+BkBqmgGGXTtgiVO/9EQs3QruYNU/7fnRkI8='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://evoroilcnsaciusotnqh.supabase.co; font-src 'self' data:; connect-src 'self' https://evoroilcnsaciusotnqh.supabase.co wss://evoroilcnsaciusotnqh.supabase.co; manifest-src 'self'; worker-src 'self' blob:; upgrade-insecure-requests`
-  * Other Info: `style-src includes unsafe-inline.`
+  * Evidence: ``
+  * Other Info: ``
 
 
 Instances: 1
 
 ### Solution
 
-Ensure that your web server, application server, load balancer, etc. is properly configured to set the Content-Security-Policy header.
+Ensure that your web server, application server, load balancer, etc. is configured to set the Content-Security-Policy header.
 
 ### Reference
 
 
+* [ https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/CSP ](https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/CSP)
+* [ https://cheatsheetseries.owasp.org/cheatsheets/Content_Security_Policy_Cheat_Sheet.html ](https://cheatsheetseries.owasp.org/cheatsheets/Content_Security_Policy_Cheat_Sheet.html)
 * [ https://www.w3.org/TR/CSP/ ](https://www.w3.org/TR/CSP/)
-* [ https://caniuse.com/#search=content+security+policy ](https://caniuse.com/#search=content+security+policy)
+* [ https://w3c.github.io/webappsec-csp/ ](https://w3c.github.io/webappsec-csp/)
+* [ https://web.dev/articles/csp ](https://web.dev/articles/csp)
+* [ https://caniuse.com/#feat=contentsecuritypolicy ](https://caniuse.com/#feat=contentsecuritypolicy)
 * [ https://content-security-policy.com/ ](https://content-security-policy.com/)
-* [ https://github.com/HtmlUnit/htmlunit-csp ](https://github.com/HtmlUnit/htmlunit-csp)
-* [ https://web.dev/articles/csp#resource-options ](https://web.dev/articles/csp#resource-options)
 
 
 #### CWE Id: [ 693 ](https://cwe.mitre.org/data/definitions/693.html)
 
 
 #### WASC Id: 15
+
+#### Source ID: 3
+
+### [ Cross-Domain Misconfiguration ](https://www.zaproxy.org/docs/alerts/10098/)
+
+
+
+##### Medium (Medium)
+
+### Description
+
+Web browser data loading may be possible, due to a Cross Origin Resource Sharing (CORS) misconfiguration on the web server.
+
+* URL: https://kavi-proyecto-is.vercel.app
+  * Node Name: `https://kavi-proyecto-is.vercel.app`
+  * Method: `GET`
+  * Parameter: ``
+  * Attack: ``
+  * Evidence: `Access-Control-Allow-Origin: *`
+  * Other Info: `The CORS misconfiguration on the web server permits cross-domain read requests from arbitrary third party domains, using unauthenticated APIs on this domain. Web browser implementations do not permit arbitrary third parties to read the response from authenticated APIs, however. This reduces the risk somewhat. This misconfiguration could be used by an attacker to access data that is available in an unauthenticated manner, but which uses some other form of security, such as IP address white-listing.`
+* URL: https://kavi-proyecto-is.vercel.app/_expo/static/css/global-698f8cf525b412f149b4bd354a0c7462.css
+  * Node Name: `https://kavi-proyecto-is.vercel.app/_expo/static/css/global-698f8cf525b412f149b4bd354a0c7462.css`
+  * Method: `GET`
+  * Parameter: ``
+  * Attack: ``
+  * Evidence: `Access-Control-Allow-Origin: *`
+  * Other Info: `The CORS misconfiguration on the web server permits cross-domain read requests from arbitrary third party domains, using unauthenticated APIs on this domain. Web browser implementations do not permit arbitrary third parties to read the response from authenticated APIs, however. This reduces the risk somewhat. This misconfiguration could be used by an attacker to access data that is available in an unauthenticated manner, but which uses some other form of security, such as IP address white-listing.`
+* URL: https://kavi-proyecto-is.vercel.app/_expo/static/css/native-tabs.module-f5891ae1e31b9e0417a6176d5bcdf15d.css
+  * Node Name: `https://kavi-proyecto-is.vercel.app/_expo/static/css/native-tabs.module-f5891ae1e31b9e0417a6176d5bcdf15d.css`
+  * Method: `GET`
+  * Parameter: ``
+  * Attack: ``
+  * Evidence: `Access-Control-Allow-Origin: *`
+  * Other Info: `The CORS misconfiguration on the web server permits cross-domain read requests from arbitrary third party domains, using unauthenticated APIs on this domain. Web browser implementations do not permit arbitrary third parties to read the response from authenticated APIs, however. This reduces the risk somewhat. This misconfiguration could be used by an attacker to access data that is available in an unauthenticated manner, but which uses some other form of security, such as IP address white-listing.`
+* URL: https://kavi-proyecto-is.vercel.app/assets/assets/fonts/MoiraiOne-Regular.f2fce952fd396c566748284021cf4970.ttf
+  * Node Name: `https://kavi-proyecto-is.vercel.app/assets/assets/fonts/MoiraiOne-Regular.f2fce952fd396c566748284021cf4970.ttf`
+  * Method: `GET`
+  * Parameter: ``
+  * Attack: ``
+  * Evidence: `Access-Control-Allow-Origin: *`
+  * Other Info: `The CORS misconfiguration on the web server permits cross-domain read requests from arbitrary third party domains, using unauthenticated APIs on this domain. Web browser implementations do not permit arbitrary third parties to read the response from authenticated APIs, however. This reduces the risk somewhat. This misconfiguration could be used by an attacker to access data that is available in an unauthenticated manner, but which uses some other form of security, such as IP address white-listing.`
+* URL: https://kavi-proyecto-is.vercel.app/favicon.ico
+  * Node Name: `https://kavi-proyecto-is.vercel.app/favicon.ico`
+  * Method: `GET`
+  * Parameter: ``
+  * Attack: ``
+  * Evidence: `Access-Control-Allow-Origin: *`
+  * Other Info: `The CORS misconfiguration on the web server permits cross-domain read requests from arbitrary third party domains, using unauthenticated APIs on this domain. Web browser implementations do not permit arbitrary third parties to read the response from authenticated APIs, however. This reduces the risk somewhat. This misconfiguration could be used by an attacker to access data that is available in an unauthenticated manner, but which uses some other form of security, such as IP address white-listing.`
+
+Instances: Systemic
+
+
+### Solution
+
+Ensure that sensitive data is not available in an unauthenticated manner (using IP address white-listing, for instance).
+Configure the "Access-Control-Allow-Origin" HTTP header to a more restrictive set of domains, or remove all CORS headers entirely, to allow the web browser to enforce the Same Origin Policy (SOP) in a more restrictive manner.
+
+### Reference
+
+
+* [ https://vulncat.fortify.com/en/detail?category=HTML5&subcategory=Overly%20Permissive%20CORS%20Policy ](https://vulncat.fortify.com/en/detail?category=HTML5&subcategory=Overly%20Permissive%20CORS%20Policy)
+
+
+#### CWE Id: [ 264 ](https://cwe.mitre.org/data/definitions/264.html)
+
+
+#### WASC Id: 14
+
+#### Source ID: 3
+
+### [ Missing Anti-clickjacking Header ](https://www.zaproxy.org/docs/alerts/10020/)
+
+
+
+##### Medium (Medium)
+
+### Description
+
+The response does not protect against 'ClickJacking' attacks. It should include either Content-Security-Policy with 'frame-ancestors' directive or X-Frame-Options.
+
+* URL: https://kavi-proyecto-is.vercel.app
+  * Node Name: `https://kavi-proyecto-is.vercel.app`
+  * Method: `GET`
+  * Parameter: `x-frame-options`
+  * Attack: ``
+  * Evidence: ``
+  * Other Info: ``
+
+
+Instances: 1
+
+### Solution
+
+Modern Web browsers support the Content-Security-Policy and X-Frame-Options HTTP headers. Ensure one of them is set on all web pages returned by your site/app.
+If you expect the page to be framed only by pages on your server (e.g. it's part of a FRAMESET) then you'll want to use SAMEORIGIN, otherwise if you never expect the page to be framed, you should use DENY. Alternatively consider implementing Content Security Policy's "frame-ancestors" directive.
+
+### Reference
+
+
+* [ https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/X-Frame-Options ](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/X-Frame-Options)
+
+
+#### CWE Id: [ 1021 ](https://cwe.mitre.org/data/definitions/1021.html)
+
+
+#### WASC Id: 15
+
+#### Source ID: 3
+
+### [ Cross-Origin-Embedder-Policy Header Missing or Invalid ](https://www.zaproxy.org/docs/alerts/90004/)
+
+
+
+##### Low (Medium)
+
+### Description
+
+Cross-Origin-Embedder-Policy header is a response header that prevents a document from loading any cross-origin resources that don't explicitly grant the document permission (using CORP or CORS).
+
+* URL: https://kavi-proyecto-is.vercel.app
+  * Node Name: `https://kavi-proyecto-is.vercel.app`
+  * Method: `GET`
+  * Parameter: `Cross-Origin-Embedder-Policy`
+  * Attack: ``
+  * Evidence: ``
+  * Other Info: ``
+
+
+Instances: 1
+
+### Solution
+
+Ensure that the application/web server sets the Cross-Origin-Embedder-Policy header appropriately, and that it sets the Cross-Origin-Embedder-Policy header to 'require-corp' for documents.
+If possible, ensure that the end user uses a standards-compliant and modern web browser that supports the Cross-Origin-Embedder-Policy header (https://caniuse.com/mdn-http_headers_cross-origin-embedder-policy).
+
+### Reference
+
+
+* [ https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Cross-Origin-Embedder-Policy ](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Cross-Origin-Embedder-Policy)
+
+
+#### CWE Id: [ 693 ](https://cwe.mitre.org/data/definitions/693.html)
+
+
+#### WASC Id: 14
+
+#### Source ID: 3
+
+### [ Cross-Origin-Opener-Policy Header Missing or Invalid ](https://www.zaproxy.org/docs/alerts/90004/)
+
+
+
+##### Low (Medium)
+
+### Description
+
+Cross-Origin-Opener-Policy header is a response header that allows a site to control if others included documents share the same browsing context. Sharing the same browsing context with untrusted documents might lead to data leak.
+
+* URL: https://kavi-proyecto-is.vercel.app
+  * Node Name: `https://kavi-proyecto-is.vercel.app`
+  * Method: `GET`
+  * Parameter: `Cross-Origin-Opener-Policy`
+  * Attack: ``
+  * Evidence: ``
+  * Other Info: ``
+
+
+Instances: 1
+
+### Solution
+
+Ensure that the application/web server sets the Cross-Origin-Opener-Policy header appropriately, and that it sets the Cross-Origin-Opener-Policy header to 'same-origin' for documents.
+'same-origin-allow-popups' is considered as less secured and should be avoided.
+If possible, ensure that the end user uses a standards-compliant and modern web browser that supports the Cross-Origin-Opener-Policy header (https://caniuse.com/mdn-http_headers_cross-origin-opener-policy).
+
+### Reference
+
+
+* [ https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Cross-Origin-Opener-Policy ](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Cross-Origin-Opener-Policy)
+
+
+#### CWE Id: [ 693 ](https://cwe.mitre.org/data/definitions/693.html)
+
+
+#### WASC Id: 14
 
 #### Source ID: 3
 
@@ -113,8 +306,8 @@ Ensure that your web server, application server, load balancer, etc. is properly
 
 A dangerous JS function seems to be in use that would leave the site vulnerable.
 
-* URL: https://kavi-proyecto-is.vercel.app/_expo/static/js/web/entry-21b29be5e1d2e33ac7681d8a53ce2098.js
-  * Node Name: `https://kavi-proyecto-is.vercel.app/_expo/static/js/web/entry-21b29be5e1d2e33ac7681d8a53ce2098.js`
+* URL: https://kavi-proyecto-is.vercel.app/_expo/static/js/web/entry-7412c7874039d410fdc9445e2fe5fcff.js
+  * Node Name: `https://kavi-proyecto-is.vercel.app/_expo/static/js/web/entry-7412c7874039d410fdc9445e2fe5fcff.js`
   * Method: `GET`
   * Parameter: ``
   * Attack: ``
@@ -139,6 +332,55 @@ See the references for security advice on the use of these functions.
 
 #### Source ID: 3
 
+### [ Permissions Policy Header Not Set ](https://www.zaproxy.org/docs/alerts/10063/)
+
+
+
+##### Low (Medium)
+
+### Description
+
+Permissions Policy Header is an added layer of security that helps to restrict from unauthorized access or usage of browser/client features by web resources. This policy ensures the user privacy by limiting or specifying the features of the browsers can be used by the web resources. Permissions Policy provides a set of standard HTTP headers that allow website owners to limit which features of browsers can be used by the page such as camera, microphone, location, full screen etc.
+
+* URL: https://kavi-proyecto-is.vercel.app
+  * Node Name: `https://kavi-proyecto-is.vercel.app`
+  * Method: `GET`
+  * Parameter: ``
+  * Attack: ``
+  * Evidence: ``
+  * Other Info: ``
+* URL: https://kavi-proyecto-is.vercel.app/_expo/static/js/web/entry-7412c7874039d410fdc9445e2fe5fcff.js
+  * Node Name: `https://kavi-proyecto-is.vercel.app/_expo/static/js/web/entry-7412c7874039d410fdc9445e2fe5fcff.js`
+  * Method: `GET`
+  * Parameter: ``
+  * Attack: ``
+  * Evidence: ``
+  * Other Info: ``
+
+
+Instances: 2
+
+### Solution
+
+Ensure that your web server, application server, load balancer, etc. is configured to set the Permissions-Policy header.
+
+### Reference
+
+
+* [ https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Permissions-Policy ](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Permissions-Policy)
+* [ https://developer.chrome.com/blog/feature-policy/ ](https://developer.chrome.com/blog/feature-policy/)
+* [ https://scotthelme.co.uk/a-new-security-header-feature-policy/ ](https://scotthelme.co.uk/a-new-security-header-feature-policy/)
+* [ https://w3c.github.io/webappsec-feature-policy/ ](https://w3c.github.io/webappsec-feature-policy/)
+* [ https://www.smashingmagazine.com/2018/12/feature-policy/ ](https://www.smashingmagazine.com/2018/12/feature-policy/)
+
+
+#### CWE Id: [ 693 ](https://cwe.mitre.org/data/definitions/693.html)
+
+
+#### WASC Id: 15
+
+#### Source ID: 3
+
 ### [ Timestamp Disclosure - Unix ](https://www.zaproxy.org/docs/alerts/10096/)
 
 
@@ -149,36 +391,36 @@ See the references for security advice on the use of these functions.
 
 A timestamp was disclosed by the application/web server. - Unix
 
-* URL: https://kavi-proyecto-is.vercel.app/_expo/static/js/web/entry-21b29be5e1d2e33ac7681d8a53ce2098.js
-  * Node Name: `https://kavi-proyecto-is.vercel.app/_expo/static/js/web/entry-21b29be5e1d2e33ac7681d8a53ce2098.js`
+* URL: https://kavi-proyecto-is.vercel.app/_expo/static/js/web/entry-7412c7874039d410fdc9445e2fe5fcff.js
+  * Node Name: `https://kavi-proyecto-is.vercel.app/_expo/static/js/web/entry-7412c7874039d410fdc9445e2fe5fcff.js`
   * Method: `GET`
   * Parameter: ``
   * Attack: ``
   * Evidence: `1518500249`
   * Other Info: `1518500249, which evaluates to: 2018-02-13 05:37:29.`
-* URL: https://kavi-proyecto-is.vercel.app/_expo/static/js/web/entry-21b29be5e1d2e33ac7681d8a53ce2098.js
-  * Node Name: `https://kavi-proyecto-is.vercel.app/_expo/static/js/web/entry-21b29be5e1d2e33ac7681d8a53ce2098.js`
+* URL: https://kavi-proyecto-is.vercel.app/_expo/static/js/web/entry-7412c7874039d410fdc9445e2fe5fcff.js
+  * Node Name: `https://kavi-proyecto-is.vercel.app/_expo/static/js/web/entry-7412c7874039d410fdc9445e2fe5fcff.js`
   * Method: `GET`
   * Parameter: ``
   * Attack: ``
   * Evidence: `1604231423`
   * Other Info: `1604231423, which evaluates to: 2020-11-01 11:50:23.`
-* URL: https://kavi-proyecto-is.vercel.app/_expo/static/js/web/entry-21b29be5e1d2e33ac7681d8a53ce2098.js
-  * Node Name: `https://kavi-proyecto-is.vercel.app/_expo/static/js/web/entry-21b29be5e1d2e33ac7681d8a53ce2098.js`
+* URL: https://kavi-proyecto-is.vercel.app/_expo/static/js/web/entry-7412c7874039d410fdc9445e2fe5fcff.js
+  * Node Name: `https://kavi-proyecto-is.vercel.app/_expo/static/js/web/entry-7412c7874039d410fdc9445e2fe5fcff.js`
   * Method: `GET`
   * Parameter: ``
   * Attack: ``
   * Evidence: `1687547391`
   * Other Info: `1687547391, which evaluates to: 2023-06-23 19:09:51.`
-* URL: https://kavi-proyecto-is.vercel.app/_expo/static/js/web/entry-21b29be5e1d2e33ac7681d8a53ce2098.js
-  * Node Name: `https://kavi-proyecto-is.vercel.app/_expo/static/js/web/entry-21b29be5e1d2e33ac7681d8a53ce2098.js`
+* URL: https://kavi-proyecto-is.vercel.app/_expo/static/js/web/entry-7412c7874039d410fdc9445e2fe5fcff.js
+  * Node Name: `https://kavi-proyecto-is.vercel.app/_expo/static/js/web/entry-7412c7874039d410fdc9445e2fe5fcff.js`
   * Method: `GET`
   * Parameter: ``
   * Attack: ``
   * Evidence: `1732584193`
   * Other Info: `1732584193, which evaluates to: 2024-11-26 01:23:13.`
-* URL: https://kavi-proyecto-is.vercel.app/_expo/static/js/web/entry-21b29be5e1d2e33ac7681d8a53ce2098.js
-  * Node Name: `https://kavi-proyecto-is.vercel.app/_expo/static/js/web/entry-21b29be5e1d2e33ac7681d8a53ce2098.js`
+* URL: https://kavi-proyecto-is.vercel.app/_expo/static/js/web/entry-7412c7874039d410fdc9445e2fe5fcff.js
+  * Node Name: `https://kavi-proyecto-is.vercel.app/_expo/static/js/web/entry-7412c7874039d410fdc9445e2fe5fcff.js`
   * Method: `GET`
   * Parameter: ``
   * Attack: ``
@@ -202,6 +444,79 @@ Manually confirm that the timestamp data is not sensitive, and that the data can
 
 
 #### WASC Id: 13
+
+#### Source ID: 3
+
+### [ X-Content-Type-Options Header Missing ](https://www.zaproxy.org/docs/alerts/10021/)
+
+
+
+##### Low (Medium)
+
+### Description
+
+The Anti-MIME-Sniffing header X-Content-Type-Options was not set to 'nosniff'. This allows older versions of Internet Explorer and Chrome to perform MIME-sniffing on the response body, potentially causing the response body to be interpreted and displayed as a content type other than the declared content type. Current (early 2014) and legacy versions of Firefox will use the declared content type (if one is set), rather than performing MIME-sniffing.
+
+* URL: https://kavi-proyecto-is.vercel.app
+  * Node Name: `https://kavi-proyecto-is.vercel.app`
+  * Method: `GET`
+  * Parameter: `x-content-type-options`
+  * Attack: ``
+  * Evidence: ``
+  * Other Info: `This issue still applies to error type pages (401, 403, 500, etc.) as those pages are often still affected by injection issues, in which case there is still concern for browsers sniffing pages away from their actual content type.
+At "High" threshold this scan rule will not alert on client or server error responses.`
+* URL: https://kavi-proyecto-is.vercel.app/_expo/static/css/global-698f8cf525b412f149b4bd354a0c7462.css
+  * Node Name: `https://kavi-proyecto-is.vercel.app/_expo/static/css/global-698f8cf525b412f149b4bd354a0c7462.css`
+  * Method: `GET`
+  * Parameter: `x-content-type-options`
+  * Attack: ``
+  * Evidence: ``
+  * Other Info: `This issue still applies to error type pages (401, 403, 500, etc.) as those pages are often still affected by injection issues, in which case there is still concern for browsers sniffing pages away from their actual content type.
+At "High" threshold this scan rule will not alert on client or server error responses.`
+* URL: https://kavi-proyecto-is.vercel.app/_expo/static/css/native-tabs.module-f5891ae1e31b9e0417a6176d5bcdf15d.css
+  * Node Name: `https://kavi-proyecto-is.vercel.app/_expo/static/css/native-tabs.module-f5891ae1e31b9e0417a6176d5bcdf15d.css`
+  * Method: `GET`
+  * Parameter: `x-content-type-options`
+  * Attack: ``
+  * Evidence: ``
+  * Other Info: `This issue still applies to error type pages (401, 403, 500, etc.) as those pages are often still affected by injection issues, in which case there is still concern for browsers sniffing pages away from their actual content type.
+At "High" threshold this scan rule will not alert on client or server error responses.`
+* URL: https://kavi-proyecto-is.vercel.app/assets/assets/fonts/MoiraiOne-Regular.f2fce952fd396c566748284021cf4970.ttf
+  * Node Name: `https://kavi-proyecto-is.vercel.app/assets/assets/fonts/MoiraiOne-Regular.f2fce952fd396c566748284021cf4970.ttf`
+  * Method: `GET`
+  * Parameter: `x-content-type-options`
+  * Attack: ``
+  * Evidence: ``
+  * Other Info: `This issue still applies to error type pages (401, 403, 500, etc.) as those pages are often still affected by injection issues, in which case there is still concern for browsers sniffing pages away from their actual content type.
+At "High" threshold this scan rule will not alert on client or server error responses.`
+* URL: https://kavi-proyecto-is.vercel.app/favicon.ico
+  * Node Name: `https://kavi-proyecto-is.vercel.app/favicon.ico`
+  * Method: `GET`
+  * Parameter: `x-content-type-options`
+  * Attack: ``
+  * Evidence: ``
+  * Other Info: `This issue still applies to error type pages (401, 403, 500, etc.) as those pages are often still affected by injection issues, in which case there is still concern for browsers sniffing pages away from their actual content type.
+At "High" threshold this scan rule will not alert on client or server error responses.`
+
+Instances: Systemic
+
+
+### Solution
+
+Ensure that the application/web server sets the Content-Type header appropriately, and that it sets the X-Content-Type-Options header to 'nosniff' for all web pages.
+If possible, ensure that the end user uses a standards-compliant and modern web browser that does not perform MIME-sniffing at all, or that can be directed by the web application/web server to not perform MIME-sniffing.
+
+### Reference
+
+
+* [ https://learn.microsoft.com/en-us/previous-versions/windows/internet-explorer/ie-developer/compatibility/gg622941(v=vs.85) ](https://learn.microsoft.com/en-us/previous-versions/windows/internet-explorer/ie-developer/compatibility/gg622941(v=vs.85))
+* [ https://owasp.org/www-community/Security_Headers ](https://owasp.org/www-community/Security_Headers)
+
+
+#### CWE Id: [ 693 ](https://cwe.mitre.org/data/definitions/693.html)
+
+
+#### WASC Id: 15
 
 #### Source ID: 3
 
@@ -237,8 +552,8 @@ Base64 encoded data was disclosed by the application/web server. Note: in the in
      style="fill:#ffffff;fill-opacity:1;stroke:none" />
 </svg>
 `
-* URL: https://kavi-proyecto-is.vercel.app/_expo/static/js/web/entry-21b29be5e1d2e33ac7681d8a53ce2098.js
-  * Node Name: `https://kavi-proyecto-is.vercel.app/_expo/static/js/web/entry-21b29be5e1d2e33ac7681d8a53ce2098.js`
+* URL: https://kavi-proyecto-is.vercel.app/_expo/static/js/web/entry-7412c7874039d410fdc9445e2fe5fcff.js
+  * Node Name: `https://kavi-proyecto-is.vercel.app/_expo/static/js/web/entry-7412c7874039d410fdc9445e2fe5fcff.js`
   * Method: `GET`
   * Parameter: ``
   * Attack: ``
@@ -369,8 +684,15 @@ The content was retrieved from a shared cache. If the response data is sensitive
   * Attack: ``
   * Evidence: `Age: 0`
   * Other Info: `The presence of the 'Age' header indicates that a HTTP/1.1 compliant caching server is in use.`
-* URL: https://kavi-proyecto-is.vercel.app/_expo/static/css/native-tabs.module-b85e04f8448112d626072b9d4e8dbe6a.css
-  * Node Name: `https://kavi-proyecto-is.vercel.app/_expo/static/css/native-tabs.module-b85e04f8448112d626072b9d4e8dbe6a.css`
+* URL: https://kavi-proyecto-is.vercel.app/_expo/static/css/global-698f8cf525b412f149b4bd354a0c7462.css
+  * Node Name: `https://kavi-proyecto-is.vercel.app/_expo/static/css/global-698f8cf525b412f149b4bd354a0c7462.css`
+  * Method: `GET`
+  * Parameter: ``
+  * Attack: ``
+  * Evidence: `Age: 0`
+  * Other Info: `The presence of the 'Age' header indicates that a HTTP/1.1 compliant caching server is in use.`
+* URL: https://kavi-proyecto-is.vercel.app/_expo/static/css/native-tabs.module-f5891ae1e31b9e0417a6176d5bcdf15d.css
+  * Node Name: `https://kavi-proyecto-is.vercel.app/_expo/static/css/native-tabs.module-f5891ae1e31b9e0417a6176d5bcdf15d.css`
   * Method: `GET`
   * Parameter: ``
   * Attack: ``
@@ -378,13 +700,6 @@ The content was retrieved from a shared cache. If the response data is sensitive
   * Other Info: `The presence of the 'Age' header indicates that a HTTP/1.1 compliant caching server is in use.`
 * URL: https://kavi-proyecto-is.vercel.app/assets/assets/fonts/MoiraiOne-Regular.f2fce952fd396c566748284021cf4970.ttf
   * Node Name: `https://kavi-proyecto-is.vercel.app/assets/assets/fonts/MoiraiOne-Regular.f2fce952fd396c566748284021cf4970.ttf`
-  * Method: `GET`
-  * Parameter: ``
-  * Attack: ``
-  * Evidence: `Age: 0`
-  * Other Info: `The presence of the 'Age' header indicates that a HTTP/1.1 compliant caching server is in use.`
-* URL: https://kavi-proyecto-is.vercel.app/assets/assets/fonts/PoiretOne-Regular.de16c7ace4ed177e5488c1a95f75d088.ttf
-  * Node Name: `https://kavi-proyecto-is.vercel.app/assets/assets/fonts/PoiretOne-Regular.de16c7ace4ed177e5488c1a95f75d088.ttf`
   * Method: `GET`
   * Parameter: ``
   * Attack: ``
@@ -647,8 +962,8 @@ The response contents are storable by caching components such as proxy servers, 
   * Attack: ``
   * Evidence: `max-age=0`
   * Other Info: ``
-* URL: https://kavi-proyecto-is.vercel.app/assets/assets/fonts/MoiraiOne-Regular.f2fce952fd396c566748284021cf4970.ttf
-  * Node Name: `https://kavi-proyecto-is.vercel.app/assets/assets/fonts/MoiraiOne-Regular.f2fce952fd396c566748284021cf4970.ttf`
+* URL: https://kavi-proyecto-is.vercel.app/_expo/static/css/global-698f8cf525b412f149b4bd354a0c7462.css
+  * Node Name: `https://kavi-proyecto-is.vercel.app/_expo/static/css/global-698f8cf525b412f149b4bd354a0c7462.css`
   * Method: `GET`
   * Parameter: ``
   * Attack: ``

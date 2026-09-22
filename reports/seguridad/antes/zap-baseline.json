@@ -1,8 +1,8 @@
 {
 	"@programName": "ZAP",
 	"@version": "2.17.0",
-	"@generated": "Tue, 22 Sept 2026 18:15:57",
-	"created": "2026-09-22T18:15:57.996152910Z",
+	"@generated": "Tue, 22 Sept 2026 09:55:11",
+	"created": "2026-09-22T09:55:11.094283144Z",
 	"insights":[
 		{
 			"level": "Low",
@@ -10,7 +10,7 @@
 			"site": "",
 			"key": "insight.log.warn",
 			"description": "ZAP warnings logged - see the zap.log file for details",
-			"statistic": "1"
+			"statistic": "2"
 		},
 		{
 			"level": "Info",
@@ -90,7 +90,7 @@
 			"site": "https://kavi-proyecto-is.vercel.app",
 			"key": "insight.response.slow",
 			"description": "Percentage of slow responses",
-			"statistic": "100"
+			"statistic": "20"
 		}
 	],
 	"site":[ 
@@ -101,34 +101,194 @@
 			"@ssl": "true",
 			"alerts": [ 
 				{
-					"pluginid": "10055",
-					"alertRef": "10055-6",
-					"alert": "CSP: style-src unsafe-inline",
-					"name": "CSP: style-src unsafe-inline",
+					"pluginid": "10038",
+					"alertRef": "10038-1",
+					"alert": "Content Security Policy (CSP) Header Not Set",
+					"name": "Content Security Policy (CSP) Header Not Set",
 					"riskcode": "2",
 					"confidence": "3",
 					"riskdesc": "Medium (High)",
-					"desc": "<p>Content Security Policy (CSP) is an added layer of security that helps to detect and mitigate certain types of attacks. Including (but not limited to) Cross Site Scripting (XSS), and data injection attacks. These attacks are used for everything from data theft to site defacement or distribution of malware. CSP provides a set of standard HTTP headers that allow website owners to declare approved sources of content that browsers should be allowed to load on that page \u2014 covered types are JavaScript, CSS, HTML frames, fonts, images and embeddable objects such as Java applets, ActiveX, audio and video files.</p>",
+					"desc": "<p>Content Security Policy (CSP) is an added layer of security that helps to detect and mitigate certain types of attacks, including Cross Site Scripting (XSS) and data injection attacks. These attacks are used for everything from data theft to site defacement or distribution of malware. CSP provides a set of standard HTTP headers that allow website owners to declare approved sources of content that browsers should be allowed to load on that page \u2014 covered types are JavaScript, CSS, HTML frames, fonts, images and embeddable objects such as Java applets, ActiveX, audio and video files.</p>",
 					"instances":[ 
 						{
-							"id": "1",
+							"id": "4",
 							"uri": "https://kavi-proyecto-is.vercel.app",
 							"nodeName": "https:\/\/kavi-proyecto-is.vercel.app",
 							"method": "GET",
-							"param": "Content-Security-Policy",
+							"param": "",
 							"attack": "",
-							"evidence": "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self' 'sha256-67fhrP0+BkBqmgGGXTtgiVO/9EQs3QruYNU/7fnRkI8='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://evoroilcnsaciusotnqh.supabase.co; font-src 'self' data:; connect-src 'self' https://evoroilcnsaciusotnqh.supabase.co wss://evoroilcnsaciusotnqh.supabase.co; manifest-src 'self'; worker-src 'self' blob:; upgrade-insecure-requests",
-							"otherinfo": "style-src includes unsafe-inline."
+							"evidence": "",
+							"otherinfo": ""
 						}
 					],
 					"count": "1",
 					"systemic": false,
-					"solution": "<p>Ensure that your web server, application server, load balancer, etc. is properly configured to set the Content-Security-Policy header.</p>",
-					"otherinfo": "<p>style-src includes unsafe-inline.</p>",
-					"reference": "<p>https://www.w3.org/TR/CSP/</p><p>https://caniuse.com/#search=content+security+policy</p><p>https://content-security-policy.com/</p><p>https://github.com/HtmlUnit/htmlunit-csp</p><p>https://web.dev/articles/csp#resource-options</p>",
+					"solution": "<p>Ensure that your web server, application server, load balancer, etc. is configured to set the Content-Security-Policy header.</p>",
+					"otherinfo": "",
+					"reference": "<p>https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/CSP</p><p>https://cheatsheetseries.owasp.org/cheatsheets/Content_Security_Policy_Cheat_Sheet.html</p><p>https://www.w3.org/TR/CSP/</p><p>https://w3c.github.io/webappsec-csp/</p><p>https://web.dev/articles/csp</p><p>https://caniuse.com/#feat=contentsecuritypolicy</p><p>https://content-security-policy.com/</p>",
 					"cweid": "693",
 					"wascid": "15",
 					"sourceid": "1"
+				},
+				{
+					"pluginid": "10098",
+					"alertRef": "10098",
+					"alert": "Cross-Domain Misconfiguration",
+					"name": "Cross-Domain Misconfiguration",
+					"riskcode": "2",
+					"confidence": "2",
+					"riskdesc": "Medium (Medium)",
+					"desc": "<p>Web browser data loading may be possible, due to a Cross Origin Resource Sharing (CORS) misconfiguration on the web server.</p>",
+					"instances":[ 
+						{
+							"id": "7",
+							"uri": "https://kavi-proyecto-is.vercel.app",
+							"nodeName": "https:\/\/kavi-proyecto-is.vercel.app",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "Access-Control-Allow-Origin: *",
+							"otherinfo": "The CORS misconfiguration on the web server permits cross-domain read requests from arbitrary third party domains, using unauthenticated APIs on this domain. Web browser implementations do not permit arbitrary third parties to read the response from authenticated APIs, however. This reduces the risk somewhat. This misconfiguration could be used by an attacker to access data that is available in an unauthenticated manner, but which uses some other form of security, such as IP address white-listing."
+						},
+						{
+							"id": "38",
+							"uri": "https://kavi-proyecto-is.vercel.app/_expo/static/css/global-698f8cf525b412f149b4bd354a0c7462.css",
+							"nodeName": "https:\/\/kavi-proyecto-is.vercel.app\/_expo\/static\/css\/global-698f8cf525b412f149b4bd354a0c7462.css",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "Access-Control-Allow-Origin: *",
+							"otherinfo": "The CORS misconfiguration on the web server permits cross-domain read requests from arbitrary third party domains, using unauthenticated APIs on this domain. Web browser implementations do not permit arbitrary third parties to read the response from authenticated APIs, however. This reduces the risk somewhat. This misconfiguration could be used by an attacker to access data that is available in an unauthenticated manner, but which uses some other form of security, such as IP address white-listing."
+						},
+						{
+							"id": "45",
+							"uri": "https://kavi-proyecto-is.vercel.app/_expo/static/css/native-tabs.module-f5891ae1e31b9e0417a6176d5bcdf15d.css",
+							"nodeName": "https:\/\/kavi-proyecto-is.vercel.app\/_expo\/static\/css\/native-tabs.module-f5891ae1e31b9e0417a6176d5bcdf15d.css",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "Access-Control-Allow-Origin: *",
+							"otherinfo": "The CORS misconfiguration on the web server permits cross-domain read requests from arbitrary third party domains, using unauthenticated APIs on this domain. Web browser implementations do not permit arbitrary third parties to read the response from authenticated APIs, however. This reduces the risk somewhat. This misconfiguration could be used by an attacker to access data that is available in an unauthenticated manner, but which uses some other form of security, such as IP address white-listing."
+						},
+						{
+							"id": "41",
+							"uri": "https://kavi-proyecto-is.vercel.app/assets/assets/fonts/MoiraiOne-Regular.f2fce952fd396c566748284021cf4970.ttf",
+							"nodeName": "https:\/\/kavi-proyecto-is.vercel.app\/assets\/assets\/fonts\/MoiraiOne-Regular.f2fce952fd396c566748284021cf4970.ttf",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "Access-Control-Allow-Origin: *",
+							"otherinfo": "The CORS misconfiguration on the web server permits cross-domain read requests from arbitrary third party domains, using unauthenticated APIs on this domain. Web browser implementations do not permit arbitrary third parties to read the response from authenticated APIs, however. This reduces the risk somewhat. This misconfiguration could be used by an attacker to access data that is available in an unauthenticated manner, but which uses some other form of security, such as IP address white-listing."
+						},
+						{
+							"id": "42",
+							"uri": "https://kavi-proyecto-is.vercel.app/favicon.ico",
+							"nodeName": "https:\/\/kavi-proyecto-is.vercel.app\/favicon.ico",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "Access-Control-Allow-Origin: *",
+							"otherinfo": "The CORS misconfiguration on the web server permits cross-domain read requests from arbitrary third party domains, using unauthenticated APIs on this domain. Web browser implementations do not permit arbitrary third parties to read the response from authenticated APIs, however. This reduces the risk somewhat. This misconfiguration could be used by an attacker to access data that is available in an unauthenticated manner, but which uses some other form of security, such as IP address white-listing."
+						}
+					],
+					"count": "5",
+					"systemic": true,
+					"solution": "<p>Ensure that sensitive data is not available in an unauthenticated manner (using IP address white-listing, for instance).</p><p>Configure the \"Access-Control-Allow-Origin\" HTTP header to a more restrictive set of domains, or remove all CORS headers entirely, to allow the web browser to enforce the Same Origin Policy (SOP) in a more restrictive manner.</p>",
+					"otherinfo": "<p>The CORS misconfiguration on the web server permits cross-domain read requests from arbitrary third party domains, using unauthenticated APIs on this domain. Web browser implementations do not permit arbitrary third parties to read the response from authenticated APIs, however. This reduces the risk somewhat. This misconfiguration could be used by an attacker to access data that is available in an unauthenticated manner, but which uses some other form of security, such as IP address white-listing.</p>",
+					"reference": "<p>https://vulncat.fortify.com/en/detail?category=HTML5&subcategory=Overly%20Permissive%20CORS%20Policy</p>",
+					"cweid": "264",
+					"wascid": "14",
+					"sourceid": "8"
+				},
+				{
+					"pluginid": "10020",
+					"alertRef": "10020-1",
+					"alert": "Missing Anti-clickjacking Header",
+					"name": "Missing Anti-clickjacking Header",
+					"riskcode": "2",
+					"confidence": "2",
+					"riskdesc": "Medium (Medium)",
+					"desc": "<p>The response does not protect against 'ClickJacking' attacks. It should include either Content-Security-Policy with 'frame-ancestors' directive or X-Frame-Options.</p>",
+					"instances":[ 
+						{
+							"id": "0",
+							"uri": "https://kavi-proyecto-is.vercel.app",
+							"nodeName": "https:\/\/kavi-proyecto-is.vercel.app",
+							"method": "GET",
+							"param": "x-frame-options",
+							"attack": "",
+							"evidence": "",
+							"otherinfo": ""
+						}
+					],
+					"count": "1",
+					"systemic": false,
+					"solution": "<p>Modern Web browsers support the Content-Security-Policy and X-Frame-Options HTTP headers. Ensure one of them is set on all web pages returned by your site/app.</p><p>If you expect the page to be framed only by pages on your server (e.g. it's part of a FRAMESET) then you'll want to use SAMEORIGIN, otherwise if you never expect the page to be framed, you should use DENY. Alternatively consider implementing Content Security Policy's \"frame-ancestors\" directive.</p>",
+					"otherinfo": "",
+					"reference": "<p>https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/X-Frame-Options</p>",
+					"cweid": "1021",
+					"wascid": "15",
+					"sourceid": "1"
+				},
+				{
+					"pluginid": "90004",
+					"alertRef": "90004-2",
+					"alert": "Cross-Origin-Embedder-Policy Header Missing or Invalid",
+					"name": "Cross-Origin-Embedder-Policy Header Missing or Invalid",
+					"riskcode": "1",
+					"confidence": "2",
+					"riskdesc": "Low (Medium)",
+					"desc": "<p>Cross-Origin-Embedder-Policy header is a response header that prevents a document from loading any cross-origin resources that don't explicitly grant the document permission (using CORP or CORS).</p>",
+					"instances":[ 
+						{
+							"id": "31",
+							"uri": "https://kavi-proyecto-is.vercel.app",
+							"nodeName": "https:\/\/kavi-proyecto-is.vercel.app",
+							"method": "GET",
+							"param": "Cross-Origin-Embedder-Policy",
+							"attack": "",
+							"evidence": "",
+							"otherinfo": ""
+						}
+					],
+					"count": "1",
+					"systemic": false,
+					"solution": "<p>Ensure that the application/web server sets the Cross-Origin-Embedder-Policy header appropriately, and that it sets the Cross-Origin-Embedder-Policy header to 'require-corp' for documents.</p><p>If possible, ensure that the end user uses a standards-compliant and modern web browser that supports the Cross-Origin-Embedder-Policy header (https://caniuse.com/mdn-http_headers_cross-origin-embedder-policy).</p>",
+					"otherinfo": "",
+					"reference": "<p>https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Cross-Origin-Embedder-Policy</p>",
+					"cweid": "693",
+					"wascid": "14",
+					"sourceid": "8"
+				},
+				{
+					"pluginid": "90004",
+					"alertRef": "90004-3",
+					"alert": "Cross-Origin-Opener-Policy Header Missing or Invalid",
+					"name": "Cross-Origin-Opener-Policy Header Missing or Invalid",
+					"riskcode": "1",
+					"confidence": "2",
+					"riskdesc": "Low (Medium)",
+					"desc": "<p>Cross-Origin-Opener-Policy header is a response header that allows a site to control if others included documents share the same browsing context. Sharing the same browsing context with untrusted documents might lead to data leak.</p>",
+					"instances":[ 
+						{
+							"id": "33",
+							"uri": "https://kavi-proyecto-is.vercel.app",
+							"nodeName": "https:\/\/kavi-proyecto-is.vercel.app",
+							"method": "GET",
+							"param": "Cross-Origin-Opener-Policy",
+							"attack": "",
+							"evidence": "",
+							"otherinfo": ""
+						}
+					],
+					"count": "1",
+					"systemic": false,
+					"solution": "<p>Ensure that the application/web server sets the Cross-Origin-Opener-Policy header appropriately, and that it sets the Cross-Origin-Opener-Policy header to 'same-origin' for documents.</p><p>'same-origin-allow-popups' is considered as less secured and should be avoided.</p><p>If possible, ensure that the end user uses a standards-compliant and modern web browser that supports the Cross-Origin-Opener-Policy header (https://caniuse.com/mdn-http_headers_cross-origin-opener-policy).</p>",
+					"otherinfo": "",
+					"reference": "<p>https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Cross-Origin-Opener-Policy</p>",
+					"cweid": "693",
+					"wascid": "14",
+					"sourceid": "8"
 				},
 				{
 					"pluginid": "10110",
@@ -141,9 +301,9 @@
 					"desc": "<p>A dangerous JS function seems to be in use that would leave the site vulnerable.</p>",
 					"instances":[ 
 						{
-							"id": "84",
-							"uri": "https://kavi-proyecto-is.vercel.app/_expo/static/js/web/entry-21b29be5e1d2e33ac7681d8a53ce2098.js",
-							"nodeName": "https:\/\/kavi-proyecto-is.vercel.app\/_expo\/static\/js\/web\/entry-21b29be5e1d2e33ac7681d8a53ce2098.js",
+							"id": "108",
+							"uri": "https://kavi-proyecto-is.vercel.app/_expo/static/js/web/entry-7412c7874039d410fdc9445e2fe5fcff.js",
+							"nodeName": "https:\/\/kavi-proyecto-is.vercel.app\/_expo\/static\/js\/web\/entry-7412c7874039d410fdc9445e2fe5fcff.js",
 							"method": "GET",
 							"param": "",
 							"attack": "",
@@ -161,6 +321,46 @@
 					"sourceid": "26"
 				},
 				{
+					"pluginid": "10063",
+					"alertRef": "10063-1",
+					"alert": "Permissions Policy Header Not Set",
+					"name": "Permissions Policy Header Not Set",
+					"riskcode": "1",
+					"confidence": "2",
+					"riskdesc": "Low (Medium)",
+					"desc": "<p>Permissions Policy Header is an added layer of security that helps to restrict from unauthorized access or usage of browser/client features by web resources. This policy ensures the user privacy by limiting or specifying the features of the browsers can be used by the web resources. Permissions Policy provides a set of standard HTTP headers that allow website owners to limit which features of browsers can be used by the page such as camera, microphone, location, full screen etc.</p>",
+					"instances":[ 
+						{
+							"id": "30",
+							"uri": "https://kavi-proyecto-is.vercel.app",
+							"nodeName": "https:\/\/kavi-proyecto-is.vercel.app",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "",
+							"otherinfo": ""
+						},
+						{
+							"id": "109",
+							"uri": "https://kavi-proyecto-is.vercel.app/_expo/static/js/web/entry-7412c7874039d410fdc9445e2fe5fcff.js",
+							"nodeName": "https:\/\/kavi-proyecto-is.vercel.app\/_expo\/static\/js\/web\/entry-7412c7874039d410fdc9445e2fe5fcff.js",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "",
+							"otherinfo": ""
+						}
+					],
+					"count": "2",
+					"systemic": false,
+					"solution": "<p>Ensure that your web server, application server, load balancer, etc. is configured to set the Permissions-Policy header.</p>",
+					"otherinfo": "",
+					"reference": "<p>https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Permissions-Policy</p><p>https://developer.chrome.com/blog/feature-policy/</p><p>https://scotthelme.co.uk/a-new-security-header-feature-policy/</p><p>https://w3c.github.io/webappsec-feature-policy/</p><p>https://www.smashingmagazine.com/2018/12/feature-policy/</p>",
+					"cweid": "693",
+					"wascid": "15",
+					"sourceid": "8"
+				},
+				{
 					"pluginid": "10096",
 					"alertRef": "10096",
 					"alert": "Timestamp Disclosure - Unix",
@@ -171,9 +371,9 @@
 					"desc": "<p>A timestamp was disclosed by the application/web server. - Unix</p>",
 					"instances":[ 
 						{
-							"id": "37",
-							"uri": "https://kavi-proyecto-is.vercel.app/_expo/static/js/web/entry-21b29be5e1d2e33ac7681d8a53ce2098.js",
-							"nodeName": "https:\/\/kavi-proyecto-is.vercel.app\/_expo\/static\/js\/web\/entry-21b29be5e1d2e33ac7681d8a53ce2098.js",
+							"id": "60",
+							"uri": "https://kavi-proyecto-is.vercel.app/_expo/static/js/web/entry-7412c7874039d410fdc9445e2fe5fcff.js",
+							"nodeName": "https:\/\/kavi-proyecto-is.vercel.app\/_expo\/static\/js\/web\/entry-7412c7874039d410fdc9445e2fe5fcff.js",
 							"method": "GET",
 							"param": "",
 							"attack": "",
@@ -181,9 +381,9 @@
 							"otherinfo": "1518500249, which evaluates to: 2018-02-13 05:37:29."
 						},
 						{
-							"id": "40",
-							"uri": "https://kavi-proyecto-is.vercel.app/_expo/static/js/web/entry-21b29be5e1d2e33ac7681d8a53ce2098.js",
-							"nodeName": "https:\/\/kavi-proyecto-is.vercel.app\/_expo\/static\/js\/web\/entry-21b29be5e1d2e33ac7681d8a53ce2098.js",
+							"id": "63",
+							"uri": "https://kavi-proyecto-is.vercel.app/_expo/static/js/web/entry-7412c7874039d410fdc9445e2fe5fcff.js",
+							"nodeName": "https:\/\/kavi-proyecto-is.vercel.app\/_expo\/static\/js\/web\/entry-7412c7874039d410fdc9445e2fe5fcff.js",
 							"method": "GET",
 							"param": "",
 							"attack": "",
@@ -191,9 +391,9 @@
 							"otherinfo": "1604231423, which evaluates to: 2020-11-01 11:50:23."
 						},
 						{
-							"id": "41",
-							"uri": "https://kavi-proyecto-is.vercel.app/_expo/static/js/web/entry-21b29be5e1d2e33ac7681d8a53ce2098.js",
-							"nodeName": "https:\/\/kavi-proyecto-is.vercel.app\/_expo\/static\/js\/web\/entry-21b29be5e1d2e33ac7681d8a53ce2098.js",
+							"id": "64",
+							"uri": "https://kavi-proyecto-is.vercel.app/_expo/static/js/web/entry-7412c7874039d410fdc9445e2fe5fcff.js",
+							"nodeName": "https:\/\/kavi-proyecto-is.vercel.app\/_expo\/static\/js\/web\/entry-7412c7874039d410fdc9445e2fe5fcff.js",
 							"method": "GET",
 							"param": "",
 							"attack": "",
@@ -201,9 +401,9 @@
 							"otherinfo": "1687547391, which evaluates to: 2023-06-23 19:09:51."
 						},
 						{
-							"id": "39",
-							"uri": "https://kavi-proyecto-is.vercel.app/_expo/static/js/web/entry-21b29be5e1d2e33ac7681d8a53ce2098.js",
-							"nodeName": "https:\/\/kavi-proyecto-is.vercel.app\/_expo\/static\/js\/web\/entry-21b29be5e1d2e33ac7681d8a53ce2098.js",
+							"id": "62",
+							"uri": "https://kavi-proyecto-is.vercel.app/_expo/static/js/web/entry-7412c7874039d410fdc9445e2fe5fcff.js",
+							"nodeName": "https:\/\/kavi-proyecto-is.vercel.app\/_expo\/static\/js\/web\/entry-7412c7874039d410fdc9445e2fe5fcff.js",
 							"method": "GET",
 							"param": "",
 							"attack": "",
@@ -211,9 +411,9 @@
 							"otherinfo": "1732584193, which evaluates to: 2024-11-26 01:23:13."
 						},
 						{
-							"id": "38",
-							"uri": "https://kavi-proyecto-is.vercel.app/_expo/static/js/web/entry-21b29be5e1d2e33ac7681d8a53ce2098.js",
-							"nodeName": "https:\/\/kavi-proyecto-is.vercel.app\/_expo\/static\/js\/web\/entry-21b29be5e1d2e33ac7681d8a53ce2098.js",
+							"id": "61",
+							"uri": "https://kavi-proyecto-is.vercel.app/_expo/static/js/web/entry-7412c7874039d410fdc9445e2fe5fcff.js",
+							"nodeName": "https:\/\/kavi-proyecto-is.vercel.app\/_expo\/static\/js\/web\/entry-7412c7874039d410fdc9445e2fe5fcff.js",
 							"method": "GET",
 							"param": "",
 							"attack": "",
@@ -231,6 +431,76 @@
 					"sourceid": "26"
 				},
 				{
+					"pluginid": "10021",
+					"alertRef": "10021",
+					"alert": "X-Content-Type-Options Header Missing",
+					"name": "X-Content-Type-Options Header Missing",
+					"riskcode": "1",
+					"confidence": "2",
+					"riskdesc": "Low (Medium)",
+					"desc": "<p>The Anti-MIME-Sniffing header X-Content-Type-Options was not set to 'nosniff'. This allows older versions of Internet Explorer and Chrome to perform MIME-sniffing on the response body, potentially causing the response body to be interpreted and displayed as a content type other than the declared content type. Current (early 2014) and legacy versions of Firefox will use the declared content type (if one is set), rather than performing MIME-sniffing.</p>",
+					"instances":[ 
+						{
+							"id": "12",
+							"uri": "https://kavi-proyecto-is.vercel.app",
+							"nodeName": "https:\/\/kavi-proyecto-is.vercel.app",
+							"method": "GET",
+							"param": "x-content-type-options",
+							"attack": "",
+							"evidence": "",
+							"otherinfo": "This issue still applies to error type pages (401, 403, 500, etc.) as those pages are often still affected by injection issues, in which case there is still concern for browsers sniffing pages away from their actual content type.\nAt \"High\" threshold this scan rule will not alert on client or server error responses."
+						},
+						{
+							"id": "40",
+							"uri": "https://kavi-proyecto-is.vercel.app/_expo/static/css/global-698f8cf525b412f149b4bd354a0c7462.css",
+							"nodeName": "https:\/\/kavi-proyecto-is.vercel.app\/_expo\/static\/css\/global-698f8cf525b412f149b4bd354a0c7462.css",
+							"method": "GET",
+							"param": "x-content-type-options",
+							"attack": "",
+							"evidence": "",
+							"otherinfo": "This issue still applies to error type pages (401, 403, 500, etc.) as those pages are often still affected by injection issues, in which case there is still concern for browsers sniffing pages away from their actual content type.\nAt \"High\" threshold this scan rule will not alert on client or server error responses."
+						},
+						{
+							"id": "50",
+							"uri": "https://kavi-proyecto-is.vercel.app/_expo/static/css/native-tabs.module-f5891ae1e31b9e0417a6176d5bcdf15d.css",
+							"nodeName": "https:\/\/kavi-proyecto-is.vercel.app\/_expo\/static\/css\/native-tabs.module-f5891ae1e31b9e0417a6176d5bcdf15d.css",
+							"method": "GET",
+							"param": "x-content-type-options",
+							"attack": "",
+							"evidence": "",
+							"otherinfo": "This issue still applies to error type pages (401, 403, 500, etc.) as those pages are often still affected by injection issues, in which case there is still concern for browsers sniffing pages away from their actual content type.\nAt \"High\" threshold this scan rule will not alert on client or server error responses."
+						},
+						{
+							"id": "52",
+							"uri": "https://kavi-proyecto-is.vercel.app/assets/assets/fonts/MoiraiOne-Regular.f2fce952fd396c566748284021cf4970.ttf",
+							"nodeName": "https:\/\/kavi-proyecto-is.vercel.app\/assets\/assets\/fonts\/MoiraiOne-Regular.f2fce952fd396c566748284021cf4970.ttf",
+							"method": "GET",
+							"param": "x-content-type-options",
+							"attack": "",
+							"evidence": "",
+							"otherinfo": "This issue still applies to error type pages (401, 403, 500, etc.) as those pages are often still affected by injection issues, in which case there is still concern for browsers sniffing pages away from their actual content type.\nAt \"High\" threshold this scan rule will not alert on client or server error responses."
+						},
+						{
+							"id": "47",
+							"uri": "https://kavi-proyecto-is.vercel.app/favicon.ico",
+							"nodeName": "https:\/\/kavi-proyecto-is.vercel.app\/favicon.ico",
+							"method": "GET",
+							"param": "x-content-type-options",
+							"attack": "",
+							"evidence": "",
+							"otherinfo": "This issue still applies to error type pages (401, 403, 500, etc.) as those pages are often still affected by injection issues, in which case there is still concern for browsers sniffing pages away from their actual content type.\nAt \"High\" threshold this scan rule will not alert on client or server error responses."
+						}
+					],
+					"count": "5",
+					"systemic": true,
+					"solution": "<p>Ensure that the application/web server sets the Content-Type header appropriately, and that it sets the X-Content-Type-Options header to 'nosniff' for all web pages.</p><p>If possible, ensure that the end user uses a standards-compliant and modern web browser that does not perform MIME-sniffing at all, or that can be directed by the web application/web server to not perform MIME-sniffing.</p>",
+					"otherinfo": "<p>This issue still applies to error type pages (401, 403, 500, etc.) as those pages are often still affected by injection issues, in which case there is still concern for browsers sniffing pages away from their actual content type.</p><p>At \"High\" threshold this scan rule will not alert on client or server error responses.</p>",
+					"reference": "<p>https://learn.microsoft.com/en-us/previous-versions/windows/internet-explorer/ie-developer/compatibility/gg622941(v=vs.85)</p><p>https://owasp.org/www-community/Security_Headers</p>",
+					"cweid": "693",
+					"wascid": "15",
+					"sourceid": "8"
+				},
+				{
 					"pluginid": "10094",
 					"alertRef": "10094-3",
 					"alert": "Base64 Disclosure",
@@ -241,7 +511,7 @@
 					"desc": "<p>Base64 encoded data was disclosed by the application/web server. Note: in the interests of performance not all base64 strings in the response were analyzed individually, the entire response should be looked at by the analyst/security team/developer(s).</p>",
 					"instances":[ 
 						{
-							"id": "4",
+							"id": "24",
 							"uri": "https://kavi-proyecto-is.vercel.app",
 							"nodeName": "https:\/\/kavi-proyecto-is.vercel.app",
 							"method": "GET",
@@ -251,9 +521,9 @@
 							"otherinfo": "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\n<svg\n   xmlns:dc=\"http://purl.org/dc/elements/1.1/\"\n   xmlns:cc=\"http://creativecommons.org/ns#\"\n   xmlns:rdf=\"http://www.w3.org/1999/02/22-rdf-syntax-ns#\"\n   xmlns:svg=\"http://www.w3.org/2000/svg\"\n   xmlns=\"http://www.w3.org/2000/svg\"\n   version=\"1.1\"\n   viewBox=\"0 0 1 1\"\n   preserveAspectRatio=\"xMinYMin meet\">\n  <path\n     d=\"M 0.04038059,0.6267767 0.14644661,0.52071068 0.42928932,0.80355339 0.3232233,0.90961941 z M 0.21715729,0.80355339 0.85355339,0.16715729 0.95961941,0.2732233 0.3232233,0.90961941 z\"\n     id=\"rect3780\"\n     style=\"fill:#ffffff;fill-opacity:1;stroke:none\" />\n</svg>\n"
 						},
 						{
-							"id": "82",
-							"uri": "https://kavi-proyecto-is.vercel.app/_expo/static/js/web/entry-21b29be5e1d2e33ac7681d8a53ce2098.js",
-							"nodeName": "https:\/\/kavi-proyecto-is.vercel.app\/_expo\/static\/js\/web\/entry-21b29be5e1d2e33ac7681d8a53ce2098.js",
+							"id": "106",
+							"uri": "https://kavi-proyecto-is.vercel.app/_expo/static/js/web/entry-7412c7874039d410fdc9445e2fe5fcff.js",
+							"nodeName": "https:\/\/kavi-proyecto-is.vercel.app\/_expo\/static\/js\/web\/entry-7412c7874039d410fdc9445e2fe5fcff.js",
 							"method": "GET",
 							"param": "",
 							"attack": "",
@@ -268,7 +538,7 @@
 					"reference": "<p>https://projects.webappsec.org/w/page/13246936/Information%20Leakage</p>",
 					"cweid": "319",
 					"wascid": "13",
-					"sourceid": "1"
+					"sourceid": "8"
 				},
 				{
 					"pluginid": "10109",
@@ -281,7 +551,7 @@
 					"desc": "<p>The application appears to be a modern web application. If you need to explore it automatically then the Client Spider may well be more effective than the standard one.</p>",
 					"instances":[ 
 						{
-							"id": "2",
+							"id": "8",
 							"uri": "https://kavi-proyecto-is.vercel.app",
 							"nodeName": "https:\/\/kavi-proyecto-is.vercel.app",
 							"method": "GET",
@@ -298,7 +568,7 @@
 					"reference": "",
 					"cweid": "-1",
 					"wascid": "-1",
-					"sourceid": "1"
+					"sourceid": "8"
 				},
 				{
 					"pluginid": "10015",
@@ -311,7 +581,7 @@
 					"desc": "<p>The cache-control header has not been set properly or is missing, allowing the browser and proxies to cache content. For static assets like css, js, or image files this might be intended, however, the resources should be reviewed to ensure that no sensitive content will be cached.</p>",
 					"instances":[ 
 						{
-							"id": "0",
+							"id": "2",
 							"uri": "https://kavi-proyecto-is.vercel.app",
 							"nodeName": "https:\/\/kavi-proyecto-is.vercel.app",
 							"method": "GET",
@@ -341,7 +611,7 @@
 					"desc": "<p>The content was retrieved from a shared cache. If the response data is sensitive, personal or user-specific, this may result in sensitive information being leaked. In some cases, this may even result in a user gaining complete control of the session of another user, depending on the configuration of the caching components in use in their environment. This is primarily an issue where caching servers such as \"proxy\" caches are configured on the local network. This configuration is typically found in corporate or educational environments, for instance.</p>",
 					"instances":[ 
 						{
-							"id": "3",
+							"id": "10",
 							"uri": "https://kavi-proyecto-is.vercel.app",
 							"nodeName": "https:\/\/kavi-proyecto-is.vercel.app",
 							"method": "GET",
@@ -351,9 +621,9 @@
 							"otherinfo": "The presence of the 'Age' header indicates that a HTTP/1.1 compliant caching server is in use."
 						},
 						{
-							"id": "23",
-							"uri": "https://kavi-proyecto-is.vercel.app/_expo/static/css/native-tabs.module-b85e04f8448112d626072b9d4e8dbe6a.css",
-							"nodeName": "https:\/\/kavi-proyecto-is.vercel.app\/_expo\/static\/css\/native-tabs.module-b85e04f8448112d626072b9d4e8dbe6a.css",
+							"id": "39",
+							"uri": "https://kavi-proyecto-is.vercel.app/_expo/static/css/global-698f8cf525b412f149b4bd354a0c7462.css",
+							"nodeName": "https:\/\/kavi-proyecto-is.vercel.app\/_expo\/static\/css\/global-698f8cf525b412f149b4bd354a0c7462.css",
 							"method": "GET",
 							"param": "",
 							"attack": "",
@@ -361,7 +631,17 @@
 							"otherinfo": "The presence of the 'Age' header indicates that a HTTP/1.1 compliant caching server is in use."
 						},
 						{
-							"id": "11",
+							"id": "48",
+							"uri": "https://kavi-proyecto-is.vercel.app/_expo/static/css/native-tabs.module-f5891ae1e31b9e0417a6176d5bcdf15d.css",
+							"nodeName": "https:\/\/kavi-proyecto-is.vercel.app\/_expo\/static\/css\/native-tabs.module-f5891ae1e31b9e0417a6176d5bcdf15d.css",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "Age: 0",
+							"otherinfo": "The presence of the 'Age' header indicates that a HTTP/1.1 compliant caching server is in use."
+						},
+						{
+							"id": "43",
 							"uri": "https://kavi-proyecto-is.vercel.app/assets/assets/fonts/MoiraiOne-Regular.f2fce952fd396c566748284021cf4970.ttf",
 							"nodeName": "https:\/\/kavi-proyecto-is.vercel.app\/assets\/assets\/fonts\/MoiraiOne-Regular.f2fce952fd396c566748284021cf4970.ttf",
 							"method": "GET",
@@ -371,17 +651,7 @@
 							"otherinfo": "The presence of the 'Age' header indicates that a HTTP/1.1 compliant caching server is in use."
 						},
 						{
-							"id": "25",
-							"uri": "https://kavi-proyecto-is.vercel.app/assets/assets/fonts/PoiretOne-Regular.de16c7ace4ed177e5488c1a95f75d088.ttf",
-							"nodeName": "https:\/\/kavi-proyecto-is.vercel.app\/assets\/assets\/fonts\/PoiretOne-Regular.de16c7ace4ed177e5488c1a95f75d088.ttf",
-							"method": "GET",
-							"param": "",
-							"attack": "",
-							"evidence": "Age: 0",
-							"otherinfo": "The presence of the 'Age' header indicates that a HTTP/1.1 compliant caching server is in use."
-						},
-						{
-							"id": "22",
+							"id": "44",
 							"uri": "https://kavi-proyecto-is.vercel.app/favicon.ico",
 							"nodeName": "https:\/\/kavi-proyecto-is.vercel.app\/favicon.ico",
 							"method": "GET",
@@ -398,7 +668,7 @@
 					"reference": "<p>https://datatracker.ietf.org/doc/html/rfc7234</p><p>https://datatracker.ietf.org/doc/html/rfc7231</p><p>https://www.rfc-editor.org/rfc/rfc9110.html</p>",
 					"cweid": "525",
 					"wascid": "-1",
-					"sourceid": "1"
+					"sourceid": "8"
 				},
 				{
 					"pluginid": "90005",
@@ -411,7 +681,7 @@
 					"desc": "<p>Specifies how and where the data would be used. For instance, if the value is audio, then the requested resource must be audio data and not any other type of resource.</p>",
 					"instances":[ 
 						{
-							"id": "7",
+							"id": "27",
 							"uri": "https://kavi-proyecto-is.vercel.app",
 							"nodeName": "https:\/\/kavi-proyecto-is.vercel.app",
 							"method": "GET",
@@ -421,7 +691,7 @@
 							"otherinfo": ""
 						},
 						{
-							"id": "14",
+							"id": "18",
 							"uri": "https://kavi-proyecto-is.vercel.app/robots.txt",
 							"nodeName": "https:\/\/kavi-proyecto-is.vercel.app\/robots.txt",
 							"method": "GET",
@@ -431,7 +701,7 @@
 							"otherinfo": ""
 						},
 						{
-							"id": "17",
+							"id": "20",
 							"uri": "https://kavi-proyecto-is.vercel.app/sitemap.xml",
 							"nodeName": "https:\/\/kavi-proyecto-is.vercel.app\/sitemap.xml",
 							"method": "GET",
@@ -448,7 +718,7 @@
 					"reference": "<p>https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Sec-Fetch-Dest</p>",
 					"cweid": "352",
 					"wascid": "9",
-					"sourceid": "1"
+					"sourceid": "8"
 				},
 				{
 					"pluginid": "90005",
@@ -461,7 +731,7 @@
 					"desc": "<p>Allows to differentiate between requests for navigating between HTML pages and requests for loading resources like images, audio etc.</p>",
 					"instances":[ 
 						{
-							"id": "6",
+							"id": "26",
 							"uri": "https://kavi-proyecto-is.vercel.app",
 							"nodeName": "https:\/\/kavi-proyecto-is.vercel.app",
 							"method": "GET",
@@ -471,7 +741,7 @@
 							"otherinfo": ""
 						},
 						{
-							"id": "13",
+							"id": "16",
 							"uri": "https://kavi-proyecto-is.vercel.app/robots.txt",
 							"nodeName": "https:\/\/kavi-proyecto-is.vercel.app\/robots.txt",
 							"method": "GET",
@@ -481,7 +751,7 @@
 							"otherinfo": ""
 						},
 						{
-							"id": "15",
+							"id": "17",
 							"uri": "https://kavi-proyecto-is.vercel.app/sitemap.xml",
 							"nodeName": "https:\/\/kavi-proyecto-is.vercel.app\/sitemap.xml",
 							"method": "GET",
@@ -498,7 +768,7 @@
 					"reference": "<p>https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Sec-Fetch-Mode</p>",
 					"cweid": "352",
 					"wascid": "9",
-					"sourceid": "1"
+					"sourceid": "8"
 				},
 				{
 					"pluginid": "90005",
@@ -511,7 +781,7 @@
 					"desc": "<p>Specifies the relationship between request initiator's origin and target's origin.</p>",
 					"instances":[ 
 						{
-							"id": "5",
+							"id": "25",
 							"uri": "https://kavi-proyecto-is.vercel.app",
 							"nodeName": "https:\/\/kavi-proyecto-is.vercel.app",
 							"method": "GET",
@@ -521,7 +791,7 @@
 							"otherinfo": ""
 						},
 						{
-							"id": "10",
+							"id": "15",
 							"uri": "https://kavi-proyecto-is.vercel.app/robots.txt",
 							"nodeName": "https:\/\/kavi-proyecto-is.vercel.app\/robots.txt",
 							"method": "GET",
@@ -531,7 +801,7 @@
 							"otherinfo": ""
 						},
 						{
-							"id": "12",
+							"id": "14",
 							"uri": "https://kavi-proyecto-is.vercel.app/sitemap.xml",
 							"nodeName": "https:\/\/kavi-proyecto-is.vercel.app\/sitemap.xml",
 							"method": "GET",
@@ -548,7 +818,7 @@
 					"reference": "<p>https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Sec-Fetch-Site</p>",
 					"cweid": "352",
 					"wascid": "9",
-					"sourceid": "1"
+					"sourceid": "8"
 				},
 				{
 					"pluginid": "90005",
@@ -561,7 +831,7 @@
 					"desc": "<p>Specifies if a navigation request was initiated by a user.</p>",
 					"instances":[ 
 						{
-							"id": "8",
+							"id": "28",
 							"uri": "https://kavi-proyecto-is.vercel.app",
 							"nodeName": "https:\/\/kavi-proyecto-is.vercel.app",
 							"method": "GET",
@@ -571,7 +841,7 @@
 							"otherinfo": ""
 						},
 						{
-							"id": "16",
+							"id": "19",
 							"uri": "https://kavi-proyecto-is.vercel.app/robots.txt",
 							"nodeName": "https:\/\/kavi-proyecto-is.vercel.app\/robots.txt",
 							"method": "GET",
@@ -581,7 +851,7 @@
 							"otherinfo": ""
 						},
 						{
-							"id": "18",
+							"id": "21",
 							"uri": "https://kavi-proyecto-is.vercel.app/sitemap.xml",
 							"nodeName": "https:\/\/kavi-proyecto-is.vercel.app\/sitemap.xml",
 							"method": "GET",
@@ -598,7 +868,7 @@
 					"reference": "<p>https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Sec-Fetch-User</p>",
 					"cweid": "352",
 					"wascid": "9",
-					"sourceid": "1"
+					"sourceid": "8"
 				},
 				{
 					"pluginid": "10049",
@@ -611,7 +881,7 @@
 					"desc": "<p>The response contents are storable by caching components such as proxy servers, but will not be retrieved directly from the cache, without validating the request upstream, in response to similar requests from other users.</p>",
 					"instances":[ 
 						{
-							"id": "9",
+							"id": "29",
 							"uri": "https://kavi-proyecto-is.vercel.app",
 							"nodeName": "https:\/\/kavi-proyecto-is.vercel.app",
 							"method": "GET",
@@ -621,9 +891,9 @@
 							"otherinfo": ""
 						},
 						{
-							"id": "21",
-							"uri": "https://kavi-proyecto-is.vercel.app/assets/assets/fonts/MoiraiOne-Regular.f2fce952fd396c566748284021cf4970.ttf",
-							"nodeName": "https:\/\/kavi-proyecto-is.vercel.app\/assets\/assets\/fonts\/MoiraiOne-Regular.f2fce952fd396c566748284021cf4970.ttf",
+							"id": "46",
+							"uri": "https://kavi-proyecto-is.vercel.app/_expo/static/css/global-698f8cf525b412f149b4bd354a0c7462.css",
+							"nodeName": "https:\/\/kavi-proyecto-is.vercel.app\/_expo\/static\/css\/global-698f8cf525b412f149b4bd354a0c7462.css",
 							"method": "GET",
 							"param": "",
 							"attack": "",
@@ -631,7 +901,7 @@
 							"otherinfo": ""
 						},
 						{
-							"id": "24",
+							"id": "49",
 							"uri": "https://kavi-proyecto-is.vercel.app/favicon.ico",
 							"nodeName": "https:\/\/kavi-proyecto-is.vercel.app\/favicon.ico",
 							"method": "GET",
@@ -641,7 +911,7 @@
 							"otherinfo": ""
 						},
 						{
-							"id": "19",
+							"id": "22",
 							"uri": "https://kavi-proyecto-is.vercel.app/robots.txt",
 							"nodeName": "https:\/\/kavi-proyecto-is.vercel.app\/robots.txt",
 							"method": "GET",
@@ -651,7 +921,7 @@
 							"otherinfo": ""
 						},
 						{
-							"id": "20",
+							"id": "23",
 							"uri": "https://kavi-proyecto-is.vercel.app/sitemap.xml",
 							"nodeName": "https:\/\/kavi-proyecto-is.vercel.app\/sitemap.xml",
 							"method": "GET",
@@ -668,7 +938,7 @@
 					"reference": "<p>https://datatracker.ietf.org/doc/html/rfc7234</p><p>https://datatracker.ietf.org/doc/html/rfc7231</p><p>https://www.w3.org/Protocols/rfc2616/rfc2616-sec13.html</p>",
 					"cweid": "524",
 					"wascid": "13",
-					"sourceid": "1"
+					"sourceid": "8"
 				}
 			]
 		}
