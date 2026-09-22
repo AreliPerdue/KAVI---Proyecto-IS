@@ -27,7 +27,7 @@ export function FieldButton({
   const theme = useTheme();
   return (
     <View style={styles.container}>
-      <AppText variant="label" color="textSecondary">
+      <AppText variant="label" color="textSecondary" numberOfLines={1}>
         {label}
       </AppText>
       <Pressable

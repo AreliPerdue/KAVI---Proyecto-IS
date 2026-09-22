@@ -52,16 +52,32 @@ export function Screen({ children, maxWidth = MaxContentWidth, scroll = false, c
     </View>
   );
 
+  /*
+   * El teclado se atiende en dos capas porque ninguna basta sola:
+   *  - iOS: `behavior="padding"` encoge el contenedor y el ScrollView deja ver
+   *    el campo enfocado.
+   *  - Android: desde que edge-to-edge es obligatorio (SDK 54+), la ventana ya
+   *    no se redimensiona y `KeyboardAvoidingView` por si solo no alcanza; quien
+   *    resuelve es `softwareKeyboardLayoutMode: "pan"` de app.json, que desplaza
+   *    la ventana. Se deja el contenedor igualmente porque evita que el campo
+   *    quede tapado al recuperar el foco.
+   * Solo envuelve a las pantallas con scroll: son las unicas con inputs, y
+   * anadirlo a las demas haria que el calendario se reajustara cada vez que se
+   * abre el teclado dentro de una hoja.
+   */
   if (!scroll) {
     return <View style={[styles.root, { backgroundColor: theme.background }]}>{content}</View>;
   }
 
   return (
-    <KeyboardAvoidingView style={[styles.root, { backgroundColor: theme.background }]} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+    <KeyboardAvoidingView
+      style={[styles.root, { backgroundColor: theme.background }]}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={[styles.scrollContent, centered ? styles.centered : null]}
         keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
         showsHorizontalScrollIndicator={false}>
         {content}
       </ScrollView>

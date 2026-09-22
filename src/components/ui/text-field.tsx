@@ -28,14 +28,14 @@ export const TextField = forwardRef<TextInput, TextFieldProps>(function TextFiel
 
   return (
     <View style={styles.container}>
-      <AppText variant="label" color="textSecondary">
+      <AppText variant="label" color="textSecondary" numberOfLines={1}>
         {label}
       </AppText>
       <View
         style={[
           styles.inputRow,
           { backgroundColor: theme.surface, borderColor },
-          focused ? styles.inputRowFocused : null,
+          focused ? null : null,
           !editable ? styles.inputRowDisabled : null,
         ]}>
         <TextInput
@@ -102,7 +102,15 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     fontSize: 16,
-    lineHeight: 20,
+    /*
+     * Android recorta acentos y descendentes (a, e, g, p, y) cuando el
+     * TextInput lleva `lineHeight`, y ese recorte es justo lo que hace que el
+     * texto parezca salirse de la caja. En iOS y web si se respeta el 16/24 de
+     * la escala (kavi-design §2); el alto de la fila lo fija `minHeight`.
+     */
+    ...Platform.select({ android: {}, default: { lineHeight: 24 } }),
+    /* Centrado vertical en Android; los multilinea lo sobreescriben con 'top'. */
+    textAlignVertical: 'center',
     paddingVertical: Spacing.md,
     paddingRight: Spacing.md,
   },

@@ -122,7 +122,7 @@ export const ExerciseCard = memo(function ExerciseCard({ exercise, index, readOn
           <TextField label="Peso" value={weight} onChangeText={setWeight} onBlur={() => onSave({ weight: weight.trim() || null })} placeholder="40 kg, corporal" />
         </View>
         <View style={styles.cell}>
-          <TextField label="Duración (min)" value={duration} onChangeText={setDuration} onBlur={() => onSave({ duration_minutes: toInt(duration) })} keyboardType="number-pad" placeholder="—" />
+          <TextField label="Duración" value={duration} onChangeText={setDuration} onBlur={() => onSave({ duration_minutes: toInt(duration) })} keyboardType="number-pad" placeholder="min" />
         </View>
       </View>
       <TextField label="Notas" value={notes} onChangeText={setNotes} onBlur={() => onSave({ notes: notes.trim() || null })} placeholder="Subir 2.5 kg la próxima…" multiline />
