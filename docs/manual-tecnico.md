@@ -372,7 +372,28 @@ El detalle completo está en [`reports/seguridad/`](../reports/seguridad/).
 |---|---|
 | **Web** | Vercel, automático al subir a `main`. Config en `vercel.json` |
 | **Android** | EAS Build, perfil `production`, genera APK instalable |
-| **iOS** | Pendiente: requiere cuenta de Apple Developer |
+| **iOS** | Desarrollado y verificado en simulador. La **distribución** está bloqueada (ver abajo) |
+
+### Sobre iOS
+
+Conviene ser preciso con esto, porque se presta a malentendidos.
+
+**La aplicación de iOS está desarrollada y funcionando.** Se ejecutó y verificó en
+el simulador de iOS, donde se comporta igual que en Android y en web: mismo
+código, mismas pantallas, mismos datos. No hay funcionalidad que falte por
+implementar en esa plataforma.
+
+Lo que falta es la **cuenta de Apple Developer** (99 USD al año). Sin ella Apple
+no emite los certificados de firma, y sin firma no se puede:
+
+- instalar la app en un iPhone o iPad físico,
+- subirla a TestFlight para que la prueben otras personas,
+- publicarla en la App Store.
+
+Es decir: **una limitación administrativa, no un trabajo pendiente**. El día que
+se adquiera la cuenta, la build de iOS se genera con el mismo pipeline de EAS que
+ya produce el APK de Android, cambiando la plataforma en el workflow. No hace
+falta escribir código.
 
 ---
 

@@ -7,6 +7,11 @@ tu tiempo.
 
 Funciona en **iOS, Android y navegador** con la misma cuenta y los mismos datos.
 
+> **Sobre iOS:** la app está desarrollada y verificada en el simulador de iOS,
+> pero todavía no se puede instalar en un iPhone ni descargar de la App Store:
+> hace falta una cuenta de Apple Developer de pago para firmarla y publicarla.
+> Mientras tanto, en iPhone se puede usar la **versión web** desde el navegador.
+
 ---
 
 ## 1. Crear tu cuenta
