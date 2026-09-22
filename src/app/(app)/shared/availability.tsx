@@ -66,6 +66,11 @@ export default function AvailabilityScreen() {
       <ModalHeader title="Disponibilidad" />
 
       {contacts.isPending ? <LoadingState /> : null}
+      {/* Sin esta rama un fallo al cargar contactos dejaba la pantalla en blanco,
+          sin explicacion ni forma de reintentar (NFR-11). */}
+      {contacts.isError ? (
+        <ErrorState message={contacts.error.message} onRetry={() => contacts.refetch()} />
+      ) : null}
       {contacts.isSuccess && sharing.length === 0 ? (
         <EmptyState title="Nadie te comparte su calendario todavía" description="Pide a tus contactos que compartan su disponibilidad contigo desde su pestaña Compartido." />
       ) : null}

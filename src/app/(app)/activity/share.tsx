@@ -4,7 +4,7 @@ import { useMemo, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { ModalHeader } from '@/components/modal-header';
-import { AppText, Avatar, Banner, Button, EmptyState, IconButton, LoadingState, Screen } from '@/components/ui';
+import { AppText, Avatar, Banner, Button, EmptyState, ErrorState, IconButton, LoadingState, Screen } from '@/components/ui';
 import { IconSize, IconStroke, Radius, Spacing } from '@/constants/theme';
 import { useActivity } from '@/hooks/use-activity';
 import { useAvailability } from '@/hooks/use-availability';
@@ -86,6 +86,11 @@ export default function ShareActivityScreen() {
       <ModalHeader title="Compartir actividad" />
       {share.error ? <Banner tone="error" message={share.error.message} /> : null}
       {contacts.isPending || shares.isPending ? <LoadingState /> : null}
+      {/* El error de la mutacion ya se avisa arriba; sin esta rama, un fallo al
+          cargar contactos o shares dejaba la pantalla vacia (NFR-11). */}
+      {contacts.isError ? (
+        <ErrorState message={contacts.error.message} onRetry={() => contacts.refetch()} />
+      ) : null}
 
       {(shares.data?.length ?? 0) > 0 ? (
         <View style={styles.section}>
