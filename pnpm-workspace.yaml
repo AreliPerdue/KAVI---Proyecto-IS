@@ -20,6 +20,13 @@ minimumReleaseAgeExclude:
   - expo-notifications@57.0.16
   - expo-secure-store@57.0.3
 
+# Vigilante de ficheros nativo que arrastra Jest. Solo sirve para el modo
+# --watch en local, asi que no se compila. Se declara aqui porque pnpm 11
+# (el de CI) convierte en error un script de build sin decision explicita,
+# mientras que pnpm 10 solo avisa.
+ignoredBuiltDependencies:
+  - '@parcel/watcher'
+
 # Permitir el postinstall que descarga el binario de la CLI de Supabase
 onlyBuiltDependencies:
   - supabase
