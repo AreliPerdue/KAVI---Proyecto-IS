@@ -72,7 +72,13 @@ jest.mock('react-native-reanimated', () => {
     C.displayName = `Animated(${Base.displayName ?? 'View'})`;
     return C;
   };
-  const Animated = { View: animado(View), Text: animado(Text), ScrollView: animado(ScrollView) };
+  const Animated = {
+    View: animado(View),
+    Text: animado(Text),
+    ScrollView: animado(ScrollView),
+    // `react-native-gesture-handler` lo usa al cargarse para envolver sus vistas.
+    createAnimatedComponent: (Base) => animado(Base),
+  };
   return {
     __esModule: true,
     default: Animated,
@@ -155,3 +161,56 @@ beforeEach(() => {
   for (const fn of Object.values(mockRouter)) if (typeof fn.mockClear === 'function') fn.mockClear();
   mockParametrosDeRuta = {};
 });
+
+/**
+ * Gestos. Su `jestSetup` oficial no basta: `GestureDetector` monta el puente
+ * con Reanimated (`useEvent`, `useComposedEventHandler`...) y nuestro mock de
+ * Reanimated no reproduce ese puente. Como los gestos no son lo que prueban
+ * estas pruebas, se sustituye la libreria entera: `GestureDetector` pinta a sus
+ * hijos y `Gesture` devuelve un constructor encadenable que no hace nada.
+ */
+jest.mock('react-native-gesture-handler', () => {
+  const React = require('react');
+  const { View, ScrollView, Pressable, FlatList } = require('react-native');
+
+  const encadenable = () => {
+    const gesto = new Proxy({}, { get: () => () => gesto });
+    return gesto;
+  };
+  const Gesture = new Proxy({}, { get: () => encadenable });
+
+  const passthrough = (nombre) => {
+    const C = ({ children }) => React.createElement(React.Fragment, null, children);
+    C.displayName = nombre;
+    return C;
+  };
+
+  return {
+    __esModule: true,
+    Gesture,
+    GestureDetector: passthrough('GestureDetector'),
+    GestureHandlerRootView: ({ children }) => React.createElement(View, null, children),
+    Directions: {},
+    State: {},
+    ScrollView,
+    FlatList,
+    TouchableOpacity: Pressable,
+    RectButton: Pressable,
+    BaseButton: Pressable,
+    PanGestureHandler: passthrough('PanGestureHandler'),
+    TapGestureHandler: passthrough('TapGestureHandler'),
+  };
+});
+
+/**
+ * `react-native-worklets` es el motor que Reanimated 4 usa para ejecutar codigo
+ * en el hilo de UI; en Jest no existe ese hilo. `runOnJS` devuelve la funcion
+ * tal cual, que es justo su efecto observable desde JavaScript.
+ */
+jest.mock('react-native-worklets', () => ({
+  __esModule: true,
+  runOnJS: (fn) => fn,
+  runOnUI: (fn) => fn,
+  createWorkletRuntime: () => ({}),
+  isWorkletFunction: () => false,
+}));
