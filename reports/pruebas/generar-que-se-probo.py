@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Genera `que-se-probo.md` a partir del resultado real de Jest, para que el informe
+Genera `Listado de pruebas.md` a partir del resultado real de Jest, para que el informe
 no pueda desviarse de lo que de verdad se ejecuta.
 
     npx jest --json --outputFile=/tmp/tests.json
@@ -338,5 +338,5 @@ w('cambio. Si alguna fallara, el cambio quedaría marcado en rojo.\n')
 w('El informe navegable línea por línea está en `cobertura/lcov-report/index.html`, y el')
 w('resumen técnico con la cobertura por capa en [`README.md`](README.md).\n')
 
-open('reports/pruebas/que-se-probo.md', 'w').write('\n'.join(L) + '\n')
+open('reports/pruebas/Listado de pruebas.md', 'w').write('\n'.join(L) + '\n')
 print('generado:', sum(len(v) for v in por_archivo.values()), 'pruebas en', len(por_archivo), 'archivos')

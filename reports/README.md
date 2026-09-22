@@ -27,7 +27,7 @@ del análisis y sus limitaciones.
 
 ## Para leer sin tecnicismos
 
-**[Qué se probó en KAVI, y qué salió](pruebas/que-se-probo.md)** recorre las
+**[Qué se probó en KAVI, y qué salió](pruebas/Listado%20de%20pruebas.md)** recorre las
 1 287 pruebas una por una, agrupadas por zona de la aplicación —crear cuenta,
 calendario, compartir, gimnasio…— y explicadas sin lenguaje técnico. Es el
 documento a leer si lo que interesa es *qué se verificó*, no cómo.
