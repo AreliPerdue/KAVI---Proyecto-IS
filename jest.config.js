@@ -21,6 +21,16 @@ module.exports = {
    * Acotarlo aqui daria un numero local mas alto que el del panel y seria
    * enganoso al documentarlo (rubrica: fase 2).
    */
+  /*
+   * La cobertura se emite a `reports/pruebas/cobertura`, que SI se versiona:
+   * la entrega pide los reportes dentro del repositorio, no solo que las
+   * pruebas corran. `lcov` alimenta a SonarQube, `html` es el navegable y
+   * `json-summary` el que se resume en el README.
+   */
+  coverageDirectory: 'reports/pruebas/cobertura',
+  // Sin 'html': el reportero `lcov` ya emite el informe navegable en
+  // `lcov-report/`, y tenerlos los dos duplicaba 350 ficheros en el repo.
+  coverageReporters: ['lcov', 'json-summary', 'text-summary'],
   collectCoverageFrom: [
     'src/**/*.{ts,tsx}',
     '!src/**/__tests__/**',

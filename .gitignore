@@ -44,5 +44,5 @@ example
 /ios
 /android
 
-# Cobertura de pruebas
+# Cobertura de pruebas. `reports/` SI se versiona: es un entregable.
 coverage/
