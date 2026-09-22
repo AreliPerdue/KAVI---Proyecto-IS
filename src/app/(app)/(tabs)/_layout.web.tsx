@@ -60,11 +60,14 @@ type TopBarProps = TabListProps;
 /** Barra superior web: marca + triggers (TabList con asChild exige un solo hijo). */
 function TopBar({ children, ...props }: TopBarProps) {
   const theme = useTheme();
+  // El eslogan lleva el tracking muy abierto del logo: en barras estrechas
+  // competiria con las pestanas, asi que solo aparece con espacio de sobra.
+  const wide = useWindowDimensions().width >= 720;
   return (
     <View {...props} style={[styles.bar, { backgroundColor: theme.surface, borderBottomColor: theme.border }]}>
       <View style={styles.barInner}>
         <View style={styles.brand}>
-          <Wordmark size={26} />
+          <Wordmark size={26} slogan={wide} sloganInline sloganColor="textSecondary" />
         </View>
         <View style={styles.tabList}>{children}</View>
       </View>
