@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/29</span>
+                <span class='fraction'>29/29</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>0/9</span>
+                <span class='fraction'>9/9</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>0/10</span>
+                <span class='fraction'>10/10</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/22</span>
+                <span class='fraction'>22/22</span>
             </div>
         
             
@@ -61,7 +61,7 @@
             </div>
         </template>
     </div>
-    <div class='status-line low'></div>
+    <div class='status-line high'></div>
     <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
@@ -149,33 +149,33 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">18x</span>
+<span class="cline-any cline-yes">28x</span>
+<span class="cline-any cline-yes">27x</span>
+<span class="cline-any cline-yes">27x</span>
+<span class="cline-any cline-yes">26x</span>
+<span class="cline-any cline-yes">11x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">18x</span>
+<span class="cline-any cline-yes">18x</span>
+<span class="cline-any cline-yes">18x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">18x</span>
+<span class="cline-any cline-yes">26x</span>
+<span class="cline-any cline-yes">26x</span>
+<span class="cline-any cline-yes">19x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">18x</span>
+<span class="cline-any cline-yes">26x</span>
+<span class="cline-any cline-yes">26x</span>
+<span class="cline-any cline-yes">26x</span>
+<span class="cline-any cline-yes">26x</span>
+<span class="cline-any cline-yes">26x</span>
+<span class="cline-any cline-yes">26x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">18x</span>
+<span class="cline-any cline-yes">18x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import { clampToDay } from '@/lib/dates';
 import type { Activity } from '@/types/domain';
@@ -205,34 +205,34 @@ export type PositionedBlock = {
  *
  * @param minMinutes Duración mínima que ocupa un bloque al pintarse.
  */
-export function <span class="fstat-no" title="function not covered" >layoutDay(</span>activities: readonly Activity[], day: Date, minMinutes = <span class="branch-0 cbranch-no" title="branch not covered" >0)</span>: PositionedBlock[] {
-  const items = <span class="cstat-no" title="statement not covered" >activities</span>
-    .filter(<span class="fstat-no" title="function not covered" >(a</span>) =&gt; <span class="cstat-no" title="statement not covered" >!a.all_day)</span>
-    .map(<span class="fstat-no" title="function not covered" >(a</span>ctivity) =&gt; (<span class="cstat-no" title="statement not covered" >{ activity, ...clampToDay(activity.start_at, activity.end_at, day) })</span>)
-    .filter(<span class="fstat-no" title="function not covered" >(i</span>tem): item is { activity: Activity; start: number; end: number } =&gt; <span class="cstat-no" title="statement not covered" >item.start !== undefined)</span>
-    .map(<span class="fstat-no" title="function not covered" >(i</span>tem) =&gt; (<span class="cstat-no" title="statement not covered" >{ ...item, visualEnd: Math.max(item.end, item.start + minMinutes) })</span>)
-    .sort(<span class="fstat-no" title="function not covered" >(a</span>, b) =&gt; <span class="cstat-no" title="statement not covered" >a.start - b.start || b.visualEnd - a.visualEnd)</span>;
+export function layoutDay(activities: readonly Activity[], day: Date, minMinutes = 0): PositionedBlock[] {
+  const items = activities
+    .filter((a) =&gt; !a.all_day)
+    .map((activity) =&gt; ({ activity, ...clampToDay(activity.start_at, activity.end_at, day) }))
+    .filter((item): item is { activity: Activity; start: number; end: number } =&gt; item.start !== undefined)
+    .map((item) =&gt; ({ ...item, visualEnd: Math.max(item.end, item.start + minMinutes) }))
+    .sort((a, b) =&gt; a.start - b.start || b.visualEnd - a.visualEnd);
 &nbsp;
-  const result: PositionedBlock[] = <span class="cstat-no" title="statement not covered" >[];</span>
-  let group: { start: number; end: number; visualEnd: number; column: number; activity: Activity }[] = <span class="cstat-no" title="statement not covered" >[];</span>
-  let groupEnd = <span class="cstat-no" title="statement not covered" >-1;</span>
+  const result: PositionedBlock[] = [];
+  let group: { start: number; end: number; visualEnd: number; column: number; activity: Activity }[] = [];
+  let groupEnd = -1;
 &nbsp;
-  const flush = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >()</span> =&gt; {</span>
-    const columns = <span class="cstat-no" title="statement not covered" >Math.max(1, ...group.map(<span class="fstat-no" title="function not covered" >(g</span>) =&gt; <span class="cstat-no" title="statement not covered" >g.column + 1)</span>);</span>
-<span class="cstat-no" title="statement not covered" >    for (const g of group) <span class="cstat-no" title="statement not covered" >result.push({ ...g, columns });</span></span>
-<span class="cstat-no" title="statement not covered" >    group = [];</span>
+  const flush = () =&gt; {
+    const columns = Math.max(1, ...group.map((g) =&gt; g.column + 1));
+    for (const g of group) result.push({ ...g, columns });
+    group = [];
   };
 &nbsp;
-<span class="cstat-no" title="statement not covered" >  for (const item of items) {</span>
-<span class="cstat-no" title="statement not covered" >    if (group.length &gt; 0 &amp;&amp; item.start &gt;= groupEnd) <span class="cstat-no" title="statement not covered" >flush();</span></span>
-    const used = <span class="cstat-no" title="statement not covered" >new Set(group.filter(<span class="fstat-no" title="function not covered" >(g</span>) =&gt; <span class="cstat-no" title="statement not covered" >g.visualEnd &gt; item.start)</span>.map(<span class="fstat-no" title="function not covered" >(g</span>) =&gt; <span class="cstat-no" title="statement not covered" >g.column)</span>);</span>
-    let column = <span class="cstat-no" title="statement not covered" >0;</span>
-<span class="cstat-no" title="statement not covered" >    while (used.has(column)) <span class="cstat-no" title="statement not covered" >column += 1;</span></span>
-<span class="cstat-no" title="statement not covered" >    group.push({ ...item, column });</span>
-<span class="cstat-no" title="statement not covered" >    groupEnd = Math.max(groupEnd, item.visualEnd);</span>
+  for (const item of items) {
+    if (group.length &gt; 0 &amp;&amp; item.start &gt;= groupEnd) flush();
+    const used = new Set(group.filter((g) =&gt; g.visualEnd &gt; item.start).map((g) =&gt; g.column));
+    let column = 0;
+    while (used.has(column)) column += 1;
+    group.push({ ...item, column });
+    groupEnd = Math.max(groupEnd, item.visualEnd);
   }
-<span class="cstat-no" title="statement not covered" >  if (group.length &gt; 0) <span class="cstat-no" title="statement not covered" >flush();</span></span>
-<span class="cstat-no" title="statement not covered" >  return result;</span>
+  if (group.length &gt; 0) flush();
+  return result;
 }
 &nbsp;</pre></td></tr></table></pre>
 
@@ -241,7 +241,7 @@ export function <span class="fstat-no" title="function not covered" >layoutDay(<
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-09-22T12:42:15.932Z
+                at 2026-09-22T12:59:58.289Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
