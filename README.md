@@ -110,6 +110,11 @@ pnpm db:push                # aplica migraciones al proyecto remoto
 pnpm db:types               # regenera src/types/database.ts
 ```
 
+## Manuales
+
+- **[Manual de usuario](docs/manual-de-usuario.md)** — cómo se usa la app: cuenta, calendario, actividades, temas, compartido, recordatorios, gimnasio y modo demo.
+- **[Manual técnico](docs/manual-tecnico.md)** — comandos y dónde escribirlos, cómo añadir una prueba, cómo funciona el pipeline, despliegue y las trampas que conviene no repetir.
+
 ## Desarrollo guiado por specs (SDD)
 - `CLAUDE.md` — reglas de trabajo para Claude Code (leer primero)
 - `specs/00-constitution.md` — principios del proyecto
