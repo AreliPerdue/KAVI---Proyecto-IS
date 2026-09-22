@@ -20,8 +20,10 @@ export function suggestUsername(email: string): string {
     .toLowerCase()
     .replace(/[^a-z0-9_]/g, '_')
     .replace(/_{2,}/g, '_')
-    .replace(/^_+/, '')
-    .replace(/_+$/, '')
+    // Tras colapsar las repeticiones ya no quedan rachas de guiones, así que en los
+    // extremos hay como mucho uno: sin cuantificador, el patrón no puede backtrackear.
+    .replace(/^_/, '')
+    .replace(/_$/, '')
     .slice(0, MAX_LENGTH);
   const candidate = base.length >= MIN_LENGTH ? base : `${base}${FALLBACK}`.slice(0, MAX_LENGTH);
   return USERNAME_PATTERN.test(candidate) ? candidate : FALLBACK;
