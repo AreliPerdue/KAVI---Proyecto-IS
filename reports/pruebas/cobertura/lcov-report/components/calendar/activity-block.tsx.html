@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/8</span>
+                <span class='fraction'>8/8</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">72% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>0/25</span>
+                <span class='fraction'>18/25</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>0/3</span>
+                <span class='fraction'>3/3</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/8</span>
+                <span class='fraction'>8/8</span>
             </div>
         
             
@@ -61,7 +61,7 @@
             </div>
         </template>
     </div>
-    <div class='status-line low'></div>
+    <div class='status-line high'></div>
     <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
@@ -155,19 +155,17 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">8x</span>
+<span class="cline-any cline-yes">8x</span>
+<span class="cline-any cline-yes">8x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">8x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">8x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -186,7 +184,9 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -224,38 +224,38 @@ export type ActivityBlockProps = {
 };
 &nbsp;
 /** Bloque de actividad con color de dimensión/tema (RF-C2, RF-C3). */
-export const ActivityBlock = <span class="cstat-no" title="statement not covered" >memo(function <span class="fstat-no" title="function not covered" >ActivityBlock(</span>{ activity, onPress, compact = <span class="branch-0 cbranch-no" title="branch not covered" >false,</span> titleOnly = <span class="branch-0 cbranch-no" title="branch not covered" >false,</span> shared = <span class="branch-0 cbranch-no" title="branch not covered" >false </span>}: ActivityBlockProps) {</span>
-  const theme = <span class="cstat-no" title="statement not covered" >useTheme();</span>
-  const color = <span class="cstat-no" title="statement not covered" >activityColor(activity, theme);</span>
-  const time = <span class="cstat-no" title="statement not covered" >formatTimeRange(activity.start_at, activity.end_at, activity.all_day);</span>
+export const ActivityBlock = memo(function ActivityBlock({ activity, onPress, compact = <span class="branch-0 cbranch-no" title="branch not covered" >false,</span> titleOnly = false, shared = false }: ActivityBlockProps) {
+  const theme = useTheme();
+  const color = activityColor(activity, theme);
+  const time = formatTimeRange(activity.start_at, activity.end_at, activity.all_day);
 &nbsp;
-<span class="cstat-no" title="statement not covered" >  return (</span>
+  return (
     &lt;Pressable
       accessibilityRole="button"
       accessibilityLabel={shared ? `${activity.title}, ${time}, compartida por ${activity.owner_name ?? 'un contacto'}` : `${activity.title}, ${time}`}
-      onPress={<span class="fstat-no" title="function not covered" >()</span> =&gt; <span class="cstat-no" title="statement not covered" >onPress(activity)}</span>
-      style={<span class="fstat-no" title="function not covered" >({</span> pressed }) =&gt; <span class="cstat-no" title="statement not covered" >[</span>
+      onPress={() =&gt; onPress(activity)}
+      style={({ pressed }) =&gt; [
         styles.block,
         { backgroundColor: tint(color, 0.16), borderLeftColor: color },
         shared ? { borderWidth: 1, borderStyle: 'dashed', borderColor: color } : null,
-        pressed ? styles.pressed : null,
+        pressed ? <span class="branch-0 cbranch-no" title="branch not covered" >styles.pressed </span>: null,
       ]}&gt;
       &lt;View style={styles.row}&gt;
-        {!compact ? &lt;ThemeIcon name={activity.icon} color={color} size={14} /&gt; : null}
-        &lt;AppText variant={compact ? 'caption' : 'label'} numberOfLines={compact ? 2 : 1} style={styles.title}&gt;
+        {!compact ? &lt;ThemeIcon name={activity.icon} color={color} size={14} /&gt; : <span class="branch-1 cbranch-no" title="branch not covered" >null}</span>
+        &lt;AppText variant={compact ? <span class="branch-0 cbranch-no" title="branch not covered" >'caption' </span>: 'label'} numberOfLines={compact ? <span class="branch-0 cbranch-no" title="branch not covered" >2 </span>: 1} style={styles.title}&gt;
           {activity.title}
         &lt;/AppText&gt;
       &lt;/View&gt;
       {!compact &amp;&amp; !titleOnly ? (
         &lt;AppText variant="caption" color="textSecondary" tabular numberOfLines={1}&gt;
-          {shared &amp;&amp; activity.owner_name ? `${time} · ${activity.owner_name}` : time}
+          {shared &amp;&amp; activity.owner_name ? <span class="branch-0 cbranch-no" title="branch not covered" >`${time} · ${activity.owner_name}` </span>: time}
         &lt;/AppText&gt;
-      ) : null}
+      ) : <span class="branch-1 cbranch-no" title="branch not covered" >null}</span>
     &lt;/Pressable&gt;
   );
 });
 &nbsp;
-const styles = <span class="cstat-no" title="statement not covered" >StyleSheet.create({</span>
+const styles = StyleSheet.create({
   block: {
     flex: 1,
     borderRadius: Radius.sm,
@@ -277,7 +277,7 @@ const styles = <span class="cstat-no" title="statement not covered" >StyleSheet.
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-09-22T16:42:41.463Z
+                at 2026-09-22T16:48:49.683Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
