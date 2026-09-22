@@ -1,1 +1,83 @@
-{"component":{"id":"AaDICiG2LS3M2T2E1ufE","key":"AreliPerdue_KAVI---Proyecto-IS","name":"KAVI","qualifier":"TRK","measures":[{"metric":"coverage","value":"36.7","bestValue":false},{"metric":"reliability_rating","value":"4.0","bestValue":false},{"metric":"complexity","value":"2473"},{"metric":"duplicated_lines_density","value":"0.0","bestValue":true},{"metric":"code_smells","value":"8","bestValue":false},{"metric":"security_rating","value":"3.0","bestValue":false},{"metric":"security_hotspots","value":"0","bestValue":true},{"metric":"sqale_index","value":"40","bestValue":false},{"metric":"sqale_rating","value":"1.0","bestValue":true},{"metric":"bugs","value":"5","bestValue":false},{"metric":"cognitive_complexity","value":"1277","bestValue":false},{"metric":"ncloc","value":"11167"},{"metric":"vulnerabilities","value":"2","bestValue":false}]}}
+{
+    "component": {
+        "id": "AaDICiG2LS3M2T2E1ufE",
+        "key": "AreliPerdue_KAVI---Proyecto-IS",
+        "name": "KAVI",
+        "qualifier": "TRK",
+        "measures": [
+            {
+                "metric": "coverage",
+                "value": "81.8",
+                "bestValue": false
+            },
+            {
+                "metric": "reliability_rating",
+                "value": "1.0",
+                "bestValue": true
+            },
+            {
+                "metric": "complexity",
+                "value": "2481"
+            },
+            {
+                "metric": "code_smells",
+                "value": "0",
+                "bestValue": true
+            },
+            {
+                "metric": "duplicated_lines_density",
+                "value": "0.0",
+                "bestValue": true
+            },
+            {
+                "metric": "security_rating",
+                "value": "1.0",
+                "bestValue": true
+            },
+            {
+                "metric": "security_hotspots",
+                "value": "0",
+                "bestValue": true
+            },
+            {
+                "metric": "sqale_index",
+                "value": "0",
+                "bestValue": true
+            },
+            {
+                "metric": "sqale_rating",
+                "value": "1.0",
+                "bestValue": true
+            },
+            {
+                "metric": "bugs",
+                "value": "0",
+                "bestValue": true
+            },
+            {
+                "metric": "branch_coverage",
+                "value": "77.6",
+                "bestValue": false
+            },
+            {
+                "metric": "cognitive_complexity",
+                "value": "1281",
+                "bestValue": false
+            },
+            {
+                "metric": "ncloc",
+                "value": "11183"
+            },
+            {
+                "metric": "vulnerabilities",
+                "value": "0",
+                "bestValue": true
+            },
+            {
+                "metric": "line_coverage",
+                "value": "84.8",
+                "bestValue": false
+            }
+        ]
+    }
+}

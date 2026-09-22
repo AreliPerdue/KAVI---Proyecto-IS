@@ -9,61 +9,66 @@
 
 | Métrica | Valor |
 |---|---|
-| Líneas de código | 11 167 |
-| **Deuda técnica** | **40 minutos** |
+| Líneas de código | 11 183 |
+| **Deuda técnica** | **0 minutos** |
 | Calificación de mantenibilidad | **A** |
-| Calificación de fiabilidad | D |
-| Calificación de seguridad | C |
-| **Code smells** | **8** |
-| Bugs | 5 |
-| Vulnerabilidades | 2 |
+| Calificación de fiabilidad | **A** |
+| Calificación de seguridad | **A** |
+| **Code smells** | **0** |
+| Bugs | 0 |
+| Vulnerabilidades | 0 |
 | Security hotspots | 0 |
 | **Duplicación de código** | **0.0 %** |
-| Cobertura | 36.7 % |
-| Complejidad ciclomática | 2 473 |
-| Complejidad cognitiva | 1 277 |
+| Cobertura | **81.8 %** |
+| Complejidad ciclomática | 2 481 |
+| Complejidad cognitiva | 1 281 |
 
-Las dos métricas que pedía explícitamente la rúbrica son **deuda técnica
-(40 minutos)** y **code smells (8)**. Para 11 167 líneas son cifras bajas, y es
-consecuencia directa de que el código ya pasaba por ESLint con 83 reglas
-activas y TypeScript en modo `strict` antes de llegar a SonarQube.
+Las dos métricas que pedía explícitamente la rúbrica son **deuda técnica** y
+**code smells**, ambas en cero tras corregir los 15 hallazgos del primer
+análisis. No es una cifra inflada: el código ya pasaba por ESLint con 83 reglas
+activas y TypeScript en modo `strict` antes de llegar a SonarQube, así que lo
+que quedaba era poco y concreto.
 
 La **duplicación en 0.0 %** confirma que la lógica compartida está factorizada
 en lugar de copiada: `services/demo` y `services/supabase` implementan los
 mismos contratos sin repetir código.
 
-## Hallazgos
+### Sobre la cifra de cobertura
 
-### Bugs (5)
+SonarQube publica **81.8 %**, que combina líneas y condiciones en un solo
+número. Jest las informa por separado: **84.9 % de líneas** y **77.6 % de
+condiciones**. Las dos son correctas y miden cosas distintas; el detalle está en
+el [reporte de pruebas](../pruebas/).
 
-| Archivo | Descripción |
+## Qué se corrigió
+
+El primer análisis devolvió 15 hallazgos. Se corrigieron todos.
+
+### Defectos reales
+
+| Archivo | Problema |
 |---|---|
-| `components/ui/text-field.tsx:38` | Una condición devuelve el mismo valor sea verdadera o falsa |
-| `app/(app)/workout/[id].tsx:90` | Igual que la anterior |
-| `lib/recurrence.ts:27` y `:102` | `.sort()` sobre números sin función de comparación |
-| `hooks/use-availability.ts:12` | `.sort()` sobre cadenas sin `localeCompare` |
+| `components/ui/text-field.tsx` | Una condición devolvía el mismo valor en ambas ramas: un resto de trabajo en curso que desactivaba el anillo de foco |
+| `app/(app)/workout/[id].tsx` | El mismo patrón, con un título duplicado |
+| `lib/recurrence.ts` (×2) | `.sort()` sobre números sin comparador: el orden por defecto de JavaScript es lexicográfico, así que `[0, 2, 10].sort()` da `[0, 10, 2]`. Con días de la semana (0–6) no fallaba hoy, pero se rompía ante cualquier cambio de rango |
+| `hooks/use-availability.ts` | `.sort()` sobre los ids que forman la clave de caché. Se resolvió con un orden fijo por punto de código y **no** con `localeCompare`, que depende del idioma del dispositivo y habría hecho la clave inestable entre usuarios |
+| `lib/dates.ts` | El bucle que busca huecos libres reasignaba su propia variable de avance dentro del cuerpo; reescrito como `while`, que es lo que de verdad hace |
 
-**Sobre los `.sort()`:** el orden por defecto de JavaScript es lexicográfico, así
-que `[0, 2, 10].sort()` devuelve `[0, 10, 2]`. En `recurrence.ts` los valores son
-días de la semana (0–6, un solo dígito), donde lexicográfico y numérico coinciden
-— no hay error hoy, pero es frágil ante cualquier cambio de rango.
+### Riesgos revisados y eliminados
 
-**Sobre `text-field.tsx:38`:** es un resto de depuración que desactiva el anillo
-de foco. SonarQube lo detectó por su cuenta, lo que confirma que merece
-corregirse.
+Los dos avisos de `Math.random()` no eran usos de seguridad —un identificador
+de formulario y un sufijo de username, ninguno secreto—, pero ambos se
+sustituyeron por alternativas deterministas que además son mejores:
 
-### Vulnerabilidades (2)
-
-Ambas son el mismo aviso: uso de `Math.random()`, que no es criptográficamente
-seguro.
-
-| Archivo | Uso real | Valoración |
+| Archivo | Antes | Ahora |
 |---|---|---|
-| `lib/username.ts:46` | Sufijo numérico cuando todos los nombres propuestos están ocupados | No es un secreto: el username es público y su unicidad la garantiza un índice único en la base |
-| `components/calendar/workout-draft.tsx:19` | Identificador temporal de un ejercicio en el formulario, antes de guardar | No sale del cliente ni se persiste |
+| `components/calendar/workout-draft.tsx` | `Date.now()` + aleatorio | Un contador, que no puede colisionar |
+| `lib/username.ts` | Sufijo aleatorio de 4 dígitos | Marca de tiempo en base 36, que no choca con los sufijos numéricos ya probados |
 
-Ninguno de los dos genera credenciales, tokens ni identificadores con valor de
-seguridad. Se documentan como **aceptados con justificación**, no como pendientes.
+También se simplificaron dos expresiones regulares con cuantificadores que
+podían backtrackear de forma superlineal, y se cerraron cinco avisos menores de
+estilo (`parseInt` sin `Number.`, un literal como valor por defecto de
+parámetro).
 
 ## Relación con el escaneo de seguridad
 
@@ -77,4 +82,4 @@ visibles leyendo el código fuente.
 | Archivo | Contenido |
 |---|---|
 | `sonarqube-metricas.json` | Métricas crudas de la API |
-| `sonarqube-hallazgos.json` | Bugs, vulnerabilidades y code smells con archivo y línea |
+| `sonarqube-hallazgos.json` | Hallazgos abiertos: actualmente ninguno |
