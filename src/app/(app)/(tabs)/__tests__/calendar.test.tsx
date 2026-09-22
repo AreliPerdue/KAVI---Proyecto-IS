@@ -46,7 +46,8 @@ jest.mock('@/components/calendar', () => {
   const { Pressable, Text, View } = require('react-native');
   /* eslint-enable @typescript-eslint/no-require-imports */
 
-  const vista = (nombre: string) => (props: {
+  const vista = (nombre: string) => {
+    const Vista = (props: {
     activities?: { id: string; title: string; color?: string }[];
     onPressActivity?: (a: unknown) => void;
     onPressSlot?: (dia: Date, minutos?: number) => void;
@@ -82,6 +83,9 @@ jest.mock('@/components/calendar', () => {
         React.createElement(Text, null, 'hueco'),
       ),
     );
+    };
+    Vista.displayName = nombre;
+    return Vista;
   };
 
   return {
