@@ -222,3 +222,107 @@ describe('extendRecurrenceHorizon', () => {
     expect(mockSb.secuencia).not.toContain('insert');
   });
 });
+
+describe('update con alcance "series"', () => {
+  /** Secuencia: leer la actual, leer la madre, actualizarla, borrar futuras, leer existentes, insertar, releer. */
+  const secuenciaSerie = () => {
+    mockSb.encolar(
+      { data: fila({ recurrence_rule: 'FREQ=DAILY' }), error: null },   // fetchOne
+      { data: fila({ recurrence_rule: 'FREQ=DAILY' }), error: null },   // update de la madre
+      { data: null, error: null },                                       // delete de futuras
+      { data: [], error: null },                                         // instancias existentes
+      { data: null, error: null },                                       // insert de nuevas
+      { data: fila(), error: null },                                     // relectura
+    );
+  };
+
+  it('actualiza la madre, no la instancia', async () => {
+    secuenciaSerie();
+
+    await supabaseActivities.update('a1', { title: 'Nuevo' }, 'series');
+
+    const eqs = mockSb.llamadas.filter((l) => l[0] === 'eq');
+    expect(eqs.some((e) => e[1] === 'id' && e[2] === 'a1')).toBe(true);
+  });
+
+  it('borra las instancias futuras antes de regenerarlas', async () => {
+    secuenciaSerie();
+
+    await supabaseActivities.update('a1', { title: 'Nuevo' }, 'series');
+
+    expect(mockSb.secuencia).toContain('delete');
+    expect(mockSb.llamadas.filter((l) => l[0] === 'eq')).toContainEqual(['eq', 'recurrence_parent_id', 'a1']);
+  });
+
+  it('acota el borrado a las que empiezan desde la ocurrencia editada', async () => {
+    secuenciaSerie();
+
+    await supabaseActivities.update('a1', { title: 'Nuevo' }, 'series');
+
+    expect(mockSb.secuencia).toContain('gte');
+  });
+
+  it('conserva la regla cuando el parche no la menciona', async () => {
+    secuenciaSerie();
+
+    await supabaseActivities.update('a1', { title: 'Nuevo' }, 'series');
+
+    const patch = mockSb.llamadas.find((l) => l[0] === 'update')?.[1] as { recurrence_rule: string | null };
+    expect(patch.recurrence_rule).toContain('FREQ=DAILY');
+  });
+
+  it('quitar la recurrencia deja la regla en null', async () => {
+    mockSb.encolar(
+      { data: fila({ recurrence_rule: 'FREQ=DAILY' }), error: null },
+      { data: fila(), error: null },
+      { data: null, error: null },
+      { data: fila(), error: null },
+    );
+
+    await supabaseActivities.update('a1', { recurrence: null }, 'series');
+
+    const patch = mockSb.llamadas.find((l) => l[0] === 'update')?.[1] as { recurrence_rule: string | null };
+    expect(patch.recurrence_rule).toBeNull();
+  });
+});
+
+describe('remove con alcance "series"', () => {
+  it('borra la madre y sus instancias', async () => {
+    mockSb.encolar(
+      { data: fila({ recurrence_rule: 'FREQ=DAILY' }), error: null },
+      { data: null, error: null },
+      { data: null, error: null },
+    );
+
+    await supabaseActivities.remove('a1', 'series');
+
+    expect(mockSb.secuencia.filter((m) => m === 'delete').length).toBeGreaterThan(0);
+  });
+
+  it('falla si la actividad ya no existe', async () => {
+    mockSb.responder({ data: null, error: null });
+    await expect(supabaseActivities.remove('a9', 'series')).rejects.toThrow(/ya no existe/i);
+  });
+});
+
+describe('extendRecurrenceHorizon', () => {
+  it('consulta las series de esa persona', async () => {
+    mockSb.responder({ data: [], error: null });
+
+    await supabaseActivities.extendRecurrenceHorizon('u1');
+
+    expect(mockSb.argsDe('from')).toEqual(['activities']);
+  });
+
+  it('con una serie vigente no reinserta nada', async () => {
+    const futuro = new Date(Date.now() + 80 * 86_400_000).toISOString();
+    mockSb.encolar(
+      { data: [fila({ recurrence_rule: 'FREQ=DAILY' })], error: null },
+      { data: [{ start_at: futuro }], error: null },
+    );
+
+    await supabaseActivities.extendRecurrenceHorizon('u1');
+
+    expect(mockSb.secuencia).not.toContain('insert');
+  });
+});

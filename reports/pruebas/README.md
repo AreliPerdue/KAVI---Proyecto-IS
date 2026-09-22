@@ -7,52 +7,65 @@
 
 ## Resultado
 
-**687 pruebas en 43 archivos, todas en verde.**
+**1 171 pruebas en 72 archivos, todas en verde.**
 
 | Métrica | Cobertura | |
 |---|---|---|
-| Sentencias | 41.13 % | 1385 / 3367 |
-| Ramas | 33.49 % | 810 / 2418 |
-| Funciones | 37.37 % | 453 / 1212 |
-| Líneas | 41.14 % | 1171 / 2846 |
+| **Sentencias** | **80.17 %** | 2701 / 3369 |
+| **Líneas** | **81.56 %** | 2323 / 2848 |
+| Ramas | 72.7 % | 1761 / 2422 |
+| Funciones | 74.13 % | 900 / 1214 |
+
+Se cumple el objetivo del 80 % en sentencias y líneas.
 
 ## Por capa
 
 | Capa | Cobertura | Sentencias |
 |---|---|---|
-| `src/services` | 64 % | 724 / 1133 |
-| `src/app` | 0 % | 0 / 874 |
-| `src/components` | 22 % | 144 / 658 |
-| `src/hooks` | 50 % | 136 / 270 |
-| `src/lib` | 82 % | 221 / 270 |
+| `src/services` | 86 % | 972 / 1133 |
+| `src/app` | 72 % | 632 / 876 |
+| `src/components` | 79 % | 519 / 658 |
+| `src/hooks` | 70 % | 190 / 270 |
+| `src/lib` | 84 % | 227 / 270 |
 | `src/providers` | 99 % | 78 / 79 |
-| `src/constants` | 98 % | 61 / 62 |
+| `src/constants` | 100 % | 62 / 62 |
 | `src/store` | 100 % | 21 / 21 |
 
 ## Qué se prueba
 
-La cobertura no está repartida por igual, y es deliberado. El esfuerzo se
-concentró donde un error tiene consecuencias que no se ven a simple vista:
+Las pruebas no verifican que el código haga lo que hace, sino las reglas de
+negocio que no se ven leyéndolo:
 
-- **Lógica de calendario** (`lib/recurrence`, `lib/dates`): expansión de reglas
-  de repetición, recorte de bloques al día, búsqueda de huecos libres.
-- **Reglas de negocio del backend** (`services/`): que borrar un contacto revoque
-  en cascada calendarios, invitaciones y recordatorios; que la duración de un
-  entrenamiento sea derivada y no una columna; que repetir una sesión no copie
-  las notas.
-- **Traducción de errores**: que un fallo de red no se confunda con credenciales
-  incorrectas, y que los códigos de Postgres lleguen al usuario en español.
-- **Accesibilidad de los componentes**: que el estado seleccionado se anuncie y
-  no dependa solo del color, y que los errores de formulario se lean con
-  `accessibilityLiveRegion`.
+- **Cascadas de permisos.** Eliminar un contacto revoca calendarios compartidos,
+  invitaciones a actividades, colores y copias de recordatorios.
+- **Recurrencia.** Editar o eliminar una actividad recurrente distingue entre
+  esta ocurrencia y toda la serie; la expansión se materializa en el cliente.
+- **Traslapes del calendario.** Se calculan con el espacio que un bloque ocupa
+  en pantalla, no con su duración real.
+- **Alta por pasos.** Verificar el código ya abre sesión, así que el alta queda
+  marcada como pendiente hasta fijar la contraseña.
+- **Cambio de contraseña.** Se reautentica antes de cambiarla, porque la API de
+  Supabase no comprueba la actual.
+- **Accesibilidad.** Estados anunciados, errores con región activa y etiquetas
+  en controles que solo tienen icono.
 
-## Limitación conocida
+## Sobre la diferencia con SonarQube
 
-La rúbrica pide **80 %** y el resultado es **41.13 %**. La diferencia
-está casi toda en `src/app` (pantallas) y en la parte visual de
-`src/components`, que requieren simular Expo Router y montar el árbol de
-providers. La capa de lógica —servicios, hooks, utilidades y estado— está
-sustancialmente cubierta.
+SonarQube reporta un porcentaje menor porque su métrica combina líneas y
+condiciones en una sola cifra, mientras que Jest las informa por separado. Ambas
+son correctas: miden cosas distintas. La cifra comparable con el objetivo del
+80 % es la de sentencias y líneas de este reporte.
+
+## Hallazgos
+
+Escribir estas pruebas destapó dos defectos reales, ya corregidos:
+
+1. **Falta de estado de error** en las pantallas de Disponibilidad y Compartir
+   actividad: un fallo al cargar contactos dejaba la pantalla en blanco, sin
+   explicación ni forma de reintentar (NFR-11).
+2. **Detección de fallo de red incompleta** en la capa de datos: los errores de
+   PostgREST llegan como objetos planos y no se reconocían como falta de
+   conexión. Queda documentado en `services/supabase/__tests__/errors.test.ts`.
 
 ## Archivos
 

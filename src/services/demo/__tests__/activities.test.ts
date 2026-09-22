@@ -240,3 +240,104 @@ describe('eliminar', () => {
     await expect(activities.remove('no-existe')).rejects.toThrow(/ya no existe/i);
   });
 });
+
+describe('series completas (RF-C8)', () => {
+  const conRecurrencia = () => ({
+    ...input({ title: 'Diaria' }),
+    recurrence: { freq: 'DAILY' as const, byDay: [], until: toIso(addDays(base, 6)).slice(0, 10) },
+  });
+
+  it('editar la serie cambia la madre', async () => {
+    const { activities, state } = freshApi();
+    const padre = await activities.create(USER, conRecurrencia());
+
+    await activities.update(padre.id, { title: 'Nuevo título' }, 'series');
+
+    expect(state.activities.find((a: Activity) => a.id === padre.id)?.title).toBe('Nuevo título');
+  });
+
+  it('editar la serie regenera las instancias', async () => {
+    const { activities, state } = freshApi();
+    const padre = await activities.create(USER, conRecurrencia());
+    const antes = state.activities.filter((a: Activity) => a.recurrence_parent_id === padre.id).map((a) => a.id);
+
+    await activities.update(padre.id, { title: 'Otro' }, 'series');
+
+    const despues = state.activities.filter((a: Activity) => a.recurrence_parent_id === padre.id).map((a) => a.id);
+    expect(despues.length).toBeGreaterThan(0);
+    expect(despues).not.toEqual(antes);
+  });
+
+  it('el titulo nuevo llega a todas las instancias', async () => {
+    const { activities, state } = freshApi();
+    const padre = await activities.create(USER, conRecurrencia());
+
+    await activities.update(padre.id, { title: 'Propagado' }, 'series');
+
+    const hijas = state.activities.filter((a: Activity) => a.recurrence_parent_id === padre.id);
+    expect(hijas.every((h: Activity) => h.title === 'Propagado')).toBe(true);
+  });
+
+  it('quitar la recurrencia deja la actividad suelta', async () => {
+    const { activities, state } = freshApi();
+    const padre = await activities.create(USER, conRecurrencia());
+
+    await activities.update(padre.id, { recurrence: null }, 'series');
+
+    expect(state.activities.find((a: Activity) => a.id === padre.id)?.recurrence_rule).toBeNull();
+    expect(state.activities.filter((a: Activity) => a.recurrence_parent_id === padre.id)).toHaveLength(0);
+  });
+
+  it('editar desde una instancia afecta a la serie entera', async () => {
+    const { activities, state } = freshApi();
+    const padre = await activities.create(USER, conRecurrencia());
+    const hija = state.activities.find((a: Activity) => a.recurrence_parent_id === padre.id) as Activity;
+
+    await activities.update(hija.id, { title: 'Desde la instancia' }, 'series');
+
+    expect(state.activities.find((a: Activity) => a.id === padre.id)?.title).toBe('Desde la instancia');
+  });
+
+  it('borrar solo la madre deja que la primera instancia herede la serie', async () => {
+    const { activities, state } = freshApi();
+    const padre = await activities.create(USER, conRecurrencia());
+
+    await activities.remove(padre.id, 'this');
+
+    expect(state.activities.find((a: Activity) => a.id === padre.id)).toBeUndefined();
+    const nuevaMadre = state.activities.find((a: Activity) => a.recurrence_rule !== null && a.title === 'Diaria');
+    expect(nuevaMadre).toBeDefined();
+    expect(nuevaMadre?.recurrence_parent_id).toBeNull();
+  });
+
+  it('borrar una instancia no toca a las demas', async () => {
+    const { activities, state } = freshApi();
+    const padre = await activities.create(USER, conRecurrencia());
+    const hijas = state.activities.filter((a: Activity) => a.recurrence_parent_id === padre.id);
+    const cuantas = hijas.length;
+
+    await activities.remove((hijas[0] as Activity).id, 'this');
+
+    expect(state.activities.filter((a: Activity) => a.recurrence_parent_id === padre.id)).toHaveLength(cuantas - 1);
+  });
+
+  it('extender el horizonte no duplica lo que ya existe', async () => {
+    const { activities, state } = freshApi();
+    const padre = await activities.create(USER, conRecurrencia());
+    const antes = state.activities.filter((a: Activity) => a.recurrence_parent_id === padre.id).length;
+
+    await activities.extendRecurrenceHorizon(USER);
+
+    expect(state.activities.filter((a: Activity) => a.recurrence_parent_id === padre.id)).toHaveLength(antes);
+  });
+
+  it('extender el horizonte ignora las series de otra persona', async () => {
+    const { activities, state } = freshApi();
+    await activities.create('otra-persona', conRecurrencia());
+    const antes = state.activities.length;
+
+    await activities.extendRecurrenceHorizon(USER);
+
+    expect(state.activities).toHaveLength(antes);
+  });
+});
