@@ -9,6 +9,10 @@ repositorio; ninguno se escribió a mano.
 | [`calidad/`](calidad/) | Métricas de SonarQube: deuda técnica, code smells, duplicación | Workflow *calidad*, en cada push |
 | [`seguridad/`](seguridad/) | Escaneo OWASP ZAP del sitio desplegado | Workflow *Escaneo de seguridad*, manual |
 
+El informe de cierre del proyecto está en
+[`Informe-de-cierre-KAVI.docx`](Informe-de-cierre-KAVI.docx) y cita los datos de
+estas tres carpetas.
+
 ## Resumen
 
 | | Resultado |
