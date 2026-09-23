@@ -22,10 +22,18 @@ export default function TabsLayout() {
   const badge = useSharedBadgeCount();
 
   return (
+    /*
+     * Los tres colores de Android van explicitos. Sin `indicatorColor`, la pildora de
+     * la pestana activa la elige Material 3 por su cuenta y salia casi negra: con el
+     * icono en `ink` encima quedaba negro sobre negro, invisible al tocar. Aqui es un
+     * gris del tema, que contrasta con el icono en los dos esquemas.
+     */
     <NativeTabs
       backgroundColor={theme.background}
       tintColor={theme.ink}
       iconColor={{ default: theme.textTertiary, selected: theme.ink }}
+      indicatorColor={theme.surfaceAlt}
+      rippleColor={theme.surfaceAlt}
       labelVisibilityMode="labeled"
       labelStyle={{
         default: { color: theme.textTertiary },
