@@ -15,7 +15,7 @@ import {
   usePeopleColors,
   useUserSearch,
 } from '@/hooks/use-connections';
-import { SELF_COLOR } from '@/constants/people-colors';
+import { DEFAULT_SELF_COLOR, PEOPLE_COLORS } from '@/constants/people-colors';
 
 const mockListContacts = jest.fn();
 const mockSearchUsers = jest.fn();
@@ -76,7 +76,26 @@ describe('usePeopleColors (RF-S15)', () => {
 
     const { result } = await renderHook(() => usePeopleColors(), { wrapper: Wrapper });
 
-    await waitFor(() => expect(result.current.get('u1')).toBe(SELF_COLOR));
+    await waitFor(() => expect(result.current.get('u1')).toBe(DEFAULT_SELF_COLOR));
+  });
+
+  /**
+   * Mi color sale de lo elegido en Compartido, si no del Nobi que tenga puesto, y si no
+   * del azul. Lo que importa es que sea el mismo en todas partes: el mapa lo usan tanto
+   * las pestanas de personas como los bloques del calendario.
+   */
+  it('si elegi un color a mano, ese manda', async () => {
+    mockListContacts.mockResolvedValue([]);
+    const mio = PEOPLE_COLORS[7].hex;
+    /* eslint-disable-next-line @typescript-eslint/no-require-imports -- store del dispositivo */
+    const { usePreferencesStore } = require('@/store/preferences-store') as typeof import('@/store/preferences-store');
+    usePreferencesStore.setState({ selfColor: mio });
+    const { Wrapper } = crearWrapper();
+
+    const { result } = await renderHook(() => usePeopleColors(), { wrapper: Wrapper });
+
+    await waitFor(() => expect(result.current.get('u1')).toBe(mio));
+    usePreferencesStore.setState({ selfColor: null });
   });
 
   it('asigna color a los contactos aceptados', async () => {
@@ -95,7 +114,7 @@ describe('usePeopleColors (RF-S15)', () => {
 
     const { result } = await renderHook(() => usePeopleColors(), { wrapper: Wrapper });
 
-    await waitFor(() => expect(result.current.get('u1')).toBe(SELF_COLOR));
+    await waitFor(() => expect(result.current.get('u1')).toBe(DEFAULT_SELF_COLOR));
     expect(result.current.has('u2')).toBe(false);
   });
 

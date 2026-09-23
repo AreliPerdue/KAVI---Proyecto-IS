@@ -111,7 +111,7 @@ describe('useThemeMutations', () => {
 
     await result.current.update.mutateAsync({ id: 't1', patch: { name: 'Otro' } });
 
-    expect(mockUpdateTheme).toHaveBeenCalledWith('t1', { name: 'Otro' });
+    expect(mockUpdateTheme).toHaveBeenCalledWith('t1', { name: 'Otro' }, 'u1');
   });
 
   it('eliminar pasa el id', async () => {

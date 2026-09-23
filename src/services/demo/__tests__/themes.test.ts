@@ -78,7 +78,7 @@ describe('actualizar', () => {
     const { themes } = fresh();
     const created = await themes.create(USER, input());
 
-    const updated = await themes.update(created.id, { name: 'Repaso nocturno', color: '#9C27B0' });
+    const updated = await themes.update(created.id, { name: 'Repaso nocturno', color: '#9C27B0' }, USER);
 
     expect(updated.name).toBe('Repaso nocturno');
     expect(updated.color).toBe('#9C27B0');
@@ -98,23 +98,115 @@ describe('actualizar', () => {
       dimension: theme.dimension,
     });
 
-    await themes.update(theme.id, { color: '#FF9800', dimension: 'social' });
+    await themes.update(theme.id, { color: '#FF9800', dimension: 'social' }, USER);
 
     const after = await activities.getById(act.id);
     expect(after.color).toBe('#FF9800');
     expect(after.dimension).toBe('social');
   });
 
-  it('rechaza modificar un tema del sistema', async () => {
-    const { themes, state } = fresh();
-    const system = state.themes.find((t) => t.is_system);
-
-    await expect(themes.update(system!.id, { name: 'Secuestrado' })).rejects.toThrow(/sistema/i);
-  });
-
   it('falla con un tema inexistente', async () => {
     const { themes } = fresh();
-    await expect(themes.update('no-existe', { name: 'X' })).rejects.toThrow(/ya no existe/i);
+    await expect(themes.update('no-existe', { name: 'X' }, USER)).rejects.toThrow(/ya no existe/i);
+  });
+});
+
+/**
+ * Los temas del sistema son una fila global que comparten todas las cuentas, asi que
+ * personalizarlos NO puede escribir en esa fila: se guarda aparte, por persona. Lo que
+ * de verdad hay que fijar es que el cambio de una cuenta no se vea desde otra.
+ */
+describe('personalizar un tema del sistema (RF-T3)', () => {
+  const sistema = (state: { themes: { id: string; is_system: boolean }[] }) =>
+    state.themes.find((t) => t.is_system)!.id;
+
+  it('se puede cambiar nombre, color, icono y dimension', async () => {
+    const { themes, state } = fresh();
+    const id = sistema(state);
+
+    const updated = await themes.update(id, { name: 'Gym', color: '#FF9800', icon: 'trophy', dimension: 'social' }, USER);
+
+    expect(updated.name).toBe('Gym');
+    expect(updated.color).toBe('#FF9800');
+    expect(updated.icon).toBe('trophy');
+    expect(updated.dimension).toBe('social');
+  });
+
+  it('el cambio se ve al volver a listar', async () => {
+    const { themes, state } = fresh();
+    const id = sistema(state);
+
+    await themes.update(id, { name: 'Gym' }, USER);
+
+    expect((await themes.list(USER)).find((t) => t.id === id)?.name).toBe('Gym');
+  });
+
+  /** Lo que importa de todo esto: nadie le cambia el tema a nadie. */
+  it('no se lo cambia a las demas cuentas', async () => {
+    const { themes, state } = fresh();
+    const id = sistema(state);
+
+    await themes.update(id, { name: 'Solo mio' }, USER);
+
+    expect((await themes.list(OTHER)).find((t) => t.id === id)?.name).not.toBe('Solo mio');
+  });
+
+  it('lo que no se cambia se hereda del tema original', async () => {
+    const { themes, state } = fresh();
+    const id = sistema(state);
+    const antes = (await themes.list(USER)).find((t) => t.id === id)!;
+
+    await themes.update(id, { name: 'Gym' }, USER);
+
+    const despues = (await themes.list(USER)).find((t) => t.id === id)!;
+    expect(despues.color).toBe(antes.color);
+    expect(despues.icon).toBe(antes.icon);
+  });
+
+  it('sigue marcado como del sistema, para que no se pueda borrar', async () => {
+    const { themes, state } = fresh();
+    const id = sistema(state);
+
+    await themes.update(id, { name: 'Gym' }, USER);
+
+    expect((await themes.list(USER)).find((t) => t.id === id)?.is_system).toBe(true);
+    await expect(themes.remove(id)).rejects.toThrow(/sistema/i);
+  });
+});
+
+describe('restablecer los temas del sistema (RF-T3)', () => {
+  it('deshace las personalizaciones', async () => {
+    const { themes, state } = fresh();
+    const id = state.themes.find((t) => t.is_system)!.id;
+    const original = (await themes.list(USER)).find((t) => t.id === id)!;
+    await themes.update(id, { name: 'Gym', color: '#FF9800' }, USER);
+
+    await themes.resetSystemThemes(USER);
+
+    const vuelto = (await themes.list(USER)).find((t) => t.id === id)!;
+    expect(vuelto.name).toBe(original.name);
+    expect(vuelto.color).toBe(original.color);
+  });
+
+  /** El motivo de que las personalizaciones vivan aparte: esto no puede fallar. */
+  it('no toca los temas propios', async () => {
+    const { themes } = fresh();
+    const propio = await themes.create(USER, input({ name: 'Mi tema' }));
+
+    await themes.resetSystemThemes(USER);
+
+    const lista = await themes.list(USER);
+    expect(lista.find((t) => t.id === propio.id)?.name).toBe('Mi tema');
+  });
+
+  it('no afecta a lo que haya personalizado otra cuenta', async () => {
+    const { themes, state } = fresh();
+    const id = state.themes.find((t) => t.is_system)!.id;
+    await themes.update(id, { name: 'De la otra' }, OTHER);
+
+    await themes.resetSystemThemes(USER);
+
+    expect((await themes.list(OTHER)).find((t) => t.id === id)?.name).toBe('De la otra');
   });
 });
 

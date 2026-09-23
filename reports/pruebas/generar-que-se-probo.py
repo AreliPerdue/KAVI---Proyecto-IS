@@ -206,6 +206,7 @@ MAPA = {
  'src/store/__tests__/preferences-store.test.ts': ('perfil', 'Preferencias del dispositivo', 'Formato de hora, apariencia y qué capas se ven en el calendario.'),
  'src/hooks/__tests__/use-theme.test.tsx': ('perfil', 'Modo claro y modo oscuro', 'Qué tema se aplica según lo elegido y lo que dice el sistema.'),
  'src/constants/__tests__/nobi.test.ts': ('perfil', 'Nobi, la mascota', 'Los veinte colores y su versión para cada tema.'),
+ 'src/constants/__tests__/icons.test.tsx': ('temas', 'Iconos de los temas', 'Que cada icono exista y que el del cumpleaños sea un pastel.'),
  'src/components/ui/__tests__/date-input-sheet.test.tsx': ('cimientos', 'Escribir una fecha', 'Teclear día, mes y año sin tener que navegar meses.'),
 }
 

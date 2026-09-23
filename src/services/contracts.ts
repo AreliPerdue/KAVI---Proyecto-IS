@@ -98,11 +98,18 @@ export interface RemindersApi {
 }
 
 export interface ThemesApi {
+  /** Los del sistema llegan ya con la personalización de esta persona aplicada (RF-T3). */
   list(userId: string): Promise<Theme[]>;
   create(userId: string, input: ThemeInput): Promise<Theme>;
-  update(id: string, patch: Partial<ThemeInput>): Promise<Theme>;
+  /**
+   * Editar un tema **propio** cambia la fila; editar uno **del sistema** guarda una
+   * personalización de esta persona, porque esa fila la comparten todas las cuentas.
+   */
+  update(id: string, patch: Partial<ThemeInput>, userId: string): Promise<Theme>;
   /** Las actividades conservan color/icono copiados y quedan sin tema (RF-T6). */
   remove(id: string): Promise<void>;
+  /** Devuelve los temas del sistema a como vienen. No toca los temas propios (RF-T3). */
+  resetSystemThemes(userId: string): Promise<void>;
 }
 
 export interface ConnectionsApi {

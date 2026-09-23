@@ -5,9 +5,8 @@ import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { tint } from './activity-style';
 
 import { AppText } from '@/components/ui';
-import { SELF_COLOR } from '@/constants/people-colors';
 import { IconSize, IconStroke, Radius, Spacing } from '@/constants/theme';
-import { useContacts } from '@/hooks/use-connections';
+import { useContacts, useSelfColor } from '@/hooks/use-connections';
 import { useTheme } from '@/hooks/use-theme';
 
 export type PeopleTabsProps = {
@@ -51,11 +50,12 @@ export function PeopleTabs({ overlayUserIds, colorOf, onToggle, onOnlyMe }: Peop
   const theme = useTheme();
   const router = useRouter();
   const contacts = useContacts();
+  const miColor = useSelfColor();
   const sharing = (contacts.data ?? []).filter((c) => c.kind === 'accepted' && c.theirCalendarVisibility);
 
   return (
     <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.row} accessibilityRole="tablist">
-      <PersonTab label="Tú" selected color={SELF_COLOR} onPress={onOnlyMe} />
+      <PersonTab label="Tú" selected color={miColor} onPress={onOnlyMe} />
       {sharing.map((c) => (
         <PersonTab
           key={c.profile.id}

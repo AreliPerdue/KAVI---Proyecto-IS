@@ -3,7 +3,7 @@ import { DarkTheme, DefaultTheme, type ErrorBoundaryProps, Stack, ThemeProvider 
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
-import { Platform, StyleSheet } from 'react-native';
+import { Appearance, Platform, StyleSheet } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { ErrorFallback } from '@/components/error-fallback';
@@ -14,6 +14,7 @@ import { useSplashGate } from '@/hooks/use-splash-gate';
 import { useResolvedScheme } from '@/hooks/use-theme';
 import { queryClient } from '@/lib/query-client';
 import { AuthProvider, ConfirmProvider, SnackbarProvider, useAuth } from '@/providers';
+import { usePreferencesStore } from '@/store/preferences-store';
 
 SplashScreen.preventAutoHideAsync().catch(() => {
   // En web o si ya se ocultó: sin efecto.
@@ -84,7 +85,22 @@ export function ErrorBoundary(props: ErrorBoundaryProps) {
 }
 
 export default function RootLayout() {
+  const appearance = usePreferencesStore((s) => s.appearance);
   const scheme = useResolvedScheme();
+
+  /**
+   * Las piezas **nativas** —la barra de pestañas, el teclado, las hojas del sistema—
+   * no leen nuestros tokens: siguen el esquema del sistema operativo. Sin esto, elegir
+   * «Claro» con el teléfono en oscuro dejaba una app clara con barra y teclado oscuros.
+   * `unspecified` devuelve el control al sistema, que es justo lo que pide «Sistema».
+   *
+   * Solo en nativo: en web no hay chrome del sistema que alinear y React Native Web no
+   * implementa `setColorScheme` —llamarlo ahí revienta el arranque—.
+   */
+  useEffect(() => {
+    if (Platform.OS === 'web') return;
+    Appearance.setColorScheme(appearance === 'system' ? 'unspecified' : appearance);
+  }, [appearance]);
 
   /**
    * El CSS de `global.css` no puede leer la preferencia de Perfil, así que el tema

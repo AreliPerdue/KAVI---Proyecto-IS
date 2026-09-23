@@ -24,8 +24,12 @@ const contacto = (over: Partial<Contact> & { id: string; nombre: string }): Cont
 const ANA = contacto({ id: 'ana', nombre: 'Ana Ruiz' });
 const PEDRO = contacto({ id: 'pedro', nombre: 'Pedro Lima' });
 
+let mockMiColor = '#176BFF';
 let mockContacts: { data?: Contact[] } = { data: [ANA, PEDRO] };
-jest.mock('@/hooks/use-connections', () => ({ useContacts: () => mockContacts }));
+jest.mock('@/hooks/use-connections', () => ({
+  useContacts: () => mockContacts,
+  useSelfColor: () => mockMiColor,
+}));
 
 beforeEach(() => {
   mockContacts = { data: [ANA, PEDRO] };

@@ -4,17 +4,18 @@ import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { AppText, Avatar, Banner, Button, EmptyState, ErrorState, IconButton, LoadingState, Screen, Sheet, TextField } from '@/components/ui';
-import { PEOPLE_COLORS, SELF_COLOR } from '@/constants/people-colors';
+import { PEOPLE_COLORS } from '@/constants/people-colors';
 import { IconSize, IconStroke, Radius, Spacing } from '@/constants/theme';
-import { useConnectionMutations, useContacts, usePeopleColors, useUserSearch, SEARCH_MIN_LENGTH } from '@/hooks/use-connections';
+import { useConnectionMutations, useContacts, usePeopleColors, useSelfColor, useUserSearch, SEARCH_MIN_LENGTH } from '@/hooks/use-connections';
 import { useShareMutations, useInvitations } from '@/hooks/use-shares';
 import { useTheme } from '@/hooks/use-theme';
 import { formatShortDate, formatTimeRange, fromIso } from '@/lib/dates';
 import { useConfirm, useSnackbar } from '@/providers';
 import type { CalendarVisibility, Contact } from '@/services/connections';
+import { usePreferencesStore } from '@/store/preferences-store';
+import { useMyProfile } from '@/hooks/use-profile';
 
 const MAX_WIDTH = 720;
-const CONTACT_COLORS = PEOPLE_COLORS.filter((c) => c.hex !== SELF_COLOR);
 
 const VISIBILITY_OPTIONS: { value: CalendarVisibility | null; label: string; hint: string }[] = [
   { value: null, label: 'No compartir', hint: 'No ve nada de tu calendario.' },
@@ -27,6 +28,11 @@ function visibilityLabel(v: CalendarVisibility | null): string {
 }
 
 /** Tab Compartido: invitaciones, solicitudes, contactos y acceso a disponibilidad (spec 06 UI). */
+/** Nombre del color en la paleta; si no está, se dice «personalizado» y no un hex. */
+function nombreDeColor(hex: string): string {
+  return PEOPLE_COLORS.find((c) => c.hex === hex)?.label ?? 'Personalizado';
+}
+
 export default function SharedScreen() {
   const theme = useTheme();
   const router = useRouter();
@@ -44,6 +50,13 @@ export default function SharedScreen() {
   // quedarse en pantalla el resultado de lo que se escribió antes.
   const canSearch = query.trim().replace(/^@+/, '').length >= SEARCH_MIN_LENGTH;
   const peopleColors = usePeopleColors();
+  const miColor = useSelfColor();
+  const setSelfColor = usePreferencesStore((st) => st.setSelfColor);
+  const [eligiendoMiColor, setEligiendoMiColor] = useState(false);
+  // El mío fuera: ofrecerlo dejaría a un contacto indistinguible de mí.
+  const coloresParaContactos = PEOPLE_COLORS.filter((c) => c.hex !== miColor);
+  const elegidoAMano = usePreferencesStore((st) => st.selfColor) !== null;
+  const profile = useMyProfile();
 
   const list = contacts.data ?? [];
   const incoming = list.filter((c) => c.kind === 'incoming');
@@ -168,6 +181,24 @@ export default function SharedScreen() {
 
       <View style={styles.section}>
         <AppText variant="heading">Contactos</AppText>
+        {/*
+          * Mi propia fila va con las demás y no en Perfil: el color solo significa algo
+          * al lado del de los otros, que es donde se ve si choca con alguno.
+          */}
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={`Tú. Tu color en el calendario: ${nombreDeColor(miColor)}`}
+          onPress={() => setEligiendoMiColor(true)}
+          style={({ pressed }) => [styles.row, { borderColor: theme.border }, pressed ? { backgroundColor: theme.surfaceAlt } : null]}>
+          <View style={[styles.personDot, { backgroundColor: miColor }]} />
+          {profile.data ? <Avatar profile={profile.data} /> : null}
+          <View style={styles.cardText}>
+            <AppText variant="bodyStrong">Tú</AppText>
+            <AppText variant="caption" color="textSecondary">
+              Tu color: {nombreDeColor(miColor).toLowerCase()}
+            </AppText>
+          </View>
+        </Pressable>
         {contacts.isSuccess && accepted.length === 0 ? (
           <EmptyState
             title="Aún no tienes contactos"
@@ -267,6 +298,39 @@ export default function SharedScreen() {
         ))}
       </Sheet>
 
+      <Sheet visible={eligiendoMiColor} onClose={() => setEligiendoMiColor(false)} title="Tu color">
+        <AppText variant="caption" color="textTertiary">
+          Con el que verás tus actividades cuando superpongas el calendario de alguien más.
+        </AppText>
+        <View style={styles.chips}>
+          {PEOPLE_COLORS.map((c) => {
+            const selected = miColor === c.hex;
+            return (
+              <Pressable
+                key={c.id}
+                accessibilityRole="button"
+                accessibilityLabel={c.label}
+                accessibilityState={{ selected }}
+                onPress={() => {
+                  // Volver a tocar el elegido lo devuelve al color del Nobi.
+                  setSelfColor(selected ? null : c.hex);
+                  showSnackbar({ message: selected ? 'Tu color vuelve al de tu Nobi.' : `Tu color: ${c.label.toLowerCase()}.` });
+                }}
+                style={({ pressed }) => [
+                  styles.colorDot,
+                  { backgroundColor: c.hex, borderColor: selected ? theme.text : 'transparent' },
+                  pressed ? { opacity: 0.75 } : null,
+                ]}>
+                {selected ? <Check size={IconSize.inline} strokeWidth={3} color="#FFFFFF" /> : null}
+              </Pressable>
+            );
+          })}
+        </View>
+        <AppText variant="caption" color="textTertiary">
+          {elegidoAMano ? 'Toca el color elegido para volver al de tu Nobi.' : 'Es el color de tu Nobi. Toca otro para fijarlo.'}
+        </AppText>
+      </Sheet>
+
       <Sheet visible={sheetContact !== null} onClose={() => setContactSheetFor(null)} title={sheetContact?.profile.display_name ?? 'Contacto'}>
         <AppText variant="label" color="textSecondary">
           Color en el calendario
@@ -275,8 +339,8 @@ export default function SharedScreen() {
           Con el que verás sus actividades al superponer su calendario con el tuyo.
         </AppText>
         <View style={styles.chips}>
-          {/* El primer color es el de "Tú": ofrecerlo permitiría no distinguirte de un contacto. */}
-          {CONTACT_COLORS.map((c) => {
+          {/* El mío se excluye: ofrecerlo permitiría no distinguirme de un contacto. */}
+          {coloresParaContactos.map((c) => {
             const selected = (peopleColors.get(sheetContact?.profile.id ?? '') ?? null) === c.hex;
             const manual = sheetContact?.color === c.hex;
             return (

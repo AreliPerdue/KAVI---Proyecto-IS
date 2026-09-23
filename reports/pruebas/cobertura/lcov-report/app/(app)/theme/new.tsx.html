@@ -23,16 +23,16 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">85.71% </span>
+                <span class="strong">85.96% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>48/56</span>
+                <span class='fraction'>49/57</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">87.23% </span>
+                <span class="strong">86.27% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>41/47</span>
+                <span class='fraction'>44/51</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">93.33% </span>
+                <span class="strong">93.47% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>42/45</span>
+                <span class='fraction'>43/46</span>
             </div>
         
             
@@ -261,7 +261,10 @@
 <a name='L196'></a><a href='#L196'>196</a>
 <a name='L197'></a><a href='#L197'>197</a>
 <a name='L198'></a><a href='#L198'>198</a>
-<a name='L199'></a><a href='#L199'>199</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L199'></a><a href='#L199'>199</a>
+<a name='L200'></a><a href='#L200'>200</a>
+<a name='L201'></a><a href='#L201'>201</a>
+<a name='L202'></a><a href='#L202'>202</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -289,6 +292,8 @@
 <span class="cline-any cline-yes">34x</span>
 <span class="cline-any cline-yes">34x</span>
 <span class="cline-any cline-yes">34x</span>
+<span class="cline-any cline-yes">34x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">34x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">34x</span>
@@ -422,15 +427,16 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1312x</span>
-<span class="cline-any cline-yes">1312x</span>
+<span class="cline-any cline-yes">1344x</span>
+<span class="cline-any cline-yes">1344x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-yes">1312x</span>
+<span class="cline-any cline-yes">1344x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -488,6 +494,8 @@ export default function ThemeFormScreen() {
   const themes = useThemes();
   const { create, update, remove } = useThemeMutations();
   const editing = themes.data?.find((t) =&gt; t.id === id) ?? null;
+  // La fila de un tema del sistema es global y se comparte: se personaliza, no se borra.
+  const delSistema = !!editing?.is_system;
 &nbsp;
   const { control, handleSubmit, reset } = useForm&lt;ThemeFormValues&gt;({
     resolver: zodResolver(themeFormSchema),
@@ -550,7 +558,7 @@ export default function ThemeFormScreen() {
 &nbsp;
   return (
     &lt;Screen modal scroll maxWidth={MAX_WIDTH}&gt;
-      &lt;ModalHeader title={editing ? 'Editar tema' : 'Nuevo tema'} /&gt;
+      &lt;ModalHeader title={delSistema ? <span class="branch-0 cbranch-no" title="branch not covered" >'Personalizar tema' </span>: editing ? 'Editar tema' : 'Nuevo tema'} /&gt;
       {mutation.error ? &lt;Banner tone="error" message={mutation.error.message} /&gt; : null}
 &nbsp;
       &lt;View style={[styles.preview, { backgroundColor: `${color}22`, borderColor: color }]}&gt;
@@ -643,7 +651,8 @@ export default function ThemeFormScreen() {
       /&gt;
 &nbsp;
       &lt;Button title={editing ? 'Guardar cambios' : 'Crear tema'} onPress={onSubmit} loading={mutation.isPending} /&gt;
-      {editing ? &lt;Button title="Eliminar tema" variant="danger" onPress={onDelete} loading={remove.isPending} /&gt; : null}
+      {/* Un tema del sistema se personaliza, no se borra: su fila la comparten todas las cuentas. */}
+      {editing &amp;&amp; !delSistema ? &lt;Button title="Eliminar tema" variant="danger" onPress={onDelete} loading={remove.isPending} /&gt; : null}
     &lt;/Screen&gt;
   );
 }
@@ -664,7 +673,7 @@ const styles = StyleSheet.create({
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-09-23T11:22:42.115Z
+                at 2026-09-23T15:23:38.450Z
             </div>
         <script src="../../../prettify.js"></script>
         <script>

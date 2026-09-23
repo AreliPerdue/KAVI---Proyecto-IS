@@ -1,23 +1,23 @@
 # Qué se probó en KAVI, y qué salió
 
-Este documento recorre **una por una** las 1 530 pruebas automáticas del proyecto,
+Este documento recorre **una por una** las 1 560 pruebas automáticas del proyecto,
 agrupadas por zona de la aplicación y escritas para que se entiendan sin leer código.
 
 Una prueba automática es un programa pequeño que usa la app como lo haría una persona
 —tocar un botón, escribir en un campo, guardar— y comprueba que ocurre lo que debía
-ocurrir. Si algo deja de funcionar, la prueba falla y lo dice. Las 1 530 se ejecutan
-enteras en unos 19 segundos, cada vez que se sube un cambio al repositorio.
+ocurrir. Si algo deja de funcionar, la prueba falla y lo dice. Las 1 560 se ejecutan
+enteras en unos 27 segundos, cada vez que se sube un cambio al repositorio.
 
 ## Resultado
 
 | | |
 |---|---|
-| Pruebas ejecutadas | **1 530** |
-| Pruebas superadas | **1 530** |
+| Pruebas ejecutadas | **1 560** |
+| Pruebas superadas | **1 560** |
 | Pruebas falladas | **0** |
-| Archivos de prueba | 90 |
-| Porcentaje del código cubierto | **85.5 %** |
-| Tiempo de ejecución | ~19 segundos |
+| Archivos de prueba | 91 |
+| Porcentaje del código cubierto | **85.4 %** |
+| Tiempo de ejecución | ~27 segundos |
 
 **Todas pasaron.** Ninguna quedó pendiente, saltada ni marcada como excepción.
 
@@ -34,11 +34,11 @@ Están agrupadas igual que en el código, bajo el aspecto que verifican.
 - [Crear cuenta y entrar](#crear-cuenta-y-entrar) — 167 pruebas
 - [El calendario](#el-calendario) — 219 pruebas
 - [Crear y editar actividades](#crear-y-editar-actividades) — 209 pruebas
-- [Temas y dimensiones del bienestar](#temas-y-dimensiones-del-bienestar) — 68 pruebas
-- [Compartir con otras personas](#compartir-con-otras-personas) — 249 pruebas
+- [Temas y dimensiones del bienestar](#temas-y-dimensiones-del-bienestar) — 89 pruebas
+- [Compartir con otras personas](#compartir-con-otras-personas) — 254 pruebas
 - [Recordatorios](#recordatorios) — 138 pruebas
 - [Gimnasio](#gimnasio) — 140 pruebas
-- [Perfil y administración](#perfil-y-administracion) — 117 pruebas
+- [Perfil y administración](#perfil-y-administracion) — 121 pruebas
 - [Los cimientos: interfaz y utilidades](#los-cimientos-interfaz-y-utilidades) — 223 pruebas
 - [Lo que encontramos](#lo-que-encontramos)
 - [Cómo reproducirlo](#como-reproducirlo)
@@ -1234,7 +1234,7 @@ Aquí vive la parte más difícil de la app: las actividades que se repiten. Edi
 
 ## Temas y dimensiones del bienestar
 
-**68 pruebas, todas superadas.**
+**89 pruebas, todas superadas.**
 
 Los temas son la forma en que KAVI clasifica en qué inviertes tu tiempo. La regla importante es que el estilo se copia a la actividad al crearla: si después cambias el tema, las actividades que ya existían no cambian de color solas.
 
@@ -1305,7 +1305,7 @@ Los temas son la forma en que KAVI clasifica en qué inviertes tu tiempo. La reg
 
 ### Temas — servidor real
 
-*Guardado y reglas de los temas.* — 13 pruebas.
+*Guardado y reglas de los temas.* — 20 pruebas.
 
 
 **list**
@@ -1313,6 +1313,9 @@ Los temas son la forma en que KAVI clasifica en qué inviertes tu tiempo. La reg
 - ✓ consulta la tabla themes
 - ✓ ordena los del sistema primero y luego por nombre
 - ✓ devuelve lo que responde la base
+- ✓ aplica la personalización sobre los temas del sistema
+- ✓ pide solo las personalizaciones de esa persona
+- ✓ un tema propio no se toca aunque haya personalizaciones
 - ✓ traduce el error de la base
 
 **create**
@@ -1321,11 +1324,21 @@ Los temas son la forma en que KAVI clasifica en qué inviertes tu tiempo. La reg
 - ✓ pide una sola fila de vuelta
 - ✓ propaga un nombre duplicado como "ya existe"
 
-**update**
+**update de un tema propio**
 
 - ✓ filtra por el id del tema
 - ✓ envía solo el parche
-- ✓ un tema del sistema lo rechaza la RLS (RF-T3)
+
+**update de un tema del sistema**
+
+- ✓ no escribe en la tabla de temas
+- ✓ guarda la personalización a nombre de quien la hace
+- ✓ devuelve el tema ya compuesto
+
+**restablecer los temas del sistema**
+
+- ✓ borra solo las personalizaciones de esa persona
+- ✓ propaga el error si falla
 
 **remove**
 
@@ -1336,7 +1349,7 @@ Los temas son la forma en que KAVI clasifica en qué inviertes tu tiempo. La reg
 
 ### Temas — modo demostración
 
-*Lo mismo en el backend de práctica.* — 12 pruebas.
+*Lo mismo en el backend de práctica.* — 19 pruebas.
 
 
 **crear**
@@ -1354,8 +1367,21 @@ Los temas son la forma en que KAVI clasifica en qué inviertes tu tiempo. La reg
 
 - ✓ cambia los campos enviados
 - ✓ propaga el nuevo estilo a las actividades que lo usan (copia de estilo)
-- ✓ rechaza modificar un tema del sistema
 - ✓ falla con un tema inexistente
+
+**personalizar un tema del sistema (RF-T3)**
+
+- ✓ se puede cambiar nombre, color, icono y dimensión
+- ✓ el cambio se ve al volver a listar
+- ✓ no se lo cambia a las demás cuentas
+- ✓ lo que no se cambia se hereda del tema original
+- ✓ sigue marcado como del sistema, para que no se pueda borrar
+
+**restablecer los temas del sistema (RF-T3)**
+
+- ✓ deshace las personalizaciones
+- ✓ no toca los temas propios
+- ✓ no afecta a lo que haya personalizado otra cuenta
 
 **eliminar**
 
@@ -1391,11 +1417,33 @@ Los temas son la forma en que KAVI clasifica en qué inviertes tu tiempo. La reg
 - ✓ un fallo al crear se propaga
 
 
+### Iconos de los temas
+
+*Que cada icono exista y que el del cumpleaños sea un pastel.* — 7 pruebas.
+
+
+**los iconos que la app genera sola**
+
+- ✓ el del cumpleanos esta en el catalogo
+- ✓ y el del entrenamiento también
+
+**catalogo**
+
+- ✓ los nombres publicados coinciden con las claves
+- ✓ un nombre desconocido no se toma por válido
+- ✓ ofrece al menos los treinta que pide la spec
+
+**ThemeIcon**
+
+- ✓ el cumpleanos pinta un pastel y no la etiqueta genérica
+- ✓ un nombre desconocido si cae a la etiqueta
+
+
 ---
 
 ## Compartir con otras personas
 
-**249 pruebas, todas superadas.**
+**254 pruebas, todas superadas.**
 
 Es el área con más reglas de privacidad, y por eso la más probada. Lo esencial: quien te comparte su calendario "solo ocupación" cede sus horas ocupadas, nunca lo que hace en ellas; y al eliminar a un contacto tiene que revocarse todo de golpe, sin dejar restos de acceso.
 
@@ -1781,7 +1829,7 @@ Es el área con más reglas de privacidad, y por eso la más probada. Lo esencia
 
 ### Carga de contactos
 
-*Búsqueda, colores y refresco.* — 17 pruebas.
+*Búsqueda, colores y refresco.* — 18 pruebas.
 
 
 **useContacts**
@@ -1792,6 +1840,7 @@ Es el área con más reglas de privacidad, y por eso la más probada. Lo esencia
 **usePeopleColors (RF-S15)**
 
 - ✓ incluye mi propio color bajo mi id
+- ✓ si elegi un color a mano, ese manda
 - ✓ asigna color a los contactos aceptados
 - ✓ ignora las solicitudes pendientes
 - ✓ respeta el color elegido a mano
@@ -1845,32 +1894,39 @@ Es el área con más reglas de privacidad, y por eso la más probada. Lo esencia
 
 ### Colores de cada persona
 
-*Que dos contactos no salgan del mismo color.* — 15 pruebas.
+*Que dos contactos no salgan del mismo color.* — 19 pruebas.
 
 
-**paleta**
+**la paleta**
 
-- ✓ son 8 colores con id, etiqueta y hex
-- ✓ no hay hex repetidos
-- ✓ el color de "Tú" es el primero de la paleta
+- ✓ tiene un color por cada Nobi, con el mismo id
+- ✓ no repite ningun hex
+- ✓ todos los hex están bien formados
+- ✓ todos contrastan al menos 3:1 sobre los dos fondos
+- ✓ ningun par se confunde entre si
+- ✓ hay veinte, uno por contacto habitual
 
-**assignPeopleColors**
+**el color que corresponde a un Nobi**
 
-- ✓ sin contactos devuelve un mapa vacío
-- ✓ asigna un color a cada contacto
+- ✓ es el de su mismo id
+- ✓ sin Nobi elegido no hay color
+- ✓ un avatar que no es un Nobi tampoco da color
+
+**repartir los colores**
+
 - ✓ respeta el color elegido a mano
-- ✓ nunca reparte el color reservado para "Tú"
-- ✓ no repite color entre contactos mientras queden libres
-- ✓ un color elegido a mano deja de ofrecerse al resto
-- ✓ es estable: el mismo orden da el mismo reparto
-- ✓ con más contactos que colores reutiliza en vez de dejar a alguien sin color
+- ✓ sin color a mano usa el del Nobi de esa persona
+- ✓ si el del Nobi ya está ocupado, le da otro
+- ✓ sin Nobi ni color reparte los libres
+- ✓ nunca reparte mi propio color
+- ✓ con más gente que colores reutiliza en vez de dejar a alguien sin color
+- ✓ sin contactos devuelve un mapa vacío
 
-**nextAvailableColor**
+**el siguiente color libre**
 
-- ✓ sin nada en uso devuelve el primero libre después del de "Tú"
-- ✓ salta los que ya están en uso
-- ✓ nunca devuelve el color de "Tú"
-- ✓ agotada la paleta cae a un color válido
+- ✓ no es el mio
+- ✓ no repite los que ya están en uso
+- ✓ con todos ocupados devuelve uno válido en vez de fallar
 
 
 ### Visibilidad de cada actividad
@@ -2498,7 +2554,7 @@ El registro de entrenamientos, accesible desde cualquier actividad marcada como 
 
 ## Perfil y administración
 
-**117 pruebas, todas superadas.**
+**121 pruebas, todas superadas.**
 
 Tus datos, tus estadísticas y los ajustes. El panel de administración es la parte con control de acceso: una cuenta normal no debe verlo, y aun viéndolo solo muestra cifras agregadas, nunca el contenido de la agenda de nadie.
 
@@ -2675,7 +2731,7 @@ Tus datos, tus estadísticas y los ajustes. El panel de administración es la pa
 
 ### Preferencias del dispositivo
 
-*Formato de hora, apariencia y qué capas se ven en el calendario.* — 21 pruebas.
+*Formato de hora, apariencia y qué capas se ven en el calendario.* — 25 pruebas.
 
 
 **valor inicial**
@@ -2713,6 +2769,13 @@ Tus datos, tus estadísticas y los ajustes. El panel de administración es la pa
 - ✓ se recuerda para la proxima sesión
 - ✓ sin nada guardado se queda en oscuro
 - ✓ elegirla no pierde las demás preferencias
+
+**elegir algo mientras se leen las preferencias**
+
+- ✓ no pierde la apariencia recien elegida
+- ✓ ni el formato de hora
+- ✓ lo que nadie toco si se aplica
+- ✓ lo elegido antes de hidratar sobrevive a reabrir la app
 
 
 ### Modo claro y modo oscuro
@@ -3261,7 +3324,7 @@ por 20 minutos se consideren solapadas en pantalla.
 Desde la carpeta del proyecto:
 
 ```
-pnpm test              # ejecuta las 1 530 pruebas
+pnpm test              # ejecuta las 1 560 pruebas
 pnpm test:coverage     # además mide qué porcentaje del código se ejerce
 ```
 

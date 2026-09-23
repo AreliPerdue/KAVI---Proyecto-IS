@@ -11,9 +11,15 @@ type Dates = typeof import('@/lib/dates');
 
 /** Prefijo `mock` obligatorio: Jest eleva la fabrica de `jest.mock` sobre los imports. */
 const mockAlmacen = new Map<string, string>();
+/** Si esta puesto, la lectura del disco se queda esperando a que la prueba la suelte. */
+let mockSoltarLectura: (() => void) | null = null;
+let mockLecturaLenta = false;
 jest.mock('@/lib/storage', () => ({
   getJson: async (k: string) => {
+    // El disco devuelve lo que habia AL EMPEZAR la lectura; tardar en contestar no
+    // cambia lo leido. Asi se comporta AsyncStorage en un telefono.
     const v = mockAlmacen.get(k);
+    if (mockLecturaLenta) await new Promise<void>((r) => { mockSoltarLectura = r; });
     return v ? JSON.parse(v) : null;
   },
   setJson: async (k: string, v: unknown) => {
@@ -36,7 +42,11 @@ function fresh(): { store: Store; dates: Dates } {
   return { store, dates };
 }
 
-beforeEach(() => mockAlmacen.clear());
+beforeEach(() => {
+  mockAlmacen.clear();
+  mockLecturaLenta = false;
+  mockSoltarLectura = null;
+});
 
 describe('valor inicial', () => {
   it('arranca en 24 h, que es lo habitual en es-MX', () => {
@@ -231,5 +241,77 @@ describe('apariencia (NFR-18)', () => {
     expect(estado.appearance).toBe('light');
     expect(estado.timeFormat).toBe('12h');
     expect(estado.showWorkouts).toBe(false);
+  });
+});
+
+
+/**
+ * Leer las preferencias del disco es asincrono y en un telefono tarda lo suficiente
+ * para que de tiempo a tocar un ajuste antes de que la lectura vuelva. Si `hydrate`
+ * aplicara entonces lo guardado encima, el cambio recien hecho se deshace solo y se
+ * ve como que el ajuste "no funciona". En web no se notaba: `localStorage` contesta
+ * en el mismo tick.
+ */
+describe('elegir algo mientras se leen las preferencias', () => {
+  it('no pierde la apariencia recien elegida', async () => {
+    mockAlmacen.set('kavi.preferences', JSON.stringify({ timeFormat: '24h', appearance: 'dark' }));
+    mockLecturaLenta = true;
+    const { store: { usePreferencesStore } } = fresh();
+
+    const hidratando = usePreferencesStore.getState().hydrate();
+    usePreferencesStore.getState().setAppearance('light');
+    mockSoltarLectura?.();
+    await hidratando;
+
+    expect(usePreferencesStore.getState().appearance).toBe('light');
+  });
+
+  it('ni el formato de hora', async () => {
+    mockAlmacen.set('kavi.preferences', JSON.stringify({ timeFormat: '24h' }));
+    mockLecturaLenta = true;
+    const { store: { usePreferencesStore }, dates } = fresh();
+
+    const hidratando = usePreferencesStore.getState().hydrate();
+    usePreferencesStore.getState().setTimeFormat('12h');
+    mockSoltarLectura?.();
+    await hidratando;
+
+    expect(usePreferencesStore.getState().timeFormat).toBe('12h');
+    // Y el formato propagado tiene que ser el elegido, no el que venia del disco.
+    expect(dates.formatTime(new Date(2026, 0, 1, 14, 30))).toMatch(/2:30/);
+  });
+
+  /** Lo que no se toco si viene del disco: no es un "no hidratar", es "no pisar". */
+  it('lo que nadie toco si se aplica', async () => {
+    mockAlmacen.set('kavi.preferences', JSON.stringify({ timeFormat: '12h', showWorkouts: false }));
+    mockLecturaLenta = true;
+    const { store: { usePreferencesStore } } = fresh();
+
+    const hidratando = usePreferencesStore.getState().hydrate();
+    usePreferencesStore.getState().setAppearance('light');
+    mockSoltarLectura?.();
+    await hidratando;
+
+    expect(usePreferencesStore.getState().showWorkouts).toBe(false);
+    expect(usePreferencesStore.getState().timeFormat).toBe('12h');
+  });
+
+  /** Y lo elegido antes de hidratar tiene que quedar guardado para la proxima sesion. */
+  it('lo elegido antes de hidratar sobrevive a reabrir la app', async () => {
+    mockAlmacen.set('kavi.preferences', JSON.stringify({ timeFormat: '12h', appearance: 'dark' }));
+    mockLecturaLenta = true;
+    const { store: { usePreferencesStore } } = fresh();
+
+    const hidratando = usePreferencesStore.getState().hydrate();
+    usePreferencesStore.getState().setAppearance('light');
+    mockSoltarLectura?.();
+    await hidratando;
+
+    mockLecturaLenta = false;
+    const otra = fresh();
+    await otra.store.usePreferencesStore.getState().hydrate();
+
+    expect(otra.store.usePreferencesStore.getState().appearance).toBe('light');
+    expect(otra.store.usePreferencesStore.getState().timeFormat).toBe('12h');
   });
 });

@@ -7,6 +7,7 @@ import {
   Bike,
   BookOpen,
   Briefcase,
+  Cake,
   Calculator,
   Camera,
   Car,
@@ -87,6 +88,7 @@ export const THEME_ICONS = {
   code: Code,
   phone: Phone,
   gift: Gift,
+  cake: Cake,
   tag: Tag,
 } as const;
 

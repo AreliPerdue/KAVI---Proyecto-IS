@@ -1,10 +1,12 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
-import { assignPeopleColors, SELF_COLOR } from '@/constants/people-colors';
+import { assignPeopleColors, colorDeNobi, DEFAULT_SELF_COLOR } from '@/constants/people-colors';
 import { useDebouncedValue } from '@/hooks/use-debounced-value';
 import { invalidateSharedData } from '@/lib/query-invalidation';
+import { useMyProfile } from '@/hooks/use-profile';
 import { useAuth } from '@/providers';
+import { usePreferencesStore } from '@/store/preferences-store';
 import {
   acceptConnection,
   type CalendarVisibility,
@@ -34,21 +36,32 @@ export function useContacts() {
 }
 
 /**
- * Color de cada persona para el calendario superpuesto (RF-S15): el elegido a mano y,
- * para el resto, el primero libre de la paleta. Incluye `SELF_COLOR` bajo mi propio id.
+ * Color de cada persona para el calendario superpuesto (RF-S15): el elegido a mano,
+ * si no el de su Nobi, y si no el primero libre de la paleta. Incluye el mío bajo mi
+ * propio id, que es lo que pinta mis actividades cuando hay calendarios superpuestos.
  */
 export function usePeopleColors(): Map<string, string> {
   const { userId } = useAuth();
   const contacts = useContacts();
+  const perfil = useMyProfile();
+  const elegido = usePreferencesStore((s) => s.selfColor);
+  const miAvatar = perfil.data?.avatar_url;
   const data = contacts.data;
   return useMemo(() => {
+    const mio = elegido ?? colorDeNobi(miAvatar) ?? DEFAULT_SELF_COLOR;
     const accepted = (data ?? [])
       .filter((c) => c.kind === 'accepted')
-      .map((c) => ({ userId: c.profile.id, color: c.color }));
-    const colors = assignPeopleColors(accepted);
-    if (userId) colors.set(userId, SELF_COLOR);
+      .map((c) => ({ userId: c.profile.id, color: c.color, avatarUrl: c.profile.avatar_url }));
+    const colors = assignPeopleColors(accepted, mio);
+    if (userId) colors.set(userId, mio);
     return colors;
-  }, [data, userId]);
+  }, [data, userId, elegido, miAvatar]);
+}
+
+/** Mi color resuelto, para pintarlo donde no hace falta el mapa entero. */
+export function useSelfColor(): string {
+  const { userId } = useAuth();
+  return usePeopleColors().get(userId ?? '') ?? DEFAULT_SELF_COLOR;
 }
 
 /** Mínimo para buscar: es también el largo mínimo de un username (RF-A1). */

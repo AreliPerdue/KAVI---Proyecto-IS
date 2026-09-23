@@ -4,7 +4,7 @@ import { useMemo } from 'react';
 import { DIMENSIONS, type Dimension } from '@/constants/dimensions';
 import { activityKeys } from '@/hooks/use-activities-range';
 import { useAuth } from '@/providers';
-import { createTheme, listThemes, removeTheme, updateTheme } from '@/services/themes';
+import { createTheme, listThemes, removeTheme, resetSystemThemes, updateTheme } from '@/services/themes';
 import type { Theme, ThemeInput } from '@/types/domain';
 
 export const themeKeys = {
@@ -39,9 +39,10 @@ export function useThemeMutations() {
   };
   const create = useMutation({ mutationFn: (input: ThemeInput) => createTheme(userId as string, input), onSuccess: invalidate });
   const update = useMutation({
-    mutationFn: ({ id, patch }: { id: string; patch: Partial<ThemeInput> }) => updateTheme(id, patch),
+    mutationFn: ({ id, patch }: { id: string; patch: Partial<ThemeInput> }) => updateTheme(id, patch, userId as string),
     onSuccess: invalidate,
   });
   const remove = useMutation({ mutationFn: (id: string) => removeTheme(id), onSuccess: invalidate });
-  return { create, update, remove };
+  const resetSystem = useMutation({ mutationFn: () => resetSystemThemes(userId as string), onSuccess: invalidate });
+  return { create, update, remove, resetSystem };
 }

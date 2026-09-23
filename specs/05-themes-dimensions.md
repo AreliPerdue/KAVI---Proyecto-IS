@@ -42,7 +42,25 @@ Clasificar actividades en un toque mediante temas predefinidos, cada uno ligado 
 ## Requerimientos funcionales
 - RF-T1. Picker de temas en el formulario de actividad: grid agrupado por dimensión, con búsqueda simple; seleccionar asigna dimensión, color e icono.
 - RF-T2. El usuario puede crear temas propios: nombre + dimensión + color (paleta fija de 12) + icono (set curado ~30). CRUD solo de los suyos.
-- RF-T3. Temas del sistema no son editables ni eliminables.
+- RF-T3. **Los temas del sistema se pueden personalizar, pero no borrar.** Cada persona
+  puede cambiarles el nombre, la dimensión, el color y el icono. Eliminarlos no: son el
+  catálogo de partida y quedarse sin él dejaría la app sin forma de clasificar.
+
+  La personalización es **de quien la hace y solo la ve esa persona**. La fila del tema
+  del sistema es una sola y la comparten todas las cuentas, así que editarla en sitio le
+  cambiaría el tema a todo el mundo: lo que se guarda es una fila aparte por persona y
+  tema (`theme_overrides`), y la lista se compone al leer. Los campos que no se tocan
+  heredan del tema original.
+
+  **Restablecer los temas del sistema** borra esas personalizaciones y los devuelve a
+  como vienen. No alcanza a los temas propios —viven en otra tabla— ni reescribe las
+  actividades ya creadas, que conservan el color y el icono que se les copió (RF-T6).
+  Pide confirmación, porque deshace trabajo y no se puede deshacer a su vez (NFR-12).
+
+  **Criterio.** *Dado* que cambio el nombre del tema «Gimnasio» a «Gym», *cuando* otra
+  persona abre sus temas, *entonces* sigue viendo «Gimnasio»; *y cuando* restablezco los
+  temas del sistema, *entonces* el mío vuelve a «Gimnasio» y mis temas propios siguen
+  intactos.
 - RF-T4. Actividad sin tema es válida (P3): usa color neutro y sin dimensión, y puede clasificarse después.
 - RF-T5. Los filtros del calendario usan dimensión y tema (ver RF-C11).
 - RF-T6. Si se elimina un tema propio, sus actividades conservan color/icono copiados y quedan sin tema (FK `on delete set null` + copia de estilo al guardar).

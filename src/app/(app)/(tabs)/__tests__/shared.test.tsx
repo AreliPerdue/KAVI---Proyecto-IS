@@ -27,6 +27,7 @@ jest.mock('@/hooks/use-connections', () => ({
   useInvitations: () => mockInvitaciones,
   useUserSearch: () => mockBusqueda,
   usePeopleColors: () => new Map(),
+  useSelfColor: () => '#176BFF',
   useConnectionMutations: () => ({
     remove: mockRemove, accept: mockAccept, request: mockRequest,
     setVisibility: mockSetVisibility, setColor: mockSetColor,
@@ -37,6 +38,7 @@ jest.mock('@/hooks/use-shares', () => ({
   useShareMutations: () => ({ respond: mockRespond, share: { mutate: jest.fn() }, remove: { mutate: jest.fn() } }),
 }));
 jest.mock('@/providers', () => ({ useConfirm: () => mockConfirm, useSnackbar: () => mockSnackbar }));
+jest.mock('@/hooks/use-profile', () => ({ useMyProfile: () => ({ data: { id: 'u1', username: 'areli', display_name: 'Areli' } }) }));
 
 /* eslint-disable-next-line @typescript-eslint/no-require-imports -- tras los mocks */
 const Pantalla = require('@/app/(app)/(tabs)/shared').default as () => React.ReactElement;

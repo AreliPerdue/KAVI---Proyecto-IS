@@ -4,6 +4,14 @@ import type { Activity, Contact, Profile, Workout } from '@/types/domain';
 export const WORKOUT_PREFIX = 'workout-';
 export const BIRTHDAY_PREFIX = 'birthday-';
 
+/**
+ * Iconos de las capas derivadas. Van nombrados y exportados porque nadie los elige a
+ * mano: si el nombre no esta en el catalogo, `ThemeIcon` cae a una etiqueta generica
+ * sin avisar. Hay una prueba que lo comprueba.
+ */
+export const WORKOUT_ICON = 'dumbbell';
+export const BIRTHDAY_ICON = 'cake';
+
 /** Un bloque derivado no existe como fila: no se puede editar ni compartir. */
 export function isDerivedActivity(activity: Pick<Activity, 'id'>): boolean {
   return activity.id.startsWith(WORKOUT_PREFIX) || activity.id.startsWith(BIRTHDAY_PREFIX);
@@ -41,7 +49,7 @@ export function workoutsToActivities(workouts: readonly Workout[]): Activity[] {
         title: w.title || 'Entrenamiento',
         dimension: 'fisica' as const,
         color: null,
-        icon: 'dumbbell',
+        icon: WORKOUT_ICON,
         start_at: w.performed_at,
         end_at: toIso(new Date(inicio.getTime() + minutos * 60_000)),
         all_day: false,
@@ -90,7 +98,7 @@ export function birthdaysToActivities(
         title: `Cumpleaños de ${nombreDe(persona)}`,
         dimension: 'social' as const,
         color: null,
-        icon: 'cake',
+        icon: BIRTHDAY_ICON,
         start_at: toIso(startOfDay(fecha)),
         end_at: toIso(setTimeOfDay(fecha, 1440)),
         all_day: true,

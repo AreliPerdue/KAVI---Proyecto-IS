@@ -33,9 +33,42 @@ describe('list', () => {
   });
 
   it('devuelve lo que responde la base', async () => {
-    const temas = [{ id: 't1', name: 'Gimnasio' }];
-    mockSb.responder({ data: temas, error: null });
+    const temas = [{ id: 't1', name: 'Gimnasio', is_system: false }];
+    mockSb.encolar({ data: temas, error: null }, { data: [], error: null });
     expect(await supabaseThemes.list('u1')).toEqual(temas);
+  });
+
+  /**
+   * La fila del tema del sistema es global; lo que cada persona cambio vive en
+   * `theme_overrides` y se compone aqui al leer (RF-T3).
+   */
+  it('aplica la personalizacion sobre los temas del sistema', async () => {
+    mockSb.encolar(
+      { data: [{ id: 't1', name: 'Gimnasio', color: '#4CAF50', icon: 'dumbbell', dimension: 'fisica', is_system: true }], error: null },
+      { data: [{ theme_id: 't1', name: 'Gym', color: '#FF9800', dimension: null, icon: null }], error: null },
+    );
+
+    const [tema] = await supabaseThemes.list('u1');
+
+    expect(tema.name).toBe('Gym');
+    expect(tema.color).toBe('#FF9800');
+    // Lo que no se personalizo se hereda del original.
+    expect(tema.icon).toBe('dumbbell');
+  });
+
+  it('pide solo las personalizaciones de esa persona', async () => {
+    mockSb.encolar({ data: [], error: null }, { data: [], error: null });
+    await supabaseThemes.list('u1');
+    expect(mockSb.argsDe('eq')).toEqual(['user_id', 'u1']);
+  });
+
+  it('un tema propio no se toca aunque haya personalizaciones', async () => {
+    mockSb.encolar(
+      { data: [{ id: 't9', name: 'Mio', is_system: false }], error: null },
+      { data: [{ theme_id: 't9', name: 'Pisado' }], error: null },
+    );
+
+    expect((await supabaseThemes.list('u1'))[0].name).toBe('Mio');
   });
 
   it('traduce el error de la base', async () => {
@@ -65,22 +98,66 @@ describe('create', () => {
   });
 });
 
-describe('update', () => {
+describe('update de un tema propio', () => {
   it('filtra por el id del tema', async () => {
-    mockSb.responder({ data: { id: 't1' }, error: null });
-    await supabaseThemes.update('t1', { name: 'Nuevo' });
+    mockSb.encolar({ data: { id: 't1', is_system: false }, error: null }, { data: { id: 't1' }, error: null });
+    await supabaseThemes.update('t1', { name: 'Nuevo' }, 'u1');
     expect(mockSb.argsDe('eq')).toEqual(['id', 't1']);
   });
 
   it('envia solo el parche', async () => {
-    mockSb.responder({ data: { id: 't1' }, error: null });
-    await supabaseThemes.update('t1', { color: '#FF0000' });
+    mockSb.encolar({ data: { id: 't1', is_system: false }, error: null }, { data: { id: 't1' }, error: null });
+    await supabaseThemes.update('t1', { color: '#FF0000' }, 'u1');
     expect(mockSb.argsDe('update')).toEqual([{ color: '#FF0000' }]);
   });
+});
 
-  it('un tema del sistema lo rechaza la RLS (RF-T3)', async () => {
-    mockSb.responder({ data: null, error: { message: 'rls', code: '42501' } });
-    await expect(supabaseThemes.update('sys-1', { name: 'X' })).rejects.toThrow(/permiso/i);
+/**
+ * Esa fila la comparten todas las cuentas: escribir en ella le cambiaria el tema a
+ * todo el mundo. El cambio se guarda como personalizacion de quien lo hace (RF-T3).
+ */
+describe('update de un tema del sistema', () => {
+  const original = { id: 'sys-1', name: 'Gimnasio', color: '#4CAF50', icon: 'dumbbell', dimension: 'fisica', is_system: true };
+
+  it('no escribe en la tabla de temas', async () => {
+    mockSb.encolar({ data: original, error: null }, { data: { theme_id: 'sys-1', name: 'Gym' }, error: null });
+
+    await supabaseThemes.update('sys-1', { name: 'Gym' }, 'u1');
+
+    expect(mockSb.llamadas.some((l) => l[0] === 'update')).toBe(false);
+  });
+
+  it('guarda la personalizacion a nombre de quien la hace', async () => {
+    mockSb.encolar({ data: original, error: null }, { data: { theme_id: 'sys-1', name: 'Gym' }, error: null });
+
+    await supabaseThemes.update('sys-1', { name: 'Gym' }, 'u1');
+
+    expect(mockSb.argsDe('upsert')?.[0]).toEqual({ user_id: 'u1', theme_id: 'sys-1', name: 'Gym' });
+  });
+
+  it('devuelve el tema ya compuesto', async () => {
+    mockSb.encolar({ data: original, error: null }, { data: { theme_id: 'sys-1', name: 'Gym', color: null }, error: null });
+
+    const tema = await supabaseThemes.update('sys-1', { name: 'Gym' }, 'u1');
+
+    expect(tema.name).toBe('Gym');
+    expect(tema.color).toBe('#4CAF50');
+  });
+});
+
+describe('restablecer los temas del sistema', () => {
+  it('borra solo las personalizaciones de esa persona', async () => {
+    mockSb.responder({ data: null, error: null });
+
+    await supabaseThemes.resetSystemThemes('u1');
+
+    expect(mockSb.argsDe('from')).toEqual(['theme_overrides']);
+    expect(mockSb.argsDe('eq')).toEqual(['user_id', 'u1']);
+  });
+
+  it('propaga el error si falla', async () => {
+    mockSb.responder({ data: null, error: { message: 'boom', code: '42501' } });
+    await expect(supabaseThemes.resetSystemThemes('u1')).rejects.toThrow(/permiso/i);
   });
 });
 

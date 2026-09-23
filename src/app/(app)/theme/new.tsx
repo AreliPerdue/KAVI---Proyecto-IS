@@ -27,6 +27,8 @@ export default function ThemeFormScreen() {
   const themes = useThemes();
   const { create, update, remove } = useThemeMutations();
   const editing = themes.data?.find((t) => t.id === id) ?? null;
+  // La fila de un tema del sistema es global y se comparte: se personaliza, no se borra.
+  const delSistema = !!editing?.is_system;
 
   const { control, handleSubmit, reset } = useForm<ThemeFormValues>({
     resolver: zodResolver(themeFormSchema),
@@ -89,7 +91,7 @@ export default function ThemeFormScreen() {
 
   return (
     <Screen modal scroll maxWidth={MAX_WIDTH}>
-      <ModalHeader title={editing ? 'Editar tema' : 'Nuevo tema'} />
+      <ModalHeader title={delSistema ? 'Personalizar tema' : editing ? 'Editar tema' : 'Nuevo tema'} />
       {mutation.error ? <Banner tone="error" message={mutation.error.message} /> : null}
 
       <View style={[styles.preview, { backgroundColor: `${color}22`, borderColor: color }]}>
@@ -182,7 +184,8 @@ export default function ThemeFormScreen() {
       />
 
       <Button title={editing ? 'Guardar cambios' : 'Crear tema'} onPress={onSubmit} loading={mutation.isPending} />
-      {editing ? <Button title="Eliminar tema" variant="danger" onPress={onDelete} loading={remove.isPending} /> : null}
+      {/* Un tema del sistema se personaliza, no se borra: su fila la comparten todas las cuentas. */}
+      {editing && !delSistema ? <Button title="Eliminar tema" variant="danger" onPress={onDelete} loading={remove.isPending} /> : null}
     </Screen>
   );
 }

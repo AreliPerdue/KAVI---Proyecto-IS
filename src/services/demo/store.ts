@@ -6,7 +6,7 @@ import { addDays, addHours, setHours, setMinutes, startOfDay, startOfWeek } from
 
 import { DIMENSION_BY_KEY } from '@/constants/dimensions';
 import { SYSTEM_THEMES } from '@/constants/themes';
-import type { Activity, ActivityShareStatus, AuthUser, Profile, Theme } from '@/types/domain';
+import type { Activity, ActivityShareStatus, AuthUser, Profile, Theme, ThemeInput } from '@/types/domain';
 
 export type DemoConnection = { id: string; requester_id: string; addressee_id: string; status: 'pending' | 'accepted'; created_at: string; responded_at: string | null };
 export type DemoCalendarShare = { id: string; owner_id: string; shared_with_id: string; visibility: 'busy' | 'details'; created_at: string };
@@ -25,6 +25,12 @@ type DemoState = {
   accounts: DemoAccount[];
   currentUser: AuthUser | null;
   themes: Theme[];
+  /**
+   * Personalizacion de los temas del sistema, por persona (RF-T3). La clave es
+   * `usuario:tema`. Va aparte de `themes` porque esa fila es global: editarla en sitio
+   * le cambiaria el tema a todas las cuentas.
+   */
+  themeOverrides: Record<string, Partial<ThemeInput>>;
   activities: Activity[];
   connections: DemoConnection[];
   calendarShares: DemoCalendarShare[];
@@ -202,6 +208,7 @@ export const demoState: DemoState = {
   currentUser: null,
   contactColors: [],
   themes: [...SYSTEM_THEMES],
+  themeOverrides: {},
   activities: [...seedActivities(), ...seededOthers, ...seededCarga],
   connections: [
     { id: 'con-ana', requester_id: DEMO_USER.id, addressee_id: DEMO_CONTACTS.ana.id, status: 'accepted', created_at: new Date().toISOString(), responded_at: new Date().toISOString() },
