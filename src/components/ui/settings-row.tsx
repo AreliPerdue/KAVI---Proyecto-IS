@@ -52,6 +52,11 @@ export type SettingsRowProps = {
   value?: string;
   /** Control propio a la derecha (p. ej. un `Toggle`). Sustituye al valor y al chevron. */
   right?: ReactNode;
+  /**
+   * Control bajo la etiqueta, a todo lo ancho. Para los que no caben a la derecha en
+   * 375 px sin recortar la etiqueta (p. ej. un `Segmented` de tres opciones).
+   */
+  below?: ReactNode;
   onPress?: () => void;
   /** Acción destructiva: etiqueta e icono en `danger`. */
   destructive?: boolean;
@@ -59,7 +64,7 @@ export type SettingsRowProps = {
 };
 
 /** Fila de ajuste: icono, etiqueta, valor y chevron. Sin `onPress` es solo informativa. */
-export function SettingsRow({ icon, label, hint, value, right, onPress, destructive = false, disabled = false }: SettingsRowProps) {
+export function SettingsRow({ icon, label, hint, value, right, below, onPress, destructive = false, disabled = false }: SettingsRowProps) {
   const theme = useTheme();
   const labelColor: ThemeColor = destructive ? 'danger' : 'text';
   const interactive = !!onPress && !disabled;
@@ -89,6 +94,17 @@ export function SettingsRow({ icon, label, hint, value, right, onPress, destruct
       )}
     </>
   );
+
+  if (below) {
+    return (
+      <View style={disabled ? styles.disabled : null}>
+        <View style={[styles.row, styles.rowWithBelow]} accessible accessibilityLabel={label}>
+          {content}
+        </View>
+        <View style={styles.below}>{below}</View>
+      </View>
+    );
+  }
 
   if (!interactive) {
     return (
@@ -124,6 +140,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.lg,
     paddingVertical: Spacing.sm,
   },
+  rowWithBelow: { paddingBottom: 0, minHeight: 0 },
+  below: { paddingHorizontal: Spacing.lg, paddingTop: Spacing.sm, paddingBottom: Spacing.md },
   iconTile: { width: ICON_TILE, height: ICON_TILE, borderRadius: Radius.sm, borderCurve: 'continuous', alignItems: 'center', justifyContent: 'center' },
   text: { flex: 1, gap: 2 },
   value: { maxWidth: '45%', textAlign: 'right' },

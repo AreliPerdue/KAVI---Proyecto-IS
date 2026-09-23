@@ -18,10 +18,13 @@ KAVI es un planificador personal donde **el calendario es la estrella** y las **
 Nunca hex sueltos en componentes; todo pasa por tokens semánticos.
 
 ### Color (claro / oscuro)
-**KAVI se entrega en oscuro**: `useResolvedScheme()` devuelve siempre `dark` y `app.json` fija
-`userInterfaceStyle: "dark"`. Los tokens claros quedan definidos para cuando exista un ajuste
-de apariencia en Perfil. Todo el sistema neutro se deriva de dos anclas — tinta `#131313` y
-blanco contrastante `#F2F2F2` — que se intercambian entre temas.
+**KAVI arranca en oscuro y la apariencia se elige** en Perfil → Presentación: Sistema / Claro /
+Oscuro (NFR-18). `useResolvedScheme()` resuelve esa preferencia contra `useColorScheme()` y
+`app.json` fija `userInterfaceStyle: "automatic"`. Los dos temas son de primera clase: ninguna
+pantalla puede dar por hecho el oscuro. Todo el sistema neutro se deriva de dos anclas — tinta
+`#131313` y blanco contrastante `#F2F2F2` — que se intercambian entre temas.
+La única excepción es el splash, siempre oscuro: el nativo se fija antes de que haya JavaScript
+para leer la preferencia y el logo es de contorno blanco.
 
 | Token | Claro | Oscuro | Uso |
 |---|---|---|---|

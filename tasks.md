@@ -62,6 +62,7 @@ Fuente de verdad del avance. Reglas: trabajar en orden, respetar dependencias, m
 - [x] T161 Actividades privadas: los contactos ven el hueco ocupado pero nunca el titulo, sea cual sea su nivel de visibilidad (RF-C14). La regla vive en la RPC, no en el cliente.
 - [x] T165 Confirmacion de asistencia con tres respuestas —voy, tal vez, no voy— y lista de invitados agrupada por respuesta (RF-S19).
 - [x] T166 La app abre siempre en el calendario, salvo la primera vez que se usa (RF-C15).
+- [x] T167 Modo claro elegible desde Perfil → Presentación (Sistema / Claro / Oscuro). La preferencia es del dispositivo y se guarda con las demás de presentación; sin elección se queda en oscuro, igual que antes. `app.json` pasa a `userInterfaceStyle: "automatic"` y el autofill del navegador sigue el tema mediante un atributo del documento, que es lo único que no se puede pintar desde React Native Web. El splash queda fijo en oscuro a propósito. (NFR-18)
 - [x] T163 Visibilidad por actividad con tres estados —normal, solo algunos, privada— y lista de quien puede ver el detalle (RF-C14). Solo restringe: el nivel del calendario es el techo, y la interfaz avisa cuando marcar a alguien no va a servir.
 - [x] T164 Cerrado el hueco de la politica de lectura: una peticion a mano contra `activities` devolvia el titulo de una actividad privada aunque la RPC no lo entregara.
 - [x] T158 Cumpleanos en el perfil y en el calendario, propio y de los contactos aceptados, con icono de pastel e interruptor (RF-A10). Migracion 20260923100000.

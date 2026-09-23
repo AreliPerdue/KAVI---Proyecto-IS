@@ -16,6 +16,7 @@ import {
   Palette,
   Pencil,
   Repeat2,
+  SunMoon,
   Users,
 } from 'lucide-react-native';
 import { useEffect, useMemo, useState } from 'react';
@@ -102,6 +103,8 @@ export default function ProfileScreen() {
   const theme = useTheme();
   const timeFormat = usePreferencesStore((s) => s.timeFormat);
   const setTimeFormat = usePreferencesStore((s) => s.setTimeFormat);
+  const appearance = usePreferencesStore((s) => s.appearance);
+  const setAppearance = usePreferencesStore((s) => s.setAppearance);
   const showWorkouts = usePreferencesStore((s) => s.showWorkouts);
   const setShowWorkouts = usePreferencesStore((s) => s.setShowWorkouts);
   const showBirthdays = usePreferencesStore((s) => s.showBirthdays);
@@ -365,6 +368,24 @@ export default function ProfileScreen() {
       />
 
       <SettingsGroup title="Presentación" footer="Se aplica al calendario, a los recordatorios y al historial de entrenamientos.">
+        {/* Debajo y no a la derecha: tres opciones no caben junto a la etiqueta en 375 px. */}
+        <SettingsRow
+          icon={<SunMoon size={IconSize.inline} strokeWidth={IconStroke} color={theme.textSecondary} />}
+          label="Apariencia"
+          hint="«Sistema» sigue el ajuste de tu teléfono o navegador."
+          below={
+            <Segmented
+              fullWidth
+              options={[
+                { value: 'system', label: 'Sistema' },
+                { value: 'light', label: 'Claro' },
+                { value: 'dark', label: 'Oscuro' },
+              ]}
+              value={appearance}
+              onChange={setAppearance}
+            />
+          }
+        />
         <SettingsRow
           icon={<Clock size={IconSize.inline} strokeWidth={IconStroke} color={theme.textSecondary} />}
           label="Formato de hora"

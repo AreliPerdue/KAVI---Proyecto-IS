@@ -3,7 +3,7 @@ import { DarkTheme, DefaultTheme, type ErrorBoundaryProps, Stack, ThemeProvider 
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
-import { StyleSheet } from 'react-native';
+import { Platform, StyleSheet } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { ErrorFallback } from '@/components/error-fallback';
@@ -86,6 +86,16 @@ export function ErrorBoundary(props: ErrorBoundaryProps) {
 export default function RootLayout() {
   const scheme = useResolvedScheme();
 
+  /**
+   * El CSS de `global.css` no puede leer la preferencia de Perfil, así que el tema
+   * activo se publica en un atributo del documento. Solo afecta al autofill del
+   * navegador, que es lo único que no se puede pintar desde React Native Web.
+   */
+  useEffect(() => {
+    if (Platform.OS !== 'web') return;
+    document.documentElement.setAttribute('data-kavi-theme', scheme);
+  }, [scheme]);
+
   return (
     <GestureHandlerRootView style={styles.root}>
       <QueryClientProvider client={queryClient}>
@@ -96,7 +106,8 @@ export default function RootLayout() {
                 <RootNavigator />
               </ConfirmProvider>
             </SnackbarProvider>
-            <StatusBar style="light" />
+            {/* Con fondo claro los iconos del sistema tienen que ir oscuros. */}
+            <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
           </ThemeProvider>
         </AuthProvider>
       </QueryClientProvider>

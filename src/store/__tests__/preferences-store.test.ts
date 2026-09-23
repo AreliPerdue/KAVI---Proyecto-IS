@@ -179,3 +179,57 @@ describe('nombre del ultimo entrenamiento (RF-F7)', () => {
     expect(otra.store.usePreferencesStore.getState().timeFormat).toBe('12h');
   });
 });
+
+/**
+ * Apariencia (NFR-18). Es una preferencia del dispositivo, no de la cuenta: quien
+ * usa KAVI en el telefono de noche y en la web de dia elige distinto en cada uno.
+ */
+describe('apariencia (NFR-18)', () => {
+  it('arranca en oscuro, que es como nacio KAVI', () => {
+    const { store: { usePreferencesStore, DEFAULT_APPEARANCE } } = fresh();
+    expect(DEFAULT_APPEARANCE).toBe('dark');
+    expect(usePreferencesStore.getState().appearance).toBe('dark');
+  });
+
+  it('guarda la que se elija', () => {
+    const { store: { usePreferencesStore } } = fresh();
+    usePreferencesStore.getState().setAppearance('light');
+    expect(usePreferencesStore.getState().appearance).toBe('light');
+  });
+
+  it('se recuerda para la proxima sesion', async () => {
+    const { store: { usePreferencesStore } } = fresh();
+    usePreferencesStore.getState().setAppearance('system');
+
+    const otra = fresh();
+    await otra.store.usePreferencesStore.getState().hydrate();
+
+    expect(otra.store.usePreferencesStore.getState().appearance).toBe('system');
+  });
+
+  /** Quien ya tenia preferencias guardadas nunca eligio apariencia: sigue en oscuro. */
+  it('sin nada guardado se queda en oscuro', async () => {
+    const { store: { usePreferencesStore } } = fresh();
+    usePreferencesStore.getState().setTimeFormat('12h');
+
+    const otra = fresh();
+    await otra.store.usePreferencesStore.getState().hydrate();
+
+    expect(otra.store.usePreferencesStore.getState().appearance).toBe('dark');
+  });
+
+  it('elegirla no pierde las demas preferencias', async () => {
+    const { store: { usePreferencesStore } } = fresh();
+    usePreferencesStore.getState().setTimeFormat('12h');
+    usePreferencesStore.getState().setShowWorkouts(false);
+    usePreferencesStore.getState().setAppearance('light');
+
+    const otra = fresh();
+    await otra.store.usePreferencesStore.getState().hydrate();
+
+    const estado = otra.store.usePreferencesStore.getState();
+    expect(estado.appearance).toBe('light');
+    expect(estado.timeFormat).toBe('12h');
+    expect(estado.showWorkouts).toBe(false);
+  });
+});

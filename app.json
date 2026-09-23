@@ -6,7 +6,7 @@
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "kavi",
-    "userInterfaceStyle": "dark",
+    "userInterfaceStyle": "automatic",
     "backgroundColor": "#131313",
     "ios": {
       "bundleIdentifier": "com.sistemas-meled.kavi"

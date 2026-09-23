@@ -212,3 +212,47 @@ describe('modo demo', () => {
     expect(screen.getByLabelText(/versión.*demo/i)).toBeTruthy();
   });
 });
+
+/**
+ * Apariencia (NFR-18). Es el unico sitio desde donde se cambia el tema, asi que lo
+ * que hay que fijar es que las tres opciones esten y que elegir una la guarde: sin
+ * eso el ajuste se veria pero no haria nada.
+ */
+describe('apariencia (NFR-18)', () => {
+  /* eslint-disable-next-line @typescript-eslint/no-require-imports -- tras los mocks */
+  const { usePreferencesStore } = require('@/store/preferences-store') as typeof import('@/store/preferences-store');
+
+  beforeEach(() => usePreferencesStore.setState({ appearance: 'dark' }));
+
+  it('ofrece seguir al sistema, claro y oscuro', async () => {
+    await render(<Pantalla />);
+
+    for (const opcion of ['Sistema', 'Claro', 'Oscuro']) {
+      expect(screen.getByRole('tab', { name: opcion })).toBeTruthy();
+    }
+  });
+
+  it('marca como seleccionada la que esta activa', async () => {
+    usePreferencesStore.setState({ appearance: 'light' });
+    await render(<Pantalla />);
+
+    expect(screen.getByRole('tab', { name: 'Claro' }).props.accessibilityState.selected).toBe(true);
+    expect(screen.getByRole('tab', { name: 'Oscuro' }).props.accessibilityState.selected).toBe(false);
+  });
+
+  it('elegir «Claro» la guarda', async () => {
+    await render(<Pantalla />);
+
+    await fireEvent.press(screen.getByRole('tab', { name: 'Claro' }));
+
+    expect(usePreferencesStore.getState().appearance).toBe('light');
+  });
+
+  it('y «Sistema» deja que mande el telefono', async () => {
+    await render(<Pantalla />);
+
+    await fireEvent.press(screen.getByRole('tab', { name: 'Sistema' }));
+
+    expect(usePreferencesStore.getState().appearance).toBe('system');
+  });
+});

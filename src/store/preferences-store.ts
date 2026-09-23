@@ -5,6 +5,12 @@ import { getJson, setJson } from '@/lib/storage';
 
 const PREFS_KEY = 'kavi.preferences';
 
+/** `system` sigue al teléfono; las otras dos lo fijan (NFR-18). */
+export type Appearance = 'system' | 'light' | 'dark';
+
+/** KAVI nació en oscuro y se mantiene como punto de partida. */
+export const DEFAULT_APPEARANCE: Appearance = 'dark';
+
 /** Reloj de 24 h por omisión, que es lo habitual en es-MX. */
 export const DEFAULT_TIME_FORMAT: TimeFormat = '24h';
 
@@ -15,6 +21,7 @@ type Prefs = {
   showBirthdays: boolean;
   /** Falso solo hasta la primera vez que se abre la app. */
   visto: boolean;
+  appearance: Appearance;
 };
 
 type PreferencesState = {
@@ -35,12 +42,15 @@ type PreferencesState = {
    * vacío, que no dice qué hacer a continuación.
    */
   visto: boolean;
+  /** Apariencia elegida: seguir al sistema, clara u oscura (NFR-18). */
+  appearance: Appearance;
   hydrated: boolean;
   setTimeFormat: (formato: TimeFormat) => void;
   setLastWorkoutTitle: (titulo: string | null) => void;
   setShowWorkouts: (mostrar: boolean) => void;
   setShowBirthdays: (mostrar: boolean) => void;
   marcarVisto: () => void;
+  setAppearance: (valor: Appearance) => void;
   hydrate: () => Promise<void>;
 };
 
@@ -58,6 +68,7 @@ export const usePreferencesStore = create<PreferencesState>((set, get) => ({
   showWorkouts: true,
   showBirthdays: true,
   visto: false,
+  appearance: DEFAULT_APPEARANCE,
   hydrated: false,
 
   setTimeFormat: (formato) => {
@@ -82,6 +93,11 @@ export const usePreferencesStore = create<PreferencesState>((set, get) => ({
     persistir({ ...get(), showBirthdays: mostrar });
   },
 
+  setAppearance: (valor) => {
+    set({ appearance: valor });
+    persistir({ ...get(), appearance: valor });
+  },
+
   marcarVisto: () => {
     if (get().visto) return;
     set({ visto: true });
@@ -101,6 +117,7 @@ export const usePreferencesStore = create<PreferencesState>((set, get) => ({
       showWorkouts: prefs?.showWorkouts ?? true,
       showBirthdays: prefs?.showBirthdays ?? true,
       visto: prefs?.visto ?? false,
+      appearance: prefs?.appearance ?? DEFAULT_APPEARANCE,
       hydrated: true,
     });
   },
@@ -108,7 +125,7 @@ export const usePreferencesStore = create<PreferencesState>((set, get) => ({
 
 /** Se guarda el conjunto entero: son dos claves y así no pueden desincronizarse. */
 function persistir(
-  estado: Pick<PreferencesState, 'timeFormat' | 'lastWorkoutTitle' | 'showWorkouts' | 'showBirthdays' | 'visto'>,
+  estado: Pick<PreferencesState, 'timeFormat' | 'lastWorkoutTitle' | 'showWorkouts' | 'showBirthdays' | 'visto' | 'appearance'>,
 ): void {
   void setJson(PREFS_KEY, {
     timeFormat: estado.timeFormat,
@@ -116,5 +133,6 @@ function persistir(
     showWorkouts: estado.showWorkouts,
     showBirthdays: estado.showBirthdays,
     visto: estado.visto,
+    appearance: estado.appearance,
   } satisfies Prefs);
 }

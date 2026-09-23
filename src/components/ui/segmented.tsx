@@ -12,14 +12,19 @@ export function Segmented<T extends string>({
   options,
   value,
   onChange,
+  fullWidth = false,
 }: {
   options: readonly SegmentedOption<T>[];
   value: T;
   onChange: (value: T) => void;
+  /** Ocupa todo el ancho disponible y reparte los segmentos por igual. */
+  fullWidth?: boolean;
 }) {
   const theme = useTheme();
   return (
-    <View style={[styles.container, { backgroundColor: theme.surfaceAlt }]} accessibilityRole="tablist">
+    <View
+      style={[styles.container, { backgroundColor: theme.surfaceAlt }, fullWidth ? styles.containerFullWidth : null]}
+      accessibilityRole="tablist">
       {options.map((option) => {
         const selected = option.value === value;
         return (
@@ -31,6 +36,7 @@ export function Segmented<T extends string>({
             onPress={() => onChange(option.value)}
             style={({ pressed }) => [
               styles.segment,
+              fullWidth ? styles.segmentFullWidth : null,
               selected ? { backgroundColor: theme.surface, boxShadow: '0 1px 2px rgba(22,23,26,0.08)' } : null,
               pressed ? styles.pressed : null,
             ]}>
@@ -52,6 +58,8 @@ const styles = StyleSheet.create({
     borderCurve: 'continuous',
     gap: 2,
   },
+  containerFullWidth: { alignSelf: 'stretch' },
+  segmentFullWidth: { flex: 1 },
   segment: {
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.sm - 2,
