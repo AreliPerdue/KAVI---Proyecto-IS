@@ -8,7 +8,12 @@ const PREFS_KEY = 'kavi.preferences';
 /** Reloj de 24 h por omisión, que es lo habitual en es-MX. */
 export const DEFAULT_TIME_FORMAT: TimeFormat = '24h';
 
-type Prefs = { timeFormat: TimeFormat; lastWorkoutTitle: string | null };
+type Prefs = {
+  timeFormat: TimeFormat;
+  lastWorkoutTitle: string | null;
+  showWorkouts: boolean;
+  showBirthdays: boolean;
+};
 
 type PreferencesState = {
   timeFormat: TimeFormat;
@@ -18,9 +23,15 @@ type PreferencesState = {
    * volver a escribirlo cada vez es trabajo que la app puede ahorrarse (RF-F7).
    */
   lastWorkoutTitle: string | null;
+  /** Pintar los entrenamientos sueltos en el calendario (RF-F10). */
+  showWorkouts: boolean;
+  /** Pintar mi cumpleaños y el de mis contactos (RF-A10). */
+  showBirthdays: boolean;
   hydrated: boolean;
   setTimeFormat: (formato: TimeFormat) => void;
   setLastWorkoutTitle: (titulo: string | null) => void;
+  setShowWorkouts: (mostrar: boolean) => void;
+  setShowBirthdays: (mostrar: boolean) => void;
   hydrate: () => Promise<void>;
 };
 
@@ -35,6 +46,8 @@ type PreferencesState = {
 export const usePreferencesStore = create<PreferencesState>((set, get) => ({
   timeFormat: DEFAULT_TIME_FORMAT,
   lastWorkoutTitle: null,
+  showWorkouts: true,
+  showBirthdays: true,
   hydrated: false,
 
   setTimeFormat: (formato) => {
@@ -49,19 +62,41 @@ export const usePreferencesStore = create<PreferencesState>((set, get) => ({
     persistir({ ...get(), lastWorkoutTitle: limpio });
   },
 
+  setShowWorkouts: (mostrar) => {
+    set({ showWorkouts: mostrar });
+    persistir({ ...get(), showWorkouts: mostrar });
+  },
+
+  setShowBirthdays: (mostrar) => {
+    set({ showBirthdays: mostrar });
+    persistir({ ...get(), showBirthdays: mostrar });
+  },
+
   hydrate: async () => {
     if (get().hydrated) return;
     const prefs = await getJson<Prefs>(PREFS_KEY);
     const formato = prefs?.timeFormat ?? DEFAULT_TIME_FORMAT;
     setTimeFormat(formato);
-    set({ timeFormat: formato, lastWorkoutTitle: prefs?.lastWorkoutTitle ?? null, hydrated: true });
+    set({
+      timeFormat: formato,
+      lastWorkoutTitle: prefs?.lastWorkoutTitle ?? null,
+      // Ausentes = activadas: son el comportamiento por defecto y quien ya tenía
+      // preferencias guardadas no las vio nunca apagadas.
+      showWorkouts: prefs?.showWorkouts ?? true,
+      showBirthdays: prefs?.showBirthdays ?? true,
+      hydrated: true,
+    });
   },
 }));
 
 /** Se guarda el conjunto entero: son dos claves y así no pueden desincronizarse. */
-function persistir(estado: Pick<PreferencesState, 'timeFormat' | 'lastWorkoutTitle'>): void {
+function persistir(
+  estado: Pick<PreferencesState, 'timeFormat' | 'lastWorkoutTitle' | 'showWorkouts' | 'showBirthdays'>,
+): void {
   void setJson(PREFS_KEY, {
     timeFormat: estado.timeFormat,
     lastWorkoutTitle: estado.lastWorkoutTitle,
+    showWorkouts: estado.showWorkouts,
+    showBirthdays: estado.showBirthdays,
   } satisfies Prefs);
 }

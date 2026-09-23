@@ -126,6 +126,24 @@ const mockRouter = {
 let mockParametrosDeRuta = {};
 
 global.mockRouter = mockRouter;
+
+/**
+ * Navegacion del navegador de pestanas. Guarda los oyentes por evento para que una
+ * prueba pueda dispararlos: `dispararEventoDeNavegacion('tabPress')`.
+ */
+const mockOyentesNavegacion = new Map();
+const mockNavigation = {
+  setOptions: jest.fn(),
+  addListener: jest.fn((evento, cb) => {
+    const lista = mockOyentesNavegacion.get(evento) ?? [];
+    lista.push(cb);
+    mockOyentesNavegacion.set(evento, lista);
+    return () => mockOyentesNavegacion.set(evento, (mockOyentesNavegacion.get(evento) ?? []).filter((x) => x !== cb));
+  }),
+};
+global.dispararEventoDeNavegacion = (evento) => {
+  for (const cb of mockOyentesNavegacion.get(evento) ?? []) cb();
+};
 global.setParametrosDeRuta = (params) => { mockParametrosDeRuta = params ?? {}; };
 
 jest.mock('expo-router', () => {
@@ -146,7 +164,7 @@ jest.mock('expo-router', () => {
     useGlobalSearchParams: () => mockParametrosDeRuta,
     usePathname: () => '/',
     useSegments: () => [],
-    useNavigation: () => ({ setOptions: jest.fn() }),
+    useNavigation: () => mockNavigation,
     useFocusEffect: (efecto) => React.useEffect(efecto, [efecto]),
     Link: ({ children, asChild }) => (asChild ? children : React.createElement(View, null, children)),
     Redirect: () => null,
@@ -159,6 +177,8 @@ jest.mock('expo-router', () => {
 
 beforeEach(() => {
   for (const fn of Object.values(mockRouter)) if (typeof fn.mockClear === 'function') fn.mockClear();
+  mockOyentesNavegacion.clear();
+  mockNavigation.addListener.mockClear();
   mockParametrosDeRuta = {};
 });
 

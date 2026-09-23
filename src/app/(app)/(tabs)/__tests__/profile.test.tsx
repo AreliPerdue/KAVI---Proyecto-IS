@@ -106,7 +106,8 @@ describe('estadisticas', () => {
     expect(screen.getByText('Actividades este mes')).toBeTruthy();
     expect(screen.getByText('Amigos')).toBeTruthy();
     expect(screen.getByText('Temas propios')).toBeTruthy();
-    expect(screen.getByText('Entrenamientos')).toBeTruthy();
+    // Aparece dos veces: la estadistica y el interruptor de que se ve en el calendario.
+    expect(screen.getAllByText('Entrenamientos').length).toBeGreaterThan(0);
   });
 
   it('solo cuenta contactos aceptados como amigos', async () => {

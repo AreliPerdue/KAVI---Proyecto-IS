@@ -2,14 +2,9 @@ import { create } from 'zustand';
 
 import type { Dimension } from '@/constants/dimensions';
 import { type CalendarView, toDayKey } from '@/lib/dates';
-import { getJson, setJson } from '@/lib/storage';
-
-const PREFS_KEY = 'kavi.calendar.prefs';
 
 /** Vista con la que abre el calendario mientras no se elija otra (RF-C1). */
 export const DEFAULT_VIEW: CalendarView = 'month';
-
-type Prefs = { view: CalendarView };
 
 export type CalendarFilters = {
   dimensions: Dimension[];
@@ -41,9 +36,11 @@ type CalendarState = {
 
 /**
  * Estado local del calendario (plan §1: Zustand mínimo).
- * Solo se persiste la vista elegida a mano en el menú; abrir un día desde el mes
- * navega a la vista diaria sin convertirla en la vista por defecto, de modo que el
- * calendario sigue abriendo en mensual (RF-C1, RF-C4).
+ *
+ * La vista **no se persiste**: el calendario abre siempre en mensual (RF-C1). Es lo
+ * que se pidió al usarlo: entrar por una vista de día heredada de la sesión anterior
+ * desorienta, porque se pierde de vista dónde estás en el mes. Dentro de la sesión
+ * la vista se cambia con normalidad; lo que no hace es sobrevivir al cierre.
  */
 export const useCalendarStore = create<CalendarState>((set, get) => ({
   view: DEFAULT_VIEW,
@@ -52,10 +49,7 @@ export const useCalendarStore = create<CalendarState>((set, get) => ({
   overlayUserIds: [],
   hydrated: false,
 
-  setView: (view) => {
-    set({ view });
-    void setJson(PREFS_KEY, { view } satisfies Prefs);
-  },
+  setView: (view) => set({ view }),
   setAnchorKey: (anchorKey) => set({ anchorKey }),
   openDay: (anchorKey) => set({ anchorKey, view: 'day' }),
   goToday: () => set({ anchorKey: toDayKey(new Date()) }),
@@ -69,10 +63,10 @@ export const useCalendarStore = create<CalendarState>((set, get) => ({
     })),
   clearOverlayUsers: () => set({ overlayUserIds: [] }),
 
+  /** Ya no lee preferencias; queda para no pintar el calendario hasta estar listo. */
   hydrate: async () => {
     if (get().hydrated) return;
-    const prefs = await getJson<Prefs>(PREFS_KEY);
-    set({ view: prefs?.view ?? DEFAULT_VIEW, hydrated: true });
+    set({ view: DEFAULT_VIEW, hydrated: true });
   },
 }));
 

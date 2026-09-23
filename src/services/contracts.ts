@@ -59,7 +59,7 @@ export interface AuthApi {
 }
 
 /** Nombre visible y username, ambos editables desde Perfil (RF-A9). */
-export type ProfileUpdate = Partial<Pick<Profile, 'display_name' | 'username' | 'avatar_url'>>;
+export type ProfileUpdate = Partial<Pick<Profile, 'display_name' | 'username' | 'avatar_url' | 'birthday'>>;
 
 export interface ProfilesApi {
   getMyProfile(userId: string): Promise<Profile>;

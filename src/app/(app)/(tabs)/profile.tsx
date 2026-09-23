@@ -11,6 +11,8 @@ import {
   KeyRound,
   LogOut,
   Clock,
+  Cake,
+  Dumbbell,
   Palette,
   Pencil,
   Repeat2,
@@ -27,6 +29,7 @@ import {
   Avatar,
   Banner,
   Button,
+  DatePickerSheet,
   ErrorState,
   LoadingState,
   Screen,
@@ -35,6 +38,7 @@ import {
   SettingsRow,
   Sheet,
   TextField,
+  Toggle,
 } from '@/components/ui';
 import { IconSize, IconStroke, Radius, Spacing } from '@/constants/theme';
 import { useActivitiesRange } from '@/hooks/use-activities-range';
@@ -46,7 +50,7 @@ import { useTheme } from '@/hooks/use-theme';
 import { useThemes } from '@/hooks/use-themes';
 import { useWorkouts } from '@/hooks/use-workouts';
 import { NOBIS, nobiIdDesde, nobiUrl } from '@/constants/nobi';
-import { rangeForView } from '@/lib/dates';
+import { formatDate, fromDayKey, rangeForView, toDayKey } from '@/lib/dates';
 import { env } from '@/lib/env';
 import { notificationPermissionGranted } from '@/lib/notifications';
 import { changePasswordSchema, type ChangePasswordValues, profileSchema, type ProfileValues } from '@/lib/schemas/auth';
@@ -98,6 +102,11 @@ export default function ProfileScreen() {
   const theme = useTheme();
   const timeFormat = usePreferencesStore((s) => s.timeFormat);
   const setTimeFormat = usePreferencesStore((s) => s.setTimeFormat);
+  const showWorkouts = usePreferencesStore((s) => s.showWorkouts);
+  const setShowWorkouts = usePreferencesStore((s) => s.setShowWorkouts);
+  const showBirthdays = usePreferencesStore((s) => s.showBirthdays);
+  const setShowBirthdays = usePreferencesStore((s) => s.setShowBirthdays);
+  const [pickingBirthday, setPickingBirthday] = useState(false);
   const router = useRouter();
   const confirm = useConfirm();
   const showSnackbar = useSnackbar();
@@ -315,6 +324,42 @@ export default function ProfileScreen() {
           })}
         </View>
       </SettingsGroup>
+
+      <SettingsGroup title="Qué se ve en el calendario">
+        <SettingsRow
+          icon={<Dumbbell size={IconSize.inline} strokeWidth={IconStroke} color={theme.textSecondary} />}
+          label="Entrenamientos"
+          hint="Los que registras sin agendar aparecen en su hora."
+          right={<Toggle label="Entrenamientos en el calendario" value={showWorkouts} onValueChange={setShowWorkouts} />}
+        />
+        <SettingsRow
+          icon={<Cake size={IconSize.inline} strokeWidth={IconStroke} color={theme.textSecondary} />}
+          label="Cumpleaños"
+          hint="El tuyo y el de tus contactos."
+          right={<Toggle label="Cumpleaños en el calendario" value={showBirthdays} onValueChange={setShowBirthdays} />}
+        />
+        <SettingsRow
+          icon={<Cake size={IconSize.inline} strokeWidth={IconStroke} color={theme.textSecondary} />}
+          label="Mi cumpleaños"
+          hint={profile.data?.birthday ? undefined : 'Sin definir. Tus contactos lo verán en su calendario.'}
+          value={profile.data?.birthday ? formatDate(fromDayKey(profile.data.birthday)) : 'Elegir'}
+          onPress={() => setPickingBirthday(true)}
+        />
+      </SettingsGroup>
+
+      <DatePickerSheet
+        visible={pickingBirthday}
+        value={profile.data?.birthday ? fromDayKey(profile.data.birthday) : new Date(1995, 0, 1)}
+        title="Tu cumpleaños"
+        onClose={() => setPickingBirthday(false)}
+        onSelect={(fecha) => {
+          setPickingBirthday(false);
+          update.mutate(
+            { birthday: toDayKey(fecha) },
+            { onSuccess: () => showSnackbar({ message: 'Cumpleaños guardado.' }) },
+          );
+        }}
+      />
 
       <SettingsGroup title="Presentación" footer="Se aplica al calendario, a los recordatorios y al historial de entrenamientos.">
         <SettingsRow

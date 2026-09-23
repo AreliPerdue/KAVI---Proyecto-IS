@@ -15,6 +15,9 @@ let mockActividades: Record<string, unknown>;
 let mockContactos: Record<string, unknown>;
 let mockDisponibilidad: Record<string, unknown>;
 
+let mockPerfil: { data?: unknown } = { data: null };
+let mockEntrenamientos: { data?: unknown[] } = { data: [] };
+
 jest.mock('@/providers', () => ({
   useSnackbar: () => mockSnackbar,
   useAuth: () => ({ userId: 'u1' }),
@@ -29,6 +32,9 @@ jest.mock('@/hooks/use-connections', () => ({
   usePeopleColors: () => new Map([['u1', '#4C8DFF'], ['u2', '#B06BFF']]),
 }));
 jest.mock('@/hooks/use-availability', () => ({ useAvailability: () => mockDisponibilidad }));
+// Capas derivadas del calendario: entrenamientos y cumpleaños (RF-F10, RF-A10).
+jest.mock('@/hooks/use-profile', () => ({ useMyProfile: () => mockPerfil }));
+jest.mock('@/hooks/use-workouts', () => ({ useWorkouts: () => mockEntrenamientos }));
 jest.mock('@/services/activities', () => ({ extendRecurrenceHorizon: () => mockExtend() }));
 
 /**
@@ -160,6 +166,29 @@ describe('vista activa', () => {
     useCalendarStore.setState({ view: 'day' });
     await render(<Pantalla />);
     expect(screen.getByText('vista-dia')).toBeTruthy();
+  });
+});
+
+describe('volver a la pestaña', () => {
+  /**
+   * Se escucha `tabPress` y no el foco de la pantalla: el foco vuelve también al
+   * cerrar una actividad, y ahí devolver a mensual sacaría a la persona de la vista
+   * en la que estaba trabajando.
+   */
+  it('tocar la pestaña devuelve a la vista mensual', async () => {
+    useCalendarStore.setState({ view: 'week' });
+    await render(<Pantalla />);
+
+    globalThis.dispararEventoDeNavegacion('tabPress');
+
+    expect(useCalendarStore.getState().view).toBe('month');
+  });
+
+  it('mientras no se toque la pestaña la vista se respeta', async () => {
+    useCalendarStore.setState({ view: 'week' });
+    await render(<Pantalla />);
+
+    expect(useCalendarStore.getState().view).toBe('week');
   });
 });
 

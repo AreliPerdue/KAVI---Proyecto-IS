@@ -36,3 +36,20 @@ OAuth social, verificación en dos pasos, borrado de cuenta in-app.
 
 ## UI mínima
 `/login`, `/register` (4 pasos), `/forgot-password`, `/(app)/profile`. Formularios simples, botón deshabilitado durante submit, estados de carga y error visibles (P9).
+
+- RF-A10. **Cumpleaños.** El perfil puede guardar la fecha de nacimiento. Aparece en
+  el calendario propio como actividad de todo el día con icono de pastel, y en el de
+  los **contactos aceptados**: es el sentido de ponerlo, que alguien se acuerde. No
+  es un dato obligatorio y se puede dejar sin definir.
+
+  Se guarda la fecha completa con año, no solo día y mes: descartar el año después es
+  trivial y recuperarlo es imposible. En el calendario solo se usa día y mes, porque
+  el cumpleaños se repite cada año.
+
+  El 29 de febrero se omite en los años no bisiestos en lugar de desplazarlo, que
+  sería inventar una fecha que esa persona no eligió.
+
+  **Criterio.** *Dado* un contacto aceptado con cumpleaños el 15 de septiembre,
+  *cuando* abro el calendario de septiembre, *entonces* veo "Cumpleaños de <nombre>"
+  ese día; y *cuando* desactivo "Cumpleaños" en Perfil, *entonces* deja de aparecer.
+

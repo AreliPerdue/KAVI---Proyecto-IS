@@ -23,16 +23,16 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">88.88% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>6/6</span>
+                <span class='fraction'>8/9</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">85.71% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>5/5</span>
+                <span class='fraction'>6/7</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">88.88% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>6/6</span>
+                <span class='fraction'>8/9</span>
             </div>
         
             
@@ -97,7 +97,34 @@
 <a name='L32'></a><a href='#L32'>32</a>
 <a name='L33'></a><a href='#L33'>33</a>
 <a name='L34'></a><a href='#L34'>34</a>
-<a name='L35'></a><a href='#L35'>35</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L35'></a><a href='#L35'>35</a>
+<a name='L36'></a><a href='#L36'>36</a>
+<a name='L37'></a><a href='#L37'>37</a>
+<a name='L38'></a><a href='#L38'>38</a>
+<a name='L39'></a><a href='#L39'>39</a>
+<a name='L40'></a><a href='#L40'>40</a>
+<a name='L41'></a><a href='#L41'>41</a>
+<a name='L42'></a><a href='#L42'>42</a>
+<a name='L43'></a><a href='#L43'>43</a>
+<a name='L44'></a><a href='#L44'>44</a>
+<a name='L45'></a><a href='#L45'>45</a>
+<a name='L46'></a><a href='#L46'>46</a>
+<a name='L47'></a><a href='#L47'>47</a>
+<a name='L48'></a><a href='#L48'>48</a>
+<a name='L49'></a><a href='#L49'>49</a>
+<a name='L50'></a><a href='#L50'>50</a>
+<a name='L51'></a><a href='#L51'>51</a>
+<a name='L52'></a><a href='#L52'>52</a>
+<a name='L53'></a><a href='#L53'>53</a>
+<a name='L54'></a><a href='#L54'>54</a>
+<a name='L55'></a><a href='#L55'>55</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -111,6 +138,18 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">126x</span>
+<span class="cline-any cline-yes">126x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">126x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">126x</span>
 <span class="cline-any cline-yes">126x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -131,20 +170,40 @@
 <span class="cline-any cline-yes">29x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import { StyleSheet, View } from 'react-native';
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import { Image } from 'expo-image';
+import { StyleSheet, View } from 'react-native';
 &nbsp;
 import { AppText } from './app-text';
 &nbsp;
+import { nobiSource } from '@/constants/nobi';
 import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import type { Profile } from '@/types/domain';
 &nbsp;
+type PerfilMinimo = Pick&lt;Profile, 'username' | 'display_name'&gt; &amp; { avatar_url?: string | null };
+&nbsp;
 /**
- * Avatar con iniciales (sin imágenes en V1). Si la persona no tiene nombre visible,
- * el username sirve solo para sacar una inicial: nunca se muestra como texto (RF-A9).
+ * Avatar de una persona.
+ *
+ * Si tiene un Nobi elegido se muestra la mascota; si no, sus iniciales. Cuando no
+ * hay nombre visible, el username sirve solo para sacar una inicial: nunca se
+ * muestra como texto (RF-A9).
  */
-export function Avatar({ profile, size = 40 }: { profile: Pick&lt;Profile, 'username' | 'display_name'&gt;; size?: number }) {
+export function Avatar({ profile, size = 40 }: { profile: PerfilMinimo; size?: number }) {
   const theme = useTheme();
+  const nobi = nobiSource(profile.avatar_url);
+&nbsp;
+  <span class="missing-if-branch" title="if path not taken" >I</span>if (nobi) {
+<span class="cstat-no" title="statement not covered" >    return (</span>
+      &lt;View
+        accessible={false}
+        style={[styles.circle, { width: size, height: size, backgroundColor: theme.surfaceAlt, borderColor: theme.border }]}&gt;
+        &lt;Image source={nobi} style={styles.imagen} contentFit="cover" /&gt;
+      &lt;/View&gt;
+    );
+  }
+&nbsp;
   const name = profile.display_name?.trim() || profile.username;
   const initials = name
     .split(/\s+/)
@@ -163,7 +222,8 @@ export function Avatar({ profile, size = 40 }: { profile: Pick&lt;Profile, 'user
 }
 &nbsp;
 const styles = StyleSheet.create({
-  circle: { borderRadius: Radius.full, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
+  circle: { borderRadius: Radius.full, borderWidth: 1, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
+  imagen: { width: '100%', height: '100%' },
 });
 &nbsp;</pre></td></tr></table></pre>
 
@@ -172,7 +232,7 @@ const styles = StyleSheet.create({
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-09-23T04:14:56.397Z
+                at 2026-09-23T05:25:14.028Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

@@ -44,17 +44,22 @@ Un gym tracker en miniatura, accedido **desde el calendario**: campos abiertos y
 ## UI
 Rutas: `/(app)/workout/[id]`, historial en `/(app)/fitness`. Diseño de tarjetas grandes, teclado numérico donde aplique, cero modales anidados.
 
-- RF-F10. **El entrenamiento libre aparece en el calendario.** Al iniciar un
-  entrenamiento libre desde Fitness se crea también su actividad de gimnasio, a la
-  hora en que se empieza y con una hora de duración, y el entrenamiento queda ligado
-  a ella. Motivo: haber entrenado es un hecho del día, y el calendario es el registro
-  de cómo se ocupó el tiempo; un entrenamiento que no aparece ahí deja un hueco falso
-  y rompe las estadísticas de dimensión del bienestar. El nombre de la actividad es el
-  del entrenamiento, y si no tiene, "Entrenamiento".
+- RF-F10. **Los entrenamientos se ven en el calendario.** Los entrenamientos sin
+  actividad asociada se pintan en el calendario como bloques derivados de solo
+  lectura, a la hora en que se registraron y con la duración sumada de sus ejercicios
+  (una hora si no la tienen). Los que sí tienen actividad no se duplican: ya se ven a
+  través de ella.
 
-  **Criterio.** *Dado* el historial de Fitness, *cuando* inicio un entrenamiento libre,
-  *entonces* aparece una actividad de gimnasio en mi calendario a esa hora, y abrirla
-  ofrece ver ese entrenamiento.
+  Se derivan en lugar de crear actividades reales por dos razones: alcanza también a
+  los entrenamientos registrados antes de existir esta vista, y permite ocultarlos con
+  un interruptor en Perfil sin borrar nada. Motivo de fondo: haber entrenado es un
+  hecho del día y el calendario es el registro de cómo se ocupó el tiempo; un
+  entrenamiento que no aparece ahí deja un hueco falso.
+
+  **Criterio.** *Dado* un entrenamiento libre registrado el 21 de septiembre, *cuando*
+  abro el calendario en esa semana, *entonces* aparece un bloque a esa hora; y *cuando*
+  desactivo "Entrenamientos en el calendario" en Perfil, *entonces* deja de aparecer
+  sin que el entrenamiento se borre.
 
 - RF-F9. **Rutina desde el calendario.** Al activar "Actividad de gimnasio" en el formulario de actividad aparece ahí mismo el editor de ejercicios (nombre, series, reps, peso, con autocompletado de nombres ya usados). Los ejercicios se guardan junto con la actividad creando su entrenamiento, sin pasar por el módulo Fitness. Si la actividad ya tiene un entrenamiento guardado, en su lugar se ofrece abrirlo para no duplicarlo.
 

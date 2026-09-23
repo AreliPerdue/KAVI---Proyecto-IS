@@ -17,6 +17,8 @@ export type Profile = {
   username: string;
   display_name: string | null;
   avatar_url: string | null;
+  /** Fecha de nacimiento (RF-A10). La ven los contactos en su calendario. */
+  birthday: string | null;
   created_at: string;
   role: UserRole;
 };

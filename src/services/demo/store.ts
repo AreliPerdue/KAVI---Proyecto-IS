@@ -50,7 +50,7 @@ const DEMO_PROFILE: Profile = {
   id: DEMO_USER.id,
   username: 'demo',
   display_name: 'Demo KAVI',
-  avatar_url: null,
+  avatar_url: null, birthday: null,
   created_at: new Date().toISOString(),
   // La cuenta demo es administradora para poder recorrer el panel sin backend (spec 09).
   role: 'adminkavi',
@@ -134,7 +134,7 @@ function contactAccount(c: (typeof DEMO_CONTACTS)[keyof typeof DEMO_CONTACTS]): 
   return {
     user: { id: c.id, email: c.email },
     password: 'demo1234',
-    profile: { id: c.id, username: c.username, display_name: c.display_name, avatar_url: null, created_at: new Date().toISOString(), role: 'user' },
+    profile: { id: c.id, username: c.username, display_name: c.display_name, avatar_url: null, birthday: null, created_at: new Date().toISOString(), role: 'user' },
   };
 }
 

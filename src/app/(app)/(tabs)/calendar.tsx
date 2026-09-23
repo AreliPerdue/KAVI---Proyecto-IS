@@ -1,10 +1,11 @@
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { runOnJS } from 'react-native-worklets';
 
 import { applyFilters, CalendarHeader, DayView, DueRemindersBanner, FilterSheet, MonthView, WeekView } from '@/components/calendar';
+import { birthdaysToActivities, cumpleañerosDe, isDerivedActivity, workoutsToActivities } from '@/components/calendar/derived';
 import { blocksToActivities, isOverlayActivity } from '@/components/calendar/overlay';
 import { PeopleTabs } from '@/components/calendar/people-tabs';
 import { AppText, ErrorState, Fab, Screen, Skeleton } from '@/components/ui';
@@ -12,11 +13,14 @@ import { Spacing } from '@/constants/theme';
 import { useActivitiesRange, usePrefetchAdjacentRanges } from '@/hooks/use-activities-range';
 import { useAvailability } from '@/hooks/use-availability';
 import { useContacts, usePeopleColors } from '@/hooks/use-connections';
+import { useMyProfile } from '@/hooks/use-profile';
+import { useWorkouts } from '@/hooks/use-workouts';
+import { usePreferencesStore } from '@/store/preferences-store';
 import { useTheme } from '@/hooks/use-theme';
 import { fromDayKey, rangeForView, shiftAnchor, toDayKey } from '@/lib/dates';
 import { useAuth, useSnackbar } from '@/providers';
 import { extendRecurrenceHorizon } from '@/services/activities';
-import { useCalendarStore } from '@/store/calendar-store';
+import { DEFAULT_VIEW, useCalendarStore } from '@/store/calendar-store';
 import type { Activity } from '@/types/domain';
 
 /** Calendario: la estrella (P1). Vistas mes/semana/día, personas superpuestas, FAB (spec 04). */
@@ -63,6 +67,28 @@ export default function CalendarScreen() {
 
   // Calendarios superpuestos (solo lectura; sin títulos si comparten "busy").
   const contacts = useContacts();
+  const navigation = useNavigation();
+
+  /**
+   * Volver a la pestaña Calendario reabre en mensual (RF-C1).
+   *
+   * Se escucha `tabPress` y no el foco de la pantalla a propósito: el foco vuelve
+   * también al cerrar una actividad o un entrenamiento, y en ese caso devolver a
+   * mensual sacaría a la persona de la vista semanal en la que estaba trabajando.
+   */
+  useEffect(() => {
+    // `tabPress` no está en el mapa de eventos que tipa expo-router, pero sí lo emite
+    // el navegador de pestañas por debajo.
+    const quitar = (navigation as unknown as {
+      addListener: (evento: string, cb: () => void) => () => void;
+    }).addListener('tabPress', () => setView(DEFAULT_VIEW));
+    return quitar;
+  }, [navigation, setView]);
+
+  const profile = useMyProfile();
+  const workouts = useWorkouts();
+  const showWorkouts = usePreferencesStore((st) => st.showWorkouts);
+  const showBirthdays = usePreferencesStore((st) => st.showBirthdays);
   const peopleColors = usePeopleColors();
   const sharing = useMemo(
     () => (contacts.data ?? []).filter((c) => c.kind === 'accepted' && c.theirCalendarVisibility),
@@ -91,6 +117,10 @@ export default function CalendarScreen() {
   );
 
   const openActivity = (activity: Activity) => {
+    if (isDerivedActivity(activity)) {
+      showSnackbar({ message: `${activity.title} · no se edita desde aquí.` });
+      return;
+    }
     if (isOverlayActivity(activity)) {
       showSnackbar({ message: `${activity.title} · calendario de ${activity.owner_name ?? 'tu contacto'} (solo lectura).` });
       return;
@@ -121,10 +151,25 @@ export default function CalendarScreen() {
    * Con "Tú" a solas vuelve el color coding de dimensiones y temas.
    */
   const byPerson = activeOverlayIds.length > 0;
+  /**
+   * Capas derivadas: entrenamientos sueltos y cumpleaños. No son actividades
+   * guardadas sino una vista sobre datos que ya existen, así que quedan fuera de
+   * los filtros de dimensión y tema —no tienen ninguno elegido por nadie— y se
+   * pueden apagar desde Perfil sin borrar nada.
+   */
+  const derivadas = useMemo(() => {
+    const extras: Activity[] = [];
+    if (showWorkouts && workouts.data) extras.push(...workoutsToActivities(workouts.data));
+    if (showBirthdays) {
+      extras.push(...birthdaysToActivities(cumpleañerosDe(profile.data ?? undefined, contacts.data ?? []), range.from, range.to));
+    }
+    return extras;
+  }, [showWorkouts, workouts.data, showBirthdays, profile.data, contacts.data, range.from, range.to]);
+
   const data = useMemo(() => {
-    const all = [...applyFilters(activities.data ?? [], filters), ...overlayActivities];
+    const all = [...applyFilters(activities.data ?? [], filters), ...derivadas, ...overlayActivities];
     return byPerson ? all.map((a) => ({ ...a, color: colorOf(a.owner_id) })) : all;
-  }, [activities.data, filters, overlayActivities, byPerson, colorOf]);
+  }, [activities.data, filters, derivadas, overlayActivities, byPerson, colorOf]);
   const isShared = (a: Activity) => a.owner_id !== userId;
   const activeFilterCount = filters.dimensions.length + filters.themeIds.length;
   const showEmpty = activities.isSuccess && data.length === 0;

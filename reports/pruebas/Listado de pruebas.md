@@ -32,12 +32,12 @@ Están agrupadas igual que en el código, bajo el aspecto que verifican.
 ### Índice
 
 - [Crear cuenta y entrar](#crear-cuenta-y-entrar) — 155 pruebas
-- [El calendario](#el-calendario) — 189 pruebas
+- [El calendario](#el-calendario) — 191 pruebas
 - [Crear y editar actividades](#crear-y-editar-actividades) — 202 pruebas
 - [Temas y dimensiones del bienestar](#temas-y-dimensiones-del-bienestar) — 68 pruebas
 - [Compartir con otras personas](#compartir-con-otras-personas) — 221 pruebas
 - [Recordatorios](#recordatorios) — 80 pruebas
-- [Gimnasio](#gimnasio) — 143 pruebas
+- [Gimnasio](#gimnasio) — 140 pruebas
 - [Perfil y administración](#perfil-y-administracion) — 72 pruebas
 - [Los cimientos: interfaz y utilidades](#los-cimientos-interfaz-y-utilidades) — 204 pruebas
 - [Lo que encontramos](#lo-que-encontramos)
@@ -344,14 +344,14 @@ Es la puerta de la app: si algo falla aquí, nadie llega al resto. Se comprobó 
 
 ## El calendario
 
-**189 pruebas, todas superadas.**
+**191 pruebas, todas superadas.**
 
 Es la pantalla central de KAVI. Lo delicado aquí no es enseñar los días, sino colocar bien las actividades: las que se traslapan tienen que repartirse el ancho, las muy cortas tienen que seguir siendo legibles y las que cruzan la medianoche tienen que aparecer en los dos días. También se comprobó todo el manejo de fechas, que es la base invisible de la pantalla.
 
 
 ### Pantalla del calendario
 
-*La pantalla principal de la app.* — 17 pruebas.
+*La pantalla principal de la app.* — 19 pruebas.
 
 
 **vista activa**
@@ -359,6 +359,11 @@ Es la pantalla central de KAVI. Lo delicado aquí no es enseñar los días, sino
 - ✓ abre en mensual
 - ✓ cambia a semanal según el estado
 - ✓ cambia a diaria según el estado
+
+**volver a la pestaña**
+
+- ✓ tocar la pestaña devuelve a la vista mensual
+- ✓ mientras no se toque la pestaña la vista se respeta
 
 **estados**
 
@@ -1941,14 +1946,14 @@ Cada persona decide por su cuenta si quiere el aviso, incluso en una actividad c
 
 ## Gimnasio
 
-**143 pruebas, todas superadas.**
+**140 pruebas, todas superadas.**
 
 El registro de entrenamientos, accesible desde cualquier actividad marcada como gimnasio. Lo que más se cuidó es que capturar no pierda nada: los campos se guardan al salir de ellos, y borrar un ejercicio ofrece deshacer en vez de pedir confirmación.
 
 
 ### Pantalla de Fitness
 
-*El historial de entrenamientos.* — 24 pruebas.
+*El historial de entrenamientos.* — 21 pruebas.
 
 
 **estados de carga**
@@ -1974,12 +1979,9 @@ El registro de entrenamientos, accesible desde cualquier actividad marcada como 
 
 **entrenamiento libre**
 
-- ✓ crea primero la actividad de gimnasio
-- ✓ la actividad dura una hora
-- ✓ sin nombre previo la actividad se llama Entrenamiento
-- ✓ con nombre previo la actividad lo usa
-- ✓ el entrenamiento queda ligado a la actividad creada
-- ✓ el entrenamiento se estrena con el nombre del anterior
+- ✓ lo crea sin ligarlo a ninguna actividad
+- ✓ se estrena con el nombre del entrenamiento anterior
+- ✓ la primera vez, sin nombre previo, se crea sin nombre
 - ✓ solo entra al detalle cuando el backend confirma
 - ✓ el botón se bloquea mientras se crea
 - ✓ explica cómo registrar una sesión ya agendada

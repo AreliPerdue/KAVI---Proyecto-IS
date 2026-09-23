@@ -164,6 +164,7 @@ export type Database = {
           username: string;
           display_name: string | null;
           avatar_url: string | null;
+          birthday: string | null;
           created_at: string;
           role: string;
         };
@@ -172,6 +173,7 @@ export type Database = {
           username: string;
           display_name?: string | null;
           avatar_url?: string | null;
+          birthday?: string | null;
           created_at?: string;
           role?: string;
         };
@@ -180,6 +182,7 @@ export type Database = {
           username?: string;
           display_name?: string | null;
           avatar_url?: string | null;
+          birthday?: string | null;
           created_at?: string;
           role?: string;
         };

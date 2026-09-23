@@ -57,7 +57,9 @@ Fuente de verdad del avance. Reglas: trabajar en orden, respetar dependencias, m
 - [x] T073 Fallback web: banner in-app de reminders vencidos. (RF-C10, NFR-10) Dep: T071
 - [ ] T074 ✅ HITO: notificación local llega en iOS y Android con el título correcto (requiere build nativo recompilado). Dep: T072
 - [x] T153 Reactivar `expo-notifications` con la versión del SDK 57 (~57.0.20). La incompatibilidad era de versión, no de implementación: la instalada era para SDK 53.
-- [x] T155 El entrenamiento libre crea tambien su actividad de gimnasio, para que aparezca en el calendario (RF-F10, spec actualizada).
+- [x] T155 Los entrenamientos sueltos se pintan en el calendario como capa derivada, con interruptor en Perfil (RF-F10, spec actualizada). Se derivan en vez de crear actividades: alcanza tambien a los ya registrados y se puede ocultar sin borrar nada.
+- [x] T158 Cumpleanos en el perfil y en el calendario, propio y de los contactos aceptados, con icono de pastel e interruptor (RF-A10). Migracion 20260923100000.
+- [x] T159 El calendario reabre en mensual al volver a su pestana (RF-C1). Se escucha tabPress y no el foco, para no sacar de la vista semanal al cerrar una actividad.
 - [x] T156 Recordatorio con antelacion libre, ademas de los cinco presets (RF-C9). El texto "agregalos desde Editar" pasa a boton que abre el formulario y se desplaza a la seccion.
 - [x] T157 Avatares Nobi: diez colores de la mascota elegibles desde Perfil. Se guardan en el perfil, no en el dispositivo, para que los contactos vean el mismo avatar.
 - [x] T154 Avisos de solicitudes de contacto e invitaciones a actividades (RF-S17). Se detectan comparando lo que refresca Realtime, no leyendo el evento, para que los datos sigan pasando por la capa de servicios. Solo llegan con la app en ejecución; el push con la app cerrada queda en el plan de mejora.
