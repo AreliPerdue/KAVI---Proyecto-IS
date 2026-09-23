@@ -9,6 +9,7 @@ import {
   Info,
   KeyRound,
   LogOut,
+  Clock,
   Palette,
   Pencil,
   Repeat2,
@@ -18,6 +19,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { Pressable, StyleSheet, View } from 'react-native';
 
+import { usePreferencesStore } from '@/store/preferences-store';
+
 import {
   AppText,
   Avatar,
@@ -26,6 +29,7 @@ import {
   ErrorState,
   LoadingState,
   Screen,
+  Segmented,
   SettingsGroup,
   SettingsRow,
   Sheet,
@@ -90,6 +94,8 @@ function StatTile({ value, label }: { value: number; label: string }) {
 /** Perfil y ajustes: identidad, resumen y accesos agrupados (RF-A6). */
 export default function ProfileScreen() {
   const theme = useTheme();
+  const timeFormat = usePreferencesStore((s) => s.timeFormat);
+  const setTimeFormat = usePreferencesStore((s) => s.setTimeFormat);
   const router = useRouter();
   const confirm = useConfirm();
   const showSnackbar = useSnackbar();
@@ -275,6 +281,23 @@ export default function ProfileScreen() {
           label="Disponibilidad"
           hint="Horarios en común con tus amigos."
           onPress={() => router.push('/(app)/shared/availability')}
+        />
+      </SettingsGroup>
+
+      <SettingsGroup title="Presentación" footer="Se aplica al calendario, a los recordatorios y al historial de entrenamientos.">
+        <SettingsRow
+          icon={<Clock size={IconSize.inline} strokeWidth={IconStroke} color={theme.textSecondary} />}
+          label="Formato de hora"
+          right={
+            <Segmented
+              options={[
+                { value: '24h', label: '24 h' },
+                { value: '12h', label: '12 h' },
+              ]}
+              value={timeFormat}
+              onChange={setTimeFormat}
+            />
+          }
         />
       </SettingsGroup>
 

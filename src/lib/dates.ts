@@ -148,22 +148,58 @@ export function formatDate(date: Date): string {
   return format(date, 'd MMM yyyy', { locale: es });
 }
 
-/** Minutos desde medianoche → "14:30" (formato 24 h, es-MX). */
-export function formatMinutes(minutes: number): string {
-  const total = ((minutes % MINUTES_PER_DAY) + MINUTES_PER_DAY) % MINUTES_PER_DAY;
-  const h = Math.floor(total / 60);
-  const m = total % 60;
-  return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
+export type TimeFormat = '24h' | '12h';
+
+/**
+ * Preferencia de reloj, en un módulo y no en un contexto de React a propósito:
+ * las horas se formatean desde funciones puras que se importan en decenas de
+ * sitios —componentes, servicios, etiquetas de accesibilidad—, y pasar la
+ * preferencia por props hasta cada una sería mucho más frágil que leerla aquí.
+ * Quien la cambia es `usePreferencesStore`, que además la persiste.
+ */
+let formatoDeHora: TimeFormat = '24h';
+
+export function setTimeFormat(formato: TimeFormat): void {
+  formatoDeHora = formato;
 }
 
-/** "14:30" */
+export function getTimeFormat(): TimeFormat {
+  return formatoDeHora;
+}
+
+/** Descompone unos minutos desde medianoche en hora y minuto del día. */
+function partesDelDia(minutes: number): { h: number; m: number } {
+  const total = ((minutes % MINUTES_PER_DAY) + MINUTES_PER_DAY) % MINUTES_PER_DAY;
+  return { h: Math.floor(total / 60), m: total % 60 };
+}
+
+/**
+ * Minutos desde medianoche → "14:30", o "2:30 p.m." si la preferencia es de 12 h.
+ * En es-MX el sufijo va en minúsculas y con puntos.
+ */
+export function formatMinutes(minutes: number): string {
+  const { h, m } = partesDelDia(minutes);
+  const mm = m.toString().padStart(2, '0');
+  if (formatoDeHora === '24h') return `${h.toString().padStart(2, '0')}:${mm}`;
+  // Las 0 son las 12 a.m. y las 12 siguen siendo las 12 p.m.
+  const h12 = h % 12 === 0 ? 12 : h % 12;
+  return `${h12}:${mm} ${h < 12 ? 'a.m.' : 'p.m.'}`;
+}
+
+/** "14:30" o "2:30 p.m." */
 export function formatTime(date: Date): string {
   return formatMinutes(minutesSinceMidnight(date));
 }
 
-/** Etiqueta de hora para el timeline: "00:00", "14:00". */
+/**
+ * Etiqueta de hora para el timeline: "00:00", "14:00". En 12 h se omiten los
+ * minutos —"2 p.m."— porque la columna es estrecha y el ":00" no aporta nada.
+ */
 export function formatHourLabel(hour: number): string {
-  return formatMinutes(((hour % 24) + 24) % 24 * 60);
+  const h = ((hour % 24) + 24) % 24;
+  if (formatoDeHora === '24h') return formatMinutes(h * 60);
+  const h12 = h % 12 === 0 ? 12 : h % 12;
+  return `${h12} ${h < 12 ? 'a.m.' : 'p.m.'}`;
 }
 
 /** "14:30 – 15:30" o "Todo el día" */

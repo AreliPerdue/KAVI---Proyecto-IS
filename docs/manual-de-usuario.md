@@ -145,6 +145,11 @@ En **Compartido** buscas por nombre de usuario (con o sin `@`) o por el correo
 completo. Hacen falta al menos 3 caracteres. Envías la solicitud y la otra
 persona la acepta.
 
+Cuando aceptas una solicitud que te llega, KAVI te confirma que esa persona ya es
+tu contacto y abre enseguida su ficha para que elijas su color y qué le compartes.
+**Esos ajustes se guardan solos**, no hay que confirmar nada: cada cambio te avisa
+al aplicarse. El botón **Listo** cierra la ficha cuando termines.
+
 ### Compartir tu calendario
 
 Una vez sois contactos, decides **qué ve cada quien** de tu agenda:
@@ -235,6 +240,13 @@ entrenamientos) y los accesos a **Temas**, **Compartido** y **Disponibilidad**.
 
 Desde aquí se cambia el nombre visible, el nombre de usuario y la contraseña —
 esta última pidiendo primero la actual— y se cierra la sesión, con confirmación.
+
+### Formato de hora
+
+En **Perfil → Presentación → Formato de hora** eliges entre **24 h** (`14:30`) y
+**12 h** (`2:30 p.m.`). El cambio es inmediato y se aplica a todo: el calendario,
+los recordatorios y el historial de entrenamientos. Se recuerda para la próxima
+vez que abras la app.
 
 ---
 

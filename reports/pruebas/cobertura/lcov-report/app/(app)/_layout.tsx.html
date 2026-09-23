@@ -25,7 +25,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/6</span>
+                <span class='fraction'>0/11</span>
             </div>
         
             
@@ -39,14 +39,14 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>0/3</span>
+                <span class='fraction'>0/6</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/6</span>
+                <span class='fraction'>0/10</span>
             </div>
         
             
@@ -109,7 +109,25 @@
 <a name='L44'></a><a href='#L44'>44</a>
 <a name='L45'></a><a href='#L45'>45</a>
 <a name='L46'></a><a href='#L46'>46</a>
-<a name='L47'></a><a href='#L47'>47</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L47'></a><a href='#L47'>47</a>
+<a name='L48'></a><a href='#L48'>48</a>
+<a name='L49'></a><a href='#L49'>49</a>
+<a name='L50'></a><a href='#L50'>50</a>
+<a name='L51'></a><a href='#L51'>51</a>
+<a name='L52'></a><a href='#L52'>52</a>
+<a name='L53'></a><a href='#L53'>53</a>
+<a name='L54'></a><a href='#L54'>54</a>
+<a name='L55'></a><a href='#L55'>55</a>
+<a name='L56'></a><a href='#L56'>56</a>
+<a name='L57'></a><a href='#L57'>57</a>
+<a name='L58'></a><a href='#L58'>58</a>
+<a name='L59'></a><a href='#L59'>59</a>
+<a name='L60'></a><a href='#L60'>60</a>
+<a name='L61'></a><a href='#L61'>61</a>
+<a name='L62'></a><a href='#L62'>62</a>
+<a name='L63'></a><a href='#L63'>63</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -129,8 +147,22 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -157,10 +189,12 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import { ErrorFallback } from '@/components/error-fallback';
 import { type ErrorBoundaryProps, Stack } from 'expo-router';
+import { useEffect } from 'react';
 import { Platform } from 'react-native';
 &nbsp;
 import { useRealtimeInvalidation } from '@/hooks/use-realtime';
 import { useReminderSync } from '@/hooks/use-reminders';
+import { usePreferencesStore } from '@/store/preferences-store';
 &nbsp;
 export function <span class="fstat-no" title="function not covered" >ErrorBoundary(</span>props: ErrorBoundaryProps) {
 <span class="cstat-no" title="statement not covered" >  return &lt;ErrorFallback {...props} /&gt;;</span>
@@ -173,12 +207,26 @@ function <span class="fstat-no" title="function not covered" >ReminderSync(</spa
 <span class="cstat-no" title="statement not covered" >  return null;</span>
 }
 &nbsp;
+/**
+ * Carga la preferencia de reloj antes de pintar nada del área autenticada. Va
+ * aquí y no en el calendario porque el formato de hora se usa también en
+ * Fitness y en los avisos de recordatorio.
+ */
+function <span class="fstat-no" title="function not covered" >Preferencias(</span>) {
+  const hydrate = <span class="cstat-no" title="statement not covered" >usePreferencesStore(<span class="fstat-no" title="function not covered" >(s</span>) =&gt; <span class="cstat-no" title="statement not covered" >s.hydrate)</span>;</span>
+<span class="cstat-no" title="statement not covered" >  useEffect(<span class="fstat-no" title="function not covered" >()</span> =&gt; {</span>
+<span class="cstat-no" title="statement not covered" >    void hydrate();</span>
+  }, [hydrate]);
+<span class="cstat-no" title="statement not covered" >  return null;</span>
+}
+&nbsp;
 /** Stack nativo del área autenticada: tabs + rutas modales (actividad, entrenamiento…). */
 export default function <span class="fstat-no" title="function not covered" >AppLayout(</span>) {
   const modal = <span class="cstat-no" title="statement not covered" >Platform.OS === 'web' ? 'card' : 'modal';</span>
 <span class="cstat-no" title="statement not covered" >  return (</span>
     &lt;&gt;
       &lt;ReminderSync /&gt;
+      &lt;Preferencias /&gt;
     &lt;Stack screenOptions={{ headerShown: false }}&gt;
       &lt;Stack.Screen name="(tabs)" /&gt;
       &lt;Stack.Screen name="activity/new" options={{ presentation: modal }} /&gt;
@@ -208,7 +256,7 @@ export default function <span class="fstat-no" title="function not covered" >App
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-09-22T18:53:09.882Z
+                at 2026-09-23T00:18:34.353Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

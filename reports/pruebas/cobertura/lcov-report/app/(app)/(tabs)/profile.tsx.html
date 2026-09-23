@@ -23,9 +23,9 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">75.28% </span>
+                <span class="strong">76.34% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>67/89</span>
+                <span class='fraction'>71/93</span>
             </div>
         
             
@@ -37,16 +37,16 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">54.28% </span>
+                <span class="strong">56.75% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>19/35</span>
+                <span class='fraction'>21/37</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">73.49% </span>
+                <span class="strong">74.11% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>61/83</span>
+                <span class='fraction'>63/85</span>
             </div>
         
             
@@ -525,7 +525,34 @@
 <a name='L460'></a><a href='#L460'>460</a>
 <a name='L461'></a><a href='#L461'>461</a>
 <a name='L462'></a><a href='#L462'>462</a>
-<a name='L463'></a><a href='#L463'>463</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L463'></a><a href='#L463'>463</a>
+<a name='L464'></a><a href='#L464'>464</a>
+<a name='L465'></a><a href='#L465'>465</a>
+<a name='L466'></a><a href='#L466'>466</a>
+<a name='L467'></a><a href='#L467'>467</a>
+<a name='L468'></a><a href='#L468'>468</a>
+<a name='L469'></a><a href='#L469'>469</a>
+<a name='L470'></a><a href='#L470'>470</a>
+<a name='L471'></a><a href='#L471'>471</a>
+<a name='L472'></a><a href='#L472'>472</a>
+<a name='L473'></a><a href='#L473'>473</a>
+<a name='L474'></a><a href='#L474'>474</a>
+<a name='L475'></a><a href='#L475'>475</a>
+<a name='L476'></a><a href='#L476'>476</a>
+<a name='L477'></a><a href='#L477'>477</a>
+<a name='L478'></a><a href='#L478'>478</a>
+<a name='L479'></a><a href='#L479'>479</a>
+<a name='L480'></a><a href='#L480'>480</a>
+<a name='L481'></a><a href='#L481'>481</a>
+<a name='L482'></a><a href='#L482'>482</a>
+<a name='L483'></a><a href='#L483'>483</a>
+<a name='L484'></a><a href='#L484'>484</a>
+<a name='L485'></a><a href='#L485'>485</a>
+<a name='L486'></a><a href='#L486'>486</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -617,6 +644,8 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">58x</span>
+<span class="cline-any cline-yes">174x</span>
+<span class="cline-any cline-yes">174x</span>
 <span class="cline-any cline-yes">58x</span>
 <span class="cline-any cline-yes">58x</span>
 <span class="cline-any cline-yes">58x</span>
@@ -815,6 +844,23 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -998,6 +1044,7 @@ import {
   Info,
   KeyRound,
   LogOut,
+  Clock,
   Palette,
   Pencil,
   Repeat2,
@@ -1007,6 +1054,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { Pressable, StyleSheet, View } from 'react-native';
 &nbsp;
+import { usePreferencesStore } from '@/store/preferences-store';
+&nbsp;
 import {
   AppText,
   Avatar,
@@ -1015,6 +1064,7 @@ import {
   ErrorState,
   LoadingState,
   Screen,
+  Segmented,
   SettingsGroup,
   SettingsRow,
   Sheet,
@@ -1079,6 +1129,8 @@ function StatTile({ value, label }: { value: number; label: string }) {
 /** Perfil y ajustes: identidad, resumen y accesos agrupados (RF-A6). */
 export default function ProfileScreen() {
   const theme = useTheme();
+  const timeFormat = usePreferencesStore((s) =&gt; s.timeFormat);
+  const setTimeFormat = usePreferencesStore((s) =&gt; s.setTimeFormat);
   const router = useRouter();
   const confirm = useConfirm();
   const showSnackbar = useSnackbar();
@@ -1264,6 +1316,23 @@ export default function ProfileScreen() {
           label="Disponibilidad"
           hint="Horarios en común con tus amigos."
           onPress={<span class="fstat-no" title="function not covered" >()</span> =&gt; <span class="cstat-no" title="statement not covered" >router.push('/(app)/shared/availability')}</span>
+        /&gt;
+      &lt;/SettingsGroup&gt;
+&nbsp;
+      &lt;SettingsGroup title="Presentación" footer="Se aplica al calendario, a los recordatorios y al historial de entrenamientos."&gt;
+        &lt;SettingsRow
+          icon={&lt;Clock size={IconSize.inline} strokeWidth={IconStroke} color={theme.textSecondary} /&gt;}
+          label="Formato de hora"
+          right={
+            &lt;Segmented
+              options={[
+                { value: '24h', label: '24 h' },
+                { value: '12h', label: '12 h' },
+              ]}
+              value={timeFormat}
+              onChange={setTimeFormat}
+            /&gt;
+          }
         /&gt;
       &lt;/SettingsGroup&gt;
 &nbsp;
@@ -1456,7 +1525,7 @@ const styles = StyleSheet.create({
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-09-22T18:53:09.882Z
+                at 2026-09-23T00:18:34.353Z
             </div>
         <script src="../../../prettify.js"></script>
         <script>

@@ -32,7 +32,7 @@ Están agrupadas igual que en el código, bajo el aspecto que verifican.
 ### Índice
 
 - [Crear cuenta y entrar](#crear-cuenta-y-entrar) — 155 pruebas
-- [El calendario](#el-calendario) — 169 pruebas
+- [El calendario](#el-calendario) — 183 pruebas
 - [Crear y editar actividades](#crear-y-editar-actividades) — 198 pruebas
 - [Temas y dimensiones del bienestar](#temas-y-dimensiones-del-bienestar) — 68 pruebas
 - [Compartir con otras personas](#compartir-con-otras-personas) — 221 pruebas
@@ -344,7 +344,7 @@ Es la puerta de la app: si algo falla aquí, nadie llega al resto. Se comprobó 
 
 ## El calendario
 
-**169 pruebas, todas superadas.**
+**183 pruebas, todas superadas.**
 
 Es la pantalla central de KAVI. Lo delicado aquí no es enseñar los días, sino colocar bien las actividades: las que se traslapan tienen que repartirse el ancho, las muy cortas tienen que seguir siendo legibles y las que cruzan la medianoche tienen que aparecer en los dos días. También se comprobó todo el manejo de fechas, que es la base invisible de la pantalla.
 
@@ -624,7 +624,7 @@ Es la pantalla central de KAVI. Lo delicado aquí no es enseñar los días, sino
 
 ### Manejo de fechas y horas
 
-*La base de todo el calendario: rangos, formatos en español y huecos libres.* — 49 pruebas.
+*La base de todo el calendario: rangos, formatos en español y huecos libres.* — 63 pruebas.
 
 
 **constantes**
@@ -705,6 +705,23 @@ Es la pantalla central de KAVI. Lo delicado aquí no es enseñar los días, sino
 - ✓ devuelve vacío si la duración no cabe en la franja
 - ✓ acepta una franja horaria personalizada
 - ✓ recorre varios días
+
+**formato de 12 y 24 horas**
+
+- ✓ por omisión el reloj es de 24 h
+- ✓ en 12 h la tarde lleva p.m.
+- ✓ en 12 h la mañana lleva a.m.
+- ✓ la medianoche es 12 a.m.
+- ✓ el mediodia es 12 p.m.
+- ✓ las 12:59 aun son p.m., no a.m.
+- ✓ las 23:59 son las 11:59 p.m.
+- ✓ los minutos siguen llevando dos digitos
+- ✓ la etiqueta de hora omite los minutos en 12 h
+- ✓ en 24 h la etiqueta conserva los minutos
+- ✓ formatTime respeta la preferencia
+- ✓ el rango de horas también
+- ✓ una actividad de todo el día no cambia con el reloj
+- ✓ cambiar de vuelta a 24 h restaura el formato
 
 
 ---

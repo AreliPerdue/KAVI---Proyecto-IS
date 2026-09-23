@@ -129,7 +129,14 @@ export default function SharedScreen() {
               </IconButton>
               <IconButton
                 label="Aceptar solicitud"
-                onPress={() => connections.accept.mutate(c.connection.id, { onSuccess: () => setContactSheetFor(c.profile.id) })}>
+                onPress={() =>
+                  connections.accept.mutate(c.connection.id, {
+                    onSuccess: () => {
+                      showSnackbar({ message: `${c.profile.display_name?.split(' ')[0] ?? 'Contacto'} ya es tu contacto.` });
+                      setContactSheetFor(c.profile.id);
+                    },
+                  })
+                }>
                 <Check size={IconSize.inline} strokeWidth={IconStroke} color={theme.success} />
               </IconButton>
             </View>
@@ -259,7 +266,10 @@ export default function SharedScreen() {
                 onPress={() => {
                   if (!sheetContact) return;
                   // Volver a tocar el color asignado lo devuelve a automático.
-                  connections.setColor.mutate({ contactUserId: sheetContact.profile.id, color: manual ? null : c.hex });
+                  connections.setColor.mutate(
+                    { contactUserId: sheetContact.profile.id, color: manual ? null : c.hex },
+                    { onSuccess: () => showSnackbar({ message: manual ? 'Color automático.' : `Color: ${c.label.toLowerCase()}.` }) },
+                  );
                 }}
                 style={({ pressed }) => [
                   styles.colorDot,
@@ -305,6 +315,9 @@ export default function SharedScreen() {
             </Pressable>
           );
         })}
+        <AppText variant="caption" color="textTertiary" style={styles.sheetHint}>
+          Los cambios se guardan solos.
+        </AppText>
         <Button
           title="Eliminar contacto"
           variant="danger"
@@ -315,6 +328,7 @@ export default function SharedScreen() {
             void removeContact(contact);
           }}
         />
+        <Button title="Listo" onPress={() => setContactSheetFor(null)} />
       </Sheet>
     </Screen>
   );
@@ -334,4 +348,5 @@ const styles = StyleSheet.create({
   colorDot: { width: 40, height: 40, borderRadius: Radius.full, borderWidth: 2, alignItems: 'center', justifyContent: 'center' },
   personDot: { width: 10, height: 10, borderRadius: 5 },
   sheetSection: { marginTop: Spacing.sm },
+  sheetHint: { marginTop: Spacing.sm, textAlign: 'center' },
 });

@@ -20,20 +20,22 @@ import {
   formatWeekTitle,
   fromDayKey,
   fromIso,
+  getTimeFormat,
+  MINUTES_PER_DAY,
   minutesSinceMidnight,
   monthGridDays,
   nextHalfHour,
   rangeForView,
+  setTimeFormat,
   setTimeOfDay,
   shiftAnchor,
+  SLOT_MINUTES,
+  SLOTS_PER_DAY,
   toDayKey,
   toIso,
-  weekDays,
-  MINUTES_PER_DAY,
-  SLOTS_PER_DAY,
-  SLOT_MINUTES,
   WEEKDAY_LABELS,
   WEEKDAY_SHORT,
+  weekDays,
 } from '@/lib/dates';
 
 /** Lunes 7 de septiembre de 2026, 14:30 hora local. */
@@ -323,5 +325,93 @@ describe('findFreeSlots (RF-S9)', () => {
     const slots = findFreeSlots([], dia, new Date(2026, 8, 10), 60);
     const dias = new Set(slots.map((s) => toDayKey(s.start)));
     expect(dias.size).toBeGreaterThan(1);
+  });
+});
+
+/**
+ * Formato de reloj (preferencia del usuario).
+ *
+ * La preferencia vive en el modulo, asi que cada prueba la devuelve a 24 h al
+ * terminar: si se filtrara, las demas pruebas de este archivo empezarian a ver
+ * horas en 12 h sin haberlo pedido.
+ */
+describe('formato de 12 y 24 horas', () => {
+  afterEach(() => setTimeFormat('24h'));
+
+  it('por omision el reloj es de 24 h', () => {
+    expect(getTimeFormat()).toBe('24h');
+    expect(formatMinutes(14 * 60 + 30)).toBe('14:30');
+  });
+
+  it('en 12 h la tarde lleva p.m.', () => {
+    setTimeFormat('12h');
+    expect(formatMinutes(14 * 60 + 30)).toBe('2:30 p.m.');
+  });
+
+  it('en 12 h la manana lleva a.m.', () => {
+    setTimeFormat('12h');
+    expect(formatMinutes(9 * 60 + 5)).toBe('9:05 a.m.');
+  });
+
+  /** Las 00:00 son las 12 a.m., no las 0 a.m. */
+  it('la medianoche es 12 a.m.', () => {
+    setTimeFormat('12h');
+    expect(formatMinutes(0)).toBe('12:00 a.m.');
+  });
+
+  /** Y las 12:00 siguen siendo las 12, pero p.m. */
+  it('el mediodia es 12 p.m.', () => {
+    setTimeFormat('12h');
+    expect(formatMinutes(12 * 60)).toBe('12:00 p.m.');
+  });
+
+  it('las 12:59 aun son p.m., no a.m.', () => {
+    setTimeFormat('12h');
+    expect(formatMinutes(12 * 60 + 59)).toBe('12:59 p.m.');
+  });
+
+  it('las 23:59 son las 11:59 p.m.', () => {
+    setTimeFormat('12h');
+    expect(formatMinutes(23 * 60 + 59)).toBe('11:59 p.m.');
+  });
+
+  it('los minutos siguen llevando dos digitos', () => {
+    setTimeFormat('12h');
+    expect(formatMinutes(13 * 60 + 5)).toBe('1:05 p.m.');
+  });
+
+  /** La columna de horas del timeline es estrecha: el ":00" no aporta nada. */
+  it('la etiqueta de hora omite los minutos en 12 h', () => {
+    setTimeFormat('12h');
+    expect(formatHourLabel(14)).toBe('2 p.m.');
+    expect(formatHourLabel(0)).toBe('12 a.m.');
+    expect(formatHourLabel(12)).toBe('12 p.m.');
+  });
+
+  it('en 24 h la etiqueta conserva los minutos', () => {
+    expect(formatHourLabel(14)).toBe('14:00');
+  });
+
+  it('formatTime respeta la preferencia', () => {
+    setTimeFormat('12h');
+    expect(formatTime(new Date(2026, 8, 7, 18, 45))).toBe('6:45 p.m.');
+  });
+
+  it('el rango de horas tambien', () => {
+    setTimeFormat('12h');
+    const inicio = new Date(2026, 8, 7, 9).toISOString();
+    const fin = new Date(2026, 8, 7, 10, 30).toISOString();
+    expect(formatTimeRange(inicio, fin, false)).toBe('9:00 a.m. – 10:30 a.m.');
+  });
+
+  it('una actividad de todo el dia no cambia con el reloj', () => {
+    setTimeFormat('12h');
+    expect(formatTimeRange('x', 'y', true)).toBe('Todo el día');
+  });
+
+  it('cambiar de vuelta a 24 h restaura el formato', () => {
+    setTimeFormat('12h');
+    setTimeFormat('24h');
+    expect(formatMinutes(14 * 60 + 30)).toBe('14:30');
   });
 });
