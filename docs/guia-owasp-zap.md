@@ -139,6 +139,75 @@ nunca contra el que usan las personas. Por eso el workflow del proyecto corre el
 *baseline* pasivo y no el *full scan*, y está explicado en
 [`reports/seguridad/README.md`](../reports/seguridad/README.md).
 
+### Si el navegador no se lanza desde ZAP
+
+ZAP usa Selenium para abrir el navegador y en macOS a menudo no encuentra el
+binario, con el error *«The provided browser was not found»*. Se puede arreglar
+indicándole la ruta en **Tools → Options → Selenium → Path to Chrome binary**:
+
+```
+/Applications/Google Chrome.app/Contents/MacOS/Google Chrome
+```
+
+Pero hay una vía que no depende de Selenium y da menos problemas: abrir el
+navegador tú misma apuntándolo al proxy de ZAP.
+
+```bash
+"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" \
+  --proxy-server=127.0.0.1:8080 \
+  --user-data-dir=/tmp/zap-chrome \
+  https://kavi-proyecto-is.vercel.app
+```
+
+`--user-data-dir` crea un perfil aparte: no toca tu Chrome normal, ni tus
+pestañas, ni tus sesiones. Se pierde el HUD superpuesto, pero las alertas
+aparecen igual.
+
+---
+
+## 4.b El certificado de ZAP: obligatorio para este sitio
+
+Este paso parece opcional en la mayoría de los tutoriales. **Aquí no lo es.**
+
+ZAP se pone en medio del tráfico cifrado con su propio certificado, y el
+navegador lo rechaza por no conocerlo. Normalmente bastaría con aceptar el aviso
+y seguir, pero **`vercel.app` está en la lista de precarga HSTS de Chrome**: en
+dominios de esa lista el navegador **no ofrece la opción de continuar**. El
+error `NET::ERR_CERT_AUTHORITY_INVALID` aparece sin botón para saltárselo.
+
+Así que hay que instalar el certificado raíz de ZAP.
+
+> **Qué implica.** Ese certificado permite a ZAP leer todo tu tráfico HTTPS
+> mientras esté instalado. Es lo que hace que la herramienta funcione, y es
+> seguro mientras sea tu ZAP el que está en medio. Pero **quítalo al terminar**:
+> el último apartado explica cómo.
+
+### Exportarlo
+
+**Tools → Options... → Network → Server Certificates** → botón **Save**.
+Guárdalo en el Escritorio como `zap_root_ca.cer`.
+
+### Instalarlo
+
+```bash
+sudo security add-trusted-cert -d -r trustRoot \
+  -k /Library/Keychains/System.keychain ~/Desktop/zap_root_ca.cer
+```
+
+A mano: doble clic en el archivo → **Keychain Access** → busca "OWASP" → doble
+clic en el certificado → despliega **Trust** → *When using this certificate*:
+**Always Trust**.
+
+Después relanza el navegador. El sitio ya carga sin avisos.
+
+### Quitarlo al terminar
+
+```bash
+sudo security delete-certificate -c "OWASP Zed Attack Proxy Root CA" \
+  /Library/Keychains/System.keychain
+rm -rf /tmp/zap-chrome
+```
+
 ---
 
 ## 5. Leer los resultados
