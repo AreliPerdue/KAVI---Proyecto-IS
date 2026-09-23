@@ -130,6 +130,40 @@ viven en tres sitios independientes y hay que actualizarlas en los tres: el `.en
 local, las variables de entorno de **EAS** (para las builds) y las de **Vercel**
 (para la web).
 
+### Aplicar migraciones al proyecto remoto
+
+`pnpm db:push` falla con **"Cannot find project ref. Have you run supabase link?"**
+mientras el repositorio no esté enlazado con el proyecto de Supabase. El enlace
+es por máquina y se hace una sola vez:
+
+```bash
+pnpm exec supabase login                                # abre el navegador
+pnpm exec supabase link --project-ref evoroilcnsaciusotnqh
+```
+
+El `link` pide la **contraseña de la base de datos** — no la de tu cuenta de
+Supabase. Está en el panel, en *Project Settings → Database*; si no la recuerdas,
+ahí mismo se puede generar otra.
+
+Antes de empujar nada, conviene mirar qué va a pasar:
+
+```bash
+pnpm exec supabase migration list
+```
+
+Muestra dos columnas, local y remoto, y se ve qué migraciones faltan por aplicar.
+Solo entonces:
+
+```bash
+pnpm db:push
+```
+
+> **No apliques el SQL a mano en el editor del panel.** Funciona una vez, pero
+> Supabase lleva la cuenta de las migraciones aplicadas en la tabla
+> `supabase_migrations.schema_migrations`, y una aplicada a mano no queda
+> registrada: el siguiente `db:push` intentará aplicarla otra vez y fallará
+> diciendo que la columna ya existe.
+
 ### Modo demostración
 
 Con `EXPO_PUBLIC_DEMO_MODE=true` la app usa un backend en memoria
@@ -156,6 +190,8 @@ en modo demo.
 | `pnpm test:coverage` | Además mide cobertura y la escribe en `reports/pruebas/` |
 | `pnpm test:listado` | Regenera `reports/pruebas/Listado de pruebas.md` |
 | `pnpm db:migration <nombre>` | Nueva migración SQL |
+| `pnpm exec supabase link --project-ref <ref>` | Enlaza el repo con el proyecto remoto (una sola vez por máquina) |
+| `pnpm exec supabase migration list` | Compara qué migraciones hay en local y cuáles están aplicadas en remoto |
 | `pnpm db:reset` | Recrea la base local desde migraciones y seeds |
 | `pnpm db:push` | Aplica migraciones al proyecto remoto |
 | `pnpm db:types` | Regenera `src/types/database.ts` desde el esquema |
