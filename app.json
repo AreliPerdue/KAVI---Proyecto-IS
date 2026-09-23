@@ -33,7 +33,13 @@
           "backgroundColor": "#131313",
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 220,
-          "resizeMode": "contain"
+          "resizeMode": "contain",
+          "android": {
+            "image": "./assets/images/splash-icon-android.png",
+            "imageWidth": 320,
+            "resizeMode": "contain",
+            "backgroundColor": "#131313"
+          }
         }
       ],
       [
