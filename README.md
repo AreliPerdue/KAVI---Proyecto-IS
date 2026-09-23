@@ -113,6 +113,7 @@ pnpm db:types               # regenera src/types/database.ts
 ## Manuales
 
 - **[Manual de usuario](docs/manual-de-usuario.md)** — cómo se usa la app: cuenta, calendario, actividades, temas, compartido, recordatorios, gimnasio y modo demo.
+- **[Guía de OWASP ZAP](docs/guia-owasp-zap.md)** — cómo correr el análisis de seguridad desde la app de escritorio, paso a paso.
 - **[Manual técnico](docs/manual-tecnico.md)** — comandos y dónde escribirlos, cómo añadir una prueba, cómo funciona el pipeline, despliegue y las trampas que conviene no repetir.
 
 ## Desarrollo guiado por specs (SDD)

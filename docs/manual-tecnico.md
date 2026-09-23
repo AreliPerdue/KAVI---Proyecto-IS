@@ -332,6 +332,10 @@ Manual. Escaneo **pasivo** (*baseline*) contra el sitio desplegado en Vercel.
 Es pasivo a propósito: el *full scan* lanza ataques de inyección reales y este
 despliegue apunta a la base de datos de producción.
 
+Para ejecutarlo desde la aplicación de escritorio de ZAP —útil para explorar los
+hallazgos, navegar con sesión iniciada o demostrarlo en vivo— hay una guía paso a
+paso en [`guia-owasp-zap.md`](guia-owasp-zap.md).
+
 ---
 
 ## 6. Calidad y seguridad

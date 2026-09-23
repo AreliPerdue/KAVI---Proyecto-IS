@@ -99,6 +99,13 @@ minificado, no datos expuestos. Los cuatro `Sec-Fetch-*` se refieren a cabeceras
 que envía el **navegador** en sus peticiones, no el servidor: no son
 accionables desde el despliegue.
 
+## Ejecutarlo a mano
+
+Este reporte lo genera el workflow de forma automática y pasiva. Para explorar
+los hallazgos dentro de la herramienta, navegar el sitio con sesión iniciada o
+demostrarlo en vivo, hay una guía paso a paso en
+[`docs/guia-owasp-zap.md`](../../docs/guia-owasp-zap.md).
+
 ## Alcance y limitaciones
 
 Conviene ser explícito sobre qué cubre y qué no:
