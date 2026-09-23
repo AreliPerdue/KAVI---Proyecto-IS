@@ -55,7 +55,6 @@ export default function SharedScreen() {
   const [eligiendoMiColor, setEligiendoMiColor] = useState(false);
   // El mío fuera: ofrecerlo dejaría a un contacto indistinguible de mí.
   const coloresParaContactos = PEOPLE_COLORS.filter((c) => c.hex !== miColor);
-  const elegidoAMano = usePreferencesStore((st) => st.selfColor) !== null;
   const profile = useMyProfile();
 
   const list = contacts.data ?? [];
@@ -326,9 +325,6 @@ export default function SharedScreen() {
             );
           })}
         </View>
-        <AppText variant="caption" color="textTertiary">
-          {elegidoAMano ? 'Toca el color elegido para volver al de tu Nobi.' : 'Es el color de tu Nobi. Toca otro para fijarlo.'}
-        </AppText>
       </Sheet>
 
       <Sheet visible={sheetContact !== null} onClose={() => setContactSheetFor(null)} title={sheetContact?.profile.display_name ?? 'Contacto'}>
