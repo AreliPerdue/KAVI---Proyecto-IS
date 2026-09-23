@@ -200,6 +200,7 @@ MAPA = {
  'src/app/(app)/__tests__/layout.test.tsx': ('cuenta', 'Rutas protegidas', 'Que sin sesión no se pueda entrar a ninguna pantalla de la app.'),
  'src/components/calendar/__tests__/derived.test.ts': ('calendario', 'Entrenamientos y cumpleaños en el calendario', 'Las dos capas que se dibujan sin ser actividades de verdad.'),
  'src/components/calendar/__tests__/visibility-field.test.tsx': ('compartir', 'Visibilidad de cada actividad', 'Elegir quién ve el detalle y quién solo "ocupado".'),
+ 'src/components/calendar/__tests__/reminders-field.test.tsx': ('recordatorios', 'Elegir la antelación del aviso', 'Los cinco atajos y la antelación escrita a mano.'),
  'src/lib/__tests__/notifications.test.ts': ('recordatorios', 'Avisos del sistema', 'Que se programen sin duplicados y que la app no se rompa donde no existen.'),
  'src/hooks/__tests__/use-social-notifications.test.tsx': ('recordatorios', 'Avisos de solicitudes e invitaciones', 'El aviso inmediato cuando alguien te escribe o te invita.'),
  'src/store/__tests__/preferences-store.test.ts': ('perfil', 'Preferencias del dispositivo', 'Formato de hora, apariencia y qué capas se ven en el calendario.'),

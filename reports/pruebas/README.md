@@ -7,14 +7,14 @@
 
 ## Resultado
 
-**1 514 pruebas en 89 archivos, todas en verde.**
+**1 530 pruebas en 90 archivos, todas en verde.**
 
 | Métrica | Cobertura | |
 |---|---|---|
-| **Sentencias** | **83.60 %** | 3162 / 3782 |
-| **Líneas** | **85.16 %** | 2710 / 3182 |
-| Ramas | 77.85 % | 2145 / 2755 |
-| Funciones | 78.17 % | 1046 / 1338 |
+| **Sentencias** | **84.08 %** | 3180 / 3782 |
+| **Líneas** | **85.48 %** | 2720 / 3182 |
+| Ramas | 78.47 % | 2162 / 2755 |
+| Funciones | 79.07 % | 1058 / 1338 |
 
 Se cumple el objetivo del 80 % en todas las métricas de referencia. La cifra que
 SonarQube publica en portada combina líneas y condiciones en un solo número y también
@@ -23,7 +23,7 @@ queda por encima del objetivo.
 ## Versión sin tecnicismos
 
 Si lo que interesa es **qué se verificó** y no cómo, [`Listado de pruebas.md`](Listado%20de%20pruebas.md)
-recorre las 1 514 pruebas una por una, agrupadas por zona de la aplicación y
+recorre las 1 530 pruebas una por una, agrupadas por zona de la aplicación y
 explicadas en lenguaje llano.
 
 ## Por capa
@@ -32,7 +32,7 @@ explicadas en lenguaje llano.
 |---|---|---|
 | `src/services` | 88 % | 1029 / 1171 |
 | `src/app` | 75 % | 741 / 982 |
-| `src/components` | 87 % | 675 / 780 |
+| `src/components` | 89 % | 693 / 780 |
 | `src/lib` | 87 % | 292 / 337 |
 | `src/hooks` | 74 % | 231 / 314 |
 | `src/providers` | 99 % | 78 / 79 |

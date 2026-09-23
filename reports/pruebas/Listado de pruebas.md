@@ -1,23 +1,23 @@
 # Qué se probó en KAVI, y qué salió
 
-Este documento recorre **una por una** las 1 514 pruebas automáticas del proyecto,
+Este documento recorre **una por una** las 1 530 pruebas automáticas del proyecto,
 agrupadas por zona de la aplicación y escritas para que se entiendan sin leer código.
 
 Una prueba automática es un programa pequeño que usa la app como lo haría una persona
 —tocar un botón, escribir en un campo, guardar— y comprueba que ocurre lo que debía
-ocurrir. Si algo deja de funcionar, la prueba falla y lo dice. Las 1 514 se ejecutan
-enteras en unos 20 segundos, cada vez que se sube un cambio al repositorio.
+ocurrir. Si algo deja de funcionar, la prueba falla y lo dice. Las 1 530 se ejecutan
+enteras en unos 19 segundos, cada vez que se sube un cambio al repositorio.
 
 ## Resultado
 
 | | |
 |---|---|
-| Pruebas ejecutadas | **1 514** |
-| Pruebas superadas | **1 514** |
+| Pruebas ejecutadas | **1 530** |
+| Pruebas superadas | **1 530** |
 | Pruebas falladas | **0** |
-| Archivos de prueba | 89 |
-| Porcentaje del código cubierto | **85.2 %** |
-| Tiempo de ejecución | ~20 segundos |
+| Archivos de prueba | 90 |
+| Porcentaje del código cubierto | **85.5 %** |
+| Tiempo de ejecución | ~19 segundos |
 
 **Todas pasaron.** Ninguna quedó pendiente, saltada ni marcada como excepción.
 
@@ -36,7 +36,7 @@ Están agrupadas igual que en el código, bajo el aspecto que verifican.
 - [Crear y editar actividades](#crear-y-editar-actividades) — 209 pruebas
 - [Temas y dimensiones del bienestar](#temas-y-dimensiones-del-bienestar) — 68 pruebas
 - [Compartir con otras personas](#compartir-con-otras-personas) — 249 pruebas
-- [Recordatorios](#recordatorios) — 122 pruebas
+- [Recordatorios](#recordatorios) — 138 pruebas
 - [Gimnasio](#gimnasio) — 140 pruebas
 - [Perfil y administración](#perfil-y-administracion) — 117 pruebas
 - [Los cimientos: interfaz y utilidades](#los-cimientos-interfaz-y-utilidades) — 223 pruebas
@@ -1917,7 +1917,7 @@ Es el área con más reglas de privacidad, y por eso la más probada. Lo esencia
 
 ## Recordatorios
 
-**122 pruebas, todas superadas.**
+**138 pruebas, todas superadas.**
 
 Cada persona decide por su cuenta si quiere el aviso, incluso en una actividad compartida: silenciarlo tú no puede silenciarlo a los demás. También se comprobó el cálculo de a qué hora exacta debe saltar cada aviso.
 
@@ -2081,6 +2081,40 @@ Cada persona decide por su cuenta si quiere el aviso, incluso en una actividad c
 - ✓ expresa en horas los multiplos de 60
 - ✓ cae a minutos cuando no es multiplo
 - ✓ nunca devuelve vacío
+
+
+### Elegir la antelación del aviso
+
+*Los cinco atajos y la antelación escrita a mano.* — 16 pruebas.
+
+
+**antelación escrita a mano**
+
+- ✓ convierte la cantidad según la unidad
+- ✓ rechaza el cero y los negativos
+- ✓ rechaza lo que no es un número
+- ✓ rechaza más de un mes de antelación
+
+**los atajos**
+
+- ✓ se ofrecen los cinco
+- ✓ tocar uno lo agrega
+- ✓ tocar uno ya elegido lo quita
+- ✓ se guardan ordenados de menor a mayor
+
+**lo elegido a mano**
+
+- ✓ aparece como un chip más, para poder quitarlo
+- ✓ no se duplica con los atajos
+
+**la hoja de antelación personalizada**
+
+- ✓ se abre desde su chip
+- ✓ el botón empieza deshabilitado, sin nada escrito
+- ✓ con una cantidad valida dice cuando avisara
+- ✓ con una cantidad inválida lo explica
+- ✓ agregar lo devuelve junto a lo que ya había
+- ✓ avisa si esa antelación ya estaba, y no deja agregarla
 
 
 ### Avisos del sistema
@@ -3227,7 +3261,7 @@ por 20 minutos se consideren solapadas en pantalla.
 Desde la carpeta del proyecto:
 
 ```
-pnpm test              # ejecuta las 1 514 pruebas
+pnpm test              # ejecuta las 1 530 pruebas
 pnpm test:coverage     # además mide qué porcentaje del código se ejerce
 ```
 
