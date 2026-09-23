@@ -56,6 +56,8 @@ Fuente de verdad del avance. Reglas: trabajar en orden, respetar dependencias, m
 - [x] T072 Reprogramación al editar horario/eliminar actividad; sync al login y foreground. (RF-C10) Dep: T071
 - [x] T073 Fallback web: banner in-app de reminders vencidos. (RF-C10, NFR-10) Dep: T071
 - [ ] T074 ✅ HITO: notificación local llega en iOS y Android con el título correcto (requiere build nativo recompilado). Dep: T072
+- [x] T153 Reactivar `expo-notifications` con la versión del SDK 57 (~57.0.20). La incompatibilidad era de versión, no de implementación: la instalada era para SDK 53.
+- [x] T154 Avisos de solicitudes de contacto e invitaciones a actividades (RF-S17). Se detectan comparando lo que refresca Realtime, no leyendo el evento, para que los datos sigan pasando por la capa de servicios. Solo llegan con la app en ejecución; el push con la app cerrada queda en el plan de mejora.
 
 ## Fase 5 — Compartido (UI, modo demo) — spec 06
 - [x] T080 `services/connections.ts` (contrato + demo con varias cuentas seed) + pantalla Contactos: búsqueda, solicitar, aceptar, eliminar. (RF-S1–S3) Dep: T039

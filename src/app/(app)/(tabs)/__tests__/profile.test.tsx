@@ -145,7 +145,7 @@ describe('recordatorios', () => {
   it('sin permisos disponibles lo explica', async () => {
     await render(<Pantalla />);
 
-    await waitFor(() => expect(screen.getByText(/deshabilitados/i)).toBeTruthy());
+    await waitFor(() => expect(screen.getByText(/no hay avisos del sistema/i)).toBeTruthy());
   });
 
   it('con permiso concedido lo dice', async () => {

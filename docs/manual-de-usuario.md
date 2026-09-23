@@ -203,9 +203,25 @@ momento, 10 minutos, 30 minutos, 1 hora o 1 día antes. Puedes poner varios.
 En una actividad compartida **cada persona decide por su cuenta**: si tú silencias
 el recordatorio, los demás lo siguen recibiendo.
 
-> En la versión web, los recordatorios vencidos aparecen como un aviso dentro de
-> la propia app, en la parte superior del calendario. Se pueden descartar uno a
-> uno y no vuelven.
+En el móvil el aviso llega como **notificación del sistema**, aunque no tengas la
+app abierta. La primera vez que pongas un recordatorio, KAVI te pedirá permiso;
+si lo rechazas, puedes concederlo después desde los Ajustes del teléfono. En
+**Perfil** se ve en todo momento si están activados.
+
+> En la versión web no existen las notificaciones del sistema. Ahí los
+> recordatorios vencidos aparecen como un aviso dentro de la propia app, en la
+> parte superior del calendario. Se descartan uno a uno y no vuelven.
+
+### Avisos de otras personas
+
+También recibirás una notificación cuando:
+
+- alguien te **envía una solicitud de contacto**;
+- alguien te **invita a una actividad** — el aviso dice quién, qué y cuándo.
+
+Estos avisos llegan **mientras la app está abierta o recién cerrada**. Si llega
+algo con la app completamente cerrada, lo verás igualmente al abrirla: aparece
+en la pestaña **Compartido**, con su contador.
 
 ---
 

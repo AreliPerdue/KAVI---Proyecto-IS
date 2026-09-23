@@ -5,6 +5,7 @@ import { Platform } from 'react-native';
 
 import { useRealtimeInvalidation } from '@/hooks/use-realtime';
 import { useReminderSync } from '@/hooks/use-reminders';
+import { useSocialNotifications } from '@/hooks/use-social-notifications';
 import { usePreferencesStore } from '@/store/preferences-store';
 
 export function ErrorBoundary(props: ErrorBoundaryProps) {
@@ -15,6 +16,7 @@ export function ErrorBoundary(props: ErrorBoundaryProps) {
 function ReminderSync() {
   useReminderSync();
   useRealtimeInvalidation();
+  useSocialNotifications();
   return null;
 }
 

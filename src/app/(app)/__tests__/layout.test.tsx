@@ -15,9 +15,11 @@ import { usePreferencesStore } from '@/store/preferences-store';
 const mockHydrate = jest.fn().mockResolvedValue(undefined);
 const mockReminderSync = jest.fn();
 const mockRealtime = jest.fn();
+const mockSociales = jest.fn();
 
 jest.mock('@/hooks/use-reminders', () => ({ useReminderSync: () => mockReminderSync() }));
 jest.mock('@/hooks/use-realtime', () => ({ useRealtimeInvalidation: () => mockRealtime() }));
+jest.mock('@/hooks/use-social-notifications', () => ({ useSocialNotifications: () => mockSociales() }));
 
 jest.mock('expo-router', () => {
   // eslint-disable-next-line @typescript-eslint/no-require-imports -- dentro de la fabrica de jest.mock
@@ -36,6 +38,7 @@ beforeEach(() => {
   mockHydrate.mockClear();
   mockReminderSync.mockClear();
   mockRealtime.mockClear();
+  mockSociales.mockClear();
   usePreferencesStore.setState({ hydrate: mockHydrate });
 });
 
@@ -60,6 +63,11 @@ describe('arranque del área autenticada', () => {
   it('se suscribe a los cambios en tiempo real', async () => {
     await render(<AppLayout />);
     expect(mockRealtime).toHaveBeenCalled();
+  });
+
+  it('activa los avisos de solicitudes e invitaciones (RF-S17)', async () => {
+    await render(<AppLayout />);
+    expect(mockSociales).toHaveBeenCalled();
   });
 
   it('se monta sin romperse', async () => {
