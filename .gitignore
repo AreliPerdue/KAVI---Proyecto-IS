@@ -49,3 +49,8 @@ coverage/
 
 # Resultado intermedio de Jest (lo usa `pnpm test:listado`)
 .jest-results.json
+
+# Informes de ZAP en crudo: pesan ~15 MB y el repositorio es publico.
+# Se versiona el comprimido (.gz), que tiene el mismo contenido.
+reports/seguridad/*ZAP-Report*
+reports/seguridad/zap-manual-*.html

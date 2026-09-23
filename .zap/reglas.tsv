@@ -1,7 +1,51 @@
 # Reglas del escaneo ZAP. Formato: ID	accion	comentario
 # accion: WARN (avisar), FAIL (romper el job) o IGNORE (silenciar).
 #
-# Por ahora todo queda en WARN: el objetivo de esta primera pasada es
-# inventariar los hallazgos para el informe, no bloquear el pipeline.
-# Cuando cada aviso este revisado, los aceptados pasan a IGNORE con su
-# justificacion escrita aqui y el resto a FAIL.
+# Triaje del escaneo del 23-09-2026 (6 hallazgos, 0 de riesgo alto). Cada regla
+# silenciada lleva escrito POR QUE se acepta: un IGNORE sin motivo es
+# indistinguible de esconder un fallo. Lo que no esta aqui sigue avisando.
+
+# --- Aceptados: informativos o inherentes a una SPA estatica ---
+
+# Dice que el sitio es una aplicacion de pagina unica. Es una observacion sobre la
+# arquitectura, no un defecto: KAVI es exactamente eso.
+10109	IGNORE	Modern Web Application: describe la arquitectura, no un fallo
+
+# Numeros del bundle de JavaScript que por su forma parecen marcas de tiempo Unix.
+# Son constantes del codigo empaquetado (duraciones, offsets), no fechas de nadie.
+10096	IGNORE	Timestamp Disclosure: constantes del bundle, no datos de personas
+
+# Comentarios del codigo empaquetado con palabras como "TODO" o "admin". Vienen de
+# dependencias de terceros y no revelan rutas, credenciales ni logica de acceso: el
+# control de acceso real vive en las politicas RLS de la base (NFR-4).
+10027	IGNORE	Suspicious Comments: comentarios de dependencias, sin datos sensibles
+
+# El HTML servido es la cascara de la SPA: no lleva datos de ninguna cuenta, que se
+# piden a Supabase por fetch con el token de la sesion. Cachearla es lo correcto y
+# es lo que hace que la app abra rapido.
+10015	IGNORE	Cache-control: la cascara de la SPA no contiene datos de cuentas
+10049	IGNORE	Storable but Non-Cacheable: misma razon que 10015
+10050	IGNORE	Retrieved from Cache: misma razon que 10015
+
+# Cadenas en base64 dentro del bundle. Son imagenes SVG incrustadas como data-URI,
+# comprobado en el informe: ningun secreto va en el cliente (solo la clave anonima,
+# que es publica por diseno y esta acotada por RLS).
+10094	IGNORE	Base64 Disclosure: SVG incrustados, verificado uno a uno
+
+# Cabecera que envia el navegador en sus peticiones, no algo que el sitio sirva.
+# Aqui solo refleja como ZAP hizo las suyas.
+90005	IGNORE	Sec-Fetch-Dest: cabecera de peticion del cliente, no de la respuesta
+
+# `eval(` dentro del bundle empaquetado. No hay ninguno en `src/`: viene de una
+# dependencia. Se revisa si algun dia aparece en codigo propio.
+10110	WARN	Dangerous JS Functions: eval de una dependencia, no de codigo de KAVI
+
+# --- Pendiente, a proposito visible ---
+
+# El unico hallazgo con contenido real (riesgo medio). React Native Web inyecta los
+# estilos en linea en tiempo de ejecucion, asi que `style-src 'unsafe-inline'` es
+# estructural mientras la web se genere con Expo. El resto de la CSP si esta cerrada:
+# `script-src` con hashes, `default-src 'self'`, `object-src 'none'` y
+# `frame-ancestors 'none'`. Se deja en WARN —no en IGNORE— para que siga saliendo en
+# cada informe: el dia que Expo permita estilos con hash, esto se quita.
+10055	WARN	CSP style-src unsafe-inline: inevitable con React Native Web, revisar si cambia

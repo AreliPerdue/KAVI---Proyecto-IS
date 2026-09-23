@@ -1,7 +1,7 @@
 # Reporte de seguridad — OWASP ZAP
 
 **Objetivo:** https://kavi-proyecto-is.vercel.app
-**Fecha:** 22 de septiembre de 2026
+**Fecha:** 23 de septiembre de 2026 (último escaneo)
 **Herramienta:** OWASP ZAP {stable} vía `zaproxy/action-baseline@v0.15.0`
 **Modo:** *Baseline* (análisis pasivo)
 **Ejecución:** [workflow "Escaneo de seguridad (OWASP ZAP)"](../../.github/workflows/seguridad.yml)
@@ -11,15 +11,44 @@
 Se escaneó, se corrigió y se volvió a escanear. Las correcciones están en
 [`vercel.json`](../../vercel.json).
 
-| Riesgo | Antes | Después |
-|---|---|---|
-| Alto | 0 | **0** |
-| Medio | 3 | **1** |
-| Bajo | 6 | **2** |
-| Informativo | 9 | 9 |
-| **Total** | **18** | **12** |
+| Riesgo | Antes | Después | 23-09 (final) |
+|---|---|---|---|
+| Alto | 0 | **0** | **0** |
+| Medio | 3 | 1 | **1** |
+| Bajo | 6 | 2 | **1** |
+| Informativo | 9 | 9 | **4** |
+| **Total** | **18** | **12** | **6** |
 
 El escaneo previo se conserva íntegro en [`antes/`](antes/) para poder comparar.
+
+## Triaje final (23 de septiembre)
+
+Los seis hallazgos que quedan están **revisados uno a uno** en
+[`.zap/reglas.tsv`](../../.zap/reglas.tsv), cada uno con el motivo escrito por el
+que se acepta. Silenciar un aviso sin dejar constancia del porqué es
+indistinguible de esconderlo, así que la justificación vive junto a la regla.
+
+| Hallazgo | Riesgo | Decisión |
+|---|---|---|
+| CSP: `style-src unsafe-inline` | Medio | **Sigue avisando.** Es el único con contenido real |
+| Timestamp Disclosure (Unix) | Bajo | Aceptado: constantes del bundle, no fechas de personas |
+| Suspicious Comments | Info | Aceptado: comentarios de dependencias, sin datos sensibles |
+| Modern Web Application | Info | Aceptado: describe la arquitectura, no es un defecto |
+| Re-examine Cache-control | Info | Aceptado: la cáscara de la SPA no lleva datos de cuentas |
+| Retrieved from Cache | Info | Aceptado: misma razón |
+
+### Por qué la CSP se queda en aviso y no se silencia
+
+React Native Web inyecta los estilos **en línea** en tiempo de ejecución, así que
+`style-src 'unsafe-inline'` es estructural mientras la web se genere con Expo: no
+es una omisión que se pueda cerrar escribiendo una cabecera. El resto de la
+política sí está cerrada — `script-src` con hashes, `default-src 'self'`,
+`object-src 'none'` y `frame-ancestors 'none'` —, de modo que el vector que
+importa (inyección de **script**) queda cubierto.
+
+Se deja en `WARN` y no en `IGNORE` a propósito: así sigue apareciendo en cada
+informe y el día que Expo permita estilos con hash, se quita. Un `IGNORE` lo
+haría desaparecer y con él la posibilidad de acordarse.
 
 ## Qué se corrigió
 
@@ -145,3 +174,17 @@ Dos cosas que hay que recordar al tocar la aplicación:
 | `zap-baseline.json` | Datos crudos |
 | `antes/` | El escaneo previo a las correcciones, completo |
 | `sin-style-inline.png` | Evidencia de cómo queda la app sin `style-src 'unsafe-inline'` |
+
+## Dónde está el informe completo
+
+[`zap-manual-2026-09-23.html.gz`](zap-manual-2026-09-23.html.gz) — el informe que
+genera ZAP, con los seis hallazgos y sus evidencias.
+
+Va comprimido porque en crudo son 15 MB y este repositorio es público: subirlo así
+hace lento cualquier `git clone` para siempre, y el contenido es el mismo. Para
+abrirlo:
+
+```bash
+gunzip -k reports/seguridad/zap-manual-2026-09-23.html.gz
+open reports/seguridad/zap-manual-2026-09-23.html
+```
