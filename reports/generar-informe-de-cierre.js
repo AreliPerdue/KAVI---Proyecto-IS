@@ -86,7 +86,7 @@ add(
   p('Ingeniería y Desarrollo de Software', { size: 22, align: AlignmentType.CENTER, after: 60 }),
   p('Universidad Tecmilenio', { size: 22, color: GRIS, align: AlignmentType.CENTER, after: 500 }),
   p('Areli Perdue', { size: 24, bold: true, align: AlignmentType.CENTER, after: 60 }),
-  p('22 de septiembre de 2026', { size: 21, color: GRIS, align: AlignmentType.CENTER, after: 500 }),
+  p('23 de septiembre de 2026', { size: 21, color: GRIS, align: AlignmentType.CENTER, after: 500 }),
   p('github.com/AreliPerdue/KAVI---Proyecto-IS', { size: 20, color: ACENTO, align: AlignmentType.CENTER }),
   new Paragraph({ pageBreakBefore: true, children: [] }),
 );
@@ -95,18 +95,18 @@ add(
 add(
   h1('1. Resumen ejecutivo'),
   p('KAVI es una aplicación multiplataforma de planificación personal —iOS, Android y navegador— organizada alrededor del calendario. Las actividades se clasifican con temas ligados a las siete dimensiones del bienestar, se comparten con contactos bajo tres niveles de privacidad, y las de gimnasio abren un registro de entrenamientos.'),
-  p('El proyecto se desarrolló entre el 1 y el 22 de septiembre de 2026, en 116 commits, siguiendo un enfoque dirigido por especificaciones: cada funcionalidad se describió antes de implementarse, y el código se contrastó contra esa descripción.'),
+  p('El proyecto se desarrolló entre el 1 y el 23 de septiembre de 2026, en 142 commits, siguiendo un enfoque dirigido por especificaciones: cada funcionalidad se describió antes de implementarse, y el código se contrastó contra esa descripción.'),
   p('Estado al cierre:', { bold: true, after: 100 }),
   tabla(
     ['Indicador', 'Resultado'],
     [
-      ['Tareas completadas', '120 de 126 (95 %)'],
-      ['Pruebas automáticas', '1 342, todas en verde'],
-      ['Cobertura de código', '83.7 % sentencias · 85.2 % líneas'],
+      ['Tareas completadas', '147 de 150 (98 %)'],
+      ['Pruebas automáticas', '1 564, todas en verde'],
+      ['Cobertura de código', '84.0 % sentencias · 85.4 % líneas'],
       ['Deuda técnica (SonarQube)', '0 minutos'],
       ['Bugs · vulnerabilidades · code smells', '0 · 0 · 0'],
-      ['Duplicación de código', '0.0 %'],
-      ['Hallazgos de seguridad de riesgo alto', '0'],
+      ['Duplicación de código', '0.5 %'],
+      ['Hallazgos de seguridad de riesgo alto', '0 (6 en total, todos revisados)'],
       ['Plataformas operativas', 'Web y Android en producción; iOS verificado en simulador'],
     ], [5, 5],
   ),
@@ -150,16 +150,17 @@ add(
     'Se añadió una fase 7b de rediseño de la experiencia del calendario y adaptación a pantallas grandes, surgida de probar la aplicación en uso real. No estaba en el plan inicial y representa, aproximadamente, dos días de trabajo no previsto.']),
 
   h2('2.3 Lo que queda abierto'),
-  p('Seis tareas de 126 permanecen sin cerrar. Se documentan por transparencia; ninguna bloquea el funcionamiento del sistema.', { after: 160 }),
+  p('Tres tareas de 150 permanecen sin cerrar. Se documentan por transparencia; ninguna bloquea el funcionamiento del sistema.', { after: 160 }),
   tabla(
     ['Pendiente', 'Motivo'],
     [
-      ['Distribución de iOS', 'Requiere cuenta de Apple Developer de pago (§3.4)'],
-      ['Notificaciones del sistema', 'Incompatibilidad de biblioteca (§2.2)'],
-      ['Reporte de pruebas en cada despliegue', 'El reporte existe en el pipeline; falta enlazarlo al despliegue'],
-      ['Pruebas automatizadas de RLS', 'Las políticas están escritas y verificadas manualmente'],
+      ['Notificación del sistema verificada en dispositivo', 'Requiere instalar una compilación nueva; el código está y funciona en la aplicación'],
+      ['Matriz de pruebas manuales por funcionalidad', 'Las pruebas automáticas cubren la lógica; falta el recorrido manual en las tres plataformas'],
+      ['Hito final de la versión candidata', 'Fijado al 26 de septiembre de 2026, posterior a este informe'],
     ], [4, 6],
   ),
+  p('', { after: 120 }),
+  p('Aparte de estas, la distribución de iOS sigue bloqueada por un motivo administrativo y no de desarrollo (§3.4).'),
 );
 
 // ─────────────── 3. Implementación y seguridad ───────────────
@@ -171,21 +172,21 @@ add(
   vinneta('El panel de administración se oculta a las cuentas sin el rol, pero ocultarlo no es el control de acceso.'),
   vinneta('El control real está en la base de datos: las funciones del panel comprueban el rol antes de devolver nada. Una petición manipulada desde el cliente no obtiene datos.'),
   vinneta('El panel solo expone cifras agregadas —número de cuentas, de actividades, de conexiones—, nunca el contenido de la agenda de ninguna persona.'),
-  p('Toda tabla incorpora políticas de seguridad a nivel de fila (Row Level Security) desde su creación. Son 14 migraciones versionadas en el repositorio, cada una con sus políticas.', { after: 160 }),
+  p('Toda tabla incorpora políticas de seguridad a nivel de fila (Row Level Security) desde su creación. Son 20 migraciones versionadas en el repositorio, cada una con sus políticas.', { after: 160 }),
 
   h2('3.2 Cobertura de pruebas'),
   p('El requisito era una cobertura igual o superior al 80 %. El resultado:'),
   tabla(
     ['Métrica', 'Cobertura', 'Detalle'],
     [
-      ['Sentencias', '83.7 %', '2 871 de 3 431'],
-      ['Líneas', '85.2 %', '2 470 de 2 899'],
-      ['Ramas', '77.9 %', '1 919 de 2 463'],
-      ['Funciones', '78.4 %', '970 de 1 237'],
+      ['Sentencias', '84.0 %', '3 266 de 3 888'],
+      ['Líneas', '85.4 %', '2 793 de 3 270'],
+      ['Ramas', '78.4 %', '2 227 de 2 840'],
+      ['Funciones', '78.9 %', '1 079 de 1 367'],
     ], [4, 3, 3],
   ),
   p('', { after: 160 }),
-  p('Son 1 342 pruebas en 81 archivos, ejecutadas con Jest en unos 25 segundos. SonarQube publica una cifra distinta, 82.6 %, porque combina líneas y condiciones en un solo número; ambas superan el umbral.'),
+  p('Son 1 564 pruebas en 92 archivos, ejecutadas con Jest en unos 27 segundos. SonarQube publica una cifra distinta, 82.9 %, porque combina líneas y condiciones en un solo número; ambas superan el umbral.'),
   p('Las pruebas no verifican que el código haga lo que hace, sino las reglas que no se ven leyéndolo: que quien comparte su calendario en modo «solo ocupación» ceda sus horas pero nunca sus títulos; que eliminar un contacto revoque en cascada todo lo compartido; que editar una actividad recurrente distinga entre una ocurrencia y la serie completa.'),
   rico([{ t: 'Escribirlas destapó dos defectos reales. ', b: true },
     'El primero: dos pantallas se quedaban completamente en blanco si fallaba la carga de contactos, sin mensaje ni forma de reintentar, indistinguibles de no tener ningún contacto. El segundo: ciertos errores de red no se reconocían como tales y caían en un mensaje genérico. Ambos están corregidos y tienen su propia prueba.'], { after: 160 }),
@@ -195,7 +196,7 @@ add(
   tabla(
     ['Flujo', 'Cuándo se ejecuta', 'Qué hace'],
     [
-      ['Pruebas', 'Cada push, cada pull request, y a demanda', 'Tipos, 1 342 pruebas, lint y análisis de SonarQube'],
+      ['Pruebas', 'Cada push, cada pull request, y a demanda', 'Tipos, 1 564 pruebas, lint y análisis de SonarQube'],
       ['Build de producción', 'A demanda', 'Genera el APK instalable de Android mediante EAS'],
       ['Escaneo de seguridad', 'A demanda', 'Análisis pasivo con OWASP ZAP del sitio desplegado'],
     ], [2, 3, 5],
@@ -214,7 +215,7 @@ add(
 add(
   regla(), h1('4. Pruebas y calidad'),
   h2('4.1 Análisis estático con SonarQube'),
-  p('El análisis se ejecuta en cada integración y consume la cobertura de Jest. Resultados sobre 11 240 líneas de código:'),
+  p('El análisis se ejecuta en cada integración y consume la cobertura de Jest. Resultados sobre 12 505 líneas de código:'),
   tabla(
     ['Métrica', 'Valor'],
     [
@@ -222,10 +223,10 @@ add(
       ['Code smells', '0'],
       ['Bugs', '0'],
       ['Vulnerabilidades', '0'],
-      ['Duplicación de código', '0.0 %'],
-      ['Cobertura', '82.6 %'],
-      ['Complejidad ciclomática', '2 501'],
-      ['Complejidad cognitiva', '1 293'],
+      ['Duplicación de código', '0.5 %'],
+      ['Cobertura', '82.9 %'],
+      ['Complejidad ciclomática', '2 828'],
+      ['Complejidad cognitiva', '1 494'],
       ['Calificaciones', 'Fiabilidad A · Seguridad A · Mantenibilidad A'],
       ['Puerta de calidad', 'Superada'],
     ], [5, 5],
@@ -242,9 +243,9 @@ add(
   h2('4.2 Análisis dinámico con OWASP ZAP'),
   p('Se escaneó el sitio desplegado, se corrigieron los hallazgos y se volvió a escanear. Ambos reportes están versionados en el repositorio.'),
   tabla(
-    ['Riesgo', 'Antes', 'Después'],
-    [['Alto', '0', '0'], ['Medio', '3', '1'], ['Bajo', '6', '2'], ['Informativo', '9', '9'], ['Total', '18', '12']],
-    [4, 3, 3],
+    ['Riesgo', 'Antes', 'Después', 'Tras el triaje'],
+    [['Alto', '0', '0', '0'], ['Medio', '3', '1', '1'], ['Bajo', '6', '2', '1'], ['Informativo', '9', '9', '4'], ['Total', '18', '12', '6']],
+    [3, 2, 2, 3],
   ),
   p('', { after: 160 }),
   p('Los tres hallazgos de riesgo medio eran cabeceras de respuesta HTTP ausentes, corregidas en la configuración del despliegue sin tocar el código de la aplicación: falta de política de seguridad de contenido, falta de protección contra incrustación en marcos ajenos y una política de origen cruzado más permisiva de lo necesario. Se cerraron además cuatro hallazgos de riesgo bajo.'),
@@ -252,7 +253,9 @@ add(
     'El escaneo se ejecutó en modo pasivo de forma deliberada: el modo activo envía ataques de inyección reales y el despliegue está conectado a la base de datos de producción. Que no aparezca inyección SQL no es, por tanto, resultado de haberla probado activamente. El argumento es estructural: el acceso a datos se realiza mediante consultas parametrizadas sobre una capa que no construye SQL por concatenación, y bajo políticas de seguridad a nivel de fila. Frente a XSS, la política de seguridad de contenido implantada autoriza el único script en línea mediante su huella criptográfica, de modo que ningún script inyectado en el documento podría ejecutarse.']),
   rico([{ t: 'El hallazgo que permanece. ', b: true },
     'Es de riesgo medio y se mantiene a conciencia: la política de estilos permite estilos en línea. React Native Web inyecta sus hojas de estilo en tiempo de ejecución y un alojamiento estático no puede emitir un identificador único por petición. Se comprobó retirándolo: la aplicación queda completamente sin estilos, y la evidencia gráfica está en el repositorio. El riesgo es acotado, pues permite estilos inyectados pero no ejecución de código; la defensa frente a XSS descansa en la política de scripts, que sí es estricta.']),
-  p('Los hallazgos restantes de riesgo bajo e informativo son falsos positivos originados en dependencias de terceros: secuencias numéricas dentro del código empaquetado que un detector interpreta como marcas de tiempo, y un mensaje de error de una biblioteca de validación que contiene la palabra «bug».'),
+  p('Los hallazgos restantes de riesgo bajo e informativo son falsos positivos originados en dependencias de terceros: secuencias numéricas dentro del código empaquetado que un detector interpreta como marcas de tiempo, y comentarios del código empaquetado que un detector marca como sospechosos.'),
+  rico([{ t: 'Triaje final. ', b: true },
+    'Los seis hallazgos que permanecen están revisados uno a uno, y cada decisión lleva escrito su motivo junto a la regla que la aplica. Silenciar un aviso sin dejar constancia del porqué es, a efectos prácticos, indistinguible de esconderlo: quien lea el archivo dentro de seis meses no podrá saber si se estudió o si se acalló. El hallazgo de riesgo medio se mantiene deliberadamente en estado de aviso —no silenciado— para que siga apareciendo en cada informe mientras la limitación técnica que lo causa siga vigente.']),
 );
 
 // ─────────────── 5. Lecciones aprendidas ───────────────
@@ -271,10 +274,15 @@ add(
   p('Una compilación de producción salió durante días en modo demostración sin que nada lo advirtiera: faltaba una clave de configuración que vincula el perfil de compilación con sus variables de entorno. El diagnóstico inicial fue erróneo y se corrigió solo al inspeccionar el paquete generado. La conclusión es que un artefacto de producción debe verificarse examinándolo, no asumiendo que la configuración se aplicó.'),
   p('El mismo principio se aplicó después al cambiar las cabeceras de seguridad: antes de desplegarlas se sirvió la compilación en local con esas mismas cabeceras leídas del archivo de configuración, y se comprobó con un navegador que la aplicación seguía funcionando. Una política mal formada puede dejar una aplicación inservible sin producir ningún error visible.'),
 
-  h2('5.4 La configuración por defecto rara vez es la adecuada'),
+  h2('5.4 Medir antes que deducir'),
+  p('El fallo que más tiempo consumió en todo el proyecto fue un modo claro que, en el emulador de Expo Go sobre Android, mostraba la interfaz a medias: las imágenes cambiaban al juego claro y los fondos seguían oscuros. Se formularon y descartaron tres explicaciones sucesivas —una caché de imágenes, un compilador que memoiza de más, una barra de pestañas nativa que no propaga el repintado— y cada una consumió trabajo antes de descartarse.'),
+  p('La causa real apareció al instrumentar la aplicación para que registrase, en cada render, qué color estaba pidiendo. El registro mostró que pedía exactamente los colores claros correctos. Es decir: el programa funcionaba y era el sistema operativo quien lo alteraba. Android aplica una inversión automática de colores a las aplicaciones que no declaran soportar tema oscuro, y dentro de un contenedor de desarrollo se hereda la configuración de ese contenedor, no la de la aplicación propia. En una compilación firmada el problema no existe, lo que se verificó generando el proyecto nativo y leyendo el tema declarado.'),
+  p('La lección no es sobre temas de color. Es que tres hipótesis razonables, encadenadas, costaron más que la media hora de instrumentar y leer un valor. Ante un comportamiento que contradice lo que el código dice hacer, medir primero y deducir después; y ante una diferencia entre plataformas, sospechar del entorno antes que del programa.'),
+
+  h2('5.5 La configuración por defecto rara vez es la adecuada'),
   p('Las incidencias que más tiempo consumieron no fueron de programación, sino de configuración: un perfil de compilación al que le faltaba una clave, un análisis automático que ignoraba las exclusiones, una regla que clasificaba mal los archivos de prueba, un enlace de proyecto ausente en la herramienta de base de datos. Todas se comportaban silenciosamente: no fallaban, producían resultados incorrectos.'),
 
-  h2('5.5 Documentar la decisión, no solo el resultado'),
+  h2('5.6 Documentar la decisión, no solo el resultado'),
   p('Varias decisiones de este proyecto resultan incomprensibles sin su motivo: por qué se conserva un hallazgo de seguridad de riesgo medio, por qué el estilo de un tema se copia a la actividad en lugar de referenciarse, por qué la recurrencia se materializa en el cliente. Registrar el razonamiento —y no únicamente la conclusión— es lo que permite que una decisión se revise con criterio en lugar de revertirse por desconocimiento.'),
 );
 
@@ -321,6 +329,7 @@ add(
   vinneta('Verificar cada artefacto de producción examinándolo, no asumiendo que la configuración se aplicó.'),
   vinneta('Comprobar qué mide cada herramienta antes de actuar sobre sus cifras.'),
   vinneta('Registrar el motivo de toda decisión que contradiga lo obvio, junto al código que la implementa.'),
+  vinneta('Ante un comportamiento que contradice el código, instrumentar y medir antes de encadenar hipótesis.'),
   vinneta('Mantener el suelo de cobertura y elevarlo de forma gradual conforme se estabilicen las áreas nuevas.'),
 );
 
@@ -334,7 +343,7 @@ add(
       ['Código fuente del sistema', 'src/ · supabase/migrations/'],
       ['Pipeline de integración y entrega continuas', '.github/workflows/'],
       ['Reporte de pruebas unitarias y cobertura', 'reports/pruebas/'],
-      ['Listado legible de las 1 342 pruebas', 'reports/pruebas/Listado de pruebas.md'],
+      ['Listado legible de las 1 564 pruebas', 'reports/pruebas/Listado de pruebas.md'],
       ['Métricas de SonarQube', 'reports/calidad/'],
       ['Reportes de OWASP ZAP (antes y después)', 'reports/seguridad/'],
       ['Manual de usuario', 'docs/manual-de-usuario.md'],
