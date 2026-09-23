@@ -29,19 +29,46 @@ Descárgalo a mano:
 
 ### Si macOS no te deja abrirlo
 
-Es lo normal con esta app. Al abrirla por primera vez dirá que no se puede
-verificar el desarrollador. Para permitirlo:
+Saldrá un aviso diciendo que **Apple no pudo verificar que ZAP esté libre de
+malware**, con dos botones: *Move to Trash* y *Done*.
 
-- **Clic derecho** sobre ZAP en Aplicaciones → **Abrir** → **Abrir** otra vez en
-  el aviso. Solo hay que hacerlo la primera vez.
-- Si aun así no deja, abre la Terminal y ejecuta:
+**Pulsa "Done".** Si eliges *Move to Trash* se borra la instalación y hay que
+descargar los 264 MB otra vez.
+
+El motivo del aviso es real y conviene entenderlo: **las versiones de macOS de
+ZAP se publican sin firma de código**. No es que la firma sea dudosa, es que no
+existe, y por eso macOS no puede comprobar por su cuenta que el archivo no se
+haya alterado por el camino. Es también la razón por la que Homebrew deshabilitó
+su instalador.
+
+#### Verifica el archivo antes de saltarte el aviso
+
+Como macOS no puede hacerlo, hazlo tú: OWASP publica la huella SHA-256 de cada
+archivo en las notas de la versión. Compara la del tuyo con la oficial.
+
+```bash
+shasum -a 256 ~/Downloads/ZAP_2.17.0_aarch64.dmg
+```
+
+Esa huella tiene que coincidir **carácter por carácter** con la que aparece
+junto al archivo en https://github.com/zaproxy/zaproxy/releases/latest. Si
+coincide, el archivo es exactamente el que OWASP publicó. Si no coincide, **no
+lo abras**: bórralo y vuelve a descargarlo.
+
+#### Permitir la app
+
+Solo después de que la huella coincida:
+
+- **Ajustes del Sistema → Privacidad y seguridad**. Baja hasta *Seguridad*: hay
+  un mensaje sobre ZAP con un botón **Abrir igualmente**. Confirma con tu
+  contraseña o Touch ID.
+- Si ese mensaje no aparece, desde la Terminal:
 
   ```bash
-  xattr -d com.apple.quarantine /Applications/ZAP.app
+  xattr -dr com.apple.quarantine /Applications/ZAP.app
   ```
 
-  Eso quita la marca de "descargado de internet". Solo hazlo con apps que sepas
-  de dónde vienen, como esta.
+  Quita la marca de "descargado de internet", solo para esa app.
 
 ---
 
