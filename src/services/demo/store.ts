@@ -80,6 +80,7 @@ function activity(
     owner_id: ownerId,
     title,
     description: null,
+    is_private: false,
     theme_id: theme?.id ?? null,
     dimension: theme?.dimension ?? null,
     color: theme ? DIMENSION_BY_KEY[theme.dimension].color : null,

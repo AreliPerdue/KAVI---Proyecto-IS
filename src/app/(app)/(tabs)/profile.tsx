@@ -29,7 +29,7 @@ import {
   Avatar,
   Banner,
   Button,
-  DatePickerSheet,
+  DateInputSheet,
   ErrorState,
   LoadingState,
   Screen,
@@ -50,7 +50,7 @@ import { useTheme } from '@/hooks/use-theme';
 import { useThemes } from '@/hooks/use-themes';
 import { useWorkouts } from '@/hooks/use-workouts';
 import { NOBIS, nobiIdDesde, nobiUrl } from '@/constants/nobi';
-import { formatDate, fromDayKey, rangeForView, toDayKey } from '@/lib/dates';
+import { formatDayAndMonth, fromDayKey, rangeForView, toDayKey } from '@/lib/dates';
 import { env } from '@/lib/env';
 import { notificationPermissionGranted } from '@/lib/notifications';
 import { changePasswordSchema, type ChangePasswordValues, profileSchema, type ProfileValues } from '@/lib/schemas/auth';
@@ -341,16 +341,19 @@ export default function ProfileScreen() {
         <SettingsRow
           icon={<Cake size={IconSize.inline} strokeWidth={IconStroke} color={theme.textSecondary} />}
           label="Mi cumpleaños"
-          hint={profile.data?.birthday ? undefined : 'Sin definir. Tus contactos lo verán en su calendario.'}
-          value={profile.data?.birthday ? formatDate(fromDayKey(profile.data.birthday)) : 'Elegir'}
+          hint={profile.data?.birthday ? 'Tus contactos lo verán en su calendario.' : 'Sin definir. Tus contactos lo verán en su calendario.'}
+          value={profile.data?.birthday ? formatDayAndMonth(fromDayKey(profile.data.birthday)) : 'Elegir'}
           onPress={() => setPickingBirthday(true)}
         />
       </SettingsGroup>
 
-      <DatePickerSheet
+      {/* Se escribe en vez de navegar el calendario: una fecha de nacimiento está a
+          cientos de meses de hoy, y cada mes es un toque. */}
+      <DateInputSheet
         visible={pickingBirthday}
-        value={profile.data?.birthday ? fromDayKey(profile.data.birthday) : new Date(1995, 0, 1)}
+        value={profile.data?.birthday ? fromDayKey(profile.data.birthday) : null}
         title="Tu cumpleaños"
+        maxDate={new Date()}
         onClose={() => setPickingBirthday(false)}
         onSelect={(fecha) => {
           setPickingBirthday(false);

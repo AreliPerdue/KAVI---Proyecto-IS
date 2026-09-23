@@ -30,6 +30,9 @@ export const demoProfiles: ProfilesApi = {
     if (patch.avatar_url !== undefined) {
       account.profile = { ...account.profile, avatar_url: patch.avatar_url };
     }
+    if (patch.birthday !== undefined) {
+      account.profile = { ...account.profile, birthday: patch.birthday };
+    }
     return { ...account.profile };
   },
 };

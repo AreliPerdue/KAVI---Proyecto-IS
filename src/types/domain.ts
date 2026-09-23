@@ -75,6 +75,8 @@ export type Activity = {
   recurrence_rule: string | null;
   recurrence_parent_id: string | null;
   is_gym: boolean;
+  /** Privada: los demás la ven como ocupada, sin título (RF-C14). */
+  is_private: boolean;
   created_at: string;
   updated_at: string;
   /** Solo en actividades compartidas conmigo: nombre visible del dueño (RF-S5, RF-S13). */
@@ -173,6 +175,8 @@ export type ActivityInput = {
   end_at: string;
   all_day?: boolean;
   is_gym?: boolean;
+  /** Privada: los demás la ven como ocupada, sin título (RF-C14). */
+  is_private?: boolean;
 };
 
 export type Workout = {

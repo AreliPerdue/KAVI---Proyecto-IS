@@ -17,6 +17,7 @@ const base = (id: string, ownerId: string) => ({
   recurrence_rule: null,
   recurrence_parent_id: null,
   is_gym: false,
+  is_private: false,
 });
 
 /**

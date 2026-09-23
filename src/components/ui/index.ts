@@ -12,6 +12,7 @@ export { Segmented, type SegmentedOption } from './segmented';
 export { IconButton } from './icon-button';
 export { Sheet, type SheetProps } from './sheet';
 export { FieldButton } from './field-button';
+export { DateInputSheet, fechaDesde } from './date-input-sheet';
 export { DatePickerSheet } from './date-picker-sheet';
 export { TimePickerSheet } from './time-picker-sheet';
 export { SwitchRow, Toggle } from './switch-row';

@@ -151,13 +151,21 @@ describe('fecha de fin', () => {
     expect(screen.queryByLabelText(/^Hasta/)).toBeNull();
   });
 
-  it('elegir un dia en el calendario lo fija', async () => {
+  /** La fecha de fin se escribe: para un curso puede estar meses por delante. */
+  const escribirFecha = async (dia: string, mes: string, anio: string) => {
+    await fireEvent.changeText(screen.getByLabelText('Día'), dia);
+    await fireEvent.changeText(screen.getByLabelText('Mes'), mes);
+    await fireEvent.changeText(screen.getByLabelText('Año'), anio);
+    await fireEvent.press(screen.getByText('Guardar'));
+  };
+
+  it('escribir la fecha de fin la fija', async () => {
     const onChange = await montar({ freq: 'DAILY', byDay: [], until: '2026-09-30' });
 
     await fireEvent.press(screen.getByLabelText(/^Hasta/));
-    await fireEvent.press(screen.getByLabelText(/^miércoles 30 de septiembre/i));
+    await escribirFecha('15', '12', '2026');
 
-    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ until: '2026-09-30' }));
+    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ until: '2026-12-15' }));
   });
 
   /** Terminar antes de empezar no significa nada: la fecha se empuja al dia base. */
@@ -165,9 +173,26 @@ describe('fecha de fin', () => {
     const onChange = await montar({ freq: 'DAILY', byDay: [], until: '2026-09-30' });
 
     await fireEvent.press(screen.getByLabelText(/^Hasta/));
-    await fireEvent.press(screen.getByLabelText(/^martes 1 de septiembre/i));
+    await escribirFecha('1', '9', '2026');
 
     expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ until: DIA_BASE }));
+  });
+
+  it('una fecha que no existe no deja guardar', async () => {
+    await montar({ freq: 'DAILY', byDay: [], until: '2026-09-30' });
+
+    await fireEvent.press(screen.getByLabelText(/^Hasta/));
+    await fireEvent.changeText(screen.getByLabelText('Día'), '31');
+    await fireEvent.changeText(screen.getByLabelText('Mes'), '2');
+    await fireEvent.changeText(screen.getByLabelText('Año'), '2026');
+
+    expect(screen.getByText(/esa fecha no existe/i)).toBeTruthy();
+    expect(screen.getByLabelText('Guardar').props.accessibilityState.disabled).toBe(true);
+  });
+
+  it('dice desde cuando empieza la repeticion', async () => {
+    await montar({ freq: 'WEEKLY', byDay: [0], until: null });
+    expect(screen.getByText(/empieza el .*, la fecha de la actividad/i)).toBeTruthy();
   });
 });
 

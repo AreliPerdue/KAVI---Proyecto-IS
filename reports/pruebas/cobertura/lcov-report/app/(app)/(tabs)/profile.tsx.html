@@ -628,7 +628,10 @@
 <a name='L563'></a><a href='#L563'>563</a>
 <a name='L564'></a><a href='#L564'>564</a>
 <a name='L565'></a><a href='#L565'>565</a>
-<a name='L566'></a><a href='#L566'>566</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L566'></a><a href='#L566'>566</a>
+<a name='L567'></a><a href='#L567'>567</a>
+<a name='L568'></a><a href='#L568'>568</a>
+<a name='L569'></a><a href='#L569'>569</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -928,8 +931,8 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1102x</span>
-<span class="cline-any cline-yes">1102x</span>
+<span class="cline-any cline-yes">1160x</span>
+<span class="cline-any cline-yes">1160x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -943,7 +946,7 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1102x</span>
+<span class="cline-any cline-yes">1160x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -974,6 +977,9 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -1224,7 +1230,7 @@ import {
   Avatar,
   Banner,
   Button,
-  DatePickerSheet,
+  DateInputSheet,
   ErrorState,
   LoadingState,
   Screen,
@@ -1245,7 +1251,7 @@ import { useTheme } from '@/hooks/use-theme';
 import { useThemes } from '@/hooks/use-themes';
 import { useWorkouts } from '@/hooks/use-workouts';
 import { NOBIS, nobiIdDesde, nobiUrl } from '@/constants/nobi';
-import { formatDate, fromDayKey, rangeForView, toDayKey } from '@/lib/dates';
+import { formatDayAndMonth, fromDayKey, rangeForView, toDayKey } from '@/lib/dates';
 import { env } from '@/lib/env';
 import { notificationPermissionGranted } from '@/lib/notifications';
 import { changePasswordSchema, type ChangePasswordValues, profileSchema, type ProfileValues } from '@/lib/schemas/auth';
@@ -1536,16 +1542,19 @@ export default function ProfileScreen() {
         &lt;SettingsRow
           icon={&lt;Cake size={IconSize.inline} strokeWidth={IconStroke} color={theme.textSecondary} /&gt;}
           label="Mi cumpleaños"
-          hint={profile.data?.birthday ? <span class="branch-0 cbranch-no" title="branch not covered" >undefined </span>: 'Sin definir. Tus contactos lo verán en su calendario.'}
-          value={profile.data?.birthday ? <span class="branch-0 cbranch-no" title="branch not covered" >formatDate(fromDayKey(profile.data.birthday)) </span>: 'Elegir'}
+          hint={profile.data?.birthday ? <span class="branch-0 cbranch-no" title="branch not covered" >'Tus contactos lo verán en su calendario.' </span>: 'Sin definir. Tus contactos lo verán en su calendario.'}
+          value={profile.data?.birthday ? <span class="branch-0 cbranch-no" title="branch not covered" >formatDayAndMonth(fromDayKey(profile.data.birthday)) </span>: 'Elegir'}
           onPress={<span class="fstat-no" title="function not covered" >()</span> =&gt; <span class="cstat-no" title="statement not covered" >setPickingBirthday(true)}</span>
         /&gt;
       &lt;/SettingsGroup&gt;
 &nbsp;
-      &lt;DatePickerSheet
+      {/* Se escribe en vez de navegar el calendario: una fecha de nacimiento está a
+          cientos de meses de hoy, y cada mes es un toque. */}
+      &lt;DateInputSheet
         visible={pickingBirthday}
-        value={profile.data?.birthday ? <span class="branch-0 cbranch-no" title="branch not covered" >fromDayKey(profile.data.birthday) </span>: new Date(1995, 0, 1)}
+        value={profile.data?.birthday ? <span class="branch-0 cbranch-no" title="branch not covered" >fromDayKey(profile.data.birthday) </span>: null}
         title="Tu cumpleaños"
+        maxDate={new Date()}
         onClose={<span class="fstat-no" title="function not covered" >()</span> =&gt; <span class="cstat-no" title="statement not covered" >setPickingBirthday(false)}</span>
         onSelect={<span class="fstat-no" title="function not covered" >(f</span>echa) =&gt; {
 <span class="cstat-no" title="statement not covered" >          setPickingBirthday(false);</span>
@@ -1765,7 +1774,7 @@ const styles = StyleSheet.create({
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-09-23T05:25:14.028Z
+                at 2026-09-23T05:46:12.201Z
             </div>
         <script src="../../../prettify.js"></script>
         <script>

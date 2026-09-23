@@ -5,6 +5,8 @@ import type { ScrollView } from 'react-native';
 import { ActivityForm } from '@/components/calendar/activity-form';
 import { activityToFormValues, defaultFormValues, formValuesToInput } from '@/components/calendar/activity-form-mapping';
 import { ModalHeader } from '@/components/modal-header';
+import { useContacts } from '@/hooks/use-connections';
+import { useShareMutations } from '@/hooks/use-shares';
 import { ErrorState, LoadingState, Screen } from '@/components/ui';
 import { useActivity, useActivityMutations } from '@/hooks/use-activity';
 import { useWorkoutByActivity, useWorkoutMutations } from '@/hooks/use-workouts';
@@ -28,6 +30,9 @@ export default function ActivityFormScreen() {
    * sección: es larga y, sin esto, la persona aterriza en el título y tiene que
    * buscar dónde estaba lo que venía a hacer.
    */
+  const contacts = useContacts();
+  const aceptados = (contacts.data ?? []).filter((c) => c.kind === 'accepted');
+  const { share } = useShareMutations();
   const scrollRef = useRef<ScrollView>(null);
   const remindersY = useRef<number | null>(null);
   const yaEnfocado = useRef(false);
@@ -101,6 +106,7 @@ export default function ActivityFormScreen() {
     <Screen modal scroll maxWidth={FORM_MAX_WIDTH} scrollRef={scrollRef}>
       <ModalHeader title={headerTitle} />
       <ActivityForm
+        showSharing={!editing}
         onRemindersLayout={enfocarRecordatorios}
         key={editing ? `${id}-${scope}` : 'new'}
         defaultValues={defaults}
@@ -146,8 +152,29 @@ export default function ActivityFormScreen() {
                     showSnackbar({ message: 'Actividad creada, pero no se pudo guardar el entrenamiento.' });
                   });
                 }
+                // Invitar a quien se haya elegido (RF-S18). Va antes del aviso de
+                // cierre para que el mensaje ya pueda decir con cuántas personas se
+                // compartió, y si falla la actividad no se pierde: sigue creada.
+                const invitados =
+                  values.shareWith === 'all'
+                    ? aceptados.map((c) => c.profile.id)
+                    : values.shareWith === 'some'
+                      ? values.shareContactIds
+                      : [];
+                if (invitados.length > 0) {
+                  await share
+                    .mutateAsync({ activityId: saved.id, contactUserIds: invitados })
+                    .catch(() => showSnackbar({ message: 'Actividad creada, pero no se pudo compartir.' }));
+                }
+
                 const finish = () => {
-                  showSnackbar({ message: input.recurrence ? 'Actividad recurrente creada.' : 'Actividad creada.' });
+                  const compartida = invitados.length > 0 ? ` Compartida con ${invitados.length}.` : '';
+                  const base = values.isPrivate
+                    ? 'Actividad privada creada.'
+                    : input.recurrence
+                      ? 'Actividad recurrente creada.'
+                      : 'Actividad creada.';
+                  showSnackbar({ message: base + compartida });
                   close();
                 };
                 if (values.reminderOffsets.length === 0) return finish();

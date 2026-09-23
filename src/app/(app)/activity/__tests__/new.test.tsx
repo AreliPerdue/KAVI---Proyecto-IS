@@ -26,6 +26,9 @@ jest.mock('@/hooks/use-activity', () => ({
   useActivityMutations: () => ({ create: mockCreate, update: mockUpdate, remove: { mutate: jest.fn() } }),
 }));
 jest.mock('@/hooks/use-themes', () => ({ useThemes: () => ({ data: [] }) }));
+// Invitar al crear (RF-S18): la pantalla consulta contactos y la mutación de compartir.
+jest.mock('@/hooks/use-connections', () => ({ useContacts: () => mockContactos }));
+jest.mock('@/hooks/use-shares', () => ({ useShareMutations: () => ({ share: mockCompartir }) }));
 jest.mock('@/hooks/use-reminders', () => ({
   useActivityReminders: () => mockRecordatorios,
   useReminderMutations: () => ({ setForActivity: mockSetForActivity }),
@@ -35,6 +38,9 @@ jest.mock('@/hooks/use-workouts', () => ({
   useWorkoutMutations: () => ({ create: mockCrearWorkout, addExercise: mockAddExercise }),
 }));
 jest.mock('@/providers', () => ({ useSnackbar: () => mockSnackbar }));
+
+let mockContactos: { data?: unknown[] } = { data: [] };
+const mockCompartir = { mutateAsync: jest.fn().mockResolvedValue(undefined) };
 
 /**
  * El formulario real se prueba aparte. Aqui basta con un boton que dispare

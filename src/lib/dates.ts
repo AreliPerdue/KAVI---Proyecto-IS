@@ -148,6 +148,11 @@ export function formatDate(date: Date): string {
   return format(date, 'd MMM yyyy', { locale: es });
 }
 
+/** "28 de junio" — día y mes, para lo que se repite cada año. */
+export function formatDayAndMonth(date: Date): string {
+  return format(date, "d 'de' MMMM", { locale: es });
+}
+
 export type TimeFormat = '24h' | '12h';
 
 /**

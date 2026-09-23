@@ -6,6 +6,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { RecurrenceField } from './recurrence-field';
 import { RemindersField } from './reminders-field';
+import { SharingField } from './sharing-field';
 import { ThemeField } from './theme-field';
 import { type ExerciseDraft, WorkoutDraft } from './workout-draft';
 
@@ -30,6 +31,8 @@ export type ActivityFormProps = {
   onOpenExistingWorkout?: () => void;
   /** Posición vertical de la sección de recordatorios, para poder desplazarse a ella. */
   onRemindersLayout?: (y: number) => void;
+  /** Ofrecer privacidad e invitaciones. Solo al crear: después se hace desde el detalle. */
+  showSharing?: boolean;
 };
 
 /** Formulario de actividad (RF-C5): título, fecha, horas, todo el día, descripción. */
@@ -43,6 +46,7 @@ export function ActivityForm({
   existingWorkoutCount,
   onOpenExistingWorkout,
   onRemindersLayout,
+  showSharing = false,
 }: ActivityFormProps) {
   const theme = useTheme();
   const { control, handleSubmit, setValue } = useForm<ActivityFormValues>({
@@ -151,6 +155,37 @@ export function ActivityForm({
           <RecurrenceField value={value} onChange={onChange} baseDayKey={dayKey} disabled={recurrenceLocked} />
         )}
       />
+
+      {/* Solo al crear: una vez creada, se comparte desde su detalle. */}
+      {showSharing ? (
+        <Controller
+          control={control}
+          name="shareWith"
+          render={({ field: { onChange: onShareWith, value: shareWith }, fieldState }) => (
+            <Controller
+              control={control}
+              name="isPrivate"
+              render={({ field: { onChange: onPrivate, value: isPrivate } }) => (
+                <Controller
+                  control={control}
+                  name="shareContactIds"
+                  render={({ field: { onChange: onIds, value: ids }, fieldState: idsState }) => (
+                    <SharingField
+                      isPrivate={isPrivate}
+                      onPrivateChange={onPrivate}
+                      shareWith={shareWith}
+                      onShareWithChange={onShareWith}
+                      contactIds={ids}
+                      onContactIdsChange={onIds}
+                      error={fieldState.error?.message ?? idsState.error?.message}
+                    />
+                  )}
+                />
+              )}
+            />
+          )}
+        />
+      ) : null}
 
       {/* `onLayout` publica dónde queda esta sección, para que quien abra el
           formulario pidiendo los recordatorios pueda desplazarse hasta aquí. */}

@@ -90,6 +90,7 @@ export const demoActivities: ActivitiesApi = {
       owner_id: userId,
       title: fields.title,
       description: fields.description ?? null,
+      is_private: fields.is_private ?? false,
       theme_id: fields.theme_id ?? null,
       dimension: fields.dimension ?? null,
       color: fields.color ?? null,

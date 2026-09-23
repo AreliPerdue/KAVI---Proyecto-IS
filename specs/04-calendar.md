@@ -48,3 +48,17 @@ El calendario es la pantalla principal y el hub de toda la app (P1). Desde él s
 
 ## UI
 Ruta principal: `/(app)/calendar` (tab inicial). Header: mes/rango actual, selector de vista, botón filtros. FAB "+". Hoja de detalle como bottom sheet.
+
+- RF-C14. **Actividad privada.** Una actividad puede marcarse como privada al
+  crearla. Los contactos siguen viéndola como un hueco ocupado, pero **nunca su
+  título ni su color**, tengan el nivel de visibilidad que tengan sobre el
+  calendario. Se protege el contenido, no la disponibilidad.
+
+  La regla se aplica en la base de datos, no al pintar: si se filtrara en el cliente,
+  el título viajaría igualmente hasta el dispositivo de la otra persona y bastaría
+  con mirar la respuesta de red. Una actividad privada tampoco admite invitados, y
+  un disparador lo rechaza además de la interfaz.
+
+  **Criterio.** *Dado* un contacto con visibilidad «con detalles», *cuando* marco una
+  actividad como privada, *entonces* esa persona ve el bloque como ocupado y sin
+  título, mientras sigue viendo el título del resto de mis actividades.

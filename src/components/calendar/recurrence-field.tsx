@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { AppText, Chip, DatePickerSheet, FieldButton, Segmented, type SegmentedOption, SwitchRow } from '@/components/ui';
+import { AppText, Chip, DateInputSheet, FieldButton, Segmented, type SegmentedOption, SwitchRow } from '@/components/ui';
 import { Spacing } from '@/constants/theme';
 import { formatDate, fromDayKey, toDayKey } from '@/lib/dates';
 import { type RecurrenceFreq, type RecurrenceRule } from '@/lib/recurrence';
@@ -50,6 +50,12 @@ export function RecurrenceField({
         <Segmented options={FREQ_OPTIONS} value={freq} onChange={setFreq} />
       )}
 
+      {value && !disabled ? (
+        <AppText variant="caption" color="textTertiary">
+          Empieza el {formatDate(baseDay)}, la fecha de la actividad.
+        </AppText>
+      ) : null}
+
       {value?.freq === 'WEEKLY' && !disabled ? (
         <View style={styles.days}>
           {DAY_LABELS.map((label, index) => {
@@ -74,19 +80,20 @@ export function RecurrenceField({
         <>
           <SwitchRow
             label="Termina en una fecha"
-            hint={value.until ? undefined : 'Si no, se repite sin fin (se generan 90 días por adelantado).'}
+            hint={value.until ? undefined : 'Si no, se repite sin fin. Para un horario de clases, marca hasta cuándo dura el curso.'}
             value={value.until !== null}
             onValueChange={(on) => onChange({ ...value, until: on ? toDayKey(fromDayKey(baseDayKey)) : null })}
           />
           {value.until ? (
             <FieldButton label="Hasta" value={formatDate(fromDayKey(value.until))} onPress={() => setPickingUntil(true)} />
           ) : null}
-          <DatePickerSheet
+          <DateInputSheet
             visible={pickingUntil}
-            value={value.until ? fromDayKey(value.until) : baseDay}
+            value={value.until ? fromDayKey(value.until) : null}
             title="Repetir hasta"
             onClose={() => setPickingUntil(false)}
             onSelect={(date) => {
+              // Terminar antes de empezar no significa nada: se empuja al día base.
               onChange({ ...value, until: toDayKey(date < baseDay ? baseDay : date) });
               setPickingUntil(false);
             }}

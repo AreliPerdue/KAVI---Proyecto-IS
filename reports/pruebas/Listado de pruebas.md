@@ -33,7 +33,7 @@ Están agrupadas igual que en el código, bajo el aspecto que verifican.
 
 - [Crear cuenta y entrar](#crear-cuenta-y-entrar) — 155 pruebas
 - [El calendario](#el-calendario) — 191 pruebas
-- [Crear y editar actividades](#crear-y-editar-actividades) — 202 pruebas
+- [Crear y editar actividades](#crear-y-editar-actividades) — 204 pruebas
 - [Temas y dimensiones del bienestar](#temas-y-dimensiones-del-bienestar) — 68 pruebas
 - [Compartir con otras personas](#compartir-con-otras-personas) — 221 pruebas
 - [Recordatorios](#recordatorios) — 80 pruebas
@@ -742,7 +742,7 @@ Es la pantalla central de KAVI. Lo delicado aquí no es enseñar los días, sino
 
 ## Crear y editar actividades
 
-**202 pruebas, todas superadas.**
+**204 pruebas, todas superadas.**
 
 Aquí vive la parte más difícil de la app: las actividades que se repiten. Editar o borrar una tiene que distinguir entre "solo esta vez" y "toda la serie", y equivocarse significa perder datos de la persona. También se comprobó el cruce entre cómo se guardan las horas (universales) y cómo se muestran (tu hora local).
 
@@ -910,7 +910,7 @@ Aquí vive la parte más difícil de la app: las actividades que se repiten. Edi
 
 ### Campo de repetición
 
-*Elegir cada cuánto se repite una actividad.* — 21 pruebas.
+*Elegir cada cuánto se repite una actividad.* — 23 pruebas.
 
 
 **elegir frecuencia**
@@ -939,8 +939,10 @@ Aquí vive la parte más difícil de la app: las actividades que se repiten. Edi
 - ✓ desactivarla la borra
 - ✓ con fecha puesta se muestra para poder cambiarla
 - ✓ sin fecha no hay botón que abrir
-- ✓ elegir un día en el calendario lo fija
+- ✓ escribir la fecha de fin la fija
 - ✓ una fecha anterior al arranque se corrige al día base
+- ✓ una fecha que no existe no deja guardar
+- ✓ dice desde cuando empieza la repetición
 
 **editando una sola ocurrencia**
 

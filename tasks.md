@@ -58,6 +58,9 @@ Fuente de verdad del avance. Reglas: trabajar en orden, respetar dependencias, m
 - [ ] T074 ✅ HITO: notificación local llega en iOS y Android con el título correcto (requiere build nativo recompilado). Dep: T072
 - [x] T153 Reactivar `expo-notifications` con la versión del SDK 57 (~57.0.20). La incompatibilidad era de versión, no de implementación: la instalada era para SDK 53.
 - [x] T155 Los entrenamientos sueltos se pintan en el calendario como capa derivada, con interruptor en Perfil (RF-F10, spec actualizada). Se derivan en vez de crear actividades: alcanza tambien a los ya registrados y se puede ocultar sin borrar nada.
+- [x] T160 Fecha escrita en lugar de navegada (cumpleanos y fin de recurrencia): el calendario mensual exige tantos toques como meses de distancia.
+- [x] T161 Actividades privadas: los contactos ven el hueco ocupado pero nunca el titulo, sea cual sea su nivel de visibilidad (RF-C14). La regla vive en la RPC, no en el cliente.
+- [x] T162 Invitar al crear la actividad: a nadie, a algunos o a todos los contactos (RF-S18).
 - [x] T158 Cumpleanos en el perfil y en el calendario, propio y de los contactos aceptados, con icono de pastel e interruptor (RF-A10). Migracion 20260923100000.
 - [x] T159 El calendario reabre en mensual al volver a su pestana (RF-C1). Se escucha tabPress y no el foco, para no sacar de la vista semanal al cerrar una actividad.
 - [x] T156 Recordatorio con antelacion libre, ademas de los cinco presets (RF-C9). El texto "agregalos desde Editar" pasa a boton que abre el formulario y se desplaza a la seccion.
