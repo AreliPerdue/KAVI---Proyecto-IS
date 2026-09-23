@@ -62,6 +62,24 @@ describe('list', () => {
     expect(mockSb.argsDe('eq')).toEqual(['user_id', 'u1']);
   });
 
+  /**
+   * Las personalizaciones son un extra. Si esa consulta falla —una base sin la
+   * migracion aplicada, por ejemplo— la lista de temas tiene que seguir llegando: sin
+   * temas el calendario no puede clasificar nada, y la pantalla quedaba en "algo salio
+   * mal" por algo accesorio.
+   */
+  it('si fallan las personalizaciones, los temas siguen llegando', async () => {
+    mockSb.encolar(
+      { data: [{ id: 't1', name: 'Gimnasio', is_system: true }], error: null },
+      { data: null, error: { message: 'no existe la tabla', code: 'PGRST205' } },
+    );
+
+    const temas = await supabaseThemes.list('u1');
+
+    expect(temas).toHaveLength(1);
+    expect(temas[0].name).toBe('Gimnasio');
+  });
+
   it('un tema propio no se toca aunque haya personalizaciones', async () => {
     mockSb.encolar(
       { data: [{ id: 't9', name: 'Mio', is_system: false }], error: null },

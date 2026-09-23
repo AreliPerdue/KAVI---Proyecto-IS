@@ -27,10 +27,20 @@ export const supabaseThemes: ThemesApi = {
     const themes = unwrap(
       await getSupabase().from('themes').select('*').order('is_system', { ascending: false }).order('name'),
     ) as Theme[];
-    const overrides = unwrap(
-      await getSupabase().from('theme_overrides').select('theme_id, name, dimension, color, icon').eq('user_id', userId),
-    ) as Override[];
-    const porTema = new Map(overrides.map((o) => [o.theme_id, o]));
+
+    /*
+     * Las personalizaciones son un extra: si la consulta falla, la lista de temas sigue
+     * sirviendo. Sin esto, una base a la que todavía no se le aplicó la migración
+     * dejaba la pantalla entera en "algo salió mal", y los temas son lo que hace
+     * funcionar al calendario.
+     */
+    const { data, error } = await getSupabase()
+      .from('theme_overrides')
+      .select('theme_id, name, dimension, color, icon')
+      .eq('user_id', userId);
+    if (error) return themes;
+
+    const porTema = new Map((data as Override[]).map((o) => [o.theme_id, o]));
     return themes.map((t) => (t.is_system ? conOverride(t, porTema.get(t.id)) : t));
   },
 
