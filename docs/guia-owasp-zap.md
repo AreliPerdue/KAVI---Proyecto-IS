@@ -62,6 +62,10 @@ Solo después de que la huella coincida:
 - **Ajustes del Sistema → Privacidad y seguridad**. Baja hasta *Seguridad*: hay
   un mensaje sobre ZAP con un botón **Abrir igualmente**. Confirma con tu
   contraseña o Touch ID.
+
+  Con el sistema en inglés: **System Settings → Privacy & Security**, sección
+  *Security*, mensaje *«ZAP» was blocked to protect your Mac* y botón **Open
+  Anyway**. Sale una segunda confirmación con el mismo botón.
 - Si ese mensaje no aparece, desde la Terminal:
 
   ```bash
@@ -74,9 +78,12 @@ Solo después de que la huella coincida:
 
 ## 2. Primer arranque
 
-Al abrir ZAP por primera vez pregunta si quieres **conservar la sesión**.
+Al abrir ZAP por primera vez pregunta si quieres **conservar la sesión**. La
+interfaz de ZAP está en inglés siempre, independientemente del idioma del
+sistema. De las tres opciones, elige la última:
 
-Elige **"No, I do not want to persist this session at this moment in time"**.
+> **No, I do not want to persist this session at this moment in time**
+
 Para un escaneo puntual no hace falta guardar nada, y así no se acumulan archivos
 de sesión en tu disco.
 
