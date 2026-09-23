@@ -31,6 +31,8 @@ type DemoState = {
   /** Color que cada persona asigna a sus contactos al superponer calendarios (RF-S15). */
   contactColors: DemoContactColor[];
   activityShares: DemoActivityShare[];
+  /** Quién puede ver el detalle de una actividad con visibilidad 'selected' (RF-C14). */
+  activityViewers: { activity_id: string; user_id: string }[];
   reminders: DemoReminder[];
   recipients: DemoRecipient[];
   listeners: Set<Listener>;
@@ -80,7 +82,7 @@ function activity(
     owner_id: ownerId,
     title,
     description: null,
-    is_private: false,
+    visibility: 'default',
     theme_id: theme?.id ?? null,
     dimension: theme?.dimension ?? null,
     color: theme ? DIMENSION_BY_KEY[theme.dimension].color : null,
@@ -215,6 +217,7 @@ export const demoState: DemoState = {
     { id: 'as-gym', activity_id: gymTogether.id, shared_with_id: DEMO_USER.id, status: 'pending', created_at: new Date().toISOString() },
     { id: 'as-brunch', activity_id: brunch.id, shared_with_id: DEMO_USER.id, status: 'accepted', created_at: new Date().toISOString() },
   ],
+  activityViewers: [],
   reminders: [],
   recipients: [],
   listeners: new Set(),

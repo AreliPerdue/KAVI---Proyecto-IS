@@ -61,14 +61,8 @@ Conectar personas, compartir actividades y calendarios con control de visibilida
 ## UI
 Tab "Compartido": contactos, solicitudes, invitaciones a actividades, accesos a disponibilidad. Acciones de compartir viven en el detalle de la actividad (P1: todo desde el calendario).
 
-- RF-S18. **Invitar al crear.** El formulario de nueva actividad permite invitar en el
-  mismo paso: a nadie (por omisión), a algunos contactos elegidos, o a todos. Evita el
-  recorrido de crear, abrir el detalle y compartir, que es el caso habitual cuando la
-  actividad nace ya siendo de varias personas.
-
-  Las invitaciones se envían después de crear la actividad: si el envío falla, la
-  actividad no se pierde y se avisa de que no se pudo compartir.
-
-  **Criterio.** *Dado* el formulario de nueva actividad con dos contactos aceptados,
-  *cuando* elijo «Todos» y creo, *entonces* ambos reciben la invitación y el aviso
-  dice con cuántas personas se compartió.
+> **Invitar no es lo mismo que dejar ver.** Invitar (RF-S4) añade a alguien a la
+> actividad: le llega una invitación y, si la acepta, la tiene en su propio
+> calendario. La visibilidad por actividad (RF-C14) decide qué ven en **tu** calendario
+> quienes ya lo tienen compartido. Lo primero se hace desde el detalle de la actividad;
+> lo segundo, al crearla.

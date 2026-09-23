@@ -29,7 +29,7 @@ const tema: Theme = {
 const valores = (over: Partial<ActivityFormValues> = {}): ActivityFormValues => ({
   title: 'Junta', description: '', dayKey: '2026-09-07',
   startMinutes: 570, endMinutes: 630,
-  allDay: false, isGym: false, isPrivate: false, shareWith: 'none', shareContactIds: [],
+  allDay: false, isGym: false, visibility: 'default', viewerIds: [],
   themeId: null, recurrence: null, reminderOffsets: [],
   ...over,
 });

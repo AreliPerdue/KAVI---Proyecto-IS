@@ -49,15 +49,29 @@ El calendario es la pantalla principal y el hub de toda la app (P1). Desde él s
 ## UI
 Ruta principal: `/(app)/calendar` (tab inicial). Header: mes/rango actual, selector de vista, botón filtros. FAB "+". Hoja de detalle como bottom sheet.
 
-- RF-C14. **Actividad privada.** Una actividad puede marcarse como privada al
-  crearla. Los contactos siguen viéndola como un hueco ocupado, pero **nunca su
-  título ni su color**, tengan el nivel de visibilidad que tengan sobre el
-  calendario. Se protege el contenido, no la disponibilidad.
+- RF-C14. **Visibilidad por actividad.** Al crear una actividad se elige quién ve su
+  título, con tres opciones:
 
-  La regla se aplica en la base de datos, no al pintar: si se filtrara en el cliente,
-  el título viajaría igualmente hasta el dispositivo de la otra persona y bastaría
-  con mirar la respuesta de red. Una actividad privada tampoco admite invitados, y
-  un disparador lo rechaza además de la interfaz.
+  | | Quién ve el título |
+  |---|---|
+  | **Normal** (por defecto) | Quienes tengan tu calendario «con detalles» |
+  | **Algunos** | Solo las personas marcadas, y aun así con «con detalles» |
+  | **Privada** | Nadie |
+
+  En los tres casos el hueco **sigue apareciendo ocupado**: se protege el contenido,
+  no la disponibilidad.
+
+  La regla que las gobierna es que **solo restringen, nunca amplían**: el nivel dado a
+  cada persona sobre el calendario es el techo. Marcar a alguien a quien compartes en
+  modo «solo ocupación» no le enseña el título — lo contrario convertiría este ajuste
+  en una forma de saltarse lo que decidiste para esa persona, y la interfaz lo avisa
+  al marcarla.
+
+  Se aplica en la base de datos y en dos sitios, no en uno: la RPC de disponibilidad
+  no entrega el título, **y** la política de lectura no deja leer la fila. Solo con lo
+  primero, una petición hecha a mano contra la tabla devolvería el título de una
+  actividad privada. Una privada tampoco admite invitados, y un disparador lo rechaza
+  además de la interfaz.
 
   **Criterio.** *Dado* un contacto con visibilidad «con detalles», *cuando* marco una
   actividad como privada, *entonces* esa persona ve el bloque como ocupado y sin

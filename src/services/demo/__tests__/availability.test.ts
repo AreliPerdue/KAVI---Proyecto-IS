@@ -93,6 +93,77 @@ describe('que se ve de cada persona', () => {
   });
 });
 
+/**
+ * Visibilidad por actividad (RF-C14).
+ *
+ * La regla de fondo: **solo restringe, nunca amplía**. El nivel que diste sobre tu
+ * calendario es el techo, y elegir a alguien en una actividad no puede saltárselo.
+ */
+describe('visibilidad de la actividad', () => {
+  it('una privada llega sin titulo aunque haya nivel de detalle', async () => {
+    const { api } = fresh([actividad({ id: 'p1', owner_id: PEDRO, title: 'Terapia', visibility: 'private' })]);
+
+    const [bloque] = await api.getAvailability(YO, [PEDRO], DESDE, HASTA);
+
+    expect(bloque.title).toBeNull();
+    expect(bloque.color).toBeNull();
+  });
+
+  /** Se protege el contenido, no la disponibilidad: el hueco sigue ocupado. */
+  it('pero sigue ocupando el hueco', async () => {
+    const { api } = fresh([actividad({ id: 'p1', owner_id: PEDRO, visibility: 'private' })]);
+
+    expect(await api.getAvailability(YO, [PEDRO], DESDE, HASTA)).toHaveLength(1);
+  });
+
+  it('marcar una privada no silencia a las demas', async () => {
+    const { api } = fresh([
+      actividad({ id: 'p1', owner_id: PEDRO, title: 'Terapia', visibility: 'private' }),
+      actividad({ id: 'p2', owner_id: PEDRO, title: 'Dentista', start_at: '2026-09-07T18:00:00.000Z', end_at: '2026-09-07T19:00:00.000Z' }),
+    ]);
+
+    const bloques = await api.getAvailability(YO, [PEDRO], DESDE, HASTA);
+
+    expect(bloques.find((b) => b.title === 'Dentista')).toBeTruthy();
+  });
+
+  it('con "selected" solo la ve quien este en la lista', async () => {
+    const { api, state } = fresh([
+      actividad({ id: 'p1', owner_id: PEDRO, title: 'Junta', visibility: 'selected' }),
+    ]);
+    state.activityViewers.push({ activity_id: 'p1', user_id: YO });
+
+    expect((await api.getAvailability(YO, [PEDRO], DESDE, HASTA))[0].title).toBe('Junta');
+  });
+
+  it('y quien no esta en la lista ve solo el hueco', async () => {
+    const { api } = fresh([
+      actividad({ id: 'p1', owner_id: PEDRO, title: 'Junta', visibility: 'selected' }),
+    ]);
+
+    expect((await api.getAvailability(YO, [PEDRO], DESDE, HASTA))[0].title).toBeNull();
+  });
+
+  /**
+   * Lo más importante: estar en la lista NO sube el nivel. Ana comparte en modo
+   * `busy`, así que aunque me elija sigo viendo solo el hueco.
+   */
+  it('estar en la lista no salta el nivel del calendario', async () => {
+    const { api, state } = fresh([
+      actividad({ id: 'a1', owner_id: ANA, title: 'Terapia', visibility: 'selected' }),
+    ]);
+    state.activityViewers.push({ activity_id: 'a1', user_id: YO });
+
+    expect((await api.getAvailability(YO, [ANA], DESDE, HASTA))[0].title).toBeNull();
+  });
+
+  it('la propia se ve entera aunque sea privada', async () => {
+    const { api } = fresh([actividad({ id: 'm1', owner_id: YO, title: 'Mi secreto', visibility: 'private' })]);
+
+    expect((await api.getAvailability(YO, [YO], DESDE, HASTA))[0].title).toBe('Mi secreto');
+  });
+});
+
 describe('recorte por rango', () => {
   it('una actividad que solapa el borde inicial si cuenta', async () => {
     const { api } = fresh([

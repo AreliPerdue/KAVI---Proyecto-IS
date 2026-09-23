@@ -80,6 +80,27 @@ async function fetchOne(id: string): Promise<Activity> {
   return data as Activity;
 }
 
+/**
+ * Guarda quién puede ver el detalle de una actividad recién creada (RF-C14).
+ *
+ * Solo escribe con visibilidad `selected` y con alguien elegido: en cualquier otro
+ * caso no hay nada que guardar, y una actividad nueva tampoco tiene lista previa que
+ * limpiar. Al editar sí habrá que sustituirla, y eso vivirá en `update`.
+ *
+ * `unwrap` no vale aquí: exige datos y un insert sin `select` no devuelve filas.
+ */
+async function guardarVisores(
+  activityId: string,
+  visibility: Activity['visibility'],
+  viewerIds: string[] | undefined,
+): Promise<void> {
+  if (visibility !== 'selected' || !viewerIds?.length) return;
+  const { error } = await getSupabase()
+    .from('activity_viewers')
+    .insert(viewerIds.map((user_id) => ({ activity_id: activityId, user_id })));
+  if (error) throw toError(error);
+}
+
 export const supabaseActivities: ActivitiesApi = {
   /** Lectura por rango visible (NFR-1): start_at < to AND end_at > from; la RLS filtra. */
   /**
@@ -131,7 +152,8 @@ export const supabaseActivities: ActivitiesApi = {
   },
 
   async create(userId, input) {
-    const { recurrence, ...fields } = input;
+    // `viewerIds` no es una columna: va a su propia tabla una vez existe la fila.
+    const { recurrence, viewerIds, ...fields } = input;
     const created = unwrap(
       await getSupabase()
         .from('activities')
@@ -143,6 +165,7 @@ export const supabaseActivities: ActivitiesApi = {
         .select('*')
         .single(),
     ) as Activity;
+    await guardarVisores(created.id, created.visibility, viewerIds);
     if (recurrence) await materialize(created, recurrence, fromIso(created.start_at));
     return created;
   },

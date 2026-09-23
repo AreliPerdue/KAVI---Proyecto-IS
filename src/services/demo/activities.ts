@@ -84,13 +84,13 @@ export const demoActivities: ActivitiesApi = {
   async create(userId, input) {
     await delay();
     const now = new Date().toISOString();
-    const { recurrence, ...fields } = input;
+    const { recurrence, viewerIds, ...fields } = input;
     const created: Activity = {
       id: nextId('act'),
       owner_id: userId,
       title: fields.title,
       description: fields.description ?? null,
-      is_private: fields.is_private ?? false,
+      visibility: fields.visibility ?? 'default',
       theme_id: fields.theme_id ?? null,
       dimension: fields.dimension ?? null,
       color: fields.color ?? null,
@@ -105,6 +105,12 @@ export const demoActivities: ActivitiesApi = {
       updated_at: now,
     };
     demoState.activities.push(created);
+    // Mismo criterio que en Supabase: la lista solo aplica con 'selected', y cambiar
+    // de opción la vacía para no dejar permisos olvidados.
+    demoState.activityViewers = demoState.activityViewers.filter((v) => v.activity_id !== created.id);
+    if (created.visibility === 'selected' && viewerIds?.length) {
+      demoState.activityViewers.push(...viewerIds.map((user_id) => ({ activity_id: created.id, user_id })));
+    }
     if (recurrence) materialize(created, recurrence, fromIso(created.start_at));
     emitDataChange();
     return { ...created };

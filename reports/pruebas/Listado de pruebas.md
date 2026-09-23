@@ -35,7 +35,7 @@ Están agrupadas igual que en el código, bajo el aspecto que verifican.
 - [El calendario](#el-calendario) — 191 pruebas
 - [Crear y editar actividades](#crear-y-editar-actividades) — 204 pruebas
 - [Temas y dimensiones del bienestar](#temas-y-dimensiones-del-bienestar) — 68 pruebas
-- [Compartir con otras personas](#compartir-con-otras-personas) — 221 pruebas
+- [Compartir con otras personas](#compartir-con-otras-personas) — 228 pruebas
 - [Recordatorios](#recordatorios) — 80 pruebas
 - [Gimnasio](#gimnasio) — 140 pruebas
 - [Perfil y administración](#perfil-y-administracion) — 73 pruebas
@@ -1308,7 +1308,7 @@ Los temas son la forma en que KAVI clasifica en qué inviertes tu tiempo. La reg
 
 ## Compartir con otras personas
 
-**221 pruebas, todas superadas.**
+**228 pruebas, todas superadas.**
 
 Es el área con más reglas de privacidad, y por eso la más probada. Lo esencial: quien te comparte su calendario "solo ocupación" cede sus horas ocupadas, nunca lo que hace en ellas; y al eliminar a un contacto tiene que revocarse todo de golpe, sin dejar restos de acceso.
 
@@ -1655,7 +1655,7 @@ Es el área con más reglas de privacidad, y por eso la más probada. Lo esencia
 
 ### Disponibilidad — modo demostración
 
-*La regla de privacidad más estricta de la app.* — 12 pruebas.
+*La regla de privacidad más estricta de la app.* — 19 pruebas.
 
 
 **que se ve de cada persona**
@@ -1665,6 +1665,16 @@ Es el área con más reglas de privacidad, y por eso la más probada. Lo esencia
 - ✓ de quien no comparte su calendario no llega nada
 - ✓ de uno mismo se ve todo aunque no haya share
 - ✓ pedir varias personas a la vez respeta la visibilidad de cada una
+
+**visibilidad de la actividad**
+
+- ✓ una privada llega sin título aunque haya nivel de detalle
+- ✓ pero sigue ocupando el hueco
+- ✓ marcar una privada no silencia a las demás
+- ✓ con "selected" solo la ve quien este en la lista
+- ✓ y quien no esta en la lista ve solo el hueco
+- ✓ estar en la lista no salta el nivel del calendario
+- ✓ la propia se ve entera aunque sea privada
 
 **recorte por rango**
 

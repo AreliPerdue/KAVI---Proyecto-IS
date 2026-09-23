@@ -58,6 +58,17 @@ export type Theme = {
   owner_id: string | null;
 };
 
+/**
+ * Quién ve el título de una actividad (RF-C14).
+ *
+ * - `default`: quienes tengan tu calendario en modo «con detalles».
+ * - `selected`: solo las personas elegidas, y aun así con «con detalles».
+ * - `private`: nadie; todos ven el hueco como ocupado.
+ *
+ * Solo restringe, nunca amplía: el nivel del calendario es el techo.
+ */
+export type ActivityVisibility = 'default' | 'selected' | 'private';
+
 export type Activity = {
   id: string;
   owner_id: string;
@@ -75,8 +86,8 @@ export type Activity = {
   recurrence_rule: string | null;
   recurrence_parent_id: string | null;
   is_gym: boolean;
-  /** Privada: los demás la ven como ocupada, sin título (RF-C14). */
-  is_private: boolean;
+  /** Quién ve el título. El nivel del calendario sigue siendo el techo (RF-C14). */
+  visibility: ActivityVisibility;
   created_at: string;
   updated_at: string;
   /** Solo en actividades compartidas conmigo: nombre visible del dueño (RF-S5, RF-S13). */
@@ -175,8 +186,10 @@ export type ActivityInput = {
   end_at: string;
   all_day?: boolean;
   is_gym?: boolean;
-  /** Privada: los demás la ven como ocupada, sin título (RF-C14). */
-  is_private?: boolean;
+  /** Quién ve el título (RF-C14). Con 'selected', además, `viewerIds`. */
+  visibility?: ActivityVisibility;
+  /** Contactos que pueden ver el detalle cuando la visibilidad es 'selected'. */
+  viewerIds?: string[];
 };
 
 export type Workout = {

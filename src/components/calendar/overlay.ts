@@ -42,7 +42,7 @@ export function blocksToActivities(
     recurrence_parent_id: null,
     is_gym: false,
     // Un bloque superpuesto ya viene filtrado por la base: si era privado, llega sin título.
-    is_private: false,
+    visibility: 'default' as const,
     created_at: b.start_at,
     updated_at: b.start_at,
   }));

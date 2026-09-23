@@ -19,25 +19,17 @@ export const activityFormSchema = z
     endMinutes: z.number().int().min(0).max(1440),
     allDay: z.boolean(),
     isGym: z.boolean(),
-    /** Privada: los demás la ven como ocupada, sin título (RF-C14). */
-    isPrivate: z.boolean(),
-    /**
-     * A quién invitar al crearla (RF-S18). 'none' = a nadie de momento; se puede
-     * compartir después desde el detalle. Una actividad privada no admite invitados.
-     */
-    shareWith: z.enum(['none', 'all', 'some']),
-    shareContactIds: z.array(z.string()),
+    /** Quién ve el título. El nivel del calendario sigue siendo el techo (RF-C14). */
+    visibility: z.enum(['default', 'selected', 'private']),
+    /** Con 'selected', quiénes pueden ver el detalle. */
+    viewerIds: z.array(z.string()),
     themeId: z.string().nullable(),
     recurrence: recurrenceSchema,
     reminderOffsets: z.array(z.number().int().min(0)),
   })
-  .refine((v) => !(v.isPrivate && v.shareWith !== 'none'), {
-    message: 'Una actividad privada no se puede compartir.',
-    path: ['shareWith'],
-  })
-  .refine((v) => v.shareWith !== 'some' || v.shareContactIds.length > 0, {
-    message: 'Elige al menos un contacto, o cambia a «Nadie».',
-    path: ['shareContactIds'],
+  .refine((v) => v.visibility !== 'selected' || v.viewerIds.length > 0, {
+    message: 'Elige al menos una persona, o cambia a otra opción.',
+    path: ['viewerIds'],
   })
   .refine((v) => v.allDay || v.endMinutes > v.startMinutes, {
     message: 'La hora de fin debe ser posterior a la de inicio.',

@@ -6,7 +6,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { RecurrenceField } from './recurrence-field';
 import { RemindersField } from './reminders-field';
-import { SharingField } from './sharing-field';
+import { VisibilityField } from './visibility-field';
 import { ThemeField } from './theme-field';
 import { type ExerciseDraft, WorkoutDraft } from './workout-draft';
 
@@ -156,30 +156,25 @@ export function ActivityForm({
         )}
       />
 
-      {/* Solo al crear: una vez creada, se comparte desde su detalle. */}
+      {/* Solo al crear: después se ajusta desde el detalle. */}
       {showSharing ? (
         <Controller
           control={control}
-          name="shareWith"
-          render={({ field: { onChange: onShareWith, value: shareWith }, fieldState }) => (
+          name="visibility"
+          render={({ field: { onChange: onVisibility, value: visibility } }) => (
             <Controller
               control={control}
-              name="isPrivate"
-              render={({ field: { onChange: onPrivate, value: isPrivate } }) => (
-                <Controller
-                  control={control}
-                  name="shareContactIds"
-                  render={({ field: { onChange: onIds, value: ids }, fieldState: idsState }) => (
-                    <SharingField
-                      isPrivate={isPrivate}
-                      onPrivateChange={onPrivate}
-                      shareWith={shareWith}
-                      onShareWithChange={onShareWith}
-                      contactIds={ids}
-                      onContactIdsChange={onIds}
-                      error={fieldState.error?.message ?? idsState.error?.message}
-                    />
-                  )}
+              name="viewerIds"
+              render={({ field: { onChange: onIds, value: ids }, fieldState }) => (
+                <VisibilityField
+                  visibility={visibility}
+                  onVisibilityChange={(v) => {
+                    onVisibility(v);
+                    if (v !== 'selected') onIds([]);
+                  }}
+                  viewerIds={ids}
+                  onViewerIdsChange={onIds}
+                  error={fieldState.error?.message}
                 />
               )}
             />
