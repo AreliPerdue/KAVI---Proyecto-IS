@@ -37,7 +37,7 @@ Están agrupadas igual que en el código, bajo el aspecto que verifican.
 - [Temas y dimensiones del bienestar](#temas-y-dimensiones-del-bienestar) — 68 pruebas
 - [Compartir con otras personas](#compartir-con-otras-personas) — 221 pruebas
 - [Recordatorios](#recordatorios) — 80 pruebas
-- [Gimnasio](#gimnasio) — 140 pruebas
+- [Gimnasio](#gimnasio) — 143 pruebas
 - [Perfil y administración](#perfil-y-administracion) — 72 pruebas
 - [Los cimientos: interfaz y utilidades](#los-cimientos-interfaz-y-utilidades) — 204 pruebas
 - [Lo que encontramos](#lo-que-encontramos)
@@ -1941,14 +1941,14 @@ Cada persona decide por su cuenta si quiere el aviso, incluso en una actividad c
 
 ## Gimnasio
 
-**140 pruebas, todas superadas.**
+**143 pruebas, todas superadas.**
 
 El registro de entrenamientos, accesible desde cualquier actividad marcada como gimnasio. Lo que más se cuidó es que capturar no pierda nada: los campos se guardan al salir de ellos, y borrar un ejercicio ofrece deshacer en vez de pedir confirmación.
 
 
 ### Pantalla de Fitness
 
-*El historial de entrenamientos.* — 21 pruebas.
+*El historial de entrenamientos.* — 24 pruebas.
 
 
 **estados de carga**
@@ -1974,9 +1974,12 @@ El registro de entrenamientos, accesible desde cualquier actividad marcada como 
 
 **entrenamiento libre**
 
-- ✓ lo crea sin ligarlo a ninguna actividad
-- ✓ se estrena con el nombre del entrenamiento anterior
-- ✓ la primera vez, sin nombre previo, se crea sin nombre
+- ✓ crea primero la actividad de gimnasio
+- ✓ la actividad dura una hora
+- ✓ sin nombre previo la actividad se llama Entrenamiento
+- ✓ con nombre previo la actividad lo usa
+- ✓ el entrenamiento queda ligado a la actividad creada
+- ✓ el entrenamiento se estrena con el nombre del anterior
 - ✓ solo entra al detalle cuando el backend confirma
 - ✓ el botón se bloquea mientras se crea
 - ✓ explica cómo registrar una sesión ya agendada

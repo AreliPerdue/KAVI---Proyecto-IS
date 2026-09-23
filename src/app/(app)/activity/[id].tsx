@@ -184,9 +184,21 @@ export default function ActivityDetailScreen() {
               onValueChange={(enabled) => setEnabled.mutate({ reminderId: r.id, enabled })}
             />
           ))
+        ) : isOwner ? (
+          <Button
+            title="Agregar recordatorios"
+            variant="secondary"
+            icon={<Bell size={IconSize.inline} strokeWidth={IconStroke} color={theme.text} />}
+            onPress={() =>
+              router.push({
+                pathname: '/(app)/activity/new',
+                params: { id: data.id, scope: isSeries ? 'series' : 'this', focus: 'reminders' },
+              })
+            }
+          />
         ) : (
           <AppText variant="caption" color="textTertiary">
-            Sin recordatorios. Agrégalos desde Editar.
+            Esta actividad no tiene recordatorios.
           </AppText>
         )}
       </View>

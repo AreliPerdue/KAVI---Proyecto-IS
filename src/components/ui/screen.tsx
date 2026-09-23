@@ -1,4 +1,4 @@
-import { type ReactNode } from 'react';
+import { type ReactNode, type RefObject } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View, type ViewStyle } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -20,6 +20,8 @@ export type ScreenProps = {
    */
   modal?: boolean;
   contentStyle?: ViewStyle;
+  /** Acceso al ScrollView, para llevar el foco a una sección concreta al abrir. */
+  scrollRef?: RefObject<ScrollView | null>;
 };
 
 /**
@@ -27,7 +29,7 @@ export type ScreenProps = {
  * El contenido se estira al ancho disponible y se centra solo cuando supera `maxWidth`
  * (nunca desborda en horizontal, NFR-9).
  */
-export function Screen({ children, maxWidth = MaxContentWidth, scroll = false, centered = false, modal = false, contentStyle }: ScreenProps) {
+export function Screen({ children, maxWidth = MaxContentWidth, scroll = false, centered = false, modal = false, contentStyle, scrollRef }: ScreenProps) {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
   const paddingTop = (modal && Platform.OS === 'ios' ? 0 : insets.top) + Spacing.lg;
@@ -74,6 +76,7 @@ export function Screen({ children, maxWidth = MaxContentWidth, scroll = false, c
       style={[styles.root, { backgroundColor: theme.background }]}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView
+        ref={scrollRef}
         style={styles.scroll}
         contentContainerStyle={[styles.scrollContent, centered ? styles.centered : null]}
         keyboardShouldPersistTaps="handled"

@@ -1,5 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import Constants from 'expo-constants';
+import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import {
   Bell,
@@ -44,6 +45,7 @@ import { useIsAdmin } from '@/hooks/use-admin';
 import { useTheme } from '@/hooks/use-theme';
 import { useThemes } from '@/hooks/use-themes';
 import { useWorkouts } from '@/hooks/use-workouts';
+import { NOBIS, nobiIdDesde, nobiUrl } from '@/constants/nobi';
 import { rangeForView } from '@/lib/dates';
 import { env } from '@/lib/env';
 import { notificationPermissionGranted } from '@/lib/notifications';
@@ -284,6 +286,36 @@ export default function ProfileScreen() {
         />
       </SettingsGroup>
 
+      <SettingsGroup title="Tu Nobi" footer="Nobi es la mascota de KAVI. El color que elijas lo verán también tus contactos.">
+        <View style={styles.nobis}>
+          {NOBIS.map((nobi) => {
+            const elegido = nobiIdDesde(profile.data?.avatar_url) === nobi.id;
+            return (
+              <Pressable
+                key={nobi.id}
+                accessibilityRole="button"
+                accessibilityLabel={`Nobi ${nobi.label}`}
+                accessibilityState={{ selected: elegido }}
+                disabled={update.isPending}
+                onPress={() => {
+                  // Volver a tocar el elegido lo quita y devuelve las iniciales.
+                  update.mutate(
+                    { avatar_url: elegido ? null : nobiUrl(nobi.id) },
+                    { onSuccess: () => showSnackbar({ message: elegido ? 'Nobi quitado.' : `Nobi ${nobi.label.toLowerCase()}.` }) },
+                  );
+                }}
+                style={({ pressed }) => [
+                  styles.nobi,
+                  { borderColor: elegido ? theme.ink : 'transparent', backgroundColor: theme.surfaceAlt },
+                  pressed ? { opacity: 0.75 } : null,
+                ]}>
+                <Image source={nobi.source} style={styles.nobiImagen} contentFit="cover" />
+              </Pressable>
+            );
+          })}
+        </View>
+      </SettingsGroup>
+
       <SettingsGroup title="Presentación" footer="Se aplica al calendario, a los recordatorios y al historial de entrenamientos.">
         <SettingsRow
           icon={<Clock size={IconSize.inline} strokeWidth={IconStroke} color={theme.textSecondary} />}
@@ -459,6 +491,9 @@ export default function ProfileScreen() {
 }
 
 const styles = StyleSheet.create({
+  nobis: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm, padding: Spacing.md },
+  nobi: { width: 60, height: 60, borderRadius: Radius.full, borderWidth: 2, overflow: 'hidden' },
+  nobiImagen: { width: '100%', height: '100%' },
   content: { gap: Spacing.xl },
   hero: {
     flexDirection: 'row',

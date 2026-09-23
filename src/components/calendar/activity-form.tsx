@@ -28,6 +28,8 @@ export type ActivityFormProps = {
   /** Nº de ejercicios del entrenamiento ya guardado, si la actividad tiene uno. */
   existingWorkoutCount?: number;
   onOpenExistingWorkout?: () => void;
+  /** Posición vertical de la sección de recordatorios, para poder desplazarse a ella. */
+  onRemindersLayout?: (y: number) => void;
 };
 
 /** Formulario de actividad (RF-C5): título, fecha, horas, todo el día, descripción. */
@@ -40,6 +42,7 @@ export function ActivityForm({
   recurrenceLocked = false,
   existingWorkoutCount,
   onOpenExistingWorkout,
+  onRemindersLayout,
 }: ActivityFormProps) {
   const theme = useTheme();
   const { control, handleSubmit, setValue } = useForm<ActivityFormValues>({
@@ -149,11 +152,15 @@ export function ActivityForm({
         )}
       />
 
-      <Controller
-        control={control}
-        name="reminderOffsets"
-        render={({ field: { onChange, value } }) => <RemindersField value={value} onChange={onChange} />}
-      />
+      {/* `onLayout` publica dónde queda esta sección, para que quien abra el
+          formulario pidiendo los recordatorios pueda desplazarse hasta aquí. */}
+      <View onLayout={(e) => onRemindersLayout?.(e.nativeEvent.layout.y)}>
+        <Controller
+          control={control}
+          name="reminderOffsets"
+          render={({ field: { onChange, value } }) => <RemindersField value={value} onChange={onChange} />}
+        />
+      </View>
 
       <Controller
         control={control}

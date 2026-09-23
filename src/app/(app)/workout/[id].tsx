@@ -131,7 +131,7 @@ export default function WorkoutScreen() {
                 },
               );
             }}
-            placeholder={data.activity_title ?? 'Pierna, empuje, cardio…'}
+            placeholder={data.activity_title ?? 'Gym día de brazo, día de pierna…'}
             autoCapitalize="sentences"
             returnKeyType="done"
           />

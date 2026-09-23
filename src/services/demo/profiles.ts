@@ -27,6 +27,9 @@ export const demoProfiles: ProfilesApi = {
     if (patch.display_name !== undefined) {
       account.profile = { ...account.profile, display_name: patch.display_name };
     }
+    if (patch.avatar_url !== undefined) {
+      account.profile = { ...account.profile, avatar_url: patch.avatar_url };
+    }
     return { ...account.profile };
   },
 };

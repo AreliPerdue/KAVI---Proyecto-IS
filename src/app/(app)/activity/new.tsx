@@ -1,5 +1,6 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useMemo } from 'react';
+import { useMemo, useRef } from 'react';
+import type { ScrollView } from 'react-native';
 
 import { ActivityForm } from '@/components/calendar/activity-form';
 import { activityToFormValues, defaultFormValues, formValuesToInput } from '@/components/calendar/activity-form-mapping';
@@ -15,13 +16,28 @@ import type { RecurrenceScope } from '@/services/activities';
 
 const FORM_MAX_WIDTH = 640;
 
-type Params = { id?: string; date?: string; start?: string; end?: string; title?: string; scope?: RecurrenceScope };
+type Params = { id?: string; date?: string; start?: string; end?: string; title?: string; scope?: RecurrenceScope; focus?: 'reminders' };
 
 /** Crear (sin id) o editar (con id) una actividad (RF-C5, RF-C6, RF-C8). */
 export default function ActivityFormScreen() {
   const router = useRouter();
   const showSnackbar = useSnackbar();
-  const { id, date, start, end, title, scope = 'this' } = useLocalSearchParams<Params>();
+  const { id, date, start, end, title, scope = 'this', focus } = useLocalSearchParams<Params>();
+  /**
+   * Al abrir desde «Agregar recordatorios» el formulario se desplaza hasta esa
+   * sección: es larga y, sin esto, la persona aterriza en el título y tiene que
+   * buscar dónde estaba lo que venía a hacer.
+   */
+  const scrollRef = useRef<ScrollView>(null);
+  const remindersY = useRef<number | null>(null);
+  const yaEnfocado = useRef(false);
+  const enfocarRecordatorios = (y: number) => {
+    remindersY.current = y;
+    if (focus !== 'reminders' || yaEnfocado.current) return;
+    yaEnfocado.current = true;
+    // Un margen arriba para que la sección no quede pegada al borde.
+    scrollRef.current?.scrollTo({ y: Math.max(0, y - 24), animated: true });
+  };
   const editing = !!id;
   const activity = useActivity(id);
   const parent = useActivity(activity.data?.recurrence_parent_id ?? undefined);
@@ -82,9 +98,10 @@ export default function ActivityFormScreen() {
   const mutation = editing ? update : create;
 
   return (
-    <Screen modal scroll maxWidth={FORM_MAX_WIDTH}>
+    <Screen modal scroll maxWidth={FORM_MAX_WIDTH} scrollRef={scrollRef}>
       <ModalHeader title={headerTitle} />
       <ActivityForm
+        onRemindersLayout={enfocarRecordatorios}
         key={editing ? `${id}-${scope}` : 'new'}
         defaultValues={defaults}
         submitLabel={editing ? 'Guardar cambios' : 'Crear actividad'}

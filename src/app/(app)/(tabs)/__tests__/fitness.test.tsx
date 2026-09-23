@@ -28,16 +28,20 @@ const consulta = (over: Partial<Consulta> = {}): Consulta => ({
 
 let mockWorkouts: Consulta = consulta();
 const mockCreate = { mutate: jest.fn(), isPending: false };
+const mockCrearActividad = { mutate: jest.fn(), isPending: false };
 
 jest.mock('@/hooks/use-workouts', () => ({
   useWorkouts: () => mockWorkouts,
   useWorkoutMutations: () => ({ create: mockCreate }),
 }));
+jest.mock('@/hooks/use-activity', () => ({ useActivityMutations: () => ({ create: mockCrearActividad }) }));
 
 beforeEach(() => {
   mockWorkouts = consulta();
   mockCreate.mutate.mockReset();
   mockCreate.isPending = false;
+  mockCrearActividad.mutate.mockReset();
+  mockCrearActividad.isPending = false;
   globalThis.mockRouter.push.mockClear();
   usePreferencesStore.setState({ lastWorkoutTitle: null });
 });
@@ -149,24 +153,68 @@ describe('historial', () => {
 });
 
 describe('entrenamiento libre', () => {
-  it('lo crea sin ligarlo a ninguna actividad', async () => {
+  /**
+   * RF-F10: haber entrenado es un hecho del dia, asi que el entrenamiento libre
+   * crea tambien su actividad de gimnasio y queda visible en el calendario.
+   */
+  it('crea primero la actividad de gimnasio', async () => {
     await render(<FitnessScreen />);
 
     await fireEvent.press(screen.getByText('Entrenamiento libre'));
 
+    expect(mockCrearActividad.mutate).toHaveBeenCalledWith(
+      expect.objectContaining({ is_gym: true, all_day: false }),
+      expect.any(Object),
+    );
+    // El entrenamiento no se crea hasta que la actividad existe.
+    expect(mockCreate.mutate).not.toHaveBeenCalled();
+  });
+
+  it('la actividad dura una hora', async () => {
+    await render(<FitnessScreen />);
+    await fireEvent.press(screen.getByText('Entrenamiento libre'));
+
+    const [entrada] = mockCrearActividad.mutate.mock.calls[0];
+    const minutos = (Date.parse(entrada.end_at) - Date.parse(entrada.start_at)) / 60000;
+    expect(minutos).toBe(60);
+  });
+
+  it('sin nombre previo la actividad se llama Entrenamiento', async () => {
+    usePreferencesStore.getState().setLastWorkoutTitle(null);
+    await render(<FitnessScreen />);
+    await fireEvent.press(screen.getByText('Entrenamiento libre'));
+
+    expect(mockCrearActividad.mutate.mock.calls[0][0].title).toBe('Entrenamiento');
+  });
+
+  it('con nombre previo la actividad lo usa', async () => {
+    usePreferencesStore.getState().setLastWorkoutTitle('Pierna');
+    await render(<FitnessScreen />);
+    await fireEvent.press(screen.getByText('Entrenamiento libre'));
+
+    expect(mockCrearActividad.mutate.mock.calls[0][0].title).toBe('Pierna');
+  });
+
+  it('el entrenamiento queda ligado a la actividad creada', async () => {
+    await render(<FitnessScreen />);
+    await fireEvent.press(screen.getByText('Entrenamiento libre'));
+
+    const [, opciones] = mockCrearActividad.mutate.mock.calls[0];
+    opciones.onSuccess({ id: 'act-1' });
+
     expect(mockCreate.mutate).toHaveBeenCalledWith(
-      expect.objectContaining({ activity_id: null }),
+      expect.objectContaining({ activity_id: 'act-1' }),
       expect.any(Object),
     );
   });
 
   /** Navegar antes de la respuesta abriria un detalle sin entrenamiento detras. */
   /** Quien entrena repite rutina: no tiene que reescribir el nombre cada vez. */
-  it('se estrena con el nombre del entrenamiento anterior', async () => {
+  it('el entrenamiento se estrena con el nombre del anterior', async () => {
     usePreferencesStore.getState().setLastWorkoutTitle('Pierna');
     await render(<FitnessScreen />);
-
     await fireEvent.press(screen.getByText('Entrenamiento libre'));
+    mockCrearActividad.mutate.mock.calls[0][1].onSuccess({ id: 'act-1' });
 
     expect(mockCreate.mutate).toHaveBeenCalledWith(
       expect.objectContaining({ title: 'Pierna' }),
@@ -174,21 +222,10 @@ describe('entrenamiento libre', () => {
     );
   });
 
-  it('la primera vez, sin nombre previo, se crea sin nombre', async () => {
-    usePreferencesStore.getState().setLastWorkoutTitle(null);
-    await render(<FitnessScreen />);
-
-    await fireEvent.press(screen.getByText('Entrenamiento libre'));
-
-    expect(mockCreate.mutate).toHaveBeenCalledWith(
-      expect.objectContaining({ title: null }),
-      expect.any(Object),
-    );
-  });
-
   it('solo entra al detalle cuando el backend confirma', async () => {
     await render(<FitnessScreen />);
     await fireEvent.press(screen.getByText('Entrenamiento libre'));
+    mockCrearActividad.mutate.mock.calls[0][1].onSuccess({ id: 'act-1' });
     expect(globalThis.mockRouter.push).not.toHaveBeenCalled();
 
     const [, opciones] = mockCreate.mutate.mock.calls[0];
@@ -201,7 +238,7 @@ describe('entrenamiento libre', () => {
   });
 
   it('el boton se bloquea mientras se crea', async () => {
-    mockCreate.isPending = true;
+    mockCrearActividad.isPending = true;
     await render(<FitnessScreen />);
     expect(screen.getByLabelText('Entrenamiento libre').props.accessibilityState.disabled).toBe(true);
   });

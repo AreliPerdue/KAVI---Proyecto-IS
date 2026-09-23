@@ -6,8 +6,9 @@ import { FlatList, Pressable, StyleSheet, View } from 'react-native';
 import { AppText, Button, EmptyState, ErrorState, LoadingState, Screen } from '@/components/ui';
 import { IconSize, IconStroke, Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { useActivityMutations } from '@/hooks/use-activity';
 import { useWorkoutMutations, useWorkouts } from '@/hooks/use-workouts';
-import { formatShortDate, formatTime, fromIso } from '@/lib/dates';
+import { formatShortDate, formatTime, fromIso, toIso } from '@/lib/dates';
 import { usePreferencesStore } from '@/store/preferences-store';
 import type { Workout } from '@/types/domain';
 
@@ -22,6 +23,7 @@ export default function FitnessScreen() {
   const router = useRouter();
   const workouts = useWorkouts();
   const { create } = useWorkoutMutations();
+  const { create: crearActividad } = useActivityMutations();
   const lastWorkoutTitle = usePreferencesStore((s) => s.lastWorkoutTitle);
 
   const openWorkout = useCallback(
@@ -30,14 +32,44 @@ export default function FitnessScreen() {
   );
 
   /**
-   * Se estrena con el nombre del entrenamiento anterior: quien entrena repite
-   * rutina, y así solo hay que cambiarlo cuando de verdad cambia (RF-F7).
+   * Entrenamiento libre (RF-F2, RF-F7, RF-F10).
+   *
+   * Se crea también su actividad de gimnasio, porque haber entrenado es un hecho
+   * del día y el calendario es el registro de cómo se ocupó el tiempo: un
+   * entrenamiento que no aparece ahí deja un hueco falso y descuadra las
+   * estadísticas por dimensión del bienestar.
+   *
+   * El nombre se estrena con el del entrenamiento anterior: quien entrena repite
+   * rutina, y así solo hay que cambiarlo cuando de verdad cambia.
    */
-  const startFree = () =>
-    create.mutate(
-      { activity_id: null, title: lastWorkoutTitle, performed_at: new Date().toISOString() },
-      { onSuccess: (w) => openWorkout(w.id, 'edit') },
+  const startFree = () => {
+    const ahora = new Date();
+    const fin = new Date(ahora.getTime() + 60 * 60_000);
+    const titulo = lastWorkoutTitle?.trim() || 'Entrenamiento';
+
+    crearActividad.mutate(
+      {
+        title: titulo,
+        description: null,
+        start_at: toIso(ahora),
+        end_at: toIso(fin),
+        all_day: false,
+        is_gym: true,
+        theme_id: null,
+        dimension: null,
+        color: null,
+        icon: null,
+        recurrence: null,
+      },
+      {
+        onSuccess: (actividad) =>
+          create.mutate(
+            { activity_id: actividad.id, title: lastWorkoutTitle, performed_at: toIso(ahora) },
+            { onSuccess: (w) => openWorkout(w.id, 'edit') },
+          ),
+      },
     );
+  };
 
   const renderItem = useCallback(
     ({ item }: { item: Workout }) => (
@@ -73,7 +105,7 @@ export default function FitnessScreen() {
           title="Entrenamiento libre"
           variant="secondary"
           icon={<Plus size={IconSize.inline} strokeWidth={IconStroke} color={theme.text} />}
-          loading={create.isPending}
+          loading={create.isPending || crearActividad.isPending}
           onPress={startFree}
         />
         <AppText variant="caption" color="textTertiary">
