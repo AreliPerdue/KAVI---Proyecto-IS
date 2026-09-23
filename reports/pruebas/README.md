@@ -7,12 +7,12 @@
 
 ## Resultado
 
-**1 560 pruebas en 91 archivos, todas en verde.**
+**1 564 pruebas en 92 archivos, todas en verde.**
 
 | Métrica | Cobertura | |
 |---|---|---|
-| **Sentencias** | **83.98 %** | 3261 / 3883 |
-| **Líneas** | **85.39 %** | 2788 / 3265 |
+| **Sentencias** | **84.00 %** | 3266 / 3888 |
+| **Líneas** | **85.41 %** | 2793 / 3270 |
 | Ramas | 78.36 % | 2224 / 2838 |
 | Funciones | 78.91 % | 1078 / 1366 |
 
@@ -23,7 +23,7 @@ queda por encima del objetivo.
 ## Versión sin tecnicismos
 
 Si lo que interesa es **qué se verificó** y no cómo, [`Listado de pruebas.md`](Listado%20de%20pruebas.md)
-recorre las 1 560 pruebas una por una, agrupadas por zona de la aplicación y
+recorre las 1 564 pruebas una por una, agrupadas por zona de la aplicación y
 explicadas en lenguaje llano.
 
 ## Por capa

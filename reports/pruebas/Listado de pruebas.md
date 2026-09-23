@@ -1,23 +1,23 @@
 # Qué se probó en KAVI, y qué salió
 
-Este documento recorre **una por una** las 1 560 pruebas automáticas del proyecto,
+Este documento recorre **una por una** las 1 564 pruebas automáticas del proyecto,
 agrupadas por zona de la aplicación y escritas para que se entiendan sin leer código.
 
 Una prueba automática es un programa pequeño que usa la app como lo haría una persona
 —tocar un botón, escribir en un campo, guardar— y comprueba que ocurre lo que debía
-ocurrir. Si algo deja de funcionar, la prueba falla y lo dice. Las 1 560 se ejecutan
-enteras en unos 27 segundos, cada vez que se sube un cambio al repositorio.
+ocurrir. Si algo deja de funcionar, la prueba falla y lo dice. Las 1 564 se ejecutan
+enteras en unos 33 segundos, cada vez que se sube un cambio al repositorio.
 
 ## Resultado
 
 | | |
 |---|---|
-| Pruebas ejecutadas | **1 560** |
-| Pruebas superadas | **1 560** |
+| Pruebas ejecutadas | **1 564** |
+| Pruebas superadas | **1 564** |
 | Pruebas falladas | **0** |
-| Archivos de prueba | 91 |
+| Archivos de prueba | 92 |
 | Porcentaje del código cubierto | **85.4 %** |
-| Tiempo de ejecución | ~27 segundos |
+| Tiempo de ejecución | ~33 segundos |
 
 **Todas pasaron.** Ninguna quedó pendiente, saltada ni marcada como excepción.
 
@@ -34,11 +34,11 @@ Están agrupadas igual que en el código, bajo el aspecto que verifican.
 - [Crear cuenta y entrar](#crear-cuenta-y-entrar) — 167 pruebas
 - [El calendario](#el-calendario) — 219 pruebas
 - [Crear y editar actividades](#crear-y-editar-actividades) — 209 pruebas
-- [Temas y dimensiones del bienestar](#temas-y-dimensiones-del-bienestar) — 89 pruebas
+- [Temas y dimensiones del bienestar](#temas-y-dimensiones-del-bienestar) — 90 pruebas
 - [Compartir con otras personas](#compartir-con-otras-personas) — 254 pruebas
 - [Recordatorios](#recordatorios) — 138 pruebas
 - [Gimnasio](#gimnasio) — 140 pruebas
-- [Perfil y administración](#perfil-y-administracion) — 121 pruebas
+- [Perfil y administración](#perfil-y-administracion) — 124 pruebas
 - [Los cimientos: interfaz y utilidades](#los-cimientos-interfaz-y-utilidades) — 223 pruebas
 - [Lo que encontramos](#lo-que-encontramos)
 - [Cómo reproducirlo](#como-reproducirlo)
@@ -1234,7 +1234,7 @@ Aquí vive la parte más difícil de la app: las actividades que se repiten. Edi
 
 ## Temas y dimensiones del bienestar
 
-**89 pruebas, todas superadas.**
+**90 pruebas, todas superadas.**
 
 Los temas son la forma en que KAVI clasifica en qué inviertes tu tiempo. La regla importante es que el estilo se copia a la actividad al crearla: si después cambias el tema, las actividades que ya existían no cambian de color solas.
 
@@ -1305,7 +1305,7 @@ Los temas son la forma en que KAVI clasifica en qué inviertes tu tiempo. La reg
 
 ### Temas — servidor real
 
-*Guardado y reglas de los temas.* — 20 pruebas.
+*Guardado y reglas de los temas.* — 21 pruebas.
 
 
 **list**
@@ -1315,6 +1315,7 @@ Los temas son la forma en que KAVI clasifica en qué inviertes tu tiempo. La reg
 - ✓ devuelve lo que responde la base
 - ✓ aplica la personalización sobre los temas del sistema
 - ✓ pide solo las personalizaciones de esa persona
+- ✓ si fallan las personalizaciones, los temas siguen llegando
 - ✓ un tema propio no se toca aunque haya personalizaciones
 - ✓ traduce el error de la base
 
@@ -2554,7 +2555,7 @@ El registro de entrenamientos, accesible desde cualquier actividad marcada como 
 
 ## Perfil y administración
 
-**121 pruebas, todas superadas.**
+**124 pruebas, todas superadas.**
 
 Tus datos, tus estadísticas y los ajustes. El panel de administración es la parte con control de acceso: una cuenta normal no debe verlo, y aun viéndolo solo muestra cifras agregadas, nunca el contenido de la agenda de nadie.
 
@@ -2776,6 +2777,16 @@ Tus datos, tus estadísticas y los ajustes. El panel de administración es la pa
 - ✓ ni el formato de hora
 - ✓ lo que nadie toco si se aplica
 - ✓ lo elegido antes de hidratar sobrevive a reabrir la app
+
+
+### El tema llega a toda la pantalla
+
+*Que al cambiar de tema no quede ninguna parte con el anterior.* — 3 pruebas.
+
+
+- ✓ un consumidor bajo un padre memoizado sigue el esquema del contexto
+- ✓ sin proveedor se resuelve desde la preferencia
+- ✓ el contexto manda sobre la preferencia suelta
 
 
 ### Modo claro y modo oscuro
@@ -3324,7 +3335,7 @@ por 20 minutos se consideren solapadas en pantalla.
 Desde la carpeta del proyecto:
 
 ```
-pnpm test              # ejecuta las 1 560 pruebas
+pnpm test              # ejecuta las 1 564 pruebas
 pnpm test:coverage     # además mide qué porcentaje del código se ejerce
 ```
 

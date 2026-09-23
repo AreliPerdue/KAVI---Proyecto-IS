@@ -204,6 +204,7 @@ MAPA = {
  'src/lib/__tests__/notifications.test.ts': ('recordatorios', 'Avisos del sistema', 'Que se programen sin duplicados y que la app no se rompa donde no existen.'),
  'src/hooks/__tests__/use-social-notifications.test.tsx': ('recordatorios', 'Avisos de solicitudes e invitaciones', 'El aviso inmediato cuando alguien te escribe o te invita.'),
  'src/store/__tests__/preferences-store.test.ts': ('perfil', 'Preferencias del dispositivo', 'Formato de hora, apariencia y qué capas se ven en el calendario.'),
+ 'src/hooks/__tests__/use-theme-context.test.tsx': ('perfil', 'El tema llega a toda la pantalla', 'Que al cambiar de tema no quede ninguna parte con el anterior.'),
  'src/hooks/__tests__/use-theme.test.tsx': ('perfil', 'Modo claro y modo oscuro', 'Qué tema se aplica según lo elegido y lo que dice el sistema.'),
  'src/constants/__tests__/nobi.test.ts': ('perfil', 'Nobi, la mascota', 'Los veinte colores y su versión para cada tema.'),
  'src/constants/__tests__/icons.test.tsx': ('temas', 'Iconos de los temas', 'Que cada icono exista y que el del cumpleaños sea un pastel.'),
