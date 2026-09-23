@@ -33,6 +33,7 @@ export const NOBIS: readonly NobiColor[] = [
   { id: 'navy_blue', label: 'Azul marino', source: require('../../assets/nobi/navy_blue.png') },
   { id: 'indigo', label: 'Índigo', source: require('../../assets/nobi/indigo.png') },
   { id: 'purple', label: 'Morado', source: require('../../assets/nobi/purple.png') },
+  { id: 'light_purple', label: 'Morado claro', source: require('../../assets/nobi/light_purple.png') },
   { id: 'lilac', label: 'Lila', source: require('../../assets/nobi/lilac.png') },
   { id: 'white', label: 'Blanco', source: require('../../assets/nobi/white.png') },
   { id: 'gray', label: 'Gris', source: require('../../assets/nobi/gray.png') },
