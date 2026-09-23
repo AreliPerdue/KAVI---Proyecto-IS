@@ -333,6 +333,25 @@ begin
   raise notice 'OK 13 · un contacto aceptado ve el cumpleaños';
 end $$;
 
+-- ═══ 14. Las políticas no se llaman entre sí en círculo ═══
+-- Una política que consulta otra tabla queda sujeta a las políticas de esa tabla.
+-- `activities` mira `activity_viewers` y, si `activity_viewers` mirara `activities`
+-- al leer, PostgreSQL abortaría por recursión y el calendario entero dejaría de
+-- cargar. Esta comprobación es barata y habría cazado el fallo al introducirlo.
+set role authenticated;
+select pg_temp.act_as('bbbbbbbb-0000-4000-8000-000000000002');
+do $$
+declare n int;
+begin
+  begin
+    select count(*) into n from public.activities;
+    select count(*) into n from public.activity_viewers;
+    raise notice 'OK 14 · leer activities y activity_viewers no recursiona';
+  exception when others then
+    raise exception 'FALLO 14: leer disparó %', sqlerrm;
+  end;
+end $$;
+
 -- ── Limpieza ──
 reset role;
 select pg_temp.act_as(null);

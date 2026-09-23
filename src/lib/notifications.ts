@@ -14,6 +14,7 @@
  * - `presentNow()` muestra un aviso inmediato, para cuando llega una solicitud de
  *   contacto o una invitación a una actividad.
  */
+import Constants, { ExecutionEnvironment } from 'expo-constants';
 import { Platform } from 'react-native';
 
 import type { UpcomingReminder } from '@/types/domain';
@@ -23,8 +24,15 @@ type NotificationsModule = typeof import('expo-notifications');
 let module: NotificationsModule | null | undefined;
 let handlerSet = false;
 
+/**
+ * Expo Go retiró las notificaciones en el SDK 53, y cargar el módulo ahí no falla en
+ * silencio: lanza un error que se ve en la consola en cada arranque. Se comprueba
+ * antes de intentarlo, para no ensuciar los registros con algo ya conocido.
+ */
+const EN_EXPO_GO = Constants.executionEnvironment === ExecutionEnvironment.StoreClient;
+
 function load(): NotificationsModule | null {
-  if (Platform.OS === 'web') return null;
+  if (Platform.OS === 'web' || EN_EXPO_GO) return null;
   if (module !== undefined) return module;
   try {
     // eslint-disable-next-line @typescript-eslint/no-require-imports -- carga perezosa de módulo nativo
