@@ -162,7 +162,33 @@ function seedOtherActivities(): Activity[] {
   ];
 }
 
+/**
+ * Actividades extra para medir el rendimiento (NFR-1, NFR-2).
+ *
+ * Se activa con `EXPO_PUBLIC_DEMO_SEED_COUNT=500` y por omisión no genera nada, así
+ * que no afecta al uso normal del modo demostración. Existe para poder medir la
+ * carga del calendario con un volumen realista en lugar de con los datos de ejemplo,
+ * que son una docena.
+ */
+function seedCargaArtificial(): Activity[] {
+  const cuantas = Number.parseInt(process.env.EXPO_PUBLIC_DEMO_SEED_COUNT ?? '', 10);
+  if (!Number.isFinite(cuantas) || cuantas <= 0) return [];
+
+  const monday = startOfWeek(new Date(), { weekStartsOn: 1 });
+  const temas = SYSTEM_THEMES.slice(0, 6);
+  const salida: Activity[] = [];
+  for (let i = 0; i < cuantas; i += 1) {
+    // Repartidas en un año alrededor de hoy, varias por día, para que cualquier
+    // vista tenga contenido y las de un mismo día se solapen.
+    const dia = addDays(monday, Math.floor(i / 3) - 180);
+    const hora = 7 + (i % 3) * 4;
+    salida.push(activity(`Carga ${i + 1}`, temas[i % temas.length]?.name ?? null, dia, hora, 1.5));
+  }
+  return salida;
+}
+
 const seededOthers = seedOtherActivities();
+const seededCarga = seedCargaArtificial();
 const gymTogether = seededOthers.find((a) => a.title === 'Gimnasio juntos') as Activity;
 const brunch = seededOthers.find((a) => a.title === 'Brunch') as Activity;
 
@@ -174,7 +200,7 @@ export const demoState: DemoState = {
   currentUser: null,
   contactColors: [],
   themes: [...SYSTEM_THEMES],
-  activities: [...seedActivities(), ...seededOthers],
+  activities: [...seedActivities(), ...seededOthers, ...seededCarga],
   connections: [
     { id: 'con-ana', requester_id: DEMO_USER.id, addressee_id: DEMO_CONTACTS.ana.id, status: 'accepted', created_at: new Date().toISOString(), responded_at: new Date().toISOString() },
     { id: 'con-luis', requester_id: DEMO_CONTACTS.luis.id, addressee_id: DEMO_USER.id, status: 'pending', created_at: new Date().toISOString(), responded_at: null },

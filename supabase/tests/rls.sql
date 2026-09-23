@@ -252,6 +252,87 @@ begin
   raise notice 'OK 10 · ser admin no da acceso a las actividades de nadie';
 end $$;
 
+-- ═══ 11. Actividad privada: ni con 'details' se ve el título (RF-C14) ═══
+-- Es la regla más delicada que añadimos: el resto de la privacidad depende del
+-- nivel dado al calendario, y esta es una excepción por actividad que tiene que
+-- ganarle a ese nivel. Bea tiene 'details' sobre el calendario de Ana.
+reset role;
+update public.calendar_shares set visibility = 'details'
+ where owner_id = 'aaaaaaaa-0000-4000-8000-000000000001'
+   and shared_with_id = 'bbbbbbbb-0000-4000-8000-000000000002';
+
+insert into public.activities (id, owner_id, title, start_at, end_at, is_private)
+values ('11111111-0000-4000-8000-00000000000a','aaaaaaaa-0000-4000-8000-000000000001',
+        'Terapia', now() + interval '1 day', now() + interval '1 day 1 hour', true);
+
+set role authenticated;
+select pg_temp.act_as('bbbbbbbb-0000-4000-8000-000000000002');
+do $$
+declare n_privadas int; titulo text;
+begin
+  -- El bloque tiene que seguir ocupando el hueco: se protege el contenido, no la
+  -- disponibilidad. Lo que no puede salir es el título.
+  select count(*) into n_privadas
+    from public.get_availability(array['aaaaaaaa-0000-4000-8000-000000000001'::uuid],
+                                 now(), now() + interval '30 days')
+   where start_at = (select start_at from public.activities
+                      where id = '11111111-0000-4000-8000-00000000000a');
+  if n_privadas <> 1 then
+    raise exception 'FALLO 11a: la actividad privada debe seguir ocupando el hueco, hubo % bloques', n_privadas;
+  end if;
+
+  select title into titulo
+    from public.get_availability(array['aaaaaaaa-0000-4000-8000-000000000001'::uuid],
+                                 now(), now() + interval '30 days')
+   where start_at = (select start_at from public.activities
+                      where id = '11111111-0000-4000-8000-00000000000a');
+  if titulo is not null then
+    raise exception 'FALLO 11b: una actividad privada expuso su título: %', titulo;
+  end if;
+
+  -- Y el resto de actividades de Ana sí deben seguir mostrando título con 'details':
+  -- la privacidad es por actividad, no un interruptor global.
+  if (select count(title)
+        from public.get_availability(array['aaaaaaaa-0000-4000-8000-000000000001'::uuid],
+                                     now(), now() + interval '30 days')) = 0 then
+    raise exception 'FALLO 11c: marcar una privada silenció también a las demás';
+  end if;
+  raise notice 'OK 11 · la actividad privada ocupa el hueco sin exponer su título';
+end $$;
+
+-- ═══ 12. No se puede invitar a una actividad privada (RF-C14) ═══
+-- La interfaz ya no lo ofrece, pero la regla tiene que vivir en la base: una
+-- petición manipulada no debe poder saltársela.
+reset role;
+do $$
+begin
+  begin
+    insert into public.activity_shares (activity_id, shared_with_id, status)
+    values ('11111111-0000-4000-8000-00000000000a','bbbbbbbb-0000-4000-8000-000000000002','pending');
+    raise exception 'FALLO 12: se pudo invitar a una actividad privada';
+  exception when insufficient_privilege then
+    raise notice 'OK 12 · invitar a una actividad privada queda rechazado';
+  end;
+end $$;
+
+-- ═══ 13. El cumpleaños lo ven los contactos, no los desconocidos (RF-A10) ═══
+reset role;
+update public.profiles set birthday = '1998-06-28'
+ where id = 'aaaaaaaa-0000-4000-8000-000000000001';
+
+set role authenticated;
+select pg_temp.act_as('bbbbbbbb-0000-4000-8000-000000000002');
+do $$
+declare cumple date;
+begin
+  select birthday into cumple from public.profiles
+   where id = 'aaaaaaaa-0000-4000-8000-000000000001';
+  if cumple is null then
+    raise exception 'FALLO 13a: un contacto aceptado no ve el cumpleaños';
+  end if;
+  raise notice 'OK 13 · un contacto aceptado ve el cumpleaños';
+end $$;
+
 -- ── Limpieza ──
 reset role;
 select pg_temp.act_as(null);
