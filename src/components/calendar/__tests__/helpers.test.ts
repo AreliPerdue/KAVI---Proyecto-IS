@@ -9,7 +9,7 @@ import { groupByDay } from '@/components/calendar/group-by-day';
 import { blocksToActivities, isOverlayActivity, OVERLAY_PREFIX } from '@/components/calendar/overlay';
 import { Colors } from '@/constants/theme';
 import { EMPTY_FILTERS } from '@/store/calendar-store';
-import type { Activity } from '@/types/domain';
+import type { Activity, AvailabilityBlock } from '@/types/domain';
 
 const actividad = (over: Partial<Activity> = {}): Activity =>
   ({
@@ -174,5 +174,64 @@ describe('tint', () => {
 
   it('admite otra opacidad', () => {
     expect(tint('#000000', 0.5)).toBe('rgba(0,0,0,0.5)');
+  });
+});
+
+/**
+ * Duplicado al superponer (regresión).
+ *
+ * Una actividad que un contacto me compartió ya está en mi calendario. Al superponer
+ * su agenda, esa misma actividad vuelve a llegar como bloque de disponibilidad, así
+ * que sin descartarla se pinta dos veces, una sobre otra.
+ */
+describe('no duplicar lo que ya tengo', () => {
+  const bloque = (over: Partial<AvailabilityBlock> = {}): AvailabilityBlock => ({
+    user_id: 'ana',
+    start_at: '2026-09-23T15:00:00.000Z',
+    end_at: '2026-09-23T16:00:00.000Z',
+    title: 'Comida',
+    color: '#E91E63',
+    ...over,
+  });
+
+  const mia = (over: Partial<Activity> = {}): Activity =>
+    ({
+      id: 'a1', owner_id: 'ana', title: 'Comida', description: null, theme_id: null,
+      dimension: null, color: '#E91E63', icon: null, all_day: false, is_gym: false,
+      recurrence_rule: null, recurrence_parent_id: null, created_at: 'x', updated_at: 'x',
+      start_at: '2026-09-23T15:00:00.000Z',
+      end_at: '2026-09-23T16:00:00.000Z',
+      ...over,
+    }) as Activity;
+
+  const nombre = () => 'Ana';
+  const color = () => '#E91E63';
+
+  it('sin nada propio los bloques pasan tal cual', () => {
+    expect(blocksToActivities([bloque()], nombre, color)).toHaveLength(1);
+  });
+
+  it('descarta el bloque de una actividad que ya tengo compartida', () => {
+    expect(blocksToActivities([bloque()], nombre, color, [mia()])).toHaveLength(0);
+  });
+
+  it('una actividad de la misma persona a otra hora si se pinta', () => {
+    const otra = mia({ start_at: '2026-09-23T18:00:00.000Z', end_at: '2026-09-23T19:00:00.000Z' });
+    expect(blocksToActivities([bloque()], nombre, color, [otra])).toHaveLength(1);
+  });
+
+  /** Coincidir en horario con otra persona es normal, no es el mismo evento. */
+  it('el mismo horario pero de otra persona no se descarta', () => {
+    expect(blocksToActivities([bloque({ user_id: 'luis' })], nombre, color, [mia()])).toHaveLength(1);
+  });
+
+  it('mis propias actividades no descartan bloques ajenos', () => {
+    const propia = mia({ owner_id: 'yo' });
+    expect(blocksToActivities([bloque()], nombre, color, [propia])).toHaveLength(1);
+  });
+
+  it('descarta solo los que coinciden, no la lista entera', () => {
+    const bloques = [bloque(), bloque({ start_at: '2026-09-23T18:00:00.000Z', end_at: '2026-09-23T19:00:00.000Z' })];
+    expect(blocksToActivities(bloques, nombre, color, [mia()])).toHaveLength(1);
   });
 });

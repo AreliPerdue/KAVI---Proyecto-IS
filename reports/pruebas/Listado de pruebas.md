@@ -32,8 +32,8 @@ Están agrupadas igual que en el código, bajo el aspecto que verifican.
 ### Índice
 
 - [Crear cuenta y entrar](#crear-cuenta-y-entrar) — 155 pruebas
-- [El calendario](#el-calendario) — 183 pruebas
-- [Crear y editar actividades](#crear-y-editar-actividades) — 198 pruebas
+- [El calendario](#el-calendario) — 189 pruebas
+- [Crear y editar actividades](#crear-y-editar-actividades) — 202 pruebas
 - [Temas y dimensiones del bienestar](#temas-y-dimensiones-del-bienestar) — 68 pruebas
 - [Compartir con otras personas](#compartir-con-otras-personas) — 221 pruebas
 - [Recordatorios](#recordatorios) — 80 pruebas
@@ -344,7 +344,7 @@ Es la puerta de la app: si algo falla aquí, nadie llega al resto. Se comprobó 
 
 ## El calendario
 
-**183 pruebas, todas superadas.**
+**189 pruebas, todas superadas.**
 
 Es la pantalla central de KAVI. Lo delicado aquí no es enseñar los días, sino colocar bien las actividades: las que se traslapan tienen que repartirse el ancho, las muy cortas tienen que seguir siendo legibles y las que cruzan la medianoche tienen que aparecer en los dos días. También se comprobó todo el manejo de fechas, que es la base invisible de la pantalla.
 
@@ -481,7 +481,7 @@ Es la pantalla central de KAVI. Lo delicado aquí no es enseñar los días, sino
 
 ### Filtrado y agrupación de actividades
 
-*Qué se enseña y cómo se ordena.* — 23 pruebas.
+*Qué se enseña y cómo se ordena.* — 29 pruebas.
 
 
 **applyFilters**
@@ -521,6 +521,15 @@ Es la pantalla central de KAVI. Lo delicado aquí no es enseñar los días, sino
 - ✓ acepta hex de 3 digitos
 - ✓ acepta hex sin almohadilla
 - ✓ admite otra opacidad
+
+**no duplicar lo que ya tengo**
+
+- ✓ sin nada propio los bloques pasan tal cual
+- ✓ descarta el bloque de una actividad que ya tengo compartida
+- ✓ una actividad de la misma persona a otra hora si se pinta
+- ✓ el mismo horario pero de otra persona no se descarta
+- ✓ mis propias actividades no descartan bloques ajenos
+- ✓ descarta solo los que coinciden, no la lista entera
 
 
 ### Cabecera del calendario
@@ -728,7 +737,7 @@ Es la pantalla central de KAVI. Lo delicado aquí no es enseñar los días, sino
 
 ## Crear y editar actividades
 
-**198 pruebas, todas superadas.**
+**202 pruebas, todas superadas.**
 
 Aquí vive la parte más difícil de la app: las actividades que se repiten. Editar o borrar una tiene que distinguir entre "solo esta vez" y "toda la serie", y equivocarse significa perder datos de la persona. También se comprobó el cruce entre cómo se guardan las horas (universales) y cómo se muestran (tu hora local).
 
@@ -972,14 +981,18 @@ Aquí vive la parte más difícil de la app: las actividades que se repiten. Edi
 
 ### Actividades — servidor real
 
-*Guardar, leer, editar y borrar contra la base de datos.* — 32 pruebas.
+*Guardar, leer, editar y borrar contra la base de datos.* — 36 pruebas.
 
 
 **listByRange**
 
 - ✓ usa traslape, no contención: start < to AND end > from (NFR-1)
 - ✓ ordena por hora de inicio
-- ✓ no filtra por dueño: de eso se encarga la RLS
+- ✓ sin nada compartido conmigo pide solo lo mio
+- ✓ busca primero que actividades me han compartido y aceptado
+- ✓ con actividades compartidas pide las mias O esas, no todo lo legible
+- ✓ sin compartidas no construye un in() vacío
+- ✓ una invitación pendiente no entra en el calendario
 - ✓ en una actividad propia no añade el nombre del dueño
 - ✓ en una actividad ajena añade el nombre visible (RF-S5)
 - ✓ sin nombre visible cae al username

@@ -86,8 +86,8 @@ export default function CalendarScreen() {
     [peopleColors, theme.neutralActivity],
   );
   const overlayActivities = useMemo(
-    () => (overlay.data ? blocksToActivities(overlay.data, nameOf, colorOf) : []),
-    [overlay.data, nameOf, colorOf],
+    () => (overlay.data ? blocksToActivities(overlay.data, nameOf, colorOf, activities.data ?? []) : []),
+    [overlay.data, nameOf, colorOf, activities.data],
   );
 
   const openActivity = (activity: Activity) => {

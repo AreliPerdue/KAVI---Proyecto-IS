@@ -32,23 +32,61 @@ beforeEach(() => {
 
 describe('listByRange', () => {
   it('usa traslape, no contencion: start < to AND end > from (NFR-1)', async () => {
+    mockSb.encolar({ data: [], error: null });
     await supabaseActivities.listByRange('u1', 'FROM', 'TO');
     expect(mockSb.argsDe('lt')).toEqual(['start_at', 'TO']);
     expect(mockSb.argsDe('gt')).toEqual(['end_at', 'FROM']);
   });
 
   it('ordena por hora de inicio', async () => {
+    mockSb.encolar({ data: [], error: null });
     await supabaseActivities.listByRange('u1', 'a', 'b');
     expect(mockSb.argsDe('order')).toEqual(['start_at']);
   });
 
-  it('no filtra por dueno: de eso se encarga la RLS', async () => {
+  /**
+   * Esta prueba afirmaba lo contrario —que no filtrar era intencionado porque «de
+   * eso se encarga la RLS»— y con ello dejaba pasar un fallo real. La RLS permite
+   * leer todas las actividades de quien te comparte su calendario en modo detalles,
+   * porque lo necesita la pantalla de disponibilidad. Apoyarse solo en ella metía
+   * las actividades de los contactos en el calendario propio sin haberlas pedido.
+   */
+  it('sin nada compartido conmigo pide solo lo mio', async () => {
+    mockSb.encolar({ data: [], error: null });
     await supabaseActivities.listByRange('u1', 'a', 'b');
-    expect(mockSb.llamadas.filter((l) => l[0] === 'eq')).toHaveLength(0);
+    expect(mockSb.llamadas.some((l) => l[0] === 'eq' && l[1] === 'owner_id' && l[2] === 'u1')).toBe(true);
+  });
+
+  it('busca primero que actividades me han compartido y aceptado', async () => {
+    mockSb.encolar({ data: [], error: null });
+    await supabaseActivities.listByRange('u1', 'a', 'b');
+    expect(mockSb.llamadas.some((l) => l[0] === 'from' && l[1] === 'activity_shares')).toBe(true);
+    expect(mockSb.llamadas.some((l) => l[0] === 'eq' && l[1] === 'shared_with_id' && l[2] === 'u1')).toBe(true);
+    expect(mockSb.llamadas.some((l) => l[0] === 'eq' && l[1] === 'status' && l[2] === 'accepted')).toBe(true);
+  });
+
+  it('con actividades compartidas pide las mias O esas, no todo lo legible', async () => {
+    mockSb.encolar({ data: [{ activity_id: 'a9' }, { activity_id: 'a8' }], error: null });
+    await supabaseActivities.listByRange('u1', 'a', 'b');
+    expect(mockSb.argsDe('or')).toEqual(['owner_id.eq.u1,id.in.(a9,a8)']);
+  });
+
+  /** `in.()` con la lista vacia no es sintaxis valida en PostgREST. */
+  it('sin compartidas no construye un in() vacio', async () => {
+    mockSb.encolar({ data: [], error: null });
+    await supabaseActivities.listByRange('u1', 'a', 'b');
+    expect(mockSb.argsDe('or')).toBeUndefined();
+  });
+
+  it('una invitacion pendiente no entra en el calendario', async () => {
+    mockSb.encolar({ data: [], error: null });
+    await supabaseActivities.listByRange('u1', 'a', 'b');
+    // El filtro por `accepted` es lo que la deja fuera; vive en la lista de invitaciones.
+    expect(mockSb.llamadas.some((l) => l[0] === 'eq' && l[2] === 'accepted')).toBe(true);
   });
 
   it('en una actividad propia no anade el nombre del dueno', async () => {
-    mockSb.responder({ data: [fila()], error: null });
+    mockSb.encolar({ data: [], error: null }, { data: [fila()], error: null });
     expect((await supabaseActivities.listByRange('u1', 'a', 'b'))[0]?.owner_name).toBeUndefined();
   });
 

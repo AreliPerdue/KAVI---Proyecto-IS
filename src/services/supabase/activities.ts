@@ -82,15 +82,43 @@ async function fetchOne(id: string): Promise<Activity> {
 
 export const supabaseActivities: ActivitiesApi = {
   /** Lectura por rango visible (NFR-1): start_at < to AND end_at > from; la RLS filtra. */
+  /**
+   * Mi calendario: lo mío y lo que me han compartido explícitamente.
+   *
+   * El filtro por dueño va aquí a propósito, aunque la RLS ya limite qué filas se
+   * pueden leer. Son dos preguntas distintas: la RLS responde «¿puedo leer esto?»
+   * y esta consulta responde «¿debe salir en mi calendario?». La política permite
+   * leer todas las actividades de quien me comparte su calendario en modo detalles
+   * —lo necesita la pantalla de disponibilidad—, así que apoyarse solo en ella
+   * metía las actividades de mis contactos en mi inicio sin haberlas pedido, las
+   * duplicaba al superponer su calendario y las presentaba como si me hubieran
+   * invitado a cada una.
+   *
+   * Los calendarios de contactos se ven desde la superposición, que va por
+   * `get_availability` y respeta el nivel de visibilidad de cada quien.
+   */
   async listByRange(userId, fromIso_, toIso_) {
-    const rows = unwrap(
+    const compartidas = unwrap(
       await getSupabase()
-        .from('activities')
-        .select(SELECT)
-        .lt('start_at', toIso_)
-        .gt('end_at', fromIso_)
-        .order('start_at'),
-    ) as Row[];
+        .from('activity_shares')
+        .select('activity_id')
+        .eq('shared_with_id', userId)
+        .eq('status', 'accepted'),
+    ) as { activity_id: string }[];
+
+    const consulta = getSupabase()
+      .from('activities')
+      .select(SELECT)
+      .lt('start_at', toIso_)
+      .gt('end_at', fromIso_);
+
+    // `in.()` con la lista vacía no es sintaxis válida en PostgREST.
+    const ids = compartidas.map((s) => s.activity_id);
+    const acotada = ids.length
+      ? consulta.or(`owner_id.eq.${userId},id.in.(${ids.join(',')})`)
+      : consulta.eq('owner_id', userId);
+
+    const rows = unwrap(await acotada.order('start_at')) as Row[];
     return rows.map((r) => toActivity(r, userId));
   },
 
