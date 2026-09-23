@@ -11,7 +11,7 @@ import { SplashView } from '@/components/splash-view';
 import { Colors } from '@/constants/theme';
 import { useBrandFonts } from '@/hooks/use-brand-fonts';
 import { useSplashGate } from '@/hooks/use-splash-gate';
-import { useResolvedScheme } from '@/hooks/use-theme';
+import { ThemeSchemeProvider, useSchemeFromPreference } from '@/hooks/use-theme';
 import { queryClient } from '@/lib/query-client';
 import { AuthProvider, ConfirmProvider, SnackbarProvider, useAuth } from '@/providers';
 import { usePreferencesStore } from '@/store/preferences-store';
@@ -86,7 +86,7 @@ export function ErrorBoundary(props: ErrorBoundaryProps) {
 
 export default function RootLayout() {
   const appearance = usePreferencesStore((s) => s.appearance);
-  const scheme = useResolvedScheme();
+  const scheme = useSchemeFromPreference();
 
   /**
    * Las piezas **nativas** —la barra de pestañas, el teclado, las hojas del sistema—
@@ -116,15 +116,17 @@ export default function RootLayout() {
     <GestureHandlerRootView style={styles.root}>
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
-          <ThemeProvider value={navigationThemes[scheme]}>
-            <SnackbarProvider>
-              <ConfirmProvider>
-                <RootNavigator />
-              </ConfirmProvider>
-            </SnackbarProvider>
-            {/* Con fondo claro los iconos del sistema tienen que ir oscuros. */}
-            <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
-          </ThemeProvider>
+          <ThemeSchemeProvider scheme={scheme}>
+            <ThemeProvider value={navigationThemes[scheme]}>
+              <SnackbarProvider>
+                <ConfirmProvider>
+                  <RootNavigator />
+                </ConfirmProvider>
+              </SnackbarProvider>
+              {/* Con fondo claro los iconos del sistema tienen que ir oscuros. */}
+              <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
+            </ThemeProvider>
+          </ThemeSchemeProvider>
         </AuthProvider>
       </QueryClientProvider>
     </GestureHandlerRootView>
