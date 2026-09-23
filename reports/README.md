@@ -35,5 +35,15 @@ documento a leer si lo que interesa es *qué se verificó*, no cómo.
 ## Informe de cierre
 
 El informe de cierre del proyecto está en
-[`Informe-de-cierre-KAVI.docx`](Informe-de-cierre-KAVI.docx) y cita los datos de
-estas tres carpetas. **Pendiente de regenerar** con las cifras actuales.
+[`Informe-de-cierre-KAVI.docx`](Informe-de-cierre-KAVI.docx): comparación entre
+lo planificado y lo ejecutado, lecciones aprendidas y plan de mejora continua,
+con las cifras de estas tres carpetas.
+
+Se genera desde el repositorio, no se escribe a mano:
+
+```bash
+node reports/generar-informe-de-cierre.js reports/Informe-de-cierre-KAVI.docx
+```
+
+Así las cifras que cita no pueden desviarse de las que miden las herramientas.
+Para entregarlo en PDF, ábrelo en Word y exporta.
