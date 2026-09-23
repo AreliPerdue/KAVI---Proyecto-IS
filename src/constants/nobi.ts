@@ -19,14 +19,23 @@ export type NobiColor = {
 
 export const NOBIS: readonly NobiColor[] = [
   { id: 'pink', label: 'Rosa', source: require('../../assets/nobi/pink.png') },
+  { id: 'magenta', label: 'Magenta', source: require('../../assets/nobi/magenta.png') },
   { id: 'red', label: 'Rojo', source: require('../../assets/nobi/red.png') },
+  { id: 'deep_red', label: 'Rojo oscuro', source: require('../../assets/nobi/deep_red.png') },
   { id: 'orange', label: 'Naranja', source: require('../../assets/nobi/orange.png') },
   { id: 'yellow', label: 'Amarillo', source: require('../../assets/nobi/yellow.png') },
+  { id: 'olive_green', label: 'Verde oliva', source: require('../../assets/nobi/olive_green.png') },
   { id: 'lime_green', label: 'Verde lima', source: require('../../assets/nobi/lime_green.png') },
+  { id: 'green', label: 'Verde', source: require('../../assets/nobi/green.png') },
   { id: 'turquois', label: 'Turquesa', source: require('../../assets/nobi/turquois.png') },
   { id: 'baby_blue', label: 'Azul cielo', source: require('../../assets/nobi/baby_blue.png') },
   { id: 'blue', label: 'Azul', source: require('../../assets/nobi/blue.png') },
+  { id: 'navy_blue', label: 'Azul marino', source: require('../../assets/nobi/navy_blue.png') },
+  { id: 'indigo', label: 'Índigo', source: require('../../assets/nobi/indigo.png') },
+  { id: 'purple', label: 'Morado', source: require('../../assets/nobi/purple.png') },
+  { id: 'lilac', label: 'Lila', source: require('../../assets/nobi/lilac.png') },
   { id: 'white', label: 'Blanco', source: require('../../assets/nobi/white.png') },
+  { id: 'gray', label: 'Gris', source: require('../../assets/nobi/gray.png') },
   { id: 'black', label: 'Negro', source: require('../../assets/nobi/black.png') },
 ];
 
