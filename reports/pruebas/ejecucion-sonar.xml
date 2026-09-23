@@ -1,0 +1,1498 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testExecutions version="1">
+  <file path="src/services/demo/__tests__/themes.test.ts">
+    <testCase name="crear › marca el tema como propio y no del sistema" duration="656"/>
+    <testCase name="crear › recorta los espacios del nombre" duration="363"/>
+    <testCase name="crear › aparece en la lista del dueno" duration="514"/>
+    <testCase name="leer › la lista incluye los temas del sistema" duration="187"/>
+    <testCase name="leer › no muestra los temas propios de otra persona" duration="424"/>
+    <testCase name="actualizar › cambia los campos enviados" duration="606"/>
+    <testCase name="actualizar › propaga el nuevo estilo a las actividades que lo usan (copia de estilo)" duration="970"/>
+    <testCase name="actualizar › rechaza modificar un tema del sistema" duration="324"/>
+    <testCase name="actualizar › falla con un tema inexistente" duration="383"/>
+    <testCase name="eliminar › lo saca de la lista" duration="656"/>
+    <testCase name="eliminar › desvincula las actividades pero les conserva el estilo copiado (RF-T6)" duration="963"/>
+    <testCase name="eliminar › rechaza borrar un tema del sistema" duration="328"/>
+  </file>
+  <file path="src/services/demo/__tests__/workouts.test.ts">
+    <testCase name="crear › devuelve el entrenamiento con id y dueno" duration="582"/>
+    <testCase name="crear › nace sin ejercicios y sin duracion" duration="342"/>
+    <testCase name="crear › guarda el nombre que se le da (RF-F7)" duration="387"/>
+    <testCase name="crear › recorta los espacios del nombre" duration="299"/>
+    <testCase name="crear › un nombre en blanco se guarda como sin nombre, no como cadena vacia" duration="297"/>
+    <testCase name="crear › sin nombre nace sin el" duration="307"/>
+    <testCase name="crear › se puede cambiar despues" duration="365"/>
+    <testCase name="crear › rechaza un segundo entrenamiento para la misma actividad" duration="539"/>
+    <testCase name="leer › list solo devuelve los propios" duration="794"/>
+    <testCase name="leer › list ordena del mas reciente al mas antiguo" duration="779"/>
+    <testCase name="leer › getById falla con un id inexistente" duration="129"/>
+    <testCase name="leer › getByActivity devuelve null cuando la actividad no tiene entrenamiento" duration="181"/>
+    <testCase name="actualizar › cambia las notas" duration="354"/>
+    <testCase name="actualizar › conserva las notas si el patch no las menciona" duration="355"/>
+    <testCase name="ejercicios › se anaden con posicion incremental" duration="405"/>
+    <testCase name="ejercicios › recortan los espacios del nombre" duration="343"/>
+    <testCase name="ejercicios › suben el conteo del entrenamiento" duration="440"/>
+    <testCase name="ejercicios › la duracion total es la suma de los ejercicios, no un campo guardado (RF-F3)" duration="499"/>
+    <testCase name="ejercicios › se pueden editar" duration="475"/>
+    <testCase name="ejercicios › al eliminarlos baja el conteo" duration="571"/>
+    <testCase name="ejercicios › no se pueden anadir a un entrenamiento inexistente" duration="99"/>
+    <testCase name="eliminar › lo saca de la lista" duration="808"/>
+    <testCase name="eliminar › arrastra sus ejercicios" duration="726"/>
+  </file>
+  <file path="src/services/demo/__tests__/connections.test.ts">
+    <testCase name="buscar personas (RF-S1) › encuentra por prefijo de username" duration="481"/>
+    <testCase name="buscar personas (RF-S1) › acepta la arroba inicial" duration="185"/>
+    <testCase name="buscar personas (RF-S1) › encuentra por correo completo" duration="218"/>
+    <testCase name="buscar personas (RF-S1) › el correo exige la cadena completa: un prefijo no basta" duration="243"/>
+    <testCase name="buscar personas (RF-S1) › exige al menos 3 caracteres, para no poder enumerar cuentas" duration="330"/>
+    <testCase name="buscar personas (RF-S1) › nunca se devuelve a quien busca" duration="159"/>
+    <testCase name="buscar personas (RF-S1) › ignora mayusculas y espacios" duration="149"/>
+    <testCase name="buscar personas (RF-S1) › ordena la coincidencia exacta primero" duration="160"/>
+    <testCase name="buscar personas (RF-S1) › tope de 8 resultados" duration="185"/>
+    <testCase name="listar contactos (RF-S3) › clasifica aceptados, recibidas y enviadas" duration="292"/>
+    <testCase name="listar contactos (RF-S3) › reporta la visibilidad que cada quien concede" duration="285"/>
+    <testCase name="listar contactos (RF-S3) › viene ordenado por nombre visible" duration="275"/>
+    <testCase name="listar contactos (RF-S3) › no incluye a quien no tiene conexion conmigo" duration="288"/>
+    <testCase name="solicitar conexion › crea la solicitud como pendiente" duration="276"/>
+    <testCase name="solicitar conexion › rechaza enviarsela a uno mismo" duration="305"/>
+    <testCase name="solicitar conexion › rechaza duplicar una conexion ya aceptada" duration="285"/>
+    <testCase name="solicitar conexion › rechaza duplicar una solicitud pendiente, en cualquier direccion" duration="281"/>
+    <testCase name="aceptar › la solicitud recibida pasa a aceptada y queda fechada" duration="276"/>
+    <testCase name="aceptar › solo la puede aceptar quien la recibio, no quien la envio" duration="280"/>
+    <testCase name="aceptar › falla con una solicitud inexistente" duration="286"/>
+    <testCase name="eliminar contacto y cascada (RF-S2) › quita la conexion" duration="279"/>
+    <testCase name="eliminar contacto y cascada (RF-S2) › revoca el calendario que esa persona me compartia" duration="273"/>
+    <testCase name="eliminar contacto y cascada (RF-S2) › revoca las invitaciones a actividades entre ambos" duration="277"/>
+    <testCase name="eliminar contacto y cascada (RF-S2) › olvida el color que le habia asignado (RF-S15)" duration="527"/>
+    <testCase name="eliminar contacto y cascada (RF-S2) › no deja borrar una conexion ajena" duration="281"/>
+    <testCase name="eliminar contacto y cascada (RF-S2) › ignora en silencio una conexion inexistente" duration="278"/>
+    <testCase name="color de contacto (RF-S15) › guarda el color elegido" duration="284"/>
+    <testCase name="color de contacto (RF-S15) › null vuelve al color automatico y no guarda nada" duration="590"/>
+    <testCase name="color de contacto (RF-S15) › reemplaza en vez de acumular" duration="582"/>
+    <testCase name="color de contacto (RF-S15) › solo se puede asignar a contactos aceptados" duration="286"/>
+    <testCase name="visibilidad del calendario (RF-S7) › comparte con el nivel elegido" duration="294"/>
+    <testCase name="visibilidad del calendario (RF-S7) › cambiar el nivel no duplica el share" duration="528"/>
+    <testCase name="visibilidad del calendario (RF-S7) › null deja de compartir" duration="544"/>
+    <testCase name="visibilidad del calendario (RF-S7) › no se puede compartir con quien no es contacto aceptado" duration="440"/>
+    <testCase name="visibilidad del calendario (RF-S7) › pero si se puede dejar de compartir aunque ya no sean contactos" duration="309"/>
+  </file>
+  <file path="src/services/demo/__tests__/admin.test.ts">
+    <testCase name="getStats › cuenta todas las cuentas" duration="284"/>
+    <testCase name="getStats › cuenta todas las actividades" duration="319"/>
+    <testCase name="getStats › las altas de 7 dias no superan a las de 30" duration="292"/>
+    <testCase name="getStats › cuenta solo las conexiones aceptadas" duration="294"/>
+    <testCase name="getStats › los temas personalizados excluyen los del sistema" duration="281"/>
+    <testCase name="getStats › las personas activas no superan al total de cuentas" duration="298"/>
+    <testCase name="getStats › devuelve todas las metricas del contrato" duration="304"/>
+    <testCase name="listAccounts › devuelve una fila por cuenta" duration="320"/>
+    <testCase name="listAccounts › incluye correo, rol y fecha de alta" duration="295"/>
+    <testCase name="listAccounts › cuenta las actividades de cada persona" duration="318"/>
+    <testCase name="listAccounts › la ultima actividad es la mas reciente de esa persona" duration="414"/>
+    <testCase name="listAccounts › una cuenta sin actividades no tiene ultima actividad" duration="318"/>
+    <testCase name="listAccounts › vienen de la mas reciente a la mas antigua" duration="281"/>
+    <testCase name="listAccounts › no expone contrasenas" duration="302"/>
+  </file>
+  <file path="src/store/__tests__/calendar-store.test.ts">
+    <testCase name="valores iniciales › abre en vista mensual" duration="116"/>
+    <testCase name="valores iniciales › el ancla es hoy en formato yyyy-MM-dd" duration="75"/>
+    <testCase name="valores iniciales › nace sin filtros ni superposiciones" duration="80"/>
+    <testCase name="vista y navegacion › setView cambia la vista" duration="102"/>
+    <testCase name="vista y navegacion › setAnchorKey mueve el ancla sin tocar la vista" duration="81"/>
+    <testCase name="vista y navegacion › openDay lleva a la vista diaria de ese dia" duration="89"/>
+    <testCase name="vista y navegacion › goToday vuelve al ancla de hoy" duration="87"/>
+    <testCase name="filtros › setFilters los aplica" duration="104"/>
+    <testCase name="filtros › clearFilters los vacia" duration="171"/>
+    <testCase name="filtros › hasActiveFilters distingue vacio de con contenido" duration="1"/>
+    <testCase name="calendarios superpuestos (RF-S15) › toggle anade y quita" duration="165"/>
+    <testCase name="calendarios superpuestos (RF-S15) › acepta varias personas y conserva el orden" duration="126"/>
+    <testCase name="calendarios superpuestos (RF-S15) › clearOverlayUsers vuelve a &quot;solo yo&quot;" duration="225"/>
+    <testCase name="hidratacion › marca hydrated al terminar" duration="117"/>
+    <testCase name="hidratacion › sin preferencia guardada cae a la vista por defecto" duration="147"/>
+    <testCase name="hidratacion › no vuelve a hidratar si ya lo hizo" duration="139"/>
+  </file>
+  <file path="src/services/demo/__tests__/shares.test.ts">
+    <testCase name="compartir una actividad (RF-S4) › crea la invitacion como pendiente" duration="910"/>
+    <testCase name="compartir una actividad (RF-S4) › solo quien la creo puede compartirla" duration="614"/>
+    <testCase name="compartir una actividad (RF-S4) › solo se comparte con contactos aceptados" duration="616"/>
+    <testCase name="compartir una actividad (RF-S4) › compartir dos veces no duplica la invitacion" duration="859"/>
+    <testCase name="compartir una actividad (RF-S4) › reinvitar a quien rechazo reabre la invitacion" duration="1100"/>
+    <testCase name="compartir una actividad (RF-S4) › acepta varios contactos de una vez" duration="672"/>
+    <testCase name="compartir una actividad (RF-S4) › falla con una actividad inexistente" duration="316"/>
+    <testCase name="listar shares de una actividad › incluye el perfil de cada invitado" duration="679"/>
+    <testCase name="listar shares de una actividad › vacia si no se ha compartido" duration="434"/>
+    <testCase name="invitaciones recibidas (RF-S5) › solo muestra las pendientes dirigidas a mi" duration="317"/>
+    <testCase name="invitaciones recibidas (RF-S5) › acompana cada invitacion con la actividad y su dueno" duration="334"/>
+    <testCase name="invitaciones recibidas (RF-S5) › ordena por la fecha de la actividad" duration="376"/>
+    <testCase name="invitaciones recibidas (RF-S5) › una vez respondida desaparece de la lista" duration="651"/>
+    <testCase name="responder invitaciones › aceptar marca el share como aceptado" duration="366"/>
+    <testCase name="responder invitaciones › rechazar lo marca como rechazado" duration="338"/>
+    <testCase name="responder invitaciones › nadie mas puede responder por mi" duration="420"/>
+    <testCase name="responder invitaciones › al aceptar se heredan los recordatorios de la actividad (RF-S10)" duration="1049"/>
+    <testCase name="quitar un share › lo puede quitar quien creo la actividad" duration="887"/>
+    <testCase name="quitar un share › tambien lo puede quitar el invitado" duration="893"/>
+    <testCase name="quitar un share › un tercero no puede" duration="1022"/>
+    <testCase name="quitar un share › ignora en silencio un share inexistente" duration="565"/>
+  </file>
+  <file path="src/services/demo/__tests__/profiles.test.ts">
+    <testCase name="getMyProfile › devuelve el perfil de la cuenta" duration="422"/>
+    <testCase name="getMyProfile › falla con un usuario desconocido" duration="293"/>
+    <testCase name="getMyProfile › devuelve una copia: mutarla no toca el estado" duration="300"/>
+    <testCase name="updateMyProfile › cambia el nombre visible" duration="312"/>
+    <testCase name="updateMyProfile › permite dejar el nombre en blanco" duration="302"/>
+    <testCase name="updateMyProfile › normaliza el username a minusculas y sin espacios" duration="303"/>
+    <testCase name="updateMyProfile › rechaza un username que ya tiene otra persona" duration="300"/>
+    <testCase name="updateMyProfile › la comprobacion ignora mayusculas: Pedro y pedro son el mismo" duration="314"/>
+    <testCase name="updateMyProfile › guardar el propio username sin cambiarlo no se reporta como ocupado" duration="363"/>
+    <testCase name="updateMyProfile › un parche vacio no rompe nada" duration="321"/>
+    <testCase name="updateMyProfile › falla con un usuario desconocido" duration="389"/>
+    <testCase name="updateMyProfile › cambiar el username no borra el nombre visible" duration="546"/>
+  </file>
+  <file path="src/services/demo/__tests__/availability.test.ts">
+    <testCase name="que se ve de cada persona › de quien comparte en modo detalles llega el titulo y el color" duration="279"/>
+    <testCase name="que se ve de cada persona › de quien comparte solo ocupacion llega el hueco, nunca el titulo (P4)" duration="321"/>
+    <testCase name="que se ve de cada persona › de quien no comparte su calendario no llega nada" duration="303"/>
+    <testCase name="que se ve de cada persona › de uno mismo se ve todo aunque no haya share" duration="286"/>
+    <testCase name="que se ve de cada persona › pedir varias personas a la vez respeta la visibilidad de cada una" duration="296"/>
+    <testCase name="recorte por rango › una actividad que solapa el borde inicial si cuenta" duration="342"/>
+    <testCase name="recorte por rango › una que termina justo al empezar el rango no cuenta" duration="353"/>
+    <testCase name="recorte por rango › una que empieza justo al acabar el rango tampoco" duration="298"/>
+    <testCase name="recorte por rango › las de fuera del rango se descartan" duration="320"/>
+    <testCase name="forma del resultado › los bloques salen ordenados por hora de inicio" duration="326"/>
+    <testCase name="forma del resultado › sin personas que consultar devuelve vacio" duration="296"/>
+    <testCase name="forma del resultado › cada bloque dice de quien es" duration="313"/>
+  </file>
+  <file path="src/services/demo/__tests__/auth.test.ts">
+    <testCase name="isUsernameAvailable (RF-A1) › reporta ocupado uno que ya existe" duration="377"/>
+    <testCase name="isUsernameAvailable (RF-A1) › reporta libre uno que no existe" duration="169"/>
+    <testCase name="isUsernameAvailable (RF-A1) › la comparacion ignora mayusculas" duration="183"/>
+    <testCase name="signUp directo › crea la cuenta y abre sesion" duration="369"/>
+    <testCase name="signUp directo › normaliza correo y username a minusculas" duration="323"/>
+    <testCase name="signUp directo › rechaza un username ocupado" duration="306"/>
+    <testCase name="signUp directo › rechaza un correo ya registrado" duration="342"/>
+    <testCase name="signUp directo › la cuenta nueva nace sin rol de administracion" duration="281"/>
+    <testCase name="alta por pasos (RF-A8) › el primer paso no crea cuenta todavia" duration="385"/>
+    <testCase name="alta por pasos (RF-A8) › rechaza empezar con un correo ya registrado" duration="275"/>
+    <testCase name="alta por pasos (RF-A8) › rechaza empezar con un username ocupado" duration="376"/>
+    <testCase name="alta por pasos (RF-A8) › el codigo correcto crea la cuenta y abre sesion" duration="626"/>
+    <testCase name="alta por pasos (RF-A8) › conserva el username elegido en el paso previo" duration="632"/>
+    <testCase name="alta por pasos (RF-A8) › la cuenta queda sin contrasena hasta el ultimo paso" duration="627"/>
+    <testCase name="alta por pasos (RF-A8) › una cuenta a medias no puede iniciar sesion" duration="880"/>
+    <testCase name="alta por pasos (RF-A8) › un codigo incorrecto se distingue de uno caducado" duration="629"/>
+    <testCase name="alta por pasos (RF-A8) › verificar sin haber empezado se reporta como caducado" duration="287"/>
+    <testCase name="alta por pasos (RF-A8) › el codigo se consume: no sirve dos veces" duration="888"/>
+    <testCase name="alta por pasos (RF-A8) › setPassword completa el alta y ya permite entrar" duration="1187"/>
+    <testCase name="alta por pasos (RF-A8) › setPassword sin sesion falla" duration="276"/>
+    <testCase name="signIn › entra con las credenciales de la cuenta demo" duration="287"/>
+    <testCase name="signIn › rechaza la contrasena incorrecta" duration="295"/>
+    <testCase name="signIn › el correo no distingue mayusculas" duration="464"/>
+    <testCase name="signIn › un correo nuevo crea cuenta al vuelo (solo en demo)" duration="372"/>
+    <testCase name="signIn › pero exige una contrasena de al menos 8 caracteres" duration="289"/>
+    <testCase name="signIn › el username derivado del correo cumple el formato" duration="305"/>
+    <testCase name="changePassword (RF-A9) › cambia la contrasena comprobando la actual" duration="559"/>
+    <testCase name="changePassword (RF-A9) › rechaza si la actual no coincide" duration="283"/>
+    <testCase name="changePassword (RF-A9) › rechaza repetir la misma contrasena" duration="286"/>
+    <testCase name="changePassword (RF-A9) › falla con un correo desconocido" duration="330"/>
+    <testCase name="sesion › getSession devuelve null sin sesion" duration="45"/>
+    <testCase name="sesion › getSession devuelve la sesion abierta" duration="371"/>
+    <testCase name="sesion › signOut la cierra" duration="405"/>
+    <testCase name="sesion › onAuthStateChange avisa al entrar y al salir" duration="478"/>
+    <testCase name="sesion › cancelar la suscripcion deja de avisar" duration="297"/>
+    <testCase name="sesion › resetPassword no falla (en demo no envia nada)" duration="322"/>
+  </file>
+  <file path="src/components/calendar/__tests__/recurrence-field.test.tsx">
+    <testCase name="elegir frecuencia › arranca en &quot;No&quot; cuando no hay regla" duration="75"/>
+    <testCase name="elegir frecuencia › marca la frecuencia que ya tiene la regla" duration="275"/>
+    <testCase name="elegir frecuencia › volver a &quot;No&quot; borra la regla entera" duration="12"/>
+    <testCase name="elegir frecuencia › la diaria no arrastra dias de la semana" duration="15"/>
+    <testCase name="elegir frecuencia › la semanal se estrena con el dia de la propia actividad" duration="6"/>
+    <testCase name="elegir frecuencia › al volver a semanal se recuperan los dias que ya habia" duration="29"/>
+    <testCase name="elegir frecuencia › cambiar de frecuencia conserva la fecha de fin" duration="17"/>
+    <testCase name="dias de la semana › solo aparecen en la frecuencia semanal" duration="11"/>
+    <testCase name="dias de la semana › se marcan los dias de la regla" duration="24"/>
+    <testCase name="dias de la semana › tocar un dia libre lo anade" duration="29"/>
+    <testCase name="dias de la semana › tocar un dia marcado lo quita" duration="89"/>
+    <testCase name="dias de la semana › quitar el unico dia lo vuelve a poner" duration="36"/>
+    <testCase name="fecha de fin › sin regla no se ofrece" duration="12"/>
+    <testCase name="fecha de fin › se explica que sin fecha se repite indefinidamente" duration="12"/>
+    <testCase name="fecha de fin › activarla propone el dia de la actividad" duration="20"/>
+    <testCase name="fecha de fin › desactivarla la borra" duration="20"/>
+    <testCase name="fecha de fin › con fecha puesta se muestra para poder cambiarla" duration="21"/>
+    <testCase name="fecha de fin › sin fecha no hay boton que abrir" duration="35"/>
+    <testCase name="fecha de fin › elegir un dia en el calendario lo fija" duration="132"/>
+    <testCase name="fecha de fin › una fecha anterior al arranque se corrige al dia base" duration="97"/>
+    <testCase name="editando una sola ocurrencia › no deja tocar la repeticion y dice por que" duration="16"/>
+  </file>
+  <file path="src/services/demo/__tests__/reminders.test.ts">
+    <testCase name="definir recordatorios › crea uno por cada offset" duration="870"/>
+    <testCase name="definir recordatorios › los devuelve ordenados por antelacion" duration="552"/>
+    <testCase name="definir recordatorios › reemplaza el conjunto en vez de acumular" duration="733"/>
+    <testCase name="definir recordatorios › una lista vacia los borra todos" duration="764"/>
+    <testCase name="definir recordatorios › conserva los que se repiten entre una llamada y otra" duration="746"/>
+    <testCase name="definir recordatorios › solo quien creo la actividad puede definirlos" duration="490"/>
+    <testCase name="definir recordatorios › falla con una actividad inexistente" duration="235"/>
+    <testCase name="listar por actividad › nacen habilitados" duration="602"/>
+    <testCase name="listar por actividad › vacio si la actividad no tiene ninguno" duration="413"/>
+    <testCase name="habilitar y deshabilitar › cada persona decide por su cuenta" duration="688"/>
+    <testCase name="habilitar y deshabilitar › se puede volver a habilitar" duration="775"/>
+    <testCase name="habilitar y deshabilitar › desactivarlo yo no lo desactiva para los demas" duration="1249"/>
+    <testCase name="proximos recordatorios › devuelve los de actividades futuras dentro del horizonte" duration="678"/>
+    <testCase name="proximos recordatorios › el aviso se programa antes del inicio, segun el offset" duration="632"/>
+    <testCase name="proximos recordatorios › ignora las actividades ya pasadas" duration="950"/>
+    <testCase name="proximos recordatorios › ignora lo que cae mas alla del horizonte" duration="656"/>
+    <testCase name="proximos recordatorios › omite los que desactive" duration="719"/>
+    <testCase name="proximos recordatorios › el cuerpo dice la hora de inicio" duration="787"/>
+    <testCase name="proximos recordatorios › en una actividad de todo el dia dice &quot;Hoy&quot; en vez de la hora" duration="686"/>
+    <testCase name="proximos recordatorios › en una actividad ajena indica quien la comparte" duration="1170"/>
+    <testCase name="proximos recordatorios › vienen ordenados por cuando se disparan" duration="1309"/>
+  </file>
+  <file path="src/components/calendar/__tests__/month-view.test.tsx">
+    <testCase name="rejilla › pinta siempre seis semanas completas" duration="187"/>
+    <testCase name="rejilla › cada celda dice el dia y que no tiene nada" duration="100"/>
+    <testCase name="rejilla › una celda con una actividad lo dice en singular" duration="138"/>
+    <testCase name="rejilla › con varias lo dice en plural" duration="138"/>
+    <testCase name="rejilla › incluye dias del mes anterior y del siguiente" duration="142"/>
+    <testCase name="interaccion › tocar un dia lo comunica" duration="146"/>
+    <testCase name="interaccion › tambien se pueden tocar los dias de relleno" duration="131"/>
+    <testCase name="actividades de varios dias › aparecen contadas en cada dia que tocan" duration="67"/>
+    <testCase name="actividades de varios dias › las de otro mes no se cuentan en este" duration="117"/>
+  </file>
+  <file path="src/store/__tests__/preferences-store.test.ts">
+    <testCase name="valor inicial › arranca en 24 h, que es lo habitual en es-MX" duration="274"/>
+    <testCase name="valor inicial › nace sin hidratar" duration="136"/>
+    <testCase name="cambiar el formato › guarda el valor elegido" duration="100"/>
+    <testCase name="cambiar el formato › lo propaga a las funciones que formatean horas" duration="114"/>
+    <testCase name="cambiar el formato › se puede volver a 24 h" duration="100"/>
+    <testCase name="cambiar el formato › lo persiste para la proxima sesion" duration="286"/>
+    <testCase name="hidratacion › sin nada guardado se queda en el valor por omision" duration="142"/>
+    <testCase name="hidratacion › al hidratar tambien propaga el formato guardado" duration="406"/>
+    <testCase name="hidratacion › no vuelve a hidratar si ya lo hizo" duration="224"/>
+    <testCase name="nombre del ultimo entrenamiento (RF-F7) › arranca sin ninguno" duration="234"/>
+    <testCase name="nombre del ultimo entrenamiento (RF-F7) › guarda el que se le pase" duration="247"/>
+    <testCase name="nombre del ultimo entrenamiento (RF-F7) › recorta los espacios" duration="199"/>
+    <testCase name="nombre del ultimo entrenamiento (RF-F7) › un nombre en blanco lo deja sin nombre, no en cadena vacia" duration="143"/>
+    <testCase name="nombre del ultimo entrenamiento (RF-F7) › se recuerda para la proxima sesion" duration="424"/>
+    <testCase name="nombre del ultimo entrenamiento (RF-F7) › cambiar el nombre no pierde el formato de hora" duration="377"/>
+    <testCase name="nombre del ultimo entrenamiento (RF-F7) › y cambiar el formato no pierde el nombre" duration="388"/>
+  </file>
+  <file path="src/app/(auth)/__tests__/forgot-password.test.tsx">
+    <testCase name="ForgotPasswordScreen › muestra el titulo y el campo de correo" duration="87"/>
+    <testCase name="ForgotPasswordScreen › ofrece volver a iniciar sesion" duration="16"/>
+    <testCase name="ForgotPasswordScreen › envia el correo escrito" duration="21"/>
+    <testCase name="ForgotPasswordScreen › no envia si el correo no es valido" duration="16"/>
+    <testCase name="ForgotPasswordScreen › no envia con el campo vacio" duration="10"/>
+    <testCase name="ForgotPasswordScreen › muestra el error del backend" duration="9"/>
+    <testCase name="ForgotPasswordScreen › el mensaje de exito no revela si el correo existe" duration="8"/>
+    <testCase name="ForgotPasswordScreen › durante el envio el boton queda ocupado" duration="55"/>
+  </file>
+  <file path="src/app/(app)/theme/__tests__/new.test.tsx">
+    <testCase name="crear › muestra el campo de nombre vacio" duration="251"/>
+    <testCase name="crear › ofrece las siete dimensiones" duration="128"/>
+    <testCase name="crear › no crea sin nombre" duration="114"/>
+    <testCase name="crear › con nombre crea el tema" duration="163"/>
+    <testCase name="crear › al crearlo avisa y cierra" duration="150"/>
+    <testCase name="crear › cambiar la dimension se refleja en lo enviado" duration="158"/>
+    <testCase name="crear › al crear no ofrece eliminar" duration="113"/>
+    <testCase name="editar › carga los valores del tema" duration="125"/>
+    <testCase name="editar › se titula como edicion" duration="125"/>
+    <testCase name="editar › guardar actualiza en vez de crear" duration="155"/>
+    <testCase name="editar › un color fuera de la paleta cae al primero, sin dejar el selector vacio" duration="101"/>
+    <testCase name="editar › ofrece eliminar y pide confirmacion" duration="125"/>
+    <testCase name="editar › al confirmar lo elimina" duration="238"/>
+    <testCase name="estados › mientras cargan los temas lo indica" duration="275"/>
+    <testCase name="estados › muestra el error de la mutacion" duration="128"/>
+  </file>
+  <file path="src/components/calendar/__tests__/activity-form.test.tsx">
+    <testCase name="campos basicos › muestra titulo, fecha y horas" duration="413"/>
+    <testCase name="campos basicos › las horas vienen de los valores iniciales" duration="74"/>
+    <testCase name="campos basicos › el boton lleva la etiqueta pedida" duration="77"/>
+    <testCase name="campos basicos › muestra el error recibido" duration="113"/>
+    <testCase name="campos basicos › mientras guarda el boton queda ocupado" duration="94"/>
+    <testCase name="validacion › no envia sin titulo" duration="110"/>
+    <testCase name="validacion › con titulo si envia" duration="145"/>
+    <testCase name="todo el dia › por defecto no esta marcado y se ven las horas" duration="80"/>
+    <testCase name="todo el dia › al marcarlo desaparecen las horas" duration="104"/>
+    <testCase name="todo el dia › la fecha sigue estando" duration="127"/>
+    <testCase name="recurrencia (RF-C8) › se puede elegir la frecuencia cuando no esta bloqueada" duration="95"/>
+    <testCase name="recurrencia (RF-C8) › al editar una sola ocurrencia se explica por que no se puede" duration="84"/>
+    <testCase name="gimnasio (RF-F9) › por defecto no esta marcado" duration="63"/>
+    <testCase name="gimnasio (RF-F9) › al marcarlo aparece la captura de rutina" duration="108"/>
+    <testCase name="gimnasio (RF-F9) › con un entrenamiento ya existente ofrece abrirlo en vez de duplicarlo" duration="169"/>
+    <testCase name="gimnasio (RF-F9) › un entrenamiento existente sin ejercicios se describe distinto" duration="396"/>
+    <testCase name="descripcion › es opcional" duration="110"/>
+    <testCase name="descripcion › se propaga cuando se escribe" duration="106"/>
+  </file>
+  <file path="src/services/demo/__tests__/activities.test.ts">
+    <testCase name="crear › devuelve la actividad con id, dueno y marcas de tiempo" duration="715"/>
+    <testCase name="crear › aplica los valores por defecto de los campos opcionales" duration="347"/>
+    <testCase name="crear › queda recuperable por listByRange" duration="683"/>
+    <testCase name="crear › con recurrencia materializa las instancias de la serie" duration="337"/>
+    <testCase name="leer › getById devuelve la actividad creada" duration="445"/>
+    <testCase name="leer › getById falla con un id inexistente" duration="191"/>
+    <testCase name="leer › listByRange excluye lo que queda fuera del rango" duration="592"/>
+    <testCase name="leer › listByRange incluye lo que se traslapa parcialmente con el rango" duration="581"/>
+    <testCase name="leer › listByRange no muestra actividades de otra persona" duration="571"/>
+    <testCase name="leer › listByRange devuelve ordenado por hora de inicio" duration="825"/>
+    <testCase name="actualizar › cambia los campos enviados y conserva el resto" duration="576"/>
+    <testCase name="actualizar › persiste el cambio" duration="742"/>
+    <testCase name="actualizar › permite vaciar la descripcion pasando null" duration="621"/>
+    <testCase name="actualizar › scope &quot;this&quot; no toca a las hermanas de la serie" duration="888"/>
+    <testCase name="actualizar › falla al actualizar algo que no existe" duration="389"/>
+    <testCase name="eliminar › quita la actividad de listByRange" duration="764"/>
+    <testCase name="eliminar › getById falla despues de eliminar" duration="1107"/>
+    <testCase name="eliminar › no afecta a las demas actividades" duration="908"/>
+    <testCase name="eliminar › scope &quot;series&quot; borra la madre y las instancias futuras" duration="501"/>
+    <testCase name="eliminar › falla al eliminar algo que no existe" duration="344"/>
+    <testCase name="series completas (RF-C8) › editar la serie cambia la madre" duration="692"/>
+    <testCase name="series completas (RF-C8) › editar la serie regenera las instancias" duration="708"/>
+    <testCase name="series completas (RF-C8) › el titulo nuevo llega a todas las instancias" duration="614"/>
+    <testCase name="series completas (RF-C8) › quitar la recurrencia deja la actividad suelta" duration="705"/>
+    <testCase name="series completas (RF-C8) › editar desde una instancia afecta a la serie entera" duration="711"/>
+    <testCase name="series completas (RF-C8) › borrar solo la madre deja que la primera instancia herede la serie" duration="658"/>
+    <testCase name="series completas (RF-C8) › borrar una instancia no toca a las demas" duration="613"/>
+    <testCase name="series completas (RF-C8) › extender el horizonte no duplica lo que ya existe" duration="408"/>
+    <testCase name="series completas (RF-C8) › extender el horizonte ignora las series de otra persona" duration="858"/>
+  </file>
+  <file path="src/app/(app)/(tabs)/__tests__/profile.test.tsx">
+    <testCase name="identidad › muestra nombre, usuario y correo" duration="206"/>
+    <testCase name="identidad › sin nombre visible usa un texto de reserva" duration="105"/>
+    <testCase name="identidad › la tarjeta abre la edicion" duration="227"/>
+    <testCase name="identidad › mientras carga lo dice" duration="70"/>
+    <testCase name="identidad › si falla ofrece reintentar" duration="137"/>
+    <testCase name="estadisticas › cuenta actividades del mes, amigos, temas propios y entrenamientos" duration="71"/>
+    <testCase name="estadisticas › solo cuenta contactos aceptados como amigos" duration="98"/>
+    <testCase name="accesos del calendario › ofrece temas, compartido y disponibilidad" duration="73"/>
+    <testCase name="administracion (spec 09) › una cuenta normal no ve el panel" duration="94"/>
+    <testCase name="administracion (spec 09) › una cuenta administradora si" duration="203"/>
+    <testCase name="recordatorios › sin permisos disponibles lo explica" duration="332"/>
+    <testCase name="recordatorios › con permiso concedido lo dice" duration="214"/>
+    <testCase name="recordatorios › sin permiso invita a activarlos en Ajustes" duration="87"/>
+    <testCase name="cerrar sesion › pide confirmacion antes de nada" duration="100"/>
+    <testCase name="cerrar sesion › al confirmar cierra la sesion" duration="131"/>
+    <testCase name="cerrar sesion › muestra el error si falla" duration="57"/>
+    <testCase name="modo demo › fuera de demo no ofrece cambiar de cuenta" duration="171"/>
+    <testCase name="modo demo › en demo si, y avisa de que los datos se reinician" duration="96"/>
+    <testCase name="modo demo › la version se marca como demo" duration="129"/>
+  </file>
+  <file path="src/providers/__tests__/confirm-provider.test.tsx">
+    <testCase name="ConfirmProvider › no muestra el dialogo hasta pedirlo" duration="232"/>
+    <testCase name="ConfirmProvider › muestra titulo y mensaje" duration="16"/>
+    <testCase name="ConfirmProvider › usa etiquetas por defecto" duration="35"/>
+    <testCase name="ConfirmProvider › acepta etiquetas propias" duration="31"/>
+    <testCase name="ConfirmProvider › confirmar resuelve true" duration="13"/>
+    <testCase name="ConfirmProvider › cancelar resuelve false" duration="9"/>
+    <testCase name="ConfirmProvider › al responder el dialogo se cierra" duration="17"/>
+    <testCase name="ConfirmProvider › sin mensaje solo muestra el titulo" duration="47"/>
+    <testCase name="ConfirmProvider › se puede volver a abrir despues de responder" duration="32"/>
+    <testCase name="useConfirm › falla con un mensaje util fuera del provider" duration="12"/>
+  </file>
+  <file path="src/app/(auth)/__tests__/register.test.tsx">
+    <testCase name="recorrido de pasos › empieza preguntando el nombre" duration="139"/>
+    <testCase name="recorrido de pasos › anuncia en que paso va" duration="24"/>
+    <testCase name="recorrido de pasos › no avanza con el nombre vacio" duration="72"/>
+    <testCase name="recorrido de pasos › avanza al correo con un nombre valido" duration="250"/>
+    <testCase name="recorrido de pasos › no avanza con un correo invalido" duration="309"/>
+    <testCase name="recorrido de pasos › se puede retroceder" duration="95"/>
+    <testCase name="propuesta de usuario (RF-A8) › se deriva del correo al salir de ese paso" duration="65"/>
+    <testCase name="propuesta de usuario (RF-A8) › se puede cambiar por otro" duration="81"/>
+    <testCase name="propuesta de usuario (RF-A8) › si el derivado esta ocupado propone otro libre" duration="60"/>
+    <testCase name="envio del codigo › se dispara al salir del paso de usuario, con los tres datos" duration="47"/>
+    <testCase name="envio del codigo › el paso del codigo ofrece reenviarlo" duration="50"/>
+    <testCase name="verificacion y contrasena › verificar marca el alta como pendiente para no entrar a la app sin contrasena" duration="91"/>
+    <testCase name="verificacion y contrasena › si la verificacion falla se deshace la marca" duration="198"/>
+    <testCase name="verificacion y contrasena › el ultimo paso pide la contrasena y cambia el boton" duration="139"/>
+    <testCase name="verificacion y contrasena › exige que las dos contrasenas coincidan" duration="150"/>
+    <testCase name="verificacion y contrasena › con ambas iguales completa el alta" duration="131"/>
+    <testCase name="errores y estados › muestra el error de cualquiera de los tres pasos" duration="18"/>
+    <testCase name="errores y estados › mientras hay peticion el boton queda ocupado" duration="48"/>
+    <testCase name="errores y estados › abandonar el alta limpia la marca de pendiente" duration="51"/>
+  </file>
+  <file path="src/components/calendar/__tests__/timeline.test.tsx">
+    <testCase name="huecos para crear › cada media hora del dia es un boton" duration="115"/>
+    <testCase name="huecos para crear › la etiqueta lleva la hora en formato 24 h" duration="50"/>
+    <testCase name="huecos para crear › tocar un hueco da el dia y los minutos desde medianoche" duration="40"/>
+    <testCase name="huecos para crear › en vista semanal hay huecos para los siete dias" duration="195"/>
+    <testCase name="bloques de actividad › pinta la actividad del dia" duration="82"/>
+    <testCase name="bloques de actividad › tocar el bloque devuelve la actividad completa" duration="94"/>
+    <testCase name="bloques de actividad › no pinta actividades de otro dia" duration="24"/>
+    <testCase name="bloques de actividad › varias actividades a la vez se pintan todas" duration="62"/>
+    <testCase name="franja de todo el dia › las de todo el dia van en su propia franja, fuera de la rejilla" duration="117"/>
+    <testCase name="franja de todo el dia › sin actividades de todo el dia no se reserva esa franja" duration="28"/>
+    <testCase name="actividades compartidas › se puede distinguir cuales son de otra persona" duration="60"/>
+  </file>
+  <file path="src/components/ui/__tests__/time-picker-sheet.test.tsx">
+    <testCase name="apertura › cerrado no pinta el selector" duration="1047"/>
+    <testCase name="apertura › abierto muestra la hora recibida" duration="187"/>
+    <testCase name="apertura › usa un titulo por defecto" duration="109"/>
+    <testCase name="apertura › acepta un titulo propio" duration="57"/>
+    <testCase name="apertura › la medianoche se muestra como 00:00" duration="35"/>
+    <testCase name="columnas › cada hora y cada minuto se anuncian con su etiqueta" duration="54"/>
+    <testCase name="columnas › marca como seleccionadas la hora y el minuto actuales" duration="59"/>
+    <testCase name="columnas › elegir otra hora actualiza la vista previa" duration="92"/>
+    <testCase name="columnas › elegir otro minuto tambien" duration="95"/>
+    <testCase name="columnas › se pueden combinar hora y minuto" duration="174"/>
+    <testCase name="confirmar › devuelve los minutos desde medianoche" duration="109"/>
+    <testCase name="confirmar › devuelve lo elegido, no lo inicial" duration="127"/>
+  </file>
+  <file path="src/components/calendar/__tests__/theme-picker.test.tsx">
+    <testCase name="listado › muestra los temas disponibles" duration="266"/>
+    <testCase name="listado › los agrupa bajo el nombre de su dimension" duration="19"/>
+    <testCase name="listado › ofrece siempre la opcion de no poner tema (RF-T4)" duration="36"/>
+    <testCase name="listado › mientras cargan lo dice" duration="84"/>
+    <testCase name="listado › marca cual esta elegido" duration="18"/>
+    <testCase name="elegir › tocar un tema lo devuelve entero, no solo su id" duration="27"/>
+    <testCase name="elegir › &quot;Sin tema&quot; devuelve null" duration="15"/>
+    <testCase name="busqueda › filtra por nombre del tema" duration="21"/>
+    <testCase name="busqueda › ignora mayusculas" duration="36"/>
+    <testCase name="busqueda › ignora acentos" duration="63"/>
+    <testCase name="busqueda › tambien encuentra por el nombre de la dimension" duration="32"/>
+    <testCase name="busqueda › esconde las dimensiones que se quedan sin temas" duration="30"/>
+    <testCase name="busqueda › sin coincidencias lo dice en vez de dejar el hueco vacio" duration="22"/>
+    <testCase name="busqueda › borrar la busqueda devuelve la lista completa" duration="30"/>
+    <testCase name="busqueda › los espacios sobrantes no cuentan" duration="31"/>
+    <testCase name="gestionar temas › cierra el picker antes de navegar, para no dejarlo abierto detras" duration="45"/>
+  </file>
+  <file path="src/app/(auth)/__tests__/login.test.tsx">
+    <testCase name="LoginScreen › muestra el titulo y los dos campos" duration="102"/>
+    <testCase name="LoginScreen › la contrasena nace oculta" duration="35"/>
+    <testCase name="LoginScreen › ofrece recuperar contrasena y crear cuenta" duration="30"/>
+    <testCase name="LoginScreen › envia las credenciales escritas" duration="47"/>
+    <testCase name="LoginScreen › no envia con un correo invalido" duration="70"/>
+    <testCase name="LoginScreen › no envia sin contrasena" duration="31"/>
+    <testCase name="LoginScreen › muestra el error de credenciales" duration="33"/>
+    <testCase name="LoginScreen › durante el envio el boton queda ocupado" duration="28"/>
+    <testCase name="LoginScreen › sin modo demo no anuncia las credenciales de prueba" duration="41"/>
+    <testCase name="LoginScreen › en modo demo si las anuncia" duration="21"/>
+  </file>
+  <file path="src/app/(app)/activity/__tests__/detail.test.tsx">
+    <testCase name="contenido › muestra el titulo de la actividad" duration="197"/>
+    <testCase name="contenido › muestra el dia y el rango de horas" duration="11"/>
+    <testCase name="contenido › en una actividad de todo el dia no muestra horas" duration="8"/>
+    <testCase name="contenido › mientras carga lo indica" duration="9"/>
+    <testCase name="contenido › si ya no existe ofrece reintentar" duration="23"/>
+    <testCase name="acciones del dueno › ofrece editar, compartir y eliminar" duration="20"/>
+    <testCase name="acciones del dueno › compartir navega a su pantalla" duration="10"/>
+    <testCase name="acciones del dueno › editar una actividad suelta va directo al formulario" duration="48"/>
+    <testCase name="recurrencia: solo esta o toda la serie (RF-C8) › editar una serie pregunta primero el alcance" duration="48"/>
+    <testCase name="recurrencia: solo esta o toda la serie (RF-C8) › eliminar una serie tambien pregunta" duration="53"/>
+    <testCase name="recurrencia: solo esta o toda la serie (RF-C8) › elegir &quot;solo esta&quot; aplica ese alcance" duration="36"/>
+    <testCase name="recurrencia: solo esta o toda la serie (RF-C8) › una actividad recurrente se anuncia como tal" duration="15"/>
+    <testCase name="eliminar › pide confirmacion" duration="9"/>
+    <testCase name="eliminar › al confirmar elimina con el alcance correspondiente" duration="15"/>
+    <testCase name="actividad de otra persona › no ofrece editar ni eliminar" duration="8"/>
+    <testCase name="actividad de otra persona › ofrece salirse de la actividad" duration="11"/>
+    <testCase name="entrenamiento (privado del dueno) › una actividad de gimnasio propia ofrece su entrenamiento" duration="9"/>
+    <testCase name="entrenamiento (privado del dueno) › una actividad normal no lo ofrece" duration="8"/>
+    <testCase name="recordatorios › lista los definidos y permite silenciar el propio" duration="14"/>
+    <testCase name="recordatorios › sin recordatorios no pinta interruptores" duration="8"/>
+  </file>
+  <file path="src/app/(app)/activity/__tests__/share.test.tsx">
+    <testCase name="lista de candidatos › muestra a los contactos aceptados" duration="71"/>
+    <testCase name="lista de candidatos › cuando ya se comparte con todos lo dice" duration="27"/>
+    <testCase name="lista de candidatos › no ofrece a quien ya tiene la actividad" duration="21"/>
+    <testCase name="lista de candidatos › sin contactos disponibles lo dice" duration="7"/>
+    <testCase name="lista de candidatos › ignora las solicitudes pendientes: solo contactos aceptados" duration="8"/>
+    <testCase name="seleccion › el boton nace deshabilitado" duration="7"/>
+    <testCase name="seleccion › al elegir a alguien se habilita" duration="22"/>
+    <testCase name="seleccion › con varias personas el boton dice cuantas" duration="15"/>
+    <testCase name="seleccion › volver a tocar deselecciona" duration="71"/>
+    <testCase name="aviso de choque de horario (RF-S16) › avisa si el contacto ya esta ocupado en ese rango" duration="6"/>
+    <testCase name="aviso de choque de horario (RF-S16) › sin titulo visible avisa solo del horario" duration="5"/>
+    <testCase name="aviso de choque de horario (RF-S16) › con varios choques indica cuantos mas" duration="6"/>
+    <testCase name="aviso de choque de horario (RF-S16) › sin choques no avisa nada" duration="4"/>
+    <testCase name="aviso de choque de horario (RF-S16) › el aviso no impide compartir" duration="38"/>
+    <testCase name="compartir › envia la actividad y los contactos elegidos" duration="30"/>
+    <testCase name="compartir › al lograrlo avisa y cierra" duration="27"/>
+    <testCase name="errores de carga (NFR-11) › si falla la lista de contactos lo explica y deja reintentar" duration="16"/>
+    <testCase name="errores de carga (NFR-11) › no se confunde con no tener contactos" duration="6"/>
+    <testCase name="shares existentes › muestra en que estado esta cada invitacion" duration="9"/>
+    <testCase name="shares existentes › permite revocar el acceso" duration="23"/>
+  </file>
+  <file path="src/app/(app)/shared/__tests__/availability.test.tsx">
+    <testCase name="quien aparece › muestra a quien comparte su calendario" duration="164"/>
+    <testCase name="quien aparece › no muestra a un contacto que no comparte" duration="23"/>
+    <testCase name="quien aparece › tampoco a una solicitud pendiente" duration="8"/>
+    <testCase name="quien aparece › sin nadie compartiendo explica como pedirlo" duration="5"/>
+    <testCase name="semana visible › permite ir a la semana anterior y siguiente" duration="12"/>
+    <testCase name="semana visible › cambiar de semana vuelve a consultar con otro rango" duration="50"/>
+    <testCase name="seleccion de personas › la propia agenda siempre entra en la consulta" duration="34"/>
+    <testCase name="seleccion de personas › al elegir a alguien se suma a la consulta" duration="82"/>
+    <testCase name="seleccion de personas › volver a tocar la quita" duration="127"/>
+    <testCase name="encontrar horario (RF-S9) › sin elegir a nadie invita a hacerlo" duration="30"/>
+    <testCase name="encontrar horario (RF-S9) › ofrece las cuatro duraciones" duration="72"/>
+    <testCase name="encontrar horario (RF-S9) › arranca en una hora" duration="84"/>
+    <testCase name="encontrar horario (RF-S9) › se puede cambiar la duracion" duration="167"/>
+    <testCase name="encontrar horario (RF-S9) › sin huecos de esa duracion lo dice" duration="168"/>
+    <testCase name="estados › mientras calcula lo dice" duration="31"/>
+    <testCase name="estados › si falla el calculo de disponibilidad ofrece reintentar" duration="27"/>
+    <testCase name="estados › si falla la lista de contactos lo explica y deja reintentar (NFR-11)" duration="9"/>
+    <testCase name="estados › el fallo de contactos no se confunde con no tener a nadie compartiendo" duration="26"/>
+  </file>
+  <file path="src/app/(app)/workout/__tests__/detail.test.tsx">
+    <testCase name="modo de apertura › con mode=edit abre en captura" duration="62"/>
+    <testCase name="modo de apertura › con mode=view abre en lectura y ofrece editar" duration="67"/>
+    <testCase name="modo de apertura › desde lectura se puede pasar a edicion" duration="100"/>
+    <testCase name="contenido › lista los ejercicios" duration="28"/>
+    <testCase name="contenido › muestra la fecha del entrenamiento" duration="20"/>
+    <testCase name="contenido › mientras carga lo indica" duration="15"/>
+    <testCase name="contenido › si ya no existe ofrece reintentar" duration="12"/>
+    <testCase name="ejercicios › se puede anadir uno" duration="33"/>
+    <testCase name="ejercicios › eliminar uno no pide confirmacion: ofrece deshacer (NFR-12)" duration="25"/>
+    <testCase name="ejercicios › deshacer lo vuelve a crear con sus valores y su posicion" duration="134"/>
+    <testCase name="duplicar (RF-F8) › se ofrece en lectura" duration="48"/>
+    <testCase name="duplicar (RF-F8) › abre la hoja con la opcion de conservar valores" duration="101"/>
+    <testCase name="duplicar (RF-F8) › permite duplicar como entrenamiento libre" duration="96"/>
+    <testCase name="eliminar el entrenamiento › pide confirmacion" duration="37"/>
+    <testCase name="eliminar el entrenamiento › al confirmar lo elimina" duration="19"/>
+    <testCase name="nombre del entrenamiento › en lectura se muestra el nombre propio" duration="25"/>
+    <testCase name="nombre del entrenamiento › sin nombre propio se usa el de la actividad" duration="43"/>
+    <testCase name="nombre del entrenamiento › sin ninguno de los dos queda el texto de reserva" duration="18"/>
+    <testCase name="nombre del entrenamiento › en edicion es un campo, no un titulo fijo" duration="52"/>
+    <testCase name="nombre del entrenamiento › se guarda al salir del campo" duration="49"/>
+    <testCase name="nombre del entrenamiento › escribir sin salir del campo todavia no guarda" duration="50"/>
+    <testCase name="nombre del entrenamiento › borrarlo lo deja sin nombre, no en cadena vacia" duration="81"/>
+    <testCase name="nombre del entrenamiento › salir del campo sin cambiar nada no guarda" duration="32"/>
+  </file>
+  <file path="src/components/calendar/__tests__/calendar-header.test.tsx">
+    <testCase name="titulo del periodo › en mensual muestra mes y ano" duration="112"/>
+    <testCase name="titulo del periodo › en semanal muestra el rango" duration="24"/>
+    <testCase name="titulo del periodo › en diaria muestra el dia completo" duration="28"/>
+    <testCase name="titulo del periodo › el titulo abre el selector de fecha" duration="113"/>
+    <testCase name="navegacion › ofrece anterior y siguiente" duration="23"/>
+    <testCase name="navegacion › ofrece volver a hoy" duration="17"/>
+    <testCase name="cambio de vista › el control dice cual esta activa" duration="20"/>
+    <testCase name="cambio de vista › abre el menu de vistas" duration="56"/>
+    <testCase name="filtros › sin filtros activos solo dice &quot;Filtros&quot;" duration="38"/>
+    <testCase name="filtros › con filtros activos dice cuantos" duration="46"/>
+    <testCase name="filtros › abre la hoja de filtros" duration="15"/>
+  </file>
+  <file path="src/app/(app)/(tabs)/__tests__/fitness.test.tsx">
+    <testCase name="estados de carga › mientras carga no muestra la lista" duration="32"/>
+    <testCase name="estados de carga › si falla explica que paso y deja reintentar" duration="15"/>
+    <testCase name="estados de carga › sin entrenamientos invita a empezar" duration="72"/>
+    <testCase name="historial › un nombre propio gana sobre el titulo de la actividad (RF-F7)" duration="9"/>
+    <testCase name="historial › sin nombre propio se usa el de la actividad" duration="5"/>
+    <testCase name="historial › sin ninguno de los dos queda el texto de reserva" duration="6"/>
+    <testCase name="historial › una sesion ligada a una actividad lleva su titulo" duration="7"/>
+    <testCase name="historial › una sesion sin actividad se llama entrenamiento libre" duration="6"/>
+    <testCase name="historial › un solo ejercicio se dice en singular" duration="12"/>
+    <testCase name="historial › varios, en plural" duration="17"/>
+    <testCase name="historial › sin cuenta de ejercicios se muestra cero, no un hueco" duration="9"/>
+    <testCase name="historial › la duracion solo aparece si se registro" duration="26"/>
+    <testCase name="historial › sin duracion no se inventa un cero" duration="25"/>
+    <testCase name="historial › cada fila se anuncia con titulo, fecha y numero de ejercicios" duration="17"/>
+    <testCase name="historial › tocar una fila la abre en modo lectura" duration="7"/>
+    <testCase name="entrenamiento libre › lo crea sin ligarlo a ninguna actividad" duration="9"/>
+    <testCase name="entrenamiento libre › se estrena con el nombre del entrenamiento anterior" duration="7"/>
+    <testCase name="entrenamiento libre › la primera vez, sin nombre previo, se crea sin nombre" duration="8"/>
+    <testCase name="entrenamiento libre › solo entra al detalle cuando el backend confirma" duration="6"/>
+    <testCase name="entrenamiento libre › el boton se bloquea mientras se crea" duration="3"/>
+    <testCase name="entrenamiento libre › explica como registrar una sesion ya agendada" duration="8"/>
+  </file>
+  <file path="src/components/calendar/__tests__/filter-sheet.test.tsx">
+    <testCase name="lo que ofrece › estan las 7 dimensiones del bienestar" duration="80"/>
+    <testCase name="lo que ofrece › estan los temas del usuario" duration="16"/>
+    <testCase name="lo que ofrece › sin temas cargados no revienta" duration="14"/>
+    <testCase name="dimensiones › tocar una la activa" duration="17"/>
+    <testCase name="dimensiones › tocar una activa la apaga" duration="20"/>
+    <testCase name="dimensiones › se pueden acumular varias" duration="44"/>
+    <testCase name="dimensiones › las activas se ven marcadas" duration="24"/>
+    <testCase name="temas › tocar uno lo activa" duration="30"/>
+    <testCase name="temas › tocar uno activo lo apaga" duration="12"/>
+    <testCase name="temas › filtrar por tema no borra el filtro de dimension: se combinan" duration="49"/>
+    <testCase name="acciones › sin filtros activos no se ofrece limpiar" duration="11"/>
+    <testCase name="acciones › con una dimension activa si aparece" duration="15"/>
+    <testCase name="acciones › con solo un tema activo tambien" duration="46"/>
+    <testCase name="acciones › limpiar avisa al calendario" duration="40"/>
+    <testCase name="acciones › &quot;Listo&quot; cierra la hoja" duration="26"/>
+  </file>
+  <file path="src/app/(app)/__tests__/admin.test.tsx">
+    <testCase name="control de acceso › una cuenta sin rol recibe una explicacion, no un error crudo" duration="17"/>
+    <testCase name="control de acceso › y no ve ninguna estadistica" duration="2"/>
+    <testCase name="estadisticas › muestra las metricas con su etiqueta" duration="290"/>
+    <testCase name="estadisticas › formatea los numeros grandes en es-MX" duration="18"/>
+    <testCase name="estadisticas › mientras cargan lo indica" duration="17"/>
+    <testCase name="estadisticas › si fallan ofrece reintentar" duration="24"/>
+    <testCase name="listado de cuentas › muestra correo y nombre" duration="45"/>
+    <testCase name="listado de cuentas › sin cuentas lo dice" duration="20"/>
+    <testCase name="listado de cuentas › mientras cargan lo indica" duration="36"/>
+    <testCase name="listado de cuentas › no expone contenido de ninguna cuenta, solo agregados" duration="32"/>
+  </file>
+  <file path="src/app/(app)/(tabs)/__tests__/calendar.test.tsx">
+    <testCase name="vista activa › abre en mensual" duration="61"/>
+    <testCase name="vista activa › cambia a semanal segun el estado" duration="14"/>
+    <testCase name="vista activa › cambia a diaria segun el estado" duration="43"/>
+    <testCase name="estados › mientras carga no pinta ninguna vista" duration="15"/>
+    <testCase name="estados › si falla muestra el error con reintentar" duration="19"/>
+    <testCase name="estados › en vista diaria el aviso de vacio no tapa la rejilla" duration="8"/>
+    <testCase name="estados › con actividades no muestra el aviso de vacio" duration="12"/>
+    <testCase name="navegacion › tocar una actividad propia abre su detalle" duration="16"/>
+    <testCase name="navegacion › tocar un hueco abre el alta con dia y hora" duration="25"/>
+    <testCase name="navegacion › tocar un dia en mensual abre la vista diaria sin cambiar la preferida" duration="41"/>
+    <testCase name="calendarios superpuestos (RF-S15) › una actividad ajena no abre el detalle: avisa que es de solo lectura" duration="21"/>
+    <testCase name="calendarios superpuestos (RF-S15) › con personas superpuestas el color pasa a ser el de cada persona" duration="9"/>
+    <testCase name="calendarios superpuestos (RF-S15) › sin superponer a nadie vuelve el color del tema" duration="6"/>
+    <testCase name="calendarios superpuestos (RF-S15) › se ignora a quien dejo de compartir, sin tener que limpiar la seleccion" duration="11"/>
+    <testCase name="filtros › informa cuantos hay activos" duration="45"/>
+    <testCase name="filtros › la hoja de filtros empieza cerrada y se abre" duration="16"/>
+    <testCase name="horizonte de recurrencia (plan §4) › se extiende al abrir el calendario" duration="4"/>
+  </file>
+  <file path="src/hooks/__tests__/use-themes.test.tsx">
+    <testCase name="useThemes › pide los temas del usuario" duration="90"/>
+    <testCase name="useThemes › no consulta sin sesion" duration="6"/>
+    <testCase name="useThemes › expone el error si la consulta falla" duration="7"/>
+    <testCase name="useThemesByDimension › devuelve un grupo por cada dimension, en el orden de la spec" duration="3"/>
+    <testCase name="useThemesByDimension › coloca cada tema en su dimension" duration="1"/>
+    <testCase name="useThemesByDimension › las dimensiones sin temas quedan vacias, no ausentes" duration="3"/>
+    <testCase name="useThemesByDimension › tolera undefined" duration="1"/>
+    <testCase name="useThemeMutations › crear pasa el usuario y la entrada" duration="56"/>
+    <testCase name="useThemeMutations › actualizar pasa id y parche" duration="21"/>
+    <testCase name="useThemeMutations › eliminar pasa el id" duration="29"/>
+    <testCase name="useThemeMutations › editar un tema invalida tambien las actividades (copia de estilo)" duration="9"/>
+    <testCase name="useThemeMutations › un fallo al crear se propaga" duration="18"/>
+  </file>
+  <file path="src/providers/__tests__/snackbar-provider.test.tsx">
+    <testCase name="SnackbarProvider › no muestra nada hasta que se pide" duration="38"/>
+    <testCase name="SnackbarProvider › muestra el mensaje al pedirlo" duration="54"/>
+    <testCase name="SnackbarProvider › se oculta solo a los 3 s cuando no hay accion" duration="15"/>
+    <testCase name="SnackbarProvider › con accion dura mas: sigue visible a los 3 s" duration="7"/>
+    <testCase name="SnackbarProvider › respeta una duracion propia" duration="12"/>
+    <testCase name="SnackbarProvider › muestra la accion y la ejecuta" duration="52"/>
+    <testCase name="SnackbarProvider › al usar la accion el aviso desaparece" duration="26"/>
+    <testCase name="SnackbarProvider › sin onAction no pinta boton aunque haya etiqueta" duration="23"/>
+    <testCase name="SnackbarProvider › se anuncia a los lectores de pantalla" duration="35"/>
+    <testCase name="SnackbarProvider › un aviso nuevo reemplaza al anterior" duration="80"/>
+    <testCase name="useSnackbar › falla con un mensaje util si se usa fuera del provider" duration="51"/>
+  </file>
+  <file path="src/components/fitness/__tests__/exercise-card.test.tsx">
+    <testCase name="contenido › muestra los valores guardados" duration="87"/>
+    <testCase name="contenido › los campos vacios se muestran vacios, no como &quot;null&quot;" duration="26"/>
+    <testCase name="contenido › ofrece eliminar con el nombre en la etiqueta" duration="25"/>
+    <testCase name="contenido › un ejercicio sin nombre sigue teniendo etiqueta util" duration="100"/>
+    <testCase name="guardado al perder el foco (RF-F5) › escribir no guarda todavia" duration="32"/>
+    <testCase name="guardado al perder el foco (RF-F5) › al salir del campo si guarda" duration="33"/>
+    <testCase name="guardado al perder el foco (RF-F5) › las series se guardan como numero" duration="20"/>
+    <testCase name="guardado al perder el foco (RF-F5) › un numero invalido se guarda como vacio, no como cero" duration="34"/>
+    <testCase name="guardado al perder el foco (RF-F5) › un cero tampoco se guarda: no hay series de cero" duration="18"/>
+    <testCase name="guardado al perder el foco (RF-F5) › un texto en blanco se guarda como vacio" duration="55"/>
+    <testCase name="guardado al perder el foco (RF-F5) › las notas tambien se recortan" duration="59"/>
+    <testCase name="autocompletado de nombres (RF-F4) › sin foco en el nombre no propone nada" duration="47"/>
+    <testCase name="autocompletado de nombres (RF-F4) › al enfocar propone lo ya escrito antes" duration="192"/>
+    <testCase name="autocompletado de nombres (RF-F4) › elegir una sugerencia la escribe y la guarda" duration="62"/>
+    <testCase name="modo lectura › no ofrece eliminar" duration="6"/>
+    <testCase name="eliminar › avisa al pulsarlo" duration="14"/>
+  </file>
+  <file path="src/app/(app)/activity/__tests__/new.test.tsx">
+    <testCase name="modo creacion › se titula &quot;Nueva actividad&quot;" duration="21"/>
+    <testCase name="modo creacion › el boton invita a crear" duration="14"/>
+    <testCase name="modo creacion › al enviar crea la actividad" duration="11"/>
+    <testCase name="modo creacion › no consulta ninguna actividad existente" duration="15"/>
+    <testCase name="modo edicion › se titula &quot;Editar actividad&quot;" duration="34"/>
+    <testCase name="modo edicion › con alcance de serie lo dice en el titulo" duration="9"/>
+    <testCase name="modo edicion › el boton invita a guardar" duration="15"/>
+    <testCase name="modo edicion › mientras carga muestra el estado de carga" duration="21"/>
+    <testCase name="modo edicion › tambien espera a los recordatorios antes de pintar el formulario" duration="23"/>
+    <testCase name="modo edicion › si falla muestra el error con reintentar" duration="9"/>
+    <testCase name="modo edicion › reintentar vuelve a consultar" duration="40"/>
+    <testCase name="modo edicion › al guardar actualiza con el alcance recibido" duration="85"/>
+    <testCase name="modo edicion › los recordatorios se guardan despues de la actividad, no antes" duration="90"/>
+    <testCase name="modo edicion › solo se avisa y se cierra cuando los recordatorios terminan" duration="29"/>
+    <testCase name="modo edicion › editar la serie lo dice en el aviso" duration="69"/>
+    <testCase name="modo edicion › muestra el error de la mutacion" duration="43"/>
+    <testCase name="modo edicion › mientras guarda el boton queda ocupado" duration="12"/>
+    <testCase name="modo edicion › editar una sola ocurrencia bloquea cambiar la recurrencia" duration="9"/>
+    <testCase name="modo edicion › editar la serie completa si permite cambiarla" duration="8"/>
+  </file>
+  <file path="src/hooks/__tests__/use-shares.test.tsx">
+    <testCase name="claves › separan por actividad y por usuario" duration="52"/>
+    <testCase name="useActivityShares › consulta los de esa actividad" duration="34"/>
+    <testCase name="useActivityShares › sin actividad no consulta" duration="3"/>
+    <testCase name="useActivityShares › se puede desactivar a mano: solo el dueno ve los shares" duration="4"/>
+    <testCase name="useInvitations › consulta las del usuario" duration="5"/>
+    <testCase name="useInvitations › sin sesion no consulta" duration="3"/>
+    <testCase name="useShareMutations › compartir pasa usuario, actividad y contactos" duration="21"/>
+    <testCase name="useShareMutations › responder pasa la invitacion y la decision" duration="12"/>
+    <testCase name="useShareMutations › revocar pasa el share" duration="5"/>
+    <testCase name="useShareMutations › aceptar invalida tambien actividades y recordatorios (RF-S10)" duration="10"/>
+    <testCase name="useShareMutations › un fallo al compartir se propaga" duration="21"/>
+  </file>
+  <file path="src/components/calendar/__tests__/workout-draft.test.tsx">
+    <testCase name="borrador vacio › explica que se puede dejar para despues" duration="57"/>
+    <testCase name="borrador vacio › invita a anadir el primero" duration="9"/>
+    <testCase name="borrador vacio › anadir crea una tarjeta vacia" duration="108"/>
+    <testCase name="borrador vacio › cada ejercicio nuevo lleva su propia clave" duration="25"/>
+    <testCase name="con ejercicios › el boton cambia de texto" duration="21"/>
+    <testCase name="con ejercicios › muestra los valores del borrador" duration="27"/>
+    <testCase name="con ejercicios › editar un campo actualiza solo ese ejercicio" duration="53"/>
+    <testCase name="entrenamiento ya existente › ofrece abrirlo en vez de capturar otro" duration="22"/>
+    <testCase name="entrenamiento ya existente › en singular lo dice en singular" duration="21"/>
+    <testCase name="entrenamiento ya existente › sin ejercicios lo describe distinto" duration="21"/>
+    <testCase name="entrenamiento ya existente › abrirlo avisa" duration="16"/>
+    <testCase name="entrenamiento ya existente › sin la forma de abrirlo vuelve a la captura normal" duration="4"/>
+  </file>
+  <file path="src/components/calendar/__tests__/due-reminders-banner.test.tsx">
+    <testCase name="cuando aparece › con un recordatorio ya vencido lo muestra" duration="22"/>
+    <testCase name="cuando aparece › indica a que hora empieza la actividad" duration="15"/>
+    <testCase name="cuando aparece › un recordatorio futuro todavia no se muestra" duration="4"/>
+    <testCase name="cuando aparece › sin recordatorios no pinta nada" duration="5"/>
+    <testCase name="cuando aparece › en nativo no aparece: ahi hay notificaciones del sistema" duration="7"/>
+    <testCase name="cuando aparece › se anuncia a los lectores de pantalla" duration="13"/>
+    <testCase name="interaccion › tocarlo abre la actividad" duration="12"/>
+    <testCase name="interaccion › se puede descartar y no vuelve" duration="12"/>
+    <testCase name="interaccion › descartar uno no descarta los demas" duration="33"/>
+    <testCase name="interaccion › nunca muestra mas de tres a la vez" duration="15"/>
+  </file>
+  <file path="src/components/calendar/__tests__/activity-form-mapping.test.ts">
+    <testCase name="valores por defecto › propone una hora de duracion" duration="2"/>
+    <testCase name="valores por defecto › arranca vacio y sin nada activado" duration="1"/>
+    <testCase name="valores por defecto › respeta el dia, la hora y el titulo que le pasen" duration="0"/>
+    <testCase name="valores por defecto › no deja empezar tan tarde que la actividad se salga del dia" duration="1"/>
+    <testCase name="valores por defecto › el final nunca pasa de la medianoche" duration="0"/>
+    <testCase name="valores por defecto › un fin explicito por encima de la medianoche tambien se recorta" duration="1"/>
+    <testCase name="de actividad a formulario › traduce el instante UTC a dia y minutos locales" duration="2"/>
+    <testCase name="de actividad a formulario › una descripcion ausente llega como cadena vacia, no como null" duration="0"/>
+    <testCase name="de actividad a formulario › conserva la descripcion cuando la hay" duration="2"/>
+    <testCase name="de actividad a formulario › arrastra tema, gimnasio y todo el dia" duration="2"/>
+    <testCase name="de actividad a formulario › si cruza la medianoche el fin se ancla a las 24:00" duration="1"/>
+    <testCase name="de actividad a formulario › lee la recurrencia de la propia actividad por omision" duration="0"/>
+    <testCase name="de actividad a formulario › acepta la regla de la serie por separado" duration="0"/>
+    <testCase name="de actividad a formulario › sin regla en ningun lado la recurrencia es nula" duration="1"/>
+    <testCase name="de actividad a formulario › los recordatorios se inyectan desde fuera" duration="1"/>
+    <testCase name="de formulario a alta › convierte dia y minutos a instantes UTC" duration="2"/>
+    <testCase name="de formulario a alta › una descripcion vacia se guarda como null, no como cadena" duration="1"/>
+    <testCase name="de formulario a alta › una descripcion con texto se conserva" duration="1"/>
+    <testCase name="de formulario a alta › copia el estilo del tema en la actividad" duration="1"/>
+    <testCase name="de formulario a alta › sin tema la actividad nace neutra (RF-T4)" duration="0"/>
+    <testCase name="de formulario a alta › todo el dia ocupa de medianoche a medianoche e ignora las horas del formulario" duration="1"/>
+    <testCase name="de formulario a alta › arrastra titulo, gimnasio y recurrencia" duration="1"/>
+    <testCase name="ida y vuelta › actividad -&gt; formulario -&gt; alta conserva las horas" duration="2"/>
+  </file>
+  <file path="src/components/calendar/__tests__/helpers.test.ts">
+    <testCase name="applyFilters › sin filtros devuelve todo" duration="3"/>
+    <testCase name="applyFilters › sin filtros devuelve una copia, no el mismo arreglo" duration="1"/>
+    <testCase name="applyFilters › filtra por dimension" duration="1"/>
+    <testCase name="applyFilters › filtra por tema" duration="0"/>
+    <testCase name="applyFilters › los filtros se combinan con O: basta cumplir uno" duration="1"/>
+    <testCase name="applyFilters › una actividad sin dimension ni tema se descarta al filtrar" duration="1"/>
+    <testCase name="groupByDay › indexa por clave de dia local" duration="1"/>
+    <testCase name="groupByDay › una actividad de varios dias aparece en cada uno" duration="2"/>
+    <testCase name="groupByDay › dentro de cada dia van en orden cronologico" duration="2"/>
+    <testCase name="groupByDay › a igual hora desempata por titulo, para que el orden sea estable" duration="2"/>
+    <testCase name="groupByDay › sin actividades devuelve un mapa vacio" duration="0"/>
+    <testCase name="superposicion de calendarios (RF-S15) › convierte bloques en actividades de solo lectura" duration="1"/>
+    <testCase name="superposicion de calendarios (RF-S15) › un bloque sin titulo se llama &quot;Ocupado&quot;" duration="2"/>
+    <testCase name="superposicion de calendarios (RF-S15) › con titulo visible lo conserva" duration="0"/>
+    <testCase name="superposicion de calendarios (RF-S15) › el color y el nombre salen de quien es el dueno" duration="1"/>
+    <testCase name="superposicion de calendarios (RF-S15) › los ids no chocan aunque coincidan persona y hora" duration="0"/>
+    <testCase name="superposicion de calendarios (RF-S15) › una actividad normal no se confunde con una superpuesta" duration="1"/>
+    <testCase name="color del bloque (RF-T4) › usa el color copiado de la actividad" duration="0"/>
+    <testCase name="color del bloque (RF-T4) › sin color cae al neutro del tema" duration="0"/>
+    <testCase name="tint › convierte un hex de 6 digitos en rgba al 14 %" duration="0"/>
+    <testCase name="tint › acepta hex de 3 digitos" duration="5"/>
+    <testCase name="tint › acepta hex sin almohadilla" duration="0"/>
+    <testCase name="tint › admite otra opacidad" duration="1"/>
+  </file>
+  <file path="src/hooks/__tests__/use-activities.test.tsx">
+    <testCase name="activityKeys › la clave de rango distingue usuario y extremos" duration="3"/>
+    <testCase name="activityKeys › dos rangos distintos no comparten cache" duration="15"/>
+    <testCase name="activityKeys › la clave raiz invalida todo lo de actividades" duration="6"/>
+    <testCase name="useActivitiesRange › consulta con los extremos en ISO" duration="110"/>
+    <testCase name="useActivitiesRange › no consulta sin sesion" duration="18"/>
+    <testCase name="useActivitiesRange › expone el error" duration="25"/>
+    <testCase name="usePrefetchAdjacentRanges (NFR-2) › precarga el rango anterior y el siguiente" duration="50"/>
+    <testCase name="usePrefetchAdjacentRanges (NFR-2) › sin sesion no precarga nada" duration="6"/>
+    <testCase name="usePrefetchAdjacentRanges (NFR-2) › funciona igual en vista semanal" duration="12"/>
+    <testCase name="useActivity › pide el detalle por id" duration="18"/>
+    <testCase name="useActivity › sin id no consulta" duration="80"/>
+    <testCase name="useActivityMutations › crear pasa el usuario y la entrada" duration="52"/>
+    <testCase name="useActivityMutations › actualizar propaga el alcance de la recurrencia" duration="28"/>
+    <testCase name="useActivityMutations › actualizar refresca el detalle en cache sin esperar a la red" duration="17"/>
+    <testCase name="useActivityMutations › eliminar propaga el alcance" duration="12"/>
+    <testCase name="useActivityMutations › crear invalida el calendario" duration="16"/>
+    <testCase name="useActivityMutations › un fallo al crear se propaga" duration="64"/>
+  </file>
+  <file path="src/components/calendar/__tests__/people-tabs.test.tsx">
+    <testCase name="quien aparece › yo siempre estoy, y siempre activo" duration="67"/>
+    <testCase name="quien aparece › salen los contactos que me comparten su calendario" duration="73"/>
+    <testCase name="quien aparece › un contacto que no me comparte su calendario no aparece" duration="7"/>
+    <testCase name="quien aparece › una solicitud pendiente tampoco" duration="14"/>
+    <testCase name="quien aparece › sin contactos quedan solo &quot;Tú&quot; y el acceso a contactos" duration="12"/>
+    <testCase name="quien aparece › mientras cargan tampoco revienta" duration="15"/>
+    <testCase name="como se nombran › se usa el nombre de pila, para que quepan varias pestanas" duration="28"/>
+    <testCase name="como se nombran › sin nombre en el perfil se cae a una etiqueta generica" duration="23"/>
+    <testCase name="interaccion › tocar un contacto pide superponerlo" duration="54"/>
+    <testCase name="interaccion › los superpuestos se ven marcados" duration="14"/>
+    <testCase name="interaccion › se pueden superponer varios a la vez" duration="20"/>
+    <testCase name="interaccion › tocar &quot;Tú&quot; vuelve a dejar solo mi calendario" duration="35"/>
+    <testCase name="interaccion › el acceso a contactos lleva a la pantalla de compartidos" duration="9"/>
+  </file>
+  <file path="src/components/calendar/__tests__/layout-blocks.test.ts">
+    <testCase name="posicionamiento basico › sin actividades devuelve vacio" duration="40"/>
+    <testCase name="posicionamiento basico › coloca una actividad en minutos desde medianoche" duration="1"/>
+    <testCase name="posicionamiento basico › una sola actividad ocupa toda la anchura" duration="1"/>
+    <testCase name="posicionamiento basico › descarta las de todo el dia: van en su propia franja" duration="1"/>
+    <testCase name="posicionamiento basico › descarta las de otro dia" duration="1"/>
+    <testCase name="posicionamiento basico › devuelve los bloques ordenados por hora de inicio" duration="1"/>
+    <testCase name="traslapes › dos que se solapan se reparten en dos columnas" duration="2"/>
+    <testCase name="traslapes › tres simultaneas se reparten en tres columnas" duration="2"/>
+    <testCase name="traslapes › dos consecutivas sin solaparse ocupan cada una toda la anchura" duration="1"/>
+    <testCase name="traslapes › la columna se reutiliza cuando el bloque anterior ya termino" duration="1"/>
+    <testCase name="traslapes › grupos separados no comparten el reparto de columnas" duration="1"/>
+    <testCase name="alto minimo legible › sin minimo, visualEnd es el fin real" duration="0"/>
+    <testCase name="alto minimo legible › con minimo, una actividad corta se infla para poder leerse" duration="0"/>
+    <testCase name="alto minimo legible › una actividad larga no se encoge al minimo" duration="1"/>
+    <testCase name="alto minimo legible › dos cortas separadas 20 min se solapan por su alto en pantalla" duration="0"/>
+    <testCase name="alto minimo legible › esas mismas dos, sin minimo extra, van cada una a su anchura" duration="1"/>
+    <testCase name="actividades que cruzan la medianoche › la que viene del dia anterior empieza a medianoche" duration="0"/>
+    <testCase name="actividades que cruzan la medianoche › la que sigue al dia siguiente termina a medianoche" duration="1"/>
+  </file>
+  <file path="src/services/supabase/__tests__/activities.test.ts">
+    <testCase name="listByRange › usa traslape, no contencion: start &lt; to AND end &gt; from (NFR-1)" duration="4"/>
+    <testCase name="listByRange › ordena por hora de inicio" duration="3"/>
+    <testCase name="listByRange › no filtra por dueno: de eso se encarga la RLS" duration="3"/>
+    <testCase name="listByRange › en una actividad propia no anade el nombre del dueno" duration="2"/>
+    <testCase name="listByRange › en una actividad ajena anade el nombre visible (RF-S5)" duration="1"/>
+    <testCase name="listByRange › sin nombre visible cae al username" duration="1"/>
+    <testCase name="listByRange › sin perfil del dueno usa un texto neutro" duration="1"/>
+    <testCase name="listByRange › traduce el error" duration="106"/>
+    <testCase name="getById › filtra por id" duration="1"/>
+    <testCase name="getById › avisa si ya no existe" duration="4"/>
+    <testCase name="getById › traduce el error" duration="3"/>
+    <testCase name="create › marca al dueno y no escribe regla si no hay recurrencia" duration="5"/>
+    <testCase name="create › con recurrencia guarda la RRULE en la madre" duration="4"/>
+    <testCase name="create › materializa las instancias en el cliente (plan §4)" duration="1"/>
+    <testCase name="create › no usa ninguna RPC de recurrencia" duration="1"/>
+    <testCase name="create › no reinserta las instancias que ya existen" duration="1"/>
+    <testCase name="update con alcance &quot;this&quot; › actualiza solo esa fila" duration="1"/>
+    <testCase name="update con alcance &quot;this&quot; › resincroniza los destinatarios de recordatorios" duration="4"/>
+    <testCase name="update con alcance &quot;this&quot; › una actividad suelta se trata como &quot;this&quot; aunque se pida la serie" duration="3"/>
+    <testCase name="update con alcance &quot;this&quot; › falla si la actividad ya no existe" duration="6"/>
+    <testCase name="remove › falla si ya no existe" duration="1"/>
+    <testCase name="remove › una actividad suelta se borra por id" duration="15"/>
+    <testCase name="extendRecurrenceHorizon › no hace nada si no hay series" duration="1"/>
+    <testCase name="update con alcance &quot;series&quot; › actualiza la madre, no la instancia" duration="3"/>
+    <testCase name="update con alcance &quot;series&quot; › borra las instancias futuras antes de regenerarlas" duration="6"/>
+    <testCase name="update con alcance &quot;series&quot; › acota el borrado a las que empiezan desde la ocurrencia editada" duration="6"/>
+    <testCase name="update con alcance &quot;series&quot; › conserva la regla cuando el parche no la menciona" duration="2"/>
+    <testCase name="update con alcance &quot;series&quot; › quitar la recurrencia deja la regla en null" duration="1"/>
+    <testCase name="remove con alcance &quot;series&quot; › borra la madre y sus instancias" duration="2"/>
+    <testCase name="remove con alcance &quot;series&quot; › falla si la actividad ya no existe" duration="0"/>
+    <testCase name="extendRecurrenceHorizon › consulta las series de esa persona" duration="0"/>
+    <testCase name="extendRecurrenceHorizon › con una serie vigente no reinserta nada" duration="1"/>
+  </file>
+  <file path="src/providers/__tests__/auth-provider.test.tsx">
+    <testCase name="restauracion de sesion › con sesion guardada la deja disponible" duration="152"/>
+    <testCase name="restauracion de sesion › sin sesion arranca sin usuario" duration="17"/>
+    <testCase name="restauracion de sesion › termina de cargar aunque restaurar falle (sin red)" duration="9"/>
+    <testCase name="restauracion de sesion › se suscribe a los cambios de sesion del backend" duration="10"/>
+    <testCase name="restauracion de sesion › un cambio en el backend se refleja en la app" duration="11"/>
+    <testCase name="restauracion de sesion › cancela la suscripcion al desmontar" duration="5"/>
+    <testCase name="alta por pasos (RF-A8) › arranca sin alta pendiente" duration="28"/>
+    <testCase name="alta por pasos (RF-A8) › se puede marcar como pendiente para retener a la persona en el ultimo paso" duration="71"/>
+    <testCase name="useAuth › falla con un mensaje util fuera del provider" duration="55"/>
+  </file>
+  <file path="src/lib/__tests__/username.test.ts">
+    <testCase name="suggestUsername › toma la parte local del correo" duration="1"/>
+    <testCase name="suggestUsername › pasa todo a minusculas" duration="1"/>
+    <testCase name="suggestUsername › quita los acentos en vez de sustituirlos" duration="1"/>
+    <testCase name="suggestUsername › sustituye los caracteres no permitidos por guion bajo" duration="0"/>
+    <testCase name="suggestUsername › colapsa los guiones bajos repetidos" duration="1"/>
+    <testCase name="suggestUsername › no deja guiones bajos en los extremos" duration="1"/>
+    <testCase name="suggestUsername › alarga los demasiado cortos" duration="0"/>
+    <testCase name="suggestUsername › recorta a 30 caracteres" duration="0"/>
+    <testCase name="suggestUsername › cae al valor de reserva cuando no queda nada aprovechable" duration="1"/>
+    <testCase name="suggestUsername › siempre produce algo que la base aceptaria" duration="2"/>
+    <testCase name="availableUsername › devuelve la base cuando esta libre" duration="1"/>
+    <testCase name="availableUsername › prueba sufijos numericos hasta encontrar uno libre" duration="0"/>
+    <testCase name="availableUsername › consulta la base antes que cualquier sufijo" duration="1"/>
+    <testCase name="availableUsername › respeta el tope de intentos y aun asi devuelve algo valido" duration="1"/>
+    <testCase name="availableUsername › el sufijo no hace crecer el username mas alla del maximo" duration="0"/>
+  </file>
+  <file path="src/services/supabase/__tests__/reminders.test.ts">
+    <testCase name="listByActivity › filtra por actividad y ordena por antelacion" duration="3"/>
+    <testCase name="listByActivity › pide las copias de destinatario junto al recordatorio" duration="1"/>
+    <testCase name="listByActivity › resuelve `enabled` desde mi propia copia" duration="2"/>
+    <testCase name="listByActivity › sin copia propia se asume habilitado" duration="1"/>
+    <testCase name="listByActivity › no filtra por la copia de otra persona" duration="0"/>
+    <testCase name="listByActivity › traduce el error" duration="9"/>
+    <testCase name="setForActivity › lee primero lo que ya existe" duration="4"/>
+    <testCase name="setForActivity › inserta solo los offsets que faltan" duration="1"/>
+    <testCase name="setForActivity › no inserta nada si no falta ninguno" duration="0"/>
+    <testCase name="setForActivity › borra por id los que sobran" duration="1"/>
+    <testCase name="setForActivity › una lista vacia borra todos" duration="1"/>
+    <testCase name="setForActivity › conserva los offsets que se repiten: no los borra ni reinserta" duration="1"/>
+    <testCase name="setForActivity › sincroniza las copias con la RPC, incluso si solo se borro" duration="1"/>
+    <testCase name="setForActivity › propaga el rechazo de la RLS al insertar" duration="1"/>
+    <testCase name="setEnabled (RF-S12) › actualiza solo mi copia" duration="1"/>
+    <testCase name="setEnabled (RF-S12) › traduce el error" duration="1"/>
+    <testCase name="listUpcoming › pide solo las copias habilitadas de esta persona" duration="2"/>
+    <testCase name="listUpcoming › acota la ventana al horizonte pedido" duration="0"/>
+    <testCase name="listUpcoming › calcula el disparo restando la antelacion" duration="1"/>
+    <testCase name="listUpcoming › el cuerpo lleva la hora de inicio" duration="1"/>
+    <testCase name="listUpcoming › en todo el dia dice &quot;Hoy&quot;" duration="1"/>
+    <testCase name="listUpcoming › en actividad ajena indica quien la comparte" duration="32"/>
+    <testCase name="listUpcoming › sin nombre visible del dueno cae al username" duration="0"/>
+    <testCase name="listUpcoming › sin perfil del dueno usa un texto neutro" duration="1"/>
+    <testCase name="listUpcoming › vienen ordenados por cuando se disparan" duration="20"/>
+  </file>
+  <file path="src/app/(app)/(tabs)/__tests__/shared.test.tsx">
+    <testCase name="estructura › muestra el titulo como encabezado" duration="294"/>
+    <testCase name="estructura › ofrece buscar personas y abrir disponibilidad" duration="15"/>
+    <testCase name="estructura › abrir disponibilidad navega a su pantalla" duration="59"/>
+    <testCase name="estructura › mientras carga lo indica" duration="31"/>
+    <testCase name="estructura › si falla ofrece reintentar" duration="125"/>
+    <testCase name="estructura › sin contactos invita a buscar a alguien" duration="19"/>
+    <testCase name="invitaciones a actividades (RF-S5) › muestra la actividad, cuando es y quien la comparte" duration="22"/>
+    <testCase name="invitaciones a actividades (RF-S5) › aceptar responde que si" duration="23"/>
+    <testCase name="invitaciones a actividades (RF-S5) › al aceptar se avisa de que entro al calendario" duration="45"/>
+    <testCase name="invitaciones a actividades (RF-S5) › rechazar responde que no y sin aviso" duration="30"/>
+    <testCase name="invitaciones a actividades (RF-S5) › sin invitaciones no pinta la seccion" duration="12"/>
+    <testCase name="solicitudes recibidas › ofrece aceptar y rechazar" duration="65"/>
+    <testCase name="solicitudes recibidas › aceptar usa el id de la conexion" duration="16"/>
+    <testCase name="eliminar contacto (RF-S2) › pide confirmacion antes de nada" duration="13"/>
+    <testCase name="eliminar contacto (RF-S2) › al confirmar elimina la conexion" duration="96"/>
+    <testCase name="eliminar contacto (RF-S2) › con un contacto aceptado avisa de la cascada" duration="69"/>
+    <testCase name="lista de contactos › muestra el nombre y que comparte cada quien" duration="10"/>
+    <testCase name="lista de contactos › sin nombre visible usa un texto de reserva" duration="9"/>
+    <testCase name="lista de contactos › quien no comparte su calendario no muestra esa linea" duration="9"/>
+    <testCase name="lista de contactos › las solicitudes enviadas se marcan como pendientes" duration="73"/>
+    <testCase name="errores › muestra el error de cualquier mutacion" duration="15"/>
+  </file>
+  <file path="src/lib/__tests__/dates.test.ts">
+    <testCase name="constantes › el dia se divide en slots de 30 minutos" duration="3"/>
+    <testCase name="constantes › las etiquetas de dia empiezan en lunes" duration="2"/>
+    <testCase name="claves de dia › toDayKey usa el formato estable yyyy-MM-dd" duration="2"/>
+    <testCase name="claves de dia › fromDayKey es su inversa" duration="1"/>
+    <testCase name="claves de dia › fromDayKey devuelve el dia a medianoche local" duration="0"/>
+    <testCase name="claves de dia › fromDayKey tolera una clave incompleta sin romperse" duration="3"/>
+    <testCase name="ISO › toIso y fromIso conservan el instante" duration="1"/>
+    <testCase name="ISO › toIso emite UTC, como se guarda en la base" duration="0"/>
+    <testCase name="rangeForView › mes abarca semanas completas de lunes a domingo" duration="7"/>
+    <testCase name="rangeForView › semana empieza en lunes y dura 7 dias" duration="3"/>
+    <testCase name="rangeForView › dia es exactamente [medianoche, medianoche siguiente)" duration="0"/>
+    <testCase name="rangeForView › los tres rangos arrancan a medianoche" duration="1"/>
+    <testCase name="shiftAnchor › avanza y retrocede un mes" duration="1"/>
+    <testCase name="shiftAnchor › avanza una semana" duration="0"/>
+    <testCase name="shiftAnchor › avanza un dia" duration="1"/>
+    <testCase name="shiftAnchor › ir y volver deja la fecha igual" duration="11"/>
+    <testCase name="rejillas › el grid mensual son siempre 6 semanas" duration="18"/>
+    <testCase name="rejillas › el grid mensual no repite dias" duration="7"/>
+    <testCase name="rejillas › weekDays devuelve 7 dias consecutivos desde el lunes" duration="1"/>
+    <testCase name="horas › nextHalfHour salta a y media si aun no pasa" duration="0"/>
+    <testCase name="horas › nextHalfHour salta a la hora en punto si ya paso la media" duration="0"/>
+    <testCase name="horas › minutesSinceMidnight cuenta desde las 00:00" duration="0"/>
+    <testCase name="horas › setTimeOfDay y minutesSinceMidnight son inversas" duration="1"/>
+    <testCase name="horas › durationMinutes mide entre dos ISO" duration="0"/>
+    <testCase name="horas › durationMinutes es negativa si el fin precede al inicio" duration="5"/>
+    <testCase name="formatos es-MX › titulo de mes capitalizado" duration="1"/>
+    <testCase name="formatos es-MX › titulo de semana dentro del mismo mes" duration="71"/>
+    <testCase name="formatos es-MX › titulo de semana a caballo entre dos meses" duration="1"/>
+    <testCase name="formatos es-MX › titulo de dia capitalizado" duration="0"/>
+    <testCase name="formatos es-MX › fecha corta en minusculas" duration="1"/>
+    <testCase name="formatos es-MX › fecha con ano" duration="0"/>
+    <testCase name="formatos es-MX › formatMinutes usa 24 h con dos digitos" duration="1"/>
+    <testCase name="formatos es-MX › formatMinutes envuelve valores fuera del dia" duration="0"/>
+    <testCase name="formatos es-MX › formatHourLabel envuelve las horas" duration="1"/>
+    <testCase name="formatos es-MX › formatTime toma la hora local del Date" duration="14"/>
+    <testCase name="formatos es-MX › formatTimeRange une inicio y fin" duration="2"/>
+    <testCase name="formatos es-MX › formatTimeRange ignora las horas si es de todo el dia" duration="1"/>
+    <testCase name="clampToDay › recorta una actividad contenida en el dia" duration="1"/>
+    <testCase name="clampToDay › devuelve null si la actividad es de otro dia" duration="0"/>
+    <testCase name="clampToDay › recorta por la izquierda cuando viene del dia anterior" duration="1"/>
+    <testCase name="clampToDay › recorta por la derecha cuando sigue al dia siguiente" duration="1"/>
+    <testCase name="clampToDay › garantiza 15 minutos de alto para que el bloque sea visible" duration="6"/>
+    <testCase name="findFreeSlots (RF-S9) › sin ocupaciones ofrece huecos dentro de la franja util" duration="8"/>
+    <testCase name="findFreeSlots (RF-S9) › respeta la duracion pedida" duration="1"/>
+    <testCase name="findFreeSlots (RF-S9) › no propone huecos que choquen con lo ocupado" duration="7"/>
+    <testCase name="findFreeSlots (RF-S9) › devuelve vacio si el dia esta ocupado por completo" duration="0"/>
+    <testCase name="findFreeSlots (RF-S9) › devuelve vacio si la duracion no cabe en la franja" duration="1"/>
+    <testCase name="findFreeSlots (RF-S9) › acepta una franja horaria personalizada" duration="0"/>
+    <testCase name="findFreeSlots (RF-S9) › recorre varios dias" duration="1"/>
+    <testCase name="formato de 12 y 24 horas › por omision el reloj es de 24 h" duration="1"/>
+    <testCase name="formato de 12 y 24 horas › en 12 h la tarde lleva p.m." duration="0"/>
+    <testCase name="formato de 12 y 24 horas › en 12 h la manana lleva a.m." duration="1"/>
+    <testCase name="formato de 12 y 24 horas › la medianoche es 12 a.m." duration="0"/>
+    <testCase name="formato de 12 y 24 horas › el mediodia es 12 p.m." duration="0"/>
+    <testCase name="formato de 12 y 24 horas › las 12:59 aun son p.m., no a.m." duration="1"/>
+    <testCase name="formato de 12 y 24 horas › las 23:59 son las 11:59 p.m." duration="0"/>
+    <testCase name="formato de 12 y 24 horas › los minutos siguen llevando dos digitos" duration="0"/>
+    <testCase name="formato de 12 y 24 horas › la etiqueta de hora omite los minutos en 12 h" duration="1"/>
+    <testCase name="formato de 12 y 24 horas › en 24 h la etiqueta conserva los minutos" duration="0"/>
+    <testCase name="formato de 12 y 24 horas › formatTime respeta la preferencia" duration="1"/>
+    <testCase name="formato de 12 y 24 horas › el rango de horas tambien" duration="1"/>
+    <testCase name="formato de 12 y 24 horas › una actividad de todo el dia no cambia con el reloj" duration="0"/>
+    <testCase name="formato de 12 y 24 horas › cambiar de vuelta a 24 h restaura el formato" duration="1"/>
+  </file>
+  <file path="src/lib/__tests__/recurrence.test.ts">
+    <testCase name="toRRule › serializa la frecuencia sola" duration="5"/>
+    <testCase name="toRRule › traduce byDay a codigos RFC 5545 con lunes = 0" duration="0"/>
+    <testCase name="toRRule › ordena byDay aunque llegue desordenado" duration="0"/>
+    <testCase name="toRRule › omite BYDAY cuando no es semanal" duration="1"/>
+    <testCase name="toRRule › escribe UNTIL sin guiones" duration="0"/>
+    <testCase name="parseRRule › devuelve null sin texto" duration="4"/>
+    <testCase name="parseRRule › devuelve null con una frecuencia que no soportamos" duration="0"/>
+    <testCase name="parseRRule › es la inversa de toRRule" duration="1"/>
+    <testCase name="parseRRule › ignora codigos de dia desconocidos" duration="3"/>
+    <testCase name="expandOccurrences › excluye la madre y devuelve una ocurrencia por dia" duration="21"/>
+    <testCase name="expandOccurrences › conserva la hora del dia de la madre" duration="1"/>
+    <testCase name="expandOccurrences › semanal solo cae en los dias pedidos" duration="0"/>
+    <testCase name="expandOccurrences › semanal sin byDay repite el dia de la madre" duration="1"/>
+    <testCase name="expandOccurrences › UNTIL corta la serie e incluye ese mismo dia" duration="1"/>
+    <testCase name="expandOccurrences › no devuelve nada si el horizonte no pasa de la madre" duration="0"/>
+    <testCase name="expandOccurrences › mensual salta los meses que no tienen ese dia" duration="1"/>
+    <testCase name="describeRecurrence › describe la ausencia de regla" duration="0"/>
+    <testCase name="describeRecurrence › describe cada frecuencia en es-MX" duration="1"/>
+    <testCase name="describeRecurrence › anade el limite en formato dd/mm/aaaa" duration="0"/>
+  </file>
+  <file path="src/hooks/__tests__/use-workouts.test.tsx">
+    <testCase name="claves › separan lista, detalle, actividad y nombres" duration="2"/>
+    <testCase name="consultas › useWorkouts pide el historial del usuario" duration="65"/>
+    <testCase name="consultas › useWorkout pide por id" duration="20"/>
+    <testCase name="consultas › useWorkout sin id no consulta" duration="11"/>
+    <testCase name="consultas › useWorkoutByActivity cruza actividad y usuario" duration="4"/>
+    <testCase name="consultas › useWorkoutByActivity se puede desactivar a mano" duration="2"/>
+    <testCase name="consultas › useExerciseNames pide el autocompletado propio" duration="4"/>
+    <testCase name="mutaciones › crear pasa el usuario" duration="40"/>
+    <testCase name="mutaciones › actualizar pasa id y parche" duration="12"/>
+    <testCase name="mutaciones › eliminar pasa el id" duration="7"/>
+    <testCase name="mutaciones › anadir ejercicio pasa entrenamiento y datos" duration="4"/>
+    <testCase name="mutaciones › editar un ejercicio solo refresca el autocompletado (RF-F4)" duration="20"/>
+    <testCase name="mutaciones › eliminar un ejercicio si refresca todo el historial" duration="3"/>
+    <testCase name="mutaciones › duplicar propaga destino y si se conservan valores (RF-F8)" duration="3"/>
+    <testCase name="mutaciones › un fallo al crear se propaga" duration="7"/>
+  </file>
+  <file path="src/components/ui/__tests__/app-text.test.tsx">
+    <testCase name="AppText › muestra el contenido" duration="81"/>
+    <testCase name="AppText › usa la variante body por defecto" duration="2"/>
+    <testCase name="AppText › aplica la escala de la variante display" duration="3"/>
+    <testCase name="AppText › aplica la escala de la variante title" duration="1"/>
+    <testCase name="AppText › aplica la escala de la variante heading" duration="2"/>
+    <testCase name="AppText › aplica la escala de la variante bodyStrong" duration="1"/>
+    <testCase name="AppText › aplica la escala de la variante label" duration="1"/>
+    <testCase name="AppText › aplica la escala de la variante caption" duration="2"/>
+    <testCase name="AppText › usa el color de texto primario por defecto" duration="3"/>
+    <testCase name="AppText › acepta el token de color textSecondary" duration="1"/>
+    <testCase name="AppText › acepta el token de color textTertiary" duration="2"/>
+    <testCase name="AppText › acepta el token de color danger" duration="1"/>
+    <testCase name="AppText › acepta el token de color success" duration="3"/>
+    <testCase name="AppText › activa numeros tabulares para horas y fechas" duration="4"/>
+    <testCase name="AppText › no los activa por defecto" duration="1"/>
+    <testCase name="AppText › el estilo propio gana sobre el de la variante" duration="3"/>
+    <testCase name="AppText › deja pasar las props de accesibilidad" duration="1"/>
+    <testCase name="AppText › respeta numberOfLines" duration="2"/>
+  </file>
+  <file path="src/components/ui/__tests__/brand.test.tsx">
+    <testCase name="Wordmark › muestra el wordmark" duration="28"/>
+    <testCase name="Wordmark › usa la fuente de marca, no la del sistema" duration="3"/>
+    <testCase name="Wordmark › sin pedirlo no muestra el eslogan" duration="2"/>
+    <testCase name="Wordmark › con slogan lo muestra en su propia fuente" duration="1"/>
+    <testCase name="Wordmark › el tamano escala el wordmark" duration="2"/>
+    <testCase name="Wordmark › apilado el eslogan escala en proporcion y queda pequeno" duration="2"/>
+    <testCase name="Wordmark › en linea respeta el minimo de 12 px aunque el wordmark sea chico" duration="2"/>
+    <testCase name="Wordmark › en linea no encoge un eslogan que ya supera el minimo" duration="2"/>
+    <testCase name="Wordmark › el eslogan puede llevar su propio color" duration="2"/>
+    <testCase name="Wordmark › sin sloganColor ambos comparten color" duration="2"/>
+    <testCase name="DimensionDots › pinta un punto por cada dimension del bienestar" duration="4"/>
+    <testCase name="DimensionDots › son siete" duration="2"/>
+    <testCase name="DimensionDots › acepta un tamano propio" duration="3"/>
+    <testCase name="DimensionDots › es decorativo: se oculta a los lectores de pantalla" duration="4"/>
+  </file>
+  <file path="src/components/ui/__tests__/states.test.tsx">
+    <testCase name="LoadingState › usa un texto por defecto" duration="20"/>
+    <testCase name="LoadingState › acepta una etiqueta propia" duration="4"/>
+    <testCase name="LoadingState › anuncia el cambio a los lectores de pantalla" duration="2"/>
+    <testCase name="EmptyState › muestra el titulo" duration="3"/>
+    <testCase name="EmptyState › muestra la descripcion cuando la hay" duration="2"/>
+    <testCase name="EmptyState › sin descripcion no pinta nada extra" duration="6"/>
+    <testCase name="ErrorState › muestra el mensaje" duration="3"/>
+    <testCase name="ErrorState › se anuncia como alerta" duration="9"/>
+    <testCase name="ErrorState › ofrece reintentar cuando hay como" duration="22"/>
+    <testCase name="ErrorState › sin onRetry no muestra el boton" duration="14"/>
+    <testCase name="Skeleton › se renderiza sin contenido" duration="7"/>
+    <testCase name="Skeleton › acepta un estilo para imitar la forma del contenido" duration="1"/>
+  </file>
+  <file path="src/components/ui/__tests__/rows-and-buttons.test.tsx">
+    <testCase name="IconButton › se anuncia con la etiqueta obligatoria" duration="13"/>
+    <testCase name="IconButton › avisa al tocarlo" duration="3"/>
+    <testCase name="IconButton › deshabilitado no responde y lo comunica" duration="2"/>
+    <testCase name="IconButton › tiene area tactil ampliada con hitSlop" duration="2"/>
+    <testCase name="Fab › usa una etiqueta por defecto descriptiva" duration="3"/>
+    <testCase name="Fab › acepta una etiqueta propia" duration="2"/>
+    <testCase name="Fab › avisa al tocarlo" duration="2"/>
+    <testCase name="ActionRow › muestra la etiqueta" duration="3"/>
+    <testCase name="ActionRow › avisa al tocarla" duration="2"/>
+    <testCase name="ActionRow › deshabilitada no responde" duration="5"/>
+    <testCase name="ActionRow › acepta el color destructivo" duration="4"/>
+    <testCase name="SettingsRow › muestra etiqueta y valor" duration="5"/>
+    <testCase name="SettingsRow › sin onPress es informativa, no un boton" duration="4"/>
+    <testCase name="SettingsRow › con onPress es un boton que avisa" duration="5"/>
+    <testCase name="SettingsRow › se anuncia con etiqueta y valor juntos" duration="15"/>
+    <testCase name="SettingsRow › deshabilitada deja de ser interactiva" duration="2"/>
+    <testCase name="SettingsRow › muestra el hint en segunda linea" duration="1"/>
+    <testCase name="SettingsRow › un control propio a la derecha sustituye al valor" duration="2"/>
+    <testCase name="SettingsRow › la etiqueta no envuelve" duration="12"/>
+    <testCase name="SettingsGroup › muestra el titulo del grupo" duration="19"/>
+    <testCase name="SettingsGroup › muestra el pie del grupo" duration="7"/>
+    <testCase name="SettingsGroup › renderiza todas las filas" duration="12"/>
+    <testCase name="SettingsGroup › descarta los hijos falsos (filas condicionales)" duration="4"/>
+  </file>
+  <file path="src/hooks/__tests__/use-reminders.test.tsx">
+    <testCase name="claves › separan por actividad y por usuario" duration="2"/>
+    <testCase name="useActivityReminders › consulta los de esa actividad para ese usuario" duration="15"/>
+    <testCase name="useActivityReminders › sin actividad no consulta" duration="31"/>
+    <testCase name="useActivityReminders › sin sesion tampoco" duration="3"/>
+    <testCase name="useReminderMutations › definir offsets pasa actividad, usuario y lista" duration="54"/>
+    <testCase name="useReminderMutations › silenciar uno pasa el recordatorio y el usuario" duration="5"/>
+    <testCase name="useReminderMutations › cualquier cambio invalida toda la familia" duration="7"/>
+    <testCase name="useUpcomingReminders › pide los del horizonte configurado" duration="6"/>
+    <testCase name="useUpcomingReminders › sin sesion no consulta" duration="3"/>
+    <testCase name="useReminderSync (plan §3.4) › reprograma las notificaciones con lo que hay" duration="7"/>
+    <testCase name="useReminderSync (plan §3.4) › no reprograma si el contenido no cambio, aunque se vuelva a renderizar" duration="11"/>
+    <testCase name="useReminderSync (plan §3.4) › se suscribe al cambio de primer plano para refrescar" duration="4"/>
+    <testCase name="useReminderSync (plan §3.4) › sin recordatorios no programa nada" duration="18"/>
+  </file>
+  <file path="src/components/ui/__tests__/field-button.test.tsx">
+    <testCase name="FieldButton › muestra etiqueta y valor" duration="18"/>
+    <testCase name="FieldButton › sin valor muestra el placeholder" duration="5"/>
+    <testCase name="FieldButton › acepta un placeholder propio" duration="3"/>
+    <testCase name="FieldButton › se anuncia con etiqueta y valor juntos" duration="3"/>
+    <testCase name="FieldButton › sin valor se anuncia con el placeholder" duration="2"/>
+    <testCase name="FieldButton › abre el selector al tocarlo" duration="3"/>
+    <testCase name="FieldButton › deshabilitado no abre nada" duration="4"/>
+    <testCase name="FieldButton › muestra el error debajo" duration="3"/>
+    <testCase name="FieldButton › el valor no envuelve a dos lineas" duration="30"/>
+    <testCase name="FieldButton › la etiqueta tampoco envuelve" duration="4"/>
+  </file>
+  <file path="src/components/ui/__tests__/text-field.test.tsx">
+    <testCase name="TextField › muestra la etiqueta" duration="50"/>
+    <testCase name="TextField › el campo se anuncia con la etiqueta" duration="4"/>
+    <testCase name="TextField › la etiqueta no envuelve, para no desalinear filas de dos columnas" duration="3"/>
+    <testCase name="TextField › muestra el hint cuando no hay error" duration="3"/>
+    <testCase name="TextField › el error sustituye al hint" duration="3"/>
+    <testCase name="TextField › el error se anuncia a los lectores de pantalla" duration="4"/>
+    <testCase name="TextField › sin mensaje no pinta nada debajo" duration="4"/>
+    <testCase name="TextField › propaga el texto escrito" duration="5"/>
+    <testCase name="TextField › avisa del foco y del blur sin tragarse los callbacks" duration="5"/>
+    <testCase name="TextField › un campo seguro nace oculto" duration="9"/>
+    <testCase name="TextField › el boton del ojo revela y vuelve a ocultar" duration="11"/>
+    <testCase name="TextField › un campo normal no trae boton de ojo" duration="21"/>
+    <testCase name="TextField › no editable se refleja en el campo" duration="5"/>
+    <testCase name="TextField › deja pasar el tipo de teclado" duration="5"/>
+  </file>
+  <file path="src/hooks/__tests__/use-connections.test.tsx">
+    <testCase name="useContacts › pide los contactos del usuario" duration="33"/>
+    <testCase name="useContacts › no consulta sin sesion" duration="3"/>
+    <testCase name="usePeopleColors (RF-S15) › incluye mi propio color bajo mi id" duration="13"/>
+    <testCase name="usePeopleColors (RF-S15) › asigna color a los contactos aceptados" duration="9"/>
+    <testCase name="usePeopleColors (RF-S15) › ignora las solicitudes pendientes" duration="18"/>
+    <testCase name="usePeopleColors (RF-S15) › respeta el color elegido a mano" duration="7"/>
+    <testCase name="useUserSearch (RF-S1) › no busca por debajo del minimo" duration="10"/>
+    <testCase name="useUserSearch (RF-S1) › la arroba no cuenta para el minimo" duration="4"/>
+    <testCase name="useUserSearch (RF-S1) › busca en minusculas y sin espacios" duration="30"/>
+    <testCase name="useUserSearch (RF-S1) › sin sesion no busca" duration="3"/>
+    <testCase name="useConnectionMutations › solicitar pasa usuario y destinatario" duration="41"/>
+    <testCase name="useConnectionMutations › aceptar pasa el id de la conexion" duration="17"/>
+    <testCase name="useConnectionMutations › eliminar pasa el id" duration="9"/>
+    <testCase name="useConnectionMutations › cambiar visibilidad propaga el nivel" duration="18"/>
+    <testCase name="useConnectionMutations › quitar color pasa null" duration="6"/>
+    <testCase name="useConnectionMutations › aceptar invalida tambien calendario, disponibilidad e invitaciones" duration="8"/>
+    <testCase name="useConnectionMutations › eliminar invalida lo mismo: la cascada afecta a todo" duration="12"/>
+  </file>
+  <file path="src/components/ui/__tests__/button.test.tsx">
+    <testCase name="Button › muestra el titulo" duration="37"/>
+    <testCase name="Button › se anuncia como boton con su etiqueta" duration="4"/>
+    <testCase name="Button › avisa al tocarlo" duration="8"/>
+    <testCase name="Button › no responde cuando esta deshabilitado" duration="6"/>
+    <testCase name="Button › cargando oculta el titulo y no responde" duration="16"/>
+    <testCase name="Button › cargando se anuncia como ocupado y deshabilitado" duration="12"/>
+    <testCase name="Button › deshabilitado no se anuncia como ocupado" duration="7"/>
+    <testCase name="Button › renderiza la variante primary" duration="4"/>
+    <testCase name="Button › renderiza la variante secondary" duration="2"/>
+    <testCase name="Button › renderiza la variante ghost" duration="9"/>
+    <testCase name="Button › renderiza la variante danger" duration="5"/>
+  </file>
+  <file path="src/services/supabase/__tests__/shared.test.ts">
+    <testCase name="searchUsers (RF-S1) › va por RPC, no leyendo profiles" duration="3"/>
+    <testCase name="searchUsers (RF-S1) › pasa el termino y el tope de 8" duration="1"/>
+    <testCase name="searchUsers (RF-S1) › una busqueda vacia no consulta" duration="0"/>
+    <testCase name="searchUsers (RF-S1) › solo una arroba tampoco consulta" duration="1"/>
+    <testCase name="searchUsers (RF-S1) › sin resultados devuelve lista vacia" duration="0"/>
+    <testCase name="listContacts (RF-S3) › clasifica una solicitud que envie como saliente" duration="2"/>
+    <testCase name="listContacts (RF-S3) › clasifica una solicitud que recibi como entrante" duration="0"/>
+    <testCase name="listContacts (RF-S3) › muestra el perfil de la otra persona, no el mio" duration="1"/>
+    <testCase name="listContacts (RF-S3) › separa lo que yo comparto de lo que me comparten" duration="3"/>
+    <testCase name="listContacts (RF-S3) › incluye el color asignado a mano (RF-S15)" duration="3"/>
+    <testCase name="listContacts (RF-S3) › los colores se piden solo los mios" duration="0"/>
+    <testCase name="request › rechaza enviarse una solicitud a uno mismo sin tocar la base" duration="13"/>
+    <testCase name="request › inserta la conexion" duration="1"/>
+    <testCase name="request › el indice unico cubre las dos direcciones y se explica en espanol" duration="1"/>
+    <testCase name="request › otro error se traduce igual" duration="2"/>
+    <testCase name="accept › solo actualiza si soy la destinataria" duration="1"/>
+    <testCase name="accept › marca la fecha de respuesta" duration="0"/>
+    <testCase name="accept › si no actualizo ninguna fila, la solicitud ya no esta" duration="2"/>
+    <testCase name="remove (RF-S2) › borra la conexion y deja la cascada al trigger" duration="1"/>
+    <testCase name="setCalendarVisibility (RF-S7) › compartir hace upsert sobre el par" duration="1"/>
+    <testCase name="setCalendarVisibility (RF-S7) › null borra la fila en vez de guardar un estado" duration="1"/>
+    <testCase name="setContactColor (RF-S15) › guardar hace upsert" duration="1"/>
+    <testCase name="setContactColor (RF-S15) › null vuelve a automatico borrando la fila" duration="1"/>
+    <testCase name="shareActivity (RF-S4) › sin contactos no consulta" duration="2"/>
+    <testCase name="shareActivity (RF-S4) › upsert deja pendiente a quien habia rechazado" duration="1"/>
+    <testCase name="listInvitations (RF-S5) › pide solo las pendientes dirigidas a mi" duration="1"/>
+    <testCase name="listInvitations (RF-S5) › separa share, actividad y dueno" duration="14"/>
+    <testCase name="listInvitations (RF-S5) › ordena por la fecha de la actividad" duration="1"/>
+    <testCase name="respond › aceptar marca accepted solo en mi invitacion" duration="4"/>
+    <testCase name="respond › rechazar marca declined" duration="1"/>
+    <testCase name="respond › si no actualizo nada, la invitacion ya no esta" duration="4"/>
+    <testCase name="removeShare (RF-S6) › borra el share y resincroniza los recordatorios" duration="1"/>
+    <testCase name="removeShare (RF-S6) › si el share ya no existe no llama a la RPC" duration="0"/>
+    <testCase name="getAvailability (RF-S8) › sin personas no consulta" duration="1"/>
+    <testCase name="getAvailability (RF-S8) › va por RPC y no leyendo activities" duration="0"/>
+    <testCase name="getAvailability (RF-S8) › pasa personas y ventana" duration="0"/>
+    <testCase name="getAvailability (RF-S8) › sin datos devuelve lista vacia" duration="14"/>
+    <testCase name="getAvailability (RF-S8) › traduce el error" duration="2"/>
+  </file>
+  <file path="src/components/ui/__tests__/switch-row.test.tsx">
+    <testCase name="Toggle › se anuncia como switch con su etiqueta" duration="23"/>
+    <testCase name="Toggle › comunica el estado encendido" duration="3"/>
+    <testCase name="Toggle › comunica el estado apagado" duration="4"/>
+    <testCase name="Toggle › al tocarlo propone el valor contrario" duration="4"/>
+    <testCase name="Toggle › estando encendido propone apagarlo" duration="2"/>
+    <testCase name="Toggle › deshabilitado no responde" duration="8"/>
+    <testCase name="SwitchRow › muestra la etiqueta" duration="4"/>
+    <testCase name="SwitchRow › muestra el hint cuando lo hay" duration="2"/>
+    <testCase name="SwitchRow › sin hint no pinta segunda linea" duration="2"/>
+    <testCase name="SwitchRow › el interruptor de la fila funciona" duration="7"/>
+  </file>
+  <file path="src/components/ui/__tests__/segmented.test.tsx">
+    <testCase name="Segmented › muestra todas las opciones" duration="25"/>
+    <testCase name="Segmented › se anuncia como tablist" duration="3"/>
+    <testCase name="Segmented › marca como seleccionada solo la opcion activa" duration="3"/>
+    <testCase name="Segmented › avisa del valor elegido" duration="4"/>
+    <testCase name="Segmented › tocar la ya seleccionada tambien avisa" duration="4"/>
+    <testCase name="Segmented › funciona con dos opciones" duration="2"/>
+  </file>
+  <file path="src/components/ui/__tests__/chip.test.tsx">
+    <testCase name="Chip › muestra la etiqueta" duration="17"/>
+    <testCase name="Chip › anuncia que esta seleccionado" duration="3"/>
+    <testCase name="Chip › anuncia que no lo esta" duration="1"/>
+    <testCase name="Chip › avisa al tocarlo" duration="5"/>
+    <testCase name="Chip › acepta un color de acento de la dimension" duration="4"/>
+    <testCase name="Chip › la variante compacta sigue mostrando la etiqueta" duration="12"/>
+  </file>
+  <file path="src/services/supabase/__tests__/workouts.test.ts">
+    <testCase name="list › filtra por dueno y ordena del mas reciente al mas antiguo (RF-F7)" duration="3"/>
+    <testCase name="list › trae el titulo de la actividad ligada" duration="8"/>
+    <testCase name="list › sin actividad ligada el titulo es null" duration="0"/>
+    <testCase name="list › cuenta los ejercicios" duration="1"/>
+    <testCase name="duracion derivada (RF-F3) › suma la de los ejercicios" duration="1"/>
+    <testCase name="duracion derivada (RF-F3) › sin ninguna duracion anotada es null, no cero" duration="0"/>
+    <testCase name="duracion derivada (RF-F3) › sin ejercicios tambien es null" duration="0"/>
+    <testCase name="getById › devuelve los ejercicios ordenados por posicion" duration="0"/>
+    <testCase name="getById › avisa si ya no existe" duration="75"/>
+    <testCase name="getById › traduce el error" duration="3"/>
+    <testCase name="getByActivity (RF-F1) › filtra por actividad y dueno" duration="2"/>
+    <testCase name="getByActivity (RF-F1) › devuelve null si la actividad no tiene entrenamiento" duration="1"/>
+    <testCase name="create / update / remove › crear marca al dueno" duration="1"/>
+    <testCase name="create / update / remove › actualizar filtra por id y envia el parche" duration="2"/>
+    <testCase name="create / update / remove › eliminar borra por id" duration="11"/>
+    <testCase name="create / update / remove › eliminar traduce el error" duration="1"/>
+    <testCase name="ejercicios › calcula la siguiente posicion si no se indica" duration="1"/>
+    <testCase name="ejercicios › el primero va en la posicion 0" duration="0"/>
+    <testCase name="ejercicios › respeta una posicion explicita sin consultar" duration="0"/>
+    <testCase name="ejercicios › actualizar filtra por id" duration="1"/>
+    <testCase name="ejercicios › eliminar borra por id" duration="0"/>
+    <testCase name="exerciseNames (RF-F4) › solo ve los del propio usuario" duration="0"/>
+    <testCase name="exerciseNames (RF-F4) › quita duplicados y ordena alfabeticamente" duration="1"/>
+    <testCase name="exerciseNames (RF-F4) › sin historial devuelve lista vacia" duration="2"/>
+    <testCase name="duplicate (RF-F8) › con keepValues copia series, repeticiones y peso" duration="2"/>
+    <testCase name="duplicate (RF-F8) › sin keepValues solo viajan los nombres" duration="0"/>
+    <testCase name="duplicate (RF-F8) › las notas nunca se copian: son de la sesion que las escribio" duration="0"/>
+    <testCase name="duplicate (RF-F8) › un entrenamiento sin ejercicios no inserta la segunda tanda" duration="1"/>
+  </file>
+  <file path="src/components/ui/__tests__/banner.test.tsx">
+    <testCase name="Banner › muestra el mensaje" duration="15"/>
+    <testCase name="Banner › se anuncia como alerta" duration="8"/>
+    <testCase name="Banner › renderiza el tono error" duration="4"/>
+    <testCase name="Banner › renderiza el tono success" duration="2"/>
+    <testCase name="Banner › renderiza el tono info" duration="6"/>
+    <testCase name="Banner › el tono por defecto es informativo" duration="5"/>
+  </file>
+  <file path="src/services/supabase/__tests__/auth.test.ts">
+    <testCase name="isUsernameAvailable (RF-A1) › consulta la RPC en minusculas" duration="2"/>
+    <testCase name="isUsernameAvailable (RF-A1) › solo true significa disponible" duration="1"/>
+    <testCase name="isUsernameAvailable (RF-A1) › una respuesta nula se trata como no disponible" duration="1"/>
+    <testCase name="isUsernameAvailable (RF-A1) › traduce el error al espanol" duration="3"/>
+    <testCase name="signUp (RF-A2) › comprueba el username antes de crear la cuenta" duration="1"/>
+    <testCase name="signUp (RF-A2) › manda username y nombre como metadatos para el trigger" duration="1"/>
+    <testCase name="signUp (RF-A2) › informa si Supabase no abrio sesion (correo por confirmar)" duration="0"/>
+    <testCase name="signUp (RF-A2) › traduce un correo ya registrado" duration="3"/>
+    <testCase name="alta por pasos (RF-A8) › revalida el username justo antes de enviar el codigo" duration="1"/>
+    <testCase name="alta por pasos (RF-A8) › normaliza correo y username, y permite crear la cuenta" duration="1"/>
+    <testCase name="alta por pasos (RF-A8) › un nombre vacio viaja como null, no como cadena vacia" duration="1"/>
+    <testCase name="alta por pasos (RF-A8) › verificar el codigo devuelve la persona" duration="1"/>
+    <testCase name="alta por pasos (RF-A8) › un codigo caducado se distingue de uno invalido" duration="3"/>
+    <testCase name="alta por pasos (RF-A8) › sin usuario en la respuesta tambien falla" duration="1"/>
+    <testCase name="alta por pasos (RF-A8) › setPassword actualiza la sesion ya verificada" duration="1"/>
+    <testCase name="changePassword (RF-A9) › reautentica antes de cambiar: updateUser no comprueba la actual" duration="1"/>
+    <testCase name="changePassword (RF-A9) › si la actual no coincide, no toca la contrasena" duration="1"/>
+    <testCase name="changePassword (RF-A9) › traduce el rechazo de repetir la misma contrasena" duration="1"/>
+    <testCase name="signIn / signOut (RF-A3) › devuelve la persona al entrar" duration="1"/>
+    <testCase name="signIn / signOut (RF-A3) › traduce credenciales incorrectas" duration="0"/>
+    <testCase name="signIn / signOut (RF-A3) › un fallo de red no se confunde con credenciales incorrectas" duration="0"/>
+    <testCase name="signIn / signOut (RF-A3) › signOut propaga su error" duration="1"/>
+    <testCase name="signIn / signOut (RF-A3) › signOut sin error resuelve" duration="1"/>
+    <testCase name="resetPassword (RF-A7) › manda una URL de retorno hacia la app" duration="3"/>
+    <testCase name="resetPassword (RF-A7) › propaga el error traducido" duration="1"/>
+    <testCase name="sesion › getSession devuelve la persona si hay sesion" duration="0"/>
+    <testCase name="sesion › getSession devuelve null sin sesion" duration="3"/>
+    <testCase name="sesion › un usuario sin correo no rompe: se normaliza a cadena vacia" duration="0"/>
+    <testCase name="sesion › onAuthStateChange traduce la sesion a la persona" duration="1"/>
+  </file>
+  <file path="src/components/ui/__tests__/avatar.test.tsx">
+    <testCase name="Avatar › toma las iniciales de nombre y apellido" duration="28"/>
+    <testCase name="Avatar › con un solo nombre usa una inicial" duration="2"/>
+    <testCase name="Avatar › se queda en dos iniciales aunque haya mas palabras" duration="4"/>
+    <testCase name="Avatar › sin nombre visible cae al username" duration="3"/>
+    <testCase name="Avatar › un nombre en blanco tambien cae al username" duration="7"/>
+    <testCase name="Avatar › las iniciales van en mayuscula" duration="5"/>
+    <testCase name="Avatar › es decorativo: no lo anuncian los lectores de pantalla" duration="4"/>
+  </file>
+  <file path="src/hooks/__tests__/use-debounced-value.test.ts">
+    <testCase name="useDebouncedValue › devuelve el valor inicial de inmediato" duration="18"/>
+    <testCase name="useDebouncedValue › no propaga el cambio antes del retardo" duration="8"/>
+    <testCase name="useDebouncedValue › propaga el valor pasado el retardo" duration="2"/>
+    <testCase name="useDebouncedValue › teclear seguido solo deja pasar el ultimo valor" duration="19"/>
+    <testCase name="useDebouncedValue › acepta un retardo propio" duration="17"/>
+    <testCase name="useDebouncedValue › funciona con valores que no son texto" duration="12"/>
+  </file>
+  <file path="src/lib/__tests__/auth-errors.test.ts">
+    <testCase name="isOfflineError › reconoce &quot;Network request failed&quot; como falta de conexion" duration="6"/>
+    <testCase name="isOfflineError › reconoce &quot;TypeError: Failed to fetch&quot; como falta de conexion" duration="1"/>
+    <testCase name="isOfflineError › reconoce &quot;Load failed&quot; como falta de conexion" duration="0"/>
+    <testCase name="isOfflineError › reconoce &quot;fetch failed&quot; como falta de conexion" duration="0"/>
+    <testCase name="isOfflineError › reconoce &quot;NetworkError when attempting to fetch resource&quot; como falta de conexion" duration="1"/>
+    <testCase name="isOfflineError › no confunde otros errores con falta de conexion" duration="0"/>
+    <testCase name="isOfflineError › acepta valores que no son Error" duration="0"/>
+    <testCase name="toAuthMessage › la falta de conexion gana sobre cualquier otra coincidencia" duration="1"/>
+    <testCase name="toAuthMessage › traduce &quot;Invalid login credentials&quot;" duration="0"/>
+    <testCase name="toAuthMessage › traduce &quot;invalid_credentials&quot;" duration="1"/>
+    <testCase name="toAuthMessage › traduce &quot;User already registered&quot;" duration="0"/>
+    <testCase name="toAuthMessage › traduce &quot;user_already_exists&quot;" duration="0"/>
+    <testCase name="toAuthMessage › traduce &quot;duplicate key value violates profiles_username_key&quot;" duration="0"/>
+    <testCase name="toAuthMessage › traduce &quot;Email not confirmed&quot;" duration="0"/>
+    <testCase name="toAuthMessage › traduce &quot;email_not_confirmed&quot;" duration="1"/>
+    <testCase name="toAuthMessage › traduce &quot;over_request_rate_limit&quot;" duration="0"/>
+    <testCase name="toAuthMessage › traduce &quot;Too many requests&quot;" duration="1"/>
+    <testCase name="toAuthMessage › traduce &quot;Token has expired&quot;" duration="0"/>
+    <testCase name="toAuthMessage › traduce &quot;otp_expired&quot;" duration="0"/>
+    <testCase name="toAuthMessage › traduce &quot;Invalid token&quot;" duration="1"/>
+    <testCase name="toAuthMessage › traduce &quot;invalid_otp&quot;" duration="0"/>
+    <testCase name="toAuthMessage › traduce &quot;New password should be different from the old password&quot;" duration="0"/>
+    <testCase name="toAuthMessage › ignora mayusculas y minusculas" duration="1"/>
+    <testCase name="toAuthMessage › un codigo caducado no se reporta como codigo invalido" duration="0"/>
+    <testCase name="toAuthMessage › cae al mensaje generico con algo desconocido" duration="1"/>
+    <testCase name="toAuthMessage › nunca devuelve una cadena vacia" duration="4"/>
+    <testCase name="toAuthMessage › todos los mensajes estan en espanol y son accionables" duration="2"/>
+    <testCase name="AuthUiError › conserva el mensaje y se identifica por nombre" duration="1"/>
+    <testCase name="AuthUiError › guarda la causa original para depurar" duration="1"/>
+  </file>
+  <file path="src/services/supabase/__tests__/themes.test.ts">
+    <testCase name="list › consulta la tabla themes" duration="2"/>
+    <testCase name="list › ordena los del sistema primero y luego por nombre" duration="0"/>
+    <testCase name="list › devuelve lo que responde la base" duration="1"/>
+    <testCase name="list › traduce el error de la base" duration="5"/>
+    <testCase name="create › marca el tema como propio y no del sistema" duration="1"/>
+    <testCase name="create › pide una sola fila de vuelta" duration="6"/>
+    <testCase name="create › propaga un nombre duplicado como &quot;ya existe&quot;" duration="6"/>
+    <testCase name="update › filtra por el id del tema" duration="1"/>
+    <testCase name="update › envia solo el parche" duration="0"/>
+    <testCase name="update › un tema del sistema lo rechaza la RLS (RF-T3)" duration="1"/>
+    <testCase name="remove › borra por id" duration="1"/>
+    <testCase name="remove › no devuelve nada al tener exito" duration="30"/>
+    <testCase name="remove › traduce el error" duration="1"/>
+  </file>
+  <file path="src/services/supabase/__tests__/errors.test.ts">
+    <testCase name="toError › la falta de conexion se reporta como tal cuando llega como Error" duration="2"/>
+    <testCase name="toError › un error de red en forma de objeto plano hoy NO se detecta" duration="0"/>
+    <testCase name="toError › 42501 (RLS o trigger) se traduce a falta de permiso" duration="1"/>
+    <testCase name="toError › 23505 (unico duplicado) se traduce a que ya existe" duration="0"/>
+    <testCase name="toError › un codigo desconocido cae al mensaje generico" duration="0"/>
+    <testCase name="toError › siempre devuelve un AuthUiError que conserva la causa" duration="0"/>
+    <testCase name="toError › nunca filtra el mensaje crudo de Postgres" duration="0"/>
+    <testCase name="unwrap › devuelve los datos cuando no hay error" duration="0"/>
+    <testCase name="unwrap › lanza el error traducido" duration="9"/>
+    <testCase name="unwrap › datos nulos sin error tambien lanzan" duration="1"/>
+    <testCase name="unwrap › respeta valores falsy validos" duration="1"/>
+  </file>
+  <file path="src/services/supabase/__tests__/profiles.test.ts">
+    <testCase name="getMyProfile › consulta profiles filtrando por id" duration="2"/>
+    <testCase name="getMyProfile › pide columnas explicitas, no select(*)" duration="0"/>
+    <testCase name="getMyProfile › devuelve el perfil" duration="0"/>
+    <testCase name="getMyProfile › traduce el error" duration="8"/>
+    <testCase name="updateMyProfile › envia el parche y filtra por id" duration="1"/>
+    <testCase name="updateMyProfile › un username ocupado se reporta como tal, no como error generico" duration="1"/>
+    <testCase name="updateMyProfile › un username con formato invalido explica la regla" duration="0"/>
+    <testCase name="updateMyProfile › otro error cae al generico" duration="1"/>
+  </file>
+  <file path="src/lib/__tests__/env.test.ts">
+    <testCase name="con credenciales completas › usa el backend real" duration="2"/>
+    <testCase name="con credenciales completas › la bandera explicita gana sobre las credenciales" duration="0"/>
+    <testCase name="cae a modo demo › sin ninguna variable" duration="0"/>
+    <testCase name="cae a modo demo › sin la URL, aunque haya llave (el caso del APK de produccion)" duration="6"/>
+    <testCase name="cae a modo demo › sin la llave, aunque haya URL" duration="1"/>
+    <testCase name="cae a modo demo › con la URL de ejemplo de .env.example sin sustituir" duration="5"/>
+    <testCase name="cae a modo demo › con una llave demasiado corta para ser un JWT" duration="2"/>
+    <testCase name="cae a modo demo › con una URL que no es http" duration="1"/>
+    <testCase name="la bandera solo activa demo con el texto exacto &quot;true&quot; › no lo activa con &quot;TRUE&quot;" duration="1"/>
+    <testCase name="la bandera solo activa demo con el texto exacto &quot;true&quot; › no lo activa con &quot;True&quot;" duration="2"/>
+    <testCase name="la bandera solo activa demo con el texto exacto &quot;true&quot; › no lo activa con &quot;1&quot;" duration="8"/>
+    <testCase name="la bandera solo activa demo con el texto exacto &quot;true&quot; › no lo activa con &quot;si&quot;" duration="1"/>
+    <testCase name="la bandera solo activa demo con el texto exacto &quot;true&quot; › no lo activa con &quot;&quot;" duration="0"/>
+  </file>
+  <file path="src/constants/__tests__/people-colors.test.ts">
+    <testCase name="paleta › son 8 colores con id, etiqueta y hex" duration="2"/>
+    <testCase name="paleta › no hay hex repetidos" duration="1"/>
+    <testCase name="paleta › el color de &quot;Tú&quot; es el primero de la paleta" duration="0"/>
+    <testCase name="assignPeopleColors › sin contactos devuelve un mapa vacio" duration="8"/>
+    <testCase name="assignPeopleColors › asigna un color a cada contacto" duration="1"/>
+    <testCase name="assignPeopleColors › respeta el color elegido a mano" duration="1"/>
+    <testCase name="assignPeopleColors › nunca reparte el color reservado para &quot;Tú&quot;" duration="0"/>
+    <testCase name="assignPeopleColors › no repite color entre contactos mientras queden libres" duration="3"/>
+    <testCase name="assignPeopleColors › un color elegido a mano deja de ofrecerse al resto" duration="0"/>
+    <testCase name="assignPeopleColors › es estable: el mismo orden da el mismo reparto" duration="1"/>
+    <testCase name="assignPeopleColors › con mas contactos que colores reutiliza en vez de dejar a alguien sin color" duration="9"/>
+    <testCase name="nextAvailableColor › sin nada en uso devuelve el primero libre despues del de &quot;Tú&quot;" duration="0"/>
+    <testCase name="nextAvailableColor › salta los que ya estan en uso" duration="0"/>
+    <testCase name="nextAvailableColor › nunca devuelve el color de &quot;Tú&quot;" duration="0"/>
+    <testCase name="nextAvailableColor › agotada la paleta cae a un color valido" duration="0"/>
+  </file>
+  <file path="src/services/supabase/__tests__/admin.test.ts">
+    <testCase name="getStats › llama a la RPC admin_stats" duration="1"/>
+    <testCase name="getStats › devuelve la primera fila" duration="1"/>
+    <testCase name="getStats › sin filas avisa en vez de devolver vacio" duration="3"/>
+    <testCase name="getStats › una cuenta sin rol recibe el rechazo de la base (RF-AD6)" duration="0"/>
+    <testCase name="getStats › no consulta tablas directamente: solo la RPC" duration="1"/>
+    <testCase name="listAccounts › llama a admin_accounts con limite y desplazamiento" duration="1"/>
+    <testCase name="listAccounts › devuelve las cuentas" duration="1"/>
+    <testCase name="listAccounts › sin datos devuelve lista vacia, no null" duration="1"/>
+    <testCase name="listAccounts › traduce el rechazo de la RLS" duration="1"/>
+  </file>
+  <file path="src/lib/__tests__/query-invalidation.test.ts">
+    <testCase name="invalidateSharedData › invalida las cinco familias afectadas" duration="1"/>
+    <testCase name="invalidateSharedData › cubre contactos, actividades, shares, recordatorios y disponibilidad" duration="1"/>
+    <testCase name="invalidateSharedData › no olvida el calendario, que es el fallo que motivo centralizarlo" duration="1"/>
+    <testCase name="invalidateSharedData › no lanza si el cliente resuelve de inmediato" duration="1"/>
+  </file>
+  <file path="src/constants/__tests__/reminders.test.ts">
+    <testCase name="presets › van de menor a mayor antelacion" duration="1"/>
+    <testCase name="presets › el horizonte coincide con el de la recurrencia" duration="1"/>
+    <testCase name="describeOffset › usa la etiqueta del preset para 0" duration="1"/>
+    <testCase name="describeOffset › usa la etiqueta del preset para 10" duration="0"/>
+    <testCase name="describeOffset › usa la etiqueta del preset para 30" duration="0"/>
+    <testCase name="describeOffset › usa la etiqueta del preset para 60" duration="1"/>
+    <testCase name="describeOffset › usa la etiqueta del preset para 1440" duration="0"/>
+    <testCase name="describeOffset › expresa en dias los multiplos de 1440" duration="0"/>
+    <testCase name="describeOffset › expresa en horas los multiplos de 60" duration="0"/>
+    <testCase name="describeOffset › cae a minutos cuando no es multiplo" duration="0"/>
+    <testCase name="describeOffset › nunca devuelve vacio" duration="1"/>
+  </file>
+</testExecutions>

@@ -64,6 +64,12 @@ jobs:
             npx jest --ci --coverage --json --outputFile=jest-results.json
           fi
 
+      # Convierte el resultado de Jest al formato que SonarQube entiende, para que
+      # el panel muestre el numero de pruebas y no solo la cobertura.
+      - name: Informe de ejecucion para SonarQube
+        if: always() && steps.pruebas.outputs.completa == 'si'
+        run: node scripts/sonar-pruebas.mjs jest-results.json
+
       - name: Lint
         id: lint
         continue-on-error: true
@@ -88,7 +94,9 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: cobertura
-          path: reports/pruebas/cobertura/
+          path: |
+            reports/pruebas/cobertura/
+            reports/pruebas/ejecucion-sonar.xml
           retention-days: 30
 
   sonarqube:
@@ -110,7 +118,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: cobertura
-          path: reports/pruebas/cobertura
+          path: reports/pruebas
 
       - name: Analisis de SonarQube Cloud
         uses: SonarSource/sonarqube-scan-action@v7
