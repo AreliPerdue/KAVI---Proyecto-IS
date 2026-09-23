@@ -37,7 +37,7 @@ Están agrupadas igual que en el código, bajo el aspecto que verifican.
 - [Temas y dimensiones del bienestar](#temas-y-dimensiones-del-bienestar) — 68 pruebas
 - [Compartir con otras personas](#compartir-con-otras-personas) — 221 pruebas
 - [Recordatorios](#recordatorios) — 80 pruebas
-- [Gimnasio](#gimnasio) — 138 pruebas
+- [Gimnasio](#gimnasio) — 140 pruebas
 - [Perfil y administración](#perfil-y-administracion) — 72 pruebas
 - [Los cimientos: interfaz y utilidades](#los-cimientos-interfaz-y-utilidades) — 204 pruebas
 - [Lo que encontramos](#lo-que-encontramos)
@@ -1928,7 +1928,7 @@ Cada persona decide por su cuenta si quiere el aviso, incluso en una actividad c
 
 ## Gimnasio
 
-**138 pruebas, todas superadas.**
+**140 pruebas, todas superadas.**
 
 El registro de entrenamientos, accesible desde cualquier actividad marcada como gimnasio. Lo que más se cuidó es que capturar no pierda nada: los campos se guardan al salir de ellos, y borrar un ejercicio ofrece deshacer en vez de pedir confirmación.
 
@@ -1971,7 +1971,7 @@ El registro de entrenamientos, accesible desde cualquier actividad marcada como 
 
 ### Detalle de un entrenamiento
 
-*Capturar y consultar una sesión.* — 23 pruebas.
+*Capturar y consultar una sesión.* — 25 pruebas.
 
 
 **modo de apertura**
@@ -2014,6 +2014,11 @@ El registro de entrenamientos, accesible desde cualquier actividad marcada como 
 - ✓ escribir sin salir del campo todavia no guarda
 - ✓ borrarlo lo deja sin nombre, no en cadena vacía
 - ✓ salir del campo sin cambiar nada no guarda
+
+**el nombre se recuerda para el siguiente entrenamiento**
+
+- ✓ al confirmar el backend queda como propuesta del proximo
+- ✓ borrar el nombre no deja una propuesta vacía
 
 
 ### Tarjeta de ejercicio

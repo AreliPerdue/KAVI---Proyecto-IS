@@ -114,6 +114,19 @@ jobs:
           # como nuevo.
           fetch-depth: 0
 
+      # Sin las dependencias, `tsconfig.json` extiende una configuracion que vive
+      # en node_modules y Sonar avisa de que el analisis de TypeScript sera parcial.
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
       - name: Recuperar la cobertura del trabajo anterior
         uses: actions/download-artifact@v4
         with:

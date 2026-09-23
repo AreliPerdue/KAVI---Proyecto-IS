@@ -8,6 +8,8 @@
  */
 import { fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 
+import { usePreferencesStore } from '@/store/preferences-store';
+
 const mockConfirm = jest.fn();
 const mockSnackbar = jest.fn();
 /** Prefijo mock obligatorio: Jest eleva la fabrica de jest.mock. */
@@ -72,6 +74,7 @@ const ENTRENAMIENTO = (over = {}) => ({
 });
 
 beforeEach(() => {
+  usePreferencesStore.setState({ lastWorkoutTitle: null });
   mockConfirm.mockReset().mockResolvedValue(true);
   mockSnackbar.mockReset();
   for (const mut of Object.values(mockMut)) mut.mutate.mockReset();
@@ -298,5 +301,34 @@ describe('nombre del entrenamiento', () => {
     await fireEvent(screen.getByLabelText('Nombre'), 'blur');
 
     expect(mockMut.update.mutate).not.toHaveBeenCalled();
+  });
+});
+
+describe('el nombre se recuerda para el siguiente entrenamiento', () => {
+  /** El guardado es optimista de cara al usuario, pero solo se recuerda si el backend confirma. */
+  it('al confirmar el backend queda como propuesta del proximo', async () => {
+    globalThis.setParametrosDeRuta({ id: 'w1', mode: 'edit' });
+    await render(<Pantalla />);
+
+    await fireEvent.changeText(screen.getByLabelText('Nombre'), 'Empuje A');
+    await fireEvent(screen.getByLabelText('Nombre'), 'blur');
+    const [, opciones] = mockMut.update.mutate.mock.calls[0];
+    opciones.onSuccess();
+
+    expect(usePreferencesStore.getState().lastWorkoutTitle).toBe('Empuje A');
+  });
+
+  it('borrar el nombre no deja una propuesta vacia', async () => {
+    usePreferencesStore.setState({ lastWorkoutTitle: 'Pierna' });
+    mockWorkout = { ...mockWorkout, data: ENTRENAMIENTO({ title: 'Pierna' }) };
+    globalThis.setParametrosDeRuta({ id: 'w1', mode: 'edit' });
+    await render(<Pantalla />);
+
+    await fireEvent.changeText(screen.getByLabelText('Nombre'), '');
+    await fireEvent(screen.getByLabelText('Nombre'), 'blur');
+    const [, opciones] = mockMut.update.mutate.mock.calls[0];
+    opciones.onSuccess();
+
+    expect(usePreferencesStore.getState().lastWorkoutTitle).toBe('Pierna');
   });
 });

@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">90.9% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/11</span>
+                <span class='fraction'>10/11</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">50% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>0/2</span>
+                <span class='fraction'>1/2</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">83.33% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>0/6</span>
+                <span class='fraction'>5/6</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">90% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/10</span>
+                <span class='fraction'>9/10</span>
             </div>
         
             
@@ -61,7 +61,7 @@
             </div>
         </template>
     </div>
-    <div class='status-line low'></div>
+    <div class='status-line high'></div>
     <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
@@ -140,9 +140,9 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">6x</span>
+<span class="cline-any cline-yes">6x</span>
+<span class="cline-any cline-yes">6x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -151,17 +151,17 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">18x</span>
+<span class="cline-any cline-yes">6x</span>
+<span class="cline-any cline-yes">5x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">6x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">6x</span>
+<span class="cline-any cline-yes">6x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -201,10 +201,10 @@ export function <span class="fstat-no" title="function not covered" >ErrorBounda
 }
 &nbsp;
 /** Programa/reprograma notificaciones locales según los reminders (RF-C10). */
-function <span class="fstat-no" title="function not covered" >ReminderSync(</span>) {
-<span class="cstat-no" title="statement not covered" >  useReminderSync();</span>
-<span class="cstat-no" title="statement not covered" >  useRealtimeInvalidation();</span>
-<span class="cstat-no" title="statement not covered" >  return null;</span>
+function ReminderSync() {
+  useReminderSync();
+  useRealtimeInvalidation();
+  return null;
 }
 &nbsp;
 /**
@@ -212,18 +212,18 @@ function <span class="fstat-no" title="function not covered" >ReminderSync(</spa
  * aquí y no en el calendario porque el formato de hora se usa también en
  * Fitness y en los avisos de recordatorio.
  */
-function <span class="fstat-no" title="function not covered" >Preferencias(</span>) {
-  const hydrate = <span class="cstat-no" title="statement not covered" >usePreferencesStore(<span class="fstat-no" title="function not covered" >(s</span>) =&gt; <span class="cstat-no" title="statement not covered" >s.hydrate)</span>;</span>
-<span class="cstat-no" title="statement not covered" >  useEffect(<span class="fstat-no" title="function not covered" >()</span> =&gt; {</span>
-<span class="cstat-no" title="statement not covered" >    void hydrate();</span>
+function Preferencias() {
+  const hydrate = usePreferencesStore((s) =&gt; s.hydrate);
+  useEffect(() =&gt; {
+    void hydrate();
   }, [hydrate]);
-<span class="cstat-no" title="statement not covered" >  return null;</span>
+  return null;
 }
 &nbsp;
 /** Stack nativo del área autenticada: tabs + rutas modales (actividad, entrenamiento…). */
-export default function <span class="fstat-no" title="function not covered" >AppLayout(</span>) {
-  const modal = <span class="cstat-no" title="statement not covered" >Platform.OS === 'web' ? 'card' : 'modal';</span>
-<span class="cstat-no" title="statement not covered" >  return (</span>
+export default function AppLayout() {
+  const modal = Platform.OS === 'web' ? <span class="branch-0 cbranch-no" title="branch not covered" >'card' </span>: 'modal';
+  return (
     &lt;&gt;
       &lt;ReminderSync /&gt;
       &lt;Preferencias /&gt;
@@ -256,7 +256,7 @@ export default function <span class="fstat-no" title="function not covered" >App
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-09-23T02:02:18.075Z
+                at 2026-09-23T02:27:57.429Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
