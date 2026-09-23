@@ -136,7 +136,9 @@ jobs:
           name: cobertura
           path: reports/pruebas
 
+      # v8 y no v7: desde v8 verifica la firma GPG del escaner que se descarga, en
+      # vez de saltarsela y avisar de ello en cada ejecucion.
       - name: Analisis de SonarQube Cloud
-        uses: SonarSource/sonarqube-scan-action@v7
+        uses: SonarSource/sonarqube-scan-action@v8
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
