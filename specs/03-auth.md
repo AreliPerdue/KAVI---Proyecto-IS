@@ -53,3 +53,20 @@ OAuth social, verificación en dos pasos, borrado de cuenta in-app.
   *cuando* abro el calendario de septiembre, *entonces* veo "Cumpleaños de <nombre>"
   ese día; y *cuando* desactivo "Cumpleaños" en Perfil, *entonces* deja de aparecer.
 
+
+- RF-A11. **Nobi, la mascota, como avatar.** Desde Perfil se elige uno de los veinte
+  colores de Nobi; volver a tocar el elegido lo quita y devuelve las iniciales, que
+  es el avatar por omisión (RF-A6). Lo elegido se guarda en el **perfil** y no en el
+  dispositivo, porque es identidad: los contactos tienen que ver el mismo avatar que
+  tú. En `profiles.avatar_url` se guarda el identificador del color con el prefijo
+  `nobi:`, no una imagen ni una URL; un color que dejara de existir se lee como "sin
+  Nobi" y esa persona vuelve a sus iniciales, sin errores.
+
+  Cada color existe en **dos imágenes**, una para cada esquema (NFR-18), porque el
+  fondo va pintado dentro del PNG y no es transparente. La versión que se pinta la
+  decide el esquema de **quien mira**, no el de quien eligió el color: por eso lo que
+  se guarda es el identificador y no la imagen.
+
+  **Criterio.** *Dado* que elijo el Nobi turquesa, *cuando* un contacto abre mi
+  perfil, *entonces* ve el mismo Nobi turquesa; y *cuando* cambio la apariencia a
+  clara, *entonces* el mismo Nobi se ve sobre fondo claro, sin recuadro oscuro.

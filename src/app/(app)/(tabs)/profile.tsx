@@ -47,7 +47,7 @@ import { useChangePassword, useSignIn, useSignOut } from '@/hooks/use-auth-actio
 import { useContacts } from '@/hooks/use-connections';
 import { useMyProfile, useUpdateMyProfile } from '@/hooks/use-profile';
 import { useIsAdmin } from '@/hooks/use-admin';
-import { useTheme } from '@/hooks/use-theme';
+import { useResolvedScheme, useTheme } from '@/hooks/use-theme';
 import { useThemes } from '@/hooks/use-themes';
 import { useWorkouts } from '@/hooks/use-workouts';
 import { NOBIS, nobiIdDesde, nobiUrl } from '@/constants/nobi';
@@ -101,6 +101,8 @@ function StatTile({ value, label }: { value: number; label: string }) {
 /** Perfil y ajustes: identidad, resumen y accesos agrupados (RF-A6). */
 export default function ProfileScreen() {
   const theme = useTheme();
+  // Los Nobis traen el fondo pintado: la versión que se pinta depende del esquema.
+  const scheme = useResolvedScheme();
   const timeFormat = usePreferencesStore((s) => s.timeFormat);
   const setTimeFormat = usePreferencesStore((s) => s.setTimeFormat);
   const appearance = usePreferencesStore((s) => s.appearance);
@@ -321,7 +323,7 @@ export default function ProfileScreen() {
                   { borderColor: elegido ? theme.ink : 'transparent', backgroundColor: theme.surfaceAlt },
                   pressed ? { opacity: 0.75 } : null,
                 ]}>
-                <Image source={nobi.source} style={styles.nobiImagen} contentFit="cover" />
+                <Image source={nobi.sources[scheme]} style={styles.nobiImagen} contentFit="cover" />
               </Pressable>
             );
           })}

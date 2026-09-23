@@ -5,7 +5,7 @@ import { AppText } from './app-text';
 
 import { nobiSource } from '@/constants/nobi';
 import { Radius } from '@/constants/theme';
-import { useTheme } from '@/hooks/use-theme';
+import { useResolvedScheme, useTheme } from '@/hooks/use-theme';
 import type { Profile } from '@/types/domain';
 
 type PerfilMinimo = Pick<Profile, 'username' | 'display_name'> & { avatar_url?: string | null };
@@ -19,7 +19,8 @@ type PerfilMinimo = Pick<Profile, 'username' | 'display_name'> & { avatar_url?: 
  */
 export function Avatar({ profile, size = 40 }: { profile: PerfilMinimo; size?: number }) {
   const theme = useTheme();
-  const nobi = nobiSource(profile.avatar_url);
+  // El fondo va pintado en la imagen, así que la versión depende del esquema (NFR-18).
+  const nobi = nobiSource(profile.avatar_url, useResolvedScheme());
 
   if (nobi) {
     return (
