@@ -6,11 +6,11 @@ import { addDays, addHours, setHours, setMinutes, startOfDay, startOfWeek } from
 
 import { DIMENSION_BY_KEY } from '@/constants/dimensions';
 import { SYSTEM_THEMES } from '@/constants/themes';
-import type { Activity, AuthUser, Profile, Theme } from '@/types/domain';
+import type { Activity, ActivityShareStatus, AuthUser, Profile, Theme } from '@/types/domain';
 
 export type DemoConnection = { id: string; requester_id: string; addressee_id: string; status: 'pending' | 'accepted'; created_at: string; responded_at: string | null };
 export type DemoCalendarShare = { id: string; owner_id: string; shared_with_id: string; visibility: 'busy' | 'details'; created_at: string };
-export type DemoActivityShare = { id: string; activity_id: string; shared_with_id: string; status: 'pending' | 'accepted' | 'declined'; created_at: string };
+export type DemoActivityShare = { id: string; activity_id: string; shared_with_id: string; status: ActivityShareStatus; created_at: string };
 export type DemoReminder = { id: string; activity_id: string; offset_minutes: number; created_by: string; created_at: string };
 export type DemoRecipient = { id: string; reminder_id: string; user_id: string; enabled: boolean };
 

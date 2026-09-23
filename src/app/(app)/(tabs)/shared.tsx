@@ -103,11 +103,33 @@ export default function SharedScreen() {
                   </AppText>
                 </View>
               </View>
+              {/* Tres respuestas y no dos (RF-S19): «tal vez» es el caso más común y
+                  sin él hay que mentir o dejar la invitación sin responder, que para
+                  quien organiza es indistinguible de no haberla visto. */}
               <View style={styles.cardActions}>
-                <Button title="Rechazar" variant="secondary" onPress={() => shares.respond.mutate({ shareId: share.id, accept: false })} />
                 <Button
-                  title="Aceptar"
-                  onPress={() => shares.respond.mutate({ shareId: share.id, accept: true }, { onSuccess: () => showSnackbar({ message: 'Actividad añadida a tu calendario.' }) })}
+                  title="No voy"
+                  variant="secondary"
+                  onPress={() => shares.respond.mutate({ shareId: share.id, respuesta: 'declined' })}
+                />
+                <Button
+                  title="Tal vez"
+                  variant="secondary"
+                  onPress={() =>
+                    shares.respond.mutate(
+                      { shareId: share.id, respuesta: 'maybe' },
+                      { onSuccess: () => showSnackbar({ message: 'Marcada como «tal vez». Entra a tu calendario.' }) },
+                    )
+                  }
+                />
+                <Button
+                  title="Voy"
+                  onPress={() =>
+                    shares.respond.mutate(
+                      { shareId: share.id, respuesta: 'accepted' },
+                      { onSuccess: () => showSnackbar({ message: 'Actividad añadida a tu calendario.' }) },
+                    )
+                  }
                 />
               </View>
             </View>

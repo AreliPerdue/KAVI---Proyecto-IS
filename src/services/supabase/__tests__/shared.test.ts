@@ -248,7 +248,7 @@ describe('listInvitations (RF-S5)', () => {
 describe('respond', () => {
   it('aceptar marca accepted solo en mi invitacion', async () => {
     mockSb.responder({ data: [{ id: 's1' }], error: null });
-    await supabaseShares.respond('u1', 's1', true);
+    await supabaseShares.respond('u1', 's1', 'accepted');
 
     expect(mockSb.argsDe('update')).toEqual([{ status: 'accepted' }]);
     expect(mockSb.llamadas.filter((l) => l[0] === 'eq')).toContainEqual(['eq', 'shared_with_id', 'u1']);
@@ -256,13 +256,13 @@ describe('respond', () => {
 
   it('rechazar marca declined', async () => {
     mockSb.responder({ data: [{ id: 's1' }], error: null });
-    await supabaseShares.respond('u1', 's1', false);
+    await supabaseShares.respond('u1', 's1', 'declined');
     expect(mockSb.argsDe('update')).toEqual([{ status: 'declined' }]);
   });
 
   it('si no actualizo nada, la invitacion ya no esta', async () => {
     mockSb.responder({ data: [], error: null });
-    await expect(supabaseShares.respond('u1', 's1', true)).rejects.toThrow(/ya no está disponible/i);
+    await expect(supabaseShares.respond('u1', 's1', 'accepted')).rejects.toThrow(/ya no está disponible/i);
   });
 });
 

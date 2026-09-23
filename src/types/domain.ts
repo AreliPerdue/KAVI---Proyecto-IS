@@ -121,7 +121,14 @@ export type Contact = {
 
 export type CalendarVisibility = 'busy' | 'details';
 
-export type ActivityShareStatus = 'pending' | 'accepted' | 'declined';
+/**
+ * Respuesta a una invitación (RF-S19).
+ *
+ * `maybe` existe porque «sí» o «no» no cubren el caso más común —quien aún no sabe—,
+ * y sin él esa persona tiene que mentir o dejar la invitación sin responder, que
+ * para quien organiza es indistinguible de que no la haya visto.
+ */
+export type ActivityShareStatus = 'pending' | 'accepted' | 'maybe' | 'declined';
 
 export type ActivityShare = {
   id: string;

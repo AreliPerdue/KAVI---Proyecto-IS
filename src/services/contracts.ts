@@ -59,6 +59,9 @@ export interface AuthApi {
 }
 
 /** Nombre visible y username, ambos editables desde Perfil (RF-A9). */
+/** Las tres respuestas posibles: `pending` es la ausencia de respuesta. */
+export type ActivityShareResponse = 'accepted' | 'maybe' | 'declined';
+
 export type ProfileUpdate = Partial<Pick<Profile, 'display_name' | 'username' | 'avatar_url' | 'birthday'>>;
 
 export interface ProfilesApi {
@@ -127,7 +130,8 @@ export interface SharesApi {
   shareActivity(userId: string, activityId: string, contactUserIds: string[]): Promise<void>;
   /** Invitaciones recibidas pendientes (RF-S5). */
   listInvitations(userId: string): Promise<ActivityInvitation[]>;
-  respond(userId: string, shareId: string, accept: boolean): Promise<void>;
+  /** Responder a una invitación (RF-S19). `maybe` cuenta como asistencia posible. */
+  respond(userId: string, shareId: string, respuesta: ActivityShareResponse): Promise<void>;
   /** Salirse de una actividad compartida o (dueño) revocar el share (RF-S6). */
   removeShare(userId: string, shareId: string): Promise<void>;
 }

@@ -66,3 +66,22 @@ Tab "Compartido": contactos, solicitudes, invitaciones a actividades, accesos a 
 > calendario. La visibilidad por actividad (RF-C14) decide qué ven en **tu** calendario
 > quienes ya lo tienen compartido. Lo primero se hace desde el detalle de la actividad;
 > lo segundo, al crearla.
+
+- RF-S19. **Confirmación de asistencia.** Una invitación a una actividad es una
+  pregunta de asistencia, y se responde con **Voy · Tal vez · No voy**.
+
+  «Tal vez» existe porque es el caso más común y sin él hay que mentir en una
+  dirección o dejar la invitación sin responder, que para quien organiza es
+  indistinguible de que no la haya visto.
+
+  Quien responde «tal vez» **sí recibe la actividad y sus recordatorios**: es quien
+  más los necesita, porque todavía tiene que decidir a tiempo.
+
+  Quien organiza ve la lista de invitados agrupada por respuesta —van, tal vez, no
+  van, sin responder— con el recuento de confirmados sobre el total. Se agrupa por
+  respuesta y no por orden de invitación porque la pregunta que se hace es «¿cuántos
+  vienen?», no «¿a quién invité?».
+
+  **Criterio.** *Dada* una invitación recibida, *cuando* respondo «Tal vez», *entonces*
+  la actividad entra en mi calendario y quien la creó me ve bajo «Tal vez» en su lista
+  de invitados.

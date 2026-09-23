@@ -51,6 +51,13 @@ function TabButton({ label, Icon, isFocused, badge = 0, ...props }: TabButtonPro
   );
 }
 
+/**
+ * Sin esto, Expo Router elige por su cuenta qué pestaña abre y no siempre es la
+ * primera declarada: la app arrancaba en Perfil o en Compartido. El calendario es
+ * la pantalla principal del producto y es donde debe abrir (RF-C1).
+ */
+export const unstable_settings = { initialRouteName: 'calendar' };
+
 export function ErrorBoundary(props: ErrorBoundaryProps) {
   return <ErrorFallback {...props} />;
 }

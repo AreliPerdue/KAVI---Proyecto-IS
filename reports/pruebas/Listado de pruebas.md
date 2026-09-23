@@ -33,9 +33,9 @@ Están agrupadas igual que en el código, bajo el aspecto que verifican.
 
 - [Crear cuenta y entrar](#crear-cuenta-y-entrar) — 155 pruebas
 - [El calendario](#el-calendario) — 191 pruebas
-- [Crear y editar actividades](#crear-y-editar-actividades) — 204 pruebas
+- [Crear y editar actividades](#crear-y-editar-actividades) — 209 pruebas
 - [Temas y dimensiones del bienestar](#temas-y-dimensiones-del-bienestar) — 68 pruebas
-- [Compartir con otras personas](#compartir-con-otras-personas) — 228 pruebas
+- [Compartir con otras personas](#compartir-con-otras-personas) — 230 pruebas
 - [Recordatorios](#recordatorios) — 80 pruebas
 - [Gimnasio](#gimnasio) — 140 pruebas
 - [Perfil y administración](#perfil-y-administracion) — 73 pruebas
@@ -742,7 +742,7 @@ Es la pantalla central de KAVI. Lo delicado aquí no es enseñar los días, sino
 
 ## Crear y editar actividades
 
-**204 pruebas, todas superadas.**
+**209 pruebas, todas superadas.**
 
 Aquí vive la parte más difícil de la app: las actividades que se repiten. Editar o borrar una tiene que distinguir entre "solo esta vez" y "toda la serie", y equivocarse significa perder datos de la persona. También se comprobó el cruce entre cómo se guardan las horas (universales) y cómo se muestran (tu hora local).
 
@@ -780,7 +780,7 @@ Aquí vive la parte más difícil de la app: las actividades que se repiten. Edi
 
 ### Detalle de una actividad
 
-*Lo que ves al tocar una actividad.* — 20 pruebas.
+*Lo que ves al tocar una actividad.* — 25 pruebas.
 
 
 **contenido**
@@ -823,6 +823,14 @@ Aquí vive la parte más difícil de la app: las actividades que se repiten. Edi
 
 - ✓ lista los definidos y permite silenciar el propio
 - ✓ sin recordatorios no pinta interruptores
+
+**quien viene**
+
+- ✓ sin invitados no pinta la sección
+- ✓ cuenta cuántos han confirmado sobre el total
+- ✓ agrupa por respuesta
+- ✓ un grupo vacío no se pinta
+- ✓ usa el nombre de pila, que es como se nombra en toda la app
 
 
 ### Formulario de actividad
@@ -1308,14 +1316,14 @@ Los temas son la forma en que KAVI clasifica en qué inviertes tu tiempo. La reg
 
 ## Compartir con otras personas
 
-**228 pruebas, todas superadas.**
+**230 pruebas, todas superadas.**
 
 Es el área con más reglas de privacidad, y por eso la más probada. Lo esencial: quien te comparte su calendario "solo ocupación" cede sus horas ocupadas, nunca lo que hace en ellas; y al eliminar a un contacto tiene que revocarse todo de golpe, sin dejar restos de acceso.
 
 
 ### Pantalla de Compartido
 
-*Contactos, solicitudes e invitaciones.* — 21 pruebas.
+*Contactos, solicitudes e invitaciones.* — 23 pruebas.
 
 
 **estructura**
@@ -1330,9 +1338,11 @@ Es el área con más reglas de privacidad, y por eso la más probada. Lo esencia
 **invitaciones a actividades (RF-S5)**
 
 - ✓ muestra la actividad, cuándo es y quién la comparte
-- ✓ aceptar responde que sí
-- ✓ al aceptar se avisa de que entró al calendario
-- ✓ rechazar responde que no y sin aviso
+- ✓ ofrece las tres respuestas
+- ✓ «Voy» confirma la asistencia
+- ✓ «Tal vez» también la mete en el calendario
+- ✓ al confirmar se avisa de que entró al calendario
+- ✓ «No voy» rechaza y no avisa de nada
 - ✓ sin invitaciones no pinta la sección
 
 **solicitudes recibidas**
@@ -1398,7 +1408,7 @@ Es el área con más reglas de privacidad, y por eso la más probada. Lo esencia
 
 **shares existentes**
 
-- ✓ muestra en qué estado está cada invitación
+- ✓ muestra la respuesta de cada invitado
 - ✓ permite revocar el acceso
 
 

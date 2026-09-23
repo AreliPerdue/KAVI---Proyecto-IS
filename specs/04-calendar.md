@@ -76,3 +76,11 @@ Ruta principal: `/(app)/calendar` (tab inicial). Header: mes/rango actual, selec
   **Criterio.** *Dado* un contacto con visibilidad «con detalles», *cuando* marco una
   actividad como privada, *entonces* esa persona ve el bloque como ocupado y sin
   título, mientras sigue viendo el título del resto de mis actividades.
+
+- RF-C15. **Dónde abre la aplicación.** Con sesión iniciada abre siempre en el
+  calendario, que es la pantalla principal del producto. La única excepción es la
+  primera vez que se usa: ahí abre en Perfil, donde están el Nobi y el cumpleaños,
+  porque un calendario vacío no dice qué hacer a continuación.
+
+  La pestaña inicial se declara explícitamente: sin hacerlo, el enrutador elegía por
+  su cuenta y la aplicación arrancaba en Compartido o en Perfil.

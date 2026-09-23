@@ -76,7 +76,7 @@ describe('compartir una actividad (RF-S4)', () => {
     const act = await actividades.create(YO, nueva());
     await shares.shareActivity(YO, act.id, [ANA]);
     const s = state.activityShares.find((x) => x.activity_id === act.id)!;
-    await shares.respond(ANA, s.id, false);
+    await shares.respond(ANA, s.id, 'declined');
     expect(s.status).toBe('declined');
 
     await shares.shareActivity(YO, act.id, [ANA]);
@@ -142,7 +142,7 @@ describe('invitaciones recibidas (RF-S5)', () => {
     const { shares, state } = fresh();
     const pendiente = state.activityShares.find((s) => s.shared_with_id === YO && s.status === 'pending')!;
 
-    await shares.respond(YO, pendiente.id, true);
+    await shares.respond(YO, pendiente.id, 'accepted');
 
     const ids = (await shares.listInvitations(YO)).map((i) => i.share.id);
     expect(ids).not.toContain(pendiente.id);
@@ -154,7 +154,7 @@ describe('responder invitaciones', () => {
     const { shares, state } = fresh();
     const s = state.activityShares.find((x) => x.shared_with_id === YO && x.status === 'pending')!;
 
-    await shares.respond(YO, s.id, true);
+    await shares.respond(YO, s.id, 'accepted');
 
     expect(s.status).toBe('accepted');
   });
@@ -163,7 +163,7 @@ describe('responder invitaciones', () => {
     const { shares, state } = fresh();
     const s = state.activityShares.find((x) => x.shared_with_id === YO && x.status === 'pending')!;
 
-    await shares.respond(YO, s.id, false);
+    await shares.respond(YO, s.id, 'declined');
 
     expect(s.status).toBe('declined');
   });
@@ -172,7 +172,7 @@ describe('responder invitaciones', () => {
     const { shares, state } = fresh();
     const s = state.activityShares.find((x) => x.shared_with_id === YO && x.status === 'pending')!;
 
-    await expect(shares.respond(PEDRO, s.id, true)).rejects.toThrow(/ya no está disponible/i);
+    await expect(shares.respond(PEDRO, s.id, 'accepted')).rejects.toThrow(/ya no está disponible/i);
   });
 
   it('al aceptar se heredan los recordatorios de la actividad (RF-S10)', async () => {
@@ -184,7 +184,7 @@ describe('responder invitaciones', () => {
     await shares.shareActivity(YO, act.id, [ANA]);
     const s = state.activityShares.find((x) => x.activity_id === act.id)!;
 
-    await shares.respond(ANA, s.id, true);
+    await shares.respond(ANA, s.id, 'accepted');
 
     const reminderId = state.reminders.find((r) => r.activity_id === act.id)!.id;
     expect(state.recipients.some((r) => r.reminder_id === reminderId && r.user_id === ANA)).toBe(true);

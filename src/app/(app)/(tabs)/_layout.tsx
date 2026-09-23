@@ -5,6 +5,13 @@ import { NativeTabs } from "expo-router/unstable-native-tabs";
 import { useSharedBadgeCount } from "@/hooks/use-shared-badge";
 import { useTheme } from "@/hooks/use-theme";
 
+/**
+ * Sin esto, Expo Router elige por su cuenta qué pestaña abre y no siempre es la
+ * primera declarada: la app arrancaba en Perfil o en Compartido. El calendario es
+ * la pantalla principal del producto y es donde debe abrir (RF-C1).
+ */
+export const unstable_settings = { initialRouteName: 'calendar' };
+
 export function ErrorBoundary(props: ErrorBoundaryProps) {
   return <ErrorFallback {...props} />;
 }

@@ -40,13 +40,17 @@ export const demoShares: SharesApi = {
       .sort((a, b) => a.activity.start_at.localeCompare(b.activity.start_at));
   },
 
-  async respond(userId, shareId, accept) {
+  async respond(userId, shareId, respuesta) {
     await delay();
     const share = demoState.activityShares.find((s) => s.id === shareId && s.shared_with_id === userId);
     if (!share) throw new AuthUiError('Esa invitación ya no está disponible.');
-    share.status = accept ? 'accepted' : 'declined';
-    // Al aceptar, hereda los reminders existentes de la actividad (RF-S10).
-    if (accept) syncRecipients(share.activity_id);
+    share.status = respuesta;
+    /**
+     * Los recordatorios se heredan al confirmar y también al responder «tal vez»
+     * (RF-S10, RF-S19): quien duda es justamente quien más necesita el aviso para
+     * decidir a tiempo.
+     */
+    if (respuesta !== 'declined') syncRecipients(share.activity_id);
     emitDataChange();
   },
 

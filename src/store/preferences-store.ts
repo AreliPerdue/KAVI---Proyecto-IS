@@ -13,6 +13,8 @@ type Prefs = {
   lastWorkoutTitle: string | null;
   showWorkouts: boolean;
   showBirthdays: boolean;
+  /** Falso solo hasta la primera vez que se abre la app. */
+  visto: boolean;
 };
 
 type PreferencesState = {
@@ -27,11 +29,18 @@ type PreferencesState = {
   showWorkouts: boolean;
   /** Pintar mi cumpleaños y el de mis contactos (RF-A10). */
   showBirthdays: boolean;
+  /**
+   * `false` solo la primera vez que alguien abre la app. Se usa para llevarla a
+   * Perfil una vez —donde están el Nobi y el cumpleaños— en lugar de al calendario
+   * vacío, que no dice qué hacer a continuación.
+   */
+  visto: boolean;
   hydrated: boolean;
   setTimeFormat: (formato: TimeFormat) => void;
   setLastWorkoutTitle: (titulo: string | null) => void;
   setShowWorkouts: (mostrar: boolean) => void;
   setShowBirthdays: (mostrar: boolean) => void;
+  marcarVisto: () => void;
   hydrate: () => Promise<void>;
 };
 
@@ -48,6 +57,7 @@ export const usePreferencesStore = create<PreferencesState>((set, get) => ({
   lastWorkoutTitle: null,
   showWorkouts: true,
   showBirthdays: true,
+  visto: false,
   hydrated: false,
 
   setTimeFormat: (formato) => {
@@ -72,6 +82,12 @@ export const usePreferencesStore = create<PreferencesState>((set, get) => ({
     persistir({ ...get(), showBirthdays: mostrar });
   },
 
+  marcarVisto: () => {
+    if (get().visto) return;
+    set({ visto: true });
+    persistir({ ...get(), visto: true });
+  },
+
   hydrate: async () => {
     if (get().hydrated) return;
     const prefs = await getJson<Prefs>(PREFS_KEY);
@@ -84,6 +100,7 @@ export const usePreferencesStore = create<PreferencesState>((set, get) => ({
       // preferencias guardadas no las vio nunca apagadas.
       showWorkouts: prefs?.showWorkouts ?? true,
       showBirthdays: prefs?.showBirthdays ?? true,
+      visto: prefs?.visto ?? false,
       hydrated: true,
     });
   },
@@ -91,12 +108,13 @@ export const usePreferencesStore = create<PreferencesState>((set, get) => ({
 
 /** Se guarda el conjunto entero: son dos claves y así no pueden desincronizarse. */
 function persistir(
-  estado: Pick<PreferencesState, 'timeFormat' | 'lastWorkoutTitle' | 'showWorkouts' | 'showBirthdays'>,
+  estado: Pick<PreferencesState, 'timeFormat' | 'lastWorkoutTitle' | 'showWorkouts' | 'showBirthdays' | 'visto'>,
 ): void {
   void setJson(PREFS_KEY, {
     timeFormat: estado.timeFormat,
     lastWorkoutTitle: estado.lastWorkoutTitle,
     showWorkouts: estado.showWorkouts,
     showBirthdays: estado.showBirthdays,
+    visto: estado.visto,
   } satisfies Prefs);
 }

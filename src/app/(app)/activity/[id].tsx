@@ -73,8 +73,13 @@ export default function ActivityDetailScreen() {
 
   const data = activity.data;
   const color = activityColor(data, theme);
-  const acceptedShares = (shares.data ?? []).filter((s) => s.status === 'accepted');
-  const pendingShares = (shares.data ?? []).filter((s) => s.status === 'pending');
+  const invitados = shares.data ?? [];
+  const porRespuesta = {
+    accepted: invitados.filter((s) => s.status === 'accepted'),
+    maybe: invitados.filter((s) => s.status === 'maybe'),
+    declined: invitados.filter((s) => s.status === 'declined'),
+    pending: invitados.filter((s) => s.status === 'pending'),
+  };
   const isSeries = !!data.recurrence_rule || !!data.recurrence_parent_id;
   const rule = parseRRule(data.recurrence_rule ?? parent.data?.recurrence_rule ?? null);
 
@@ -203,18 +208,36 @@ export default function ActivityDetailScreen() {
         )}
       </View>
 
-      {isOwner && (acceptedShares.length > 0 || pendingShares.length > 0) ? (
+      {/* Lista de invitados con su respuesta (RF-S19). Se agrupa por respuesta en
+          vez de listar en orden de invitación: la pregunta que se hace quien
+          organiza es «¿cuántos vienen?», no «¿a quién invité?». */}
+      {isOwner && invitados.length > 0 ? (
         <View style={[styles.card, { backgroundColor: theme.surfaceAlt }]}>
           <View style={styles.inline}>
             <Users size={IconSize.inline} strokeWidth={IconStroke} color={theme.textSecondary} />
             <AppText variant="label" color="textSecondary">
-              Compartida con
+              Invitados · {porRespuesta.accepted.length} de {invitados.length} confirmados
             </AppText>
           </View>
-          <AppText variant="caption" color="textSecondary">
-            {acceptedShares.map((s) => s.profile.display_name ?? 'Contacto').join(', ') || 'Nadie aún'}
-            {pendingShares.length ? ` · ${pendingShares.length} pendiente${pendingShares.length > 1 ? 's' : ''}` : ''}
-          </AppText>
+          {(
+            [
+              ['accepted', 'Van', 'success'],
+              ['maybe', 'Tal vez', 'text'],
+              ['declined', 'No van', 'textTertiary'],
+              ['pending', 'Sin responder', 'textTertiary'],
+            ] as const
+          ).map(([clave, etiqueta, color]) =>
+            porRespuesta[clave].length > 0 ? (
+              <View key={clave} style={styles.inline}>
+                <AppText variant="caption" color={color}>
+                  {etiqueta}:
+                </AppText>
+                <AppText variant="caption" color="textSecondary" style={styles.invitados}>
+                  {porRespuesta[clave].map((s) => s.profile.display_name?.split(' ')[0] ?? 'Contacto').join(', ')}
+                </AppText>
+              </View>
+            ) : null,
+          )}
         </View>
       ) : null}
 
@@ -288,6 +311,7 @@ const styles = StyleSheet.create({
   hero: { flexDirection: 'row', gap: Spacing.lg, alignItems: 'flex-start' },
   iconBadge: { width: 48, height: 48, borderRadius: Radius.md, borderCurve: 'continuous', alignItems: 'center', justifyContent: 'center' },
   heroText: { flex: 1, gap: Spacing.xs },
+  invitados: { flex: 1 },
   inline: { flexDirection: 'row', alignItems: 'center', gap: Spacing.xs },
   card: { padding: Spacing.lg, borderRadius: Radius.md, borderCurve: 'continuous' },
   actions: { borderTopWidth: StyleSheet.hairlineWidth, paddingTop: Spacing.sm, gap: Spacing.xs },

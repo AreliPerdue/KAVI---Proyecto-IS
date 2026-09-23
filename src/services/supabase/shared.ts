@@ -181,10 +181,10 @@ export const supabaseShares: SharesApi = {
   },
 
   /** Aceptar hereda los recordatorios existentes: lo hace el trigger de activity_shares. */
-  async respond(userId, shareId, accept) {
+  async respond(userId, shareId, respuesta) {
     const { data, error } = await getSupabase()
       .from('activity_shares')
-      .update({ status: accept ? 'accepted' : 'declined' })
+      .update({ status: respuesta })
       .eq('id', shareId)
       .eq('shared_with_id', userId)
       .select('id');

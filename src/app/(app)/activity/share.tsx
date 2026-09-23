@@ -1,3 +1,4 @@
+import type { ActivityShareStatus } from '@/types/domain';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Check, CircleAlert, X } from 'lucide-react-native';
 import { useMemo, useState } from 'react';
@@ -16,7 +17,13 @@ import { useSnackbar } from '@/providers';
 
 const MAX_WIDTH = 560;
 
-const STATUS_LABEL = { pending: 'Pendiente', accepted: 'Aceptada', declined: 'Rechazada' } as const;
+/** Cómo se lee cada respuesta en la lista de invitados (RF-S19). */
+const STATUS_LABEL: Record<ActivityShareStatus, string> = {
+  pending: 'Sin responder',
+  accepted: 'Va',
+  maybe: 'Tal vez',
+  declined: 'No va',
+};
 
 /** Choque de horario de un contacto con la actividad que se va a compartir (RF-S16). */
 type Conflict = { from: string; to: string; title: string | null };

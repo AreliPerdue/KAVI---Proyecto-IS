@@ -102,9 +102,9 @@ describe('useShareMutations', () => {
     mockRespond.mockResolvedValue(undefined);
     const { result } = await montar();
 
-    await result.current.respond.mutateAsync({ shareId: 's1', accept: true });
+    await result.current.respond.mutateAsync({ shareId: 's1', respuesta: 'accepted' });
 
-    expect(mockRespond).toHaveBeenCalledWith('u1', 's1', true);
+    expect(mockRespond).toHaveBeenCalledWith('u1', 's1', 'accepted');
   });
 
   it('revocar pasa el share', async () => {
@@ -121,7 +121,7 @@ describe('useShareMutations', () => {
     const { result, queryClient } = await montar();
     const espia = jest.spyOn(queryClient, 'invalidateQueries');
 
-    await result.current.respond.mutateAsync({ shareId: 's1', accept: true });
+    await result.current.respond.mutateAsync({ shareId: 's1', respuesta: 'accepted' });
 
     const claves = espia.mock.calls.map((c) => JSON.stringify(c[0]));
     for (const familia of ['shares', 'activities', 'reminders']) {

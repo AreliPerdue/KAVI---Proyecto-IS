@@ -31,8 +31,9 @@ jest.mock('@/hooks/use-reminders', () => ({
   useActivityReminders: () => mockRecordatorios,
   useReminderMutations: () => ({ setEnabled: mockSetEnabled, setForActivity: { mutate: jest.fn() } }),
 }));
+let mockInvitados: { data: unknown[] } = { data: [] };
 jest.mock('@/hooks/use-shares', () => ({
-  useActivityShares: () => ({ data: [] }),
+  useActivityShares: () => mockInvitados,
   useShareMutations: () => ({ remove: mockQuitarShare, share: { mutate: jest.fn() }, respond: { mutate: jest.fn() } }),
 }));
 jest.mock('@/hooks/use-workouts', () => ({
@@ -244,5 +245,62 @@ describe('recordatorios', () => {
   it('sin recordatorios no pinta interruptores', async () => {
     await render(<Pantalla />);
     expect(screen.queryByRole('switch')).toBeNull();
+  });
+});
+
+
+/**
+ * Lista de invitados con su respuesta (RF-S19).
+ *
+ * Se agrupa por respuesta y no por orden de invitación porque la pregunta que se
+ * hace quien organiza es «¿cuántos vienen?», no «¿a quién invité?».
+ */
+describe('quien viene', () => {
+  const invitado = (id: string, nombre: string, status: string) => ({
+    id, shared_with_id: id, status,
+    profile: { id, display_name: nombre, username: id },
+  });
+
+  const conInvitados = async (lista: ReturnType<typeof invitado>[]) => {
+    mockInvitados = { data: lista };
+    globalThis.setParametrosDeRuta({ id: 'a1' });
+    await render(<Pantalla />);
+  };
+
+  it('sin invitados no pinta la seccion', async () => {
+    await conInvitados([]);
+    expect(screen.queryByText(/invitados/i)).toBeNull();
+  });
+
+  it('cuenta cuantos han confirmado sobre el total', async () => {
+    await conInvitados([
+      invitado('u2', 'Ana Ruiz', 'accepted'),
+      invitado('u3', 'Luis Mena', 'maybe'),
+      invitado('u4', 'Pedro Ruiz', 'pending'),
+    ]);
+    expect(screen.getByText(/1 de 3 confirmados/i)).toBeTruthy();
+  });
+
+  it('agrupa por respuesta', async () => {
+    await conInvitados([
+      invitado('u2', 'Ana Ruiz', 'accepted'),
+      invitado('u3', 'Luis Mena', 'maybe'),
+      invitado('u4', 'Pedro Ruiz', 'declined'),
+      invitado('u5', 'María Sol', 'pending'),
+    ]);
+    expect(screen.getByText('Van:')).toBeTruthy();
+    expect(screen.getByText('Tal vez:')).toBeTruthy();
+    expect(screen.getByText('No van:')).toBeTruthy();
+    expect(screen.getByText('Sin responder:')).toBeTruthy();
+  });
+
+  it('un grupo vacio no se pinta', async () => {
+    await conInvitados([invitado('u2', 'Ana Ruiz', 'accepted')]);
+    expect(screen.queryByText('No van:')).toBeNull();
+  });
+
+  it('usa el nombre de pila, que es como se nombra en toda la app', async () => {
+    await conInvitados([invitado('u2', 'María Fernanda Sol', 'accepted')]);
+    expect(screen.getByText('María')).toBeTruthy();
   });
 });

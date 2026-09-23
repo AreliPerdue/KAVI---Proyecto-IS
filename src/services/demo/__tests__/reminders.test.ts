@@ -157,7 +157,7 @@ describe('habilitar y deshabilitar', () => {
     await recordatorios.setForActivity(act.id, YO, [10]);
     await shares.shareActivity(YO, act.id, [ANA]);
     const share = state.activityShares.find((s) => s.activity_id === act.id)!;
-    await shares.respond(ANA, share.id, true);
+    await shares.respond(ANA, share.id, 'accepted');
     const id = state.reminders[0]!.id;
 
     await recordatorios.setEnabled(id, YO, false);
@@ -242,7 +242,7 @@ describe('proximos recordatorios', () => {
     await recordatorios.setForActivity(act.id, YO, [10]);
     await shares.shareActivity(YO, act.id, [ANA]);
     const share = state.activityShares.find((s) => s.activity_id === act.id)!;
-    await shares.respond(ANA, share.id, true);
+    await shares.respond(ANA, share.id, 'accepted');
 
     const p = (await recordatorios.listUpcoming(ANA, 7)).find((x) => x.activityId === act.id)!;
 

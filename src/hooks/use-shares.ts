@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { activityKeys } from '@/hooks/use-activities-range';
 import { reminderKeys } from '@/hooks/use-reminders';
 import { useAuth } from '@/providers';
+import type { ActivityShareResponse } from '@/services/contracts';
 import { type ActivityInvitation, listActivityShares, listInvitations, removeActivityShare, respondInvitation, shareActivity } from '@/services/shares';
 
 export const shareKeys = {
@@ -45,7 +46,8 @@ export function useShareMutations() {
       onSuccess: invalidate,
     }),
     respond: useMutation({
-      mutationFn: ({ shareId, accept }: { shareId: string; accept: boolean }) => respondInvitation(uid(), shareId, accept),
+      mutationFn: ({ shareId, respuesta }: { shareId: string; respuesta: ActivityShareResponse }) =>
+        respondInvitation(uid(), shareId, respuesta),
       onSuccess: invalidate,
     }),
     remove: useMutation({ mutationFn: (shareId: string) => removeActivityShare(uid(), shareId), onSuccess: invalidate }),

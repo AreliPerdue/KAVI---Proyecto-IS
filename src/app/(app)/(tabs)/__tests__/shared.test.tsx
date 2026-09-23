@@ -125,29 +125,51 @@ describe('invitaciones a actividades (RF-S5)', () => {
     expect(screen.getByText(/compartida por ana torres/i)).toBeTruthy();
   });
 
-  it('aceptar responde que si', async () => {
+  /**
+   * Tres respuestas y no dos (RF-S19): «tal vez» es el caso más común, y sin él hay
+   * que mentir o dejar la invitación sin responder, que para quien organiza es
+   * indistinguible de que no la haya visto.
+   */
+  it('ofrece las tres respuestas', async () => {
     await render(<Pantalla />);
 
-    await fireEvent.press(screen.getByRole('button', { name: 'Aceptar' }));
-
-    expect(mockRespond.mutate.mock.calls[0][0]).toEqual({ shareId: 's1', accept: true });
+    for (const r of ['Voy', 'Tal vez', 'No voy']) {
+      expect(screen.getByRole('button', { name: r })).toBeTruthy();
+    }
   });
 
-  it('al aceptar se avisa de que entro al calendario', async () => {
+  it('«Voy» confirma la asistencia', async () => {
+    await render(<Pantalla />);
+
+    await fireEvent.press(screen.getByRole('button', { name: 'Voy' }));
+
+    expect(mockRespond.mutate.mock.calls[0][0]).toEqual({ shareId: 's1', respuesta: 'accepted' });
+  });
+
+  /** Quien duda es quien más necesita el aviso para poder decidir a tiempo. */
+  it('«Tal vez» también la mete en el calendario', async () => {
+    await render(<Pantalla />);
+
+    await fireEvent.press(screen.getByRole('button', { name: 'Tal vez' }));
+
+    expect(mockRespond.mutate.mock.calls[0][0]).toEqual({ shareId: 's1', respuesta: 'maybe' });
+  });
+
+  it('al confirmar se avisa de que entro al calendario', async () => {
     mockRespond.mutate.mockImplementation((_v: unknown, o: { onSuccess?: () => void }) => o?.onSuccess?.());
     await render(<Pantalla />);
 
-    await fireEvent.press(screen.getByRole('button', { name: 'Aceptar' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Voy' }));
 
     await waitFor(() => expect(mockSnackbar).toHaveBeenCalledWith({ message: 'Actividad añadida a tu calendario.' }));
   });
 
-  it('rechazar responde que no y sin aviso', async () => {
+  it('«No voy» rechaza y no avisa de nada', async () => {
     await render(<Pantalla />);
 
-    await fireEvent.press(screen.getByRole('button', { name: 'Rechazar' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'No voy' }));
 
-    expect(mockRespond.mutate.mock.calls[0][0]).toEqual({ shareId: 's1', accept: false });
+    expect(mockRespond.mutate.mock.calls[0][0]).toEqual({ shareId: 's1', respuesta: 'declined' });
     expect(mockSnackbar).not.toHaveBeenCalled();
   });
 

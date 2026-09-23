@@ -233,14 +233,23 @@ describe('errores de carga (NFR-11)', () => {
 });
 
 describe('shares existentes', () => {
-  it('muestra en que estado esta cada invitacion', async () => {
+  /** La lista de invitados es lo que responde «¿quién viene?» (RF-S19). */
+  it('muestra la respuesta de cada invitado', async () => {
     mockShares = {
-      data: [{ id: 's1', shared_with_id: 'u2', status: 'declined', profile: { id: 'u2', display_name: 'Ana Torres' } }],
+      data: [
+        { id: 's1', shared_with_id: 'u2', status: 'accepted', profile: { id: 'u2', display_name: 'Ana Torres' } },
+        { id: 's2', shared_with_id: 'u3', status: 'maybe', profile: { id: 'u3', display_name: 'Luis Mena' } },
+        { id: 's3', shared_with_id: 'u4', status: 'declined', profile: { id: 'u4', display_name: 'Pedro Ruiz' } },
+        { id: 's4', shared_with_id: 'u5', status: 'pending', profile: { id: 'u5', display_name: 'María Sol' } },
+      ],
       isPending: false,
     };
     await render(<Pantalla />);
 
-    expect(screen.getByText('Rechazada')).toBeTruthy();
+    expect(screen.getByText('Va')).toBeTruthy();
+    expect(screen.getByText('Tal vez')).toBeTruthy();
+    expect(screen.getByText('No va')).toBeTruthy();
+    expect(screen.getByText('Sin responder')).toBeTruthy();
   });
 
   it('permite revocar el acceso', async () => {
