@@ -7,8 +7,8 @@ repositorio; ninguno se escribió a mano.
 
 | | Resultado |
 |---|---|
-| Pruebas automáticas | **1 287 en verde**, 0 fallidas |
-| Cobertura del código | **83.3 %** de sentencias · 84.9 % de líneas |
+| Pruebas automáticas | **1 514 en verde**, 0 fallidas |
+| Cobertura del código | **83.6 %** de sentencias · 85.2 % de líneas |
 | Deuda técnica | **0 minutos** · mantenibilidad **A** |
 | Bugs · vulnerabilidades · code smells | **0 · 0 · 0** · fiabilidad y seguridad **A** |
 | Duplicación de código | **0.0 %** |
@@ -18,7 +18,7 @@ repositorio; ninguno se escribió a mano.
 
 | Carpeta | Qué contiene | Cómo se regenera |
 |---|---|---|
-| [`pruebas/`](pruebas/) | Las 1 287 pruebas y su cobertura | `pnpm test:coverage` |
+| [`pruebas/`](pruebas/) | Las 1 514 pruebas y su cobertura | `pnpm test:coverage` |
 | [`calidad/`](calidad/) | Métricas de SonarQube: deuda técnica, code smells, duplicación | Workflow *calidad*, en cada push |
 | [`seguridad/`](seguridad/) | Escaneo OWASP ZAP del sitio desplegado, antes y después de corregirlo | Workflow *Escaneo de seguridad*, manual |
 
@@ -28,7 +28,7 @@ del análisis y sus limitaciones.
 ## Para leer sin tecnicismos
 
 **[Qué se probó en KAVI, y qué salió](pruebas/Listado%20de%20pruebas.md)** recorre las
-1 287 pruebas una por una, agrupadas por zona de la aplicación —crear cuenta,
+1 514 pruebas una por una, agrupadas por zona de la aplicación —crear cuenta,
 calendario, compartir, gimnasio…— y explicadas sin lenguaje técnico. Es el
 documento a leer si lo que interesa es *qué se verificó*, no cómo.
 

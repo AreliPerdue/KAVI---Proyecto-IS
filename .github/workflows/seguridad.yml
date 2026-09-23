@@ -13,12 +13,15 @@ on:
 permissions:
   contents: read
 
+# El runner va fijado y no en `ubuntu-latest`: esa etiqueta migra a Ubuntu 26 el 19 de
+# octubre de 2026 y cambiaria la maquina sin que nadie toque el repositorio. Las acciones
+# van en las versiones que corren sobre Node 24; Node 20 quedo deprecado en los runners.
 jobs:
   zap:
     name: ZAP Baseline
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       # Baseline y no full-scan: el escaneo completo lanza ataques activos
       # (inyeccion, XSS reflejado) contra el objetivo. Apuntando a un despliegue

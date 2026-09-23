@@ -24,21 +24,24 @@ concurrency:
   group: eas-build-${{ github.ref }}
   cancel-in-progress: true
 
+# El runner va fijado y no en `ubuntu-latest`: esa etiqueta migra a Ubuntu 26 el 19 de
+# octubre de 2026 y cambiaria la maquina sin que nadie toque el repositorio. Las acciones
+# van en las versiones que corren sobre Node 24; Node 20 quedo deprecado en los runners.
 jobs:
   build:
     name: Compilar en EAS
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     # El secret con el token de Expo vive en este environment, no a nivel
     # repositorio: sin esta linea el job no puede leerlo.
     environment: expogithub
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v6
         with:
           version: 11
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: pnpm
@@ -57,7 +60,7 @@ jobs:
       - name: Pruebas
         run: pnpm test
 
-      - uses: expo/expo-github-action@v8
+      - uses: expo/expo-github-action@v9
         with:
           eas-version: latest
           token: ${{ secrets.EXPOKEY }}

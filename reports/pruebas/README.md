@@ -1,43 +1,43 @@
 # Reporte de pruebas unitarias
 
 **Framework:** Jest 30 con el preset `jest-expo` y `@testing-library/react-native`
-**Fecha:** 22 de septiembre de 2026
+**Fecha:** 23 de septiembre de 2026
 **Comando:** `pnpm test:coverage`
 **Ejecución en CI:** [workflow "Pruebas"](../../.github/workflows/pruebas.yml)
 
 ## Resultado
 
-**1 287 pruebas en 79 archivos, todas en verde.**
+**1 514 pruebas en 89 archivos, todas en verde.**
 
 | Métrica | Cobertura | |
 |---|---|---|
-| **Sentencias** | **83.32 %** | 2813 / 3376 |
-| **Líneas** | **84.92 %** | 2423 / 2853 |
-| Ramas | 77.58 % | 1879 / 2422 |
-| Funciones | 77.97 % | 949 / 1217 |
+| **Sentencias** | **83.60 %** | 3162 / 3782 |
+| **Líneas** | **85.16 %** | 2710 / 3182 |
+| Ramas | 77.85 % | 2145 / 2755 |
+| Funciones | 78.17 % | 1046 / 1338 |
 
 Se cumple el objetivo del 80 % en todas las métricas de referencia. La cifra que
-SonarQube publica en portada —**81.6 %**— combina líneas y condiciones en un
-solo número y también queda por encima del objetivo.
+SonarQube publica en portada combina líneas y condiciones en un solo número y también
+queda por encima del objetivo.
 
 ## Versión sin tecnicismos
 
 Si lo que interesa es **qué se verificó** y no cómo, [`Listado de pruebas.md`](Listado%20de%20pruebas.md)
-recorre las 1 287 pruebas una por una, agrupadas por zona de la aplicación y
+recorre las 1 514 pruebas una por una, agrupadas por zona de la aplicación y
 explicadas en lenguaje llano.
 
 ## Por capa
 
 | Capa | Cobertura | Sentencias |
 |---|---|---|
-| `src/services` | 88 % | 1002 / 1133 |
-| `src/app` | 74 % | 649 / 876 |
-| `src/components` | 88 % | 580 / 660 |
-| `src/lib` | 84 % | 231 / 274 |
-| `src/hooks` | 70 % | 190 / 271 |
+| `src/services` | 88 % | 1029 / 1171 |
+| `src/app` | 75 % | 741 / 982 |
+| `src/components` | 87 % | 675 / 780 |
+| `src/lib` | 87 % | 292 / 337 |
+| `src/hooks` | 74 % | 231 / 314 |
 | `src/providers` | 99 % | 78 / 79 |
-| `src/constants` | 100 % | 62 / 62 |
-| `src/store` | 100 % | 21 / 21 |
+| `src/constants` | 100 % | 73 / 73 |
+| `src/store` | 93 % | 43 / 46 |
 
 ## Qué se prueba
 

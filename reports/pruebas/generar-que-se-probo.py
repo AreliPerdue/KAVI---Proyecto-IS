@@ -196,6 +196,16 @@ MAPA = {
  'src/lib/__tests__/env.test.ts': ('cimientos', 'Elección de backend', 'Decidir si la app usa el servidor real o el de práctica.'),
  'src/lib/__tests__/query-invalidation.test.ts': ('cimientos', 'Refresco de datos compartidos', 'Que al aceptar un contacto se actualice todo lo que le afecta.'),
  'src/services/supabase/__tests__/errors.test.ts': ('cimientos', 'Traducción de errores de la base de datos', 'Que nunca se filtre un mensaje técnico a la pantalla.'),
+ 'src/app/__tests__/index.test.tsx': ('cuenta', 'Primera pantalla al abrir', 'A dónde lleva la app según haya sesión, y la excepción de la primera vez.'),
+ 'src/app/(app)/__tests__/layout.test.tsx': ('cuenta', 'Rutas protegidas', 'Que sin sesión no se pueda entrar a ninguna pantalla de la app.'),
+ 'src/components/calendar/__tests__/derived.test.ts': ('calendario', 'Entrenamientos y cumpleaños en el calendario', 'Las dos capas que se dibujan sin ser actividades de verdad.'),
+ 'src/components/calendar/__tests__/visibility-field.test.tsx': ('compartir', 'Visibilidad de cada actividad', 'Elegir quién ve el detalle y quién solo "ocupado".'),
+ 'src/lib/__tests__/notifications.test.ts': ('recordatorios', 'Avisos del sistema', 'Que se programen sin duplicados y que la app no se rompa donde no existen.'),
+ 'src/hooks/__tests__/use-social-notifications.test.tsx': ('recordatorios', 'Avisos de solicitudes e invitaciones', 'El aviso inmediato cuando alguien te escribe o te invita.'),
+ 'src/store/__tests__/preferences-store.test.ts': ('perfil', 'Preferencias del dispositivo', 'Formato de hora, apariencia y qué capas se ven en el calendario.'),
+ 'src/hooks/__tests__/use-theme.test.tsx': ('perfil', 'Modo claro y modo oscuro', 'Qué tema se aplica según lo elegido y lo que dice el sistema.'),
+ 'src/constants/__tests__/nobi.test.ts': ('perfil', 'Nobi, la mascota', 'Los veinte colores y su versión para cada tema.'),
+ 'src/components/ui/__tests__/date-input-sheet.test.tsx': ('cimientos', 'Escribir una fecha', 'Teclear día, mes y año sin tener que navegar meses.'),
 }
 
 AREAS = [
@@ -250,27 +260,48 @@ for r in datos['testResults']:
 
 faltan = [f for f in por_archivo if f not in MAPA]
 if faltan:
-    print('SIN CLASIFICAR:', faltan, file=sys.stderr)
+    # Detener y no avisar: un archivo sin area no se imprime en ninguna seccion, y el
+    # informe saldria diciendo que las recorre todas mientras deja fuera un archivo entero.
+    print('Estos archivos de prueba no estan clasificados en MAPA y se perderian:', file=sys.stderr)
+    for f in faltan:
+        print('  ', f, file=sys.stderr)
+    sys.exit(1)
+
+total_pruebas = sum(len(v) for v in por_archivo.values())
+superadas = sum(1 for v in por_archivo.values() for a in v if a['status'] == 'passed')
+falladas = total_pruebas - superadas
+segundos = round((datos['startTime'] and (max(r['endTime'] for r in datos['testResults']) - datos['startTime']) / 1000) or 0)
+
+# La cobertura se lee del resumen que escribe Jest, no se teclea.
+try:
+    with open('reports/pruebas/cobertura/coverage-summary.json') as fh:
+        cobertura = '%.1f %%' % json.load(fh)['total']['lines']['pct']
+except (OSError, KeyError, ValueError):
+    cobertura = 'sin medir'
+
+def miles(n):
+    return f'{n:,}'.replace(',', '\u202f')
 
 L = []
 w = L.append
 w('# Qué se probó en KAVI, y qué salió\n')
-w('Este documento recorre **una por una** las 1 287 pruebas automáticas del proyecto,')
+w(f'Este documento recorre **una por una** las {miles(total_pruebas)} pruebas automáticas del proyecto,')
 w('agrupadas por zona de la aplicación y escritas para que se entiendan sin leer código.\n')
 w('Una prueba automática es un programa pequeño que usa la app como lo haría una persona')
 w('—tocar un botón, escribir en un campo, guardar— y comprueba que ocurre lo que debía')
-w('ocurrir. Si algo deja de funcionar, la prueba falla y lo dice. Las 1 287 se ejecutan')
-w('enteras en unos 20 segundos, cada vez que se sube un cambio al repositorio.\n')
+w(f'ocurrir. Si algo deja de funcionar, la prueba falla y lo dice. Las {miles(total_pruebas)} se ejecutan')
+w(f'enteras en unos {segundos} segundos, cada vez que se sube un cambio al repositorio.\n')
 w('## Resultado\n')
 w('| | |')
 w('|---|---|')
-w('| Pruebas ejecutadas | **1 287** |')
-w('| Pruebas superadas | **1 287** |')
-w('| Pruebas falladas | **0** |')
-w('| Archivos de prueba | 79 |')
-w('| Porcentaje del código cubierto | **83.3 %** |')
-w('| Tiempo de ejecución | ~20 segundos |\n')
-w('**Todas pasaron.** Ninguna quedó pendiente, saltada ni marcada como excepción.\n')
+w(f'| Pruebas ejecutadas | **{miles(total_pruebas)}** |')
+w(f'| Pruebas superadas | **{miles(superadas)}** |')
+w(f'| Pruebas falladas | **{falladas}** |')
+w(f'| Archivos de prueba | {len(por_archivo)} |')
+w(f'| Porcentaje del código cubierto | **{cobertura}** |')
+w(f'| Tiempo de ejecución | ~{segundos} segundos |\n')
+w('**Todas pasaron.** Ninguna quedó pendiente, saltada ni marcada como excepción.\n'
+  if falladas == 0 else f'**Fallaron {falladas}.** El detalle está en las listas de abajo.\n')
 w('El apartado [Lo que encontramos](#lo-que-encontramos) al final cuenta los dos defectos')
 w('reales que aparecieron al escribirlas.\n')
 w('### Cómo leer las listas\n')
@@ -330,7 +361,7 @@ w('---\n')
 w('## Cómo reproducirlo\n')
 w('Desde la carpeta del proyecto:\n')
 w('```')
-w('pnpm test              # ejecuta las 1 287 pruebas')
+w(f'pnpm test              # ejecuta las {miles(total_pruebas)} pruebas')
 w('pnpm test:coverage     # además mide qué porcentaje del código se ejerce')
 w('```\n')
 w('Las mismas pruebas se ejecutan automáticamente en GitHub cada vez que se sube un')

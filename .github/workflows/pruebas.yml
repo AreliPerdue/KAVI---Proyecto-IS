@@ -22,18 +22,21 @@ concurrency:
   group: pruebas-${{ github.ref }}
   cancel-in-progress: true
 
+# El runner va fijado y no en `ubuntu-latest`: esa etiqueta migra a Ubuntu 26 el 19 de
+# octubre de 2026 y cambiaria la maquina sin que nadie toque el repositorio. Las acciones
+# van en las versiones que corren sobre Node 24; Node 20 quedo deprecado en los runners.
 jobs:
   pruebas:
     name: Tipos, lint y pruebas
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v6
         with:
           version: 11
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: pnpm
@@ -91,7 +94,7 @@ jobs:
 
       - name: Guardar la cobertura
         if: always() && steps.pruebas.outputs.completa == 'si'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: cobertura
           path: |
@@ -105,9 +108,9 @@ jobs:
     # analisis de un build roto ni la cobertura parcial de una corrida filtrada.
     needs: pruebas
     if: github.event_name != 'workflow_dispatch' || (inputs.sonarqube && inputs.filtro == '')
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           # SonarQube necesita el historial completo para fechar el codigo nuevo
           # y decidir el quality gate; con el checkout superficial lo marca todo
@@ -116,11 +119,11 @@ jobs:
 
       # Sin las dependencias, `tsconfig.json` extiende una configuracion que vive
       # en node_modules y Sonar avisa de que el analisis de TypeScript sera parcial.
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v6
         with:
           version: 11
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: pnpm
@@ -128,7 +131,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
 
       - name: Recuperar la cobertura del trabajo anterior
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: cobertura
           path: reports/pruebas

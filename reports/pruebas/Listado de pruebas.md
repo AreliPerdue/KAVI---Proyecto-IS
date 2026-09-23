@@ -1,22 +1,22 @@
 # Qué se probó en KAVI, y qué salió
 
-Este documento recorre **una por una** las 1 287 pruebas automáticas del proyecto,
+Este documento recorre **una por una** las 1 514 pruebas automáticas del proyecto,
 agrupadas por zona de la aplicación y escritas para que se entiendan sin leer código.
 
 Una prueba automática es un programa pequeño que usa la app como lo haría una persona
 —tocar un botón, escribir en un campo, guardar— y comprueba que ocurre lo que debía
-ocurrir. Si algo deja de funcionar, la prueba falla y lo dice. Las 1 287 se ejecutan
+ocurrir. Si algo deja de funcionar, la prueba falla y lo dice. Las 1 514 se ejecutan
 enteras en unos 20 segundos, cada vez que se sube un cambio al repositorio.
 
 ## Resultado
 
 | | |
 |---|---|
-| Pruebas ejecutadas | **1 287** |
-| Pruebas superadas | **1 287** |
+| Pruebas ejecutadas | **1 514** |
+| Pruebas superadas | **1 514** |
 | Pruebas falladas | **0** |
-| Archivos de prueba | 79 |
-| Porcentaje del código cubierto | **83.3 %** |
+| Archivos de prueba | 89 |
+| Porcentaje del código cubierto | **85.2 %** |
 | Tiempo de ejecución | ~20 segundos |
 
 **Todas pasaron.** Ninguna quedó pendiente, saltada ni marcada como excepción.
@@ -31,15 +31,15 @@ Están agrupadas igual que en el código, bajo el aspecto que verifican.
 
 ### Índice
 
-- [Crear cuenta y entrar](#crear-cuenta-y-entrar) — 155 pruebas
-- [El calendario](#el-calendario) — 191 pruebas
+- [Crear cuenta y entrar](#crear-cuenta-y-entrar) — 167 pruebas
+- [El calendario](#el-calendario) — 219 pruebas
 - [Crear y editar actividades](#crear-y-editar-actividades) — 209 pruebas
 - [Temas y dimensiones del bienestar](#temas-y-dimensiones-del-bienestar) — 68 pruebas
-- [Compartir con otras personas](#compartir-con-otras-personas) — 230 pruebas
-- [Recordatorios](#recordatorios) — 80 pruebas
+- [Compartir con otras personas](#compartir-con-otras-personas) — 249 pruebas
+- [Recordatorios](#recordatorios) — 122 pruebas
 - [Gimnasio](#gimnasio) — 140 pruebas
-- [Perfil y administración](#perfil-y-administracion) — 73 pruebas
-- [Los cimientos: interfaz y utilidades](#los-cimientos-interfaz-y-utilidades) — 204 pruebas
+- [Perfil y administración](#perfil-y-administracion) — 117 pruebas
+- [Los cimientos: interfaz y utilidades](#los-cimientos-interfaz-y-utilidades) — 223 pruebas
 - [Lo que encontramos](#lo-que-encontramos)
 - [Cómo reproducirlo](#como-reproducirlo)
 
@@ -48,7 +48,7 @@ Están agrupadas igual que en el código, bajo el aspecto que verifican.
 
 ## Crear cuenta y entrar
 
-**155 pruebas, todas superadas.**
+**167 pruebas, todas superadas.**
 
 Es la puerta de la app: si algo falla aquí, nadie llega al resto. Se comprobó el alta por pasos completa, el inicio de sesión, la recuperación de contraseña y, sobre todo, que los mensajes de error digan qué pasó y cómo resolverlo en lugar de mostrar el error técnico del servidor.
 
@@ -340,11 +340,44 @@ Es la puerta de la app: si algo falla aquí, nadie llega al resto. Se comprobó 
 - ✓ falla con un mensaje útil fuera del provider
 
 
+### Primera pantalla al abrir
+
+*A dónde lleva la app según haya sesión, y la excepción de la primera vez.* — 6 pruebas.
+
+
+**sin sesión**
+
+- ✓ lleva al inicio de sesión
+- ✓ aunque sea la primera vez que se abre
+
+**con sesión**
+
+- ✓ abre en el calendario
+- ✓ la primera vez abre en Perfil
+- ✓ y deja constancia de que ya se abrio
+- ✓ mientras no se han leido las preferencias no se decide que es la primera vez
+
+
+### Rutas protegidas
+
+*Que sin sesión no se pueda entrar a ninguna pantalla de la app.* — 6 pruebas.
+
+
+**arranque del área autenticada**
+
+- ✓ carga las preferencias del dispositivo
+- ✓ no las vuelve a cargar al repintar
+- ✓ programa los recordatorios
+- ✓ se suscribe a los cambios en tiempo real
+- ✓ activa los avisos de solicitudes e invitaciones (RF-S17)
+- ✓ se monta sin romperse
+
+
 ---
 
 ## El calendario
 
-**191 pruebas, todas superadas.**
+**219 pruebas, todas superadas.**
 
 Es la pantalla central de KAVI. Lo delicado aquí no es enseñar los días, sino colocar bien las actividades: las que se traslapan tienen que repartirse el ancho, las muy cortas tienen que seguir siendo legibles y las que cruzan la medianoche tienen que aparecer en los dos días. También se comprobó todo el manejo de fechas, que es la base invisible de la pantalla.
 
@@ -736,6 +769,52 @@ Es la pantalla central de KAVI. Lo delicado aquí no es enseñar los días, sino
 - ✓ el rango de horas también
 - ✓ una actividad de todo el día no cambia con el reloj
 - ✓ cambiar de vuelta a 24 h restaura el formato
+
+
+### Entrenamientos y cumpleaños en el calendario
+
+*Las dos capas que se dibujan sin ser actividades de verdad.* — 28 pruebas.
+
+
+**entrenamientos en el calendario**
+
+- ✓ un entrenamiento suelto se pinta
+- ✓ el que tiene actividad no se pinta
+- ✓ usa el nombre del entrenamiento
+- ✓ sin nombre queda un texto de reserva
+- ✓ empieza a la hora en que se registro
+- ✓ dura lo que suman sus ejercicios
+- ✓ sin duración registrada se le da una hora
+- ✓ se marca como de gimnasio y dimensión fisica
+- ✓ se reconoce como derivado, para no ofrecer editarlo
+- ✓ una actividad normal no se confunde con una derivada
+
+**cumpleaños**
+
+- ✓ uno dentro del rango aparece
+- ✓ uno fuera del rango no
+- ✓ el año guardado no importa: cuenta el día y el mes
+- ✓ quien no lo tiene definido no genera nada
+- ✓ es de todo el día
+- ✓ lleva el icono de pastel
+- ✓ usa el nombre de pila
+- ✓ sin nombre visible cae al usuario
+- ✓ un rango a caballo entre dos años encuentra el cumpleaños
+- ✓ el 29 de febrero se omite en año no bisiesto
+- ✓ pero aparece en año bisiesto
+- ✓ no se puede editar desde el calendario
+
+**de quien se muestran**
+
+- ✓ el mio y el de mis contactos aceptados
+- ✓ una solicitud pendiente no cuenta
+- ✓ sin mi perfil cargado solo salen los contactos
+
+**es hoy mi cumpleaños**
+
+- ✓ coincide día y mes
+- ✓ otro día no
+- ✓ sin cumpleaños definido no
 
 
 ---
@@ -1316,7 +1395,7 @@ Los temas son la forma en que KAVI clasifica en qué inviertes tu tiempo. La reg
 
 ## Compartir con otras personas
 
-**230 pruebas, todas superadas.**
+**249 pruebas, todas superadas.**
 
 Es el área con más reglas de privacidad, y por eso la más probada. Lo esencial: quien te comparte su calendario "solo ocupación" cede sus horas ocupadas, nunca lo que hace en ellas; y al eliminar a un contacto tiene que revocarse todo de golpe, sin dejar restos de acceso.
 
@@ -1794,11 +1873,51 @@ Es el área con más reglas de privacidad, y por eso la más probada. Lo esencia
 - ✓ agotada la paleta cae a un color válido
 
 
+### Visibilidad de cada actividad
+
+*Elegir quién ve el detalle y quién solo "ocupado".* — 19 pruebas.
+
+
+**las tres opciones**
+
+- ✓ se ofrecen normal, algunos y privada
+- ✓ arranca en normal
+- ✓ cambiar de opción lo comunica
+
+**qué explica cada opción**
+
+- ✓ normal nombra a quién alcanza y a quién no
+- ✓ sin nadie con detalles lo dice en vez de mentir
+- ✓ privada dice que no lo ve nadie
+- ✓ algunos explica qué pasa con los demás
+
+**elegir personas**
+
+- ✓ la lista solo aparece en «algunos»
+- ✓ en «algunos» se listan los contactos aceptados
+- ✓ marcar a alguien lo comunica
+- ✓ desmarcar lo quita
+- ✓ se anuncia como casilla marcada o no
+- ✓ avisa cuando marcar a alguien no va a servir de nada
+- ✓ a quien sí tiene detalles no le pone ese aviso
+- ✓ sin contactos lo explica
+- ✓ las solicitudes pendientes no salen
+
+**distinción con invitar**
+
+- ✓ recuerda que invitar es otra cosa y dónde está
+- ✓ en una privada no se ofrece invitar
+
+**errores**
+
+- ✓ se muestran bajo el selector
+
+
 ---
 
 ## Recordatorios
 
-**80 pruebas, todas superadas.**
+**122 pruebas, todas superadas.**
 
 Cada persona decide por su cuenta si quiere el aviso, incluso en una actividad compartida: silenciarlo tú no puede silenciarlo a los demás. También se comprobó el cálculo de a qué hora exacta debe saltar cada aviso.
 
@@ -1962,6 +2081,90 @@ Cada persona decide por su cuenta si quiere el aviso, incluso en una actividad c
 - ✓ expresa en horas los multiplos de 60
 - ✓ cae a minutos cuando no es multiplo
 - ✓ nunca devuelve vacío
+
+
+### Avisos del sistema
+
+*Que se programen sin duplicados y que la app no se rompa donde no existen.* — 26 pruebas.
+
+
+**cuando el modulo nativo no esta › en web**
+
+- ✓ se declara no disponible
+- ✓ el permiso no aplica, que no es lo mismo que denegado
+- ✓ no se puede conceder permiso
+- ✓ programar no hace nada y no revienta
+- ✓ avisar tampoco
+
+**cuando el modulo nativo no esta › en Expo Go**
+
+- ✓ se declara no disponible
+- ✓ el permiso no aplica, que no es lo mismo que denegado
+- ✓ no se puede conceder permiso
+- ✓ programar no hace nada y no revienta
+- ✓ avisar tampoco
+
+**cuando el modulo nativo no esta › en un binario sin el modulo compilado**
+
+- ✓ se declara no disponible en vez de romper el arranque
+- ✓ programar devuelve cero
+
+**permisos**
+
+- ✓ si ya esta concedido no se vuelve a pedir
+- ✓ si no lo está, se pide
+- ✓ y si se deniega, se respeta
+- ✓ consultar el estado no lo pide
+
+**programar recordatorios**
+
+- ✓ programa uno por recordatorio futuro
+- ✓ cancela todo lo anterior antes de reconstruir
+- ✓ se salta los que ya pasaron
+- ✓ lleva el identificador del recordatorio, para poder reemplazarlo
+- ✓ sin permiso no programa nada
+- ✓ sin recordatorios solo cancela
+- ✓ instala el manejador una sola vez
+
+**aviso inmediato (RF-S17)**
+
+- ✓ se muestra sin programarlo para más tarde
+- ✓ acepta datos para abrir lo que corresponda
+- ✓ sin permiso no avisa y tampoco lo pide
+
+
+### Avisos de solicitudes e invitaciones
+
+*El aviso inmediato cuando alguien te escribe o te invita.* — 16 pruebas.
+
+
+**primera carga**
+
+- ✓ no avisa de lo que ya estába pendiente
+- ✓ mientras las consultas no han resuelto no hace nada
+
+**solicitudes de contacto**
+
+- ✓ avisa de una que llega después
+- ✓ usa el nombre de pila, no el completo
+- ✓ sin nombre visible cae al usuario
+- ✓ no repite el aviso de una solicitud ya anunciada
+- ✓ avisa una vez por cada solicitud nueva
+- ✓ las solicitudes que yo envie no generan aviso
+- ✓ un contacto ya aceptado tampoco
+- ✓ que desaparezca una solicitud no avisa de nada
+
+**invitaciones a actividades**
+
+- ✓ avisa con quien invita, que actividad y cuando
+- ✓ en una actividad de todo el día no dice la hora
+- ✓ no repite el aviso de una invitación ya anunciada
+- ✓ responder una invitación, que la saca de la lista, no avisa
+- ✓ avisa de cada invitación nueva por separado
+
+**las dos fuentes juntas**
+
+- ✓ una solicitud y una invitación a la vez generan dos avisos
 
 
 ---
@@ -2261,14 +2464,14 @@ El registro de entrenamientos, accesible desde cualquier actividad marcada como 
 
 ## Perfil y administración
 
-**73 pruebas, todas superadas.**
+**117 pruebas, todas superadas.**
 
 Tus datos, tus estadísticas y los ajustes. El panel de administración es la parte con control de acceso: una cuenta normal no debe verlo, y aun viéndolo solo muestra cifras agregadas, nunca el contenido de la agenda de nadie.
 
 
 ### Pantalla de Perfil
 
-*Tus datos, tus estadísticas y los ajustes.* — 19 pruebas.
+*Tus datos, tus estadísticas y los ajustes.* — 23 pruebas.
 
 
 **identidad**
@@ -2310,6 +2513,13 @@ Tus datos, tus estadísticas y los ajustes. El panel de administración es la pa
 - ✓ fuera de demo no ofrece cambiar de cuenta
 - ✓ en demo sí, y avisa de que los datos se reinician
 - ✓ la versión se marca como demo
+
+**apariencia (NFR-18)**
+
+- ✓ ofrece seguir al sistema, claro y oscuro
+- ✓ marca como seleccionada la que esta activa
+- ✓ elegir «Claro» la guarda
+- ✓ y «Sistema» deja que mande el teléfono
 
 
 ### Panel de administración
@@ -2429,11 +2639,102 @@ Tus datos, tus estadísticas y los ajustes. El panel de administración es la pa
 - ✓ no expone contraseñas
 
 
+### Preferencias del dispositivo
+
+*Formato de hora, apariencia y qué capas se ven en el calendario.* — 21 pruebas.
+
+
+**valor inicial**
+
+- ✓ arranca en 24 h, que es lo habitual en es-MX
+- ✓ nace sin hidratar
+
+**cambiar el formato**
+
+- ✓ guarda el valor elegido
+- ✓ lo propaga a las funciones que formatean horas
+- ✓ se puede volver a 24 h
+- ✓ lo persiste para la proxima sesión
+
+**hidratación**
+
+- ✓ sin nada guardado se queda en el valor por omisión
+- ✓ al hidratar también propaga el formato guardado
+- ✓ no vuelve a hidratar si ya lo hizo
+
+**nombre del último entrenamiento (RF-F7)**
+
+- ✓ arranca sin ninguno
+- ✓ guarda el que se le pase
+- ✓ recorta los espacios
+- ✓ un nombre en blanco lo deja sin nombre, no en cadena vacía
+- ✓ se recuerda para la proxima sesión
+- ✓ cambiar el nombre no pierde el formato de hora
+- ✓ y cambiar el formato no pierde el nombre
+
+**apariencia (NFR-18)**
+
+- ✓ arranca en oscuro, que es como nacio KAVI
+- ✓ guarda la que se elija
+- ✓ se recuerda para la proxima sesión
+- ✓ sin nada guardado se queda en oscuro
+- ✓ elegirla no pierde las demás preferencias
+
+
+### Modo claro y modo oscuro
+
+*Qué tema se aplica según lo elegido y lo que dice el sistema.* — 7 pruebas.
+
+
+**preferencia fijada**
+
+- ✓ «Oscuro» manda aunque el sistema este en claro
+- ✓ «Claro» manda aunque el sistema este en oscuro
+
+**«Sistema»**
+
+- ✓ sigue al sistema en claro
+- ✓ sigue al sistema en oscuro
+- ✓ si el sistema no dice nada se queda en oscuro
+
+**useTheme**
+
+- ✓ devuelve los tokens claros cuando el esquema es claro
+- ✓ y los oscuros cuando es oscuro
+
+
+### Nobi, la mascota
+
+*Los veinte colores y su versión para cada tema.* — 12 pruebas.
+
+
+**catalogo**
+
+- ✓ no repite ids
+- ✓ cada color trae las dos versiones
+- ✓ las dos versiones de un color son imagenes distintas
+- ✓ todos tienen etiqueta en español
+
+**lo que se guarda en el perfil**
+
+- ✓ es el id con prefijo, no la imagen
+- ✓ se lee de vuelta
+- ✓ sin Nobi elegido no hay id
+- ✓ un valor que no lleva el prefijo no es un Nobi
+- ✓ un color que ya no existe no es un Nobi
+
+**que imagen se pinta (NFR-18)**
+
+- ✓ en oscuro, la de fondo oscuro
+- ✓ en claro, la de fondo claro
+- ✓ sin Nobi elegido no hay imagen en ningun esquema
+
+
 ---
 
 ## Los cimientos: interfaz y utilidades
 
-**204 pruebas, todas superadas.**
+**223 pruebas, todas superadas.**
 
 Las piezas que se reutilizan en toda la app. Se prueban una vez y sirven en todas partes: botones, campos, interruptores, avisos, y los estados de carga, vacío y error que deberían aparecer en cada pantalla. Aquí se concentra buena parte de las comprobaciones de accesibilidad.
 
@@ -2861,6 +3162,37 @@ Las piezas que se reutilizan en toda la app. Se prueban una vez y sirven en toda
 - ✓ respeta valores falsy válidos
 
 
+### Escribir una fecha
+
+*Teclear día, mes y año sin tener que navegar meses.* — 19 pruebas.
+
+
+**fechaDesde**
+
+- ✓ construye una fecha válida
+- ✓ el 31 de febrero no existe y no se desborda a marzo
+- ✓ el 29 de febrero vale en año bisiesto
+- ✓ y no vale en año no bisiesto
+- ✓ un mes fuera de rango es nulo
+- ✓ un año absurdo es nulo
+- ✓ campos vacíos son nulos
+- ✓ texto que no es número es nulo
+
+**la hoja**
+
+- ✓ ofrece los tres campos
+- ✓ parte de la fecha ya guardada
+- ✓ sin una fecha completa no deja guardar
+- ✓ con una fecha válida la confirma antes de guardar
+- ✓ devuelve la fecha escrita
+- ✓ una fecha que no existe se explica
+- ✓ a medio escribir no acusa de fecha inválida
+- ✓ con día y mes pero sin año tampoco
+- ✓ el error aparece al completar los tres campos
+- ✓ una fecha futura se rechaza cuando hay tope
+- ✓ cerrada no pinta los campos
+
+
 ---
 
 ## Lo que encontramos
@@ -2895,7 +3227,7 @@ por 20 minutos se consideren solapadas en pantalla.
 Desde la carpeta del proyecto:
 
 ```
-pnpm test              # ejecuta las 1 287 pruebas
+pnpm test              # ejecuta las 1 514 pruebas
 pnpm test:coverage     # además mide qué porcentaje del código se ejerce
 ```
 
