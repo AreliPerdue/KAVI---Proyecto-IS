@@ -3,7 +3,12 @@ import { getSupabase } from '@/lib/supabase';
 import type { ProfilesApi } from '@/services/contracts';
 import type { Profile } from '@/types/domain';
 
-const PROFILE_COLUMNS = 'id, username, display_name, avatar_url, created_at, role';
+/**
+ * Columnas explícitas en lugar de `*`, para no arrastrar campos que la app no usa.
+ * El precio es este: **una columna nueva hay que añadirla aquí**, o se guarda bien y
+ * vuelve siempre vacía. Le pasó a `birthday`.
+ */
+const PROFILE_COLUMNS = 'id, username, display_name, avatar_url, birthday, created_at, role';
 
 function toProfileError(error: { message: string; code?: string }): AuthUiError {
   if (isOfflineError(error)) return new AuthUiError(AUTH_MESSAGES.offline, error);

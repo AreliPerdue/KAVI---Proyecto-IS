@@ -25,6 +25,18 @@ describe('getMyProfile', () => {
     expect(mockSb.argsDe('eq')).toEqual(['id', 'u1']);
   });
 
+  /**
+   * Regresión: `birthday` se guardaba bien pero volvía siempre vacía, porque la
+   * lista explícita de columnas no la incluía. Es el precio de no usar `select(*)`.
+   */
+  it('pide todas las columnas del perfil, incluida la mas reciente', async () => {
+    await supabaseProfiles.getMyProfile('u1');
+    const columnas = String(mockSb.argsDe('select')?.[0] ?? '');
+    for (const c of ['id', 'username', 'display_name', 'avatar_url', 'birthday', 'role']) {
+      expect(columnas).toContain(c);
+    }
+  });
+
   it('pide columnas explicitas, no select(*)', async () => {
     mockSb.responder({ data: { id: 'u1' }, error: null });
     await supabaseProfiles.getMyProfile('u1');

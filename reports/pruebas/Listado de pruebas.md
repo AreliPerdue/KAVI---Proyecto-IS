@@ -38,7 +38,7 @@ Están agrupadas igual que en el código, bajo el aspecto que verifican.
 - [Compartir con otras personas](#compartir-con-otras-personas) — 221 pruebas
 - [Recordatorios](#recordatorios) — 80 pruebas
 - [Gimnasio](#gimnasio) — 140 pruebas
-- [Perfil y administración](#perfil-y-administracion) — 72 pruebas
+- [Perfil y administración](#perfil-y-administracion) — 73 pruebas
 - [Los cimientos: interfaz y utilidades](#los-cimientos-interfaz-y-utilidades) — 204 pruebas
 - [Lo que encontramos](#lo-que-encontramos)
 - [Cómo reproducirlo](#como-reproducirlo)
@@ -2241,7 +2241,7 @@ El registro de entrenamientos, accesible desde cualquier actividad marcada como 
 
 ## Perfil y administración
 
-**72 pruebas, todas superadas.**
+**73 pruebas, todas superadas.**
 
 Tus datos, tus estadísticas y los ajustes. El panel de administración es la parte con control de acceso: una cuenta normal no debe verlo, y aun viéndolo solo muestra cifras agregadas, nunca el contenido de la agenda de nadie.
 
@@ -2319,12 +2319,13 @@ Tus datos, tus estadísticas y los ajustes. El panel de administración es la pa
 
 ### Perfil — servidor real
 
-*Leer y actualizar tus datos.* — 8 pruebas.
+*Leer y actualizar tus datos.* — 9 pruebas.
 
 
 **getMyProfile**
 
 - ✓ consulta profiles filtrando por id
+- ✓ pide todas las columnas del perfil, incluida la más reciente
 - ✓ pide columnas explicitas, no select(*)
 - ✓ devuelve el perfil
 - ✓ traduce el error

@@ -72,7 +72,12 @@ function Campos({
   const fecha = fechaDesde(dia, mes, anio);
   const fueraDeRango = fecha !== null && maxDate !== undefined && toDayKey(fecha) > toDayKey(maxDate);
   const listo = fecha !== null && !fueraDeRango;
-  const escribiendo = [dia, mes, anio].some((x) => x.trim().length > 0);
+  /**
+   * El error solo se muestra con los tres campos llenos. Antes bastaba con escribir
+   * el día para que apareciera «esa fecha no existe», que es cierto pero inútil:
+   * todavía no has terminado de escribirla.
+   */
+  const completo = [dia, mes, anio].every((x) => x.trim().length > 0);
 
   return (
     <>
@@ -90,7 +95,7 @@ function Campos({
 
       {listo ? (
         <AppText variant="label">{formatDate(fecha)}</AppText>
-      ) : escribiendo ? (
+      ) : completo ? (
         <AppText variant="label" color="danger">
           {fueraDeRango ? 'Esa fecha todavía no ha llegado.' : 'Esa fecha no existe. Revisa el día, el mes y el año.'}
         </AppText>

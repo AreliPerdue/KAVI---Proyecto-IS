@@ -98,6 +98,32 @@ describe('la hoja', () => {
     expect(screen.getByText(/esa fecha no existe/i)).toBeTruthy();
   });
 
+  /**
+   * Regresión: escribir solo el día disparaba «esa fecha no existe». Es cierto,
+   * pero inútil: todavía no has terminado de escribirla.
+   */
+  it('a medio escribir no acusa de fecha inválida', async () => {
+    await montar();
+    await fireEvent.changeText(screen.getByLabelText('Día'), '28');
+
+    expect(screen.queryByText(/esa fecha no existe/i)).toBeNull();
+    expect(screen.getByLabelText('Guardar').props.accessibilityState.disabled).toBe(true);
+  });
+
+  it('con día y mes pero sin año tampoco', async () => {
+    await montar();
+    await fireEvent.changeText(screen.getByLabelText('Día'), '28');
+    await fireEvent.changeText(screen.getByLabelText('Mes'), '6');
+
+    expect(screen.queryByText(/esa fecha no existe/i)).toBeNull();
+  });
+
+  it('el error aparece al completar los tres campos', async () => {
+    await montar();
+    await escribir('31', '2', '2026');
+    expect(screen.getByText(/esa fecha no existe/i)).toBeTruthy();
+  });
+
   /** Nadie ha nacido mañana. */
   it('una fecha futura se rechaza cuando hay tope', async () => {
     await montar({ maxDate: new Date(2026, 8, 23) });
