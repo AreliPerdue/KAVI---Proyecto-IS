@@ -37,7 +37,7 @@ Están agrupadas igual que en el código, bajo el aspecto que verifican.
 - [Temas y dimensiones del bienestar](#temas-y-dimensiones-del-bienestar) — 68 pruebas
 - [Compartir con otras personas](#compartir-con-otras-personas) — 221 pruebas
 - [Recordatorios](#recordatorios) — 80 pruebas
-- [Gimnasio](#gimnasio) — 120 pruebas
+- [Gimnasio](#gimnasio) — 138 pruebas
 - [Perfil y administración](#perfil-y-administracion) — 72 pruebas
 - [Los cimientos: interfaz y utilidades](#los-cimientos-interfaz-y-utilidades) — 204 pruebas
 - [Lo que encontramos](#lo-que-encontramos)
@@ -1928,14 +1928,14 @@ Cada persona decide por su cuenta si quiere el aviso, incluso en una actividad c
 
 ## Gimnasio
 
-**120 pruebas, todas superadas.**
+**138 pruebas, todas superadas.**
 
 El registro de entrenamientos, accesible desde cualquier actividad marcada como gimnasio. Lo que más se cuidó es que capturar no pierda nada: los campos se guardan al salir de ellos, y borrar un ejercicio ofrece deshacer en vez de pedir confirmación.
 
 
 ### Pantalla de Fitness
 
-*El historial de entrenamientos.* — 16 pruebas.
+*El historial de entrenamientos.* — 21 pruebas.
 
 
 **estados de carga**
@@ -1946,6 +1946,9 @@ El registro de entrenamientos, accesible desde cualquier actividad marcada como 
 
 **historial**
 
+- ✓ un nombre propio gana sobre el título de la actividad (RF-F7)
+- ✓ sin nombre propio se usa el de la actividad
+- ✓ sin ninguno de los dos queda el texto de reserva
 - ✓ una sesión ligada a una actividad lleva su título
 - ✓ una sesión sin actividad se llama entrenamiento libre
 - ✓ un solo ejercicio se dice en singular
@@ -1959,6 +1962,8 @@ El registro de entrenamientos, accesible desde cualquier actividad marcada como 
 **entrenamiento libre**
 
 - ✓ lo crea sin ligarlo a ninguna actividad
+- ✓ se estrena con el nombre del entrenamiento anterior
+- ✓ la primera vez, sin nombre previo, se crea sin nombre
 - ✓ solo entra al detalle cuando el backend confirma
 - ✓ el botón se bloquea mientras se crea
 - ✓ explica cómo registrar una sesión ya agendada
@@ -1966,7 +1971,7 @@ El registro de entrenamientos, accesible desde cualquier actividad marcada como 
 
 ### Detalle de un entrenamiento
 
-*Capturar y consultar una sesión.* — 15 pruebas.
+*Capturar y consultar una sesión.* — 23 pruebas.
 
 
 **modo de apertura**
@@ -1998,6 +2003,17 @@ El registro de entrenamientos, accesible desde cualquier actividad marcada como 
 
 - ✓ pide confirmación
 - ✓ al confirmar lo elimina
+
+**nombre del entrenamiento**
+
+- ✓ en lectura se muestra el nombre propio
+- ✓ sin nombre propio se usa el de la actividad
+- ✓ sin ninguno de los dos queda el texto de reserva
+- ✓ en edición es un campo, no un título fijo
+- ✓ se guarda al salir del campo
+- ✓ escribir sin salir del campo todavia no guarda
+- ✓ borrarlo lo deja sin nombre, no en cadena vacía
+- ✓ salir del campo sin cambiar nada no guarda
 
 
 ### Tarjeta de ejercicio
@@ -2124,13 +2140,18 @@ El registro de entrenamientos, accesible desde cualquier actividad marcada como 
 
 ### Entrenamientos — modo demostración
 
-*Lo mismo en el backend de práctica.* — 18 pruebas.
+*Lo mismo en el backend de práctica.* — 23 pruebas.
 
 
 **crear**
 
 - ✓ devuelve el entrenamiento con id y dueño
 - ✓ nace sin ejercicios y sin duración
+- ✓ guarda el nombre que se le da (RF-F7)
+- ✓ recorta los espacios del nombre
+- ✓ un nombre en blanco se guarda como sin nombre, no como cadena vacía
+- ✓ sin nombre nace sin el
+- ✓ se puede cambiar después
 - ✓ rechaza un segundo entrenamiento para la misma actividad
 
 **leer**

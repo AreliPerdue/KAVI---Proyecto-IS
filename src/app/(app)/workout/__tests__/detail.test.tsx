@@ -65,7 +65,7 @@ const ejercicio = (over = {}) => ({
   sets: 4, reps: '8', weight: '80 kg', duration_minutes: null, notes: null, ...over,
 });
 const ENTRENAMIENTO = (over = {}) => ({
-  id: 'w1', owner_id: 'u1', activity_id: null, activity_title: null,
+  id: 'w1', owner_id: 'u1', activity_id: null, activity_title: null, title: null,
   performed_at: new Date(2026, 8, 7, 7, 30).toISOString(),
   notes: null, created_at: 'x', duration_minutes: null,
   exercises: [ejercicio()], ...over,
@@ -215,5 +215,88 @@ describe('eliminar el entrenamiento', () => {
     await fireEvent.press(screen.getByRole('button', { name: 'Eliminar entrenamiento' }));
 
     await waitFor(() => expect(mockMut.remove.mutate).toHaveBeenCalled());
+  });
+});
+
+
+/**
+ * Nombre propio de la sesion (RF-F7).
+ *
+ * El encabezado era fijo —"Entrenamiento libre"— y no se podia cambiar. Ahora es
+ * un campo mas, con la misma mecanica que las notas: se guarda al salir de el. Y
+ * al guardarlo se recuerda, para proponerlo en el siguiente entrenamiento.
+ */
+describe('nombre del entrenamiento', () => {
+  it('en lectura se muestra el nombre propio', async () => {
+    mockWorkout = { ...mockWorkout, data: ENTRENAMIENTO({ title: 'Empuje A' }) };
+    globalThis.setParametrosDeRuta({ id: 'w1', mode: 'view' });
+    await render(<Pantalla />);
+    expect(screen.getByText('Empuje A')).toBeTruthy();
+  });
+
+  it('sin nombre propio se usa el de la actividad', async () => {
+    mockWorkout = { ...mockWorkout, data: ENTRENAMIENTO({ title: null, activity_title: 'Gimnasio · pierna' }) };
+    globalThis.setParametrosDeRuta({ id: 'w1', mode: 'view' });
+    await render(<Pantalla />);
+    expect(screen.getByText('Gimnasio · pierna')).toBeTruthy();
+  });
+
+  it('sin ninguno de los dos queda el texto de reserva', async () => {
+    globalThis.setParametrosDeRuta({ id: 'w1', mode: 'view' });
+    await render(<Pantalla />);
+    expect(screen.getByText('Entrenamiento libre')).toBeTruthy();
+  });
+
+  it('en edicion es un campo, no un titulo fijo', async () => {
+    globalThis.setParametrosDeRuta({ id: 'w1', mode: 'edit' });
+    await render(<Pantalla />);
+    expect(screen.getByLabelText('Nombre')).toBeTruthy();
+  });
+
+  it('se guarda al salir del campo', async () => {
+    globalThis.setParametrosDeRuta({ id: 'w1', mode: 'edit' });
+    await render(<Pantalla />);
+
+    await fireEvent.changeText(screen.getByLabelText('Nombre'), 'Pierna');
+    await fireEvent(screen.getByLabelText('Nombre'), 'blur');
+
+    expect(mockMut.update.mutate).toHaveBeenCalledWith(
+      { id: 'w1', patch: { title: 'Pierna' } },
+      expect.any(Object),
+    );
+  });
+
+  it('escribir sin salir del campo todavia no guarda', async () => {
+    globalThis.setParametrosDeRuta({ id: 'w1', mode: 'edit' });
+    await render(<Pantalla />);
+
+    await fireEvent.changeText(screen.getByLabelText('Nombre'), 'Pierna');
+
+    expect(mockMut.update.mutate).not.toHaveBeenCalled();
+  });
+
+  it('borrarlo lo deja sin nombre, no en cadena vacia', async () => {
+    mockWorkout = { ...mockWorkout, data: ENTRENAMIENTO({ title: 'Pierna' }) };
+    globalThis.setParametrosDeRuta({ id: 'w1', mode: 'edit' });
+    await render(<Pantalla />);
+
+    await fireEvent.changeText(screen.getByLabelText('Nombre'), '   ');
+    await fireEvent(screen.getByLabelText('Nombre'), 'blur');
+
+    expect(mockMut.update.mutate).toHaveBeenCalledWith(
+      { id: 'w1', patch: { title: null } },
+      expect.any(Object),
+    );
+  });
+
+  /** Sin esto cada blur dispararia una escritura aunque no se hubiera tocado nada. */
+  it('salir del campo sin cambiar nada no guarda', async () => {
+    mockWorkout = { ...mockWorkout, data: ENTRENAMIENTO({ title: 'Pierna' }) };
+    globalThis.setParametrosDeRuta({ id: 'w1', mode: 'edit' });
+    await render(<Pantalla />);
+
+    await fireEvent(screen.getByLabelText('Nombre'), 'blur');
+
+    expect(mockMut.update.mutate).not.toHaveBeenCalled();
   });
 });

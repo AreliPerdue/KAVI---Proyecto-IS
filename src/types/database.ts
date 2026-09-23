@@ -304,6 +304,7 @@ export type Database = {
           id: string;
           activity_id: string | null;
           owner_id: string;
+          title: string | null;
           performed_at: string;
           duration_minutes: number | null;
           notes: string | null;
@@ -313,6 +314,7 @@ export type Database = {
           id?: string;
           activity_id?: string | null;
           owner_id: string;
+          title?: string | null;
           performed_at?: string;
           duration_minutes?: number | null;
           notes?: string | null;
@@ -322,6 +324,7 @@ export type Database = {
           id?: string;
           activity_id?: string | null;
           owner_id?: string;
+          title?: string | null;
           performed_at?: string;
           duration_minutes?: number | null;
           notes?: string | null;

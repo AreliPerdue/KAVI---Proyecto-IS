@@ -38,6 +38,37 @@ describe('crear', () => {
     expect(created.duration_minutes).toBeNull();
   });
 
+  it('guarda el nombre que se le da (RF-F7)', async () => {
+    const workouts = fresh();
+    const w = await workouts.create(USER, input({ title: 'Empuje A' }));
+    expect(w.title).toBe('Empuje A');
+  });
+
+  it('recorta los espacios del nombre', async () => {
+    const workouts = fresh();
+    const w = await workouts.create(USER, input({ title: '  Pierna  ' }));
+    expect(w.title).toBe('Pierna');
+  });
+
+  it('un nombre en blanco se guarda como sin nombre, no como cadena vacia', async () => {
+    const workouts = fresh();
+    const w = await workouts.create(USER, input({ title: '   ' }));
+    expect(w.title).toBeNull();
+  });
+
+  it('sin nombre nace sin el', async () => {
+    const workouts = fresh();
+    const w = await workouts.create(USER, input());
+    expect(w.title).toBeNull();
+  });
+
+  it('se puede cambiar despues', async () => {
+    const workouts = fresh();
+    const w = await workouts.create(USER, input());
+    const cambiado = await workouts.update(w.id, { title: 'Pierna' });
+    expect(cambiado.title).toBe('Pierna');
+  });
+
   it('rechaza un segundo entrenamiento para la misma actividad', async () => {
     const workouts = fresh();
     await workouts.create(USER, input({ activity_id: 'act-1' }));

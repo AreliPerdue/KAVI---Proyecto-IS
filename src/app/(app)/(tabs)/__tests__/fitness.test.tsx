@@ -9,11 +9,12 @@
 import { fireEvent, render, screen } from '@testing-library/react-native';
 
 import FitnessScreen from '@/app/(app)/(tabs)/fitness';
+import { usePreferencesStore } from '@/store/preferences-store';
 import type { Workout } from '@/types/domain';
 
 const entreno = (over: Partial<Workout> = {}): Workout =>
   ({
-    id: 'w1', user_id: 'u1', activity_id: null, activity_title: null,
+    id: 'w1', user_id: 'u1', activity_id: null, activity_title: null, title: null,
     performed_at: new Date(2026, 8, 7, 18, 30).toISOString(),
     duration_minutes: null, notes: null, exercise_count: 3, created_at: 'x',
     ...over,
@@ -38,6 +39,7 @@ beforeEach(() => {
   mockCreate.mutate.mockReset();
   mockCreate.isPending = false;
   globalThis.mockRouter.push.mockClear();
+  usePreferencesStore.setState({ lastWorkoutTitle: null });
 });
 
 describe('estados de carga', () => {
@@ -65,6 +67,24 @@ describe('estados de carga', () => {
 });
 
 describe('historial', () => {
+  it('un nombre propio gana sobre el titulo de la actividad (RF-F7)', async () => {
+    mockWorkouts = consulta({ data: [entreno({ title: 'Empuje A', activity_title: 'Gimnasio' })] });
+    await render(<FitnessScreen />);
+    expect(screen.getByLabelText(/^Empuje A, /)).toBeTruthy();
+  });
+
+  it('sin nombre propio se usa el de la actividad', async () => {
+    mockWorkouts = consulta({ data: [entreno({ title: null, activity_title: 'Gimnasio' })] });
+    await render(<FitnessScreen />);
+    expect(screen.getByLabelText(/^Gimnasio, /)).toBeTruthy();
+  });
+
+  it('sin ninguno de los dos queda el texto de reserva', async () => {
+    mockWorkouts = consulta({ data: [entreno({ title: null, activity_title: null })] });
+    await render(<FitnessScreen />);
+    expect(screen.getByLabelText(/^Entrenamiento libre, /)).toBeTruthy();
+  });
+
   it('una sesion ligada a una actividad lleva su titulo', async () => {
     mockWorkouts = consulta({ data: [entreno({ activity_title: 'Pierna' })] });
     await render(<FitnessScreen />);
@@ -141,6 +161,31 @@ describe('entrenamiento libre', () => {
   });
 
   /** Navegar antes de la respuesta abriria un detalle sin entrenamiento detras. */
+  /** Quien entrena repite rutina: no tiene que reescribir el nombre cada vez. */
+  it('se estrena con el nombre del entrenamiento anterior', async () => {
+    usePreferencesStore.getState().setLastWorkoutTitle('Pierna');
+    await render(<FitnessScreen />);
+
+    await fireEvent.press(screen.getByText('Entrenamiento libre'));
+
+    expect(mockCreate.mutate).toHaveBeenCalledWith(
+      expect.objectContaining({ title: 'Pierna' }),
+      expect.any(Object),
+    );
+  });
+
+  it('la primera vez, sin nombre previo, se crea sin nombre', async () => {
+    usePreferencesStore.getState().setLastWorkoutTitle(null);
+    await render(<FitnessScreen />);
+
+    await fireEvent.press(screen.getByText('Entrenamiento libre'));
+
+    expect(mockCreate.mutate).toHaveBeenCalledWith(
+      expect.objectContaining({ title: null }),
+      expect.any(Object),
+    );
+  });
+
   it('solo entra al detalle cuando el backend confirma', async () => {
     await render(<FitnessScreen />);
     await fireEvent.press(screen.getByText('Entrenamiento libre'));

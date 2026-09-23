@@ -177,6 +177,8 @@ export type Workout = {
   id: string;
   activity_id: string | null;
   owner_id: string;
+  /** Nombre propio de la sesión (RF-F7). Sin él se usa el título de la actividad. */
+  title: string | null;
   performed_at: string;
   /**
    * Derivado, no guardado: suma de la duración de sus ejercicios (RF-F3).
@@ -204,6 +206,7 @@ export type WorkoutExercise = {
 
 export type WorkoutInput = {
   activity_id?: string | null;
+  title?: string | null;
   performed_at: string;
   notes?: string | null;
 };

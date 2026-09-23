@@ -218,6 +218,16 @@ La pestaña **Fitness** guarda el historial completo: qué hiciste, cuándo y cu
 ejercicios. Desde ahí también puedes empezar un **entrenamiento libre**, sin
 actividad asociada.
 
+### Ponerle nombre
+
+Cada sesión puede llevar su propio nombre —"Pierna", "Empuje A"—, que se edita
+en el campo **Nombre** de arriba y se guarda solo al salir de él.
+
+Al crear el siguiente entrenamiento libre, KAVI **propone el último nombre que
+usaste**: si entrenas siempre la misma rutina no tienes que reescribirlo, y si
+cambias solo lo corriges. Si borras el nombre, la sesión vuelve a mostrar el
+título de su actividad, y si no tiene ninguna, "Entrenamiento libre".
+
 ### Capturar
 
 Cada ejercicio tiene nombre, series, repeticiones, peso, duración y notas. Todos

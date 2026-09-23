@@ -13,6 +13,7 @@ import { useTheme } from '@/hooks/use-theme';
 import { useExerciseNames, useWorkout, useWorkoutMutations, useWorkouts } from '@/hooks/use-workouts';
 import { formatDate, formatShortDate, formatTime, fromIso, startOfDay, toIso } from '@/lib/dates';
 import { useConfirm, useSnackbar } from '@/providers';
+import { usePreferencesStore } from '@/store/preferences-store';
 import type { WorkoutExercise } from '@/types/domain';
 
 const MAX_WIDTH = 640;
@@ -33,6 +34,8 @@ export default function WorkoutScreen() {
   const [duplicateOpen, setDuplicateOpen] = useState(false);
   const [keepValues, setKeepValues] = useState(true);
   const [notes, setNotes] = useState<string | null>(null);
+  const [title, setTitle] = useState<string | null>(null);
+  const setLastWorkoutTitle = usePreferencesStore((s) => s.setLastWorkoutTitle);
 
   const data = workout.data;
   const markSaved = () => setSaved(true);
@@ -83,6 +86,9 @@ export default function WorkoutScreen() {
   }
 
   const notesValue = notes ?? data.notes ?? '';
+  const titleValue = title ?? data.title ?? '';
+  /** Lo que se enseña arriba: nombre propio > título de la actividad > reserva. */
+  const encabezado = data.title || data.activity_title || 'Entrenamiento libre';
 
   return (
     <Screen modal scroll maxWidth={MAX_WIDTH}>
@@ -106,10 +112,31 @@ export default function WorkoutScreen() {
       ) : null}
 
       <View style={[styles.headerCard, { backgroundColor: theme.surfaceAlt }]}>
-        {data.activity_title ? (
-          <AppText variant="heading">{data.activity_title}</AppText>
+        {editing ? (
+          <TextField
+            label="Nombre"
+            value={titleValue}
+            onChangeText={setTitle}
+            onBlur={() => {
+              const limpio = titleValue.trim();
+              if (limpio === (data.title ?? '')) return;
+              mutations.update.mutate(
+                { id: data.id, patch: { title: limpio || null } },
+                {
+                  onSuccess: () => {
+                    markSaved();
+                    // Se propone en el siguiente entrenamiento libre (RF-F7).
+                    if (limpio) setLastWorkoutTitle(limpio);
+                  },
+                },
+              );
+            }}
+            placeholder={data.activity_title ?? 'Pierna, empuje, cardio…'}
+            autoCapitalize="sentences"
+            returnKeyType="done"
+          />
         ) : (
-          <AppText variant="heading">Entrenamiento libre</AppText>
+          <AppText variant="heading">{encabezado}</AppText>
         )}
         {editing ? (
           <>

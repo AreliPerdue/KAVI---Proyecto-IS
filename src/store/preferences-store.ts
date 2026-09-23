@@ -8,12 +8,19 @@ const PREFS_KEY = 'kavi.preferences';
 /** Reloj de 24 h por omisión, que es lo habitual en es-MX. */
 export const DEFAULT_TIME_FORMAT: TimeFormat = '24h';
 
-type Prefs = { timeFormat: TimeFormat };
+type Prefs = { timeFormat: TimeFormat; lastWorkoutTitle: string | null };
 
 type PreferencesState = {
   timeFormat: TimeFormat;
+  /**
+   * Nombre del último entrenamiento al que se le puso uno. Se propone al crear el
+   * siguiente, porque quien entrena suele repetir rutina —"Pierna", "Empuje A"— y
+   * volver a escribirlo cada vez es trabajo que la app puede ahorrarse (RF-F7).
+   */
+  lastWorkoutTitle: string | null;
   hydrated: boolean;
   setTimeFormat: (formato: TimeFormat) => void;
+  setLastWorkoutTitle: (titulo: string | null) => void;
   hydrate: () => Promise<void>;
 };
 
@@ -27,12 +34,19 @@ type PreferencesState = {
  */
 export const usePreferencesStore = create<PreferencesState>((set, get) => ({
   timeFormat: DEFAULT_TIME_FORMAT,
+  lastWorkoutTitle: null,
   hydrated: false,
 
   setTimeFormat: (formato) => {
     setTimeFormat(formato);
     set({ timeFormat: formato });
-    void setJson(PREFS_KEY, { timeFormat: formato } satisfies Prefs);
+    persistir({ ...get(), timeFormat: formato });
+  },
+
+  setLastWorkoutTitle: (titulo) => {
+    const limpio = titulo?.trim() || null;
+    set({ lastWorkoutTitle: limpio });
+    persistir({ ...get(), lastWorkoutTitle: limpio });
   },
 
   hydrate: async () => {
@@ -40,6 +54,14 @@ export const usePreferencesStore = create<PreferencesState>((set, get) => ({
     const prefs = await getJson<Prefs>(PREFS_KEY);
     const formato = prefs?.timeFormat ?? DEFAULT_TIME_FORMAT;
     setTimeFormat(formato);
-    set({ timeFormat: formato, hydrated: true });
+    set({ timeFormat: formato, lastWorkoutTitle: prefs?.lastWorkoutTitle ?? null, hydrated: true });
   },
 }));
+
+/** Se guarda el conjunto entero: son dos claves y así no pueden desincronizarse. */
+function persistir(estado: Pick<PreferencesState, 'timeFormat' | 'lastWorkoutTitle'>): void {
+  void setJson(PREFS_KEY, {
+    timeFormat: estado.timeFormat,
+    lastWorkoutTitle: estado.lastWorkoutTitle,
+  } satisfies Prefs);
+}

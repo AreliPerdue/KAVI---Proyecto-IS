@@ -8,7 +8,13 @@ import { IconSize, IconStroke, Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useWorkoutMutations, useWorkouts } from '@/hooks/use-workouts';
 import { formatShortDate, formatTime, fromIso } from '@/lib/dates';
+import { usePreferencesStore } from '@/store/preferences-store';
 import type { Workout } from '@/types/domain';
+
+/** Nombre propio > título de la actividad ligada > texto de reserva (RF-F7). */
+function nombreDe(workout: Workout): string {
+  return workout.title || workout.activity_title || 'Entrenamiento libre';
+}
 
 /** Historial de entrenamientos + entrenamiento libre (RF-F2, RF-F7). */
 export default function FitnessScreen() {
@@ -16,27 +22,35 @@ export default function FitnessScreen() {
   const router = useRouter();
   const workouts = useWorkouts();
   const { create } = useWorkoutMutations();
+  const lastWorkoutTitle = usePreferencesStore((s) => s.lastWorkoutTitle);
 
   const openWorkout = useCallback(
     (id: string, mode: 'view' | 'edit') => router.push({ pathname: '/(app)/workout/[id]', params: { id, mode } }),
     [router],
   );
 
+  /**
+   * Se estrena con el nombre del entrenamiento anterior: quien entrena repite
+   * rutina, y así solo hay que cambiarlo cuando de verdad cambia (RF-F7).
+   */
   const startFree = () =>
-    create.mutate({ activity_id: null, performed_at: new Date().toISOString() }, { onSuccess: (w) => openWorkout(w.id, 'edit') });
+    create.mutate(
+      { activity_id: null, title: lastWorkoutTitle, performed_at: new Date().toISOString() },
+      { onSuccess: (w) => openWorkout(w.id, 'edit') },
+    );
 
   const renderItem = useCallback(
     ({ item }: { item: Workout }) => (
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel={`${item.activity_title ?? 'Entrenamiento libre'}, ${formatShortDate(fromIso(item.performed_at))}, ${item.exercise_count ?? 0} ejercicios`}
+        accessibilityLabel={`${nombreDe(item)}, ${formatShortDate(fromIso(item.performed_at))}, ${item.exercise_count ?? 0} ejercicios`}
         onPress={() => openWorkout(item.id, 'view')}
         style={({ pressed }) => [styles.row, { borderColor: theme.border, backgroundColor: pressed ? theme.surfaceAlt : theme.surface }]}>
         <View style={[styles.icon, { backgroundColor: theme.surfaceAlt }]}>
           <Dumbbell size={IconSize.inline} strokeWidth={IconStroke} color={theme.text} />
         </View>
         <View style={styles.text}>
-          <AppText variant="bodyStrong">{item.activity_title ?? 'Entrenamiento libre'}</AppText>
+          <AppText variant="bodyStrong">{nombreDe(item)}</AppText>
           <AppText variant="caption" color="textSecondary" tabular>
             {formatShortDate(fromIso(item.performed_at))} · {formatTime(fromIso(item.performed_at))} · {item.exercise_count ?? 0}{' '}
             {item.exercise_count === 1 ? 'ejercicio' : 'ejercicios'}

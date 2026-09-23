@@ -119,3 +119,63 @@ describe('hidratacion', () => {
     expect(usePreferencesStore.getState().timeFormat).toBe('12h');
   });
 });
+
+describe('nombre del ultimo entrenamiento (RF-F7)', () => {
+  it('arranca sin ninguno', () => {
+    const { store: { usePreferencesStore } } = fresh();
+    expect(usePreferencesStore.getState().lastWorkoutTitle).toBeNull();
+  });
+
+  it('guarda el que se le pase', () => {
+    const { store: { usePreferencesStore } } = fresh();
+    usePreferencesStore.getState().setLastWorkoutTitle('Pierna');
+    expect(usePreferencesStore.getState().lastWorkoutTitle).toBe('Pierna');
+  });
+
+  it('recorta los espacios', () => {
+    const { store: { usePreferencesStore } } = fresh();
+    usePreferencesStore.getState().setLastWorkoutTitle('  Empuje A  ');
+    expect(usePreferencesStore.getState().lastWorkoutTitle).toBe('Empuje A');
+  });
+
+  it('un nombre en blanco lo deja sin nombre, no en cadena vacia', () => {
+    const { store: { usePreferencesStore } } = fresh();
+    usePreferencesStore.getState().setLastWorkoutTitle('   ');
+    expect(usePreferencesStore.getState().lastWorkoutTitle).toBeNull();
+  });
+
+  it('se recuerda para la proxima sesion', async () => {
+    const { store: { usePreferencesStore } } = fresh();
+    usePreferencesStore.getState().setLastWorkoutTitle('Pierna');
+
+    const otra = fresh();
+    await otra.store.usePreferencesStore.getState().hydrate();
+
+    expect(otra.store.usePreferencesStore.getState().lastWorkoutTitle).toBe('Pierna');
+  });
+
+  /** Se persisten juntos: guardar uno no puede borrar el otro. */
+  it('cambiar el nombre no pierde el formato de hora', async () => {
+    const { store: { usePreferencesStore } } = fresh();
+    usePreferencesStore.getState().setTimeFormat('12h');
+    usePreferencesStore.getState().setLastWorkoutTitle('Pierna');
+
+    const otra = fresh();
+    await otra.store.usePreferencesStore.getState().hydrate();
+
+    expect(otra.store.usePreferencesStore.getState().timeFormat).toBe('12h');
+    expect(otra.store.usePreferencesStore.getState().lastWorkoutTitle).toBe('Pierna');
+  });
+
+  it('y cambiar el formato no pierde el nombre', async () => {
+    const { store: { usePreferencesStore } } = fresh();
+    usePreferencesStore.getState().setLastWorkoutTitle('Pierna');
+    usePreferencesStore.getState().setTimeFormat('12h');
+
+    const otra = fresh();
+    await otra.store.usePreferencesStore.getState().hydrate();
+
+    expect(otra.store.usePreferencesStore.getState().lastWorkoutTitle).toBe('Pierna');
+    expect(otra.store.usePreferencesStore.getState().timeFormat).toBe('12h');
+  });
+});
