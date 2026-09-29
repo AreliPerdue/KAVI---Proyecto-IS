@@ -36,3 +36,17 @@ el archivo se vea igual en cualquier computadora aunque no las tenga instaladas.
 
 Si quieres editarlas en PowerPoint, están en `assets/fonts/` y se instalan copiándolas a
 `~/Library/Fonts/`.
+
+## Revisión visual
+
+`./revisar.sh` convierte la presentación a PDF con **LibreOffice**, que es lo único
+que funciona sin intervención: PowerPoint solo exporta por AppleScript y eso falla en
+cuanto queda un proceso colgado o el archivo está abierto.
+
+**Una advertencia sobre el render:** LibreOffice no encuentra Century Gothic ni Corbel
+aunque estén instaladas, y las sustituye por una serif. Sirve para comprobar
+composición —posiciones, solapes, elementos cortados— pero **no** el aspecto
+tipográfico real. Para eso hay que abrir el archivo en PowerPoint.
+
+La geometría exacta se comprueba aparte, leyendo las cajas del propio `.pptx`: que
+ningún elemento salga del lienzo y que ninguna caja de texto se solape con otra.
