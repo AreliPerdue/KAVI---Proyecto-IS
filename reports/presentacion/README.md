@@ -3,7 +3,7 @@
 La presentación y su guion **no se versionan aquí**: viven en `kaviland/`, junto al
 repositorio, para tenerlos a mano el día de exponer.
 
-- `Presentacion-KAVI.pptx` — 25 diapositivas
+- `Presentacion-KAVI.pptx` — 26 diapositivas
 - `Guion-presentacion-KAVI.docx` — el texto para leer, con las acotaciones aparte
 
 ## Cómo regenerarlas

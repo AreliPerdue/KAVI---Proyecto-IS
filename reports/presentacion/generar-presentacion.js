@@ -100,51 +100,69 @@ function puntos(s,x,y,r=0.16,gap=0.42){ HUES.forEach((c,i)=>s.addShape(p.ShapeTy
   s.addNotes('Diapositiva 3');
 }
 
-// ═════ 4 · La pantalla representativa ═════
+// ═════ 4 · El calendario ═════
 {
   const s = limpio();
-  titulo(s,'La pantalla más representativa',SOCIAL);
-  s.addImage({path:S+'app-calendario-compartido.png',x:M,y:1.35,w:8.4,h:5.0});
-  tarjeta(s,9.55,1.35,2.9,2.3,'Color por persona','Cada contacto tiene el suyo. Por defecto, el de su Nobi.',SOCIAL);
-  tarjeta(s,9.55,3.85,2.9,2.5,'Privacidad real','Las actividades de Ana dicen «Ocupado»: comparte su disponibilidad, no lo que hace.',EMOCIONAL);
-  s.addNotes('Diapositiva 4 · señala los bloques rojos.');
+  titulo(s,'El calendario es la estrella',SOCIAL);
+  s.addImage({path:S+'app-calendario-compartido.png',x:M,y:1.3,w:8.5,h:5.06});
+  tarjeta(s,9.65,1.3,2.8,2.4,'Color por persona','Cada contacto tiene el suyo. Por omisi\u00f3n, el de su Nobi.',SOCIAL);
+  tarjeta(s,9.65,3.9,2.8,2.45,'Privacidad real','Las de Ana dicen \u00abOcupado\u00bb: comparte su disponibilidad, no lo que hace.',EMOCIONAL);
+  s.addNotes('Diapositiva 4 \u00b7 se\u00f1ala los bloques rojos que dicen \u00abOcupado\u00bb.');
 }
 
-// ═════ 4b · Recorrido por la app ═════
-{
-  const s = limpio();
-  titulo(s,'Un recorrido',INTELECTUAL);
-  const caps=[['app-nueva-actividad','Crear una actividad','Tema, repetición y quién la ve: normal, solo algunos o privada.'],
-              ['app-fitness','Gimnasio','Las actividades de gimnasio abren su registro de entrenamientos.'],
-              ['app-temas','Temas','Los del sistema se personalizan; los cambios son solo tuyos.']];
-  caps.forEach(([f,t,d],i)=>{
-    const x=M+i*3.95;
-    s.addImage({path:S+f+'.png',x,y:1.35,w:3.7,h:2.2});
-    s.addText(t,{x,y:3.7,w:3.7,h:0.4,fontSize:15,bold:true,color:TINTA,fontFace:TITULAR,isTextBox:true,margin:0});
-    s.addText(d,{x,y:4.12,w:3.7,h:1.0,fontSize:12.5,color:GRIS,fontFace:CUERPO,isTextBox:true,margin:0});
-  });
-  s.addText('Todo pasa por la capa de servicios: ninguna pantalla habla directamente con la base de datos.',
-    {x:M,y:5.5,w:11.6,h:0.5,fontSize:13.5,italic:true,color:GRIS,fontFace:CUERPO,isTextBox:true,margin:0});
-  nobiL(s,'turquois',11.3,5.85,1.2);
-  s.addNotes('Diapositiva 5 · recorrido rapido. Si vas con retraso, pasa de largo.');
-}
-
-// ═════ 4c · Tres plataformas ═════
+// ═════ 5 · Crear una actividad ═════
 {
   const s = claro();
-  titulo(s,'Un solo código, tres plataformas',FISICA);
-  s.addText('iOS, Android y navegador comparten el mismo código, las mismas pantallas y los mismos datos (NFR-8).',
+  titulo(s,'Crear una actividad',INTELECTUAL);
+  s.addImage({path:S+'app-nueva-actividad.png',x:M,y:1.3,w:6.3,h:4.97});
+  s.addText('Todo lo que define una actividad, en una pantalla.',
+    {x:7.5,y:1.35,w:4.95,h:0.6,fontSize:17,bold:true,color:TINTA,fontFace:TITULAR,isTextBox:true,margin:0});
+  const campos=[['Tema','Lo liga a una dimensi\u00f3n del bienestar y le da su color.',INTELECTUAL],
+                ['Repetici\u00f3n','Diaria, semanal o mensual.',FISICA],
+                ['Qui\u00e9n la ve','Normal, solo algunos contactos, o privada.',EMOCIONAL]];
+  campos.forEach(([t,d,c],i)=>{
+    const y=2.15+i*1.45;
+    s.addShape(p.ShapeType.ellipse,{x:7.5,y:y+0.06,w:0.26,h:0.26,fill:{color:c}});
+    s.addText(t,{x:7.88,y,w:4.5,h:0.4,fontSize:15,bold:true,color:TINTA,fontFace:TITULAR,isTextBox:true,margin:0});
+    s.addText(d,{x:7.88,y:y+0.42,w:4.5,h:0.85,fontSize:13,color:GRIS,fontFace:CUERPO,isTextBox:true,margin:0});
+  });
+  s.addShape(p.ShapeType.roundRect,{x:7.5,y:6.5,w:4.95,h:0.0,fill:{color:BLANCO},rectRadius:0.1});
+  s.addText('La privacidad se decide actividad por actividad, no solo por contacto.',
+    {x:7.5,y:6.5,w:4.95,h:0.5,fontSize:12.5,italic:true,color:ORO,fontFace:CUERPO,isTextBox:true,margin:0});
+  s.addNotes('Diapositiva 5 \u00b7 lo distintivo es \u00abqui\u00e9n la ve\u00bb.');
+}
+
+// ═════ 6 · El gimnasio ═════
+{
+  const s = limpio();
+  titulo(s,'El gimnasio, dentro del calendario',FISICA);
+  s.addImage({path:S+'app-entrenamiento.png',x:M,y:1.3,w:7.4,h:4.16});
+  s.addText('Una actividad marcada como gimnasio abre su propio registro.',
+    {x:8.6,y:1.35,w:3.85,h:0.85,fontSize:16,bold:true,color:TINTA,fontFace:TITULAR,isTextBox:true,margin:0});
+  s.addText('Ejercicios, series, repeticiones, peso y las notas de la sesi\u00f3n. El nombre del \u00faltimo entrenamiento se propone en el siguiente, porque quien entrena repite rutina.',
+    {x:8.6,y:2.35,w:3.85,h:1.9,fontSize:13,color:GRIS,fontFace:CUERPO,isTextBox:true,margin:0});
+  nobiL(s,'lime_green',8.6,4.4,1.5);
+  s.addText('No es una app aparte: vive dentro del calendario, en la actividad que ya agendaste.',
+    {x:M,y:5.75,w:11.6,h:0.6,fontSize:13.5,italic:true,color:GRIS,fontFace:CUERPO,isTextBox:true,margin:0});
+  s.addNotes('Diapositiva 6 \u00b7 el gimnasio.');
+}
+
+// ═════ 7 · Tres plataformas ═════
+{
+  const s = claro();
+  titulo(s,'Un solo c\u00f3digo, tres plataformas',FISICA);
+  s.addText('iOS, Android y navegador comparten el mismo c\u00f3digo, las mismas pantallas y los mismos datos (NFR-8).',
     {x:M,y:1.3,w:11.6,h:0.5,fontSize:14.5,color:GRIS,fontFace:CUERPO,isTextBox:true,margin:0});
   s.addImage({path:S+'movil-calendario.png',x:M+0.5,y:1.95,w:2.0,h:4.33});
   s.addImage({path:S+'movil-perfil.png',x:M+2.75,y:1.95,w:2.0,h:4.33});
   s.addImage({path:S+'app-calendario-claro.png',x:M+5.5,y:1.95,w:6.0,h:3.58});
-  s.addText('Móvil',{x:M+0.5,y:6.35,w:4.25,h:0.4,align:'center',fontSize:13,bold:true,color:TINTA,
+  s.addText('M\u00f3vil',{x:M+0.5,y:6.35,w:4.25,h:0.4,align:'center',fontSize:13,bold:true,color:TINTA,
     fontFace:TITULAR,isTextBox:true,margin:0});
   s.addText('Navegador, en modo claro',{x:M+5.5,y:5.65,w:6.0,h:0.4,align:'center',fontSize:13,bold:true,
     color:TINTA,fontFace:TITULAR,isTextBox:true,margin:0});
-  s.addText('La apariencia se elige: sistema, claro u oscuro. Toda la paleta está verificada a 4.5:1 en los dos temas.',
-    {x:M+5.5,y:6.05,w:6.0,h:0.7,align:'center',fontSize:12,color:GRIS,fontFace:CUERPO,isTextBox:true,margin:0});
-  s.addNotes('Diapositiva 6 · las tres plataformas y el modo claro.');
+  s.addText('La apariencia se elige: sistema, claro u oscuro. Toda la paleta est\u00e1 verificada a 4.5:1 en los dos temas.',
+    {x:M+5.5,y:6.05,w:5.8,h:0.7,align:'center',fontSize:12,color:GRIS,fontFace:CUERPO,isTextBox:true,margin:0});
+  s.addNotes('Diapositiva 7 \u00b7 las tres plataformas y el modo claro.');
 }
 
 // ═════ 5 · El módulo: el problema ═════
