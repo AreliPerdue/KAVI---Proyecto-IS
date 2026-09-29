@@ -12,7 +12,7 @@ repositorio; ninguno se escribió a mano.
 | Deuda técnica | **0 minutos** · mantenibilidad **A** |
 | Bugs · vulnerabilidades · code smells | **0 · 0 · 0** · fiabilidad y seguridad **A** |
 | Duplicación de código | **0.0 %** |
-| Escaneo de seguridad (ZAP) | 0 altas · 1 media · 2 bajas |
+| Escaneo de seguridad (ZAP) | **0 altas** · 1 media · 1 baja · 4 informativas, todas revisadas |
 
 ## Qué hay en cada carpeta
 
@@ -35,15 +35,24 @@ documento a leer si lo que interesa es *qué se verificó*, no cómo.
 ## Informe de cierre
 
 El informe de cierre del proyecto está en
-[`Informe-de-cierre-KAVI.docx`](Informe-de-cierre-KAVI.docx): comparación entre
-lo planificado y lo ejecutado, lecciones aprendidas y plan de mejora continua,
-con las cifras de estas tres carpetas.
+[`Informe-de-cierre-KAVI.docx`](Informe-de-cierre-KAVI.docx): línea de tiempo
+planificada contra real, comparación de alcance, lecciones aprendidas y plan de
+mejora continua con indicadores medibles, además de las propuestas de
+innovación, con las cifras de estas tres carpetas.
 
 Se genera desde el repositorio, no se escribe a mano:
 
 ```bash
-node reports/generar-informe-de-cierre.js reports/Informe-de-cierre-KAVI.docx
+python3 reports/generador/construir.py plantilla.docx reports/Informe-de-cierre-KAVI.docx
 ```
 
-Así las cifras que cita no pueden desviarse de las que miden las herramientas.
+`plantilla.docx` es una entrega anterior de la materia: de ahí sale la portada
+—logotipo, encabezado y tabla de datos— y los estilos, de modo que el informe
+sale con el mismo formato sin tener que replicarlo a mano.
+
+Las cifras se leen del repositorio en cada ejecución —la cobertura de Jest, las
+métricas de SonarQube, los reportes de ZAP, `tasks.md` y el historial de git—,
+así que no pueden desviarse de las que miden las herramientas. La línea de
+tiempo real se reconstruye de las fechas de los commits.
+
 Para entregarlo en PDF, ábrelo en Word y exporta.
