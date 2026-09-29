@@ -133,21 +133,21 @@ const caja=(s,y,h,t,d)=>{ s.addShape(p.ShapeType.roundRect,{x:M,y,w:W-M*2,h,fill
   caja(s,4.0,2.0,'Lo que aprendí','Un problema de diseño no se detecta leyendo el código: aparece al implementarlo. Preferí rediseñar el flujo antes que dejar un hueco conocido.');
   s.addNotes('La solución fue un estado intermedio de «alta pendiente» que retiene a la persona en el último paso hasta completar el registro. Costó alrededor de un día de trabajo no planificado. Lo rescatable es el criterio: un problema de diseño no se detecta leyendo el código, aparece al implementarlo, y conviene rediseñar antes que dejar el hueco.'); }
 
-{ const s=bg('fondo-claro'); T(s,'Autenticación con JWT',INTELECTUAL);
-  card(s,M,1.5,3.7,2.6,'1 · Token firmado','Supabase Auth emite un JWT en cada sesión.',INTELECTUAL);
-  card(s,M+3.95,1.5,3.7,2.6,'2 · Viaja en cada petición','La base de datos lo valida antes de devolver filas.',FISICA);
-  card(s,M+7.9,1.5,3.7,2.6,'3 · Dos roles','Administrador y usuario, guardados en el perfil.',SOCIAL);
-  txt(s,'20 migraciones versionadas, cada una con sus políticas de seguridad.',{x:M,y:4.5,w:11.6,h:0.5,fontSize:15,color:GRIS});
+{ const s=bg('fondo-claro'); T(s,'Cómo se controla quién entra',INTELECTUAL);
+  card(s,M,1.5,3.7,2.6,'1 · Una credencial firmada','Al iniciar sesión, el sistema entrega una credencial que no se puede falsificar.',INTELECTUAL);
+  card(s,M+3.95,1.5,3.7,2.6,'2 · Se comprueba siempre','Cada consulta la lleva, y la base de datos la revisa antes de responder.',FISICA);
+  card(s,M+7.9,1.5,3.7,2.6,'3 · Dos tipos de cuenta','Administrador y usuario normal, con permisos distintos.',SOCIAL);
+  txt(s,'Cada tabla de la base de datos nace con sus propias reglas de quién puede ver qué.',{x:M,y:4.5,w:11.6,h:0.5,fontSize:15,color:GRIS});
   nobi(s,'navy_blue',11.3,5.1,1.3,true);
-  s.addNotes('La autenticación se apoya en tokens JWT firmados. Cada petición los transporta y la base de datos los valida antes de decidir qué filas devuelve. Hay dos roles, administrador y usuario, guardados en el perfil. Y cada tabla lleva sus políticas de seguridad desde el momento en que se crea: son veinte migraciones versionadas.'); }
+  s.addNotes('Al iniciar sesión, el sistema entrega una credencial firmada que no se puede falsificar. Cada consulta la lleva, y la base de datos la revisa antes de responder. Hay dos tipos de cuenta: administrador y usuario normal. Y cada tabla nace con sus reglas de quién puede ver qué.'); }
 
 { const s=bg('fondo-oscuro'); T(s,'Dónde vive el control de acceso',ESPIRITUAL,true);
   frase(s,'Ocultar el panel\nno es controlar el acceso.',1.6,33,PAPEL,9.0);
-  txt(s,'Ocultarlo es cosmética. El control real está en la base de datos: cada tabla lleva políticas a nivel de fila desde que se crea, y las funciones comprueban el rol antes de devolver nada.',
+  txt(s,'Esconder un botón es maquillaje. La protección de verdad está en la base de datos: antes de entregar cualquier dato, comprueba quién lo pide y si tiene permiso.',
     {x:M,y:3.9,w:9.0,h:1.3,fontSize:15,color:GRIS_CLARO});
   txt(s,'Una petición manipulada desde el navegador no obtiene datos.',{x:M,y:5.4,w:9.0,h:0.6,fontSize:16,bold:true,color:ORO});
   nobi(s,'indigo',10.5,2.4,2.0);
-  s.addNotes('Quiero subrayar algo que me parece importante. Ocultar el panel de administración a quien no tiene permiso es cosmética, no seguridad. El control real vive en la base de datos: las políticas a nivel de fila y la comprobación del rol dentro de cada función. Una petición manipulada desde el navegador no obtiene datos.'); }
+  s.addNotes('Quiero subrayar algo importante. Esconder el panel de administración a quien no tiene permiso es maquillaje, no seguridad. La protección de verdad está en la base de datos: antes de entregar cualquier dato comprueba quién lo pide. Aunque alguien manipule la petición desde el navegador, no obtiene nada.'); }
 
 { const s=bg('fondo-oscuro'); T(s,'Pruebas unitarias',FISICA,true);
   txt(s,'84%',{x:M,y:1.8,w:5.4,h:2.0,fontSize:108,bold:true,color:PAPEL,f:TITULAR});
@@ -180,10 +180,10 @@ const caja=(s,y,h,t,d)=>{ s.addShape(p.ShapeType.roundRect,{x:M,y,w:W-M*2,h,fill
   s.addNotes('Quiero explicar por qué no los había visto antes. No eran errores de lógica que se detecten leyendo el código: eran ausencias. Nadie descubre leyendo una pantalla que no contempla el fallo de red, porque no hay nada escrito que leer. Se descubre al preguntarse, caso por caso, qué debería ocurrir en cada situación.'); }
 
 // ─────────── BLOQUE 2 ───────────
-{ const s=bg('fondo-claro'); T(s,'Pipeline: los tres flujos',SOCIAL);
-  [['Pruebas','Cada push y cada pull request','Tipos → 1 564 pruebas → lint → SonarQube',INTELECTUAL],
-   ['Build de producción','A demanda','Genera el APK de Android con EAS Build',FISICA],
-   ['Escaneo de seguridad','A demanda','Análisis pasivo con OWASP ZAP',EMOCIONAL]].forEach(([t,c,d,col],i)=>{
+{ const s=bg('fondo-claro'); T(s,'Tres procesos automáticos',SOCIAL);
+  [['Pruebas','Cada push y cada pull request','Revisa el código y corre las 1 564 pruebas',INTELECTUAL],
+   ['Build de producción','A demanda','Genera el archivo instalable de Android',FISICA],
+   ['Escaneo de seguridad','A demanda','Busca fallos de seguridad en el sitio publicado',EMOCIONAL]].forEach(([t,c,d,col],i)=>{
     const x=M+i*3.95;
     s.addShape(p.ShapeType.roundRect,{x,y:1.6,w:3.7,h:2.9,fill:{color:BLANCO},rectRadius:0.12,
       shadow:{type:'outer',blur:8,offset:1,angle:90,color:'BFBFBF',opacity:0.25}});
@@ -194,13 +194,13 @@ const caja=(s,y,h,t,d)=>{ s.addShape(p.ShapeType.roundRect,{x:M,y,w:W-M*2,h,fill
   txt(s,'El despliegue web es automático: cada cambio en la rama principal publica en Vercel.',
     {x:M,y:4.9,w:11.6,h:0.5,fontSize:15,color:TINTA});
   nobi(s,'baby_blue',11.3,5.5,1.3,true);
-  s.addNotes('Paso a la integración continua. Tengo tres flujos configurados. El primero se ejecuta en cada cambio y encadena verificación de tipos, las mil quinientas pruebas, el lint y el análisis de calidad. Los otros dos van a demanda, porque uno consume créditos de compilación y el otro tarda varios minutos. El despliegue web es automático.'); }
+  s.addNotes('Tengo tres procesos que corren solos. El primero se activa con cada cambio que subo: revisa el código y ejecuta las mil quinientas pruebas. Los otros dos los lanzo cuando hace falta, porque uno genera el instalable y el otro tarda varios minutos. Y la versión web se publica sola en cuanto apruebo un cambio.'); }
 
-{ const s=bg('fondo-claro'); T(s,'Dos decisiones del pipeline',INTELECTUAL);
-  card(s,M,1.6,5.65,2.5,'Todo falla junto, no en cadena','Tipos, pruebas y lint continúan aunque uno falle: una sola ejecución muestra todos los problemas a la vez.',INTELECTUAL);
-  card(s,M+5.95,1.6,5.65,2.5,'Suelo del 80 %','Si un cambio baja la cobertura de ahí, la integración falla en lugar de pasar inadvertida.',FISICA);
-  caja(s,4.4,2.0,'Por qué no es la configuración por defecto','Lo normal es detenerse en el primer error. Prefiero ver todos los problemas de una vez antes que descubrirlos de uno en uno, corregir y volver a esperar.');
-  s.addNotes('Dos decisiones que no son la configuración por defecto. La primera: los pasos continúan aunque uno falle, de modo que una sola ejecución muestra todos los problemas a la vez en lugar de obligarme a descubrirlos de uno en uno. La segunda: si un cambio baja la cobertura del ochenta por ciento, la integración falla.'); }
+{ const s=bg('fondo-claro'); T(s,'Dos decisiones propias',INTELECTUAL);
+  card(s,M,1.6,5.65,2.5,'Ver todos los errores de una vez','Lo normal es detenerse en el primero. Aquí el proceso continúa y los muestra todos juntos.',INTELECTUAL);
+  card(s,M+5.95,1.6,5.65,2.5,'Un mínimo que no se puede bajar','Si un cambio deja menos del 80 % del código probado, el sistema lo rechaza.',FISICA);
+  caja(s,4.4,2.0,'Por qué lo cambié','Descubrir los errores de uno en uno significa corregir, volver a subir y esperar otra vez. Verlos todos juntos ahorra ese ciclo cada vez.');
+  s.addNotes('Dos decisiones que no vienen puestas por defecto. La primera: que el proceso no se detenga en el primer error, para verlos todos juntos en lugar de descubrirlos de uno en uno. La segunda: si un cambio deja menos del ochenta por ciento del código probado, el sistema lo rechaza.'); }
 
 { const s=bg('fondo-limpio'); T(s,'Ejecuciones en verde',FISICA);
   s.addImage({path:S+'actions-pruebas.png',x:M,y:1.35,w:11.6,h:5.0});
@@ -208,17 +208,17 @@ const caja=(s,y,h,t,d)=>{ s.addShape(p.ShapeType.roundRect,{x:M,y,w:W-M*2,h,fill
 
 // ─────────── BLOQUE 3 ───────────
 { const s=bg('fondo-oscuro'); T(s,'Calidad de código',INTELECTUAL,true);
-  [['0 min','Deuda técnica'],['0','Bugs'],['0','Vulnerabilidades'],['0','Code smells'],['0.5 %','Duplicación'],['A A A','Calificaciones']].forEach(([v,l],i)=>{
+  [['0','Errores'],['0','Fallos de seguridad'],['0','Código mal escrito'],['0.5 %','Código repetido'],['0 min','Trabajo pendiente'],['A A A','Calificación']].forEach(([v,l],i)=>{
     const x=M+(i%3)*3.95, y=1.75+Math.floor(i/3)*2.15;
     s.addShape(p.ShapeType.roundRect,{x,y,w:3.7,h:1.75,fill:{color:'1C1C1C'},rectRadius:0.12});
     txt(s,v,{x:x+0.35,y:y+0.28,w:3.0,h:0.75,fontSize:33,bold:true,color:PAPEL,f:TITULAR});
     txt(s,l,{x:x+0.35,y:y+1.08,w:3.0,h:0.4,fontSize:13,color:GRIS_CLARO}); });
-  txt(s,'Sobre 12 505 líneas · Puerta de calidad superada',{x:M,y:6.15,w:11.6,h:0.45,fontSize:13.5,italic:true,color:ORO});
-  s.addNotes('En calidad de código, el análisis estático sobre doce mil quinientas líneas devuelve cero minutos de deuda técnica, cero errores, cero vulnerabilidades y calificación A en fiabilidad, seguridad y mantenibilidad. La puerta de calidad está superada, y se vuelve a comprobar en cada integración, no una sola vez.'); }
+  txt(s,'Sobre 12 505 líneas de código. Revisión automática superada.',{x:M,y:6.15,w:11.6,h:0.45,fontSize:13.5,italic:true,color:ORO});
+  s.addNotes('Una herramienta revisa automáticamente todo el código en busca de errores, fallos de seguridad y partes mal escritas. Sobre doce mil quinientas líneas no encuentra ninguno, y la calificación es A en las tres categorías que mide. Esta revisión se repite con cada cambio, no una sola vez.'); }
 
 { const s=bg('fondo-limpio'); T(s,'El panel, en SonarQube',INTELECTUAL);
   s.addImage({path:S+'sonar.png',x:M+1.4,y:1.35,w:8.9,h:5.0});
-  s.addNotes('Este es el panel, que se actualiza solo en cada integración. La comprobación no depende de que yo me acuerde de ejecutarla: si un cambio empeora cualquiera de esas métricas, el propio pipeline lo marca antes de que llegue a publicarse.'); }
+  s.addNotes('Este es el panel, que se actualiza solo. La revisión no depende de que yo me acuerde de hacerla: si un cambio empeora cualquiera de esos números, el sistema lo marca antes de que llegue a publicarse.'); }
 
 { const s=bg('fondo-claro'); T(s,'Los ceros no son el punto de partida',ESPIRITUAL);
   txt(s,'15',{x:M,y:1.7,w:2.6,h:1.5,fontSize:80,bold:true,color:TINTA,f:TITULAR});
@@ -226,10 +226,10 @@ const caja=(s,y,h,t,d)=>{ s.addShape(p.ShapeType.roundRect,{x:M,y,w:W-M*2,h,fill
   txt(s,'Corregirlos reveló defectos reales.',{x:4.6,y:1.8,w:7.8,h:0.5,fontSize:18,bold:true,color:TINTA,f:TITULAR});
   s.addShape(p.ShapeType.roundRect,{x:4.6,y:2.5,w:7.8,h:1.5,fill:{color:BLANCO},rectRadius:0.12,
     shadow:{type:'outer',blur:8,offset:1,angle:90,color:'BFBFBF',opacity:0.25}});
-  txt(s,'Ordenar por defecto es alfabético:\n0, 2, 10  se ordena como  0, 10, 2',{x:4.95,y:2.75,w:7.1,h:1.0,fontSize:15,color:TINTA,f:'Courier New'});
-  txt(s,'Con días de la semana no fallaba. Se habría roto al ampliar el rango.',{x:4.6,y:4.2,w:7.8,h:0.5,fontSize:13.5,color:GRIS});
+  txt(s,'Al ordenar números, el programa los trataba como texto:\nel 10 quedaba antes que el 2.',{x:4.95,y:2.8,w:7.1,h:1.0,fontSize:15,color:TINTA});
+  txt(s,'Con siete días no se notaba. Habría fallado al ampliar la lista.',{x:4.6,y:4.2,w:7.8,h:0.5,fontSize:13.5,color:GRIS});
   nobi(s,'olive_green',M,4.6,1.7,true);
-  s.addNotes('Conviene aclarar que esos ceros no son el punto de partida. El primer análisis devolvió quince hallazgos, y corregirlos reveló defectos reales. El más claro: dos ordenaciones sin función de comparación. Con días de la semana no fallaba, pero se habría roto en cuanto ampliara el rango de valores.'); }
+  s.addNotes('Conviene aclarar que esos ceros no son el punto de partida. La primera revisión encontró quince problemas, y corregirlos destapó fallos reales. El más claro: al ordenar números, el programa los trataba como si fueran texto, y el diez quedaba antes que el dos. Con siete días no se notaba, pero habría fallado al ampliar la lista.'); }
 
 { const s=bg('fondo-claro'); T(s,'Seguridad: OWASP ZAP',EMOCIONAL);
   txt(s,'Se escaneó, se corrigió y se volvió a escanear.',{x:M,y:1.3,w:11.6,h:0.45,fontSize:15,color:GRIS});
@@ -237,34 +237,34 @@ const caja=(s,y,h,t,d)=>{ s.addShape(p.ShapeType.roundRect,{x:M,y,w:W-M*2,h,fill
   cifra(s,M+3.0,2.1,2.7,'12','Tras corregir',GRIS);
   cifra(s,M+6.0,2.1,2.7,'6','Tras el triaje',FISICA);
   cifra(s,M+9.0,2.1,2.7,'0','De riesgo alto',FISICA);
-  caja(s,4.3,2.1,'Los tres de riesgo medio eran cabeceras HTTP ausentes','Política de seguridad de contenido, protección contra incrustación en marcos ajenos y una política de origen cruzado demasiado permisiva. Se cerraron desde la configuración del despliegue, sin tocar el código.');
-  s.addNotes('En seguridad utilicé OWASP ZAP contra el sitio publicado. Escaneé, corregí y volví a escanear. De dieciocho hallazgos iniciales quedan seis, y ninguno de riesgo alto en ningún momento. Los tres de riesgo medio eran cabeceras de respuesta ausentes, y se cerraron desde la configuración del despliegue sin tocar el código.'); }
+  caja(s,4.3,2.1,'Los tres de riesgo medio eran protecciones que faltaban','Instrucciones que el sitio debe enviar al navegador para que no permita ciertos ataques. Se añadieron desde la configuración, sin tocar una línea del programa.');
+  s.addNotes('Para la seguridad usé una herramienta que revisa el sitio publicado buscando puntos débiles. Analicé, corregí y volví a analizar. De dieciocho avisos iniciales quedan seis, y ninguno grave en ningún momento. Los tres más serios eran protecciones que faltaban, y se añadieron desde la configuración.'); }
 
-{ const s=bg('fondo-oscuro'); T(s,'Sobre XSS e inyección SQL',ESPIRITUAL,true);
+{ const s=bg('fondo-oscuro'); T(s,'Sobre los ataques que no probé',ESPIRITUAL,true);
   frase(s,'El escaneo fue pasivo,\na propósito.',1.7,33,PAPEL,8.6);
-  txt(s,'El modo activo envía ataques reales, y el despliegue está conectado a la base de producción. No quise atacar mi propia base de datos.',
+  txt(s,'La otra forma de analizar consiste en lanzar ataques de verdad, y mi sitio está conectado a la base con datos reales. No quise atacar mi propia información.',
     {x:M,y:3.9,w:8.6,h:1.0,fontSize:16,color:GRIS_CLARO});
-  txt(s,'Si no aparece inyección SQL, no es porque la haya probado activamente.',{x:M,y:5.1,w:8.6,h:0.6,fontSize:16,bold:true,color:ORO});
+  txt(s,'Que no aparezcan esos fallos no significa que los haya provocado para comprobarlo.',{x:M,y:5.1,w:8.6,h:0.6,fontSize:16,bold:true,color:ORO});
   nobi(s,'red',10.5,2.4,2.0);
-  s.addNotes('Aquí quiero ser precisa, porque es fácil afirmar de más. El escaneo fue pasivo a propósito: el modo activo envía ataques de inyección reales, y mi despliegue está conectado a la base de datos de producción. Por tanto, que no aparezca inyección SQL en el reporte no significa que la haya probado activamente.'); }
+  s.addNotes('Aquí quiero ser precisa, porque es fácil decir de más. El análisis fue de observación, a propósito. La otra forma consiste en lanzar ataques reales, y mi sitio está conectado a la base con datos de verdad: no quise atacar mi propia información. Así que si esos fallos no aparecen, no es porque los haya provocado para comprobarlo.'); }
 
-{ const s=bg('fondo-claro'); T(s,'Por qué la defensa se sostiene',FISICA);
-  card(s,M,1.6,5.65,2.6,'Frente a inyección SQL','No se construye SQL concatenando cadenas. Todo pasa por consultas parametrizadas y por políticas a nivel de fila.',INTELECTUAL);
-  card(s,M+5.95,1.6,5.65,2.6,'Frente a XSS','La política de contenido autoriza el único script en línea por su huella criptográfica. Un script inyectado no se ejecutaría.',EMOCIONAL);
-  txt(s,'El argumento es estructural, no empírico: descansa en cómo está construido el sistema.',
+{ const s=bg('fondo-claro'); T(s,'Por qué el sistema resiste igual',FISICA);
+  card(s,M,1.6,5.65,2.6,'Contra el robo de datos','Las consultas a la base nunca se arman pegando texto, que es por donde entra ese ataque. Y cada una pasa por las reglas de permisos.',INTELECTUAL);
+  card(s,M+5.95,1.6,5.65,2.6,'Contra el código inyectado','El navegador solo ejecuta el programa propio, identificado por una firma única. Cualquier otro que alguien intente colar queda bloqueado.',EMOCIONAL);
+  txt(s,'La defensa no está en haberlo probado, sino en cómo está construido el sistema.',
     {x:M,y:4.5,w:11.6,h:0.6,fontSize:15,italic:true,color:GRIS});
   nobi(s,'turquois',11.3,5.2,1.3,true);
-  s.addNotes('Mi argumento es estructural, no empírico. Frente a inyección, el acceso a datos no construye instrucciones concatenando cadenas: usa consultas parametrizadas bajo políticas a nivel de fila. Frente a ejecución de scripts, la política de contenido autoriza únicamente el script propio por su huella criptográfica, de modo que uno inyectado no se ejecutaría.'); }
+  s.addNotes('Mi defensa está en cómo está construido el sistema. Las consultas a la base nunca se arman pegando texto, que es por donde entra ese tipo de ataque. Y el navegador solo ejecuta el programa propio, identificado por una firma única: cualquier otro que alguien intente colar queda bloqueado.'); }
 
 { const s=bg('fondo-claro'); T(s,'El hallazgo que se mantiene',SOCIAL);
   s.addShape(p.ShapeType.roundRect,{x:M,y:1.4,w:11.6,h:1.9,fill:{color:BLANCO},rectRadius:0.12,
     shadow:{type:'outer',blur:8,offset:1,angle:90,color:'BFBFBF',opacity:0.25}});
-  txt(s,'CSP: style-src unsafe-inline  ·  riesgo medio',{x:M+0.4,y:1.65,w:10.8,h:0.45,fontSize:18,bold:true,color:TINTA,f:TITULAR});
-  txt(s,'React Native Web inyecta sus estilos en tiempo de ejecución. Al retirarlo, la aplicación queda completamente sin estilos: está comprobado y la evidencia está en el repositorio.',
+  txt(s,'Un aviso de riesgo medio, sin corregir',{x:M+0.4,y:1.65,w:10.8,h:0.45,fontSize:18,bold:true,color:TINTA,f:TITULAR});
+  txt(s,'La herramienta pide restringir cómo se aplican los estilos visuales. Probé a hacerlo y la aplicación se quedó sin ningún diseño: la tecnología que uso los genera mientras funciona, y no hay forma de anticiparlos.',
     {x:M+0.4,y:2.15,w:10.8,h:1.0,fontSize:13.5,color:GRIS});
-  txt(s,'El riesgo es acotado: permite estilos inyectados, no ejecución de código.',{x:M,y:3.6,w:11.6,h:0.5,fontSize:15,color:TINTA});
-  caja(s,4.35,2.1,'Se mantiene como aviso, no silenciado','Silenciar un aviso sin dejar escrito el motivo es indistinguible de esconderlo: quien abra ese archivo dentro de seis meses no sabría si se estudió o se calló.');
-  s.addNotes('Queda un hallazgo de riesgo medio, y lo mantengo a conciencia. No se puede corregir sin dejar la aplicación sin estilos, y lo comprobé retirándolo. El riesgo es acotado: permite estilos inyectados, no ejecución de código. Lo dejé como aviso visible en lugar de silenciarlo, para que siga apareciendo en cada informe.'); }
+  txt(s,'El riesgo es limitado: afecta al aspecto visual, no permite ejecutar código.',{x:M,y:3.6,w:11.6,h:0.5,fontSize:15,color:TINTA});
+  caja(s,4.35,2.1,'Lo dejé visible en lugar de callarlo','Se puede configurar la herramienta para que deje de avisar. Preferí que siga apareciendo, con el motivo escrito al lado: silenciar un aviso sin explicar por qué se parece demasiado a esconderlo.');
+  s.addNotes('Queda un aviso de riesgo medio y lo mantengo a propósito. Probé a corregirlo y la aplicación se quedó sin ningún diseño, porque la tecnología que uso genera los estilos mientras funciona. El riesgo es limitado: afecta al aspecto visual, no permite ejecutar código. Podía configurar la herramienta para que dejara de avisar, pero preferí que siga apareciendo con el motivo escrito al lado.'); }
 
 // ─────────── BLOQUE 4 ───────────
 { const s=bg('fondo-claro'); T(s,'Planificado contra ejecutado',SOCIAL);
@@ -273,25 +273,25 @@ const caja=(s,y,h,t,d)=>{ s.addShape(p.ShapeType.roundRect,{x:M,y,w:W-M*2,h,fill
   cifra(s,M+6.0,1.6,2.7,'9','Fases planificadas',TINTA);
   cifra(s,M+9.0,1.6,2.7,'10','Fases ejecutadas',SOCIAL);
   caja(s,3.9,2.4,'Cuatro desviaciones, ninguna fue un simple retraso','Las cuatro obligaron a cambiar una decisión de diseño. Una de ellas ni siquiera estaba en el plan: apareció al usar la aplicación de verdad, no al mirarla.');
-  s.addNotes('Sobre la planeación: cerré ciento cuarenta y siete de ciento cincuenta tareas, en ciento cuarenta y tres cambios registrados. Planifiqué nueve fases y ejecuté diez, porque apareció una que no estaba prevista. Tuve cuatro desviaciones, y ninguna fue un simple retraso: las cuatro obligaron a cambiar una decisión de diseño.'); }
+  s.addNotes('Sobre la planeación: cerré ciento cuarenta y siete de ciento cincuenta tareas. Planifiqué nueve etapas y ejecuté diez, porque apareció una que no estaba prevista. Tuve cuatro desviaciones, y ninguna fue un simple retraso: las cuatro me obligaron a cambiar una decisión de diseño.'); }
 
 { const s=bg('fondo-claro'); T(s,'Las cuatro desviaciones',EMOCIONAL);
   [['Alta por pasos','La obligó un hueco de seguridad real. Un día.',EMOCIONAL],
-   ['Notificaciones','Biblioteca incompatible con el SDK. Se degradó a aviso dentro de la aplicación.',SOCIAL],
-   ['Recurrencia en el cliente','En la base de datos era mucho más difícil distinguir «esta vez» de «toda la serie».',INTELECTUAL],
+   ['Notificaciones','La herramienta que las envía no funcionaba con la versión que uso. Quedaron como aviso dentro de la app.',SOCIAL],
+   ['Actividades que se repiten','Cambié dónde se generan: distinguir «solo esta vez» de «toda la serie» era mucho más difícil del otro modo.',INTELECTUAL],
    ['Rediseño del calendario','Surgió de usar la aplicación. Dos días no previstos.',FISICA]].forEach(([t,d,c],i)=>
     card(s,M+(i%2)*5.95,1.5+Math.floor(i/2)*1.75,5.65,1.6,t,d,c));
-  txt(s,'Preferí degradar una funcionalidad antes que bajar el SDK de toda la aplicación por una sola cosa.',
+  txt(s,'Preferí renunciar a una función antes que bajar de versión toda la aplicación por una sola cosa.',
     {x:M,y:5.2,w:11.6,h:0.6,fontSize:14,italic:true,color:GRIS});
-  s.addNotes('Estas son las cuatro. El alta por pasos ya la expliqué. En las notificaciones, la biblioteca resultó incompatible con la versión del entorno: preferí degradar esa funcionalidad antes que bajar el entorno de toda la aplicación por una sola cosa. Y la última surgió de usar la aplicación de verdad, no de mirarla.'); }
+  s.addNotes('Estas son las cuatro. El registro por pasos ya lo expliqué. En las notificaciones, la herramienta que las envía no funcionaba con la versión que uso: preferí renunciar a esa función antes que bajar de versión toda la aplicación por una sola cosa. Y la última surgió de usar la aplicación de verdad, no de mirarla.'); }
 
 { const s=bg('fondo-oscuro'); T(s,'Lección 1',ESPIRITUAL,true);
-  frase(s,'Una métrica sin verificar\nes peor que ninguna métrica.',1.7,32,PAPEL,9.0);
-  txt(s,'El panel de calidad reportó durante días 329 bugs y 25.9 % de duplicación. Ninguna cifra era real: medía código generado automáticamente.',
-    {x:M,y:4.0,w:9.0,h:1.1,fontSize:16,color:GRIS_CLARO});
-  txt(s,'De haberlas creído, habría corregido archivos que nadie escribió.',{x:M,y:5.3,w:9.0,h:0.6,fontSize:16,bold:true,color:ORO});
+  frase(s,'Que algo parezca correcto\nno significa que lo esté.',1.7,32,PAPEL,9.0);
+  txt(s,'Durante días publiqué una versión que, sin avisar de nada, se estaba conectando a los datos de práctica en lugar de a los reales. No fallaba: simplemente mostraba lo que no era.',
+    {x:M,y:4.0,w:9.0,h:1.2,fontSize:16,color:GRIS_CLARO});
+  txt(s,'Lo descubrí al revisar el archivo generado, no al mirar la pantalla.',{x:M,y:5.4,w:9.0,h:0.6,fontSize:16,bold:true,color:ORO});
   nobi(s,'yellow',10.6,2.6,2.0);
-  s.addNotes('Primera lección. El panel de calidad reportó durante días trescientos veintinueve errores y veinticinco por ciento de duplicación. Ninguna cifra era real: la herramienta estaba midiendo código generado automáticamente, no el que yo escribí. De haberlas dado por buenas, habría invertido días corrigiendo archivos que nadie había escrito.'); }
+  s.addNotes('Primera lección. Durante varios días publiqué una versión que se conectaba a los datos de práctica en lugar de a los reales, y nada lo advertía: no fallaba, simplemente mostraba lo que no era. Lo descubrí al revisar el archivo generado, no al mirar la pantalla. Desde entonces reviso lo que se publica, no doy por hecho que la configuración se aplicó.'); }
 
 { const s=bg('fondo-oscuro'); T(s,'Lección 2',ESPIRITUAL,true);
   txt(s,'Medir antes que deducir.',{x:M,y:1.75,w:9.0,h:0.8,fontSize:38,bold:true,color:PAPEL,f:TITULAR});
@@ -314,15 +314,15 @@ const caja=(s,y,h,t,d)=>{ s.addShape(p.ShapeType.roundRect,{x:M,y,w:W-M*2,h,fill
 { const s=bg('fondo-claro'); T(s,'Plan de mejora: corto plazo',FISICA);
   txt(s,'Acciones medibles, en una o dos semanas.',{x:M,y:1.3,w:11.6,h:0.45,fontSize:15,color:GRIS});
   [['Distribución de iOS','La aplicación está hecha y verificada en simulador. Falta la cuenta de Apple Developer: es administrativo, no técnico.',FISICA],
-   ['Reporte ligado al despliegue','Hoy el sitio puede publicarse con pruebas en rojo sin que nada lo advierta.',SOCIAL],
-   ['Pruebas de las políticas de acceso','Son el control de seguridad real y hoy se verifican a mano.',EMOCIONAL]].forEach(([t,d,c],i)=>
+   ['Avisar si algo falla al publicar','Hoy el sitio puede publicarse con pruebas fallando sin que nada lo advierta.',SOCIAL],
+   ['Probar solas las reglas de permisos','Son la protección real de los datos, y hoy las reviso a mano una por una.',EMOCIONAL]].forEach(([t,d,c],i)=>
     card(s,M+i*3.95,1.9,3.7,3.1,t,d,c));
   nobi(s,'lime_green',11.3,5.3,1.3,true);
-  s.addNotes('El plan de mejora está ordenado por beneficio contra esfuerzo. A corto plazo, tres acciones medibles. La distribución de iOS es puramente administrativa: la aplicación está terminada y verificada en simulador, y lo que falta es la cuenta de desarrollador. Las otras dos cierran huecos que hoy dependen de que yo me acuerde.'); }
+  s.addNotes('El plan de mejora está ordenado por lo que más aporta con menos esfuerzo. A corto plazo, tres acciones concretas. Publicar en iPhone es un trámite: la aplicación está terminada y probada, y lo que falta es la cuenta de desarrollador de Apple. Las otras dos cierran huecos que hoy dependen de que yo me acuerde.'); }
 
 { const s=bg('fondo-claro'); T(s,'Plan de mejora: medio y largo plazo',INTELECTUAL);
-  [['Medio · 1–3 meses',['Pruebas de extremo a extremo','Escaneo activo sobre entorno de pruebas','Auditoría de dependencias'],SOCIAL],
-   ['Largo · 3 meses en adelante',['Sincronización con calendarios externos','Rutinas de gimnasio con progresión','Medición continua del rendimiento'],INTELECTUAL]].forEach(([t,items,c],i)=>{
+  [['Medio · 1–3 meses',['Probar recorridos completos, de principio a fin','Lanzar ataques reales, pero sobre una copia de prueba','Revisar las herramientas externas que uso'],SOCIAL],
+   ['Largo · 3 meses en adelante',['Conectar con otros calendarios','Rutinas de gimnasio que sugieran progresión','Medir la rapidez de forma continua'],INTELECTUAL]].forEach(([t,items,c],i)=>{
     const x=M+i*5.95;
     s.addShape(p.ShapeType.roundRect,{x,y:1.6,w:5.65,h:3.4,fill:{color:BLANCO},rectRadius:0.12,
       shadow:{type:'outer',blur:8,offset:1,angle:90,color:'BFBFBF',opacity:0.25}});
@@ -330,9 +330,9 @@ const caja=(s,y,h,t,d)=>{ s.addShape(p.ShapeType.roundRect,{x:M,y,w:W-M*2,h,fill
     txt(s,t,{x:x+0.68,y:1.8,w:4.6,h:0.42,fontSize:14.5,bold:true,color:TINTA,f:TITULAR});
     s.addText(items.map((it,j)=>({text:it,options:{bullet:true,breakLine:j<items.length-1}})),
       {x:x+0.3,y:2.4,w:5.0,h:2.3,fontSize:13,color:GRIS,fontFace:CUERPO,isTextBox:true,margin:0,paraSpaceAfter:10}); });
-  txt(s,'Del proceso: verificar cada artefacto examinándolo, y medir antes de encadenar hipótesis.',
+  txt(s,'Y sobre la forma de trabajar: revisar lo que se publica, y medir antes de suponer.',
     {x:M,y:5.3,w:11.6,h:0.6,fontSize:14,italic:true,color:GRIS});
-  s.addNotes('A medio plazo, pruebas de extremo a extremo que recorran un flujo completo, y el escaneo activo que hoy descarté, pero sobre un entorno de pruebas en lugar de producción. A largo plazo, la sincronización con calendarios externos, que es la principal barrera de adopción de cualquier planificador.'); }
+  s.addNotes('A medio plazo, probar recorridos completos de principio a fin, y lanzar los ataques reales que hoy descarté, pero sobre una copia de prueba. A largo plazo, conectar con otros calendarios, que es la principal razón por la que la gente abandona un planificador: no quiere capturar todo dos veces.'); }
 
 { const s=bg('fondo-oscuro'); T(s,'Innovación: el equilibrio como dato',ESPIRITUAL,true);
   frase(s,'KAVI ya sabe en qué dimensión\ninviertes tu tiempo.',1.6,31,PAPEL,9.0);
