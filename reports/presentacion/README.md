@@ -3,8 +3,7 @@
 La presentación y su guion **no se versionan aquí**: viven en `kaviland/`, junto al
 repositorio, para tenerlos a mano el día de exponer.
 
-- `Presentacion-KAVI.pptx` — 26 diapositivas
-- `Guion-presentacion-KAVI.docx` — el texto para leer, con las acotaciones aparte
+- `Presentacion-KAVI.pptx` — 37 diapositivas, con el texto hablado en las notas de cada una
 
 ## Cómo regenerarlas
 
@@ -16,7 +15,6 @@ npm i pptxgenjs docx playwright-core          # en un directorio temporal
 node generar-fondos.mjs                        # formas orgánicas de fondo y wordmark
 node recortar-nobis.mjs                        # Nobis en círculo con fondo transparente
 node generar-presentacion.js  ../../../Presentacion-KAVI.pptx
-node generar-guion.js         ../../../Guion-presentacion-KAVI.docx
 ```
 
 `arte/` no se versiona: lo reconstruyen los dos primeros scripts. `capturas/` sí, porque
