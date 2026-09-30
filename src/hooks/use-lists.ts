@@ -25,6 +25,13 @@ import {
   type ListPermission,
   type ListShare,
   listsSharedWithMe,
+  listTags,
+  type ListTag,
+  createListTag,
+  removeListTag,
+  renameListTag,
+  setListTag,
+  tagsOfList,
   rescheduleListItems,
   searchLists,
   shareList,
@@ -43,6 +50,8 @@ export const listKeys = {
   search: (userId: string | null, term: string) => ['lists', 'search', userId, term] as const,
   shares: (listId: string) => ['lists', 'shares', listId] as const,
   sharedWithMe: (userId: string | null) => ['lists', 'shared-with-me', userId] as const,
+  tags: (userId: string | null) => ['lists', 'tags', userId] as const,
+  tagsOf: (listId: string) => ['lists', 'tags-of', listId] as const,
 };
 
 export function useLists() {
@@ -135,6 +144,26 @@ export function useListsSharedWithMe() {
     queryKey: listKeys.sharedWithMe(userId),
     queryFn: () => listsSharedWithMe(userId as string),
     enabled: !!userId,
+  });
+}
+
+/** Mis etiquetas, con cuántas listas lleva cada una (RF-L22). */
+export function useListTags() {
+  const { userId } = useAuth();
+  return useQuery<ListTag[]>({
+    queryKey: listKeys.tags(userId),
+    queryFn: () => listTags(userId as string),
+    enabled: !!userId,
+  });
+}
+
+/** Etiquetas puestas a una lista concreta. */
+export function useTagsOfList(listId: string | undefined) {
+  const { userId } = useAuth();
+  return useQuery<ListTag[]>({
+    queryKey: listKeys.tagsOf(listId ?? ''),
+    queryFn: () => tagsOfList(listId as string, userId as string),
+    enabled: !!listId && !!userId,
   });
 }
 
@@ -236,6 +265,20 @@ export function useListMutations() {
                 : 1024;
         await reorderListItem(item.id, orden, item.section_id);
       },
+      onSuccess: invalidar,
+    }),
+    createTag: useMutation({
+      mutationFn: (name: string) => createListTag(userId as string, name),
+      onSuccess: invalidar,
+    }),
+    renameTag: useMutation({
+      mutationFn: ({ id, name }: { id: string; name: string }) => renameListTag(id, name),
+      onSuccess: invalidar,
+    }),
+    removeTag: useMutation({ mutationFn: (id: string) => removeListTag(id), onSuccess: invalidar }),
+    setTag: useMutation({
+      mutationFn: ({ listId, tagId, puesta }: { listId: string; tagId: string; puesta: boolean }) =>
+        setListTag(listId, tagId, puesta),
       onSuccess: invalidar,
     }),
     toggleItem: useMutation({

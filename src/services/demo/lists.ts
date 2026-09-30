@@ -9,16 +9,19 @@
 import { addDays, format } from 'date-fns';
 
 import type { ListDetail, ListPermission, ListSearchResults, ListShare, ListsApi } from '@/services/contracts';
+import type { ListTag } from '@/types/domain';
 import { delay, demoState, emitDataChange, nextId } from '@/services/demo/store';
 import { AuthUiError } from '@/lib/auth-errors';
 import type { KaviList, ListItem, ListSection } from '@/types/domain';
 
-type StoredList = Omit<KaviList, 'pending_count' | 'total_count'>;
+type StoredList = Omit<KaviList, 'pending_count' | 'total_count' | 'tag_ids'>;
 
 const lists: StoredList[] = [];
 const sections: ListSection[] = [];
 const items: ListItem[] = [];
 const shares: Omit<ListShare, 'profile'>[] = [];
+const tags: Omit<ListTag, 'list_count'>[] = [];
+const tagLinks: { list_id: string; tag_id: string }[] = [];
 
 /** Separación entre órdenes contiguos, para que siempre quepa algo en medio. */
 const STEP = 1024;
@@ -62,6 +65,7 @@ function conCuentas(lista: StoredList): KaviList {
     ...lista,
     total_count: suyos.length,
     pending_count: suyos.filter((i) => i.completed_at === null).length,
+    tag_ids: tagLinks.filter((l) => l.list_id === lista.id).map((l) => l.tag_id),
   };
 }
 
@@ -373,6 +377,60 @@ export const demoLists: ListsApi = {
     await delay();
     const mios = new Set(shares.filter((sh) => sh.shared_with_id === userId).map((sh) => sh.list_id));
     return lists.filter((l) => mios.has(l.id) && !l.is_archived).sort(ordenar).map(conCuentas);
+  },
+
+  async listTags(userId) {
+    await delay();
+    return tags
+      .filter((t) => t.owner_id === userId)
+      .map((t) => ({ ...t, list_count: tagLinks.filter((l) => l.tag_id === t.id).length }))
+      .sort((a, b) => a.name.localeCompare(b.name, 'es'));
+  },
+
+  async createTag(userId, name) {
+    await delay();
+    const limpio = name.trim();
+    // Sin distinguir mayúsculas: "Casa" y "casa" serían dos montones para lo mismo.
+    const ya = tags.find((t) => t.owner_id === userId && t.name.toLowerCase() === limpio.toLowerCase());
+    if (ya) return { ...ya, list_count: tagLinks.filter((l) => l.tag_id === ya.id).length };
+    const tag = { id: nextId('tag'), owner_id: userId, name: limpio };
+    tags.push(tag);
+    emitDataChange();
+    return { ...tag, list_count: 0 };
+  },
+
+  async renameTag(tagId, name) {
+    await delay();
+    const tag = tags.find((t) => t.id === tagId);
+    if (!tag) throw new AuthUiError('Esa etiqueta ya no existe.');
+    tag.name = name.trim();
+    emitDataChange();
+    return { ...tag, list_count: tagLinks.filter((l) => l.tag_id === tag.id).length };
+  },
+
+  async removeTag(tagId) {
+    await delay();
+    const i = tags.findIndex((t) => t.id === tagId);
+    if (i >= 0) tags.splice(i, 1);
+    // Se van los vínculos, no las listas: borrar una forma de agrupar no borra lo agrupado.
+    for (let k = tagLinks.length - 1; k >= 0; k--) if (tagLinks[k]!.tag_id === tagId) tagLinks.splice(k, 1);
+    emitDataChange();
+  },
+
+  async tagsOfList(listId, userId) {
+    await delay();
+    const ids = new Set(tagLinks.filter((l) => l.list_id === listId).map((l) => l.tag_id));
+    return tags
+      .filter((t) => ids.has(t.id) && t.owner_id === userId)
+      .map((t) => ({ ...t, list_count: tagLinks.filter((l) => l.tag_id === t.id).length }));
+  },
+
+  async setListTag(listId, tagId, puesta) {
+    await delay();
+    const i = tagLinks.findIndex((l) => l.list_id === listId && l.tag_id === tagId);
+    if (puesta && i < 0) tagLinks.push({ list_id: listId, tag_id: tagId });
+    if (!puesta && i >= 0) tagLinks.splice(i, 1);
+    emitDataChange();
   },
 
   async rescheduleItems(itemIds, dueDate) {

@@ -8,7 +8,14 @@ import { PEOPLE_COLORS } from '@/constants/people-colors';
 import { ModalHeader } from '@/components/modal-header';
 import { ActionRow, AppText, EmptyState, ErrorState, Fab, LoadingState, Screen, Sheet, ThemeIcon } from '@/components/ui';
 import { Fonts, IconSize, IconStroke, Radius, Spacing, Typography } from '@/constants/theme';
-import { useArchivedLists, useListMutations, useLists, useListSearch, useListsSharedWithMe } from '@/hooks/use-lists';
+import {
+  useArchivedLists,
+  useListMutations,
+  useLists,
+  useListSearch,
+  useListsSharedWithMe,
+  useListTags,
+} from '@/hooks/use-lists';
 import { useDebouncedValue } from '@/hooks/use-debounced-value';
 import { useShrinkOnScroll } from '@/hooks/use-shrink-on-scroll';
 import { useTheme } from '@/hooks/use-theme';
@@ -131,6 +138,8 @@ export default function ListsScreen() {
   const lists = useLists();
   const archivadas = useArchivedLists(verArchivadas);
   const compartidas = useListsSharedWithMe();
+  const etiquetas = useListTags();
+  const [etiquetaActiva, setEtiquetaActiva] = useState<string | null>(null);
   const { update, remove, duplicate, create, swapLists } = useListMutations();
   const { shrunk, onScroll } = useShrinkOnScroll();
 
@@ -139,9 +148,11 @@ export default function ListsScreen() {
   const abrir = useCallback((id: string) => router.push({ pathname: '/(app)/list/[id]', params: { id } }), [router]);
 
   const { fijadas, propias } = useMemo(() => {
-    const todas = lists.data ?? [];
+    // Con una etiqueta activa se filtra antes de agrupar, para que "Fijadas" siga
+    // significando "fijadas de esto" y no quede un encabezado sobre nada.
+    const todas = (lists.data ?? []).filter((l) => !etiquetaActiva || l.tag_ids.includes(etiquetaActiva));
     return { fijadas: todas.filter((l) => l.is_pinned), propias: todas.filter((l) => !l.is_pinned) };
-  }, [lists.data]);
+  }, [lists.data, etiquetaActiva]);
 
   const cerrarMenu = () => setMenuDe(null);
 
@@ -310,6 +321,60 @@ export default function ListsScreen() {
         ) : null}
       </View>
 
+      {/*
+        Fila de etiquetas: es la forma de ver juntas las listas de un mismo tema (RF-L22).
+        No aparece si no hay ninguna, para no ocupar alto prometiendo algo vacío.
+      */}
+      {!buscando && !verArchivadas && (etiquetas.data ?? []).length > 0 ? (
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          /*
+           * `flexGrow: 0` y alineación al centro: dentro de una columna flexible, un
+           * carrusel horizontal se estira a todo el alto disponible y sus pastillas salen
+           * del tamaño de la pantalla. Aquí debe ocupar solo lo que miden.
+           */
+          style={styles.etiquetasScroll}
+          contentContainerStyle={styles.etiquetas}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityState={{ selected: etiquetaActiva === null }}
+            accessibilityLabel="Todas las listas"
+            onPress={() => setEtiquetaActiva(null)}
+            style={({ pressed }) => [
+              styles.etiqueta,
+              etiquetaActiva === null
+                ? { backgroundColor: theme.ink, borderColor: theme.ink }
+                : { borderColor: theme.border },
+              pressed ? styles.pressed : null,
+            ]}>
+            <AppText variant="label" color={etiquetaActiva === null ? 'onInk' : 'textSecondary'}>
+              Todas
+            </AppText>
+          </Pressable>
+          {(etiquetas.data ?? []).map((t) => {
+            const activa = etiquetaActiva === t.id;
+            return (
+              <Pressable
+                key={t.id}
+                accessibilityRole="button"
+                accessibilityState={{ selected: activa }}
+                accessibilityLabel={`${t.name}, ${t.list_count} ${t.list_count === 1 ? 'lista' : 'listas'}`}
+                onPress={() => setEtiquetaActiva(activa ? null : t.id)}
+                style={({ pressed }) => [
+                  styles.etiqueta,
+                  activa ? { backgroundColor: theme.ink, borderColor: theme.ink } : { borderColor: theme.border },
+                  pressed ? styles.pressed : null,
+                ]}>
+                <AppText variant="label" color={activa ? 'onInk' : 'textSecondary'}>
+                  {t.name}
+                </AppText>
+              </Pressable>
+            );
+          })}
+        </ScrollView>
+      ) : null}
+
       {buscando ? <Resultados datos={resultados.data} abrir={abrir} /> : null}
 
       {!buscando && consulta.isPending ? <LoadingState /> : null}
@@ -429,6 +494,15 @@ const styles = StyleSheet.create({
     fontSize: Typography.body.fontSize,
     lineHeight: Typography.body.lineHeight,
     padding: 0,
+  },
+  etiquetasScroll: { flexGrow: 0 },
+  etiquetas: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm, paddingRight: Spacing.lg },
+  etiqueta: {
+    minHeight: 36,
+    paddingHorizontal: Spacing.md,
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderRadius: Radius.full,
   },
   resultados: { gap: Spacing.sm, paddingBottom: Spacing['3xl'] },
   grupoTitulo: { marginTop: Spacing.sm },

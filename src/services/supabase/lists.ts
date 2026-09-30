@@ -2,7 +2,7 @@ import { AuthUiError } from '@/lib/auth-errors';
 import { getSupabase } from '@/lib/supabase';
 import type { ListDetail, ListSearchResults, ListShare, ListsApi } from '@/services/contracts';
 import { toError, unwrap } from '@/services/supabase/errors';
-import type { KaviList, ListItem, ListSection } from '@/types/domain';
+import type { KaviList, ListItem, ListSection, ListTag } from '@/types/domain';
 
 /** Separación entre órdenes contiguos, para que siempre quepa algo en medio. */
 const STEP = 1024;
@@ -12,23 +12,27 @@ const STEP = 1024;
  * vive aquí. La base y el dominio pueden llamarle distinto; lo que no puede es que la
  * pantalla se entere.
  */
-type ListRow = Omit<KaviList, 'view' | 'pending_count' | 'total_count'> & {
+type ListRow = Omit<KaviList, 'view' | 'pending_count' | 'total_count' | 'tag_ids'> & {
   view_mode: KaviList['view'];
   list_items: { completed_at: string | null }[];
+  /* La RLS de `list_tag_links` ya limita esto a **mis** etiquetas, así que no hace falta
+   * filtrar por dueño en la consulta: lo que vuelve es lo mío y nada más. */
+  list_tag_links: { tag_id: string }[];
 };
 
 function toList(row: ListRow): KaviList {
-  const { view_mode, list_items, ...resto } = row;
+  const { view_mode, list_items, list_tag_links, ...resto } = row;
   return {
     ...resto,
     view: view_mode,
     total_count: list_items.length,
     pending_count: list_items.filter((i) => i.completed_at === null).length,
+    tag_ids: (list_tag_links ?? []).map((l) => l.tag_id),
   };
 }
 
 /** Las cuentas de la tarjeta del inicio se piden con la lista, no en una consulta aparte. */
-const SELECT_LISTA = '*, list_items(completed_at)';
+const SELECT_LISTA = '*, list_items(completed_at), list_tag_links(tag_id)';
 
 /**
  * El `!inner` con `lists` sirve para filtrar por dueño, pero PostgREST devuelve además la
@@ -373,6 +377,62 @@ export const supabaseLists: ListsApi = {
         .order('sort_order', { ascending: true }),
     );
     return (rows as unknown as ListRow[]).map(toList);
+  },
+
+  async listTags(userId) {
+    const rows = unwrap(
+      await getSupabase()
+        .from('list_tags')
+        .select('*, list_tag_links(count)')
+        .eq('owner_id', userId)
+        .order('name'),
+    ) as unknown as (Omit<ListTag, 'list_count'> & { list_tag_links: { count: number }[] })[];
+    return rows.map(({ list_tag_links, ...t }) => ({ ...t, list_count: list_tag_links[0]?.count ?? 0 }));
+  },
+
+  async createTag(userId, name) {
+    const row = unwrap(
+      await getSupabase()
+        .from('list_tags')
+        // `upsert` sobre (owner_id, name): pedir una etiqueta que ya existe devuelve esa,
+        // que es lo que uno espera al volver a escribir "Casa".
+        .upsert({ owner_id: userId, name: name.trim() }, { onConflict: 'owner_id,name' })
+        .select('*')
+        .single(),
+    ) as unknown as Omit<ListTag, 'list_count'>;
+    return { ...row, list_count: 0 };
+  },
+
+  async renameTag(tagId, name) {
+    const row = unwrap(
+      await getSupabase().from('list_tags').update({ name: name.trim() }).eq('id', tagId).select('*').single(),
+    ) as unknown as Omit<ListTag, 'list_count'>;
+    return { ...row, list_count: 0 };
+  },
+
+  async removeTag(tagId) {
+    // Los vínculos se van con la etiqueta por `on delete cascade`; las listas no se tocan.
+    const { error } = await getSupabase().from('list_tags').delete().eq('id', tagId);
+    if (error) throw toError(error);
+  },
+
+  async tagsOfList(listId, userId) {
+    const rows = unwrap(
+      await getSupabase()
+        .from('list_tag_links')
+        .select('tag:list_tags!inner(*)')
+        .eq('list_id', listId)
+        .eq('list_tags.owner_id', userId),
+    ) as unknown as { tag: Omit<ListTag, 'list_count'> }[];
+    return rows.map((r) => ({ ...r.tag, list_count: 0 }));
+  },
+
+  async setListTag(listId, tagId, puesta) {
+    const q = getSupabase().from('list_tag_links');
+    const { error } = puesta
+      ? await q.upsert({ list_id: listId, tag_id: tagId })
+      : await q.delete().eq('list_id', listId).eq('tag_id', tagId);
+    if (error) throw toError(error);
   },
 
   async rescheduleItems(itemIds, dueDate) {

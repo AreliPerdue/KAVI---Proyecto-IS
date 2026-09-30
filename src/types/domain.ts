@@ -267,6 +267,20 @@ export type KaviList = {
   /** Derivados para la tarjeta del inicio (RF-L1). */
   pending_count: number;
   total_count: number;
+  /**
+   * Etiquetas **mías** puestas a esta lista (RF-L22). Viajan con la lista para poder
+   * filtrar el inicio sin una consulta por tarjeta.
+   */
+  tag_ids: string[];
+};
+
+/** Etiqueta propia para agrupar listas por tema (RF-L22). */
+export type ListTag = {
+  id: string;
+  owner_id: string;
+  name: string;
+  /** Cuántas listas la llevan; derivado, para la fila de filtros del inicio. */
+  list_count: number;
 };
 
 export type ListSection = {

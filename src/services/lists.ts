@@ -2,7 +2,7 @@
 import { listsApi } from '@/services/backend';
 
 export type { ListDetail, ListPermission, ListSearchResults, ListShare } from '@/services/contracts';
-export type { KaviList, ListInput, ListItem, ListItemInput, ListSection, ListView } from '@/types/domain';
+export type { KaviList, ListInput, ListItem, ListItemInput, ListSection, ListTag, ListView } from '@/types/domain';
 
 export const listLists = listsApi.list;
 export const listArchivedLists = listsApi.listArchived;
@@ -32,3 +32,10 @@ export const listListShares = listsApi.listShares;
 export const shareList = listsApi.share;
 export const unshareList = listsApi.unshare;
 export const listsSharedWithMe = listsApi.sharedWithMe;
+
+export const listTags = listsApi.listTags;
+export const createListTag = listsApi.createTag;
+export const renameListTag = listsApi.renameTag;
+export const removeListTag = listsApi.removeTag;
+export const tagsOfList = listsApi.tagsOfList;
+export const setListTag = listsApi.setListTag;

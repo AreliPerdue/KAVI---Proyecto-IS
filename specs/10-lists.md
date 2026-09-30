@@ -42,6 +42,20 @@ Por eso **los ítems nunca entran en la rejilla de horas**, ni siquiera cuando l
   lista vacía en el inicio.
 - **RF-L3.** Fijar una lista la manda al principio. El orden entre listas se reordena arrastrando.
 - **RF-L4.** Buscar por nombre de lista y por texto de ítem, incluidos los ya completados.
+- **RF-L22. Etiquetas.** Una lista puede llevar varias (Casa, Escuela, Trabajo…), y el inicio
+  se filtra tocando una: es la forma de ver juntas las listas de un mismo tema.
+
+  **No hay etiquetas del sistema.** Las que la app sugiere viven en el cliente; al tocar una
+  se crea una etiqueta **tuya** con ese nombre, así que cualquiera se puede renombrar o
+  borrar sin pedir permiso. Es distinto de los temas, que sí son del sistema porque el
+  producto define su dimensión y su color; una etiqueta es solo una palabra que alguien
+  eligió, y hacerla global obligaría a una tabla de personalizaciones por usuario solo para
+  poder renombrar "Escuela" a "Uni".
+
+  **Etiquetar es de quien mira, no de la lista.** En una lista compartida cada quien la
+  agrupa como le sirve: que yo la guarde en "Casa" no le cambia nada a la otra persona.
+
+  Borrar una etiqueta no borra ninguna lista: se pierde la forma de agrupar, no lo agrupado.
 
 ## Dentro de una lista (RF-L5 – RF-L10)
 - **RF-L5.** Agregar un ítem escribiendo su título y confirmando; el campo se queda listo para el siguiente, porque las listas se llenan de corrido.

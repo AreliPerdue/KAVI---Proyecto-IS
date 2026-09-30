@@ -7,6 +7,7 @@ import type {
   ListItem,
   ListItemInput,
   ListSection,
+  ListTag,
   AdminAccount,
   AdminStats,
   ActivityInput,
@@ -245,7 +246,20 @@ export interface ListsApi {
   search(userId: string, term: string): Promise<ListSearchResults>;
 }
 
-export interface ListsApi extends ListSharesApi {}
+export interface ListTagsApi {
+  /** Mis etiquetas, con cuántas listas lleva cada una (RF-L22). */
+  listTags(userId: string): Promise<ListTag[]>;
+  /** Crea una etiqueta, o devuelve la que ya existe con ese nombre. */
+  createTag(userId: string, name: string): Promise<ListTag>;
+  renameTag(tagId: string, name: string): Promise<ListTag>;
+  /** Borra la etiqueta y sus vínculos. Ninguna lista se pierde. */
+  removeTag(tagId: string): Promise<void>;
+  /** Etiquetas de una lista concreta. */
+  tagsOfList(listId: string, userId: string): Promise<ListTag[]>;
+  setListTag(listId: string, tagId: string, puesta: boolean): Promise<void>;
+}
+
+export interface ListsApi extends ListSharesApi, ListTagsApi {}
 
 export type ListSearchResults = {
   lists: KaviList[];

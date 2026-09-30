@@ -372,9 +372,16 @@ un clic de más para llegar a lo mismo.
 - [ ] T210 Resúmenes (RF-L21). **La redacción se escribe antes que la consulta.** Un resumen
   que diga "dejaste el 25 % sin completar" es justo la presión que KAVI dijo que no iba a
   ejercer: se cuenta lo hecho, no lo que falta, y no hay rachas que romper. Dep: T209
-- [ ] T211 Etiquetas de listas. Hacen falta para poder resumir "mis listas de trabajo"
-  (RF-L21), y de paso son parte de la fase 3 del concepto. **Van después de lo ya
-  planeado**: primero se termina la fase 1 y el bloque de compartir. Dep: T195
+- [x] T211 Etiquetas de listas (RF-L22). Tablas `list_tags` y `list_tag_links`, sugerencias
+  en el cliente, hoja para poner y quitar desde la lista, y fila de filtro en el inicio.
+  **Sin etiquetas del sistema**: las sugerencias no son filas, y elegir una crea una
+  etiqueta propia con ese nombre. La alternativa —filas globales con `is_system`, como los
+  temas— obligaría a una tabla de personalizaciones por usuario solo para poder renombrar
+  "Escuela" a "Uni"; los temas lo justifican porque el producto define su dimensión y su
+  color, una etiqueta es solo una palabra.
+  Etiquetar es de quien mira: en una lista compartida cada quien la agrupa como le sirve, y
+  la RLS del vínculo exige que la etiqueta sea tuya. Las etiquetas viajan con la lista
+  (`tag_ids`) para poder filtrar el inicio sin una consulta por tarjeta. Dep: T195
 
 - [x] T212 Fechas en los elementos (RF-L11). Día y hora opcional desde la hoja de edición,
   y la fecha visible en el propio renglón sin abrir nada —en el acento de aviso si ya pasó,

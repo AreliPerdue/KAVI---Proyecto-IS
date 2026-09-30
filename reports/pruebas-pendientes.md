@@ -185,3 +185,13 @@ juntarlo en una sesión dedicada a pruebas.
 - [ ] El orden nuevo cae entre los vecinos del destino y no pisa a ninguno.
 - [ ] Tocar sin mantener sigue abriendo la edición, no arrastra.
 - [ ] Verificación manual en teléfono: el arrastre no pelea con el scroll de la pantalla.
+
+## Etiquetas (T211)
+
+- [ ] `createTag` con un nombre que ya existe devuelve la existente y no duplica, sin
+  importar mayúsculas.
+- [ ] Borrar una etiqueta no borra ninguna lista.
+- [ ] RLS: B no ve las etiquetas de A ni sus vínculos, **aunque comparta la lista**. Es lo
+  que sostiene que etiquetar sea de quien mira.
+- [ ] `tag_ids` solo trae las etiquetas propias en una lista compartida.
+- [ ] Con una etiqueta activa, "Fijadas" solo muestra las fijadas de esa etiqueta.
