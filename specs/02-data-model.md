@@ -9,6 +9,8 @@ profiles ─┬─< activities >─── themes (predefinidos, ligados a dimens
           │       ├─< reminders ─< reminder_recipients (reminders compartidos)
           │       ├─< activity_shares (compartir actividad puntual)
           │       └─── workouts ─< workout_exercises (mini gym tracker)
+          ├─< lists ─┬─< list_sections
+          │          └─< list_items (fecha flotante, sin hora obligatoria)
           ├─< connections (contactos entre usuarios)
           └─< calendar_shares (compartir calendario completo)
 ```
@@ -294,3 +296,35 @@ create policy "wex_owner" on public.workout_exercises
 - Given calendar_share visibility='busy', When B consulta disponibilidad de A, Then obtiene bloques sin título/descripcion, y no puede leer las filas de activities.
 - Given un activity_share aceptado con reminder, When B consulta reminder_recipients, Then tiene su fila y puede silenciarla sin afectar al dueño.
 - Todas las migraciones corren de cero (`supabase db reset`) sin errores y con seeds de temas.
+
+## 10. KAVI Lists (spec 10)
+
+Tres tablas, todas con RLS desde su creación. El SQL completo vive en
+`supabase/migrations/20260930120000_lists.sql`; aquí quedan las decisiones que no se leen
+solas en el esquema.
+
+- **`lists`** — nombre, icono, color de la paleta de personas, vista, fijada, archivada y
+  orden. La columna se llama `view_mode` y no `view` porque `view` es palabra reservada en
+  SQL; el dominio la llama `view` y el servicio hace el mapeo.
+- **`list_sections`** — agrupaciones dentro de una lista (Frutas · Lácteos · Despensa).
+- **`list_items`** — el elemento. `section_id` es `on delete set null`: al borrar una
+  sección sus elementos vuelven a la lista sin agrupar, porque borrar una forma de ordenar
+  no debería borrar lo ordenado. Un `check` exige que `completed_at` y `completed_by` vayan
+  juntos o ninguno, para que en una lista compartida no quede la autoría a medias.
+
+**`sort_order` es `numeric`, no un entero de posición.** Mover un elemento entre dos vecinos
+se resuelve escribiendo una sola fila con el promedio de sus órdenes. Con enteros habría que
+renumerar todo lo de abajo, y en una lista compartida dos personas reordenando a la vez se
+pisarían.
+
+**`due_date` es `date`, no `timestamptz`.** Es la excepción consciente a la regla de fechas
+del proyecto: "el sábado" no es un instante sino un día del calendario de quien lo escribió,
+y guardado como instante UTC se corre de día al cruzar husos horarios. La hora, cuando
+existe, va aparte en `due_time` y solo sirve para el recordatorio (spec 10, RF-L11).
+
+**`can_edit_list()` existe desde la fase 1 aunque todavía no haya listas compartidas.** Las
+políticas de secciones y elementos preguntan por ella en vez de consultar `lists`
+directamente, así que cuando llegue `list_shares` solo cambia la función y ninguna política.
+Es `security definer` por la misma razón que `owns_activity`: en cuanto exista `list_shares`,
+su RLS querría consultar `lists` y la de `lists` consultaría `list_shares` — recursión, la
+misma que ya costó una migración correctiva en este repo.

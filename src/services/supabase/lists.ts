@@ -1,37 +1,304 @@
+import { AuthUiError } from '@/lib/auth-errors';
+import { getSupabase } from '@/lib/supabase';
+import type { ListDetail, ListsApi } from '@/services/contracts';
+import { toError, unwrap } from '@/services/supabase/errors';
+import type { KaviList, ListItem, ListSection } from '@/types/domain';
+
+/** Separación entre órdenes contiguos, para que siempre quepa algo en medio. */
+const STEP = 1024;
+
 /**
- * KAVI Lists sobre Supabase (spec 10).
- *
- * Pendiente de la migración de T195. Se declara con el contrato completo para que el
- * cascarón compile y las pantallas se puedan armar contra la implementación demo; cada
- * método falla con un mensaje que la UI puede mostrar en su estado de error, en vez de
- * devolver datos vacíos que se verían como "no tienes listas".
+ * `view` es palabra reservada en SQL, así que la columna se llama `view_mode` y el mapeo
+ * vive aquí. La base y el dominio pueden llamarle distinto; lo que no puede es que la
+ * pantalla se entere.
  */
-import type { ListsApi } from '@/services/contracts';
+type ListRow = Omit<KaviList, 'view' | 'pending_count' | 'total_count'> & {
+  view_mode: KaviList['view'];
+  list_items: { completed_at: string | null }[];
+};
 
-const PENDIENTE = 'Las listas todavía no están disponibles en tu cuenta.';
+function toList(row: ListRow): KaviList {
+  const { view_mode, list_items, ...resto } = row;
+  return {
+    ...resto,
+    view: view_mode,
+    total_count: list_items.length,
+    pending_count: list_items.filter((i) => i.completed_at === null).length,
+  };
+}
 
-function falta(): never {
-  throw new Error(PENDIENTE);
+/** Las cuentas de la tarjeta del inicio se piden con la lista, no en una consulta aparte. */
+const SELECT_LISTA = '*, list_items(completed_at)';
+
+/**
+ * El `!inner` con `lists` sirve para filtrar por dueño, pero PostgREST devuelve además la
+ * fila unida dentro de cada elemento. Se quita aquí y no se deja pasar al dominio: quien
+ * reciba un `ListItem` no tiene por qué saber cómo se filtró.
+ */
+function sinJoin(rows: unknown[]): ListItem[] {
+  return rows.map((row) => {
+    const { lists: _unido, ...item } = row as ListItem & { lists: unknown };
+    return item as ListItem;
+  });
+}
+
+async function listasDe(userId: string, archivadas: boolean): Promise<KaviList[]> {
+  const rows = unwrap(
+    await getSupabase()
+      .from('lists')
+      .select(SELECT_LISTA)
+      .eq('owner_id', userId)
+      .eq('is_archived', archivadas)
+      // Fijadas primero; dentro de cada grupo, por su orden (RF-L3).
+      .order('is_pinned', { ascending: false })
+      .order('sort_order', { ascending: true }),
+  );
+  return (rows as unknown as ListRow[]).map(toList);
+}
+
+async function getLista(listId: string): Promise<KaviList> {
+  const { data, error } = await getSupabase().from('lists').select(SELECT_LISTA).eq('id', listId).maybeSingle();
+  if (error) throw toError(error);
+  if (!data) throw new AuthUiError('Esa lista ya no existe.');
+  return toList(data as unknown as ListRow);
+}
+
+/** Orden siguiente dentro de un conjunto, para no pisar lo que ya está colocado. */
+async function siguienteOrden(tabla: 'lists' | 'list_sections' | 'list_items', columna: string, valor: string): Promise<number> {
+  const rows = unwrap(
+    await getSupabase().from(tabla).select('sort_order').eq(columna, valor).order('sort_order', { ascending: false }).limit(1),
+  ) as { sort_order: number }[];
+  return (rows[0]?.sort_order ?? 0) + STEP;
 }
 
 export const supabaseLists: ListsApi = {
-  list: falta,
-  listArchived: falta,
-  getById: falta,
-  create: falta,
-  update: falta,
-  remove: falta,
-  duplicate: falta,
-  reorder: falta,
-  addSection: falta,
-  renameSection: falta,
-  removeSection: falta,
-  addItem: falta,
-  updateItem: falta,
-  removeItem: falta,
-  toggleItem: falta,
-  reorderItem: falta,
-  listByDateRange: falta,
-  listOverdue: falta,
-  rescheduleItems: falta,
+  list: (userId) => listasDe(userId, false),
+  listArchived: (userId) => listasDe(userId, true),
+
+  async getById(listId): Promise<ListDetail> {
+    const [list, sections, items] = await Promise.all([
+      getLista(listId),
+      getSupabase().from('list_sections').select('*').eq('list_id', listId).order('sort_order'),
+      getSupabase().from('list_items').select('*').eq('list_id', listId).order('sort_order'),
+    ]);
+    return {
+      list,
+      sections: unwrap(sections) as ListSection[],
+      items: unwrap(items) as ListItem[],
+    };
+  },
+
+  async create(userId, input) {
+    const row = unwrap(
+      await getSupabase()
+        .from('lists')
+        .insert({
+          owner_id: userId,
+          name: input.name.trim(),
+          icon: input.icon,
+          color: input.color,
+          view_mode: input.view ?? 'checklist',
+          sort_order: await siguienteOrden('lists', 'owner_id', userId),
+        })
+        .select(SELECT_LISTA)
+        .single(),
+    );
+    return toList(row as unknown as ListRow);
+  },
+
+  async update(listId, patch) {
+    const { view, name, ...resto } = patch;
+    const row = unwrap(
+      await getSupabase()
+        .from('lists')
+        .update({
+          ...resto,
+          ...(name !== undefined ? { name: name.trim() } : {}),
+          ...(view !== undefined ? { view_mode: view } : {}),
+        })
+        .eq('id', listId)
+        .select(SELECT_LISTA)
+        .single(),
+    );
+    return toList(row as unknown as ListRow);
+  },
+
+  async remove(listId) {
+    // Secciones y elementos se van con la lista por `on delete cascade`.
+    const { error } = await getSupabase().from('lists').delete().eq('id', listId);
+    if (error) throw toError(error);
+  },
+
+  async duplicate(listId) {
+    const origen = await this.getById(listId);
+    const copia = await this.create(origen.list.owner_id, {
+      name: `${origen.list.name} (copia)`,
+      icon: origen.list.icon,
+      color: origen.list.color,
+      view: origen.list.view,
+    });
+
+    const mapaSecciones = new Map<string, string>();
+    if (origen.sections.length > 0) {
+      const nuevas = unwrap(
+        await getSupabase()
+          .from('list_sections')
+          .insert(origen.sections.map((s) => ({ list_id: copia.id, name: s.name, sort_order: s.sort_order })))
+          .select('*'),
+      ) as ListSection[];
+      // Se emparejan por orden porque se insertaron en el mismo orden en que se leyeron.
+      origen.sections.forEach((s, i) => {
+        const nueva = nuevas[i];
+        if (nueva) mapaSecciones.set(s.id, nueva.id);
+      });
+    }
+
+    // Solo los pendientes: duplicar una lista es volver a usarla, no copiar su historial.
+    const pendientes = origen.items.filter((i) => i.completed_at === null);
+    if (pendientes.length > 0) {
+      const { error } = await getSupabase()
+        .from('list_items')
+        .insert(
+          pendientes.map((it) => ({
+            list_id: copia.id,
+            section_id: it.section_id ? (mapaSecciones.get(it.section_id) ?? null) : null,
+            title: it.title,
+            note: it.note,
+            sort_order: it.sort_order,
+            created_by: it.created_by,
+            due_date: it.due_date,
+            due_time: it.due_time,
+          })),
+        );
+      if (error) throw toError(error);
+    }
+    return getLista(copia.id);
+  },
+
+  async reorder(listId, sortOrder) {
+    const { error } = await getSupabase().from('lists').update({ sort_order: sortOrder }).eq('id', listId);
+    if (error) throw toError(error);
+  },
+
+  async addSection(listId, name) {
+    return unwrap(
+      await getSupabase()
+        .from('list_sections')
+        .insert({ list_id: listId, name: name.trim(), sort_order: await siguienteOrden('list_sections', 'list_id', listId) })
+        .select('*')
+        .single(),
+    ) as ListSection;
+  },
+
+  async renameSection(sectionId, name) {
+    return unwrap(
+      await getSupabase().from('list_sections').update({ name: name.trim() }).eq('id', sectionId).select('*').single(),
+    ) as ListSection;
+  },
+
+  async removeSection(sectionId) {
+    // Los elementos no se van con la sección: la FK es `on delete set null`.
+    const { error } = await getSupabase().from('list_sections').delete().eq('id', sectionId);
+    if (error) throw toError(error);
+  },
+
+  async addItem(listId, userId, input) {
+    return unwrap(
+      await getSupabase()
+        .from('list_items')
+        .insert({
+          list_id: listId,
+          section_id: input.section_id ?? null,
+          title: input.title.trim(),
+          note: input.note ?? null,
+          created_by: userId,
+          due_date: input.due_date ?? null,
+          due_time: input.due_time ?? null,
+          sort_order: await siguienteOrden('list_items', 'list_id', listId),
+        })
+        .select('*')
+        .single(),
+    ) as ListItem;
+  },
+
+  async updateItem(itemId, patch) {
+    const { title, ...resto } = patch;
+    return unwrap(
+      await getSupabase()
+        .from('list_items')
+        .update({ ...resto, ...(title !== undefined ? { title: title.trim() } : {}) })
+        .eq('id', itemId)
+        .select('*')
+        .single(),
+    ) as ListItem;
+  },
+
+  async removeItem(itemId) {
+    const { error } = await getSupabase().from('list_items').delete().eq('id', itemId);
+    if (error) throw toError(error);
+  },
+
+  async toggleItem(itemId, userId, done) {
+    // `completed_at` y `completed_by` van juntos o ninguno: hay un check que lo exige.
+    return unwrap(
+      await getSupabase()
+        .from('list_items')
+        .update({
+          completed_at: done ? new Date().toISOString() : null,
+          completed_by: done ? userId : null,
+        })
+        .eq('id', itemId)
+        .select('*')
+        .single(),
+    ) as ListItem;
+  },
+
+  async reorderItem(itemId, sortOrder, sectionId) {
+    const { error } = await getSupabase()
+      .from('list_items')
+      .update({ sort_order: sortOrder, section_id: sectionId })
+      .eq('id', itemId);
+    if (error) throw toError(error);
+  },
+
+  async listByDateRange(userId, fromDate, toDate) {
+    /*
+     * El filtro por dueño se hace sobre la lista, no sobre el elemento: `list_items` no
+     * guarda `owner_id`, y añadirlo sería duplicar un dato que la FK ya garantiza. El
+     * `!inner` convierte la relación en un join que además excluye las archivadas.
+     */
+    const rows = unwrap(
+      await getSupabase()
+        .from('list_items')
+        .select('*, lists!inner(owner_id, is_archived)')
+        .eq('lists.owner_id', userId)
+        .eq('lists.is_archived', false)
+        .gte('due_date', fromDate)
+        .lte('due_date', toDate)
+        .order('due_date')
+        .order('sort_order'),
+    );
+    return sinJoin(rows as unknown[]);
+  },
+
+  async listOverdue(userId, beforeDate) {
+    const rows = unwrap(
+      await getSupabase()
+        .from('list_items')
+        .select('*, lists!inner(owner_id, is_archived)')
+        .eq('lists.owner_id', userId)
+        .eq('lists.is_archived', false)
+        .is('completed_at', null)
+        .lt('due_date', beforeDate)
+        // Lo más viejo primero: es lo que lleva más tiempo esperando.
+        .order('due_date', { ascending: true }),
+    );
+    return sinJoin(rows as unknown[]);
+  },
+
+  async rescheduleItems(itemIds, dueDate) {
+    if (itemIds.length === 0) return;
+    const { error } = await getSupabase().from('list_items').update({ due_date: dueDate }).in('id', [...itemIds]);
+    if (error) throw toError(error);
+  },
 };

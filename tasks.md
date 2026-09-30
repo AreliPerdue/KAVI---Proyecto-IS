@@ -268,14 +268,19 @@ un clic de más para llegar a lo mismo.
   colaboración y criterios de aceptación en Given/When/Then. Alcance acotado a la Fase 1
   acordada. **Fuera del alcance para siempre**: rastreo de precios y vistas previas de
   tiendas. Dep: —
-- [ ] T195 Modelo de datos de listas en `specs/02-data-model.md`: `lists`, `list_sections`,
+- [x] T195 Modelo de datos de listas en `specs/02-data-model.md`: `lists`, `list_sections`,
   `list_items`, `list_shares`, todas con RLS desde su creación. Dos cuidados aprendidos en
   este repo: helper `security definer` para evitar la recursión de RLS entre `lists` y
   `list_shares` (ver T-fix de `20260923220000`), y orden de ítems en `numeric` con índices
   fraccionarios, no enteros, para que dos personas reordenando a la vez no se pisen. La
   fecha sin hora va como `date` y no como `timestamptz`: es una fecha flotante y guardarla
   como instante UTC la corre de día según la zona. Excepción consciente a la regla de fechas
-  de CLAUDE.md, documentada en la spec. Dep: T194
+  de CLAUDE.md, documentada en la spec.
+  Hecho: migración `20260930120000_lists.sql` con las tres tablas, sus índices —uno parcial
+  sobre `due_date`, que solo la minoría de los elementos tiene—, los triggers de
+  `updated_at`, el helper `can_edit_list` y las políticas. Y `supabaseLists` implementado
+  contra ella. Se adelanta respecto al plan original: Areli valida en Vercel con datos
+  reales, así que dejar la migración para el final la tenía probando a ciegas. Dep: T194
 
 - [x] T198 Cascarón de Lists funcionando contra el backend demo: tipos de dominio,
   contrato `ListsApi`, backend demo completo de la fase 1 con semilla (Súper con secciones

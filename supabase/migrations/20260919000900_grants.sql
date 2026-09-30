@@ -18,3 +18,6 @@ revoke execute on function public.add_reminder_recipients(uuid) from anon;
 revoke execute on function public.is_admin(uuid) from anon;
 revoke execute on function public.admin_stats() from anon;
 revoke execute on function public.admin_accounts(int, int) from anon;
+
+-- T195 · Lists. `can_edit_list` decide permisos, así que sin sesión no tiene nada que decir.
+revoke execute on function public.can_edit_list(uuid) from anon;

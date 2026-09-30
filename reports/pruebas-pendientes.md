@@ -96,3 +96,13 @@ juntarlo en una sesión dedicada a pruebas.
 - [ ] `hasActiveFilters` es verdadero con `onlyListItems` aunque no haya dimensión ni tema
   —si no, el punto del botón de filtros no se enciende y el filtro queda invisible.
 - [ ] `applyFilters` ignora `onlyListItems`: recibe actividades y devuelve actividades.
+
+## Migración de Lists (T195)
+
+- [ ] Ampliar `supabase/tests/rls.sql`: con dos usuarios, que B no vea ni toque las listas,
+  secciones ni elementos de A. Es la garantía que sostiene todo el módulo.
+- [ ] Que `can_edit_list` no sea ejecutable por `anon`.
+- [ ] `listByDateRange` y `listOverdue` excluyen las listas archivadas por el join.
+- [ ] `duplicate` en Supabase remapea las secciones y copia solo los pendientes, igual que
+  el demo. Son dos implementaciones del mismo contrato y es donde más fácil divergen.
+- [ ] El check de `completed_at`/`completed_by`: palomear sin usuario debe fallar.
