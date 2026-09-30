@@ -5,6 +5,7 @@
  * que permite ocultarlas con un interruptor sin borrar nada, y que alcancen también a
  * lo registrado antes de que la vista existiera.
  */
+import { applyFilters } from '@/components/calendar/apply-filters';
 import {
   birthdaysToActivities,
   cumpleañerosDe,
@@ -12,6 +13,7 @@ import {
   isDerivedActivity,
   workoutsToActivities,
 } from '@/components/calendar/derived';
+import type { CalendarFilters } from '@/store/calendar-store';
 import type { Contact, Profile, Workout } from '@/types/domain';
 
 const entreno = (over: Partial<Workout> = {}): Workout =>
@@ -172,5 +174,48 @@ describe('es hoy mi cumpleaños', () => {
 
   it('sin cumpleaños definido no', () => {
     expect(esHoyCumpleaños(null)).toBe(false);
+  });
+});
+
+
+/**
+ * Las capas derivadas pasan por el mismo filtro que las actividades guardadas.
+ *
+ * Antes quedaban fuera a propósito, con el argumento de que «no tienen dimensión
+ * elegida por nadie». Sí la tienen —`fisica` los entrenamientos, `social` los
+ * cumpleaños—, así que al filtrar por otra dimensión seguían pintados y se
+ * incumplía RF-C11, que pide ver *solo* lo de la dimensión elegida.
+ */
+describe('las capas derivadas obedecen los filtros (RF-C11)', () => {
+  const filtro = (over: Partial<CalendarFilters> = {}): CalendarFilters =>
+    ({ dimensions: [], themeIds: [], ...over }) as CalendarFilters;
+
+  const entrenamiento = workoutsToActivities([entreno()]);
+  const cumpleaños = birthdaysToActivities(
+    [perfil({ birthday: '2000-09-21' })],
+    new Date(2026, 8, 1),
+    new Date(2026, 8, 30),
+  );
+
+  it('sin filtros se pintan las dos capas', () => {
+    expect(applyFilters([...entrenamiento, ...cumpleaños], filtro())).toHaveLength(2);
+  });
+
+  it('un entrenamiento sobrevive al filtro de su propia dimensión', () => {
+    expect(applyFilters(entrenamiento, filtro({ dimensions: ['fisica'] }))).toHaveLength(1);
+  });
+
+  /** El caso reportado: filtrar por otra cosa dejaba los entrenamientos en pantalla. */
+  it('un entrenamiento desaparece al filtrar por otra dimensión', () => {
+    expect(applyFilters(entrenamiento, filtro({ dimensions: ['social'] }))).toHaveLength(0);
+  });
+
+  it('un cumpleaños desaparece al filtrar por una dimensión que no es la suya', () => {
+    expect(applyFilters(cumpleaños, filtro({ dimensions: ['fisica'] }))).toHaveLength(0);
+  });
+
+  /** Ninguna de las dos capas tiene tema, así que un filtro de tema las excluye siempre. */
+  it('filtrar por tema deja fuera las capas derivadas', () => {
+    expect(applyFilters([...entrenamiento, ...cumpleaños], filtro({ themeIds: ['t1'] }))).toHaveLength(0);
   });
 });

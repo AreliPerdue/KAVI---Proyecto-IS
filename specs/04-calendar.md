@@ -31,6 +31,10 @@ El calendario es la pantalla principal y el hub de toda la app (P1). Desde él s
 
 ### Filtros y estados
 - RF-C11. Filtro por dimensión (chips con las 7) y por tema; combinables; afectan las 3 vistas.
+  El filtro alcanza **todo lo que se pinta en el calendario**, incluidas las capas derivadas
+  (entrenamientos sueltos de RF-F10 y cumpleaños de RF-A10): cada una lleva su dimensión, y
+  dejarlas visibles al filtrar por otra contradice el criterio de aceptación de abajo. Los
+  interruptores de Perfil son independientes: deciden si esa capa existe, no si pasa el filtro.
 - RF-C12. Estados de carga (skeleton), vacío ("No tienes actividades este día") y error con retry.
 
 ## Reglas de negocio
@@ -45,6 +49,8 @@ El calendario es la pantalla principal y el hub de toda la app (P1). Desde él s
 - Given que edito "solo esta ocurrencia", When guardo, Then las demás instancias no cambian.
 - Given un reminder de 30 min, When llega la hora, Then recibo la notificación local con el título de la actividad (iOS y Android).
 - Given filtro por dimensión "física", When lo aplico, Then solo veo actividades de esa dimensión en las 3 vistas.
+- Given los entrenamientos visibles en el calendario, When filtro por una dimensión distinta de
+  "física", Then dejan de verse, igual que las actividades que no pasan el filtro.
 
 ## UI
 Ruta principal: `/(app)/calendar` (tab inicial). Header: mes/rango actual, selector de vista, botón filtros. FAB "+". Hoja de detalle como bottom sheet.

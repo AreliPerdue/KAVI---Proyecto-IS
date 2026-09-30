@@ -183,5 +183,74 @@ Fuente de verdad del avance. Reglas: trabajar en orden, respetar dependencias, m
 - [x] T105 Pruebas de RLS ampliadas con actividades privadas y cumpleaños (bloques 11-13), y la regla de que el acceso a datos solo vive en services pasa a ser una regla de lint en vez de una convención. (NFR-4, NFR-6) Dep: T031
 - [ ] T107 ✅ HITO FINAL: versión candidata KAVI V1 con backend real — 26 de septiembre de 2026.
 
+## Fase 9 — KAVI como proyecto personal (30-sep-2026 en adelante)
+La entrega académica cerró con 100. De aquí en adelante KAVI deja de tener rúbrica y las
+decisiones son de producto. Se mantiene SDD: nada se implementa sin spec.
+
+### Correcciones
+- [x] T187 Los filtros del calendario no alcanzaban a las capas derivadas: al filtrar por
+  cualquier dimensión, los entrenamientos sueltos y los cumpleaños seguían pintados. Estaba
+  escrito como decisión deliberada ("no tienen dimensión elegida por nadie"), pero sí la
+  tienen —`fisica` y `social`—, así que incumplía el criterio de aceptación de RF-C11, que
+  pide ver *solo* lo de la dimensión elegida. El filtro pasa a aplicarse sobre actividades y
+  derivadas juntas; los interruptores de Perfil siguen siendo independientes, porque
+  responden a otra pregunta (si la capa existe, no si pasa el filtro). Se aclara RF-C11 en
+  la spec y quedan 5 pruebas de regresión. (RF-C11, RF-F10, RF-A10) Dep: —
+
+### Cascarón de navegación
+- [ ] T188 Barra de accesos configurable: **3 módulos a elección + el menú fijo en el cuarto
+  lugar**. Todos los módulos siguen siendo rutas bajo `(tabs)/`; la preferencia decide cuál
+  lleva botón, no cuál existe. El menú nunca es configurable, porque es la única vía de
+  regreso si alguien quita Perfil de sus tres. La preferencia vive en `preferences-store`
+  (dispositivo, como `appearance` y `selfColor`). En web no aplica el límite: caben todos.
+  Plan A con `NativeTabs`; si cambiar el conjunto en caliente rompe el estado de navegación,
+  plan B es la barra propia con `expo-router/ui` que la web ya usa. Requiere sección nueva de
+  navegación en `specs/01-product-overview.md`. Dep: —
+- [ ] T189 Menú emergente de módulos: rejilla con todos los módulos disponibles, el que no
+  está en la barra se abre desde aquí. Es también donde se eligen los tres accesos. Dep: T188
+
+### Densidad y vistas del calendario
+- [ ] T190 Redensificar los bloques de actividad: tipografía más chica y bloques más
+  delgados para que se lea más texto en la vista previa. Web con el aire de Calendar de
+  Apple, móvil con el de Google Calendar. **La hora se conserva**: no se sustituye por
+  iconos. Toca `activity-block.tsx`, `activity-style.ts` y `timeline.tsx`. Requiere
+  actualizar la escala tipográfica permitida en `kavi-design` §2 o justificar la excepción.
+  Dep: —
+- [ ] T191 Vista **Agenda** (la "Schedule" de Google Calendar): lista cronológica continua
+  agrupada por día, sin rejilla de horas. Es la vista que mejor funciona en pantalla chica y
+  la que hace legible un mes vacío. Dep: T190
+- [ ] T192 Vista **3 días**: rejilla de horas con tres columnas, entre el día y la semana.
+  Es la que vuelve usable la semana en un teléfono. Dep: T190
+- [ ] T193 Rediseñar el selector de vistas del header, que pasa de 3 a 5 opciones (día, 3
+  días, semana, mes, agenda) y ya no cabe como segmented control. Dep: T191, T192
+
+### Módulo de listas — spec 10 (pendiente de escribir)
+- [ ] T194 Escribir `specs/10-lists.md`: filosofía, franja de pendientes del día, vistas,
+  colaboración y criterios de aceptación en Given/When/Then. Alcance acotado a la Fase 1
+  acordada. **Fuera del alcance para siempre**: rastreo de precios y vistas previas de
+  tiendas. Dep: —
+- [ ] T195 Modelo de datos de listas en `specs/02-data-model.md`: `lists`, `list_sections`,
+  `list_items`, `list_shares`, todas con RLS desde su creación. Dos cuidados aprendidos en
+  este repo: helper `security definer` para evitar la recursión de RLS entre `lists` y
+  `list_shares` (ver T-fix de `20260923220000`), y orden de ítems en `numeric` con índices
+  fraccionarios, no enteros, para que dos personas reordenando a la vez no se pisen. La
+  fecha sin hora va como `date` y no como `timestamptz`: es una fecha flotante y guardarla
+  como instante UTC la corre de día según la zona. Excepción consciente a la regla de fechas
+  de CLAUDE.md, documentada en la spec. Dep: T194
+
+### Pendientes sueltos
+- [ ] T196 Elegir idioma de la interfaz: **español o inglés**. Hoy los textos están
+  incrustados en los componentes, así que esto es sobre todo el trabajo de extraerlos.
+  Afecta también los formatos de fecha (`date-fns` locale) y la redacción es-MX que fija
+  `kavi-design` §4. Dep: —
+- [ ] T197 Nobi coral: la imagen en sus dos variantes (oscura y clara), su entrada en
+  `constants/nobi.ts`, y su color en la paleta de `people-colors.ts` manteniendo las
+  garantías de contraste y distancia perceptual que ya cumple la paleta de 20. Dep: —
+
+### Largo plazo (cuando KAVI se lance al público)
+Distribución en iOS y cuenta de Apple Developer · notificaciones push con la app cerrada ·
+funciones con IA (categorización, lenguaje natural libre, sugerencias) · código de barras ·
+imágenes en listas (gratis en dinero, caro en horas) · sincronización offline real.
+
 ## Backlog futuro (NO implementar — P8)
 Estadísticas de entrenamientos · módulos de otras dimensiones (KAVI Reader, nutrición) · push remoto · export/import calendarios · offline completo · plantillas de rutina.

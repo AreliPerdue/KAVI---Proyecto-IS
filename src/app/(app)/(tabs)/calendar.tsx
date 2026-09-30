@@ -153,9 +153,14 @@ export default function CalendarScreen() {
   const byPerson = activeOverlayIds.length > 0;
   /**
    * Capas derivadas: entrenamientos sueltos y cumpleaños. No son actividades
-   * guardadas sino una vista sobre datos que ya existen, así que quedan fuera de
-   * los filtros de dimensión y tema —no tienen ninguno elegido por nadie— y se
-   * pueden apagar desde Perfil sin borrar nada.
+   * guardadas sino una vista sobre datos que ya existen, así que se pueden apagar
+   * desde Perfil sin borrar nada.
+   *
+   * Sí obedecen los filtros: llevan dimensión propia —`fisica` los entrenamientos,
+   * `social` los cumpleaños— y dejarlas fuera rompía RF-C11, que exige ver *solo*
+   * lo de la dimensión elegida. El interruptor de Perfil y el filtro responden a
+   * preguntas distintas: uno dice «nunca me los muestres», el otro «ahora mismo
+   * solo quiero ver esto».
    */
   const derivadas = useMemo(() => {
     const extras: Activity[] = [];
@@ -167,7 +172,8 @@ export default function CalendarScreen() {
   }, [showWorkouts, workouts.data, showBirthdays, profile.data, contacts.data, range.from, range.to]);
 
   const data = useMemo(() => {
-    const all = [...applyFilters(activities.data ?? [], filters), ...derivadas, ...overlayActivities];
+    const propias = [...(activities.data ?? []), ...derivadas];
+    const all = [...applyFilters(propias, filters), ...overlayActivities];
     return byPerson ? all.map((a) => ({ ...a, color: colorOf(a.owner_id) })) : all;
   }, [activities.data, filters, derivadas, overlayActivities, byPerson, colorOf]);
   const isShared = (a: Activity) => a.owner_id !== userId;
