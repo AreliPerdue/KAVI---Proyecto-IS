@@ -91,14 +91,42 @@ escribe **antes** que la consulta que los alimenta: se cuenta lo hecho, no lo qu
 ("hiciste tu rutina completa 12 de 30 días"), y no hay rachas que se rompan ni avisos por
 haber fallado.
 
-### Decisiones abiertas
-- **Cuándo cierra una vuelta.** Sola al llegar la siguiente ocurrencia, o a mano al terminar.
-  Automática no estorba, pero castiga a quien palomea a la 1 de la mañana lo del día
-  anterior. Es lo primero que hay que resolver.
-- **Agrupar listas para poder resumirlas.** El caso que se pide —"de mis listas de trabajo"—
-  necesita etiquetas o categorías, que todavía no existen (están en la fase 3).
-- **Si el historial aplica a todas las listas o solo a las que se repiten.** Una lista de una
-  sola vez no tiene vueltas; su único dato es si se terminó.
+### Cuándo cierra una vuelta: el periodo de gracia
+Una vuelta **no** se cierra cuando empieza la siguiente. Sigue abierta y editable hasta las
+**15:00 del día siguiente**, y solo entonces caduca con el conteo que tenga.
+
+El motivo es que la gente palomea tarde: lo de ayer se anota hoy en la mañana, y cerrar a
+medianoche registraría como incumplido algo que sí se hizo. Pero las dos vueltas **no se
+mezclan**: durante la gracia conviven, cada una con su fecha, y palomear en la de ayer suma
+a ayer. La lista muestra la de hoy; si la de ayer sigue abierta e incompleta, aparece arriba
+un aviso —"Ayer: 3 de 7"— que lleva a ella.
+
+Una vuelta que caduca se cierra con lo que tenga. No se avisa ni se insiste.
+
+### Qué se registra de una lista que **no** se repite
+Nada nuevo, y es a propósito.
+
+Una lista de súper no se "completa": se usa, se vacía y se vuelve a llenar. Un 60 % palomeado
+ahí no es un fracaso, es una lista a media compra. Una lista de películas nunca termina. Medir
+esas con porcentaje de cumplimiento produce números que no significan nada y que, peor, se
+leen como reproche.
+
+Para la pregunta que sí tiene sentido en cualquier lista —**qué hiciste**— ya está el dato:
+`list_items.completed_at` guarda cuándo se palomeó cada elemento. De ahí sale "esta semana
+completaste 23 cosas" sin una tabla nueva, y sirve igual para listas que se repiten y para
+las que no. Y comparando `completed_at` contra `due_date` sale "a tiempo", que es la otra
+mitad del caso que se pidió.
+
+Así quedan dos mecanismos para dos preguntas distintas, en vez de uno forzado para las dos:
+
+| Pregunta | De dónde sale |
+|---|---|
+| ¿Cumplí mi rutina? | `list_runs` — solo listas que se repiten |
+| ¿Qué hice, y a tiempo? | `list_items.completed_at` vs `due_date` — todas |
+
+### Decisión abierta
+- **Agrupar listas para poder resumirlas.** El caso "de mis listas de trabajo" necesita
+  etiquetas, que van después de lo ya planeado (fase 3).
 
 ## Compartir (RF-L14 – RF-L17) — fase 2
 - **RF-L14.** Una lista se comparte con contactos ya aceptados (misma regla que el calendario, spec 06), con tres permisos: **ver**, **editar** (agregar, editar y palomear) y **administrar** (además, gestionar miembros).
