@@ -4,6 +4,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import { tint } from '@/components/calendar/activity-style';
+import { ModalHeader } from '@/components/modal-header';
 import { ActionRow, AppText, EmptyState, ErrorState, Fab, LoadingState, Screen, Sheet, ThemeIcon } from '@/components/ui';
 import { IconSize, IconStroke, Radius, Spacing } from '@/constants/theme';
 import { useArchivedLists, useListMutations, useLists } from '@/hooks/use-lists';
@@ -157,20 +158,24 @@ export default function ListsScreen() {
 
   return (
     <Screen contentStyle={styles.content}>
-      <View style={styles.cabecera}>
-        <AppText variant="title" accessibilityRole="header">
-          {verArchivadas ? 'Archivadas' : 'Listas'}
-        </AppText>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={verArchivadas ? 'Volver a mis listas' : 'Ver listas archivadas'}
-          onPress={() => setVerArchivadas((v) => !v)}
-          style={({ pressed }) => [styles.enlace, pressed ? styles.pressed : null]}>
-          <AppText variant="label" color="textSecondary">
-            {verArchivadas ? 'Mis listas' : 'Archivadas'}
-          </AppText>
-        </Pressable>
-      </View>
+      <ModalHeader
+        back
+        title={verArchivadas ? 'Archivadas' : 'Listas'}
+        // Dentro de Archivadas, "atrás" vuelve a las listas activas antes de salir del
+        // módulo: es el paso que la persona deshace, no la pantalla entera.
+        onClose={verArchivadas ? () => setVerArchivadas(false) : undefined}
+        right={
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={verArchivadas ? 'Volver a mis listas' : 'Ver listas archivadas'}
+            onPress={() => setVerArchivadas((v) => !v)}
+            style={({ pressed }) => [styles.enlace, pressed ? styles.pressed : null]}>
+            <AppText variant="label" color="textSecondary">
+              {verArchivadas ? 'Mis listas' : 'Archivadas'}
+            </AppText>
+          </Pressable>
+        }
+      />
 
       {consulta.isPending ? <LoadingState /> : null}
       {consulta.isError ? <ErrorState message={consulta.error.message} onRetry={() => consulta.refetch()} /> : null}
@@ -259,7 +264,6 @@ export default function ListsScreen() {
 
 const styles = StyleSheet.create({
   content: { gap: Spacing.md },
-  cabecera: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: Spacing.sm },
   enlace: { minHeight: 44, justifyContent: 'center', paddingHorizontal: Spacing.xs },
   cuerpo: { gap: Spacing.lg, paddingBottom: Spacing['3xl'] },
   grupo: { gap: Spacing.sm },

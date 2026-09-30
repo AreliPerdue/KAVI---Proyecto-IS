@@ -1,4 +1,4 @@
-import { X } from 'lucide-react-native';
+import { ChevronLeft, X } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -14,15 +14,35 @@ import { useTheme } from '@/hooks/use-theme';
  */
 const OPTICAL_INSET = (MinTouchTarget - IconSize.action) / 2;
 
-/** Encabezado de pantallas modales: cerrar + título + acción opcional. */
-export function ModalHeader({ title, right, onClose }: { title: string; right?: ReactNode; onClose?: () => void }) {
+/**
+ * Encabezado de pantallas modales: cerrar + título + acción opcional.
+ *
+ * Con `back` cambia la X por una flecha y dice "Atrás": en una pantalla **apilada** —no
+ * modal— cerrar con X sugiere descartar algo, y sin ningún control propio la única salida
+ * en web es el botón del navegador, que en la app instalada ni siquiera existe.
+ */
+export function ModalHeader({
+  title,
+  right,
+  onClose,
+  back = false,
+}: {
+  title: string;
+  right?: ReactNode;
+  onClose?: () => void;
+  back?: boolean;
+}) {
   const theme = useTheme();
   const router = useRouter();
   const close = onClose ?? (() => (router.canGoBack() ? router.back() : router.replace('/(app)/(tabs)/calendar')));
   return (
     <View style={styles.row}>
-      <IconButton label="Cerrar" onPress={close}>
-        <X size={IconSize.action} strokeWidth={IconStroke} color={theme.text} />
+      <IconButton label={back ? 'Atrás' : 'Cerrar'} onPress={close}>
+        {back ? (
+          <ChevronLeft size={IconSize.action} strokeWidth={IconStroke} color={theme.text} />
+        ) : (
+          <X size={IconSize.action} strokeWidth={IconStroke} color={theme.text} />
+        )}
       </IconButton>
       <AppText variant="heading" accessibilityRole="header" style={styles.title} numberOfLines={1}>
         {title}

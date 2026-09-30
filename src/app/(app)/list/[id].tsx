@@ -3,6 +3,7 @@ import { Check } from 'lucide-react-native';
 import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
+import { ModalHeader } from '@/components/modal-header';
 import { AppText, EmptyState, ErrorState, LoadingState, Screen, ThemeIcon } from '@/components/ui';
 import { Radius, Spacing } from '@/constants/theme';
 import { useList, useListMutations } from '@/hooks/use-lists';
@@ -83,12 +84,11 @@ export default function ListDetailScreen() {
 
       {datos ? (
         <>
-          <View style={styles.encabezado}>
-            <ThemeIcon name={datos.list.icon} color={color} size={24} />
-            <AppText variant="title" accessibilityRole="header" numberOfLines={2} style={styles.titulo}>
-              {datos.list.name}
-            </AppText>
-          </View>
+          <ModalHeader
+            back
+            title={datos.list.name}
+            right={<ThemeIcon name={datos.list.icon} color={color} size={24} />}
+          />
 
           <ScrollView contentContainerStyle={styles.cuerpo} showsVerticalScrollIndicator={false}>
             {sueltos.map((it) => (

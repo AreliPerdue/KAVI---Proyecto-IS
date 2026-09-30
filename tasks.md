@@ -275,7 +275,11 @@ un clic de más para llegar a lo mismo.
   mouse no existe la pulsación larga, así que sin él el menú era inalcanzable en web; pero
   un Pressable dentro de otro genera un `<button>` dentro de un `<button>`, que es HTML
   inválido, rompe la hidratación y saca al interno del recorrido con teclado. Como
-  hermanos se ve igual y los dos funcionan. (RF-L2, RF-L3) Dep: T198
+  hermanos se ve igual y los dos funcionan.
+  Las dos pantallas de Lists llevan botón de atrás propio: sin él la única salida en web
+  era el botón del navegador, que en la app instalada ni siquiera existe. `ModalHeader`
+  gana la variante `back` —flecha en vez de X— porque en una pantalla apilada, y no modal,
+  cerrar con X sugiere descartar algo. (RF-L2, RF-L3) Dep: T198
 - [ ] T200 Captura de ítems: campo que agrega al confirmar y se queda listo para el
   siguiente, editar, eliminar y mover entre secciones. (RF-L5, RF-L7, RF-L8) Dep: T198
 - [ ] T201 La franja de pendientes del día en el calendario: arriba de la rejilla de horas,

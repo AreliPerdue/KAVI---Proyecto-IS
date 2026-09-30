@@ -45,3 +45,5 @@ juntarlo en una sesión dedicada a pruebas.
 - [ ] Eliminar pide confirmación y el mensaje menciona cuántos elementos se pierden.
 - [ ] Archivar la saca del inicio y aparece en Archivadas; restaurar la devuelve.
 - [ ] `listFormSchema` rechaza un color fuera de la paleta.
+- [ ] `ModalHeader` con `back`: dice "Atrás" y usa flecha, no X. Y que dentro de Archivadas
+  el botón vuelva a las listas activas en vez de salir del módulo.
