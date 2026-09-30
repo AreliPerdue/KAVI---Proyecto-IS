@@ -68,6 +68,38 @@ Por eso **los ítems nunca entran en la rejilla de horas**, ni siquiera cuando l
   aparece cuando el día abierto es hoy: mirando un día pasado o futuro, "se te pasó" no
   significa nada.
 
+## Listas que se repiten y su historial (RF-L19 – RF-L21) — fase 3
+
+Una rutina no es una lista que se hace una vez: es la misma lista que se vuelve a empezar.
+Hoy KAVI no sabe distinguirlas, y por eso tampoco puede decir nada sobre cómo te ha ido.
+
+- **RF-L19. Una lista puede repetirse.** Con una regla de recurrencia (diaria, ciertos días
+  de la semana, mensual). Se reutiliza `lib/recurrence.ts`, que ya expande RRULE para las
+  actividades: una segunda implementación abriría la puerta a que las dos difieran.
+- **RF-L20. Cada vuelta queda registrada.** Al empezar una nueva vuelta, la anterior se
+  cierra guardando **cuántos elementos se completaron de cuántos** y en qué fecha, y los
+  elementos se despalomean para poder hacerla otra vez. El historial es de conteos, no de
+  copias: guardar cada elemento de cada día haría crecer la tabla sin que nadie lo consulte.
+- **RF-L21. Resúmenes.** A partir de ese historial: cuántas veces se completó entera una
+  rutina, y qué proporción se cumplió en un conjunto de listas.
+
+### El riesgo que esta función trae
+La sección "KAVI no debe caer en la productividad tóxica" de este mismo concepto aplica
+aquí más que en ningún otro lado. Un resumen que diga *"dejaste el 25 % sin completar"* es
+exactamente la presión que KAVI dijo que no iba a ejercer. La redacción de los resúmenes se
+escribe **antes** que la consulta que los alimenta: se cuenta lo hecho, no lo que falta
+("hiciste tu rutina completa 12 de 30 días"), y no hay rachas que se rompan ni avisos por
+haber fallado.
+
+### Decisiones abiertas
+- **Cuándo cierra una vuelta.** Sola al llegar la siguiente ocurrencia, o a mano al terminar.
+  Automática no estorba, pero castiga a quien palomea a la 1 de la mañana lo del día
+  anterior. Es lo primero que hay que resolver.
+- **Agrupar listas para poder resumirlas.** El caso que se pide —"de mis listas de trabajo"—
+  necesita etiquetas o categorías, que todavía no existen (están en la fase 3).
+- **Si el historial aplica a todas las listas o solo a las que se repiten.** Una lista de una
+  sola vez no tiene vueltas; su único dato es si se terminó.
+
 ## Compartir (RF-L14 – RF-L17) — fase 2
 - **RF-L14.** Una lista se comparte con contactos ya aceptados (misma regla que el calendario, spec 06), con tres permisos: **ver**, **editar** (agregar, editar y palomear) y **administrar** (además, gestionar miembros).
 - **RF-L15.** Cada ítem guarda **quién lo agregó** y **quién lo completó**, y se muestra en las listas compartidas.

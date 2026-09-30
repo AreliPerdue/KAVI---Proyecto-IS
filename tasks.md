@@ -359,6 +359,18 @@ un clic de más para llegar a lo mismo.
   secciones— se borra sola al salir, para que arrepentirse no deje basura en el inicio.
   (RF-L2) Dep: T199
 
+- [ ] T208 Listas que se repiten (RF-L19). Regla de recurrencia en `lists`, reutilizando
+  `lib/recurrence.ts` en vez de escribir una segunda expansión de RRULE. Dep: T195
+- [ ] T209 Historial de vueltas (RF-L20). Tabla `list_runs` con la fecha y cuántos elementos
+  se completaron de cuántos; al empezar una vuelta nueva se cierra la anterior y se
+  despaloman los elementos. Conteos, no copias: guardar cada elemento de cada día haría
+  crecer la tabla sin que nadie lo consulte. Dep: T208
+- [ ] T210 Resúmenes (RF-L21). **La redacción se escribe antes que la consulta.** Un resumen
+  que diga "dejaste el 25 % sin completar" es justo la presión que KAVI dijo que no iba a
+  ejercer: se cuenta lo hecho, no lo que falta, y no hay rachas que romper. Dep: T209
+- [ ] T211 Etiquetas de listas. Hacen falta para poder resumir "mis listas de trabajo"
+  (RF-L21), y de paso son parte de la fase 3 del concepto. Dep: T195
+
 ### Pendientes sueltos
 - [ ] T196 Elegir idioma de la interfaz: **español o inglés**. Hoy los textos están
   incrustados en los componentes, así que esto es sobre todo el trabajo de extraerlos.
