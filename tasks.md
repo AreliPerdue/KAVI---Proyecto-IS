@@ -303,8 +303,16 @@ un clic de más para llegar a lo mismo.
   era el botón del navegador, que en la app instalada ni siquiera existe. `ModalHeader`
   gana la variante `back` —flecha en vez de X— porque en una pantalla apilada, y no modal,
   cerrar con X sugiere descartar algo. (RF-L2, RF-L3) Dep: T198
-- [ ] T200 Captura de ítems: campo que agrega al confirmar y se queda listo para el
-  siguiente, editar, eliminar y mover entre secciones. (RF-L5, RF-L7, RF-L8) Dep: T198
+- [x] T200 Captura de ítems. `ItemComposer` es una fila "+ …" en reposo —para no llenar la
+  pantalla de campos vacíos— que al tocarla se vuelve input y **al confirmar no se cierra ni
+  pierde el foco**: las listas se llenan en ráfaga y volver a tocar el botón entre uno y
+  otro convertiría una captura de diez segundos en una de un minuto. Hay un compositor por
+  sección, así que lo que escribes cae donde estás mirando y no al final de la lista.
+  Además: hoja de edición con título, nota y cambio de sección, eliminar con confirmación
+  que distingue palomear de eliminar —uno conserva, el otro no—, y crear secciones.
+  En web se suprime el anillo de foco del navegador, que se encimaba sobre el borde de
+  acento; no se pierde el indicador, porque ese borde **es** el indicador.
+  (RF-L5, RF-L7, RF-L8, RF-L9) Dep: T198
 - [ ] T201 La franja de pendientes del día en el calendario: arriba de la rejilla de horas,
   plegable, con el icono de su lista y su casilla. Nunca dentro de las horas, ni siquiera
   si el ítem tiene hora. El hook `useListItemsByDate` ya existe. (RF-L11–RF-L13) Dep: T200

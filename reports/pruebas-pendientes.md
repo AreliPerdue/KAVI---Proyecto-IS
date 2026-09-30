@@ -68,3 +68,13 @@ juntarlo en una sesión dedicada a pruebas.
 - [ ] El FAB encogido **no** baja del mínimo táctil (44 iOS / 48 Android). Es la garantía
   que justifica la escala elegida y la que se rompería al retocar el tamaño a ojo.
 - [ ] Con movimiento reducido cambia de tamaño sin transición.
+
+## Captura de ítems (T200)
+
+- [ ] `ItemComposer`: al confirmar limpia el campo y **conserva el foco**; con el campo
+  vacío se cierra en vez de agregar algo en blanco. Es el comportamiento del que depende
+  capturar de corrido y el más fácil de romper sin darse cuenta.
+- [ ] Agregar dentro de una sección deja el ítem en esa sección, no al final de la lista.
+- [ ] Mover un ítem entre secciones desde la hoja de edición.
+- [ ] Eliminar pide confirmación y el mensaje distingue palomear de eliminar.
+- [ ] El lápiz de cada renglón no queda anidado dentro del Pressable de la fila.
