@@ -3,7 +3,7 @@ import type { ImageSourcePropType } from 'react-native';
 import type { ColorScheme } from './theme';
 
 /**
- * Nobi, la mascota de KAVI, en sus veinte colores.
+ * Nobi, la mascota de KAVI, en sus veintiún colores.
  *
  * Se declaran uno a uno y no por plantilla porque `require` de Metro necesita una
  * ruta literal: se resuelve al empaquetar, no en tiempo de ejecución.
@@ -39,6 +39,10 @@ export const NOBIS: readonly NobiColor[] = [
   { id: 'red', label: 'Rojo', sources: {
     dark: require('../../assets/nobi/red.png'),
     light: require('../../assets/nobi/light/red.png'),
+  } },
+  { id: 'coral', label: 'Coral', sources: {
+    dark: require('../../assets/nobi/coral.png'),
+    light: require('../../assets/nobi/light/coral.png'),
   } },
   { id: 'deep_red', label: 'Rojo oscuro', sources: {
     dark: require('../../assets/nobi/deep_red.png'),

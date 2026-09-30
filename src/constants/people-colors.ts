@@ -8,11 +8,16 @@ import { NOBIS } from '@/constants/nobi';
  * Es una capa distinta de la paleta de dimensiones (spec 05) y solo aplica en ese modo;
  * con "Tú" a solas vuelve el color coding de temas.
  *
- * Son **veinte y no ocho** porque con ocho, a partir del noveno contacto la paleta se
+ * Son **veintiuno y no ocho** porque con ocho, a partir del noveno contacto la paleta se
  * repetía y dos personas compartían color justo en la vista que existe para
  * distinguirlas. Van emparejados uno a uno con los colores de Nobi (`constants/nobi`),
  * para que el color que alguien eligió para su mascota sea el que lo representa en el
  * calendario de los demás.
+ *
+ * Un color nuevo se agrega **al final** aunque su matiz encaje a media lista. Este orden
+ * es el del reparto automático, y `assignPeopleColors` lo deriva en cada render en vez de
+ * guardarlo: meter uno en medio recorre el reparto y cambiaría de color a contactos que
+ * ya llevaban el suyo. Al final no le mueve el color a nadie.
  *
  * El **orden** no es decorativo: es el que se reparte a quien no ha elegido color, así
  * que va alternando matices en vez de agrupar los parecidos. Con los rosas juntos al
@@ -49,6 +54,11 @@ export const PEOPLE_COLORS: readonly PersonColor[] = [
   { id: 'lilac', label: 'Lila', hex: '#A473C7' },
   { id: 'black', label: 'Negro', hex: '#5F7266' },
   { id: 'white', label: 'Blanco', hex: '#78899F' },
+  // El coral del PNG es #F58466. Aqui va un punto mas oscuro porque el original da
+  // 2.24:1 sobre el fondo claro y la regla son 3:1; este queda a 9 de distancia
+  // perceptual del suyo, por debajo del 13 en que dos colores se confunden, asi
+  // que al ojo sigue siendo el mismo coral.
+  { id: 'coral', label: 'Coral', hex: '#DA6C50' },
 ] as const;
 
 const POR_ID = new Map(PEOPLE_COLORS.map((c) => [c.id, c.hex]));

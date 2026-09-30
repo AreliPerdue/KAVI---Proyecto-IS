@@ -197,7 +197,10 @@ decisiones son de producto. Se mantiene SDD: nada se implementa sin spec.
   responden a otra pregunta (si la capa existe, no si pasa el filtro). Se aclara RF-C11 en
   la spec y quedan 5 pruebas de regresión. (RF-C11, RF-F10, RF-A10) Dep: —
 
-### Cascarón de navegación
+### Cascarón de navegación (en pausa)
+Los cuatro accesos se quedan como están. El cambio se hace cuando haya módulos que
+poner en el dropdown —lectura, sueño, diario—; con solo Fitness dentro, el menú sería
+un clic de más para llegar a lo mismo.
 - [ ] T188 Barra de accesos configurable: **3 módulos a elección + el menú fijo en el cuarto
   lugar**. Todos los módulos siguen siendo rutas bajo `(tabs)/`; la preferencia decide cuál
   lleva botón, no cuál existe. El menú nunca es configurable, porque es la única vía de
@@ -256,9 +259,18 @@ decisiones son de producto. Se mantiene SDD: nada se implementa sin spec.
   incrustados en los componentes, así que esto es sobre todo el trabajo de extraerlos.
   Afecta también los formatos de fecha (`date-fns` locale) y la redacción es-MX que fija
   `kavi-design` §4. Dep: —
-- [ ] T197 Nobi coral: la imagen en sus dos variantes (oscura y clara), su entrada en
-  `constants/nobi.ts`, y su color en la paleta de `people-colors.ts` manteniendo las
-  garantías de contraste y distancia perceptual que ya cumple la paleta de 20. Dep: —
+- [x] T197 Nobi coral, el vigesimoprimero. Imágenes en sus dos variantes reescaladas a
+  512 px como el resto (llegaban a 1254, que son ~1.3 MB por archivo al bundle), entrada en
+  `constants/nobi.ts` entre el rojo y el rojo oscuro —donde cae su matiz en la rueda— y su
+  color en `people-colors.ts`, **al final de la lista**: ese orden es el del reparto
+  automático y se deriva en cada render, así que meterlo en medio le habría cambiado el
+  color a contactos que ya tenían el suyo.
+  El hex del PNG es `#F58466`, pero da 2.24:1 sobre el fondo claro y la paleta exige 3:1
+  porque aquí el color significa quién es cada persona (kavi-design §5). Se usa `#DA6C50`,
+  el color más parecido que cumple las tres reglas: queda a 9.0 de distancia perceptual del
+  original —bajo el 13 en que dos colores se confunden, o sea el mismo coral a la vista— y
+  contrasta 3.01:1 sobre papel y 5.52:1 sobre tinta. Es lo que ya se hacía con "blanco" y
+  "negro", que son grises con matiz por la misma razón. Dep: —
 
 ### Largo plazo (cuando KAVI se lance al público)
 Distribución en iOS y cuenta de Apple Developer · notificaciones push con la app cerrada ·

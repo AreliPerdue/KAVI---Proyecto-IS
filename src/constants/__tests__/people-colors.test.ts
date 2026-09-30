@@ -83,9 +83,9 @@ describe('la paleta', () => {
     expect(parecidos).toEqual([]);
   });
 
-  /** Veinte y no ocho: con ocho, del noveno contacto en adelante se repetian. */
-  it('hay veinte, uno por contacto habitual', () => {
-    expect(PEOPLE_COLORS.length).toBe(20);
+  /** Mas de ocho: con ocho, del noveno contacto en adelante se repetian. */
+  it('hay veintiuno, uno por cada Nobi', () => {
+    expect(PEOPLE_COLORS.length).toBe(21);
   });
 });
 
