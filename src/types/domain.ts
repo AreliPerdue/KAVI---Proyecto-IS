@@ -295,12 +295,19 @@ export type ListItem = {
    * `timestamptz` se correría de día al cruzar husos horarios.
    */
   due_date: string | null;
-  /** Hora opcional del recordatorio. No coloca el ítem en la rejilla (RF-L12). */
+  /** Hora opcional del vencimiento. No coloca el ítem en la rejilla (RF-L12). */
   due_time: string | null;
+  /**
+   * Minutos **antes** del vencimiento en que avisar; `null` = sin recordatorio (RF-L11b).
+   *
+   * Va aparte de `due_time` porque son preguntas distintas: la hora dice *cuándo es* y
+   * esto *cuándo avisar*. "Se entrega el 3, avísame el 1" necesita las dos.
+   */
+  reminder_offset_minutes: number | null;
   created_at: string;
   updated_at: string;
 };
 
 export type ListInput = Pick<KaviList, 'name' | 'icon' | 'color'> & Partial<Pick<KaviList, 'view'>>;
 export type ListItemInput = Pick<ListItem, 'title'> &
-  Partial<Pick<ListItem, 'note' | 'section_id' | 'due_date' | 'due_time'>>;
+  Partial<Pick<ListItem, 'note' | 'section_id' | 'due_date' | 'due_time' | 'reminder_offset_minutes'>>;

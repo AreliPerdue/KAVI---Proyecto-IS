@@ -112,16 +112,18 @@ export function DayItemsStrip({
             const hecho = item.completed_at !== null;
             return (
               <View key={item.id} style={styles.fila}>
+                {/*
+                  Misma regla que dentro de la lista: palomear es del círculo y tocar el
+                  texto abre. Aquí importa todavía más, porque la franja vive pegada a la
+                  rejilla del calendario y se toca de pasada.
+                */}
                 <Pressable
                   accessibilityRole="checkbox"
                   accessibilityState={{ checked: hecho }}
-                  accessibilityLabel={item.title}
+                  accessibilityLabel={hecho ? `Marcar ${item.title} como pendiente` : `Marcar ${item.title} como hecho`}
+                  hitSlop={8}
                   onPress={() => onToggleItem(item, !hecho)}
-                  style={({ pressed }) => [
-                    styles.toque,
-                    { backgroundColor: tint(color, hecho ? 0.06 : 0.16) },
-                    pressed ? styles.pressed : null,
-                  ]}>
+                  style={({ pressed }) => [styles.casillaToque, pressed ? styles.pressed : null]}>
                   <View
                     style={[
                       styles.casilla,
@@ -129,6 +131,17 @@ export function DayItemsStrip({
                     ]}>
                     {hecho ? <Check size={11} strokeWidth={3} color={theme.onInk} /> : null}
                   </View>
+                </Pressable>
+
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={`Abrir ${lista?.name ?? 'la lista'}: ${item.title}`}
+                  onPress={() => onOpenItem(item)}
+                  style={({ pressed }) => [
+                    styles.toque,
+                    { backgroundColor: tint(color, hecho ? 0.06 : 0.16) },
+                    pressed ? styles.pressed : null,
+                  ]}>
                   {lista ? <ThemeIcon name={lista.icon} color={color} size={14} /> : null}
                   <AppText
                     variant="caption"
@@ -142,14 +155,6 @@ export function DayItemsStrip({
                       {fechaVencida(item.due_date)}
                     </AppText>
                   ) : null}
-                </Pressable>
-                {/* Hermano y no anidado, para no meter un `<button>` dentro de otro en web. */}
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityLabel={`Abrir ${lista?.name ?? 'la lista'}`}
-                  hitSlop={8}
-                  onPress={() => onOpenItem(item)}
-                  style={({ pressed }) => [styles.abrir, pressed ? styles.pressed : null]}>
                   <ChevronRight size={14} strokeWidth={IconStroke} color={theme.textTertiary} />
                 </Pressable>
               </View>
@@ -183,6 +188,7 @@ const styles = StyleSheet.create({
   lista: { maxHeight: MAX_ALTO },
   listaContenido: { gap: 2 },
   fila: { flexDirection: 'row', alignItems: 'center' },
+  casillaToque: { width: 28, height: 32, alignItems: 'center', justifyContent: 'center' },
   toque: {
     flex: 1,
     flexDirection: 'row',
@@ -203,6 +209,5 @@ const styles = StyleSheet.create({
   },
   titulo: { flex: 1 },
   tachado: { textDecorationLine: 'line-through' },
-  abrir: { width: 28, height: 32, alignItems: 'center', justifyContent: 'center' },
   pressed: { opacity: 0.8 },
 });

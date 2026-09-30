@@ -1,5 +1,5 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { ArrowDown, ArrowUp, CalendarDays, Check, Clock, FolderPlus, Palette, Trash2, UserPlus, X } from 'lucide-react-native';
+import { ArrowDown, ArrowUp, Bell, CalendarDays, Check, Clock, FolderPlus, Palette, Trash2, UserPlus, X } from 'lucide-react-native';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Platform, Pressable, ScrollView, StyleSheet, TextInput, type TextStyle, View } from 'react-native';
 
@@ -23,6 +23,7 @@ import {
   ThemeIcon,
   TimePickerSheet,
 } from '@/components/ui';
+import { LIST_REMINDER_DEFAULT_HOUR, LIST_REMINDER_PRESETS } from '@/constants/reminders';
 import { Fonts, IconSize, IconStroke, Radius, Spacing, Typography } from '@/constants/theme';
 import { useList, useListMutations } from '@/hooks/use-lists';
 import { useTheme } from '@/hooks/use-theme';
@@ -305,6 +306,11 @@ export default function ListDetailScreen() {
     setEditando(null);
   };
 
+  const ponerRecordatorio = (item: ListItem, minutos: number | null) => {
+    updateItem.mutate({ id: item.id, patch: { reminder_offset_minutes: minutos } });
+    setEditando((e) => (e ? { ...e, reminder_offset_minutes: minutos } : e));
+  };
+
   const mover = (item: ListItem, sectionId: string | null) => {
     updateItem.mutate({ id: item.id, patch: { section_id: sectionId } }, { onSuccess: () => setEditando(null) });
   };
@@ -579,12 +585,42 @@ export default function ListDetailScreen() {
                     onPress={() => setHoraAbierta(true)}
                   />
                   <AppText variant="caption" color="textTertiary">
-                    {editando.due_time
-                      ? 'Te avisamos a esa hora.'
-                      : 'Con una hora te avisamos; sin ella solo aparece en tu día.'}
+                    La hora no lo mueve a la rejilla del calendario: sigue en tu día.
                   </AppText>
                 </>
               ) : null}
+              {/*
+                El recordatorio es una pregunta aparte de la hora: "se entrega el 3" y
+                "avísame el 1" se contestan por separado (RF-L11b). Sin hora propia el aviso
+                se ancla a las 9 de la mañana, porque "dos días antes" de una fecha sin hora
+                no tiene instante — y se dice, en vez de dejarlo a la adivinanza.
+              */}
+              {editando.due_date ? (
+                <View style={styles.seccionAviso}>
+                  <View style={styles.etiquetaAviso}>
+                    <Bell size={IconSize.inline} strokeWidth={IconStroke} color={theme.textSecondary} />
+                    <AppText variant="label" color="textSecondary">
+                      Recordatorio
+                    </AppText>
+                  </View>
+                  <View style={styles.chips}>
+                    {chipSeccion(editando.reminder_offset_minutes === null, 'Sin aviso', () =>
+                      ponerRecordatorio(editando, null),
+                    )}
+                    {LIST_REMINDER_PRESETS.map((preset) =>
+                      chipSeccion(editando.reminder_offset_minutes === preset.offset, preset.label, () =>
+                        ponerRecordatorio(editando, preset.offset),
+                      ),
+                    )}
+                  </View>
+                  {editando.reminder_offset_minutes !== null && !editando.due_time ? (
+                    <AppText variant="caption" color="textTertiary">
+                      Se cuenta desde las {LIST_REMINDER_DEFAULT_HOUR}:00 del día, porque este pendiente no tiene hora.
+                    </AppText>
+                  ) : null}
+                </View>
+              ) : null}
+
               {editando.due_date ? (
                 <ActionRow
                   icon={<X size={IconSize.action} strokeWidth={IconStroke} color={theme.textSecondary} />}
@@ -713,6 +749,8 @@ const styles = StyleSheet.create({
   },
   hoja: { gap: Spacing.md, paddingBottom: Spacing.md },
   fechas: { gap: Spacing.sm },
+  seccionAviso: { gap: Spacing.sm, marginTop: Spacing.xs },
+  etiquetaAviso: { flexDirection: 'row', alignItems: 'center', gap: Spacing.xs },
   orden: { gap: 0 },
   mover: { gap: Spacing.sm },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm },

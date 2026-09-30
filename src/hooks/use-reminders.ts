@@ -3,7 +3,7 @@ import { addDays } from 'date-fns';
 import { useEffect, useMemo, useRef } from 'react';
 import { AppState } from 'react-native';
 
-import { REMINDER_HORIZON_DAYS } from '@/constants/reminders';
+import { LIST_REMINDER_DEFAULT_HOUR, REMINDER_HORIZON_DAYS } from '@/constants/reminders';
 import { useListItemsByDate, useLists } from '@/hooks/use-lists';
 import { toDayKey } from '@/lib/dates';
 import { type ScheduledReminder, syncNotifications } from '@/lib/notifications';
@@ -60,23 +60,30 @@ export function useUpcomingReminders() {
  * al login, al volver a primer plano y cada vez que cambian los reminders (cache).
  */
 /**
- * Elementos de lista con día **y hora** dentro del horizonte, como avisos ya resueltos.
+ * Elementos de lista con recordatorio puesto, como avisos ya resueltos (RF-L11b).
  *
- * Solo los que tienen hora: una fecha sin hora significa "ese día, cuando pueda", y
- * inventarle las 9 de la mañana sería ponerle a la persona una alarma que nunca pidió.
+ * Avisa lo que tiene **recordatorio**, no lo que tiene hora: son preguntas distintas. Una
+ * fecha sin hora sigue significando "ese día, cuando pueda", pero si además se pidió que
+ * avisara dos días antes, ese aviso hay que darlo — y para eso se ancla a una hora por
+ * omisión, porque "dos días antes" de una fecha sin hora no tiene instante propio.
  */
 function avisosDeListas(items: readonly ListItem[], listas: readonly KaviList[]): ScheduledReminder[] {
   const nombre = new Map(listas.map((l) => [l.id, l.name]));
   return items
-    .filter((i) => i.completed_at === null && i.due_date !== null && i.due_time !== null)
-    .map((i) => ({
-      id: `list-item:${i.id}`,
-      title: i.title,
-      body: nombre.get(i.list_id) ?? 'Pendiente',
-      // La hora es local, como la escribió quien la puso: la fecha es flotante (RF-L11).
-      fireAt: new Date(`${i.due_date}T${(i.due_time as string).slice(0, 5)}:00`).toISOString(),
-      data: { listId: i.list_id, listItemId: i.id },
-    }));
+    .filter((i) => i.completed_at === null && i.due_date !== null && i.reminder_offset_minutes !== null)
+    .map((i) => {
+      const hora = i.due_time ? i.due_time.slice(0, 5) : `${String(LIST_REMINDER_DEFAULT_HOUR).padStart(2, '0')}:00`;
+      // Local, como la escribió quien la puso: la fecha es flotante (RF-L11).
+      const vence = new Date(`${i.due_date}T${hora}:00`);
+      const avisa = new Date(vence.getTime() - (i.reminder_offset_minutes as number) * 60_000);
+      return {
+        id: `list-item:${i.id}`,
+        title: i.title,
+        body: nombre.get(i.list_id) ?? 'Pendiente',
+        fireAt: avisa.toISOString(),
+        data: { listId: i.list_id, listItemId: i.id },
+      };
+    });
 }
 
 export function useReminderSync() {

@@ -169,3 +169,10 @@ juntarlo en una sesión dedicada a pruebas.
 - [ ] Verificación manual con dos sesiones: A palomea un elemento y B lo ve sin recargar.
 - [ ] Comprobar en el proyecto real que las tablas quedaron en `supabase_realtime`
   (`select * from pg_publication_tables where pubname = 'supabase_realtime'`).
+
+## Recordatorio con desfase (T223)
+
+- [ ] Un elemento **sin** recordatorio no programa nada, aunque tenga hora.
+- [ ] Con hora y "2 días antes", el aviso cae dos días antes **a esa hora**.
+- [ ] Sin hora y "2 días antes", el aviso cae dos días antes a las 9:00.
+- [ ] Quitar la fecha deja el recordatorio sin efecto (no hay de qué contar hacia atrás).

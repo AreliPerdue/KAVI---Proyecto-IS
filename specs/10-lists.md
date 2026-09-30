@@ -54,11 +54,21 @@ Por eso **los ítems nunca entran en la rejilla de horas**, ni siquiera cuando l
 ## Fechas y calendario (RF-L11 – RF-L13)
 - **RF-L11.** Un ítem puede tener: **sin fecha** (el caso normal), **fecha sin hora**, o **fecha con hora**. La hora es opcional y solo sirve para el recordatorio.
 
-  **Solo avisa lo que tiene hora.** Una fecha sin hora significa "ese día, cuando pueda", y
-  ponerle las 9 de la mañana por nuestra cuenta sería programarle a la persona una alarma
-  que no pidió. Los avisos de listas se programan por el mismo camino que los de actividades
-  (RF-C10) y no por uno propio: `syncNotifications` cancela todo antes de reprogramar, así
-  que dos fuentes llamándola por separado se borrarían entre sí.
+- **RF-L11b. El recordatorio es una pregunta aparte de la hora.** "Se entrega el 3" y
+  "avísame el 1" se contestan por separado, así que el aviso se elige como **cuánto antes**
+  —a la hora, 1 h, 1 día, 2 días, 1 semana— y no como una hora suelta. Los desfases llegan
+  más lejos que los de una actividad porque responden a otra cosa: a una cita se llega y con
+  diez minutos basta; un pendiente hay que **hacerlo**, y avisar dos días antes es lo que da
+  tiempo de hacerlo.
+
+  **Avisa lo que tiene recordatorio, no lo que tiene hora.** Sin recordatorio no se
+  interrumpe a nadie. Cuando el elemento no tiene hora propia, el aviso se ancla a las 9:00
+  del día, porque "dos días antes" de una fecha sin hora no tiene instante; la interfaz lo
+  dice en vez de dejarlo a la adivinanza.
+
+  Los avisos de listas se programan por el mismo camino que los de actividades (RF-C10) y no
+  por uno propio: `syncNotifications` cancela todo antes de reprogramar, así que dos fuentes
+  llamándola por separado se borrarían entre sí.
 - **RF-L12. La franja de pendientes.** Al abrir un día en el calendario, **arriba de la rejilla de horas** aparece una franja con los ítems que tienen esa fecha: su icono de lista, su título y su casilla para palomear. Se puede plegar. Nunca se dibuja dentro de las horas, ni siquiera si el ítem tiene hora.
 
   *Motivo:* es el punto donde Lists y el calendario se vuelven un solo sistema, sin mentir sobre lo que el dato es. Un pendiente colocado a las 10:00 en la rejilla se leería como una cita, y no lo es.

@@ -109,7 +109,7 @@ function buscarItem(itemId: string): ListItem {
   ): ListItem => ({
     id, list_id: listId, section_id: sectionId, title, note: null, sort_order: orden,
     completed_at: null, completed_by: null, created_by: owner,
-    due_date: null, due_time: null, created_at: t, updated_at: t, ...extra,
+    due_date: null, due_time: null, reminder_offset_minutes: null, created_at: t, updated_at: t, ...extra,
   });
 
   items.push(
@@ -265,6 +265,7 @@ export const demoLists: ListsApi = {
       sort_order: siguienteOrden(items.filter((i) => i.list_id === listId)),
       completed_at: null, completed_by: null, created_by: userId,
       due_date: input.due_date ?? null, due_time: input.due_time ?? null,
+      reminder_offset_minutes: input.reminder_offset_minutes ?? null,
       created_at: t, updated_at: t,
     };
     items.push(item);
@@ -280,6 +281,7 @@ export const demoLists: ListsApi = {
     if (patch.section_id !== undefined) item.section_id = patch.section_id;
     if (patch.due_date !== undefined) item.due_date = patch.due_date;
     if (patch.due_time !== undefined) item.due_time = patch.due_time;
+    if (patch.reminder_offset_minutes !== undefined) item.reminder_offset_minutes = patch.reminder_offset_minutes;
     item.updated_at = ahora();
     emitDataChange();
     return copia(item);

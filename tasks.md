@@ -465,6 +465,17 @@ un clic de más para llegar a lo mismo.
   delatara**. La migración nueva agrega las de listas y, de paso, las que ya se vigilaban,
   comprobando cada una porque en el proyecto en uso varias ya están. Dep: T220
 
+- [x] T223 Recordatorio propio del elemento, separado de la hora (RF-L11b). Hasta ahora la
+  hora hacía de dos cosas: decía *cuándo es* y *cuándo avisar*. Son preguntas distintas y con
+  una sola columna la segunda no tenía dónde vivir. Nueva columna
+  `reminder_offset_minutes` —minutos antes del vencimiento, igual que en `reminders` para
+  actividades, para que la app tenga un solo concepto de "cuánto antes"—, y presets que
+  llegan hasta una semana: a una cita se llega y diez minutos bastan; un pendiente hay que
+  hacerlo. Sin hora propia el aviso se ancla a las 9:00 y la hoja lo dice. Dep: T215
+- [x] T224 En la franja del calendario, tocar el texto abre la lista y palomear queda en el
+  círculo, igual que dentro de la lista. Ahí importa todavía más: la franja vive pegada a la
+  rejilla y se toca de pasada. (RF-L13c) Dep: T217
+
 ### Pendientes sueltos
 - [ ] T196 Elegir idioma de la interfaz: **español o inglés**. Hoy los textos están
   incrustados en los componentes, así que esto es sobre todo el trabajo de extraerlos.

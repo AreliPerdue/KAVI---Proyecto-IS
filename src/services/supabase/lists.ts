@@ -224,6 +224,7 @@ export const supabaseLists: ListsApi = {
           created_by: userId,
           due_date: input.due_date ?? null,
           due_time: input.due_time ?? null,
+          reminder_offset_minutes: input.reminder_offset_minutes ?? null,
           sort_order: await siguienteOrden('list_items', 'list_id', listId),
         })
         .select('*')
