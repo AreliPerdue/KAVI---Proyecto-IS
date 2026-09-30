@@ -53,12 +53,20 @@ export function CalendarHeader({
   const theme = useTheme();
   const { width } = useWindowDimensions();
   const wide = width >= 720;
+  const compacto = !wide;
   const [monthPickerOpen, setMonthPickerOpen] = useState(false);
   const router = useRouter();
   const title = tituloDe(view, anchor);
 
-  return (
-    <View style={styles.row}>
+  /*
+   * En angosto el encabezado se parte en dos filas: título arriba, controles abajo.
+   *
+   * En una sola fila, el mes competía por el ancho con Hoy, Listas, el selector de vista
+   * y los filtros, y terminaba cortado —"Septie…"—, que es justo el dato que dice dónde
+   * estás parada. Partirlo cuesta una franja de alto y devuelve el título entero.
+   */
+  const cuerpo = (
+    <>
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={`${title}. Cambiar de fecha`}
@@ -117,12 +125,20 @@ export function CalendarHeader({
           setMonthPickerOpen(false);
         }}
       />
-    </View>
+    </>
+  );
+
+  return compacto ? (
+    <View style={styles.columna}>{cuerpo}</View>
+  ) : (
+    <View style={styles.row}>{cuerpo}</View>
   );
 }
 
 const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: Spacing.sm },
+  /* Angosto: título arriba con todo el ancho, controles en su propio renglón. */
+  columna: { gap: Spacing.xs, alignItems: 'flex-start' },
   titleButton: { flexDirection: 'row', alignItems: 'center', gap: Spacing.xs, flexShrink: 1, minHeight: 44 },
   title: { flexShrink: 1 },
   actions: { flexDirection: 'row', alignItems: 'center', gap: Spacing.xs },

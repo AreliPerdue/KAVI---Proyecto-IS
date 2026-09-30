@@ -57,3 +57,6 @@ juntarlo en una sesión dedicada a pruebas.
 - [ ] `AgendaView` omite los días sin actividades y agrupa bien las que cruzan medianoche.
 - [ ] `formatThreeDaysTitle` cuando el rango cruza de mes.
 - [ ] Que el alfiler del menú no quede anidado dentro del Pressable de su fila.
+- [ ] Encabezado del calendario en dos filas por debajo de 720 px, con el título completo.
+  Es la clase de regresión que solo se ve en una captura, así que conviene una prueba que
+  fije que el título no se trunca a 390 px.

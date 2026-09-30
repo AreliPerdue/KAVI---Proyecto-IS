@@ -251,6 +251,11 @@ un clic de más para llegar a lo mismo.
   del orden en que se fijaron —para que la pastilla no cambie de forma según cómo se
   configuró— y nunca se queda vacía. En pantallas angostas se reduce a un botón con el
   nombre de la vista actual. (RF-C17) Dep: T191, T192
+- [x] T193b Ajustes de la revisión visual: el encabezado se parte en dos filas por debajo de
+  720 px —el mes competía con Hoy, Listas, la vista y los filtros y salía como "Septie…",
+  que es justo el dato que dice dónde estás parada—, y la vista de 3 días usa un alto de
+  hora más apretado que la semanal, porque con tres columnas sobra ancho y lo que escasea
+  es alto. Dep: T193
 
 ### Módulo de listas — spec 10 (pendiente de escribir)
 - [x] T194 Escribir `specs/10-lists.md`: filosofía, franja de pendientes del día, vistas,
@@ -324,6 +329,16 @@ un clic de más para llegar a lo mismo.
   si hace falta: el umbral de 13 de distancia perceptual es el mínimo para no confundirse,
   no una meta de diseño, y subirlo obligaría a repartir mejor los matices. Conviene hacerlo
   de una sola vez y contra los 21 PNG a la vista, no color por color. Dep: T197
+
+- [ ] T203 La barra de personas del calendario, pensada para muchos contactos. Hoy ya es un
+  carrusel horizontal, pero muestra **todos** los que comparten calendario: con veinte o más
+  hay que deslizar a ciegas hasta dar con quien buscas. Pasa a mostrar los **frecuentes o
+  recientes** (~20 como tope) y al final del carrusel un botón de tres puntos que abre la
+  lista completa **de la A a la Z**, con una lupa arriba para buscar por nombre o usuario.
+  Falta decidir qué cuenta como "frecuente": lo más honesto sin inventar telemetría es
+  ordenar por la última vez que superpusiste su calendario, que ya es un dato que la app
+  tiene a la mano. El buscador puede reutilizar `search_profiles`, que ya resuelve correo y
+  `@usuario` (RF-S1). (RF-S7, RF-S8, RF-S15) Dep: —
 
 ### Largo plazo (cuando KAVI se lance al público)
 Distribución en iOS y cuenta de Apple Developer · notificaciones push con la app cerrada ·

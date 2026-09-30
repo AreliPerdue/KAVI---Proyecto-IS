@@ -33,7 +33,13 @@ export function ThreeDaysView({ anchor, activities, onPressSlot, onPressActivity
       activitiesByDay={byDay}
       onPressSlot={onPressSlot}
       onPressActivity={onPressActivity}
-      hourHeight={width >= 1024 ? 56 : 48}
+      /*
+       * Más apretado que la semanal a propósito. Con tres columnas sobra ancho y lo que
+       * escasea es alto: comprimiendo la hora caben ~25 % más horas de un vistazo, y los
+       * bloques siguen legibles porque el ancho no es el que aprieta. Es el único sitio
+       * donde ese intercambio sale a favor.
+       */
+      hourHeight={width >= 1024 ? 48 : 40}
       isSharedActivity={isSharedActivity}
     />
   );
