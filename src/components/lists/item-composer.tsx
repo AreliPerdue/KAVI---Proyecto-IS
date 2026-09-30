@@ -14,13 +14,18 @@ import { useTheme } from '@/hooks/use-theme';
  * Va fuera de `StyleSheet.create` porque ahí un estilo que solo existe en web ensancha el
  * tipo de toda la hoja, y el resto de los estilos dejan de encajar donde se usan.
  */
-const SIN_ANILLO: TextStyle = Platform.OS === 'web' ? { outlineWidth: 0, outlineColor: 'transparent' } : {};
+const SIN_ANILLO: TextStyle = Platform.OS === 'web'
+  ? // `outlineWidth: 0` no basta: el anillo de Chrome es `outline: auto` y no respeta el
+    // ancho. El tipo de RN no admite `none` porque en nativo no existe, de ahí el rodeo.
+    ({ outlineStyle: 'none', outlineWidth: 0 } as unknown as TextStyle)
+  : {};
 
 export type ItemComposerProps = {
   /** Texto del botón en reposo, que nombra dónde va a caer lo que se escriba. */
   label: string;
+  /** Marcador mientras se escribe, p. ej. "Elemento 4". */
+  placeholder: string;
   onSubmit: (title: string) => void;
-  accent: string;
 };
 
 /**
@@ -31,7 +36,7 @@ export type ItemComposerProps = {
  * llenan en ráfaga —leche, huevos, pan— y volver a tocar el botón entre uno y otro
  * convertiría una captura de diez segundos en una de un minuto.
  */
-export function ItemComposer({ label, onSubmit, accent }: ItemComposerProps) {
+export function ItemComposer({ label, placeholder, onSubmit }: ItemComposerProps) {
   const theme = useTheme();
   const [abierto, setAbierto] = useState(false);
   const [texto, setTexto] = useState('');
@@ -68,8 +73,14 @@ export function ItemComposer({ label, onSubmit, accent }: ItemComposerProps) {
     );
   }
 
+  /*
+   * Escribiendo, la fila se ve **igual** que un elemento ya guardado: círculo y texto, sin
+   * recuadro. Antes llevaba un borde de acento y encima el anillo del navegador, o sea una
+   * caja dentro de otra caja para un renglón de una línea. Lo que indica dónde estás es el
+   * cursor, que ya está ahí.
+   */
   return (
-    <View style={[styles.fila, styles.filaAbierta, { borderColor: accent }]}>
+    <View style={styles.fila}>
       <View style={[styles.casilla, { borderColor: theme.border }]} />
       <TextInput
         ref={inputRef}
@@ -77,7 +88,7 @@ export function ItemComposer({ label, onSubmit, accent }: ItemComposerProps) {
         onChangeText={setTexto}
         onSubmitEditing={confirmar}
         onBlur={confirmar}
-        placeholder="¿Qué no quieres olvidar?"
+        placeholder={placeholder}
         placeholderTextColor={theme.textTertiary}
         returnKeyType="done"
         // Sin esto, el teclado se cierra en cada confirmación y el foco que conservamos
@@ -102,7 +113,6 @@ const styles = StyleSheet.create({
     borderRadius: Radius.sm,
     borderCurve: 'continuous',
   },
-  filaAbierta: { borderWidth: 1 },
   casilla: { width: 20, height: 20, borderRadius: Radius.full, borderWidth: 1.5 },
   input: {
     flex: 1,

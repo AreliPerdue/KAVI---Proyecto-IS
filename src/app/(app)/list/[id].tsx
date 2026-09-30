@@ -27,7 +27,11 @@ import type { ListItem, ListSection } from '@/types/domain';
 
 /* El anillo de foco del navegador se encimaba sobre el propio del campo; el cambio de
  * color al enfocar sigue haciendo de indicador visible. */
-const SIN_ANILLO: TextStyle = Platform.OS === 'web' ? { outlineWidth: 0, outlineColor: 'transparent' } : {};
+const SIN_ANILLO: TextStyle = Platform.OS === 'web'
+  ? // `outlineWidth: 0` no basta: el anillo de Chrome es `outline: auto` y no respeta el
+    // ancho. El tipo de RN no admite `none` porque en nativo no existe, de ahí el rodeo.
+    ({ outlineStyle: 'none', outlineWidth: 0 } as unknown as TextStyle)
+  : {};
 
 /**
  * Nombre de la lista, editable en el sitio (RF-L2).
@@ -322,7 +326,12 @@ export default function ListDetailScreen() {
             {sueltos.map((it) => (
               <Renglon key={it.id} item={it} color={color} onToggle={alternar(it)} onOpen={() => abrirEdicion(it)} />
             ))}
-            <ItemComposer label="Agregar elemento" accent={color} onSubmit={agregar(null)} />
+            {/* Numerado: dice cuántos llevas sin que haya que contarlos. */}
+            <ItemComposer
+              label="Agregar elemento"
+              placeholder={`Elemento ${sueltos.length + 1}`}
+              onSubmit={agregar(null)}
+            />
 
             {(datos.sections as ListSection[]).map((s) => (
               <View key={s.id} style={styles.seccion}>
@@ -332,7 +341,11 @@ export default function ListDetailScreen() {
                 {(porSeccion.get(s.id) ?? []).map((it) => (
                   <Renglon key={it.id} item={it} color={color} onToggle={alternar(it)} onOpen={() => abrirEdicion(it)} />
                 ))}
-                <ItemComposer label={`Agregar en ${s.name}`} accent={color} onSubmit={agregar(s.id)} />
+                <ItemComposer
+                  label={`Agregar en ${s.name}`}
+                  placeholder={`Elemento ${(porSeccion.get(s.id) ?? []).length + 1}`}
+                  onSubmit={agregar(s.id)}
+                />
               </View>
             ))}
 
