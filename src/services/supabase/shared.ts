@@ -232,6 +232,13 @@ const WATCHED = [
   'connections',
   'reminders',
   'reminder_recipients',
+  // Listas compartidas: lo que cambia una persona aparece en la pantalla de la otra
+  // sin recargar (RF-L16). `list_shares` entra porque retirar el acceso también debe
+  // reflejarse al instante en el inicio de quien lo pierde.
+  'lists',
+  'list_sections',
+  'list_items',
+  'list_shares',
 ] as const;
 
 export const supabaseRealtime: RealtimeApi = {

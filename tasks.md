@@ -453,9 +453,17 @@ un clic de más para llegar a lo mismo.
   permiso; pero el mismo fallo estaba en `duplicate` de Supabase, que habría reventado en
   cuanto alguien tocara "Duplicar" con el backend real. Lo compartido entre métodos pasa a
   funciones sueltas. Dep: T220
-- [ ] T222 Tiempo real en listas compartidas (RF-L16): suscripción a `lists`, `list_items` y
-  `list_shares`, con la invalidación centralizada en `lib/query-invalidation.ts` como ya se
-  hace con el calendario. Dep: T220
+- [x] T222 Tiempo real en listas compartidas (RF-L16). Las cuatro tablas entran en la lista
+  vigilada y `['lists']` en la invalidación centralizada: al palomear alguien un elemento
+  cambian el detalle, la cuenta de pendientes de su tarjeta, la franja del día y los
+  vencidos, así que invalidar solo el detalle dejaría el resto mintiendo. `list_shares`
+  entra porque retirar el acceso también debe reflejarse al instante en el inicio de quien
+  lo pierde.
+  **Hallazgo:** ninguna migración agregaba tablas a la publicación `supabase_realtime`, así
+  que eso se había habilitado desde el panel y no estaba en el repositorio. Un proyecto
+  recreado desde las migraciones se levantaría sin tiempo real y **sin ningún error que lo
+  delatara**. La migración nueva agrega las de listas y, de paso, las que ya se vigilaban,
+  comprobando cada una porque en el proyecto en uso varias ya están. Dep: T220
 
 ### Pendientes sueltos
 - [ ] T196 Elegir idioma de la interfaz: **español o inglés**. Hoy los textos están

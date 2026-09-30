@@ -160,3 +160,12 @@ juntarlo en una sesión dedicada a pruebas.
 - [ ] **Ninguna implementación usa `this`.** Es la prueba que habría atrapado T221 y que
   seguirá atrapándolo: la fachada desprende los métodos del objeto.
 - [ ] `sharedWithMe` no devuelve listas archivadas ni las propias.
+
+## Tiempo real en listas (T222)
+
+- [ ] Que las cuatro tablas de listas estén en la lista vigilada y que `['lists']` esté en
+  la invalidación: son dos listas que se editan a mano y es fácil agregar una tabla nueva a
+  una y olvidarla en la otra.
+- [ ] Verificación manual con dos sesiones: A palomea un elemento y B lo ve sin recargar.
+- [ ] Comprobar en el proyecto real que las tablas quedaron en `supabase_realtime`
+  (`select * from pg_publication_tables where pubname = 'supabase_realtime'`).
