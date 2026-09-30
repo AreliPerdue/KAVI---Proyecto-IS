@@ -38,13 +38,20 @@ export const ActivityBlock = memo(function ActivityBlock({ activity, onPress, co
         pressed ? styles.pressed : null,
       ]}>
       <View style={styles.row}>
-        {!compact ? <ThemeIcon name={activity.icon} color={color} size={14} /> : null}
-        <AppText variant={compact ? 'caption' : 'label'} numberOfLines={compact ? 2 : 1} style={styles.title}>
+        {!compact ? <ThemeIcon name={activity.icon} color={color} size={12} /> : null}
+        {/*
+          Título en `caption` y no en `label`: a 14 px un bloque de media hora cabía
+          apenas una línea y "Gimnasio · pierna" se cortaba a la mitad. Calendar y
+          Google Calendar rondan los 11-12 px por lo mismo — en una rejilla de horas
+          lo que escasea es el alto, y cada punto de tipografía son letras que se
+          pierden. La jerarquía se sostiene con la hora un punto por debajo.
+        */}
+        <AppText variant="caption" numberOfLines={compact ? 2 : 1} style={styles.title}>
           {activity.title}
         </AppText>
       </View>
       {!compact && !titleOnly ? (
-        <AppText variant="caption" color="textSecondary" tabular numberOfLines={1}>
+        <AppText variant="micro" color="textSecondary" tabular numberOfLines={1}>
           {shared && activity.owner_name ? `${time} · ${activity.owner_name}` : time}
         </AppText>
       ) : null}
@@ -59,8 +66,8 @@ const styles = StyleSheet.create({
     borderCurve: 'continuous',
     borderLeftWidth: 3,
     paddingHorizontal: Spacing.sm - 2,
-    paddingVertical: Spacing.xs,
-    gap: 2,
+    paddingVertical: 3,
+    gap: 1,
     overflow: 'hidden',
   },
   row: { flexDirection: 'row', alignItems: 'center', gap: Spacing.xs },

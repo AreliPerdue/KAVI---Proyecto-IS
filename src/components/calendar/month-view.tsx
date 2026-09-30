@@ -12,6 +12,15 @@ import { formatDayTitle, formatTime, fromIso, isSameMonth, isToday, monthGridDay
 import type { Activity } from '@/types/domain';
 
 const WEEKS = 6;
+/**
+ * Ancho de rejilla a partir del cual el número del día se alinea a la derecha.
+ *
+ * Es por ancho y no por plataforma: el navegador en un teléfono es `web` igual que en
+ * el escritorio, así que ramificar por plataforma le daba la versión de escritorio a una
+ * pantalla de 390 px. Por ancho, el navegador angosto y la app nativa coinciden, que es
+ * lo que la persona espera al ver la misma app en los dos sitios (NFR-9).
+ */
+const WIDE_GRID = 700;
 const DAYS_PER_WEEK = 7;
 
 /** Medidas base en dp; se escalan con el tamaño de fuente del sistema. */
@@ -43,6 +52,8 @@ type Metrics = {
   dayNumberHeight: number;
   showTime: boolean;
   dense: boolean;
+  /** Calendar de macOS alinea el número a la derecha; Google Calendar lo centra. */
+  alignEnd: boolean;
 };
 
 type DayCellProps = {
@@ -58,7 +69,7 @@ type DayCellProps = {
 const DayCell = memo(function DayCell({ date, inMonth, weekend, activities, theme, metrics, onPress }: DayCellProps) {
   const today = isToday(date);
   const count = activities.length;
-  const { slots, chipHeight, dayNumberHeight, showTime, dense } = metrics;
+  const { slots, chipHeight, dayNumberHeight, showTime, dense, alignEnd } = metrics;
 
   // Con más actividades que huecos, el último hueco lo ocupa el resumen "+N".
   const overflow = !dense && count > slots ? count - (slots - 1) : 0;
@@ -76,7 +87,11 @@ const DayCell = memo(function DayCell({ date, inMonth, weekend, activities, them
         today ? { backgroundColor: theme.surfaceAlt } : weekend ? { backgroundColor: tint(theme.text, 0.035) } : null,
         pressed ? { backgroundColor: tint(theme.text, 0.09) } : null,
       ]}>
-      <View style={[styles.dayNumberRow, { height: dayNumberHeight }]}>
+      <View
+        style={[
+          styles.dayNumberRow,
+          { height: dayNumberHeight, alignItems: alignEnd ? 'flex-end' : 'center' },
+        ]}>
         <View
           style={[
             styles.dayNumber,
@@ -195,6 +210,7 @@ export function MonthView({ anchor, activities, onSelectDay }: MonthViewProps) {
       dayNumberHeight,
       showTime: cellWidth >= TIME_MIN_CELL_WIDTH,
       dense: slots === 0 && free >= DENSE_ROW_HEIGHT,
+      alignEnd: grid.width >= WIDE_GRID,
     };
   }, [grid.height, grid.width]);
 

@@ -238,3 +238,69 @@ export type WorkoutInput = {
 };
 
 export type WorkoutExerciseInput = Omit<WorkoutExercise, 'id' | 'workout_id' | 'position'> & { position?: number };
+
+// ── KAVI Lists (spec 10) ───────────────────────────────────────────────────────
+
+/** Cómo se dibuja una lista por dentro (RF-L10). */
+export type ListView = 'checklist' | 'grid';
+
+export type KaviList = {
+  id: string;
+  owner_id: string;
+  name: string;
+  /** Nombre de icono del catálogo de `constants/icons`. */
+  icon: string;
+  /** Hex de la paleta de personas: Lists no estrena un tercer sistema de color. */
+  color: string;
+  view: ListView;
+  is_pinned: boolean;
+  is_archived: boolean;
+  /**
+   * Orden entre listas. Es `number` y no un entero de posición para poder insertar
+   * entre dos vecinas escribiendo una sola fila: con enteros, arrastrar una lista
+   * obliga a renumerar todas las de abajo, y en una lista compartida dos personas
+   * reordenando a la vez se pisan.
+   */
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+  /** Derivados para la tarjeta del inicio (RF-L1). */
+  pending_count: number;
+  total_count: number;
+};
+
+export type ListSection = {
+  id: string;
+  list_id: string;
+  name: string;
+  sort_order: number;
+};
+
+export type ListItem = {
+  id: string;
+  list_id: string;
+  section_id: string | null;
+  title: string;
+  note: string | null;
+  sort_order: number;
+  /** `null` mientras esté pendiente; la fecha ISO en que se palomeó (RF-L6). */
+  completed_at: string | null;
+  completed_by: string | null;
+  created_by: string;
+  /**
+   * Fecha **flotante** (`YYYY-MM-DD`), no un instante UTC (RF-L11).
+   *
+   * Excepción consciente a la regla de fechas de CLAUDE.md: "el sábado" no es un punto
+   * en el tiempo sino un día del calendario de quien lo escribió. Guardado como
+   * `timestamptz` se correría de día al cruzar husos horarios.
+   */
+  due_date: string | null;
+  /** Hora opcional del recordatorio. No coloca el ítem en la rejilla (RF-L12). */
+  due_time: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type ListInput = Pick<KaviList, 'name' | 'icon' | 'color'> & Partial<Pick<KaviList, 'view'>>;
+export type ListItemInput = Pick<ListItem, 'title'> &
+  Partial<Pick<ListItem, 'note' | 'section_id' | 'due_date' | 'due_time'>>;

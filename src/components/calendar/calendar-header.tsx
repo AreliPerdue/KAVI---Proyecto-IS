@@ -1,4 +1,5 @@
-import { ChevronDown, ChevronLeft, ChevronRight, LayoutList, SlidersHorizontal } from 'lucide-react-native';
+import { useRouter } from 'expo-router';
+import { ChevronDown, ChevronLeft, ChevronRight, CircleCheck, LayoutList, SlidersHorizontal } from 'lucide-react-native';
 import { useState } from 'react';
 import { Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
 
@@ -42,6 +43,7 @@ export function CalendarHeader({
   const wide = width >= 720;
   const [monthPickerOpen, setMonthPickerOpen] = useState(false);
   const [viewMenuOpen, setViewMenuOpen] = useState(false);
+  const router = useRouter();
   const title =
     view === 'month' ? formatMonthTitle(anchor) : view === 'week' ? formatWeekTitle(anchor) : formatDayTitle(anchor);
   const viewLabel = VIEW_OPTIONS.find((o) => o.value === view)?.label ?? 'Mes';
@@ -77,6 +79,14 @@ export function CalendarHeader({
           style={({ pressed }) => [styles.todayButton, { borderColor: theme.border }, pressed ? styles.pressed : null]}>
           <AppText variant="label">Hoy</AppText>
         </Pressable>
+        {/*
+          Entrada a Lists desde el calendario (spec 10, §UI): el mismo patrón con el
+          que Fitness se abre desde una actividad de gimnasio. Va antes del selector
+          de vistas porque pertenece al contenido del día, no a cómo se dibuja.
+        */}
+        <IconButton label="Listas" onPress={() => router.push('/(app)/lists')}>
+          <CircleCheck size={IconSize.action} strokeWidth={IconStroke} color={theme.text} />
+        </IconButton>
         <IconButton label={`Vista: ${viewLabel}. Cambiar vista`} onPress={() => setViewMenuOpen(true)}>
           <LayoutList size={IconSize.action} strokeWidth={IconStroke} color={theme.text} />
         </IconButton>

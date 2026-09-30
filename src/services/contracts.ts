@@ -2,6 +2,11 @@
 import type { RecurrenceRule } from '@/lib/recurrence';
 import type {
   Activity,
+  KaviList,
+  ListInput,
+  ListItem,
+  ListItemInput,
+  ListSection,
   AdminAccount,
   AdminStats,
   ActivityInput,
@@ -180,4 +185,42 @@ export interface WorkoutsApi {
 export interface AdminApi {
   getStats(): Promise<AdminStats>;
   listAccounts(): Promise<AdminAccount[]>;
+}
+
+/** Detalle de una lista: la lista, sus secciones y sus ítems (spec 10). */
+export type ListDetail = {
+  list: KaviList;
+  sections: ListSection[];
+  items: ListItem[];
+};
+
+export interface ListsApi {
+  /** Listas activas de quien mira, fijadas primero (RF-L1, RF-L3). */
+  list(userId: string): Promise<KaviList[]>;
+  /** Archivadas, que viven fuera del inicio (RF-L2). */
+  listArchived(userId: string): Promise<KaviList[]>;
+  getById(listId: string): Promise<ListDetail>;
+  create(userId: string, input: ListInput): Promise<KaviList>;
+  update(listId: string, patch: Partial<ListInput & Pick<KaviList, 'is_pinned' | 'is_archived' | 'view'>>): Promise<KaviList>;
+  remove(listId: string): Promise<void>;
+  /** Copia la lista con sus secciones e ítems pendientes (RF-L2). */
+  duplicate(listId: string): Promise<KaviList>;
+  reorder(listId: string, sortOrder: number): Promise<void>;
+
+  addSection(listId: string, name: string): Promise<ListSection>;
+  renameSection(sectionId: string, name: string): Promise<ListSection>;
+  removeSection(sectionId: string): Promise<void>;
+
+  addItem(listId: string, userId: string, input: ListItemInput): Promise<ListItem>;
+  updateItem(itemId: string, patch: Partial<ListItemInput>): Promise<ListItem>;
+  removeItem(itemId: string): Promise<void>;
+  /** Palomear y despalomear. Nunca borra: es lo que permite deshacer un dedazo (RF-L6). */
+  toggleItem(itemId: string, userId: string, done: boolean): Promise<ListItem>;
+  reorderItem(itemId: string, sortOrder: number, sectionId: string | null): Promise<void>;
+
+  /**
+   * Ítems con fecha dentro de [from, to], para la franja del día (RF-L12).
+   * Fechas en `YYYY-MM-DD`, no ISO: son fechas flotantes, no instantes.
+   */
+  listByDateRange(userId: string, fromDate: string, toDate: string): Promise<ListItem[]>;
 }

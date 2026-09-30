@@ -35,7 +35,7 @@ function PersonTab({ label, selected, color, onPress }: { label: string; selecte
         pressed ? styles.pressed : null,
       ]}>
       <View style={[styles.dot, { backgroundColor: color, opacity: selected ? 1 : 0.55 }]} />
-      <AppText variant="bodyStrong" color={selected ? 'text' : 'textSecondary'}>
+      <AppText variant="label" color={selected ? 'text' : 'textSecondary'}>
         {label}
       </AppText>
     </Pressable>
@@ -71,7 +71,7 @@ export function PeopleTabs({ overlayUserIds, colorOf, onToggle, onOnlyMe }: Peop
         onPress={() => router.push('/(app)/(tabs)/shared')}
         style={({ pressed }) => [styles.tab, styles.addTab, { backgroundColor: theme.surfaceAlt, borderColor: 'transparent' }, pressed ? styles.pressed : null]}>
         <Plus size={IconSize.inline} strokeWidth={IconStroke} color={theme.textSecondary} />
-        <AppText variant="bodyStrong" color="textSecondary">
+        <AppText variant="label" color="textSecondary">
           Contactos
         </AppText>
       </Pressable>
@@ -82,12 +82,19 @@ export function PeopleTabs({ overlayUserIds, colorOf, onToggle, onOnlyMe }: Peop
 
 const styles = StyleSheet.create({
   row: { flexDirection: 'row', gap: Spacing.sm, alignItems: 'center' },
+  /*
+   * Etiquetas en `label` (14) y no en `bodyStrong` (16), con menos relleno lateral.
+   * La fila es un carrusel horizontal, así que nada quedaba fuera de alcance, pero a
+   * 390 px "+ Contactos" se partía a media palabra y parecía un desbordamiento. Con
+   * cuatro pastillas más angostas entran completas sin deslizar. El alto se queda en
+   * 40 para no achicar el área táctil.
+   */
   tab: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.sm,
+    gap: Spacing.xs + 2,
     minHeight: 40,
-    paddingHorizontal: Spacing.md,
+    paddingHorizontal: Spacing.sm + 2,
     borderRadius: Radius.md,
     borderCurve: 'continuous',
     borderWidth: 1.5,

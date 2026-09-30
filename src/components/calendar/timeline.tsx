@@ -25,10 +25,10 @@ const SLOTS = Array.from({ length: SLOTS_PER_DAY }, (_, i) => i * SLOT_MINUTES);
 const GUTTER_WIDTH = 54;
 const NOW_TICK_MS = 30_000;
 /**
- * Alto mínimo de un bloque: una línea de `label` (20) más el relleno vertical.
+ * Alto mínimo de un bloque: una línea de `caption` (16) más el relleno vertical.
  * Por debajo, el título se cortaría; una actividad de un minuto se pinta a este alto.
  */
-const BASE_MIN_BLOCK_HEIGHT = 28;
+const BASE_MIN_BLOCK_HEIGHT = 22;
 const MAX_FONT_SCALE = 1.5;
 
 /** Minutos transcurridos del día, refrescados mientras el timeline esté montado. */

@@ -241,7 +241,7 @@ un clic de más para llegar a lo mismo.
   días, semana, mes, agenda) y ya no cabe como segmented control. Dep: T191, T192
 
 ### Módulo de listas — spec 10 (pendiente de escribir)
-- [ ] T194 Escribir `specs/10-lists.md`: filosofía, franja de pendientes del día, vistas,
+- [x] T194 Escribir `specs/10-lists.md`: filosofía, franja de pendientes del día, vistas,
   colaboración y criterios de aceptación en Given/When/Then. Alcance acotado a la Fase 1
   acordada. **Fuera del alcance para siempre**: rastreo de precios y vistas previas de
   tiendas. Dep: —
@@ -253,6 +253,26 @@ un clic de más para llegar a lo mismo.
   fecha sin hora va como `date` y no como `timestamptz`: es una fecha flotante y guardarla
   como instante UTC la corre de día según la zona. Excepción consciente a la regla de fechas
   de CLAUDE.md, documentada en la spec. Dep: T194
+
+- [x] T198 Cascarón de Lists funcionando contra el backend demo: tipos de dominio,
+  contrato `ListsApi`, backend demo completo de la fase 1 con semilla (Súper con secciones
+  y Pendientes de casa con un ítem fechado hoy), fachada, hook con TanStack Query, pantalla
+  de inicio con rejilla de tarjetas y pantalla de detalle con secciones, palomeo y
+  completados plegables. Entrada por el botón ○✓ del encabezado del calendario.
+  El inicio pinta cada grupo como bloque propio en vez de meter encabezados en las celdas:
+  en dos columnas un encabezado ocupa una celda y sale al lado de una tarjeta, y
+  `SectionList` no resuelve esto porque no admite varias columnas.
+  `services/supabase/lists.ts` existe con el contrato completo pero cada método falla con
+  un mensaje que la UI muestra: mejor un error legible que datos vacíos que se leerían como
+  "no tienes listas". Se conecta de verdad con T195. (RF-L1, RF-L5–RF-L10) Dep: T194
+- [ ] T199 Alta y edición de listas: hoja de creación con nombre, icono y color de la
+  paleta de personas, renombrar, fijar, archivar, duplicar y eliminar con confirmación.
+  El FAB del inicio ya está puesto y sin acción. (RF-L2, RF-L3) Dep: T198
+- [ ] T200 Captura de ítems: campo que agrega al confirmar y se queda listo para el
+  siguiente, editar, eliminar y mover entre secciones. (RF-L5, RF-L7, RF-L8) Dep: T198
+- [ ] T201 La franja de pendientes del día en el calendario: arriba de la rejilla de horas,
+  plegable, con el icono de su lista y su casilla. Nunca dentro de las horas, ni siquiera
+  si el ítem tiene hora. El hook `useListItemsByDate` ya existe. (RF-L11–RF-L13) Dep: T200
 
 ### Pendientes sueltos
 - [ ] T196 Elegir idioma de la interfaz: **español o inglés**. Hoy los textos están
