@@ -50,7 +50,10 @@ Colores de dimensión (spec 05, fijos): física `#4CAF50`, emocional `#E91E63`, 
 - **Fuentes de marca (única excepción, NFR-19)**: el wordmark "KAVI" en **Moirai One** y el eslogan "Plan more. be more." en **Poiret One**, ambas solo dentro de `components/ui/Wordmark` y del logo del splash. Nunca en botones, encabezados de pantalla ni cuerpo de texto: son display de contorno y a tamaño de interfaz pierden legibilidad. Se sirven desde `public/fonts/` — embebidas en nativo por el config plugin de `expo-font` y declaradas con `@font-face` en `src/global.css` para web — y se referencian por `BrandFonts` (nombre PostScript, igual en las 3 plataformas), nunca por string suelto.
 - Escala (px / peso / interlineado): `display` 34/700/40 · `title` 28/700/34 · `heading` 20/600/26 · `body` 16/400/24 · `bodyStrong` 16/600/24 · `label` 14/500/20 · `caption` 12/500/16.
 - Jerarquía por peso y color antes que por tamaño. Números tabulares (`fontVariant: ['tabular-nums']`) en horas y fechas.
-- Body mínimo 16; nunca texto < 12.
+- Body mínimo 16; nunca texto < 12. **Única excepción:** la variante `micro` (11 px) para la
+  hora dentro de un chip del calendario mensual, donde el título y la hora comparten 18 px
+  de alto y la hora tiene que ceder para que se lea más título. No es texto que se lea por
+  sí solo —siempre va pegado al título que explica— y no se usa fuera del calendario.
 
 ### Espaciado, forma, elevación
 - Ritmo 4/8: `xs` 4 · `sm` 8 · `md` 12 · `lg` 16 · `xl` 24 · `2xl` 32 · `3xl` 48.

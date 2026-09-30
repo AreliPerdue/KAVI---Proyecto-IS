@@ -15,11 +15,18 @@ const WEEKS = 6;
 const DAYS_PER_WEEK = 7;
 
 /** Medidas base en dp; se escalan con el tamaño de fuente del sistema. */
-const BASE_CHIP_HEIGHT = 20;
-/** Los chips crecen para repartirse el hueco sobrante, hasta este alto. */
-const MAX_CHIP_HEIGHT = 28;
+const BASE_CHIP_HEIGHT = 18;
+/**
+ * Los chips crecen apenas para repartirse el hueco sobrante.
+ *
+ * Antes llegaban a 28 y en pantallas grandes se inflaban hasta ahí siempre, que es lo
+ * que los hacía verse gordos: la celda se llenaba con dos pastillas altas en vez de
+ * con cuatro delgadas. Calendar y Google Calendar mantienen la píldora a alto fijo y
+ * dejan el sobrante en blanco; el tope bajo imita eso y de paso hace que quepan más.
+ */
+const MAX_CHIP_HEIGHT = 20;
 const BASE_DAY_NUMBER_HEIGHT = 26;
-const CHIP_GAP = 3;
+const CHIP_GAP = 2;
 /** Tope de escala: por encima el mes dejaría de caber en pantallas bajas. */
 const MAX_FONT_SCALE = 1.5;
 /** Ancho de celda a partir del cual la hora cabe junto al título. */
@@ -111,7 +118,10 @@ const DayCell = memo(function DayCell({ date, inMonth, weekend, activities, them
                 ]}>
                 <AppText variant="caption" numberOfLines={1} color={inMonth ? 'text' : 'textSecondary'}>
                   {showTime && !activity.all_day ? (
-                    <AppText variant="caption" color="textSecondary" tabular>
+                    // La hora cede un punto frente al título: es el dato de apoyo, y
+                    // cada píxel que suelta es una letra más de título que se alcanza
+                    // a leer antes de los puntos suspensivos.
+                    <AppText variant="micro" color="textSecondary" tabular>
                       {formatTime(fromIso(activity.start_at))}{' '}
                     </AppText>
                   ) : null}

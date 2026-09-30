@@ -210,12 +210,19 @@ decisiones son de producto. Se mantiene SDD: nada se implementa sin spec.
   está en la barra se abre desde aquí. Es también donde se eligen los tres accesos. Dep: T188
 
 ### Densidad y vistas del calendario
-- [ ] T190 Redensificar los bloques de actividad: tipografía más chica y bloques más
-  delgados para que se lea más texto en la vista previa. Web con el aire de Calendar de
-  Apple, móvil con el de Google Calendar. **La hora se conserva**: no se sustituye por
-  iconos. Toca `activity-block.tsx`, `activity-style.ts` y `timeline.tsx`. Requiere
-  actualizar la escala tipográfica permitida en `kavi-design` §2 o justificar la excepción.
-  Dep: —
+- [x] T190a Píldoras del mes más delgadas. Se inflaban solas: el alto máximo era 28 px y
+  en pantallas grandes los chips crecían hasta ahí siempre, así que una celda se llenaba
+  con dos pastillas gordas en vez de con cuatro delgadas. Baja el alto base a 18, el tope
+  a 20 y la separación a 2, como Calendar y Google Calendar, que mantienen la píldora a
+  alto fijo y dejan el sobrante en blanco. La hora baja a una variante `micro` de 11 px
+  para que ceda espacio al título y se lean más letras antes de los puntos suspensivos;
+  es la única excepción al mínimo de 12 px y queda documentada en `kavi-design` §2.
+  Verificado en web con las tres actividades por celda ya visibles. Dep: —
+- [ ] T190b Misma revisión de densidad en las vistas de día y semana. Ahí el alto lo manda
+  la duración, así que lo que queda por ajustar es la tipografía: hoy el título va en
+  `label` (14) y la hora en `caption` (12) — la jerarquía ya es correcta, pero ambos se
+  ven grandes frente a la referencia de Apple y Google. Pendiente de decidir con capturas
+  a la vista. Dep: T190a
 - [ ] T191 Vista **Agenda** (la "Schedule" de Google Calendar): lista cronológica continua
   agrupada por día, sin rejilla de horas. Es la vista que mejor funciona en pantalla chica y
   la que hace legible un mes vacío. Dep: T190

@@ -104,6 +104,13 @@ export const Typography = {
   bodyStrong: { fontSize: 16, fontWeight: '600', lineHeight: 24 },
   label: { fontSize: 14, fontWeight: '500', lineHeight: 20 },
   caption: { fontSize: 12, fontWeight: '500', lineHeight: 16 },
+  /**
+   * Solo para la hora dentro de un chip del calendario, donde compite con el
+   * título por un espacio de 18 px de alto y tiene que ceder. Es la única
+   * excepción al mínimo de 12 px de `kavi-design` §2 y está documentada ahí:
+   * nunca para texto que se lea por sí solo, y jamás fuera del calendario.
+   */
+  micro: { fontSize: 11, fontWeight: '500', lineHeight: 14 },
 } as const;
 
 export type TypographyVariant = keyof typeof Typography;
