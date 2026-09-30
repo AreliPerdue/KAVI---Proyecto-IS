@@ -1,5 +1,5 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { CalendarDays, Check, Clock, FolderPlus, Palette, Pencil, Trash2, X } from 'lucide-react-native';
+import { ArrowDown, ArrowUp, CalendarDays, Check, Clock, FolderPlus, Palette, Pencil, Trash2, X } from 'lucide-react-native';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Platform, Pressable, ScrollView, StyleSheet, TextInput, type TextStyle, View } from 'react-native';
 
@@ -182,6 +182,7 @@ export default function ListDetailScreen() {
     addSection,
     update: updateList,
     remove: removeList,
+    swapItems,
   } = useListMutations();
 
   const [verCompletados, setVerCompletados] = useState(false);
@@ -285,6 +286,19 @@ export default function ListDetailScreen() {
     const due_time = minutos === null ? null : `${String(Math.floor(minutos / 60)).padStart(2, '0')}:${String(minutos % 60).padStart(2, '0')}`;
     updateItem.mutate({ id: item.id, patch: { due_time } });
     setEditando((e) => (e ? { ...e, due_time } : e));
+  };
+
+  /** Los vecinos de un elemento son los de **su** grupo: subir no lo saca de su sección. */
+  const hermanosDe = (item: ListItem): ListItem[] =>
+    item.section_id ? (porSeccion.get(item.section_id) ?? []) : sueltos;
+
+  const desplazar = (item: ListItem, direccion: -1 | 1) => {
+    const hermanos = hermanosDe(item);
+    const i = hermanos.findIndex((h) => h.id === item.id);
+    const vecino = hermanos[i + direccion];
+    if (!vecino) return;
+    swapItems.mutate({ a: item, b: vecino });
+    setEditando(null);
   };
 
   const mover = (item: ListItem, sectionId: string | null) => {
@@ -575,6 +589,24 @@ export default function ListDetailScreen() {
               </View>
             ) : null}
 
+            <View style={styles.orden}>
+              <ActionRow
+                icon={<ArrowUp size={IconSize.action} strokeWidth={IconStroke} color={theme.text} />}
+                label="Subir"
+                disabled={hermanosDe(editando).findIndex((h) => h.id === editando.id) <= 0}
+                onPress={() => desplazar(editando, -1)}
+              />
+              <ActionRow
+                icon={<ArrowDown size={IconSize.action} strokeWidth={IconStroke} color={theme.text} />}
+                label="Bajar"
+                disabled={(() => {
+                  const h = hermanosDe(editando);
+                  return h.findIndex((x) => x.id === editando.id) >= h.length - 1;
+                })()}
+                onPress={() => desplazar(editando, 1)}
+              />
+            </View>
+
             <Button title="Guardar" onPress={guardarEdicion} loading={updateItem.isPending} />
             <ActionRow
               icon={<Trash2 size={IconSize.action} strokeWidth={IconStroke} color={theme.danger} />}
@@ -661,6 +693,7 @@ const styles = StyleSheet.create({
   },
   hoja: { gap: Spacing.md, paddingBottom: Spacing.md },
   fechas: { gap: Spacing.sm },
+  orden: { gap: 0 },
   mover: { gap: Spacing.sm },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm },
   chip: {

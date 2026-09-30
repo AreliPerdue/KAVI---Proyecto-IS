@@ -8,7 +8,7 @@
  */
 import { addDays, format } from 'date-fns';
 
-import type { ListDetail, ListsApi } from '@/services/contracts';
+import type { ListDetail, ListSearchResults, ListsApi } from '@/services/contracts';
 import { delay, demoState, emitDataChange, nextId } from '@/services/demo/store';
 import type { KaviList, ListItem, ListSection } from '@/types/domain';
 
@@ -27,6 +27,20 @@ function ahora(): string {
 
 function siguienteOrden(existentes: readonly { sort_order: number }[]): number {
   return existentes.length === 0 ? STEP : Math.max(...existentes.map((e) => e.sort_order)) + STEP;
+}
+
+/**
+ * Copia superficial de un elemento antes de salir del backend demo.
+ *
+ * Sin esto se devolvían las **mismas referencias** que guarda el almacén, y quien tuviera
+ * un elemento en la mano veía cambiar sus campos por debajo en cuanto alguien escribía. Lo
+ * pagó el intercambio de orden: al leer el `sort_order` del primero para dárselo al
+ * segundo, ese campo ya había sido mutado por la escritura anterior y los dos terminaban
+ * igual. Supabase devuelve filas sueltas por construcción; el demo tiene que imitarlo o
+ * deja de servir para probar.
+ */
+function copia<T>(fila: T): T {
+  return { ...fila };
 }
 
 function conCuentas(lista: StoredList): KaviList {
@@ -123,7 +137,7 @@ export const demoLists: ListsApi = {
     return {
       list: conCuentas(lista),
       sections: sections.filter((s) => s.list_id === listId).sort((a, b) => a.sort_order - b.sort_order),
-      items: items.filter((i) => i.list_id === listId).sort((a, b) => a.sort_order - b.sort_order),
+      items: items.filter((i) => i.list_id === listId).sort((a, b) => a.sort_order - b.sort_order).map(copia),
     };
   },
 
@@ -242,7 +256,7 @@ export const demoLists: ListsApi = {
     };
     items.push(item);
     emitDataChange();
-    return item;
+    return copia(item);
   },
 
   async updateItem(itemId, patch) {
@@ -255,7 +269,7 @@ export const demoLists: ListsApi = {
     if (patch.due_time !== undefined) item.due_time = patch.due_time;
     item.updated_at = ahora();
     emitDataChange();
-    return item;
+    return copia(item);
   },
 
   async removeItem(itemId) {
@@ -272,7 +286,7 @@ export const demoLists: ListsApi = {
     item.completed_by = done ? userId : null;
     item.updated_at = ahora();
     emitDataChange();
-    return item;
+    return copia(item);
   },
 
   async reorderItem(itemId, sortOrder, sectionId) {
@@ -288,7 +302,8 @@ export const demoLists: ListsApi = {
     const mias = new Set(lists.filter((l) => l.owner_id === userId && !l.is_archived).map((l) => l.id));
     return items
       .filter((i) => mias.has(i.list_id) && i.due_date !== null && i.due_date >= fromDate && i.due_date <= toDate)
-      .sort((a, b) => (a.due_date ?? '').localeCompare(b.due_date ?? '') || a.sort_order - b.sort_order);
+      .sort((a, b) => (a.due_date ?? '').localeCompare(b.due_date ?? '') || a.sort_order - b.sort_order)
+      .map(copia);
   },
 
   async listOverdue(userId, beforeDate) {
@@ -297,7 +312,22 @@ export const demoLists: ListsApi = {
     return items
       .filter((i) => mias.has(i.list_id) && i.completed_at === null && i.due_date !== null && i.due_date < beforeDate)
       // Lo más viejo primero: es lo que lleva más tiempo esperando.
-      .sort((a, b) => (a.due_date ?? '').localeCompare(b.due_date ?? ''));
+      .sort((a, b) => (a.due_date ?? '').localeCompare(b.due_date ?? ''))
+      .map(copia);
+  },
+
+  async search(userId, term): Promise<ListSearchResults> {
+    await delay();
+    const q = term.trim().toLowerCase();
+    if (!q) return { lists: [], items: [] };
+    const mias = lists.filter((l) => l.owner_id === userId && !l.is_archived);
+    const ids = new Set(mias.map((l) => l.id));
+    return {
+      lists: mias.filter((l) => l.name.toLowerCase().includes(q)).map(conCuentas),
+      items: items.filter(
+        (i) => ids.has(i.list_id) && (i.title.toLowerCase().includes(q) || (i.note ?? '').toLowerCase().includes(q)),
+      ).map(copia),
+    };
   },
 
   async rescheduleItems(itemIds, dueDate) {

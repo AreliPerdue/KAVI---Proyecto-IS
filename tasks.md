@@ -393,9 +393,26 @@ un clic de más para llegar a lo mismo.
   Solo avisa lo que tiene hora: una fecha sin hora significa "ese día, cuando pueda", y
   ponerle las 9 por nuestra cuenta sería una alarma que nadie pidió. (RF-L11, RF-C10)
   Dep: T212
-- [ ] T213 Buscar listas y elementos, completados incluidos (RF-L4). Dep: T195
-- [ ] T214 Reordenar con subir/bajar en el menú de cada elemento y de cada lista. El
-  arrastre de verdad va aparte, después de que todo lo demás esté bien (RF-L3, RF-L7). Dep: T200
+- [x] T213 Buscar listas y elementos, completados incluidos (RF-L4). Campo en el inicio;
+  desde dos letras, con rebote de 250 ms para no consultar por tecla y conservando el
+  resultado anterior mientras llega el nuevo, para que no parpadee a vacío.
+  Listas y elementos se muestran **por separado**: buscar "leche" puede dar una lista que se
+  llama así y un elemento dentro de otra, y son dos respuestas distintas a la misma palabra.
+  Lo palomeado aparece tachado en vez de esconderse — media búsqueda dentro de una lista es
+  justo para recordar si algo ya se compró. En Supabase se escapan `%` y `_` del patrón:
+  sin eso, buscar "50%" traería cualquier cosa. Dep: T195
+- [x] T214 Reordenar con subir/bajar, en la hoja del elemento y en el menú de la lista. Se
+  ordena dentro del propio grupo: subir no saca un elemento de su sección ni una lista de
+  "Fijadas", y los extremos salen deshabilitados en vez de no hacer nada. El arrastre de
+  verdad va aparte, cuando lo demás esté bien. (RF-L3, RF-L7) Dep: T200
+- [x] T216 El backend demo devolvía **las mismas referencias** que guardaba, así que quien
+  tuviera un elemento en la mano veía cambiar sus campos por debajo en cuanto alguien
+  escribía. Lo destapó el intercambio de orden: al leer el `sort_order` del primero para
+  dárselo al segundo, ese campo ya había sido mutado por la escritura anterior y los dos
+  terminaban igual — el reordenar "no hacía nada". Supabase devuelve filas sueltas por
+  construcción; el demo tiene que imitarlo o deja de servir para probar. Ahora copia cada
+  fila al salir, y el intercambio además lee los dos órdenes antes de escribir ninguno, que
+  es correcto con cualquier backend. Dep: T214
 
 ### Pendientes sueltos
 - [ ] T196 Elegir idioma de la interfaz: **español o inglés**. Hoy los textos están

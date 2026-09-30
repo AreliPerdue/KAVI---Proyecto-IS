@@ -1,18 +1,20 @@
 import { useRouter } from 'expo-router';
-import { Archive, ArchiveRestore, CircleCheck, Copy, Ellipsis, Pin, PinOff, Trash2 } from 'lucide-react-native';
+import { Archive, ArchiveRestore, ArrowDown, ArrowUp, CircleCheck, Copy, Ellipsis, Pin, PinOff, Search, Trash2, X } from 'lucide-react-native';
 import { useCallback, useMemo, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Platform, Pressable, ScrollView, StyleSheet, TextInput, type TextStyle, View } from 'react-native';
 
 import { tint } from '@/components/calendar/activity-style';
 import { PEOPLE_COLORS } from '@/constants/people-colors';
 import { ModalHeader } from '@/components/modal-header';
 import { ActionRow, AppText, EmptyState, ErrorState, Fab, LoadingState, Screen, Sheet, ThemeIcon } from '@/components/ui';
-import { IconSize, IconStroke, Radius, Spacing } from '@/constants/theme';
-import { useArchivedLists, useListMutations, useLists } from '@/hooks/use-lists';
+import { Fonts, IconSize, IconStroke, Radius, Spacing, Typography } from '@/constants/theme';
+import { useArchivedLists, useListMutations, useLists, useListSearch } from '@/hooks/use-lists';
+import { useDebouncedValue } from '@/hooks/use-debounced-value';
 import { useShrinkOnScroll } from '@/hooks/use-shrink-on-scroll';
 import { useTheme } from '@/hooks/use-theme';
 import { useConfirm, useSnackbar } from '@/providers';
-import type { KaviList } from '@/types/domain';
+import type { ListSearchResults } from '@/services/lists';
+import type { KaviList, ListItem } from '@/types/domain';
 
 /** Dos columnas: es la rejilla de tarjetas de RF-L1, al estilo de Google Keep. */
 const COLUMNAS = 2;
@@ -20,6 +22,9 @@ const COLUMNAS = 2;
 /** Con qué nace una lista antes de que nadie la toque. */
 export const NOMBRE_POR_OMISION = 'Sin título';
 const COLOR_POR_OMISION = PEOPLE_COLORS[0]?.hex ?? '#176BFF';
+
+const SIN_ANILLO: TextStyle =
+  Platform.OS === 'web' ? ({ outlineStyle: 'none', outlineWidth: 0 } as unknown as TextStyle) : {};
 
 function subtitulo(lista: KaviList): string {
   if (lista.total_count === 0) return 'Sin elementos';
@@ -32,6 +37,74 @@ function enFilas(listas: readonly KaviList[]): KaviList[][] {
   const filas: KaviList[][] = [];
   for (let i = 0; i < listas.length; i += COLUMNAS) filas.push(listas.slice(i, i + COLUMNAS));
   return filas;
+}
+
+/**
+ * Resultados de la búsqueda (RF-L4).
+ *
+ * Listas y elementos se muestran por separado y no mezclados: buscar "leche" puede dar una
+ * lista que se llama así y un elemento dentro de otra, y son dos respuestas distintas a la
+ * misma palabra. Lo ya palomeado aparece tachado en vez de esconderse: media búsqueda
+ * dentro de una lista es para recordar si algo ya se compró.
+ */
+function Resultados({ datos, abrir }: { datos: ListSearchResults | undefined; abrir: (id: string) => void }) {
+  const theme = useTheme();
+  const listas = datos?.lists ?? [];
+  const elementos = datos?.items ?? [];
+
+  if (listas.length === 0 && elementos.length === 0) {
+    return (
+      <EmptyState
+        icon={<Search size={32} strokeWidth={IconStroke} color={theme.textTertiary} />}
+        title="Sin coincidencias"
+        description="Prueba con otra palabra."
+      />
+    );
+  }
+
+  const fila = (key: string, texto: string, hecho: boolean, onPress: () => void, sub?: string) => (
+    <Pressable
+      key={key}
+      accessibilityRole="button"
+      accessibilityLabel={texto}
+      onPress={onPress}
+      style={({ pressed }) => [styles.resultado, pressed ? { backgroundColor: theme.surfaceAlt } : null]}>
+      <View style={styles.resultadoTexto}>
+        <AppText variant="body" color={hecho ? 'textTertiary' : 'text'} numberOfLines={1} style={hecho ? styles.tachado : null}>
+          {texto}
+        </AppText>
+        {sub ? (
+          <AppText variant="caption" color="textTertiary" numberOfLines={1}>
+            {sub}
+          </AppText>
+        ) : null}
+      </View>
+    </Pressable>
+  );
+
+  return (
+    <ScrollView contentContainerStyle={styles.resultados} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+      {listas.length > 0 ? (
+        <>
+          <AppText variant="caption" color="textTertiary">
+            Listas
+          </AppText>
+          {listas.map((l) => fila(l.id, l.name, false, () => abrir(l.id)))}
+        </>
+      ) : null}
+
+      {elementos.length > 0 ? (
+        <>
+          <AppText variant="caption" color="textTertiary" style={listas.length > 0 ? styles.grupoTitulo : undefined}>
+            Elementos
+          </AppText>
+          {elementos.map((i: ListItem) =>
+            fila(i.id, i.title, i.completed_at !== null, () => abrir(i.list_id), i.note ?? undefined),
+          )}
+        </>
+      ) : null}
+    </ScrollView>
+  );
 }
 
 /**
@@ -48,11 +121,16 @@ export default function ListsScreen() {
   const confirm = useConfirm();
   const showSnackbar = useSnackbar();
   const [verArchivadas, setVerArchivadas] = useState(false);
+  const [busqueda, setBusqueda] = useState('');
+  // Sin esto habría una consulta por tecla; con 250 ms se dispara al dejar de escribir.
+  const termino = useDebouncedValue(busqueda, 250);
+  const resultados = useListSearch(termino);
+  const buscando = busqueda.trim().length >= 2;
   const [menuDe, setMenuDe] = useState<KaviList | null>(null);
 
   const lists = useLists();
   const archivadas = useArchivedLists(verArchivadas);
-  const { update, remove, duplicate, create } = useListMutations();
+  const { update, remove, duplicate, create, swapLists } = useListMutations();
   const { shrunk, onScroll } = useShrinkOnScroll();
 
   const consulta = verArchivadas ? archivadas : lists;
@@ -65,6 +143,16 @@ export default function ListsScreen() {
   }, [lists.data]);
 
   const cerrarMenu = () => setMenuDe(null);
+
+  /** Se ordena dentro del propio grupo: subir no despega una lista de "Fijadas". */
+  const grupoDe = (lista: KaviList) => (lista.is_pinned ? fijadas : propias);
+
+  const desplazar = (lista: KaviList, direccion: -1 | 1) => {
+    const grupo = grupoDe(lista);
+    const vecino = grupo[grupo.findIndex((l) => l.id === lista.id) + direccion];
+    cerrarMenu();
+    if (vecino) swapLists.mutate({ a: lista, b: vecino });
+  };
 
   /**
    * Crear no pasa por ningún formulario (RF-L2).
@@ -198,10 +286,35 @@ export default function ListsScreen() {
         }
       />
 
-      {consulta.isPending ? <LoadingState /> : null}
-      {consulta.isError ? <ErrorState message={consulta.error.message} onRetry={() => consulta.refetch()} /> : null}
+      <View style={[styles.buscador, { borderColor: theme.border, backgroundColor: theme.surface }]}>
+        <Search size={IconSize.inline} strokeWidth={IconStroke} color={theme.textTertiary} />
+        <TextInput
+          value={busqueda}
+          onChangeText={setBusqueda}
+          placeholder="Buscar en tus listas"
+          placeholderTextColor={theme.textTertiary}
+          returnKeyType="search"
+          accessibilityLabel="Buscar en tus listas"
+          style={[styles.buscadorInput, SIN_ANILLO, { color: theme.text }]}
+        />
+        {busqueda ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Limpiar búsqueda"
+            hitSlop={8}
+            onPress={() => setBusqueda('')}
+            style={({ pressed }) => [pressed ? styles.pressed : null]}>
+            <X size={IconSize.inline} strokeWidth={IconStroke} color={theme.textTertiary} />
+          </Pressable>
+        ) : null}
+      </View>
 
-      {consulta.isSuccess ? (
+      {buscando ? <Resultados datos={resultados.data} abrir={abrir} /> : null}
+
+      {!buscando && consulta.isPending ? <LoadingState /> : null}
+      {!buscando && consulta.isError ? <ErrorState message={consulta.error.message} onRetry={() => consulta.refetch()} /> : null}
+
+      {!buscando && consulta.isSuccess ? (
         consulta.data.length === 0 ? (
           <EmptyState
             icon={<CircleCheck size={32} strokeWidth={IconStroke} color={theme.textTertiary} />}
@@ -255,6 +368,21 @@ export default function ListsScreen() {
                   onPress={() => alternarFijada(menuDe)}
                 />
                 <ActionRow
+                  icon={<ArrowUp size={IconSize.action} strokeWidth={IconStroke} color={theme.text} />}
+                  label="Subir"
+                  disabled={grupoDe(menuDe).findIndex((l) => l.id === menuDe.id) <= 0}
+                  onPress={() => desplazar(menuDe, -1)}
+                />
+                <ActionRow
+                  icon={<ArrowDown size={IconSize.action} strokeWidth={IconStroke} color={theme.text} />}
+                  label="Bajar"
+                  disabled={(() => {
+                    const g = grupoDe(menuDe);
+                    return g.findIndex((l) => l.id === menuDe.id) >= g.length - 1;
+                  })()}
+                  onPress={() => desplazar(menuDe, 1)}
+                />
+                <ActionRow
                   icon={<Copy size={IconSize.action} strokeWidth={IconStroke} color={theme.text} />}
                   label="Duplicar"
                   onPress={() => duplicar(menuDe)}
@@ -283,6 +411,35 @@ const styles = StyleSheet.create({
   content: { gap: Spacing.md },
   enlace: { minHeight: 44, justifyContent: 'center', paddingHorizontal: Spacing.xs },
   cuerpo: { gap: Spacing.lg, paddingBottom: Spacing['3xl'] },
+  buscador: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    minHeight: 44,
+    paddingHorizontal: Spacing.md,
+    borderWidth: 1,
+    borderRadius: Radius.full,
+  },
+  buscadorInput: {
+    flex: 1,
+    fontFamily: Fonts?.sans,
+    fontSize: Typography.body.fontSize,
+    lineHeight: Typography.body.lineHeight,
+    padding: 0,
+  },
+  resultados: { gap: Spacing.sm, paddingBottom: Spacing['3xl'] },
+  grupoTitulo: { marginTop: Spacing.sm },
+  resultado: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    minHeight: 44,
+    paddingHorizontal: Spacing.sm,
+    borderRadius: Radius.sm,
+    borderCurve: 'continuous',
+  },
+  resultadoTexto: { flex: 1 },
+  tachado: { textDecorationLine: 'line-through' },
   grupo: { gap: Spacing.sm },
   fila: { flexDirection: 'row', gap: Spacing.sm },
   hueco: { flex: 1 },

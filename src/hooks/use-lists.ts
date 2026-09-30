@@ -16,9 +16,13 @@ import {
   listItemsByDateRange,
   listLists,
   listOverdueItems,
+  type ListSearchResults,
   removeList,
   removeListItem,
+  reorderList,
+  reorderListItem,
   rescheduleListItems,
+  searchLists,
   toggleListItem,
   updateList,
   updateListItem,
@@ -30,6 +34,7 @@ export const listKeys = {
   detail: (id: string) => ['lists', 'detail', id] as const,
   byDate: (userId: string | null, from: string, to: string) => ['lists', 'date', userId, from, to] as const,
   overdue: (userId: string | null, before: string) => ['lists', 'overdue', userId, before] as const,
+  search: (userId: string | null, term: string) => ['lists', 'search', userId, term] as const,
 };
 
 export function useLists() {
@@ -88,6 +93,24 @@ export function useOverdueListItems(beforeDate: string, enabled = true) {
   });
 }
 
+/**
+ * Busca listas y elementos (RF-L4).
+ *
+ * Con menos de dos letras no consulta: un solo carácter trae media base y no acerca a nada.
+ * `placeholderData` conserva lo anterior mientras llega lo nuevo, para que la lista no
+ * parpadee a vacío entre pulsaciones.
+ */
+export function useListSearch(term: string) {
+  const { userId } = useAuth();
+  const limpio = term.trim();
+  return useQuery<ListSearchResults>({
+    queryKey: listKeys.search(userId, limpio),
+    queryFn: () => searchLists(userId as string, limpio),
+    enabled: !!userId && limpio.length >= 2,
+    placeholderData: (previo) => previo,
+  });
+}
+
 export function useListMutations() {
   const { userId } = useAuth();
   const qc = useQueryClient();
@@ -124,6 +147,32 @@ export function useListMutations() {
     reschedule: useMutation({
       mutationFn: ({ ids, dueDate }: { ids: readonly string[]; dueDate: string }) =>
         rescheduleListItems(ids, dueDate),
+      onSuccess: invalidar,
+    }),
+    /**
+     * Intercambia el orden de dos vecinos (RF-L3, RF-L7).
+     *
+     * Subir y bajar en vez de arrastrar: el arrastre funciona distinto en web que en
+     * nativo y ninguna librería cubre bien las dos, así que va aparte y después. Con dos
+     * vecinos basta permutar sus `sort_order`; el hueco fraccionario se necesitará cuando
+     * llegue el arrastre, que sí inserta en medio.
+     */
+    swapItems: useMutation({
+      mutationFn: async ({ a, b }: { a: ListItem; b: ListItem }) => {
+        // Los dos órdenes se leen **antes** de escribir ninguno: si se lee el segundo
+        // después del primer guardado, se lee el valor ya intercambiado.
+        const [ordenA, ordenB] = [a.sort_order, b.sort_order];
+        await reorderListItem(a.id, ordenB, a.section_id);
+        await reorderListItem(b.id, ordenA, b.section_id);
+      },
+      onSuccess: invalidar,
+    }),
+    swapLists: useMutation({
+      mutationFn: async ({ a, b }: { a: KaviList; b: KaviList }) => {
+        const [ordenA, ordenB] = [a.sort_order, b.sort_order];
+        await reorderList(a.id, ordenB);
+        await reorderList(b.id, ordenA);
+      },
       onSuccess: invalidar,
     }),
     toggleItem: useMutation({

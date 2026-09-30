@@ -235,4 +235,17 @@ export interface ListsApi {
 
   /** Mueve varios pendientes a una fecha nueva de una sola vez (reprogramar). */
   rescheduleItems(itemIds: readonly string[], dueDate: string): Promise<void>;
+
+  /**
+   * Busca por nombre de lista y por texto de elemento, **completados incluidos** (RF-L4).
+   *
+   * Lo ya palomeado entra a propósito: media búsqueda en una lista es para recordar si algo
+   * se compró o no, y esconder lo hecho responde justo lo contrario de lo que se pregunta.
+   */
+  search(userId: string, term: string): Promise<ListSearchResults>;
 }
+
+export type ListSearchResults = {
+  lists: KaviList[];
+  items: ListItem[];
+};

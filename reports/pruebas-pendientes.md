@@ -129,3 +129,13 @@ juntarlo en una sesión dedicada a pruebas.
 - [ ] Un elemento con fecha y **sin** hora no programa nada.
 - [ ] Un elemento ya palomeado no programa nada.
 - [ ] La hora se interpreta como local, no como UTC.
+
+## Buscar y reordenar (T213, T214, T216)
+
+- [ ] **La más importante**: el backend demo no devuelve referencias vivas de su almacén.
+  Mutar lo devuelto no debe cambiar lo guardado. Es la prueba que habría atrapado T216.
+- [ ] `search` con menos de dos letras no consulta.
+- [ ] `search` encuentra elementos ya palomeados.
+- [ ] En Supabase, buscar "50%" no trae de más: `%` y `_` van escapados.
+- [ ] Subir/bajar solo permuta dentro del grupo y los extremos van deshabilitados.
+- [ ] El intercambio lee ambos `sort_order` antes de escribir.

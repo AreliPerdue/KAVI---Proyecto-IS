@@ -1,6 +1,6 @@
 import { AuthUiError } from '@/lib/auth-errors';
 import { getSupabase } from '@/lib/supabase';
-import type { ListDetail, ListsApi } from '@/services/contracts';
+import type { ListDetail, ListSearchResults, ListsApi } from '@/services/contracts';
 import { toError, unwrap } from '@/services/supabase/errors';
 import type { KaviList, ListItem, ListSection } from '@/types/domain';
 
@@ -294,6 +294,26 @@ export const supabaseLists: ListsApi = {
         .order('due_date', { ascending: true }),
     );
     return sinJoin(rows as unknown[]);
+  },
+
+  async search(userId, term): Promise<ListSearchResults> {
+    const q = term.trim();
+    if (!q) return { lists: [], items: [] };
+    // `%` y `_` son comodines de LIKE: sin escaparlos, buscar "50%" traería cualquier cosa.
+    const patron = `%${q.replace(/[\\%_]/g, (c) => `\\${c}`)}%`;
+    const [listas, elementos] = await Promise.all([
+      getSupabase().from('lists').select(SELECT_LISTA).eq('owner_id', userId).eq('is_archived', false).ilike('name', patron),
+      getSupabase()
+        .from('list_items')
+        .select('*, lists!inner(owner_id, is_archived)')
+        .eq('lists.owner_id', userId)
+        .eq('lists.is_archived', false)
+        .or(`title.ilike.${patron},note.ilike.${patron}`),
+    ]);
+    return {
+      lists: (unwrap(listas) as unknown as ListRow[]).map(toList),
+      items: sinJoin(unwrap(elementos) as unknown[]),
+    };
   },
 
   async rescheduleItems(itemIds, dueDate) {
