@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 
-import { setTimeFormat, type TimeFormat } from '@/lib/dates';
+import { type CalendarView, setTimeFormat, type TimeFormat } from '@/lib/dates';
 import { getJson, setJson } from '@/lib/storage';
 
 const PREFS_KEY = 'kavi.preferences';
@@ -14,6 +14,13 @@ export const DEFAULT_APPEARANCE: Appearance = 'dark';
 /** Reloj de 24 h por omisión, que es lo habitual en es-MX. */
 export const DEFAULT_TIME_FORMAT: TimeFormat = '24h';
 
+/**
+ * Vistas que aparecen en la pastilla del encabezado. Las demás viven en su menú y se
+ * pueden fijar desde ahí (RF-C16). Arrancan las tres de siempre; tres días y agenda
+ * quedan a un toque para quien las quiera a la mano.
+ */
+export const DEFAULT_PINNED_VIEWS: CalendarView[] = ['day', 'week', 'month'];
+
 type Prefs = {
   timeFormat: TimeFormat;
   lastWorkoutTitle: string | null;
@@ -23,6 +30,7 @@ type Prefs = {
   visto: boolean;
   appearance: Appearance;
   selfColor: string | null;
+  pinnedViews: CalendarView[];
 };
 
 type PreferencesState = {
@@ -51,6 +59,8 @@ type PreferencesState = {
    * porque es cómo **yo** me veo: a mis contactos los pinta su propia asignación.
    */
   selfColor: string | null;
+  /** Vistas visibles en la pastilla del encabezado del calendario (RF-C16). */
+  pinnedViews: CalendarView[];
   hydrated: boolean;
   setTimeFormat: (formato: TimeFormat) => void;
   setLastWorkoutTitle: (titulo: string | null) => void;
@@ -59,6 +69,7 @@ type PreferencesState = {
   marcarVisto: () => void;
   setAppearance: (valor: Appearance) => void;
   setSelfColor: (hex: string | null) => void;
+  togglePinnedView: (view: CalendarView) => void;
   hydrate: () => Promise<void>;
 };
 
@@ -88,6 +99,7 @@ export const usePreferencesStore = create<PreferencesState>((set, get) => ({
   showBirthdays: true,
   visto: false,
   appearance: DEFAULT_APPEARANCE,
+  pinnedViews: DEFAULT_PINNED_VIEWS,
   selfColor: null,
   hydrated: false,
 
@@ -129,6 +141,25 @@ export const usePreferencesStore = create<PreferencesState>((set, get) => ({
     persistir({ ...get(), selfColor: hex });
   },
 
+  /**
+   * Fija o quita una vista de la pastilla del encabezado (RF-C16).
+   *
+   * Nunca la deja vacía: sin ninguna vista fijada, el encabezado perdería su único
+   * control para cambiar de vista y solo quedaría el menú. Se conserva el orden
+   * canónico —día, tres días, semana, mes, agenda— en vez del orden en que se fueron
+   * fijando, para que la pastilla no cambie de forma según cómo se configuró.
+   */
+  togglePinnedView: (view) => {
+    const actuales = get().pinnedViews;
+    const quitando = actuales.includes(view);
+    if (quitando && actuales.length === 1) return;
+    const orden: CalendarView[] = ['day', 'threeDays', 'week', 'month', 'agenda'];
+    const siguiente = orden.filter((v) => (v === view ? !quitando : actuales.includes(v)));
+    elegidoEnEstaSesion.add('pinnedViews');
+    set({ pinnedViews: siguiente });
+    persistir({ ...get(), pinnedViews: siguiente });
+  },
+
   marcarVisto: () => {
     if (get().visto) return;
     elegidoEnEstaSesion.add('visto');
@@ -153,6 +184,7 @@ export const usePreferencesStore = create<PreferencesState>((set, get) => ({
       // preferencias guardadas no las vio nunca apagadas.
       showWorkouts: guardado('showWorkouts', prefs?.showWorkouts ?? true),
       showBirthdays: guardado('showBirthdays', prefs?.showBirthdays ?? true),
+      pinnedViews: guardado('pinnedViews', prefs?.pinnedViews ?? DEFAULT_PINNED_VIEWS),
       visto: guardado('visto', prefs?.visto ?? false),
       appearance: guardado('appearance', prefs?.appearance ?? DEFAULT_APPEARANCE),
       selfColor: guardado('selfColor', prefs?.selfColor ?? null),
@@ -166,13 +198,14 @@ export const usePreferencesStore = create<PreferencesState>((set, get) => ({
 
 /** Se guarda el conjunto entero: son dos claves y así no pueden desincronizarse. */
 function persistir(
-  estado: Pick<PreferencesState, 'timeFormat' | 'lastWorkoutTitle' | 'showWorkouts' | 'showBirthdays' | 'visto' | 'appearance' | 'selfColor'>,
+  estado: Pick<PreferencesState, 'timeFormat' | 'lastWorkoutTitle' | 'showWorkouts' | 'showBirthdays' | 'visto' | 'appearance' | 'selfColor' | 'pinnedViews'>,
 ): void {
   void setJson(PREFS_KEY, {
     timeFormat: estado.timeFormat,
     lastWorkoutTitle: estado.lastWorkoutTitle,
     showWorkouts: estado.showWorkouts,
     showBirthdays: estado.showBirthdays,
+    pinnedViews: estado.pinnedViews,
     visto: estado.visto,
     appearance: estado.appearance,
     selfColor: estado.selfColor,

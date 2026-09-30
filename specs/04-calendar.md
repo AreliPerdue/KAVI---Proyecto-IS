@@ -29,8 +29,27 @@ El calendario es la pantalla principal y el hub de toda la app (P1). Desde él s
 - RF-C9. Presets: al momento, 10 min, 30 min, 1 h, 1 día antes; múltiples permitidos.
 - RF-C10. Se programan como notificaciones locales (Expo Notifications) al crear/editar; se cancelan y reprograman al cambiar horario o eliminar la actividad. En web: fallback a banner in-app al abrir la app si el reminder venció (P5).
 
+### Vistas (RF-C16, RF-C17)
+- RF-C16. **Cinco vistas**: día, 3 días, semana, mes y agenda. Las de 3 días y agenda se
+  toman de Google Calendar por motivos distintos: la de tres días vuelve usable la rejilla
+  de horas en un teléfono, donde repartir 7 columnas en 390 px deja cada bloque ilegible; y
+  la agenda hace legible un mes con pocas actividades, donde la rejilla se ve casi vacía y
+  hay que recorrerla con la vista para hallar las tres cosas que sí hay. La agenda solo
+  pinta los días con algo agendado, y comparte el rango del mes para que "anterior" y
+  "siguiente" signifiquen lo mismo en todas las vistas.
+- RF-C17. **La barra de vistas se configura.** Cinco no caben legibles en una pastilla, así
+  que se muestran las que cada quien fije y el resto vive en su menú, donde se fijan y se
+  quitan con un alfiler. El menú nunca desaparece: es lo que garantiza que ninguna vista
+  quede inalcanzable por cómo esté configurada la pastilla, y por lo mismo no se puede
+  dejar la pastilla sin ninguna vista. En pantallas angostas la pastilla se reduce a un
+  botón con el nombre de la vista actual, que abre el mismo menú.
+
+  **Criterio.** *Dado* que "3 días" no está en la pastilla, *cuando* la fijo desde el menú,
+  *entonces* aparece en la pastilla en su lugar del orden —día, 3 días, semana, mes,
+  agenda— y no al final.
+
 ### Filtros y estados
-- RF-C11. Filtro por dimensión (chips con las 7) y por tema; combinables; afectan las 3 vistas.
+- RF-C11. Filtro por dimensión (chips con las 7) y por tema; combinables; afectan las 5 vistas.
   El filtro alcanza **todo lo que se pinta en el calendario**, incluidas las capas derivadas
   (entrenamientos sueltos de RF-F10 y cumpleaños de RF-A10): cada una lleva su dimensión, y
   dejarlas visibles al filtrar por otra contradice el criterio de aceptación de abajo. Los
@@ -48,7 +67,7 @@ El calendario es la pantalla principal y el hub de toda la app (P1). Desde él s
 - Given una actividad recurrente semanal L-M-V, When la veo en el mes, Then aparecen instancias solo en esos días hasta el horizonte.
 - Given que edito "solo esta ocurrencia", When guardo, Then las demás instancias no cambian.
 - Given un reminder de 30 min, When llega la hora, Then recibo la notificación local con el título de la actividad (iOS y Android).
-- Given filtro por dimensión "física", When lo aplico, Then solo veo actividades de esa dimensión en las 3 vistas.
+- Given filtro por dimensión "física", When lo aplico, Then solo veo actividades de esa dimensión en las 5 vistas.
 - Given los entrenamientos visibles en el calendario, When filtro por una dimensión distinta de
   "física", Then dejan de verse, igual que las actividades que no pasan el filtro.
 

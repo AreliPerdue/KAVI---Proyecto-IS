@@ -24,7 +24,15 @@ import {
 } from 'date-fns';
 import { es } from 'date-fns/locale';
 
-export type CalendarView = 'month' | 'week' | 'day';
+/**
+ * Las cinco vistas del calendario. `threeDays` y `agenda` salen de Google Calendar:
+ * la de tres días es la que vuelve usable la semana en un teléfono, y la agenda es la
+ * que hace legible un mes con pocas actividades, donde la rejilla se ve vacía.
+ */
+export type CalendarView = 'month' | 'week' | 'threeDays' | 'day' | 'agenda';
+
+/** Días que abarca la vista de tres días. */
+export const THREE_DAYS = 3;
 
 export type DateRange = { from: Date; to: Date };
 
@@ -66,8 +74,21 @@ export function rangeForView(view: CalendarView, anchor: Date): DateRange {
       const from = startOfWeek(anchor, WEEK);
       return { from: startOfDay(from), to: startOfDay(addWeeks(from, 1)) };
     }
+    case 'threeDays':
+      return { from: startOfDay(anchor), to: startOfDay(addDays(anchor, THREE_DAYS)) };
     case 'day':
       return { from: startOfDay(anchor), to: startOfDay(addDays(anchor, 1)) };
+    /*
+     * La agenda comparte el rango del mes en vez de desplazarse sin fin como la de
+     * Google. Así "anterior" y "siguiente" siguen significando lo mismo en todas las
+     * vistas y el encabezado sigue diciendo de qué periodo se está hablando; el scroll
+     * infinito obligaría a otro modelo de navegación solo para esta.
+     */
+    case 'agenda': {
+      const from = startOfWeek(startOfMonth(anchor), WEEK);
+      const to = addDays(endOfWeek(endOfMonth(anchor), WEEK), 1);
+      return { from: startOfDay(from), to: startOfDay(to) };
+    }
   }
 }
 
@@ -77,8 +98,12 @@ export function shiftAnchor(view: CalendarView, anchor: Date, direction: 1 | -1)
       return addMonths(anchor, direction);
     case 'week':
       return addWeeks(anchor, direction);
+    case 'threeDays':
+      return addDays(anchor, direction * THREE_DAYS);
     case 'day':
       return addDays(anchor, direction);
+    case 'agenda':
+      return addMonths(anchor, direction);
   }
 }
 
@@ -131,6 +156,21 @@ export function formatWeekTitle(anchor: Date): string {
     return `${format(first, 'd', { locale: es })} – ${format(last, 'd MMM yyyy', { locale: es })}`;
   }
   return `${format(first, 'd MMM', { locale: es })} – ${format(last, 'd MMM yyyy', { locale: es })}`;
+}
+
+/** "28 – 30 sep 2026" */
+export function formatThreeDaysTitle(anchor: Date): string {
+  const first = startOfDay(anchor);
+  const last = addDays(first, THREE_DAYS - 1);
+  if (isSameMonth(first, last)) {
+    return `${format(first, 'd', { locale: es })} – ${format(last, 'd MMM yyyy', { locale: es })}`;
+  }
+  return `${format(first, 'd MMM', { locale: es })} – ${format(last, 'd MMM yyyy', { locale: es })}`;
+}
+
+/** Los días que abarca la vista de tres días, desde el ancla. */
+export function threeDays(anchor: Date): Date[] {
+  return Array.from({ length: THREE_DAYS }, (_, i) => addDays(startOfDay(anchor), i));
 }
 
 /** "Lunes 7 de septiembre" */

@@ -1,18 +1,30 @@
 import { useRouter } from 'expo-router';
-import { ChevronDown, ChevronLeft, ChevronRight, CircleCheck, LayoutList, SlidersHorizontal } from 'lucide-react-native';
+import { ChevronDown, ChevronLeft, ChevronRight, CircleCheck, SlidersHorizontal } from 'lucide-react-native';
 import { useState } from 'react';
 import { Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
 
-import { ActionRow, AppText, DatePickerSheet, IconButton, Sheet } from '@/components/ui';
+import { AppText, DatePickerSheet, IconButton } from '@/components/ui';
 import { IconSize, IconStroke, Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import { type CalendarView, formatDayTitle, formatMonthTitle, formatWeekTitle } from '@/lib/dates';
+import { ViewSwitcher } from './view-switcher';
 
-const VIEW_OPTIONS: { value: CalendarView; label: string }[] = [
-  { value: 'month', label: 'Mes' },
-  { value: 'week', label: 'Semana' },
-  { value: 'day', label: 'Día' },
-];
+import { type CalendarView, formatDayTitle, formatMonthTitle, formatThreeDaysTitle, formatWeekTitle } from '@/lib/dates';
+
+/** El título dice de qué periodo se está hablando, y eso cambia con la vista. */
+function tituloDe(view: CalendarView, anchor: Date): string {
+  switch (view) {
+    case 'month':
+    // La agenda abarca el mes, así que se encabeza igual.
+    case 'agenda':
+      return formatMonthTitle(anchor);
+    case 'week':
+      return formatWeekTitle(anchor);
+    case 'threeDays':
+      return formatThreeDaysTitle(anchor);
+    case 'day':
+      return formatDayTitle(anchor);
+  }
+}
 
 export type CalendarHeaderProps = {
   view: CalendarView;
@@ -42,11 +54,8 @@ export function CalendarHeader({
   const { width } = useWindowDimensions();
   const wide = width >= 720;
   const [monthPickerOpen, setMonthPickerOpen] = useState(false);
-  const [viewMenuOpen, setViewMenuOpen] = useState(false);
   const router = useRouter();
-  const title =
-    view === 'month' ? formatMonthTitle(anchor) : view === 'week' ? formatWeekTitle(anchor) : formatDayTitle(anchor);
-  const viewLabel = VIEW_OPTIONS.find((o) => o.value === view)?.label ?? 'Mes';
+  const title = tituloDe(view, anchor);
 
   return (
     <View style={styles.row}>
@@ -87,9 +96,7 @@ export function CalendarHeader({
         <IconButton label="Listas" onPress={() => router.push('/(app)/lists')}>
           <CircleCheck size={IconSize.action} strokeWidth={IconStroke} color={theme.text} />
         </IconButton>
-        <IconButton label={`Vista: ${viewLabel}. Cambiar vista`} onPress={() => setViewMenuOpen(true)}>
-          <LayoutList size={IconSize.action} strokeWidth={IconStroke} color={theme.text} />
-        </IconButton>
+        <ViewSwitcher view={view} onChange={onChangeView} compact={!wide} />
         {onOpenFilters ? (
           <IconButton label={activeFilterCount > 0 ? `Filtros, ${activeFilterCount} activos` : 'Filtros'} onPress={onOpenFilters}>
             <View>
@@ -110,20 +117,6 @@ export function CalendarHeader({
           setMonthPickerOpen(false);
         }}
       />
-
-      <Sheet visible={viewMenuOpen} onClose={() => setViewMenuOpen(false)} title="Vista">
-        {VIEW_OPTIONS.map((option) => (
-          <ActionRow
-            key={option.value}
-            icon={<View style={[styles.viewDot, { backgroundColor: option.value === view ? theme.ink : theme.border }]} />}
-            label={option.label}
-            onPress={() => {
-              onChangeView(option.value);
-              setViewMenuOpen(false);
-            }}
-          />
-        ))}
-      </Sheet>
     </View>
   );
 }
@@ -132,9 +125,8 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: Spacing.sm },
   titleButton: { flexDirection: 'row', alignItems: 'center', gap: Spacing.xs, flexShrink: 1, minHeight: 44 },
   title: { flexShrink: 1 },
-  actions: { flexDirection: 'row', alignItems: 'center' },
+  actions: { flexDirection: 'row', alignItems: 'center', gap: Spacing.xs },
   todayButton: { minHeight: 36, paddingHorizontal: Spacing.md, borderWidth: 1, borderRadius: Radius.full, alignItems: 'center', justifyContent: 'center' },
   filterDot: { position: 'absolute', top: -2, right: -2, width: 8, height: 8, borderRadius: 4 },
-  viewDot: { width: 10, height: 10, borderRadius: 5 },
   pressed: { opacity: 0.7 },
 });

@@ -47,3 +47,13 @@ juntarlo en una sesión dedicada a pruebas.
 - [ ] `listFormSchema` rechaza un color fuera de la paleta.
 - [ ] `ModalHeader` con `back`: dice "Atrás" y usa flecha, no X. Y que dentro de Archivadas
   el botón vuelva a las listas activas en vez de salir del módulo.
+
+## Vistas nuevas y pastilla configurable (T191-T193)
+
+- [ ] `rangeForView` y `shiftAnchor` con `threeDays` y `agenda`: son switches exhaustivos y
+  un caso nuevo sin rama rompería en silencio.
+- [ ] `togglePinnedView`: no deja la pastilla vacía, y conserva el orden canónico en vez del
+  orden en que se fijaron.
+- [ ] `AgendaView` omite los días sin actividades y agrupa bien las que cruzan medianoche.
+- [ ] `formatThreeDaysTitle` cuando el rango cruza de mes.
+- [ ] Que el alfiler del menú no quede anidado dentro del Pressable de su fila.

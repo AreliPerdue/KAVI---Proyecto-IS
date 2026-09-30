@@ -5,11 +5,15 @@ import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { runOnJS } from 'react-native-worklets';
 
 import { applyFilters, CalendarHeader, DayView, DueRemindersBanner, FilterSheet, MonthView, WeekView } from '@/components/calendar';
+import { CalendarDays } from 'lucide-react-native';
+
+import { AgendaView } from '@/components/calendar/agenda-view';
+import { ThreeDaysView } from '@/components/calendar/three-days-view';
 import { birthdaysToActivities, cumpleañerosDe, isDerivedActivity, workoutsToActivities } from '@/components/calendar/derived';
 import { blocksToActivities, isOverlayActivity } from '@/components/calendar/overlay';
 import { PeopleTabs } from '@/components/calendar/people-tabs';
-import { AppText, ErrorState, Fab, Screen, Skeleton } from '@/components/ui';
-import { Spacing } from '@/constants/theme';
+import { AppText, EmptyState, ErrorState, Fab, Screen, Skeleton } from '@/components/ui';
+import { IconStroke, Spacing } from '@/constants/theme';
 import { useActivitiesRange, usePrefetchAdjacentRanges } from '@/hooks/use-activities-range';
 import { useAvailability } from '@/hooks/use-availability';
 import { useContacts, usePeopleColors } from '@/hooks/use-connections';
@@ -195,6 +199,29 @@ export default function CalendarScreen() {
     body = <MonthView anchor={anchor} activities={data} onSelectDay={selectDay} />;
   } else if (view === 'week') {
     body = <WeekView anchor={anchor} activities={data} onPressSlot={createAt} onPressActivity={openActivity} isSharedActivity={isShared} />;
+  } else if (view === 'threeDays') {
+    body = <ThreeDaysView anchor={anchor} activities={data} onPressSlot={createAt} onPressActivity={openActivity} isSharedActivity={isShared} />;
+  } else if (view === 'agenda') {
+    /*
+     * La agenda no dibuja rejilla, así que un mes sin nada no deja nada en pantalla: aquí
+     * el vacío sí necesita su propio estado, al revés que en las vistas de horas, donde la
+     * rejilla es la referencia y además es la forma de crear tocando una hora.
+     */
+    body = showEmpty ? (
+      <EmptyState
+        icon={<CalendarDays size={32} strokeWidth={IconStroke} color={theme.textTertiary} />}
+        title="Nada agendado este mes"
+        description="Toca + para crear tu primera actividad."
+      />
+    ) : (
+      <AgendaView
+        from={range.from}
+        to={range.to}
+        activities={data}
+        onPressActivity={openActivity}
+        isSharedActivity={isShared}
+      />
+    );
   } else {
     /**
      * La rejilla de 24 h es la referencia del día, así que se despliega siempre —también

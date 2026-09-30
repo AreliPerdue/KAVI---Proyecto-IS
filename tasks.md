@@ -232,13 +232,25 @@ un clic de más para llegar a lo mismo.
   `label` (14) y la hora en `caption` (12) — la jerarquía ya es correcta, pero ambos se
   ven grandes frente a la referencia de Apple y Google. Pendiente de decidir con capturas
   a la vista. Dep: T190a
-- [ ] T191 Vista **Agenda** (la "Schedule" de Google Calendar): lista cronológica continua
-  agrupada por día, sin rejilla de horas. Es la vista que mejor funciona en pantalla chica y
-  la que hace legible un mes vacío. Dep: T190
-- [ ] T192 Vista **3 días**: rejilla de horas con tres columnas, entre el día y la semana.
-  Es la que vuelve usable la semana en un teléfono. Dep: T190
-- [ ] T193 Rediseñar el selector de vistas del header, que pasa de 3 a 5 opciones (día, 3
-  días, semana, mes, agenda) y ya no cabe como segmented control. Dep: T191, T192
+- [x] T191 Vista **Agenda**: lista cronológica agrupada por día, sin rejilla de horas, que
+  **solo pinta los días con algo**. Ese es el punto: con pocas actividades la rejilla
+  mensual se ve vacía y hay que recorrerla con la vista para hallar las tres cosas que sí
+  hay. Comparte el rango del mes en vez de desplazarse sin fin como la de Google, para que
+  "anterior" y "siguiente" signifiquen lo mismo en todas las vistas; el scroll infinito
+  pedía otro modelo de navegación solo para ella. Es la única vista con estado vacío
+  propio: las de horas no lo necesitan porque la rejilla es la referencia y además es la
+  forma de crear tocando una hora. (RF-C16) Dep: T190
+- [x] T192 Vista **3 días**: la misma rejilla de la semanal con tres columnas, arrancando en
+  el día ancla y no en lunes, porque aquí lo que importa es "hoy y lo que viene". Existe
+  porque la semana reparte 7 columnas en 390 px y cada bloque queda demasiado angosto para
+  leer su título. (RF-C16) Dep: T190
+- [x] T193 Selector de vistas configurable: pastilla con las vistas fijadas más un menú con
+  las cinco, donde cada una se fija y se quita con un alfiler. Cinco no caben legibles en
+  una pastilla, así que cada quien elige cuáles quiere a un toque. La preferencia vive en
+  `preferences-store` junto a las demás del dispositivo, conserva el orden canónico en vez
+  del orden en que se fijaron —para que la pastilla no cambie de forma según cómo se
+  configuró— y nunca se queda vacía. En pantallas angostas se reduce a un botón con el
+  nombre de la vista actual. (RF-C17) Dep: T191, T192
 
 ### Módulo de listas — spec 10 (pendiente de escribir)
 - [x] T194 Escribir `specs/10-lists.md`: filosofía, franja de pendientes del día, vistas,
@@ -303,6 +315,15 @@ un clic de más para llegar a lo mismo.
   original —bajo el 13 en que dos colores se confunden, o sea el mismo coral a la vista— y
   contrasta 3.01:1 sobre papel y 5.52:1 sobre tinta. Es lo que ya se hacía con "blanco" y
   "negro", que son grises con matiz por la misma razón. Dep: —
+
+- [ ] T202 Revisar los 21 colores de la paleta de personas con criterio de diseño, no solo
+  de cumplimiento. Hoy se eligieron para pasar contraste y distancia mínima, y el resultado
+  es que varios se parecen demasiado entre sí y otros no representan el color que el Nobi
+  tiene en mente —el color es la personalidad de cada quien, y "morado claro" y "lila" no se
+  distinguen al verlos juntos—. Va con licencia para **cambiar lo que dice `kavi-design`**
+  si hace falta: el umbral de 13 de distancia perceptual es el mínimo para no confundirse,
+  no una meta de diseño, y subirlo obligaría a repartir mejor los matices. Conviene hacerlo
+  de una sola vez y contra los 21 PNG a la vista, no color por color. Dep: T197
 
 ### Largo plazo (cuando KAVI se lance al público)
 Distribución en iOS y cuenta de Apple Developer · notificaciones push con la app cerrada ·
