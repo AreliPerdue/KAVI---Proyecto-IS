@@ -9,6 +9,7 @@ import { CalendarDays } from 'lucide-react-native';
 
 import { AgendaView } from '@/components/calendar/agenda-view';
 import { ThreeDaysView } from '@/components/calendar/three-days-view';
+import { DayItemsStrip } from '@/components/lists/day-items-strip';
 import { birthdaysToActivities, cumpleañerosDe, isDerivedActivity, workoutsToActivities } from '@/components/calendar/derived';
 import { blocksToActivities, isOverlayActivity } from '@/components/calendar/overlay';
 import { PeopleTabs } from '@/components/calendar/people-tabs';
@@ -20,6 +21,7 @@ import { useContacts, usePeopleColors } from '@/hooks/use-connections';
 import { useMyProfile } from '@/hooks/use-profile';
 import { useWorkouts } from '@/hooks/use-workouts';
 import { usePreferencesStore } from '@/store/preferences-store';
+import { useListItemsByDate, useListMutations, useLists } from '@/hooks/use-lists';
 import { useShrinkOnScroll } from '@/hooks/use-shrink-on-scroll';
 import { useTheme } from '@/hooks/use-theme';
 import { fromDayKey, rangeForView, shiftAnchor, toDayKey } from '@/lib/dates';
@@ -188,6 +190,17 @@ export default function CalendarScreen() {
   // filas de abajo—, así que encoge mientras se baja y vuelve al subir.
   const { shrunk, onScroll } = useShrinkOnScroll();
 
+  /*
+   * Pendientes de listas con fecha de hoy, para la franja de arriba del día (RF-L12).
+   * Solo en la vista diaria: es donde cabe una franja sin comerse la rejilla, y es el día
+   * concreto el que da sentido a "esto hay que hacerlo hoy".
+   */
+  const diaKey = toDayKey(anchor);
+  const itemsDelDia = useListItemsByDate(diaKey, diaKey);
+  const misListas = useLists();
+  const { toggleItem: toggleListItem } = useListMutations();
+  const [franjaPlegada, setFranjaPlegada] = useState(false);
+
   let body: React.ReactNode;
   if (activities.isPending) {
     body = (
@@ -235,6 +248,14 @@ export default function CalendarScreen() {
      */
     body = (
       <View style={styles.dayBody}>
+        <DayItemsStrip
+          items={itemsDelDia.data ?? []}
+          lists={misListas.data ?? []}
+          collapsed={franjaPlegada}
+          onToggleCollapsed={() => setFranjaPlegada((v) => !v)}
+          onToggleItem={(item, done) => toggleListItem.mutate({ id: item.id, done })}
+          onOpenItem={(item) => router.push({ pathname: '/(app)/list/[id]', params: { id: item.list_id } })}
+        />
         {showEmpty ? (
           <AppText variant="caption" color="textSecondary" style={styles.dayEmptyHint}>
             Sin actividades este día. Toca una hora para agendar.

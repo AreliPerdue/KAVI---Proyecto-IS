@@ -313,9 +313,13 @@ un clic de más para llegar a lo mismo.
   En web se suprime el anillo de foco del navegador, que se encimaba sobre el borde de
   acento; no se pierde el indicador, porque ese borde **es** el indicador.
   (RF-L5, RF-L7, RF-L8, RF-L9) Dep: T198
-- [ ] T201 La franja de pendientes del día en el calendario: arriba de la rejilla de horas,
-  plegable, con el icono de su lista y su casilla. Nunca dentro de las horas, ni siquiera
-  si el ítem tiene hora. El hook `useListItemsByDate` ya existe. (RF-L11–RF-L13) Dep: T200
+- [x] T201 La franja de pendientes del día: arriba de la rejilla de horas, plegable, cada
+  ítem con la casilla, el icono y el color de su lista, y una flecha que abre esa lista.
+  **Nunca dentro de las horas**, ni siquiera si el ítem tiene hora — colocarlo ahí lo haría
+  leerse como una cita, y "arreglar la puerta el sábado" no significa "el sábado a las 10".
+  Sin pendientes no se dibuja nada: una franja vacía le robaría alto a la rejilla todos los
+  días para no decir nada. Solo en la vista diaria, que es donde cabe sin comerse la
+  rejilla y donde el día concreto da sentido a "esto toca hoy". (RF-L11–RF-L13) Dep: T200
 
 - [ ] T204 Celdas del mes que solo muestran puntos. Cuando en una celda cabe **un** chip y
   hay dos o más actividades, `visible = activities.slice(0, slots - 1)` se queda en cero y

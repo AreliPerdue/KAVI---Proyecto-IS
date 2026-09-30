@@ -78,3 +78,11 @@ juntarlo en una sesión dedicada a pruebas.
 - [ ] Mover un ítem entre secciones desde la hoja de edición.
 - [ ] Eliminar pide confirmación y el mensaje distingue palomear de eliminar.
 - [ ] El lápiz de cada renglón no queda anidado dentro del Pressable de la fila.
+
+## Franja de pendientes del día (T201)
+
+- [ ] Sin pendientes del día la franja **no se dibuja** (no una franja vacía que robe alto).
+- [ ] Un ítem con fecha y **con hora** sigue en la franja y no aparece en la rejilla. Es la
+  regla que define el módulo y la que se rompería al "mejorar" la integración.
+- [ ] Palomear desde la franja marca la misma fila que en su lista.
+- [ ] `useListItemsByDate` con el día como `YYYY-MM-DD`, no como ISO.
