@@ -9,7 +9,7 @@
  * Lo otro que importa es que `syncNotifications` sea idempotente: cancela todo antes
  * de reconstruir, porque si no cada refresco acumularia un duplicado por recordatorio.
  */
-import type { UpcomingReminder } from '@/types/domain';
+import type { ScheduledReminder } from '@/lib/notifications';
 
 type Modulo = typeof import('@/lib/notifications');
 
@@ -44,13 +44,16 @@ function fresh(): Modulo {
   return require('@/lib/notifications') as Modulo;
 }
 
-const recordatorio = (min: number, id = 'r1'): UpcomingReminder => ({
-  reminderId: id,
-  activityId: 'a1',
+/**
+ * Un aviso ya normalizado, que es lo que recibe `syncNotifications` desde que también
+ * programa recordatorios de elementos de lista y no solo de actividades.
+ */
+const recordatorio = (min: number, id = 'r1'): ScheduledReminder => ({
+  id,
   title: 'Terapia',
   body: 'En 30 minutos',
   fireAt: new Date(Date.now() + min * 60_000).toISOString(),
-  activityStartAt: new Date(Date.now() + (min + 30) * 60_000).toISOString(),
+  data: { activityId: 'a1' },
 });
 
 beforeEach(() => {

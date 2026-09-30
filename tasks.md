@@ -383,6 +383,16 @@ un clic de más para llegar a lo mismo.
   fecha quita también la hora, por lo mismo.
   Los selectores esconden la hoja del elemento mientras están abiertos: dos `Modal` de React
   Native a la vez ya dieron problemas en este repo (T146). Dep: T200
+- [x] T215 Recordatorios de elementos de lista. `due_time` guardaba la hora pero nadie
+  programaba nada, y la etiqueta del selector decía "Hora del recordatorio": la interfaz
+  prometía algo que no ocurría.
+  Entran por el mismo camino que los de actividades y no por uno propio, porque
+  `syncNotifications` cancela todas las notificaciones antes de reprogramar y dos fuentes
+  llamándola por separado se borrarían entre sí. Para eso las dos se normalizan a
+  `ScheduledReminder`, que es "cuándo suena y qué dice" sin importar de dónde salió.
+  Solo avisa lo que tiene hora: una fecha sin hora significa "ese día, cuando pueda", y
+  ponerle las 9 por nuestra cuenta sería una alarma que nadie pidió. (RF-L11, RF-C10)
+  Dep: T212
 - [ ] T213 Buscar listas y elementos, completados incluidos (RF-L4). Dep: T195
 - [ ] T214 Reordenar con subir/bajar en el menú de cada elemento y de cada lista. El
   arrastre de verdad va aparte, después de que todo lo demás esté bien (RF-L3, RF-L7). Dep: T200

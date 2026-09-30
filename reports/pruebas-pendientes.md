@@ -121,3 +121,11 @@ juntarlo en una sesión dedicada a pruebas.
 - [ ] Un elemento con fecha pasada **ya palomeado** no se pinta como vencido.
 - [ ] La fecha viaja como `YYYY-MM-DD` y no como instante, en las dos implementaciones.
 - [ ] Un elemento al que se le pone la fecha de hoy aparece en la franja del día.
+
+## Recordatorios de elementos de lista (T215)
+
+- [ ] `syncNotifications` recibe actividades **y** elementos juntos: la prueba clave es que
+  programar unos no cancele los otros, que es justo lo que pasaría llamándola por fuente.
+- [ ] Un elemento con fecha y **sin** hora no programa nada.
+- [ ] Un elemento ya palomeado no programa nada.
+- [ ] La hora se interpreta como local, no como UTC.

@@ -9,7 +9,8 @@
  *
  * Dos usos:
  *
- * - `syncNotifications()` programa los recordatorios de actividades. Es idempotente:
+ * - `syncNotifications()` programa los recordatorios de actividades y de elementos de
+ *   lista, que llegan ya normalizados a `ScheduledReminder`. Es idempotente:
  *   cancela todo lo programado y lo reconstruye, así no acumula duplicados.
  * - `presentNow()` muestra un aviso inmediato, para cuando llega una solicitud de
  *   contacto o una invitación a una actividad.
@@ -17,7 +18,6 @@
 import Constants, { ExecutionEnvironment } from 'expo-constants';
 import { Platform } from 'react-native';
 
-import type { UpcomingReminder } from '@/types/domain';
 
 type NotificationsModule = typeof import('expo-notifications');
 
@@ -82,8 +82,23 @@ function ensureHandler(Notifications: NotificationsModule) {
   handlerSet = true;
 }
 
-/** Reconstruye todas las notificaciones locales a partir de la lista de reminders. */
-export async function syncNotifications(items: readonly UpcomingReminder[]): Promise<number> {
+/**
+ * Un aviso ya resuelto: cuándo suena y qué dice, sin importar de dónde salió.
+ *
+ * Existe porque `syncNotifications` **cancela todo** antes de reprogramar, así que las
+ * fuentes no pueden llamarla por separado: la segunda borraría lo de la primera. Todas se
+ * normalizan a esta forma y se sincronizan de una sola vez.
+ */
+export type ScheduledReminder = {
+  id: string;
+  title: string;
+  body: string;
+  fireAt: string;
+  data?: Record<string, string>;
+};
+
+/** Reconstruye todas las notificaciones locales a partir de los avisos dados. */
+export async function syncNotifications(items: readonly ScheduledReminder[]): Promise<number> {
   const Notifications = load();
   if (!Notifications) return 0;
   ensureHandler(Notifications);
@@ -97,8 +112,8 @@ export async function syncNotifications(items: readonly UpcomingReminder[]): Pro
     const fireAt = new Date(item.fireAt);
     if (fireAt.getTime() <= now) continue;
     await Notifications.scheduleNotificationAsync({
-      identifier: item.reminderId,
-      content: { title: item.title, body: item.body, data: { activityId: item.activityId } },
+      identifier: item.id,
+      content: { title: item.title, body: item.body, data: item.data ?? {} },
       trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: fireAt },
     });
     scheduled += 1;

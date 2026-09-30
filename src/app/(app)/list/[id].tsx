@@ -536,13 +536,20 @@ export default function ListDetailScreen() {
                 hora sería un "cuándo" sin cuándo.
               */}
               {editando.due_date ? (
-                <FieldButton
-                  label="Hora"
-                  value={editando.due_time ? editando.due_time.slice(0, 5) : null}
-                  placeholder="Sin hora"
-                  leading={<Clock size={IconSize.inline} strokeWidth={IconStroke} color={theme.textSecondary} />}
-                  onPress={() => setHoraAbierta(true)}
-                />
+                <>
+                  <FieldButton
+                    label="Hora"
+                    value={editando.due_time ? editando.due_time.slice(0, 5) : null}
+                    placeholder="Sin hora"
+                    leading={<Clock size={IconSize.inline} strokeWidth={IconStroke} color={theme.textSecondary} />}
+                    onPress={() => setHoraAbierta(true)}
+                  />
+                  <AppText variant="caption" color="textTertiary">
+                    {editando.due_time
+                      ? 'Te avisamos a esa hora.'
+                      : 'Con una hora te avisamos; sin ella solo aparece en tu día.'}
+                  </AppText>
+                </>
               ) : null}
               {editando.due_date ? (
                 <ActionRow
