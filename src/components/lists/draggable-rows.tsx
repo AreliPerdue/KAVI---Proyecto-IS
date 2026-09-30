@@ -14,6 +14,11 @@ export type DraggableRowsProps<T> = {
   items: readonly T[];
   keyOf: (item: T) => string;
   renderItem: (item: T) => ReactNode;
+  /**
+   * Qué filas se pueden tomar. Las que no —encabezados de sección, campos de captura—
+   * siguen ocupando su lugar y cuentan para medir, pero no se arrastran.
+   */
+  draggable?: (item: T) => boolean;
   /** Se llama al soltar, con la posición de origen y la de destino. */
   onReorder: (from: number, to: number) => void;
 };
@@ -33,7 +38,7 @@ export type DraggableRowsProps<T> = {
  * El arrastre empieza con una pulsación mantenida para que tocar siga abriendo la edición,
  * que es lo que uno hace el 99 % de las veces.
  */
-export function DraggableRows<T>({ items, keyOf, renderItem, onReorder }: DraggableRowsProps<T>) {
+export function DraggableRows<T>({ items, keyOf, renderItem, draggable, onReorder }: DraggableRowsProps<T>) {
   const alturas = useRef<number[]>([]);
   const [arrastrando, setArrastrando] = useState<number | null>(null);
 
@@ -68,21 +73,33 @@ export function DraggableRows<T>({ items, keyOf, renderItem, onReorder }: Dragga
 
   return (
     <View>
-      {items.map((item, i) => (
-        <Fila
-          key={keyOf(item)}
-          index={i}
-          activo={arrastrando === i}
-          onMedir={medir(i)}
-          onEmpezar={() => setArrastrando(i)}
-          onSoltar={(dy) => {
-            setArrastrando(null);
-            const destino = destinoDe(i, dy);
-            if (destino !== i) onReorder(i, destino);
-          }}>
-          {renderItem(item)}
-        </Fila>
-      ))}
+      {items.map((item, i) => {
+        const contenido = renderItem(item);
+        // Una fila fija se mide igual que las demás —su alto cuenta para calcular el
+        // destino— pero no lleva gesto encima.
+        if (draggable && !draggable(item)) {
+          return (
+            <View key={keyOf(item)} onLayout={medir(i)}>
+              {contenido}
+            </View>
+          );
+        }
+        return (
+          <Fila
+            key={keyOf(item)}
+            index={i}
+            activo={arrastrando === i}
+            onMedir={medir(i)}
+            onEmpezar={() => setArrastrando(i)}
+            onSoltar={(dy) => {
+              setArrastrando(null);
+              const destino = destinoDe(i, dy);
+              if (destino !== i) onReorder(i, destino);
+            }}>
+            {contenido}
+          </Fila>
+        );
+      })}
     </View>
   );
 }

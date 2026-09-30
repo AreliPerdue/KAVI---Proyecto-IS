@@ -196,7 +196,7 @@ export default function ListDetailScreen() {
     update: updateList,
     remove: removeList,
     swapItems,
-    moveItem,
+    placeItem,
   } = useListMutations();
 
   const [verCompletados, setVerCompletados] = useState(false);
@@ -231,6 +231,88 @@ export default function ListDetailScreen() {
     }
     return { sueltos: libres, porSeccion: grupos, completados: items.filter((i) => i.completed_at !== null) };
   }, [datos]);
+
+  /**
+   * Todo el cuerpo es **una sola** superficie arrastrable (RF-L7).
+   *
+   * Antes cada sección tenía la suya, y por eso un elemento no podía salir de su sección:
+   * soltarlo fuera no llegaba a ninguna parte. Aplanando encabezados, elementos y campos de
+   * captura en una sola lista, arrastrar entre secciones es solo soltar más abajo, y la
+   * sección de destino se deduce del encabezado que quede por encima.
+   */
+  const entradas = useMemo(() => {
+    type Entrada =
+      | { kind: 'item'; id: string; item: ListItem }
+      | { kind: 'header'; id: string; name: string }
+      | { kind: 'composer'; id: string; label: string; placeholder: string; sectionId: string | null };
+    const salida: Entrada[] = [];
+    for (const it of sueltos) salida.push({ kind: 'item', id: it.id, item: it });
+    salida.push({
+      kind: 'composer',
+      id: 'composer-null',
+      label: 'Agregar elemento',
+      placeholder: `Elemento ${sueltos.length + 1}`,
+      sectionId: null,
+    });
+    for (const sec of datos?.sections ?? []) {
+      const suyos = porSeccion.get(sec.id) ?? [];
+      salida.push({ kind: 'header', id: `header-${sec.id}`, name: sec.name });
+      for (const it of suyos) salida.push({ kind: 'item', id: it.id, item: it });
+      salida.push({
+        kind: 'composer',
+        id: `composer-${sec.id}`,
+        label: `Agregar en ${sec.name}`,
+        placeholder: `Elemento ${suyos.length + 1}`,
+        sectionId: sec.id,
+      });
+    }
+    return salida;
+  }, [sueltos, porSeccion, datos?.sections]);
+
+  /**
+   * Resuelve dónde cayó un elemento: en qué sección y entre qué vecinos.
+   *
+   * La sección es la del encabezado que quede **por encima** del destino; si no hay
+   * ninguno, cayó en la zona sin agrupar. El orden es el punto medio entre los elementos de
+   * esa sección que queden justo antes y justo después.
+   */
+  const soltarEn = (from: number, to: number) => {
+    const origen = entradas[from];
+    if (!origen || origen.kind !== 'item') return;
+    const sin = entradas.filter((_, i) => i !== from);
+    const destino = Math.min(sin.length, Math.max(0, to));
+
+    let sectionId: string | null = null;
+    for (let i = destino - 1; i >= 0; i--) {
+      const e = sin[i];
+      if (e?.kind === 'header') {
+        sectionId = e.id.replace('header-', '');
+        break;
+      }
+      // Un campo de captura marca el final de su grupo: por encima de él ya es otra cosa.
+      if (e?.kind === 'composer') {
+        sectionId = e.sectionId;
+        break;
+      }
+    }
+
+    const mismos = (e: (typeof sin)[number] | undefined) =>
+      e?.kind === 'item' && (e.item.section_id ?? null) === sectionId ? e.item : null;
+    let antes: ListItem | null = null;
+    for (let i = destino - 1; i >= 0 && !antes; i--) antes = mismos(sin[i]);
+    let despues: ListItem | null = null;
+    for (let i = destino; i < sin.length && !despues; i++) despues = mismos(sin[i]);
+
+    const orden =
+      antes && despues
+        ? (antes.sort_order + despues.sort_order) / 2
+        : antes
+          ? antes.sort_order + 1024
+          : despues
+            ? despues.sort_order / 2
+            : 1024;
+    placeItem.mutate({ id: origen.item.id, sortOrder: orden, sectionId });
+  };
 
   const color = datos?.list.color ?? theme.ink;
   const alternar = (item: ListItem) => (done: boolean) => toggleItem.mutate({ id: item.id, done });
@@ -395,42 +477,22 @@ export default function ListDetailScreen() {
             ) : null}
 
             <DraggableRows
-              items={sueltos}
-              keyOf={(it) => it.id}
-              onReorder={(from, to) => moveItem.mutate({ grupo: sueltos, from, to })}
-              renderItem={(it) => (
-                <Renglon item={it} color={color} onToggle={alternar(it)} onOpen={() => abrirEdicion(it)} />
-              )}
+              items={entradas}
+              keyOf={(e) => e.id}
+              draggable={(e) => e.kind === 'item'}
+              onReorder={soltarEn}
+              renderItem={(e) =>
+                e.kind === 'item' ? (
+                  <Renglon item={e.item} color={color} onToggle={alternar(e.item)} onOpen={() => abrirEdicion(e.item)} />
+                ) : e.kind === 'header' ? (
+                  <AppText variant="caption" color="textTertiary" style={styles.encabezadoSeccion}>
+                    {e.name.toUpperCase()}
+                  </AppText>
+                ) : (
+                  <ItemComposer label={e.label} placeholder={e.placeholder} onSubmit={agregar(e.sectionId)} />
+                )
+              }
             />
-            {/* Numerado: dice cuántos llevas sin que haya que contarlos. */}
-            <ItemComposer
-              label="Agregar elemento"
-              placeholder={`Elemento ${sueltos.length + 1}`}
-              onSubmit={agregar(null)}
-            />
-
-            {(datos.sections as ListSection[]).map((s) => (
-              <View key={s.id} style={styles.seccion}>
-                <AppText variant="caption" color="textTertiary">
-                  {s.name.toUpperCase()}
-                </AppText>
-                <DraggableRows
-                  items={porSeccion.get(s.id) ?? []}
-                  keyOf={(it) => it.id}
-                  onReorder={(from, to) =>
-                    moveItem.mutate({ grupo: porSeccion.get(s.id) ?? [], from, to })
-                  }
-                  renderItem={(it) => (
-                    <Renglon item={it} color={color} onToggle={alternar(it)} onOpen={() => abrirEdicion(it)} />
-                  )}
-                />
-                <ItemComposer
-                  label={`Agregar en ${s.name}`}
-                  placeholder={`Elemento ${(porSeccion.get(s.id) ?? []).length + 1}`}
-                  onSubmit={agregar(s.id)}
-                />
-              </View>
-            ))}
 
             {seccionNueva ? (
               <View style={styles.seccionNueva}>
@@ -743,6 +805,7 @@ const styles = StyleSheet.create({
   },
   cuerpo: { gap: 2, paddingBottom: Spacing['3xl'] },
   seccion: { gap: 2, marginTop: Spacing.md },
+  encabezadoSeccion: { marginTop: Spacing.md, marginBottom: 2 },
   seccionNueva: { gap: Spacing.sm, marginTop: Spacing.md },
   renglonContenedor: { flexDirection: 'row', alignItems: 'center' },
   casillaToque: { width: 36, height: 44, alignItems: 'center', justifyContent: 'center' },

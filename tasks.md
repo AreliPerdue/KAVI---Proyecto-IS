@@ -512,6 +512,15 @@ un clic de más para llegar a lo mismo.
   plataformas. De paso desaparece la pulsación larga del menú de la tarjeta, que ahora es el
   gesto de arrastrar; el botón ⋯ ya lo abría. Dep: T226
 
+- [x] T228 Arrastrar elementos **entre secciones** (RF-L7, RF-L8). Antes cada sección tenía
+  su propia superficie arrastrable, y por eso un elemento no podía salir de la suya: soltarlo
+  fuera no llegaba a ninguna parte. Ahora encabezados, elementos y campos de captura se
+  aplanan en **una sola** superficie, donde los dos primeros ocupan su lugar y se miden pero
+  no se arrastran. La sección de destino se deduce del encabezado que quede por encima de
+  donde se soltó, y el orden es el punto medio entre los elementos **de esa misma sección**
+  que queden antes y después. Mover algo de Frutas a Lácteos pasa a ser una sola acción y no
+  un cambio de orden seguido de uno de sección. Dep: T225
+
 ### Pendientes sueltos
 - [ ] T196 Elegir idioma de la interfaz: **español o inglés**. Hoy los textos están
   incrustados en los componentes, así que esto es sobre todo el trabajo de extraerlos.

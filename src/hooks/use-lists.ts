@@ -241,6 +241,19 @@ export function useListMutations() {
       onSuccess: invalidar,
     }),
     /**
+     * Coloca un elemento en una posición y una sección concretas (RF-L7, RF-L8).
+     *
+     * Toma la sección además del orden porque arrastrar entre secciones es el caso normal:
+     * mover "Leche" de Frutas a Lácteos es una sola acción, no un cambio de orden seguido
+     * de un cambio de sección.
+     */
+    placeItem: useMutation({
+      mutationFn: ({ id, sortOrder, sectionId }: { id: string; sortOrder: number; sectionId: string | null }) =>
+        reorderListItem(id, sortOrder, sectionId),
+      onSuccess: invalidar,
+    }),
+
+    /**
      * Coloca un elemento en otra posición dentro de su grupo (RF-L7).
      *
      * El orden nuevo es el **punto medio** entre los dos vecinos del destino, que es para lo

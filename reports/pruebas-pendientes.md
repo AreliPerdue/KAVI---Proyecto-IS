@@ -205,3 +205,13 @@ juntarlo en una sesión dedicada a pruebas.
 - [ ] `destinoDe` de la rejilla con filas de alturas distintas y con una última fila
   incompleta (soltar en el hueco vacío cae al final).
 - [ ] Las listas compartidas conmigo no se pueden arrastrar.
+
+## Arrastrar entre secciones (T228)
+
+- [ ] `soltarEn` resuelve la sección por el encabezado que queda **por encima**, incluida la
+  zona sin agrupar cuando no hay ninguno.
+- [ ] El orden nuevo se calcula entre vecinos **de la sección de destino**, no de la de
+  origen. Es el error silencioso más probable aquí.
+- [ ] Soltar justo debajo del campo de captura de una sección cae en esa sección, no en la
+  siguiente.
+- [ ] Encabezados y campos de captura no se pueden arrastrar pero sí cuentan para medir.
