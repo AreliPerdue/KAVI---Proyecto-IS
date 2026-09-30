@@ -12,6 +12,7 @@ import {
   type ListInput,
   type ListItem,
   type ListItemInput,
+  listArchivedLists,
   listItemsByDateRange,
   listLists,
   removeList,
@@ -34,6 +35,16 @@ export function useLists() {
     queryKey: listKeys.list(userId),
     queryFn: () => listLists(userId as string),
     enabled: !!userId,
+  });
+}
+
+/** Listas archivadas: fuera del inicio, pero recuperables (RF-L2). */
+export function useArchivedLists(enabled = true) {
+  const { userId } = useAuth();
+  return useQuery<KaviList[]>({
+    queryKey: [...listKeys.list(userId), 'archived'],
+    queryFn: () => listArchivedLists(userId as string),
+    enabled: !!userId && enabled,
   });
 }
 

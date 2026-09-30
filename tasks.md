@@ -265,9 +265,17 @@ un clic de más para llegar a lo mismo.
   `services/supabase/lists.ts` existe con el contrato completo pero cada método falla con
   un mensaje que la UI muestra: mejor un error legible que datos vacíos que se leerían como
   "no tienes listas". Se conecta de verdad con T195. (RF-L1, RF-L5–RF-L10) Dep: T194
-- [ ] T199 Alta y edición de listas: hoja de creación con nombre, icono y color de la
-  paleta de personas, renombrar, fijar, archivar, duplicar y eliminar con confirmación.
-  El FAB del inicio ya está puesto y sin acción. (RF-L2, RF-L3) Dep: T198
+- [x] T199 Alta y gestión de listas: formulario modal con nombre, color de la paleta de
+  personas (21) e icono del catálogo, más menú de acciones por tarjeta —editar, fijar,
+  duplicar, archivar, eliminar— y vista de archivadas con restaurar. Crear abre la lista
+  recién hecha en vez de volver al inicio: quien crea una lista tiene algo que apuntar en
+  ella ahora mismo. Eliminar nombra cuántos elementos se pierden y ofrece archivar como
+  salida intermedia.
+  El botón de acciones va **fuera** de la tarjeta y posicionado encima, no anidado: con
+  mouse no existe la pulsación larga, así que sin él el menú era inalcanzable en web; pero
+  un Pressable dentro de otro genera un `<button>` dentro de un `<button>`, que es HTML
+  inválido, rompe la hidratación y saca al interno del recorrido con teclado. Como
+  hermanos se ve igual y los dos funcionan. (RF-L2, RF-L3) Dep: T198
 - [ ] T200 Captura de ítems: campo que agrega al confirmar y se queda listo para el
   siguiente, editar, eliminar y mover entre secciones. (RF-L5, RF-L7, RF-L8) Dep: T198
 - [ ] T201 La franja de pendientes del día en el calendario: arriba de la rejilla de horas,

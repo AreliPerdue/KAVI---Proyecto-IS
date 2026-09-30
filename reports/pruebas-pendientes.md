@@ -36,3 +36,12 @@ juntarlo en una sesión dedicada a pruebas.
   despalomearlo lo devuelva a la sección de donde salió.
 - [ ] `supabaseLists` falla a propósito hasta T195; conviene una prueba que fije que el
   mensaje llega a la UI en vez de convertirse en una lista vacía.
+
+## Alta y gestión de listas (T199)
+
+- [ ] Que el botón de acciones **no** quede anidado dentro del Pressable de la tarjeta: es
+  HTML inválido en web y ya ocurrió una vez. Una prueba que lo fije vale más que recordarlo.
+- [ ] Crear una lista navega a su detalle, no al inicio.
+- [ ] Eliminar pide confirmación y el mensaje menciona cuántos elementos se pierden.
+- [ ] Archivar la saca del inicio y aparece en Archivadas; restaurar la devuelve.
+- [ ] `listFormSchema` rechaza un color fuera de la paleta.
