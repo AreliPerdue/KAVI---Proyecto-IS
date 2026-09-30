@@ -476,6 +476,21 @@ un clic de más para llegar a lo mismo.
   círculo, igual que dentro de la lista. Ahí importa todavía más: la franja vive pegada a la
   rejilla y se toca de pasada. (RF-L13c) Dep: T217
 
+- [x] T225 Arrastrar elementos para reordenarlos (RF-L7). Hecho a mano sobre
+  `gesture-handler` y `reanimated` en vez de con una librería de arrastre: las que hay están
+  pensadas para nativo y se comportan mal en web, y aquí la web no es un extra, es donde se
+  prueba. Las dos que ya usa la app funcionan en las tres plataformas.
+  Las alturas se **miden** en vez de asumirse iguales: una fila con nota y fecha mide más que
+  una con solo título, y calcular el destino con una altura fija dejaría el elemento uno o
+  dos lugares lejos de donde se soltó. El arrastre arranca con pulsación mantenida para que
+  tocar siga abriendo la edición, que es lo que uno hace casi siempre.
+  El orden nuevo es el punto medio entre los vecinos del destino: mover algo escribe **una**
+  fila, que es justo para lo que `sort_order` es `numeric`. Subir/bajar se queda: sigue
+  siendo la vía accesible y la que funciona con teclado. Dep: T214
+- [ ] T226 Arrastrar también las tarjetas del inicio. Es otro problema: ahí la disposición es
+  una rejilla de dos columnas y el destino no es una posición en una lista sino una celda.
+  Por ahora se reordenan con subir/bajar. Dep: T225
+
 ### Pendientes sueltos
 - [ ] T196 Elegir idioma de la interfaz: **español o inglés**. Hoy los textos están
   incrustados en los componentes, así que esto es sobre todo el trabajo de extraerlos.

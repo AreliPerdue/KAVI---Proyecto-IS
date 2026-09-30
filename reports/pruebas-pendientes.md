@@ -176,3 +176,12 @@ juntarlo en una sesión dedicada a pruebas.
 - [ ] Con hora y "2 días antes", el aviso cae dos días antes **a esa hora**.
 - [ ] Sin hora y "2 días antes", el aviso cae dos días antes a las 9:00.
 - [ ] Quitar la fecha deja el recordatorio sin efecto (no hay de qué contar hacia atrás).
+
+## Arrastrar elementos (T225)
+
+- [ ] `destinoDe` con filas de **alturas distintas**: es toda la razón de medirlas y donde
+  un error se ve como "lo solté aquí y cayó allá".
+- [ ] Arrastrar menos de media fila no cambia nada.
+- [ ] El orden nuevo cae entre los vecinos del destino y no pisa a ninguno.
+- [ ] Tocar sin mantener sigue abriendo la edición, no arrastra.
+- [ ] Verificación manual en teléfono: el arrastre no pelea con el scroll de la pantalla.

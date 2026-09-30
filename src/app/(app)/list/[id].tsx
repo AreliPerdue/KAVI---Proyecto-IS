@@ -3,6 +3,7 @@ import { ArrowDown, ArrowUp, Bell, CalendarDays, Check, Clock, FolderPlus, Palet
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Platform, Pressable, ScrollView, StyleSheet, TextInput, type TextStyle, View } from 'react-native';
 
+import { DraggableRows } from '@/components/lists/draggable-rows';
 import { ItemComposer } from '@/components/lists/item-composer';
 import { ListAppearanceSheet } from '@/components/lists/list-appearance-sheet';
 import { ListShareSheet } from '@/components/lists/list-share-sheet';
@@ -187,6 +188,7 @@ export default function ListDetailScreen() {
     update: updateList,
     remove: removeList,
     swapItems,
+    moveItem,
   } = useListMutations();
 
   const [verCompletados, setVerCompletados] = useState(false);
@@ -383,9 +385,14 @@ export default function ListDetailScreen() {
               />
             ) : null}
 
-            {sueltos.map((it) => (
-              <Renglon key={it.id} item={it} color={color} onToggle={alternar(it)} onOpen={() => abrirEdicion(it)} />
-            ))}
+            <DraggableRows
+              items={sueltos}
+              keyOf={(it) => it.id}
+              onReorder={(from, to) => moveItem.mutate({ grupo: sueltos, from, to })}
+              renderItem={(it) => (
+                <Renglon item={it} color={color} onToggle={alternar(it)} onOpen={() => abrirEdicion(it)} />
+              )}
+            />
             {/* Numerado: dice cuántos llevas sin que haya que contarlos. */}
             <ItemComposer
               label="Agregar elemento"
@@ -398,9 +405,16 @@ export default function ListDetailScreen() {
                 <AppText variant="caption" color="textTertiary">
                   {s.name.toUpperCase()}
                 </AppText>
-                {(porSeccion.get(s.id) ?? []).map((it) => (
-                  <Renglon key={it.id} item={it} color={color} onToggle={alternar(it)} onOpen={() => abrirEdicion(it)} />
-                ))}
+                <DraggableRows
+                  items={porSeccion.get(s.id) ?? []}
+                  keyOf={(it) => it.id}
+                  onReorder={(from, to) =>
+                    moveItem.mutate({ grupo: porSeccion.get(s.id) ?? [], from, to })
+                  }
+                  renderItem={(it) => (
+                    <Renglon item={it} color={color} onToggle={alternar(it)} onOpen={() => abrirEdicion(it)} />
+                  )}
+                />
                 <ItemComposer
                   label={`Agregar en ${s.name}`}
                   placeholder={`Elemento ${(porSeccion.get(s.id) ?? []).length + 1}`}

@@ -211,6 +211,33 @@ export function useListMutations() {
       mutationFn: ({ listId, userId: con }: { listId: string; userId: string }) => unshareList(listId, con),
       onSuccess: invalidar,
     }),
+    /**
+     * Coloca un elemento en otra posición dentro de su grupo (RF-L7).
+     *
+     * El orden nuevo es el **punto medio** entre los dos vecinos del destino, que es para lo
+     * que `sort_order` es `numeric`: mover algo escribe una sola fila. Con enteros habría
+     * que renumerar todo lo que queda debajo, y en una lista compartida dos personas
+     * arrastrando a la vez se pisarían.
+     */
+    moveItem: useMutation({
+      mutationFn: async ({ grupo, from, to }: { grupo: readonly ListItem[]; from: number; to: number }) => {
+        const item = grupo[from];
+        if (!item || from === to) return;
+        const sin = grupo.filter((_, i) => i !== from);
+        const antes = sin[to - 1];
+        const despues = sin[to];
+        const orden =
+          antes && despues
+            ? (antes.sort_order + despues.sort_order) / 2
+            : antes
+              ? antes.sort_order + 1024
+              : despues
+                ? despues.sort_order / 2
+                : 1024;
+        await reorderListItem(item.id, orden, item.section_id);
+      },
+      onSuccess: invalidar,
+    }),
     toggleItem: useMutation({
       mutationFn: ({ id, done }: { id: string; done: boolean }) => toggleListItem(id, userId as string, done),
       onSuccess: invalidar,
