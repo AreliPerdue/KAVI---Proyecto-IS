@@ -348,6 +348,17 @@ un clic de más para llegar a lo mismo.
   filtros de dimensión y tema acotan qué actividades se ven, y este decide si se ven
   actividades. (RF-C18) Dep: T201
 
+- [x] T207 Alta de listas al estilo Google Keep, en vez de un formulario. "+" crea con
+  valores por omisión y entra directo a la lista: el nombre es un campo en el sitio, ya
+  enfocado y preseleccionado, y debajo el campo para listar. Color e icono pasan a una
+  paleta en la barra inferior, como extra. Se elimina `list/new.tsx` y la fila "Editar" del
+  menú de la tarjeta, que ya no tienen a dónde llevar.
+  El motivo lo dijo Areli mejor que la spec: «de aquí a que elijo el color y todo ya se me
+  olvidó que iba a anotar». Una lista vive de ser rápida.
+  Contrapartida resuelta: una lista intacta —nombre por omisión, sin elementos ni
+  secciones— se borra sola al salir, para que arrepentirse no deje basura en el inicio.
+  (RF-L2) Dep: T199
+
 ### Pendientes sueltos
 - [ ] T196 Elegir idioma de la interfaz: **español o inglés**. Hoy los textos están
   incrustados en los componentes, así que esto es sobre todo el trabajo de extraerlos.

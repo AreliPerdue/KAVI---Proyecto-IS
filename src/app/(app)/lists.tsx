@@ -1,9 +1,10 @@
 import { useRouter } from 'expo-router';
-import { Archive, ArchiveRestore, CircleCheck, Copy, Ellipsis, Pencil, Pin, PinOff, Trash2 } from 'lucide-react-native';
+import { Archive, ArchiveRestore, CircleCheck, Copy, Ellipsis, Pin, PinOff, Trash2 } from 'lucide-react-native';
 import { useCallback, useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import { tint } from '@/components/calendar/activity-style';
+import { PEOPLE_COLORS } from '@/constants/people-colors';
 import { ModalHeader } from '@/components/modal-header';
 import { ActionRow, AppText, EmptyState, ErrorState, Fab, LoadingState, Screen, Sheet, ThemeIcon } from '@/components/ui';
 import { IconSize, IconStroke, Radius, Spacing } from '@/constants/theme';
@@ -15,6 +16,10 @@ import type { KaviList } from '@/types/domain';
 
 /** Dos columnas: es la rejilla de tarjetas de RF-L1, al estilo de Google Keep. */
 const COLUMNAS = 2;
+
+/** Con qué nace una lista antes de que nadie la toque. */
+export const NOMBRE_POR_OMISION = 'Sin título';
+const COLOR_POR_OMISION = PEOPLE_COLORS[0]?.hex ?? '#176BFF';
 
 function subtitulo(lista: KaviList): string {
   if (lista.total_count === 0) return 'Sin elementos';
@@ -47,7 +52,7 @@ export default function ListsScreen() {
 
   const lists = useLists();
   const archivadas = useArchivedLists(verArchivadas);
-  const { update, remove, duplicate } = useListMutations();
+  const { update, remove, duplicate, create } = useListMutations();
   const { shrunk, onScroll } = useShrinkOnScroll();
 
   const consulta = verArchivadas ? archivadas : lists;
@@ -60,6 +65,20 @@ export default function ListsScreen() {
   }, [lists.data]);
 
   const cerrarMenu = () => setMenuDe(null);
+
+  /**
+   * Crear no pasa por ningún formulario (RF-L2).
+   *
+   * Se crea con valores por omisión y se entra directo a la lista, con el título enfocado
+   * y preseleccionado. Una lista se abre porque hay algo que apuntar **ya**; elegir color e
+   * icono entre veintiuno antes de poder escribir es justo el tiempo que tarda uno en
+   * olvidar qué iba a anotar. El color y el icono se cambian después, desde la paleta.
+   */
+  const nuevaLista = () =>
+    create.mutate(
+      { name: NOMBRE_POR_OMISION, icon: 'tag', color: COLOR_POR_OMISION },
+      { onSuccess: (lista) => router.push({ pathname: '/(app)/list/[id]', params: { id: lista.id, nueva: '1' } }) },
+    );
 
   const alternarFijada = (lista: KaviList) => {
     cerrarMenu();
@@ -211,7 +230,7 @@ export default function ListsScreen() {
         )
       ) : null}
 
-      {!verArchivadas ? <Fab label="Nueva lista" shrunk={shrunk} onPress={() => router.push('/(app)/list/new')} /> : null}
+      {!verArchivadas ? <Fab label="Nueva lista" shrunk={shrunk} onPress={nuevaLista} /> : null}
 
       <Sheet visible={menuDe !== null} onClose={cerrarMenu} title={menuDe?.name ?? ''}>
         {menuDe ? (
@@ -224,14 +243,6 @@ export default function ListsScreen() {
               />
             ) : (
               <>
-                <ActionRow
-                  icon={<Pencil size={IconSize.action} strokeWidth={IconStroke} color={theme.text} />}
-                  label="Editar"
-                  onPress={() => {
-                    cerrarMenu();
-                    router.push({ pathname: '/(app)/list/new', params: { id: menuDe.id } });
-                  }}
-                />
                 <ActionRow
                   icon={
                     menuDe.is_pinned ? (

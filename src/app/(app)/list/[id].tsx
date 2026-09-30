@@ -1,9 +1,11 @@
-import { useLocalSearchParams } from 'expo-router';
-import { Check, FolderPlus, Pencil, Trash2 } from 'lucide-react-native';
-import { useMemo, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { Check, FolderPlus, Palette, Pencil, Trash2 } from 'lucide-react-native';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Platform, Pressable, ScrollView, StyleSheet, TextInput, type TextStyle, View } from 'react-native';
 
 import { ItemComposer } from '@/components/lists/item-composer';
+import { ListAppearanceSheet } from '@/components/lists/list-appearance-sheet';
+import { NOMBRE_POR_OMISION } from '@/app/(app)/lists';
 import { ModalHeader } from '@/components/modal-header';
 import {
   ActionRow,
@@ -17,11 +19,71 @@ import {
   TextField,
   ThemeIcon,
 } from '@/components/ui';
-import { IconSize, IconStroke, Radius, Spacing } from '@/constants/theme';
+import { Fonts, IconSize, IconStroke, Radius, Spacing, Typography } from '@/constants/theme';
 import { useList, useListMutations } from '@/hooks/use-lists';
 import { useTheme } from '@/hooks/use-theme';
 import { useConfirm, useSnackbar } from '@/providers';
 import type { ListItem, ListSection } from '@/types/domain';
+
+/* El anillo de foco del navegador se encimaba sobre el propio del campo; el cambio de
+ * color al enfocar sigue haciendo de indicador visible. */
+const SIN_ANILLO: TextStyle = Platform.OS === 'web' ? { outlineWidth: 0, outlineColor: 'transparent' } : {};
+
+/**
+ * Nombre de la lista, editable en el sitio (RF-L2).
+ *
+ * Antes vivía en un campo etiquetado dentro de un formulario aparte, y para llegar a
+ * escribir el primer elemento había que pasar por él. Aquí el título **es** el título: se
+ * toca y se escribe, como en Google Keep. Guarda al salir del campo, no con un botón.
+ */
+function TituloEditable({
+  value,
+  autoFocus,
+  onSave,
+}: {
+  value: string;
+  autoFocus: boolean;
+  onSave: (nombre: string) => void;
+}) {
+  const theme = useTheme();
+  const [texto, setTexto] = useState(value);
+  // Si el nombre cambia por fuera (otra pantalla, otro dispositivo) se refleja aquí, pero
+  // no mientras se escribe: eso pisaría lo que la persona está tecleando.
+  const editando = useRef(false);
+  useEffect(() => {
+    if (!editando.current) setTexto(value);
+  }, [value]);
+
+  const guardar = () => {
+    editando.current = false;
+    const limpio = texto.trim();
+    if (!limpio) {
+      setTexto(value);
+      return;
+    }
+    if (limpio !== value) onSave(limpio);
+  };
+
+  return (
+    <TextInput
+      value={texto}
+      onChangeText={setTexto}
+      onFocus={() => {
+        editando.current = true;
+      }}
+      onBlur={guardar}
+      onSubmitEditing={guardar}
+      // Una lista recién creada se llama "Sin título": preseleccionar deja que la primera
+      // tecla lo reemplace en vez de obligar a borrarlo.
+      autoFocus={autoFocus}
+      selectTextOnFocus={autoFocus}
+      returnKeyType="done"
+      maxLength={40}
+      accessibilityLabel="Nombre de la lista"
+      style={[styles.titulo, SIN_ANILLO, { color: theme.text }]}
+    />
+  );
+}
 
 /** Un renglón palomeable. La casilla y el texto son el mismo objetivo táctil. */
 function Renglon({
@@ -90,13 +152,25 @@ export default function ListDetailScreen() {
   const confirm = useConfirm();
   const showSnackbar = useSnackbar();
   const detalle = useList(id);
-  const { toggleItem, addItem, updateItem, removeItem, addSection } = useListMutations();
+  const router = useRouter();
+  const {
+    toggleItem,
+    addItem,
+    updateItem,
+    removeItem,
+    addSection,
+    update: updateList,
+    remove: removeList,
+  } = useListMutations();
 
   const [verCompletados, setVerCompletados] = useState(false);
   const [editando, setEditando] = useState<ListItem | null>(null);
   const [borrador, setBorrador] = useState({ title: '', note: '' });
   const [seccionNueva, setSeccionNueva] = useState(false);
   const [nombreSeccion, setNombreSeccion] = useState('');
+  const [aparienciaAbierta, setAparienciaAbierta] = useState(false);
+  // `nueva=1` lo pone el botón + del inicio: solo entonces se enfoca el título.
+  const { nueva } = useLocalSearchParams<{ nueva?: string }>();
 
   const datos = detalle.data;
 
@@ -177,6 +251,24 @@ export default function ListDetailScreen() {
     updateItem.mutate({ id: item.id, patch: { section_id: sectionId } }, { onSuccess: () => setEditando(null) });
   };
 
+  /**
+   * Al salir, una lista que nadie tocó se borra sola.
+   *
+   * Crear sin formulario tiene este precio: tocar "+" y arrepentirse dejaría una lista
+   * "Sin título" vacía en el inicio cada vez. Se limpia solo si sigue intacta —nombre por
+   * omisión, sin elementos y sin secciones—, así que nada que se haya escrito se pierde.
+   */
+  const salir = () => {
+    const intacta =
+      datos !== undefined &&
+      datos.list.name === NOMBRE_POR_OMISION &&
+      datos.items.length === 0 &&
+      datos.sections.length === 0;
+    if (intacta && datos) removeList.mutate(datos.list.id);
+    if (router.canGoBack()) router.back();
+    else router.replace('/(app)/lists');
+  };
+
   const chipSeccion = (activo: boolean, etiqueta: string, alTocar: () => void) => (
     <Pressable
       key={etiqueta}
@@ -202,7 +294,18 @@ export default function ListDetailScreen() {
 
       {datos ? (
         <>
-          <ModalHeader back title={datos.list.name} right={<ThemeIcon name={datos.list.icon} color={color} size={24} />} />
+          <ModalHeader
+            back
+            title=""
+            onClose={salir}
+            right={<ThemeIcon name={datos.list.icon} color={color} size={24} />}
+          />
+
+          <TituloEditable
+            value={datos.list.name}
+            autoFocus={nueva === '1'}
+            onSave={(name) => updateList.mutate({ id: datos.list.id, patch: { name } })}
+          />
 
           <ScrollView
             contentContainerStyle={styles.cuerpo}
@@ -292,6 +395,29 @@ export default function ListDetailScreen() {
         </>
       ) : null}
 
+      {datos ? (
+        <View style={[styles.barra, { borderColor: theme.border }]}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Color e icono de la lista"
+            onPress={() => setAparienciaAbierta(true)}
+            style={({ pressed }) => [styles.barraBoton, pressed ? { backgroundColor: theme.surfaceAlt } : null]}>
+            <Palette size={IconSize.action} strokeWidth={IconStroke} color={theme.textSecondary} />
+          </Pressable>
+        </View>
+      ) : null}
+
+      {datos ? (
+        <ListAppearanceSheet
+          visible={aparienciaAbierta}
+          onClose={() => setAparienciaAbierta(false)}
+          color={datos.list.color}
+          icon={datos.list.icon}
+          onChangeColor={(c) => updateList.mutate({ id: datos.list.id, patch: { color: c } })}
+          onChangeIcon={(i) => updateList.mutate({ id: datos.list.id, patch: { icon: i } })}
+        />
+      ) : null}
+
       <Sheet visible={editando !== null} onClose={() => setEditando(null)} title="Elemento">
         {editando ? (
           <View style={styles.hoja}>
@@ -339,7 +465,31 @@ export default function ListDetailScreen() {
 }
 
 const styles = StyleSheet.create({
-  content: { gap: Spacing.md },
+  content: { gap: Spacing.sm },
+  titulo: {
+    fontFamily: Fonts?.sans,
+    fontSize: Typography.title.fontSize,
+    fontWeight: Typography.title.fontWeight,
+    lineHeight: Typography.title.lineHeight,
+    letterSpacing: Typography.title.letterSpacing,
+    paddingHorizontal: Spacing.xs,
+    paddingVertical: 0,
+  },
+  barra: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xs,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    paddingTop: Spacing.xs,
+  },
+  barraBoton: {
+    width: 44,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: Radius.sm,
+    borderCurve: 'continuous',
+  },
   cuerpo: { gap: 2, paddingBottom: Spacing['3xl'] },
   seccion: { gap: 2, marginTop: Spacing.md },
   seccionNueva: { gap: Spacing.sm, marginTop: Spacing.md },

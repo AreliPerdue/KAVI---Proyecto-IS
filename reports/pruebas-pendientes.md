@@ -106,3 +106,11 @@ juntarlo en una sesión dedicada a pruebas.
 - [ ] `duplicate` en Supabase remapea las secciones y copia solo los pendientes, igual que
   el demo. Son dos implementaciones del mismo contrato y es donde más fácil divergen.
 - [ ] El check de `completed_at`/`completed_by`: palomear sin usuario debe fallar.
+
+## Alta estilo Keep (T207)
+
+- [ ] "+" crea y navega sin pantalla intermedia, con el título enfocado.
+- [ ] Al salir, una lista intacta se borra; una con nombre cambiado **o** con un elemento,
+  no. Es la regla que evita basura sin tragarse trabajo de nadie.
+- [ ] El título guarda al perder el foco y se repone si se deja vacío.
+- [ ] Cambiar color o icono desde la paleta se refleja en la tarjeta del inicio.

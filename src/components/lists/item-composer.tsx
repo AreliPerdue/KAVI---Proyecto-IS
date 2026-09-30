@@ -14,7 +14,7 @@ import { useTheme } from '@/hooks/use-theme';
  * Va fuera de `StyleSheet.create` porque ahí un estilo que solo existe en web ensancha el
  * tipo de toda la hoja, y el resto de los estilos dejan de encajar donde se usan.
  */
-const SIN_ANILLO: TextStyle = Platform.OS === 'web' ? { outlineWidth: 0 } : {};
+const SIN_ANILLO: TextStyle = Platform.OS === 'web' ? { outlineWidth: 0, outlineColor: 'transparent' } : {};
 
 export type ItemComposerProps = {
   /** Texto del botón en reposo, que nombra dónde va a caer lo que se escriba. */

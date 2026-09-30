@@ -27,6 +27,19 @@ Por eso **los ítems nunca entran en la rejilla de horas**, ni siquiera cuando l
 ## Inicio de Lists (RF-L1 – RF-L4)
 - **RF-L1.** Rejilla de tarjetas estilo Google Keep, una por lista, con su icono, su nombre, su color y cuántos pendientes le quedan. Secciones: **Fijadas**, **Mis listas**, **Compartidas**.
 - **RF-L2.** Crear, renombrar, duplicar, archivar y eliminar listas. Archivar no borra: saca la lista del inicio y la conserva en **Archivadas**.
+
+  **Crear no pasa por ningún formulario.** El botón "+" crea la lista con valores por
+  omisión y entra directo a ella, con el nombre enfocado y preseleccionado para que la
+  primera tecla lo reemplace; debajo, el campo para empezar a listar. El **color y el
+  icono** son un extra que se cambia después, desde una paleta en la barra inferior.
+
+  *Motivo:* una lista se abre porque hay algo que apuntar **ya**. Elegir color e icono
+  entre veintiuno antes de poder escribir es justo el tiempo que tarda uno en olvidar qué
+  iba a anotar. El nombre se edita en el sitio, tocándolo, no en un campo etiquetado aparte.
+
+  Una lista que nadie tocó —nombre por omisión, sin elementos ni secciones— se borra sola
+  al salir: es el precio de crear sin formulario, y sin eso cada arrepentimiento dejaría una
+  lista vacía en el inicio.
 - **RF-L3.** Fijar una lista la manda al principio. El orden entre listas se reordena arrastrando.
 - **RF-L4.** Buscar por nombre de lista y por texto de ítem, incluidos los ya completados.
 
