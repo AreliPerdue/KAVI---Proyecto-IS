@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { FlatList, Pressable, StyleSheet, View } from 'react-native';
+import { FlatList, type NativeScrollEvent, type NativeSyntheticEvent, Pressable, StyleSheet, View } from 'react-native';
 
 import { activityColor, tint } from './activity-style';
 import { groupByDay } from './group-by-day';
@@ -16,6 +16,7 @@ export type AgendaViewProps = {
   activities: readonly Activity[];
   onPressActivity: (activity: Activity) => void;
   isSharedActivity?: (activity: Activity) => boolean;
+  onScroll?: (e: NativeSyntheticEvent<NativeScrollEvent>) => void;
 };
 
 type Dia = { key: string; date: Date; activities: Activity[] };
@@ -28,7 +29,7 @@ type Dia = { key: string; date: Date; activities: Activity[] };
  * cosas que sí hay. Aquí solo se pintan los días que tienen algo, así que un mes flojo
  * cabe en una pantalla y se lee de corrido.
  */
-export function AgendaView({ from, to, activities, onPressActivity, isSharedActivity }: AgendaViewProps) {
+export function AgendaView({ from, to, activities, onPressActivity, isSharedActivity, onScroll }: AgendaViewProps) {
   const theme = useTheme();
 
   const dias = useMemo<Dia[]>(() => {
@@ -96,6 +97,8 @@ export function AgendaView({ from, to, activities, onPressActivity, isSharedActi
       renderItem={renderDia}
       contentContainerStyle={styles.lista}
       showsVerticalScrollIndicator={false}
+      onScroll={onScroll}
+      scrollEventThrottle={32}
       ItemSeparatorComponent={() => <View style={[styles.separador, { backgroundColor: theme.border }]} />}
     />
   );

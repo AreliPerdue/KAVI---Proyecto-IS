@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 
 import { groupByDay } from './group-by-day';
-import { Timeline } from './timeline';
+import { Timeline, type TimelineProps } from './timeline';
 
 import type { Activity } from '@/types/domain';
 
@@ -11,10 +11,11 @@ export type DayViewProps = {
   onPressSlot: (day: Date, minutes: number) => void;
   onPressActivity: (activity: Activity) => void;
   isSharedActivity?: (activity: Activity) => boolean;
+  onScroll?: TimelineProps['onScroll'];
 };
 
 /** Vista diaria: timeline con bloques posicionados (RF-C3). */
-export function DayView({ day, activities, onPressSlot, onPressActivity, isSharedActivity }: DayViewProps) {
+export function DayView({ day, activities, onPressSlot, onPressActivity, isSharedActivity, onScroll }: DayViewProps) {
   const days = useMemo(() => [day], [day]);
   const byDay = useMemo(() => groupByDay(activities), [activities]);
   return (
@@ -26,6 +27,7 @@ export function DayView({ day, activities, onPressSlot, onPressActivity, isShare
       hourHeight={64}
       titleOnly
       isSharedActivity={isSharedActivity}
+      onScroll={onScroll}
     />
   );
 }

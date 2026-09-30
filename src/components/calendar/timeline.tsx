@@ -1,5 +1,5 @@
 import { memo, useEffect, useMemo, useRef, useState } from 'react';
-import { PixelRatio, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { type NativeScrollEvent, type NativeSyntheticEvent, PixelRatio, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import { ActivityBlock } from './activity-block';
 import { layoutDay } from './layout-blocks';
@@ -51,6 +51,7 @@ export type TimelineProps = {
   /** La vista diaria muestra solo el título en cada bloque. */
   titleOnly?: boolean;
   isSharedActivity?: (activity: Activity) => boolean;
+  onScroll?: (e: NativeSyntheticEvent<NativeScrollEvent>) => void;
 };
 
 type ColumnProps = {
@@ -149,6 +150,7 @@ export function Timeline({
   compact = false,
   titleOnly = false,
   isSharedActivity,
+  onScroll,
 }: TimelineProps) {
   const theme = useTheme();
   const scrollRef = useRef<ScrollView>(null);
@@ -216,7 +218,12 @@ export function Timeline({
         </View>
       ) : null}
 
-      <ScrollView ref={scrollRef} style={styles.scroll} contentContainerStyle={styles.scrollContent}>
+      <ScrollView
+        ref={scrollRef}
+        style={styles.scroll}
+        contentContainerStyle={styles.scrollContent}
+        onScroll={onScroll}
+        scrollEventThrottle={32}>
         <View style={[styles.gutter, { width: GUTTER_WIDTH }]}>
           {HOURS.map((hour) => (
             <View key={hour} style={{ height: hourHeight }}>

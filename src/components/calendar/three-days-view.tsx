@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { useWindowDimensions } from 'react-native';
 
 import { groupByDay } from './group-by-day';
-import { Timeline } from './timeline';
+import { Timeline, type TimelineProps } from './timeline';
 
 import { threeDays } from '@/lib/dates';
 import type { Activity } from '@/types/domain';
@@ -13,6 +13,7 @@ export type ThreeDaysViewProps = {
   onPressSlot: (day: Date, minutes: number) => void;
   onPressActivity: (activity: Activity) => void;
   isSharedActivity?: (activity: Activity) => boolean;
+  onScroll?: TimelineProps['onScroll'];
 };
 
 /**
@@ -23,7 +24,7 @@ export type ThreeDaysViewProps = {
  * perder la comparación entre días que la vista diaria no da. Empieza en el día ancla
  * y no en el lunes: aquí lo que importa es "hoy y lo que viene".
  */
-export function ThreeDaysView({ anchor, activities, onPressSlot, onPressActivity, isSharedActivity }: ThreeDaysViewProps) {
+export function ThreeDaysView({ anchor, activities, onPressSlot, onPressActivity, isSharedActivity, onScroll }: ThreeDaysViewProps) {
   const { width } = useWindowDimensions();
   const days = useMemo(() => threeDays(anchor), [anchor]);
   const byDay = useMemo(() => groupByDay(activities), [activities]);
@@ -41,6 +42,7 @@ export function ThreeDaysView({ anchor, activities, onPressSlot, onPressActivity
        */
       hourHeight={width >= 1024 ? 48 : 40}
       isSharedActivity={isSharedActivity}
+      onScroll={onScroll}
     />
   );
 }

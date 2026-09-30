@@ -256,6 +256,12 @@ un clic de más para llegar a lo mismo.
   que es justo el dato que dice dónde estás parada—, y la vista de 3 días usa un alto de
   hora más apretado que la semanal, porque con tres columnas sobra ancho y lo que escasea
   es alto. Dep: T193
+- [x] T193c El FAB encoge mientras se baja y vuelve al subir. En la agenda tapaba el horario
+  de las filas de abajo, y ahí la hora es información, no adorno. Encoge exactamente hasta
+  el mínimo táctil y no menos: más chico se vería mejor y se tocaría peor. Se elige
+  "bajar/subir" y no "hay scroll" porque en una lista larga uno está casi siempre
+  desplazado, y con esa regla el botón viviría encogido y el gesto dejaría de significar
+  algo. Respeta movimiento reducido. Dep: T191
 
 ### Módulo de listas — spec 10 (pendiente de escribir)
 - [x] T194 Escribir `specs/10-lists.md`: filosofía, franja de pendientes del día, vistas,
@@ -302,6 +308,16 @@ un clic de más para llegar a lo mismo.
 - [ ] T201 La franja de pendientes del día en el calendario: arriba de la rejilla de horas,
   plegable, con el icono de su lista y su casilla. Nunca dentro de las horas, ni siquiera
   si el ítem tiene hora. El hook `useListItemsByDate` ya existe. (RF-L11–RF-L13) Dep: T200
+
+- [ ] T204 Celdas del mes que solo muestran puntos. Cuando en una celda cabe **un** chip y
+  hay dos o más actividades, `visible = activities.slice(0, slots - 1)` se queda en cero y
+  la celda pinta solo la fila de "+N": ninguna actividad legible. Se ve en ventanas bajas y
+  en teléfono; en pantallas altas no aparece porque caben más chips.
+  Arreglo propuesto: calcular en dos pasos. Primero cuántos chips caben; si hay desborde,
+  recalcular reservando el alto de la fila de puntos —que es más baja que un chip— y
+  garantizar **al menos un chip** siempre que quepa uno. Así la celda muestra lo que cabe y
+  los puntos con el "+N" debajo, que es lo que se espera al mirar un mes lleno. (RF-C1)
+  Dep: T190a
 
 ### Pendientes sueltos
 - [ ] T196 Elegir idioma de la interfaz: **español o inglés**. Hoy los textos están

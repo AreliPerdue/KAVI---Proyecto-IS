@@ -60,3 +60,11 @@ juntarlo en una sesión dedicada a pruebas.
 - [ ] Encabezado del calendario en dos filas por debajo de 720 px, con el título completo.
   Es la clase de regresión que solo se ve en una captura, así que conviene una prueba que
   fije que el título no se trunca a 390 px.
+
+## FAB que encoge (T193c)
+
+- [ ] `useShrinkOnScroll`: encoge al bajar, vuelve al subir, y no reacciona dentro de la
+  zona superior ni a desplazamientos por debajo del umbral.
+- [ ] El FAB encogido **no** baja del mínimo táctil (44 iOS / 48 Android). Es la garantía
+  que justifica la escala elegida y la que se rompería al retocar el tamaño a ojo.
+- [ ] Con movimiento reducido cambia de tamaño sin transición.

@@ -20,6 +20,7 @@ import { useContacts, usePeopleColors } from '@/hooks/use-connections';
 import { useMyProfile } from '@/hooks/use-profile';
 import { useWorkouts } from '@/hooks/use-workouts';
 import { usePreferencesStore } from '@/store/preferences-store';
+import { useShrinkOnScroll } from '@/hooks/use-shrink-on-scroll';
 import { useTheme } from '@/hooks/use-theme';
 import { fromDayKey, rangeForView, shiftAnchor, toDayKey } from '@/lib/dates';
 import { useAuth, useSnackbar } from '@/providers';
@@ -183,6 +184,9 @@ export default function CalendarScreen() {
   const isShared = (a: Activity) => a.owner_id !== userId;
   const activeFilterCount = filters.dimensions.length + filters.themeIds.length;
   const showEmpty = activities.isSuccess && data.length === 0;
+  // El FAB tapa contenido en las vistas con scroll —en la agenda, el horario de las
+  // filas de abajo—, así que encoge mientras se baja y vuelve al subir.
+  const { shrunk, onScroll } = useShrinkOnScroll();
 
   let body: React.ReactNode;
   if (activities.isPending) {
@@ -198,9 +202,9 @@ export default function CalendarScreen() {
   } else if (view === 'month') {
     body = <MonthView anchor={anchor} activities={data} onSelectDay={selectDay} />;
   } else if (view === 'week') {
-    body = <WeekView anchor={anchor} activities={data} onPressSlot={createAt} onPressActivity={openActivity} isSharedActivity={isShared} />;
+    body = <WeekView anchor={anchor} activities={data} onPressSlot={createAt} onPressActivity={openActivity} isSharedActivity={isShared} onScroll={onScroll} />;
   } else if (view === 'threeDays') {
-    body = <ThreeDaysView anchor={anchor} activities={data} onPressSlot={createAt} onPressActivity={openActivity} isSharedActivity={isShared} />;
+    body = <ThreeDaysView anchor={anchor} activities={data} onPressSlot={createAt} onPressActivity={openActivity} isSharedActivity={isShared} onScroll={onScroll} />;
   } else if (view === 'agenda') {
     /*
      * La agenda no dibuja rejilla, así que un mes sin nada no deja nada en pantalla: aquí
@@ -220,6 +224,7 @@ export default function CalendarScreen() {
         activities={data}
         onPressActivity={openActivity}
         isSharedActivity={isShared}
+        onScroll={onScroll}
       />
     );
   } else {
@@ -235,7 +240,7 @@ export default function CalendarScreen() {
             Sin actividades este día. Toca una hora para agendar.
           </AppText>
         ) : null}
-        <DayView day={anchor} activities={data} onPressSlot={createAt} onPressActivity={openActivity} isSharedActivity={isShared} />
+        <DayView day={anchor} activities={data} onPressSlot={createAt} onPressActivity={openActivity} isSharedActivity={isShared} onScroll={onScroll} />
       </View>
     );
   }
@@ -261,7 +266,7 @@ export default function CalendarScreen() {
       <GestureDetector gesture={swipe}>
         <View style={styles.body}>{body}</View>
       </GestureDetector>
-      <Fab onPress={() => createAt(anchor)} />
+      <Fab onPress={() => createAt(anchor)} shrunk={shrunk} />
     </Screen>
   );
 }

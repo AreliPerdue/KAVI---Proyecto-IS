@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { useWindowDimensions } from 'react-native';
 
 import { groupByDay } from './group-by-day';
-import { Timeline } from './timeline';
+import { Timeline, type TimelineProps } from './timeline';
 
 import { weekDays } from '@/lib/dates';
 import type { Activity } from '@/types/domain';
@@ -13,10 +13,11 @@ export type WeekViewProps = {
   onPressSlot: (day: Date, minutes: number) => void;
   onPressActivity: (activity: Activity) => void;
   isSharedActivity?: (activity: Activity) => boolean;
+  onScroll?: TimelineProps['onScroll'];
 };
 
 /** Vista semanal: 7 columnas con bloques (RF-C2). Compacta en pantallas angostas (NFR-9). */
-export function WeekView({ anchor, activities, onPressSlot, onPressActivity, isSharedActivity }: WeekViewProps) {
+export function WeekView({ anchor, activities, onPressSlot, onPressActivity, isSharedActivity, onScroll }: WeekViewProps) {
   const { width } = useWindowDimensions();
   const days = useMemo(() => weekDays(anchor), [anchor]);
   const byDay = useMemo(() => groupByDay(activities), [activities]);
@@ -29,6 +30,7 @@ export function WeekView({ anchor, activities, onPressSlot, onPressActivity, isS
       hourHeight={width >= 1024 ? 56 : 48}
       compact={width < 768}
       isSharedActivity={isSharedActivity}
+      onScroll={onScroll}
     />
   );
 }

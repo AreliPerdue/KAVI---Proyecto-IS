@@ -8,6 +8,7 @@ import { ModalHeader } from '@/components/modal-header';
 import { ActionRow, AppText, EmptyState, ErrorState, Fab, LoadingState, Screen, Sheet, ThemeIcon } from '@/components/ui';
 import { IconSize, IconStroke, Radius, Spacing } from '@/constants/theme';
 import { useArchivedLists, useListMutations, useLists } from '@/hooks/use-lists';
+import { useShrinkOnScroll } from '@/hooks/use-shrink-on-scroll';
 import { useTheme } from '@/hooks/use-theme';
 import { useConfirm, useSnackbar } from '@/providers';
 import type { KaviList } from '@/types/domain';
@@ -47,6 +48,7 @@ export default function ListsScreen() {
   const lists = useLists();
   const archivadas = useArchivedLists(verArchivadas);
   const { update, remove, duplicate } = useListMutations();
+  const { shrunk, onScroll } = useShrinkOnScroll();
 
   const consulta = verArchivadas ? archivadas : lists;
 
@@ -192,7 +194,11 @@ export default function ListsScreen() {
             }
           />
         ) : (
-          <ScrollView contentContainerStyle={styles.cuerpo} showsVerticalScrollIndicator={false}>
+          <ScrollView
+            contentContainerStyle={styles.cuerpo}
+            showsVerticalScrollIndicator={false}
+            onScroll={onScroll}
+            scrollEventThrottle={32}>
             {verArchivadas ? (
               grupo('', archivadas.data ?? [])
             ) : (
@@ -205,7 +211,7 @@ export default function ListsScreen() {
         )
       ) : null}
 
-      {!verArchivadas ? <Fab label="Nueva lista" onPress={() => router.push('/(app)/list/new')} /> : null}
+      {!verArchivadas ? <Fab label="Nueva lista" shrunk={shrunk} onPress={() => router.push('/(app)/list/new')} /> : null}
 
       <Sheet visible={menuDe !== null} onClose={cerrarMenu} title={menuDe?.name ?? ''}>
         {menuDe ? (
