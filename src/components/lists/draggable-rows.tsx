@@ -3,6 +3,8 @@ import { type LayoutChangeEvent, StyleSheet, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, { runOnJS, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
+import { marcarArrastre } from './drag-guard';
+
 import { Motion } from '@/constants/theme';
 
 /** Cuánto hay que mantener presionado antes de que la fila se despegue. */
@@ -115,6 +117,9 @@ function Fila({
       y.value = e.translationY;
     })
     .onEnd((e) => {
+      // Solo cuenta como arrastre si de verdad se movió: un toque largo sin mover debe
+      // seguir comportándose como un toque.
+      if (Math.abs(e.translationY) > 4) runOnJS(marcarArrastre)();
       runOnJS(onSoltar)(e.translationY);
       y.value = withTiming(0, { duration: Motion.fast });
       levantada.value = withTiming(0, { duration: Motion.fast });

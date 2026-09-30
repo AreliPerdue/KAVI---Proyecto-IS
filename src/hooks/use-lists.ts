@@ -281,6 +281,26 @@ export function useListMutations() {
         setListTag(listId, tagId, puesta),
       onSuccess: invalidar,
     }),
+    /** Coloca una lista en otra posición de su grupo, con el orden medio entre vecinos. */
+    moveList: useMutation({
+      mutationFn: async ({ grupo, from, to }: { grupo: readonly KaviList[]; from: number; to: number }) => {
+        const lista = grupo[from];
+        if (!lista || from === to) return;
+        const sin = grupo.filter((_, i) => i !== from);
+        const antes = sin[to - 1];
+        const despues = sin[to];
+        const orden =
+          antes && despues
+            ? (antes.sort_order + despues.sort_order) / 2
+            : antes
+              ? antes.sort_order + 1024
+              : despues
+                ? despues.sort_order / 2
+                : 1024;
+        await reorderList(lista.id, orden);
+      },
+      onSuccess: invalidar,
+    }),
     toggleItem: useMutation({
       mutationFn: ({ id, done }: { id: string; done: boolean }) => toggleListItem(id, userId as string, done),
       onSuccess: invalidar,

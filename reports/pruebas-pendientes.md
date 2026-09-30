@@ -195,3 +195,13 @@ juntarlo en una sesión dedicada a pruebas.
   que sostiene que etiquetar sea de quien mira.
 - [ ] `tag_ids` solo trae las etiquetas propias en una lista compartida.
 - [ ] Con una etiqueta activa, "Fijadas" solo muestra las fijadas de esa etiqueta.
+
+## Arrastrar tarjetas del inicio (T226, T227)
+
+- [ ] **La que más importa**: soltar tras arrastrar **no** dispara el toque. Ya falló una
+  vez sin que se notara, porque la prueba miraba el orden y no lo que se había abierto.
+- [ ] Un toque largo **sin mover** sigue comportándose como toque: la guarda solo se activa
+  si hubo movimiento real.
+- [ ] `destinoDe` de la rejilla con filas de alturas distintas y con una última fila
+  incompleta (soltar en el hueco vacío cae al final).
+- [ ] Las listas compartidas conmigo no se pueden arrastrar.

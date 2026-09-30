@@ -3,7 +3,10 @@ import { Archive, ArchiveRestore, ArrowDown, ArrowUp, CircleCheck, Copy, Ellipsi
 import { useCallback, useMemo, useState } from 'react';
 import { Platform, Pressable, ScrollView, StyleSheet, TextInput, type TextStyle, View } from 'react-native';
 
+
 import { tint } from '@/components/calendar/activity-style';
+import { DraggableGrid } from '@/components/lists/draggable-grid';
+import { arrastreReciente } from '@/components/lists/drag-guard';
 import { PEOPLE_COLORS } from '@/constants/people-colors';
 import { ModalHeader } from '@/components/modal-header';
 import { ActionRow, AppText, EmptyState, ErrorState, Fab, LoadingState, Screen, Sheet, ThemeIcon } from '@/components/ui';
@@ -140,7 +143,7 @@ export default function ListsScreen() {
   const compartidas = useListsSharedWithMe();
   const etiquetas = useListTags();
   const [etiquetaActiva, setEtiquetaActiva] = useState<string | null>(null);
-  const { update, remove, duplicate, create, swapLists } = useListMutations();
+  const { update, remove, duplicate, create, swapLists, moveList } = useListMutations();
   const { shrunk, onScroll } = useShrinkOnScroll();
 
   const consulta = verArchivadas ? archivadas : lists;
@@ -228,9 +231,14 @@ export default function ListsScreen() {
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={`${item.name}, ${subtitulo(item)}`}
-        accessibilityHint="Mantén presionado para más acciones"
-        onPress={() => (verArchivadas ? setMenuDe(item) : abrir(item.id))}
-        onLongPress={() => setMenuDe(item)}
+        accessibilityHint="Mantén presionado para reordenar"
+        // Soltar una tarjeta no debe abrirla: el toque llega igual porque el arrastre no
+        // lo cancela, así que se ignora el que venga pegado a un arrastre.
+        onPress={() => {
+          if (arrastreReciente()) return;
+          if (verArchivadas) setMenuDe(item);
+          else abrir(item.id);
+        }}
         style={({ pressed }) => [
           styles.tarjeta,
           { backgroundColor: tint(item.color, 0.16), borderColor: item.color },
@@ -258,7 +266,12 @@ export default function ListsScreen() {
     </View>
   );
 
-  const grupo = (titulo: string, listas: KaviList[]) =>
+  /**
+   * `ordenable` distingue mis grupos de "Compartidas conmigo": el orden vive en la lista y
+   * es de su dueño, así que arrastrar algo que no es tuyo cambiaría el inicio de otra
+   * persona. Esas se muestran, no se reordenan.
+   */
+  const grupo = (titulo: string, listas: KaviList[], ordenable = true) =>
     listas.length === 0 ? null : (
       <View style={styles.grupo}>
         {/* Sin listas fijadas no hace falta encabezar "Mis listas": no hay de qué distinguirlas. */}
@@ -267,13 +280,22 @@ export default function ListsScreen() {
             {titulo}
           </AppText>
         ) : null}
-        {enFilas(listas).map((fila) => (
-          <View key={fila[0]!.id} style={styles.fila}>
-            {fila.map(tarjeta)}
-            {/* Rellena el hueco de la última fila impar para que la tarjeta no se estire. */}
-            {fila.length < COLUMNAS ? <View style={styles.hueco} /> : null}
-          </View>
-        ))}
+        {ordenable ? (
+          <DraggableGrid
+            items={listas}
+            columns={COLUMNAS}
+            keyOf={(l) => l.id}
+            onReorder={(from, to) => moveList.mutate({ grupo: listas, from, to })}
+            renderItem={tarjeta}
+          />
+        ) : (
+          enFilas(listas).map((fila) => (
+            <View key={fila[0]!.id} style={styles.fila}>
+              {fila.map(tarjeta)}
+              {fila.length < COLUMNAS ? <View style={styles.hueco} /> : null}
+            </View>
+          ))
+        )}
       </View>
     );
 
@@ -404,7 +426,7 @@ export default function ListsScreen() {
                 {grupo('Fijadas', fijadas)}
                 {grupo(fijadas.length > 0 ? 'Mis listas' : '', propias)}
                 {/* Lo compartido contigo va aparte: no es tuyo y conviene que se note. */}
-                {grupo('Compartidas conmigo', compartidas.data ?? [])}
+                {grupo('Compartidas conmigo', compartidas.data ?? [], false)}
               </>
             )}
           </ScrollView>

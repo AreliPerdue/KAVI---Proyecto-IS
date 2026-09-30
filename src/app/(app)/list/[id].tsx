@@ -3,6 +3,8 @@ import { ArrowDown, ArrowUp, Bell, CalendarDays, Check, Clock, FolderPlus, Palet
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Platform, Pressable, ScrollView, StyleSheet, TextInput, type TextStyle, View } from 'react-native';
 
+
+import { arrastreReciente } from '@/components/lists/drag-guard';
 import { DraggableRows } from '@/components/lists/draggable-rows';
 import { ItemComposer } from '@/components/lists/item-composer';
 import { ListAppearanceSheet } from '@/components/lists/list-appearance-sheet';
@@ -126,7 +128,9 @@ function Renglon({
         accessibilityState={{ checked: hecho }}
         accessibilityLabel={hecho ? `Marcar ${item.title} como pendiente` : `Marcar ${item.title} como hecho`}
         hitSlop={10}
-        onPress={() => onToggle(!hecho)}
+        onPress={() => {
+          if (!arrastreReciente()) onToggle(!hecho);
+        }}
         style={({ pressed }) => [styles.casillaToque, pressed ? styles.pressed : null]}>
         <View
           style={[
@@ -140,7 +144,10 @@ function Renglon({
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={`Editar ${item.title}`}
-        onPress={onOpen}
+        // Ignora el toque que llega pegado a un arrastre: soltar una fila no debe abrirla.
+        onPress={() => {
+          if (!arrastreReciente()) onOpen();
+        }}
         style={({ pressed }) => [styles.renglon, pressed ? { backgroundColor: theme.surfaceAlt } : null]}>
         <View style={styles.texto}>
           <AppText

@@ -494,9 +494,23 @@ un clic de más para llegar a lo mismo.
   El orden nuevo es el punto medio entre los vecinos del destino: mover algo escribe **una**
   fila, que es justo para lo que `sort_order` es `numeric`. Subir/bajar se queda: sigue
   siendo la vía accesible y la que funciona con teclado. Dep: T214
-- [ ] T226 Arrastrar también las tarjetas del inicio. Es otro problema: ahí la disposición es
-  una rejilla de dos columnas y el destino no es una posición en una lista sino una celda.
-  Por ahora se reordenan con subir/bajar. Dep: T225
+- [x] T226 Arrastrar las tarjetas del inicio (RF-L3). Es otro problema que el de una lista:
+  el destino no es una posición en una columna sino **una celda**, así que cuenta también el
+  desplazamiento horizontal. El horizontal se resuelve con el ancho de columna, que es
+  uniforme; el vertical con las alturas reales de cada fila, que no lo son —una tarjeta con
+  nombre de dos renglones estira su fila entera—. "Compartidas conmigo" no se reordena: el
+  orden vive en la lista y es de su dueño, así que moverla cambiaría el inicio de otra
+  persona.
+- [x] T227 El toque llegaba pegado al arrastre: soltar una tarjeta la movía **y** la abría.
+  Y estaba también en el arrastre de elementos (T225), donde mi prueba miraba el orden y no
+  se enteró de que además se abría la hoja detrás.
+  Se probó con el `Pressable` de gesture-handler esperando que el gesto padre lo cancelara y
+  **no ocurre**: por omisión el hijo tiene prioridad sobre el gesto de un ancestro. La
+  alternativa era encadenar referencias entre el gesto y cada elemento tocable, lo que
+  obligaría a que cada pantalla conociera la maquinaria del arrastre. Queda una guarda de
+  dos funciones que las pantallas consultan en una línea y que funciona igual en las tres
+  plataformas. De paso desaparece la pulsación larga del menú de la tarjeta, que ahora es el
+  gesto de arrastrar; el botón ⋯ ya lo abría. Dep: T226
 
 ### Pendientes sueltos
 - [ ] T196 Elegir idioma de la interfaz: **español o inglés**. Hoy los textos están
