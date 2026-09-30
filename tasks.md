@@ -206,8 +206,14 @@ decisiones son de producto. Se mantiene SDD: nada se implementa sin spec.
   Plan A con `NativeTabs`; si cambiar el conjunto en caliente rompe el estado de navegación,
   plan B es la barra propia con `expo-router/ui` que la web ya usa. Requiere sección nueva de
   navegación en `specs/01-product-overview.md`. Dep: —
-- [ ] T189 Menú emergente de módulos: rejilla con todos los módulos disponibles, el que no
-  está en la barra se abre desde aquí. Es también donde se eligen los tres accesos. Dep: T188
+- [ ] T189 Menú emergente de módulos. El cuarto lugar lo ocupa un icono de **cuatro
+  cuadrados** que despliega una lista con icono + texto por módulo: pesa · Fitness, libro ·
+  Lectura, luna · Sueño, pluma · Diario, y los que vengan. Es también donde se eligen los
+  tres accesos de la barra. El icono no cambia con la selección: es siempre "lo demás de
+  KAVI", y esa constancia es lo que lo hace encontrable. Dep: T188
+- [ ] T189b Acceso a Listas desde el calendario: botón ○✓ a la izquierda del selector de
+  vistas, como el de tareas de Google Calendar. Abre la franja de pendientes sin salir del
+  calendario, igual que Fitness se abre desde una actividad de gimnasio. Dep: T188, T194
 
 ### Densidad y vistas del calendario
 - [x] T190a Píldoras del mes más delgadas. Se inflaban solas: el alto máximo era 28 px y
