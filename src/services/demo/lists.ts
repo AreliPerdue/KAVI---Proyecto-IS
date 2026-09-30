@@ -6,7 +6,7 @@
  * falta por rendimiento —son arreglos en memoria— pero se implementa igual, porque el
  * demo existe para que lo que se prueba aquí se comporte como en Supabase.
  */
-import { format } from 'date-fns';
+import { addDays, format } from 'date-fns';
 
 import type { ListDetail, ListsApi } from '@/services/contracts';
 import { delay, demoState, emitDataChange, nextId } from '@/services/demo/store';
@@ -96,6 +96,13 @@ function buscarItem(itemId: string): ListItem {
       note: 'Comprar la bisagra antes',
     }),
     crear('it-focos', casa.id, 'Cambiar los focos del pasillo', null, STEP * 2),
+    // Vencidos: lo que no se hizo no desaparece, se muestra arriba con su fecha (RF-L18).
+    crear('it-bisagra', casa.id, 'Comprar la bisagra', null, STEP * 3, {
+      due_date: format(addDays(new Date(), -4), 'yyyy-MM-dd'),
+    }),
+    crear('it-plomero', casa.id, 'Llamar al plomero', null, STEP * 4, {
+      due_date: format(addDays(new Date(), -1), 'yyyy-MM-dd'),
+    }),
   );
 })();
 
@@ -282,5 +289,26 @@ export const demoLists: ListsApi = {
     return items
       .filter((i) => mias.has(i.list_id) && i.due_date !== null && i.due_date >= fromDate && i.due_date <= toDate)
       .sort((a, b) => (a.due_date ?? '').localeCompare(b.due_date ?? '') || a.sort_order - b.sort_order);
+  },
+
+  async listOverdue(userId, beforeDate) {
+    await delay();
+    const mias = new Set(lists.filter((l) => l.owner_id === userId && !l.is_archived).map((l) => l.id));
+    return items
+      .filter((i) => mias.has(i.list_id) && i.completed_at === null && i.due_date !== null && i.due_date < beforeDate)
+      // Lo más viejo primero: es lo que lleva más tiempo esperando.
+      .sort((a, b) => (a.due_date ?? '').localeCompare(b.due_date ?? ''));
+  },
+
+  async rescheduleItems(itemIds, dueDate) {
+    await delay();
+    const ids = new Set(itemIds);
+    const t = ahora();
+    for (const it of items) {
+      if (!ids.has(it.id)) continue;
+      it.due_date = dueDate;
+      it.updated_at = t;
+    }
+    emitDataChange();
   },
 };

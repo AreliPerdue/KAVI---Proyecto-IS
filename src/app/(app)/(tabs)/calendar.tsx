@@ -21,7 +21,7 @@ import { useContacts, usePeopleColors } from '@/hooks/use-connections';
 import { useMyProfile } from '@/hooks/use-profile';
 import { useWorkouts } from '@/hooks/use-workouts';
 import { usePreferencesStore } from '@/store/preferences-store';
-import { useListItemsByDate, useListMutations, useLists } from '@/hooks/use-lists';
+import { useListItemsByDate, useListMutations, useLists, useOverdueListItems } from '@/hooks/use-lists';
 import { useShrinkOnScroll } from '@/hooks/use-shrink-on-scroll';
 import { useTheme } from '@/hooks/use-theme';
 import { fromDayKey, rangeForView, shiftAnchor, toDayKey } from '@/lib/dates';
@@ -179,6 +179,9 @@ export default function CalendarScreen() {
   }, [showWorkouts, workouts.data, showBirthdays, profile.data, contacts.data, range.from, range.to]);
 
   const data = useMemo(() => {
+    // "Solo pendientes de listas" no acota qué actividades se ven: decide que no se vea
+    // ninguna. Por eso corta antes de `applyFilters`, que recibe y devuelve actividades.
+    if (filters.onlyListItems) return [];
     const propias = [...(activities.data ?? []), ...derivadas];
     const all = [...applyFilters(propias, filters), ...overlayActivities];
     return byPerson ? all.map((a) => ({ ...a, color: colorOf(a.owner_id) })) : all;
@@ -197,8 +200,15 @@ export default function CalendarScreen() {
    */
   const diaKey = toDayKey(anchor);
   const itemsDelDia = useListItemsByDate(diaKey, diaKey);
+  const hoyKey = toDayKey(new Date());
+  /*
+   * Lo vencido solo se muestra cuando el día abierto es hoy. Al mirar un día pasado o
+   * futuro, "se te pasó" no significa nada: lo vencido se mide contra hoy, no contra el
+   * día que estás leyendo.
+   */
+  const vencidos = useOverdueListItems(hoyKey, diaKey === hoyKey);
   const misListas = useLists();
-  const { toggleItem: toggleListItem } = useListMutations();
+  const { toggleItem: toggleListItem, reschedule } = useListMutations();
   const [franjaPlegada, setFranjaPlegada] = useState(false);
 
   let body: React.ReactNode;
@@ -250,6 +260,10 @@ export default function CalendarScreen() {
       <View style={styles.dayBody}>
         <DayItemsStrip
           items={itemsDelDia.data ?? []}
+          overdue={diaKey === hoyKey ? (vencidos.data ?? []) : []}
+          onReschedule={() =>
+            reschedule.mutate({ ids: (vencidos.data ?? []).map((i) => i.id), dueDate: hoyKey })
+          }
           lists={misListas.data ?? []}
           collapsed={franjaPlegada}
           onToggleCollapsed={() => setFranjaPlegada((v) => !v)}

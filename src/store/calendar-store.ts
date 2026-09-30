@@ -9,9 +9,17 @@ export const DEFAULT_VIEW: CalendarView = 'month';
 export type CalendarFilters = {
   dimensions: Dimension[];
   themeIds: string[];
+  /**
+   * Deja en pantalla solo los pendientes de listas y esconde las actividades (RF-C18).
+   *
+   * No es un filtro más de la misma familia: los otros dos acotan *qué actividades* se
+   * ven, y este decide *si se ven actividades*. Por eso no entra en `applyFilters`, que
+   * recibe actividades y devuelve actividades, sino que se aplica un paso antes.
+   */
+  onlyListItems: boolean;
 };
 
-export const EMPTY_FILTERS: CalendarFilters = { dimensions: [], themeIds: [] };
+export const EMPTY_FILTERS: CalendarFilters = { dimensions: [], themeIds: [], onlyListItems: false };
 
 type CalendarState = {
   view: CalendarView;
@@ -71,5 +79,5 @@ export const useCalendarStore = create<CalendarState>((set, get) => ({
 }));
 
 export function hasActiveFilters(filters: CalendarFilters): boolean {
-  return filters.dimensions.length > 0 || filters.themeIds.length > 0;
+  return filters.dimensions.length > 0 || filters.themeIds.length > 0 || filters.onlyListItems;
 }

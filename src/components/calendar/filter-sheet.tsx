@@ -1,12 +1,12 @@
 import { StyleSheet, View } from 'react-native';
 
-import { AppText, Button, Chip, Sheet, ThemeIcon } from '@/components/ui';
+import { AppText, Button, Chip, Sheet, SwitchRow, ThemeIcon } from '@/components/ui';
 import { DIMENSIONS } from '@/constants/dimensions';
 import { Spacing } from '@/constants/theme';
 import { useThemes } from '@/hooks/use-themes';
 import { type CalendarFilters, hasActiveFilters } from '@/store/calendar-store';
 
-/** Filtros por dimensión y tema, combinables, aplicados a las 3 vistas (RF-C11). */
+/** Filtros por dimensión y tema, combinables, aplicados a las 5 vistas (RF-C11, RF-C18). */
 export function FilterSheet({
   visible,
   filters,
@@ -61,6 +61,15 @@ export function FilterSheet({
             );
           })}
         </View>
+      </View>
+
+      <View style={styles.section}>
+        <SwitchRow
+          label="Solo pendientes de listas"
+          hint="Esconde las actividades y deja lo que tienes que hacer."
+          value={filters.onlyListItems}
+          onValueChange={(v) => onChange({ ...filters, onlyListItems: v })}
+        />
       </View>
 
       <View style={styles.actions}>

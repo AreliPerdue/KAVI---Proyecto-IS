@@ -24,3 +24,5 @@ export const toggleListItem = listsApi.toggleItem;
 export const reorderListItem = listsApi.reorderItem;
 
 export const listItemsByDateRange = listsApi.listByDateRange;
+export const listOverdueItems = listsApi.listOverdue;
+export const rescheduleListItems = listsApi.rescheduleItems;

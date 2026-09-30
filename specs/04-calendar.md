@@ -54,6 +54,10 @@ El calendario es la pantalla principal y el hub de toda la app (P1). Desde él s
   (entrenamientos sueltos de RF-F10 y cumpleaños de RF-A10): cada una lleva su dimensión, y
   dejarlas visibles al filtrar por otra contradice el criterio de aceptación de abajo. Los
   interruptores de Perfil son independientes: deciden si esa capa existe, no si pasa el filtro.
+- RF-C18. **Solo pendientes de listas.** Interruptor en la hoja de filtros que esconde las
+  actividades y deja en pantalla los pendientes de listas del día. No es un filtro más de la
+  misma familia: los de dimensión y tema acotan *qué actividades* se ven, y este decide *si
+  se ven actividades*, así que se aplica antes y no dentro de `applyFilters`.
 - RF-C12. Estados de carga (skeleton), vacío ("No tienes actividades este día") y error con retry.
 
 ## Reglas de negocio

@@ -331,6 +331,18 @@ un clic de más para llegar a lo mismo.
   los puntos con el "+N" debajo, que es lo que se espera al mirar un mes lleno. (RF-C1)
   Dep: T190a
 
+- [x] T205 Vencidos y reprogramar, al estilo de Todoist. Los pendientes con fecha pasada y
+  sin palomear se agrupan arriba de los de hoy, en el acento de aviso —que el token `today`
+  ya existía justo para esto— con su fecha original y una acción para moverlos todos a hoy.
+  Una lista que esconde lo que no hiciste deja de ser confiable, y es cuando se deja de
+  apuntar ahí. Solo aparecen si el día abierto es hoy: lo vencido se mide contra hoy, no
+  contra el día que se está leyendo. Se agregan `listOverdue` y `rescheduleItems` al
+  contrato. (RF-L18) Dep: T201
+- [x] T206 Filtro "Solo pendientes de listas" en el calendario. Esconde las actividades y
+  deja lo que hay que hacer. No entra en `applyFilters` porque no es de su familia: los
+  filtros de dimensión y tema acotan qué actividades se ven, y este decide si se ven
+  actividades. (RF-C18) Dep: T201
+
 ### Pendientes sueltos
 - [ ] T196 Elegir idioma de la interfaz: **español o inglés**. Hoy los textos están
   incrustados en los componentes, así que esto es sobre todo el trabajo de extraerlos.

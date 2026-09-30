@@ -86,3 +86,13 @@ juntarlo en una sesión dedicada a pruebas.
   regla que define el módulo y la que se rompería al "mejorar" la integración.
 - [ ] Palomear desde la franja marca la misma fila que en su lista.
 - [ ] `useListItemsByDate` con el día como `YYYY-MM-DD`, no como ISO.
+
+## Vencidos y filtro de listas (T205, T206)
+
+- [ ] `listOverdue` excluye lo ya palomeado y lo de listas archivadas, y ordena de más
+  viejo a más reciente.
+- [ ] Los vencidos **no** se muestran al abrir un día que no es hoy.
+- [ ] `rescheduleItems` mueve todos los indicados y no toca el resto.
+- [ ] `hasActiveFilters` es verdadero con `onlyListItems` aunque no haya dimensión ni tema
+  —si no, el punto del botón de filtros no se enciende y el filtro queda invisible.
+- [ ] `applyFilters` ignora `onlyListItems`: recibe actividades y devuelve actividades.

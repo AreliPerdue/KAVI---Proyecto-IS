@@ -147,7 +147,7 @@ beforeEach(() => {
   mockActividades = { data: [], isPending: false, isError: false, isSuccess: true, error: null, refetch: jest.fn() };
   mockContactos = { data: [] };
   mockDisponibilidad = { data: null };
-  useCalendarStore.setState({ view: 'month', anchorKey: '2026-09-07', filters: { dimensions: [], themeIds: [] }, overlayUserIds: [] });
+  useCalendarStore.setState({ view: 'month', anchorKey: '2026-09-07', filters: { dimensions: [], themeIds: [], onlyListItems: false }, overlayUserIds: [] });
 });
 
 describe('vista activa', () => {
@@ -303,7 +303,7 @@ describe('calendarios superpuestos (RF-S15)', () => {
 
 describe('filtros', () => {
   it('informa cuantos hay activos', async () => {
-    useCalendarStore.setState({ filters: { dimensions: ['fisica'], themeIds: ['t1'] } });
+    useCalendarStore.setState({ filters: { dimensions: ['fisica'], themeIds: ['t1'], onlyListItems: false } });
     await render(<Pantalla />);
 
     expect(screen.getByText('filtros:2')).toBeTruthy();

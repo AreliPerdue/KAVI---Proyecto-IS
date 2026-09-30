@@ -1,3 +1,5 @@
+import { format, isYesterday } from 'date-fns';
+import { es } from 'date-fns/locale';
 import { ChevronDown, ChevronRight, Check } from 'lucide-react-native';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
@@ -5,13 +7,28 @@ import { tint } from '@/components/calendar/activity-style';
 import { AppText, ThemeIcon } from '@/components/ui';
 import { IconStroke, Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { fromDayKey } from '@/lib/dates';
 import type { KaviList, ListItem } from '@/types/domain';
 
 /** Más allá de esto la franja deja de ser "una franja" y se come el día. */
 const MAX_ALTO = 132;
 
+/** "ayer" o "15 sep": lo reciente se nombra, lo lejano se fecha. */
+function fechaVencida(dayKey: string): string {
+  const fecha = fromDayKey(dayKey);
+  return isYesterday(fecha) ? 'ayer' : format(fecha, 'd MMM', { locale: es });
+}
+
 export type DayItemsStripProps = {
   items: readonly ListItem[];
+  /**
+   * Pendientes de días anteriores que siguen sin palomear (RF-L18).
+   *
+   * Van arriba de los de hoy y no mezclados: lo que ya se te pasó es información distinta
+   * de lo que toca hoy, y ordenarlo junto lo escondería entre lo demás.
+   */
+  overdue: readonly ListItem[];
+  onReschedule: () => void;
   /** Listas activas, para saber el icono y el color de cada elemento. */
   lists: readonly KaviList[];
   collapsed: boolean;
@@ -33,6 +50,8 @@ export type DayItemsStripProps = {
  */
 export function DayItemsStrip({
   items,
+  overdue,
+  onReschedule,
   lists,
   collapsed,
   onToggleCollapsed,
@@ -40,10 +59,10 @@ export function DayItemsStrip({
   onOpenItem,
 }: DayItemsStripProps) {
   const theme = useTheme();
-  if (items.length === 0) return null;
+  if (items.length === 0 && overdue.length === 0) return null;
 
   const porId = new Map(lists.map((l) => [l.id, l]));
-  const pendientes = items.filter((i) => i.completed_at === null).length;
+  const pendientes = items.filter((i) => i.completed_at === null).length + overdue.length;
 
   return (
     <View style={[styles.contenedor, { borderColor: theme.border }]}>
@@ -68,7 +87,26 @@ export function DayItemsStrip({
 
       {collapsed ? null : (
         <ScrollView style={styles.lista} contentContainerStyle={styles.listaContenido} showsVerticalScrollIndicator={false}>
-          {items.map((item) => {
+          {overdue.length > 0 ? (
+            <View style={styles.vencidosCabecera}>
+              <AppText variant="caption" color="today">
+                Vencidos
+              </AppText>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={`Reprogramar ${overdue.length} ${overdue.length === 1 ? 'pendiente' : 'pendientes'} para hoy`}
+                hitSlop={8}
+                onPress={onReschedule}
+                style={({ pressed }) => [styles.reprogramar, pressed ? styles.pressed : null]}>
+                <AppText variant="caption" color="today">
+                  Reprogramar para hoy
+                </AppText>
+              </Pressable>
+            </View>
+          ) : null}
+
+          {[...overdue, ...items].map((item) => {
+            const vencido = item.due_date !== null && overdue.some((o) => o.id === item.id);
             const lista = porId.get(item.list_id);
             const color = lista?.color ?? theme.neutralActivity;
             const hecho = item.completed_at !== null;
@@ -99,6 +137,11 @@ export function DayItemsStrip({
                     style={[styles.titulo, hecho ? styles.tachado : null]}>
                     {item.title}
                   </AppText>
+                  {vencido && item.due_date ? (
+                    <AppText variant="micro" color="today" tabular>
+                      {fechaVencida(item.due_date)}
+                    </AppText>
+                  ) : null}
                 </Pressable>
                 {/* Hermano y no anidado, para no meter un `<button>` dentro de otro en web. */}
                 <Pressable
@@ -129,6 +172,14 @@ const styles = StyleSheet.create({
     borderRadius: Radius.sm,
     borderCurve: 'continuous',
   },
+  vencidosCabecera: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: Spacing.sm,
+    paddingTop: 2,
+  },
+  reprogramar: { minHeight: 28, justifyContent: 'center' },
   lista: { maxHeight: MAX_ALTO },
   listaContenido: { gap: 2 },
   fila: { flexDirection: 'row', alignItems: 'center' },

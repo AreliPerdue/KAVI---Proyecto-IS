@@ -15,8 +15,10 @@ import {
   listArchivedLists,
   listItemsByDateRange,
   listLists,
+  listOverdueItems,
   removeList,
   removeListItem,
+  rescheduleListItems,
   toggleListItem,
   updateList,
   updateListItem,
@@ -27,6 +29,7 @@ export const listKeys = {
   list: (userId: string | null) => ['lists', 'list', userId] as const,
   detail: (id: string) => ['lists', 'detail', id] as const,
   byDate: (userId: string | null, from: string, to: string) => ['lists', 'date', userId, from, to] as const,
+  overdue: (userId: string | null, before: string) => ['lists', 'overdue', userId, before] as const,
 };
 
 export function useLists() {
@@ -69,6 +72,22 @@ export function useListItemsByDate(fromDate: string, toDate: string) {
   });
 }
 
+/**
+ * Pendientes vencidos: con fecha anterior a hoy y sin palomear (RF-L18).
+ *
+ * Se consultan aparte de los del día porque son otra cosa: no es "lo que toca hoy" sino
+ * "lo que ya se te pasó", y en la franja se muestran con el acento de aviso y su fecha
+ * original. Que no desaparezcan es justo el punto.
+ */
+export function useOverdueListItems(beforeDate: string, enabled = true) {
+  const { userId } = useAuth();
+  return useQuery<ListItem[]>({
+    queryKey: listKeys.overdue(userId, beforeDate),
+    queryFn: () => listOverdueItems(userId as string, beforeDate),
+    enabled: !!userId && enabled,
+  });
+}
+
 export function useListMutations() {
   const { userId } = useAuth();
   const qc = useQueryClient();
@@ -102,6 +121,11 @@ export function useListMutations() {
       onSuccess: invalidar,
     }),
     removeItem: useMutation({ mutationFn: (id: string) => removeListItem(id), onSuccess: invalidar }),
+    reschedule: useMutation({
+      mutationFn: ({ ids, dueDate }: { ids: readonly string[]; dueDate: string }) =>
+        rescheduleListItems(ids, dueDate),
+      onSuccess: invalidar,
+    }),
     toggleItem: useMutation({
       mutationFn: ({ id, done }: { id: string; done: boolean }) => toggleListItem(id, userId as string, done),
       onSuccess: invalidar,

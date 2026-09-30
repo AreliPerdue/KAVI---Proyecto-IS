@@ -35,7 +35,7 @@ describe('applyFilters', () => {
   it('filtra por dimension', () => {
     const todas = [actividad({ id: 'fis', dimension: 'fisica' }), actividad({ id: 'soc', dimension: 'social' })];
 
-    const r = applyFilters(todas, { dimensions: ['fisica'], themeIds: [] });
+    const r = applyFilters(todas, { dimensions: ['fisica'], themeIds: [], onlyListItems: false });
 
     expect(r.map((a) => a.id)).toEqual(['fis']);
   });
@@ -43,7 +43,7 @@ describe('applyFilters', () => {
   it('filtra por tema', () => {
     const todas = [actividad({ id: 'con', theme_id: 't1' }), actividad({ id: 'sin', theme_id: 't2' })];
 
-    const r = applyFilters(todas, { dimensions: [], themeIds: ['t1'] });
+    const r = applyFilters(todas, { dimensions: [], themeIds: ['t1'], onlyListItems: false });
 
     expect(r.map((a) => a.id)).toEqual(['con']);
   });
@@ -55,13 +55,13 @@ describe('applyFilters', () => {
       actividad({ id: 'ninguno' }),
     ];
 
-    const r = applyFilters(todas, { dimensions: ['fisica'], themeIds: ['t1'] });
+    const r = applyFilters(todas, { dimensions: ['fisica'], themeIds: ['t1'], onlyListItems: false });
 
     expect(r.map((a) => a.id).sort()).toEqual(['porDimension', 'porTema']);
   });
 
   it('una actividad sin dimension ni tema se descarta al filtrar', () => {
-    const r = applyFilters([actividad()], { dimensions: ['fisica'], themeIds: [] });
+    const r = applyFilters([actividad()], { dimensions: ['fisica'], themeIds: [], onlyListItems: false });
     expect(r).toEqual([]);
   });
 });

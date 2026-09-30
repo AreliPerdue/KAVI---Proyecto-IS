@@ -46,6 +46,15 @@ Por eso **los ítems nunca entran en la rejilla de horas**, ni siquiera cuando l
 
 - **RF-L13.** Palomear desde la franja marca el ítem igual que desde su lista: es la misma fila.
 
+- **RF-L18. Lo vencido no desaparece.** Los pendientes con fecha anterior a hoy y sin
+  palomear se agrupan **arriba** de los de hoy, en el acento de aviso y con su fecha
+  original ("ayer", "26 sep"), más una acción para **reprogramarlos a hoy** de una sola vez.
+
+  *Motivo:* una lista que esconde lo que no hiciste deja de ser confiable, y es el momento
+  en que la persona deja de apuntar ahí. Lo vencido se mide contra **hoy**, así que solo
+  aparece cuando el día abierto es hoy: mirando un día pasado o futuro, "se te pasó" no
+  significa nada.
+
 ## Compartir (RF-L14 – RF-L17) — fase 2
 - **RF-L14.** Una lista se comparte con contactos ya aceptados (misma regla que el calendario, spec 06), con tres permisos: **ver**, **editar** (agregar, editar y palomear) y **administrar** (además, gestionar miembros).
 - **RF-L15.** Cada ítem guarda **quién lo agregó** y **quién lo completó**, y se muestra en las listas compartidas.

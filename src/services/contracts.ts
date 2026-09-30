@@ -223,4 +223,16 @@ export interface ListsApi {
    * Fechas en `YYYY-MM-DD`, no ISO: son fechas flotantes, no instantes.
    */
   listByDateRange(userId: string, fromDate: string, toDate: string): Promise<ListItem[]>;
+
+  /**
+   * Pendientes con fecha **anterior** a `beforeDate` y todavía sin palomear.
+   *
+   * Va aparte de `listByDateRange` y no como un rango abierto porque lo vencido no tiene
+   * inicio: una compra apuntada hace tres meses sigue pendiente, y elegir una ventana
+   * arbitraria la escondería justo cuando más lleva esperando.
+   */
+  listOverdue(userId: string, beforeDate: string): Promise<ListItem[]>;
+
+  /** Mueve varios pendientes a una fecha nueva de una sola vez (reprogramar). */
+  rescheduleItems(itemIds: readonly string[], dueDate: string): Promise<void>;
 }

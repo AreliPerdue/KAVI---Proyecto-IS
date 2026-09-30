@@ -32,4 +32,6 @@ export const supabaseLists: ListsApi = {
   toggleItem: falta,
   reorderItem: falta,
   listByDateRange: falta,
+  listOverdue: falta,
+  rescheduleItems: falta,
 };

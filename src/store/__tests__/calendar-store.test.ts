@@ -67,7 +67,7 @@ describe('vista y navegacion', () => {
 });
 
 describe('filtros', () => {
-  const conFiltros: CalendarFilters = { dimensions: ['fisica'], themeIds: [] };
+  const conFiltros: CalendarFilters = { dimensions: ['fisica'], themeIds: [], onlyListItems: false };
 
   it('setFilters los aplica', () => {
     const { useCalendarStore } = fresh();
@@ -84,8 +84,8 @@ describe('filtros', () => {
 
   it('hasActiveFilters distingue vacio de con contenido', () => {
     expect(hasActiveFilters(EMPTY_FILTERS)).toBe(false);
-    expect(hasActiveFilters({ dimensions: ['social'], themeIds: [] })).toBe(true);
-    expect(hasActiveFilters({ dimensions: [], themeIds: ['t1'] })).toBe(true);
+    expect(hasActiveFilters({ dimensions: ['social'], themeIds: [], onlyListItems: false })).toBe(true);
+    expect(hasActiveFilters({ dimensions: [], themeIds: ['t1'], onlyListItems: false })).toBe(true);
   });
 });
 

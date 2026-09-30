@@ -17,7 +17,7 @@ const LECTURA = { id: 't2', name: 'Lectura', dimension: 'intelectual', color: '#
 let mockThemes: { data?: Theme[] } = { data: [GIMNASIO, LECTURA] };
 jest.mock('@/hooks/use-themes', () => ({ useThemes: () => mockThemes }));
 
-const VACIOS: CalendarFilters = { dimensions: [], themeIds: [] };
+const VACIOS: CalendarFilters = { dimensions: [], themeIds: [], onlyListItems: false };
 
 beforeEach(() => {
   mockThemes = { data: [GIMNASIO, LECTURA] };
@@ -58,27 +58,27 @@ describe('dimensiones', () => {
 
     await fireEvent.press(screen.getByLabelText('Física'));
 
-    expect(onChange).toHaveBeenCalledWith({ dimensions: ['fisica'], themeIds: [] });
+    expect(onChange).toHaveBeenCalledWith({ dimensions: ['fisica'], themeIds: [], onlyListItems: false });
   });
 
   it('tocar una activa la apaga', async () => {
-    const { onChange } = await montar({ dimensions: ['fisica'], themeIds: [] });
+    const { onChange } = await montar({ dimensions: ['fisica'], themeIds: [], onlyListItems: false });
 
     await fireEvent.press(screen.getByLabelText('Física'));
 
-    expect(onChange).toHaveBeenCalledWith({ dimensions: [], themeIds: [] });
+    expect(onChange).toHaveBeenCalledWith({ dimensions: [], themeIds: [], onlyListItems: false });
   });
 
   it('se pueden acumular varias', async () => {
-    const { onChange } = await montar({ dimensions: ['fisica'], themeIds: [] });
+    const { onChange } = await montar({ dimensions: ['fisica'], themeIds: [], onlyListItems: false });
 
     await fireEvent.press(screen.getByLabelText('Social'));
 
-    expect(onChange).toHaveBeenCalledWith({ dimensions: ['fisica', 'social'], themeIds: [] });
+    expect(onChange).toHaveBeenCalledWith({ dimensions: ['fisica', 'social'], themeIds: [], onlyListItems: false });
   });
 
   it('las activas se ven marcadas', async () => {
-    await montar({ dimensions: ['fisica'], themeIds: [] });
+    await montar({ dimensions: ['fisica'], themeIds: [], onlyListItems: false });
     expect(screen.getByLabelText('Física').props.accessibilityState.selected).toBe(true);
     expect(screen.getByLabelText('Social').props.accessibilityState.selected).toBe(false);
   });
@@ -90,23 +90,23 @@ describe('temas', () => {
 
     await fireEvent.press(screen.getByLabelText('Gimnasio'));
 
-    expect(onChange).toHaveBeenCalledWith({ dimensions: [], themeIds: ['t1'] });
+    expect(onChange).toHaveBeenCalledWith({ dimensions: [], themeIds: ['t1'], onlyListItems: false });
   });
 
   it('tocar uno activo lo apaga', async () => {
-    const { onChange } = await montar({ dimensions: [], themeIds: ['t1'] });
+    const { onChange } = await montar({ dimensions: [], themeIds: ['t1'], onlyListItems: false });
 
     await fireEvent.press(screen.getByLabelText('Gimnasio'));
 
-    expect(onChange).toHaveBeenCalledWith({ dimensions: [], themeIds: [] });
+    expect(onChange).toHaveBeenCalledWith({ dimensions: [], themeIds: [], onlyListItems: false });
   });
 
   it('filtrar por tema no borra el filtro de dimension: se combinan', async () => {
-    const { onChange } = await montar({ dimensions: ['fisica'], themeIds: [] });
+    const { onChange } = await montar({ dimensions: ['fisica'], themeIds: [], onlyListItems: false });
 
     await fireEvent.press(screen.getByLabelText('Lectura'));
 
-    expect(onChange).toHaveBeenCalledWith({ dimensions: ['fisica'], themeIds: ['t2'] });
+    expect(onChange).toHaveBeenCalledWith({ dimensions: ['fisica'], themeIds: ['t2'], onlyListItems: false });
   });
 });
 
@@ -117,17 +117,17 @@ describe('acciones', () => {
   });
 
   it('con una dimension activa si aparece', async () => {
-    await montar({ dimensions: ['fisica'], themeIds: [] });
+    await montar({ dimensions: ['fisica'], themeIds: [], onlyListItems: false });
     expect(screen.getByText('Limpiar filtros')).toBeTruthy();
   });
 
   it('con solo un tema activo tambien', async () => {
-    await montar({ dimensions: [], themeIds: ['t1'] });
+    await montar({ dimensions: [], themeIds: ['t1'], onlyListItems: false });
     expect(screen.getByText('Limpiar filtros')).toBeTruthy();
   });
 
   it('limpiar avisa al calendario', async () => {
-    const { onClear } = await montar({ dimensions: ['fisica'], themeIds: [] });
+    const { onClear } = await montar({ dimensions: ['fisica'], themeIds: [], onlyListItems: false });
 
     await fireEvent.press(screen.getByText('Limpiar filtros'));
 
