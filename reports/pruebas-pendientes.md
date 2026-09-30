@@ -139,3 +139,13 @@ juntarlo en una sesión dedicada a pruebas.
 - [ ] En Supabase, buscar "50%" no trae de más: `%` y `_` van escapados.
 - [ ] Subir/bajar solo permuta dentro del grupo y los extremos van deshabilitados.
 - [ ] El intercambio lee ambos `sort_order` antes de escribir.
+
+## Pendientes en el calendario y áreas táctiles (T217, T218)
+
+- [ ] **La que más importa**: un pendiente con fecha **no** aparece en las vistas de horas
+  (día, 3 días, semana). Es la regla que define el módulo y la más fácil de romper al
+  "mejorar" la integración.
+- [ ] En mes, el chip de un pendiente no pinta hora aunque el elemento tenga `due_time`.
+- [ ] `isDerivedActivity` reconoce el prefijo de pendientes: no se pueden editar ni compartir
+  como actividades.
+- [ ] Tocar el texto de un elemento abre la edición y **no** lo palomea.

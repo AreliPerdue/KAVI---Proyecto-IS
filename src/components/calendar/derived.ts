@@ -1,8 +1,9 @@
-import { fromIso, setTimeOfDay, startOfDay, toIso } from '@/lib/dates';
-import type { Activity, Contact, Profile, Workout } from '@/types/domain';
+import { fromDayKey, fromIso, setTimeOfDay, startOfDay, toIso } from '@/lib/dates';
+import type { Activity, Contact, KaviList, ListItem, Profile, Workout } from '@/types/domain';
 
 export const WORKOUT_PREFIX = 'workout-';
 export const BIRTHDAY_PREFIX = 'birthday-';
+export const LIST_ITEM_PREFIX = 'listitem-';
 
 /**
  * Iconos de las capas derivadas. Van nombrados y exportados porque nadie los elige a
@@ -11,10 +12,20 @@ export const BIRTHDAY_PREFIX = 'birthday-';
  */
 export const WORKOUT_ICON = 'dumbbell';
 export const BIRTHDAY_ICON = 'cake';
+export const LIST_ITEM_ICON = 'circle-check';
 
 /** Un bloque derivado no existe como fila: no se puede editar ni compartir. */
 export function isDerivedActivity(activity: Pick<Activity, 'id'>): boolean {
-  return activity.id.startsWith(WORKOUT_PREFIX) || activity.id.startsWith(BIRTHDAY_PREFIX);
+  return (
+    activity.id.startsWith(WORKOUT_PREFIX) ||
+    activity.id.startsWith(BIRTHDAY_PREFIX) ||
+    activity.id.startsWith(LIST_ITEM_PREFIX)
+  );
+}
+
+/** El id del elemento de lista detrás de un bloque derivado, para poder abrirlo. */
+export function listItemIdOf(activity: Pick<Activity, 'id'>): string | null {
+  return activity.id.startsWith(LIST_ITEM_PREFIX) ? activity.id.slice(LIST_ITEM_PREFIX.length) : null;
 }
 
 const base = (id: string, ownerId: string) => ({
@@ -122,4 +133,40 @@ export function esHoyCumpleaños(birthday: string | null | undefined, hoy = new 
   if (!birthday) return false;
   const [, mes, dia] = birthday.split('-').map(Number);
   return hoy.getMonth() === mes - 1 && hoy.getDate() === dia;
+}
+
+/**
+ * Pendientes de listas con fecha, como bloques derivados del calendario (RF-L12).
+ *
+ * **Solo para la vista mensual y la agenda**, que no tienen rejilla de horas. En las de
+ * horas seguiría valiendo la regla del módulo: un pendiente ocupa un día, no un rato, y
+ * colocarlo entre las horas lo haría leerse como una cita. Ahí vive en la franja de arriba.
+ *
+ * Van como `all_day` a propósito: así el chip del mes no intenta pintar una hora, y en su
+ * lugar se dibuja el círculo con la palomita, que es lo que dice de un vistazo que eso no
+ * es una cita sino algo por hacer.
+ */
+export function listItemsToActivities(
+  items: readonly ListItem[],
+  lists: readonly KaviList[],
+): Activity[] {
+  const porId = new Map(lists.map((l) => [l.id, l]));
+  return items
+    .filter((i) => i.due_date !== null)
+    .map((item) => {
+      const lista = porId.get(item.list_id);
+      const dia = fromDayKey(item.due_date as string);
+      return {
+        ...base(`${LIST_ITEM_PREFIX}${item.id}`, lista?.owner_id ?? item.created_by),
+        title: item.title,
+        dimension: null,
+        color: lista?.color ?? null,
+        icon: LIST_ITEM_ICON,
+        start_at: toIso(startOfDay(dia)),
+        end_at: toIso(setTimeOfDay(dia, 1440)),
+        all_day: true,
+        created_at: item.created_at,
+        updated_at: item.updated_at,
+      } as Activity;
+    });
 }

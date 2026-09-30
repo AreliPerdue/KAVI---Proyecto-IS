@@ -2,10 +2,11 @@ import { memo, useCallback, useMemo, useState } from 'react';
 import { type LayoutChangeEvent, PixelRatio, Pressable, StyleSheet, View } from 'react-native';
 
 import { activityColor, tint } from './activity-style';
+import { LIST_ITEM_PREFIX } from './derived';
 import { groupByDay } from './group-by-day';
 import { isOverlayActivity } from './overlay';
 
-import { AppText } from '@/components/ui';
+import { AppText, ThemeIcon } from '@/components/ui';
 import { Radius, Spacing, type ThemeColors } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { formatDayTitle, formatTime, fromIso, isSameMonth, isToday, monthGridDays, toDayKey, WEEKDAY_LABELS } from '@/lib/dates';
@@ -123,6 +124,9 @@ const DayCell = memo(function DayCell({ date, inMonth, weekend, activities, them
           {visible.map((activity) => {
             const color = activityColor(activity, theme);
             const foreign = isOverlayActivity(activity) || !!activity.owner_name;
+            // Un pendiente de lista no lleva hora: lleva su círculo, que de un vistazo dice
+            // que eso no es una cita sino algo por hacer (RF-L12).
+            const esPendiente = activity.id.startsWith(LIST_ITEM_PREFIX);
             return (
               <View
                 key={activity.id}
@@ -132,6 +136,8 @@ const DayCell = memo(function DayCell({ date, inMonth, weekend, activities, them
                   foreign ? { borderStyle: 'dashed', borderWidth: 1, borderColor: color, borderLeftWidth: 2 } : null,
                 ]}>
                 <AppText variant="caption" numberOfLines={1} color={inMonth ? 'text' : 'textSecondary'}>
+                  {esPendiente ? <ThemeIcon name={activity.icon} color={color} size={11} /> : null}
+                  {esPendiente ? ' ' : null}
                   {showTime && !activity.all_day ? (
                     // La hora cede un punto frente al título: es el dato de apoyo, y
                     // cada píxel que suelta es una letra más de título que se alcanza

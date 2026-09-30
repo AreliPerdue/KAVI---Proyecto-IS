@@ -8,6 +8,7 @@ import {
   BookOpen,
   Briefcase,
   Cake,
+  CircleCheck,
   Calculator,
   Camera,
   Car,
@@ -90,6 +91,7 @@ export const THEME_ICONS = {
   gift: Gift,
   cake: Cake,
   tag: Tag,
+  'circle-check': CircleCheck,
 } as const;
 
 export type ThemeIconName = keyof typeof THEME_ICONS;

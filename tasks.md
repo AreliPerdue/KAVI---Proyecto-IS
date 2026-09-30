@@ -414,6 +414,16 @@ un clic de más para llegar a lo mismo.
   fila al salir, y el intercambio además lee los dos órdenes antes de escribir ninguno, que
   es correcto con cualquier backend. Dep: T214
 
+- [x] T217 Tocar un elemento abre su edición; palomear queda solo en el círculo, con su
+  propia área táctil. Con renglones de 44 px pegados, palomear en cualquier parte es un
+  dedazo esperando a pasar. Desaparece el lápiz: la fila entera ya abre. (RF-L13c) Dep: T212
+- [x] T218 Los pendientes con fecha se pintan en **mes y agenda** como bloques del
+  calendario, con el círculo de palomita en lugar de la hora y en el color de su lista. Ahí
+  no hay rejilla de horas, así que no hay nada que malinterpretar. En las vistas de horas
+  siguen sin pintarse: viven en la franja de arriba. De paso, "Solo pendientes de listas"
+  deja de dejar la pantalla vacía en mes y agenda, que era el hueco que quedó al crearlo.
+  (RF-L13b, RF-C18) Dep: T212
+
 ### Pendientes sueltos
 - [ ] T196 Elegir idioma de la interfaz: **español o inglés**. Hoy los textos están
   incrustados en los componentes, así que esto es sobre todo el trabajo de extraerlos.

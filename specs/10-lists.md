@@ -64,6 +64,17 @@ Por eso **los ítems nunca entran en la rejilla de horas**, ni siquiera cuando l
   *Motivo:* es el punto donde Lists y el calendario se vuelven un solo sistema, sin mentir sobre lo que el dato es. Un pendiente colocado a las 10:00 en la rejilla se leería como una cita, y no lo es.
 
 - **RF-L13.** Palomear desde la franja marca el ítem igual que desde su lista: es la misma fila.
+- **RF-L13b. En mes y agenda los pendientes se pintan como bloques del calendario**, con el
+  círculo de palomita **en lugar de la hora** y en el color de su lista. Ahí no hay rejilla
+  de horas, así que no hay nada que malinterpretar; el icono dice de un vistazo que eso no
+  es una cita sino algo por hacer. En las vistas de horas siguen sin pintarse: viven en la
+  franja de arriba.
+
+  *Por qué:* convierte el calendario en la entrada a todas las formas de organizar, en vez
+  de en un sitio que solo sabe de citas.
+- **RF-L13c. Palomear es del círculo, no de la fila.** Tocar un elemento **abre su edición**.
+  Con renglones de 44 px pegados uno a otro, palomear en cualquier parte es un dedazo
+  esperando a pasar: se marca lo que no era y hay que ir a buscarlo a completados.
 
 - **RF-L18. Lo vencido no desaparece.** Los pendientes con fecha anterior a hoy y sin
   palomear se agrupan **arriba** de los de hoy, en el acento de aviso y con su fecha

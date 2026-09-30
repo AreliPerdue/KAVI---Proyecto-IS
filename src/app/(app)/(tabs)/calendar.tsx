@@ -10,7 +10,14 @@ import { CalendarDays } from 'lucide-react-native';
 import { AgendaView } from '@/components/calendar/agenda-view';
 import { ThreeDaysView } from '@/components/calendar/three-days-view';
 import { DayItemsStrip } from '@/components/lists/day-items-strip';
-import { birthdaysToActivities, cumpleañerosDe, isDerivedActivity, workoutsToActivities } from '@/components/calendar/derived';
+import {
+  birthdaysToActivities,
+  cumpleañerosDe,
+  isDerivedActivity,
+  LIST_ITEM_PREFIX,
+  listItemsToActivities,
+  workoutsToActivities,
+} from '@/components/calendar/derived';
 import { blocksToActivities, isOverlayActivity } from '@/components/calendar/overlay';
 import { PeopleTabs } from '@/components/calendar/people-tabs';
 import { AppText, EmptyState, ErrorState, Fab, Screen, Skeleton } from '@/components/ui';
@@ -158,6 +165,33 @@ export default function CalendarScreen() {
    * Con "Tú" a solas vuelve el color coding de dimensiones y temas.
    */
   const byPerson = activeOverlayIds.length > 0;
+
+  /*
+   * Pendientes de listas con fecha de hoy, para la franja de arriba del día (RF-L12).
+   * Solo en la vista diaria: es donde cabe una franja sin comerse la rejilla, y es el día
+   * concreto el que da sentido a "esto hay que hacerlo hoy".
+   */
+  const diaKey = toDayKey(anchor);
+  const itemsDelDia = useListItemsByDate(diaKey, diaKey);
+  /*
+   * En mes y agenda no hay rejilla de horas, así que los pendientes con fecha se pueden
+   * pintar como bloques del propio calendario: es el atajo que convierte el calendario en
+   * la entrada a todas las formas de organizar. En las vistas de horas **no** se pintan;
+   * ahí siguen en la franja de arriba, porque un pendiente ocupa un día y no un rato.
+   */
+  const sinRejilla = view === 'month' || view === 'agenda';
+  const itemsDelRango = useListItemsByDate(toDayKey(range.from), toDayKey(range.to), sinRejilla);
+  const hoyKey = toDayKey(new Date());
+  /*
+   * Lo vencido solo se muestra cuando el día abierto es hoy. Al mirar un día pasado o
+   * futuro, "se te pasó" no significa nada: lo vencido se mide contra hoy, no contra el
+   * día que estás leyendo.
+   */
+  const vencidos = useOverdueListItems(hoyKey, diaKey === hoyKey);
+  const misListas = useLists();
+  const { toggleItem: toggleListItem, reschedule } = useListMutations();
+  const [franjaPlegada, setFranjaPlegada] = useState(false);
+
   /**
    * Capas derivadas: entrenamientos sueltos y cumpleaños. No son actividades
    * guardadas sino una vista sobre datos que ya existen, así que se pueden apagar
@@ -172,16 +206,33 @@ export default function CalendarScreen() {
   const derivadas = useMemo(() => {
     const extras: Activity[] = [];
     if (showWorkouts && workouts.data) extras.push(...workoutsToActivities(workouts.data));
+    if (sinRejilla) extras.push(...listItemsToActivities(itemsDelRango.data ?? [], misListas.data ?? []));
     if (showBirthdays) {
       extras.push(...birthdaysToActivities(cumpleañerosDe(profile.data ?? undefined, contacts.data ?? []), range.from, range.to));
     }
     return extras;
-  }, [showWorkouts, workouts.data, showBirthdays, profile.data, contacts.data, range.from, range.to]);
+  }, [
+    showWorkouts,
+    workouts.data,
+    showBirthdays,
+    profile.data,
+    contacts.data,
+    range.from,
+    range.to,
+    sinRejilla,
+    itemsDelRango.data,
+    misListas.data,
+  ]);
 
   const data = useMemo(() => {
-    // "Solo pendientes de listas" no acota qué actividades se ven: decide que no se vea
-    // ninguna. Por eso corta antes de `applyFilters`, que recibe y devuelve actividades.
-    if (filters.onlyListItems) return [];
+    /*
+     * "Solo pendientes de listas" esconde las actividades y deja los pendientes. Donde
+     * estos se derivan —mes y agenda— quedan ellos en pantalla; en las vistas de horas la
+     * rejilla queda vacía y lo que se ve es la franja de arriba, que es donde viven.
+     */
+    if (filters.onlyListItems) {
+      return derivadas.filter((a) => a.id.startsWith(LIST_ITEM_PREFIX));
+    }
     const propias = [...(activities.data ?? []), ...derivadas];
     const all = [...applyFilters(propias, filters), ...overlayActivities];
     return byPerson ? all.map((a) => ({ ...a, color: colorOf(a.owner_id) })) : all;
@@ -192,24 +243,6 @@ export default function CalendarScreen() {
   // El FAB tapa contenido en las vistas con scroll —en la agenda, el horario de las
   // filas de abajo—, así que encoge mientras se baja y vuelve al subir.
   const { shrunk, onScroll } = useShrinkOnScroll();
-
-  /*
-   * Pendientes de listas con fecha de hoy, para la franja de arriba del día (RF-L12).
-   * Solo en la vista diaria: es donde cabe una franja sin comerse la rejilla, y es el día
-   * concreto el que da sentido a "esto hay que hacerlo hoy".
-   */
-  const diaKey = toDayKey(anchor);
-  const itemsDelDia = useListItemsByDate(diaKey, diaKey);
-  const hoyKey = toDayKey(new Date());
-  /*
-   * Lo vencido solo se muestra cuando el día abierto es hoy. Al mirar un día pasado o
-   * futuro, "se te pasó" no significa nada: lo vencido se mide contra hoy, no contra el
-   * día que estás leyendo.
-   */
-  const vencidos = useOverdueListItems(hoyKey, diaKey === hoyKey);
-  const misListas = useLists();
-  const { toggleItem: toggleListItem, reschedule } = useListMutations();
-  const [franjaPlegada, setFranjaPlegada] = useState(false);
 
   let body: React.ReactNode;
   if (activities.isPending) {

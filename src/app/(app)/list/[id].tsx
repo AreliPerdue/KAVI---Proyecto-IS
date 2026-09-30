@@ -1,5 +1,5 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { ArrowDown, ArrowUp, CalendarDays, Check, Clock, FolderPlus, Palette, Pencil, Trash2, X } from 'lucide-react-native';
+import { ArrowDown, ArrowUp, CalendarDays, Check, Clock, FolderPlus, Palette, Trash2, X } from 'lucide-react-native';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Platform, Pressable, ScrollView, StyleSheet, TextInput, type TextStyle, View } from 'react-native';
 
@@ -109,14 +109,21 @@ function Renglon({
   const hecho = item.completed_at !== null;
   // Vencido solo mientras siga pendiente: una vez hecho, su fecha ya no reclama nada.
   const vencido = !hecho && item.due_date !== null && item.due_date < toDayKey(new Date());
+  /*
+   * Palomear es cosa **del círculo**, no de la fila. Antes tocar en cualquier parte
+   * marcaba como hecho, y con renglones de 44 px pegados uno a otro eso es un dedazo
+   * esperando a pasar: se palomea algo que no era y hay que buscarlo en completados. El
+   * texto abre la edición, que es lo que uno espera al tocar un renglón.
+   */
   return (
     <View style={styles.renglonContenedor}>
       <Pressable
         accessibilityRole="checkbox"
         accessibilityState={{ checked: hecho }}
-        accessibilityLabel={item.title}
+        accessibilityLabel={hecho ? `Marcar ${item.title} como pendiente` : `Marcar ${item.title} como hecho`}
+        hitSlop={10}
         onPress={() => onToggle(!hecho)}
-        style={({ pressed }) => [styles.renglon, pressed ? { backgroundColor: theme.surfaceAlt } : null]}>
+        style={({ pressed }) => [styles.casillaToque, pressed ? styles.pressed : null]}>
         <View
           style={[
             styles.casilla,
@@ -124,6 +131,13 @@ function Renglon({
           ]}>
           {hecho ? <Check size={13} strokeWidth={3} color={theme.onInk} /> : null}
         </View>
+      </Pressable>
+
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={`Editar ${item.title}`}
+        onPress={onOpen}
+        style={({ pressed }) => [styles.renglon, pressed ? { backgroundColor: theme.surfaceAlt } : null]}>
         <View style={styles.texto}>
           <AppText
             variant="body"
@@ -149,18 +163,6 @@ function Renglon({
             </View>
           ) : null}
         </View>
-      </Pressable>
-      {/*
-        Hermano y no anidado: un Pressable dentro de otro genera un `<button>` dentro de
-        un `<button>`, que en web es HTML inválido y saca al interno del foco por teclado.
-      */}
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel={`Editar ${item.title}`}
-        hitSlop={8}
-        onPress={onOpen}
-        style={({ pressed }) => [styles.editar, pressed ? styles.pressed : null]}>
-        <Pencil size={16} strokeWidth={IconStroke} color={theme.textTertiary} />
       </Pressable>
     </View>
   );
@@ -651,6 +653,7 @@ const styles = StyleSheet.create({
   seccion: { gap: 2, marginTop: Spacing.md },
   seccionNueva: { gap: Spacing.sm, marginTop: Spacing.md },
   renglonContenedor: { flexDirection: 'row', alignItems: 'center' },
+  casillaToque: { width: 36, height: 44, alignItems: 'center', justifyContent: 'center' },
   renglon: {
     flex: 1,
     flexDirection: 'row',
@@ -674,7 +677,6 @@ const styles = StyleSheet.create({
   meta: { flexDirection: 'row', alignItems: 'center', gap: Spacing.xs },
   nota: { flex: 1 },
   tachado: { textDecorationLine: 'line-through' },
-  editar: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
   filaSeccion: {
     flexDirection: 'row',
     alignItems: 'center',

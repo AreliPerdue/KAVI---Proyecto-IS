@@ -68,12 +68,12 @@ export function useList(id: string | undefined) {
  * Ítems con fecha dentro del rango, para la franja de pendientes del día (RF-L12).
  * Las fechas van en `YYYY-MM-DD` porque son fechas flotantes, no instantes.
  */
-export function useListItemsByDate(fromDate: string, toDate: string) {
+export function useListItemsByDate(fromDate: string, toDate: string, enabled = true) {
   const { userId } = useAuth();
   return useQuery<ListItem[]>({
     queryKey: listKeys.byDate(userId, fromDate, toDate),
     queryFn: () => listItemsByDateRange(userId as string, fromDate, toDate),
-    enabled: !!userId,
+    enabled: !!userId && enabled,
   });
 }
 
