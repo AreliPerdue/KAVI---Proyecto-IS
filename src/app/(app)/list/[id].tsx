@@ -487,7 +487,6 @@ export default function ListDetailScreen() {
           onClose={() => setCompartirAbierto(false)}
           listId={datos.list.id}
           listName={datos.list.name}
-          accent={color}
         />
       ) : null}
 

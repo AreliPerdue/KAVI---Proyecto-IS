@@ -440,6 +440,13 @@ un clic de más para llegar a lo mismo.
   propias: no son tuyas y conviene que se note. El esquema admite `manage` pero la interfaz
   no lo ofrece, así que solo el dueño renombra y decide con quién se comparte. (RF-L14,
   RF-L15, RF-L17) Dep: T219
+- [x] T220b Quien ya tiene acceso sube al principio, bajo "Compartiendo con", y el resto
+  queda abajo para agregar: mezclarlos obliga a recorrer toda la agenda para responder la
+  pregunta que uno trae al abrir esto —¿quién está viendo mi lista?—. El permiso elegido se
+  rellena en `ink`, el bloque de máximo contraste del sistema, y no en el color de la lista,
+  que ya identifica a la lista en toda la pantalla y competiría. Buscador a partir de seis
+  contactos, y solo filtra a quien falta por agregar: lo ya compartido se queda siempre a la
+  vista. Dep: T220
 - [x] T221 Las implementaciones dejan de usar `this`. La fachada reexporta los métodos
   **desprendidos** del objeto (`export const shareList = listsApi.share`), así que dentro de
   una implementación `this` llega `undefined`. Lo destapó compartir, que no marcaba el
