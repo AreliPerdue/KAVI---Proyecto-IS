@@ -8,7 +8,7 @@ import { PEOPLE_COLORS } from '@/constants/people-colors';
 import { ModalHeader } from '@/components/modal-header';
 import { ActionRow, AppText, EmptyState, ErrorState, Fab, LoadingState, Screen, Sheet, ThemeIcon } from '@/components/ui';
 import { Fonts, IconSize, IconStroke, Radius, Spacing, Typography } from '@/constants/theme';
-import { useArchivedLists, useListMutations, useLists, useListSearch } from '@/hooks/use-lists';
+import { useArchivedLists, useListMutations, useLists, useListSearch, useListsSharedWithMe } from '@/hooks/use-lists';
 import { useDebouncedValue } from '@/hooks/use-debounced-value';
 import { useShrinkOnScroll } from '@/hooks/use-shrink-on-scroll';
 import { useTheme } from '@/hooks/use-theme';
@@ -130,6 +130,7 @@ export default function ListsScreen() {
 
   const lists = useLists();
   const archivadas = useArchivedLists(verArchivadas);
+  const compartidas = useListsSharedWithMe();
   const { update, remove, duplicate, create, swapLists } = useListMutations();
   const { shrunk, onScroll } = useShrinkOnScroll();
 
@@ -337,6 +338,8 @@ export default function ListsScreen() {
               <>
                 {grupo('Fijadas', fijadas)}
                 {grupo(fijadas.length > 0 ? 'Mis listas' : '', propias)}
+                {/* Lo compartido contigo va aparte: no es tuyo y conviene que se note. */}
+                {grupo('Compartidas conmigo', compartidas.data ?? [])}
               </>
             )}
           </ScrollView>

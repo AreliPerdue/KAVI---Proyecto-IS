@@ -245,7 +245,32 @@ export interface ListsApi {
   search(userId: string, term: string): Promise<ListSearchResults>;
 }
 
+export interface ListsApi extends ListSharesApi {}
+
 export type ListSearchResults = {
   lists: KaviList[];
   items: ListItem[];
 };
+
+/** Lo que la interfaz ofrece al compartir. El esquema admite además `manage` (RF-L14). */
+export type ListPermission = 'view' | 'edit';
+
+/** Con quién está compartida una lista y con qué permiso. */
+export type ListShare = {
+  id: string;
+  list_id: string;
+  shared_with_id: string;
+  permission: ListPermission;
+  profile: Profile;
+};
+
+export interface ListSharesApi {
+  /** Con quién está compartida una lista (RF-L14). */
+  listShares(listId: string): Promise<ListShare[]>;
+  /** Comparte o cambia el permiso de alguien. Solo con contactos aceptados. */
+  share(listId: string, userId: string, permission: ListPermission): Promise<ListShare>;
+  /** Retira el acceso. No borra nada del contenido (RF-L17). */
+  unshare(listId: string, userId: string): Promise<void>;
+  /** Listas que otras personas comparten conmigo, para el inicio (RF-L1). */
+  sharedWithMe(userId: string): Promise<KaviList[]>;
+}

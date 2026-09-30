@@ -1,10 +1,11 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { ArrowDown, ArrowUp, CalendarDays, Check, Clock, FolderPlus, Palette, Trash2, X } from 'lucide-react-native';
+import { ArrowDown, ArrowUp, CalendarDays, Check, Clock, FolderPlus, Palette, Trash2, UserPlus, X } from 'lucide-react-native';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Platform, Pressable, ScrollView, StyleSheet, TextInput, type TextStyle, View } from 'react-native';
 
 import { ItemComposer } from '@/components/lists/item-composer';
 import { ListAppearanceSheet } from '@/components/lists/list-appearance-sheet';
+import { ListShareSheet } from '@/components/lists/list-share-sheet';
 import { NOMBRE_POR_OMISION } from '@/app/(app)/lists';
 import { ModalHeader } from '@/components/modal-header';
 import {
@@ -193,6 +194,7 @@ export default function ListDetailScreen() {
   const [seccionNueva, setSeccionNueva] = useState(false);
   const [nombreSeccion, setNombreSeccion] = useState('');
   const [aparienciaAbierta, setAparienciaAbierta] = useState(false);
+  const [compartirAbierto, setCompartirAbierto] = useState(false);
   const [fechaAbierta, setFechaAbierta] = useState(false);
   const [horaAbierta, setHoraAbierta] = useState(false);
   // `nueva=1` lo pone el botón + del inicio: solo entonces se enfoca el título.
@@ -469,7 +471,24 @@ export default function ListDetailScreen() {
             style={({ pressed }) => [styles.barraBoton, pressed ? { backgroundColor: theme.surfaceAlt } : null]}>
             <Palette size={IconSize.action} strokeWidth={IconStroke} color={theme.textSecondary} />
           </Pressable>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Compartir la lista"
+            onPress={() => setCompartirAbierto(true)}
+            style={({ pressed }) => [styles.barraBoton, pressed ? { backgroundColor: theme.surfaceAlt } : null]}>
+            <UserPlus size={IconSize.action} strokeWidth={IconStroke} color={theme.textSecondary} />
+          </Pressable>
         </View>
+      ) : null}
+
+      {datos ? (
+        <ListShareSheet
+          visible={compartirAbierto}
+          onClose={() => setCompartirAbierto(false)}
+          listId={datos.list.id}
+          listName={datos.list.name}
+          accent={color}
+        />
       ) : null}
 
       {datos ? (

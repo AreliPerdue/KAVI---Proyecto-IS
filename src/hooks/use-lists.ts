@@ -21,8 +21,14 @@ import {
   removeListItem,
   reorderList,
   reorderListItem,
+  listListShares,
+  type ListPermission,
+  type ListShare,
+  listsSharedWithMe,
   rescheduleListItems,
   searchLists,
+  shareList,
+  unshareList,
   toggleListItem,
   updateList,
   updateListItem,
@@ -35,6 +41,8 @@ export const listKeys = {
   byDate: (userId: string | null, from: string, to: string) => ['lists', 'date', userId, from, to] as const,
   overdue: (userId: string | null, before: string) => ['lists', 'overdue', userId, before] as const,
   search: (userId: string | null, term: string) => ['lists', 'search', userId, term] as const,
+  shares: (listId: string) => ['lists', 'shares', listId] as const,
+  sharedWithMe: (userId: string | null) => ['lists', 'shared-with-me', userId] as const,
 };
 
 export function useLists() {
@@ -111,6 +119,25 @@ export function useListSearch(term: string) {
   });
 }
 
+/** Con quién está compartida una lista (RF-L14). */
+export function useListShares(listId: string | undefined) {
+  return useQuery<ListShare[]>({
+    queryKey: listKeys.shares(listId ?? ''),
+    queryFn: () => listListShares(listId as string),
+    enabled: !!listId,
+  });
+}
+
+/** Listas que otras personas comparten conmigo (RF-L1). */
+export function useListsSharedWithMe() {
+  const { userId } = useAuth();
+  return useQuery<KaviList[]>({
+    queryKey: listKeys.sharedWithMe(userId),
+    queryFn: () => listsSharedWithMe(userId as string),
+    enabled: !!userId,
+  });
+}
+
 export function useListMutations() {
   const { userId } = useAuth();
   const qc = useQueryClient();
@@ -173,6 +200,15 @@ export function useListMutations() {
         await reorderList(a.id, ordenB);
         await reorderList(b.id, ordenA);
       },
+      onSuccess: invalidar,
+    }),
+    share: useMutation({
+      mutationFn: ({ listId, userId: con, permission }: { listId: string; userId: string; permission: ListPermission }) =>
+        shareList(listId, con, permission),
+      onSuccess: invalidar,
+    }),
+    unshare: useMutation({
+      mutationFn: ({ listId, userId: con }: { listId: string; userId: string }) => unshareList(listId, con),
       onSuccess: invalidar,
     }),
     toggleItem: useMutation({

@@ -424,6 +424,32 @@ un clic de más para llegar a lo mismo.
   deja de dejar la pantalla vacía en mes y agenda, que era el hueco que quedó al crearlo.
   (RF-L13b, RF-C18) Dep: T212
 
+### Fase 2 de Lists — compartir
+- [x] T219 Migración `list_shares` con los tres permisos y las políticas que distinguen
+  **mirar** de **escribir**: `can_view_list`, `can_edit_list` y `can_manage_list`, las tres
+  `security definer` para cortar la recursión de RLS entre `lists` y `list_shares` —la misma
+  que ya costó una migración correctiva con `activities`—. Que las políticas de la migración
+  anterior ya preguntaran por `can_edit_list()` en vez de consultar `lists` a mano es lo que
+  permitió que hoy solo cambiara la función. `lists` se parte en tres políticas porque sus
+  verbos dejaron de ir juntos: la ve quien pueda verla, la renombra quien administre, y solo
+  su dueño la borra. (RF-L14, RF-L17) Dep: T195
+- [x] T220 Compartir en la app: hoja con los contactos aceptados y, junto a cada uno, **Ver**
+  y **Editar** como dos botones en su propia fila —es la pregunta que de verdad se hace al
+  compartir, y con dos opciones se contesta sin abrir nada—. Una ✕ retira el acceso sin
+  tocar el contenido. En el inicio aparece el grupo "Compartidas conmigo", aparte de las
+  propias: no son tuyas y conviene que se note. El esquema admite `manage` pero la interfaz
+  no lo ofrece, así que solo el dueño renombra y decide con quién se comparte. (RF-L14,
+  RF-L15, RF-L17) Dep: T219
+- [x] T221 Las implementaciones dejan de usar `this`. La fachada reexporta los métodos
+  **desprendidos** del objeto (`export const shareList = listsApi.share`), así que dentro de
+  una implementación `this` llega `undefined`. Lo destapó compartir, que no marcaba el
+  permiso; pero el mismo fallo estaba en `duplicate` de Supabase, que habría reventado en
+  cuanto alguien tocara "Duplicar" con el backend real. Lo compartido entre métodos pasa a
+  funciones sueltas. Dep: T220
+- [ ] T222 Tiempo real en listas compartidas (RF-L16): suscripción a `lists`, `list_items` y
+  `list_shares`, con la invalidación centralizada en `lib/query-invalidation.ts` como ya se
+  hace con el calendario. Dep: T220
+
 ### Pendientes sueltos
 - [ ] T196 Elegir idioma de la interfaz: **español o inglés**. Hoy los textos están
   incrustados en los componentes, así que esto es sobre todo el trabajo de extraerlos.

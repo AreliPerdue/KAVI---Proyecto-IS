@@ -146,7 +146,15 @@ Así quedan dos mecanismos para dos preguntas distintas, en vez de uno forzado p
   etiquetas, que van después de lo ya planeado (fase 3).
 
 ## Compartir (RF-L14 – RF-L17) — fase 2
-- **RF-L14.** Una lista se comparte con contactos ya aceptados (misma regla que el calendario, spec 06), con tres permisos: **ver**, **editar** (agregar, editar y palomear) y **administrar** (además, gestionar miembros).
+- **RF-L14.** Una lista se comparte con contactos ya aceptados (misma regla que el
+  calendario, spec 06). Junto a cada persona se elige entre **Ver** y **Editar** (agregar,
+  editar y palomear), como un par de botones en su propia fila: es la pregunta que de verdad
+  se hace al compartir, y con dos opciones se contesta sin abrir nada.
+
+  El esquema admite además **administrar** (gestionar miembros), pero la interfaz no lo
+  ofrece: mientras nadie pueda concederlo, **solo el dueño** renombra la lista, cambia su
+  color y decide con quién se comparte. Queda reservado para cuando haga falta un
+  co-propietario, sin otra migración de por medio.
 - **RF-L15.** Cada ítem guarda **quién lo agregó** y **quién lo completó**, y se muestra en las listas compartidas.
 - **RF-L16.** Los cambios de una lista compartida llegan **en vivo** por Realtime, sin recargar.
 - **RF-L17.** Quien comparte puede retirar el acceso; la lista desaparece del inicio de esa persona sin borrar el contenido.

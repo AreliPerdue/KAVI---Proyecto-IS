@@ -8,8 +8,9 @@
  */
 import { addDays, format } from 'date-fns';
 
-import type { ListDetail, ListSearchResults, ListsApi } from '@/services/contracts';
+import type { ListDetail, ListPermission, ListSearchResults, ListShare, ListsApi } from '@/services/contracts';
 import { delay, demoState, emitDataChange, nextId } from '@/services/demo/store';
+import { AuthUiError } from '@/lib/auth-errors';
 import type { KaviList, ListItem, ListSection } from '@/types/domain';
 
 type StoredList = Omit<KaviList, 'pending_count' | 'total_count'>;
@@ -17,6 +18,7 @@ type StoredList = Omit<KaviList, 'pending_count' | 'total_count'>;
 const lists: StoredList[] = [];
 const sections: ListSection[] = [];
 const items: ListItem[] = [];
+const shares: Omit<ListShare, 'profile'>[] = [];
 
 /** Separación entre órdenes contiguos, para que siempre quepa algo en medio. */
 const STEP = 1024;
@@ -41,6 +43,17 @@ function siguienteOrden(existentes: readonly { sort_order: number }[]): number {
  */
 function copia<T>(fila: T): T {
   return { ...fila };
+}
+
+/**
+ * Función suelta y no un método: la fachada reexporta los métodos desprendidos del objeto
+ * (`export const shareList = listsApi.share`), así que dentro de una implementación `this`
+ * llega `undefined`. Lo que se comparta entre métodos vive fuera del objeto.
+ */
+function conPerfil(fila: Omit<ListShare, 'profile'>): ListShare {
+  const cuenta = demoState.accounts.find((a) => a.profile.id === fila.shared_with_id);
+  if (!cuenta) throw new AuthUiError('Ese contacto ya no existe.');
+  return { ...fila, profile: cuenta.profile };
 }
 
 function conCuentas(lista: StoredList): KaviList {
@@ -328,6 +341,36 @@ export const demoLists: ListsApi = {
         (i) => ids.has(i.list_id) && (i.title.toLowerCase().includes(q) || (i.note ?? '').toLowerCase().includes(q)),
       ).map(copia),
     };
+  },
+
+  async listShares(listId) {
+    await delay();
+    return shares.filter((sh) => sh.list_id === listId).map(conPerfil);
+  },
+
+  async share(listId, userId, permission) {
+    await delay();
+    const existente = shares.find((sh) => sh.list_id === listId && sh.shared_with_id === userId);
+    if (existente) existente.permission = permission;
+    else shares.push({ id: nextId('lshare'), list_id: listId, shared_with_id: userId, permission });
+    emitDataChange();
+    const fila = shares.find((sh) => sh.list_id === listId && sh.shared_with_id === userId);
+    if (!fila) throw new AuthUiError('No se pudo compartir la lista.');
+    return conPerfil(fila);
+  },
+
+  async unshare(listId, userId) {
+    await delay();
+    // Retirar el acceso no borra nada del contenido (RF-L17): la lista sigue entera.
+    const i = shares.findIndex((sh) => sh.list_id === listId && sh.shared_with_id === userId);
+    if (i >= 0) shares.splice(i, 1);
+    emitDataChange();
+  },
+
+  async sharedWithMe(userId) {
+    await delay();
+    const mios = new Set(shares.filter((sh) => sh.shared_with_id === userId).map((sh) => sh.list_id));
+    return lists.filter((l) => mios.has(l.id) && !l.is_archived).sort(ordenar).map(conCuentas);
   },
 
   async rescheduleItems(itemIds, dueDate) {

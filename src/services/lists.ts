@@ -1,7 +1,7 @@
 /** KAVI Lists (spec 10). Fachada sobre el backend activo. */
 import { listsApi } from '@/services/backend';
 
-export type { ListDetail, ListSearchResults } from '@/services/contracts';
+export type { ListDetail, ListPermission, ListSearchResults, ListShare } from '@/services/contracts';
 export type { KaviList, ListInput, ListItem, ListItemInput, ListSection, ListView } from '@/types/domain';
 
 export const listLists = listsApi.list;
@@ -27,3 +27,8 @@ export const listItemsByDateRange = listsApi.listByDateRange;
 export const listOverdueItems = listsApi.listOverdue;
 export const rescheduleListItems = listsApi.rescheduleItems;
 export const searchLists = listsApi.search;
+
+export const listListShares = listsApi.listShares;
+export const shareList = listsApi.share;
+export const unshareList = listsApi.unshare;
+export const listsSharedWithMe = listsApi.sharedWithMe;

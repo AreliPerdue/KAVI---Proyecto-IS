@@ -1,6 +1,6 @@
 import { AuthUiError } from '@/lib/auth-errors';
 import { getSupabase } from '@/lib/supabase';
-import type { ListDetail, ListSearchResults, ListsApi } from '@/services/contracts';
+import type { ListDetail, ListSearchResults, ListShare, ListsApi } from '@/services/contracts';
 import { toError, unwrap } from '@/services/supabase/errors';
 import type { KaviList, ListItem, ListSection } from '@/types/domain';
 
@@ -71,40 +71,50 @@ async function siguienteOrden(tabla: 'lists' | 'list_sections' | 'list_items', c
   return (rows[0]?.sort_order ?? 0) + STEP;
 }
 
+/**
+ * Detalle de una lista. Función suelta y no método: la fachada reexporta los métodos
+ * desprendidos del objeto (`export const getList = listsApi.getById`), así que dentro de una
+ * implementación `this` llega `undefined`. `duplicate` lo usaba y habría fallado en cuanto
+ * alguien tocara "Duplicar" con el backend real.
+ */
+async function crearLista(userId: string, input: Parameters<ListsApi['create']>[1]): Promise<KaviList> {
+  const row = unwrap(
+    await getSupabase()
+      .from('lists')
+      .insert({
+        owner_id: userId,
+        name: input.name.trim(),
+        icon: input.icon,
+        color: input.color,
+        view_mode: input.view ?? 'checklist',
+        sort_order: await siguienteOrden('lists', 'owner_id', userId),
+      })
+      .select(SELECT_LISTA)
+      .single(),
+  );
+  return toList(row as unknown as ListRow);
+}
+
+async function detalleDe(listId: string): Promise<ListDetail> {
+  const [list, sections, items] = await Promise.all([
+    getLista(listId),
+    getSupabase().from('list_sections').select('*').eq('list_id', listId).order('sort_order'),
+    getSupabase().from('list_items').select('*').eq('list_id', listId).order('sort_order'),
+  ]);
+  return {
+    list,
+    sections: unwrap(sections) as ListSection[],
+    items: unwrap(items) as ListItem[],
+  };
+}
+
 export const supabaseLists: ListsApi = {
   list: (userId) => listasDe(userId, false),
   listArchived: (userId) => listasDe(userId, true),
 
-  async getById(listId): Promise<ListDetail> {
-    const [list, sections, items] = await Promise.all([
-      getLista(listId),
-      getSupabase().from('list_sections').select('*').eq('list_id', listId).order('sort_order'),
-      getSupabase().from('list_items').select('*').eq('list_id', listId).order('sort_order'),
-    ]);
-    return {
-      list,
-      sections: unwrap(sections) as ListSection[],
-      items: unwrap(items) as ListItem[],
-    };
-  },
+  getById: detalleDe,
 
-  async create(userId, input) {
-    const row = unwrap(
-      await getSupabase()
-        .from('lists')
-        .insert({
-          owner_id: userId,
-          name: input.name.trim(),
-          icon: input.icon,
-          color: input.color,
-          view_mode: input.view ?? 'checklist',
-          sort_order: await siguienteOrden('lists', 'owner_id', userId),
-        })
-        .select(SELECT_LISTA)
-        .single(),
-    );
-    return toList(row as unknown as ListRow);
-  },
+  create: crearLista,
 
   async update(listId, patch) {
     const { view, name, ...resto } = patch;
@@ -130,8 +140,8 @@ export const supabaseLists: ListsApi = {
   },
 
   async duplicate(listId) {
-    const origen = await this.getById(listId);
-    const copia = await this.create(origen.list.owner_id, {
+    const origen = await detalleDe(listId);
+    const copia = await crearLista(origen.list.owner_id, {
       name: `${origen.list.name} (copia)`,
       icon: origen.list.icon,
       color: origen.list.color,
@@ -314,6 +324,54 @@ export const supabaseLists: ListsApi = {
       lists: (unwrap(listas) as unknown as ListRow[]).map(toList),
       items: sinJoin(unwrap(elementos) as unknown[]),
     };
+  },
+
+  async listShares(listId) {
+    return unwrap(
+      await getSupabase()
+        .from('list_shares')
+        .select('id, list_id, shared_with_id, permission, profile:profiles!list_shares_shared_with_id_fkey(*)')
+        .eq('list_id', listId),
+    ) as unknown as ListShare[];
+  },
+
+  async share(listId, userId, permission) {
+    return unwrap(
+      await getSupabase()
+        .from('list_shares')
+        // `upsert` sobre (list_id, shared_with_id): cambiar el permiso de alguien que ya
+        // está es la misma acción que agregarlo, y separarlas obligaría a consultar antes.
+        .upsert({ list_id: listId, shared_with_id: userId, permission }, { onConflict: 'list_id,shared_with_id' })
+        .select('id, list_id, shared_with_id, permission, profile:profiles!list_shares_shared_with_id_fkey(*)')
+        .single(),
+    ) as unknown as ListShare;
+  },
+
+  async unshare(listId, userId) {
+    const { error } = await getSupabase()
+      .from('list_shares')
+      .delete()
+      .eq('list_id', listId)
+      .eq('shared_with_id', userId);
+    if (error) throw toError(error);
+  },
+
+  async sharedWithMe(userId) {
+    /*
+     * Se consulta desde `lists` con un join interno a los shares del usuario, en vez de
+     * pedir los shares y luego las listas: una sola ida y vuelta, y la RLS de `lists` ya
+     * garantiza que no vuelva nada que no se pueda ver.
+     */
+    const rows = unwrap(
+      await getSupabase()
+        .from('lists')
+        .select(`${SELECT_LISTA}, list_shares!inner(shared_with_id)`)
+        .eq('list_shares.shared_with_id', userId)
+        .eq('is_archived', false)
+        .order('is_pinned', { ascending: false })
+        .order('sort_order', { ascending: true }),
+    );
+    return (rows as unknown as ListRow[]).map(toList);
   },
 
   async rescheduleItems(itemIds, dueDate) {

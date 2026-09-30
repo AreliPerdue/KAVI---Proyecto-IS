@@ -149,3 +149,14 @@ juntarlo en una sesión dedicada a pruebas.
 - [ ] `isDerivedActivity` reconoce el prefijo de pendientes: no se pueden editar ni compartir
   como actividades.
 - [ ] Tocar el texto de un elemento abre la edición y **no** lo palomea.
+
+## Compartir listas (T219-T221)
+
+- [ ] **La más importante**: ampliar `supabase/tests/rls.sql`. Con tres usuarios, que quien
+  tiene permiso de *ver* no pueda escribir, que quien no tiene acceso no vea nada, y que
+  nadie salvo el dueño pueda borrar la lista.
+- [ ] Compartir solo funciona con contactos aceptados (`are_connected` en el `with check`).
+- [ ] Retirar el acceso no borra contenido.
+- [ ] **Ninguna implementación usa `this`.** Es la prueba que habría atrapado T221 y que
+  seguirá atrapándolo: la fachada desprende los métodos del objeto.
+- [ ] `sharedWithMe` no devuelve listas archivadas ni las propias.
