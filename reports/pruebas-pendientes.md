@@ -114,3 +114,10 @@ juntarlo en una sesión dedicada a pruebas.
   no. Es la regla que evita basura sin tragarse trabajo de nadie.
 - [ ] El título guarda al perder el foco y se repone si se deja vacío.
 - [ ] Cambiar color o icono desde la paleta se refleja en la tarjeta del inicio.
+
+## Fechas en elementos (T212)
+
+- [ ] Quitar el día quita también la hora.
+- [ ] Un elemento con fecha pasada **ya palomeado** no se pinta como vencido.
+- [ ] La fecha viaja como `YYYY-MM-DD` y no como instante, en las dos implementaciones.
+- [ ] Un elemento al que se le pone la fecha de hoy aparece en la franja del día.

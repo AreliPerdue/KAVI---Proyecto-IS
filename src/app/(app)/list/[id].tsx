@@ -1,5 +1,5 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Check, FolderPlus, Palette, Pencil, Trash2 } from 'lucide-react-native';
+import { CalendarDays, Check, Clock, FolderPlus, Palette, Pencil, Trash2, X } from 'lucide-react-native';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Platform, Pressable, ScrollView, StyleSheet, TextInput, type TextStyle, View } from 'react-native';
 
@@ -11,17 +11,21 @@ import {
   ActionRow,
   AppText,
   Button,
+  DatePickerSheet,
   EmptyState,
   ErrorState,
+  FieldButton,
   LoadingState,
   Screen,
   Sheet,
   TextField,
   ThemeIcon,
+  TimePickerSheet,
 } from '@/components/ui';
 import { Fonts, IconSize, IconStroke, Radius, Spacing, Typography } from '@/constants/theme';
 import { useList, useListMutations } from '@/hooks/use-lists';
 import { useTheme } from '@/hooks/use-theme';
+import { formatDayTitle, formatShortDate, fromDayKey, toDayKey } from '@/lib/dates';
 import { useConfirm, useSnackbar } from '@/providers';
 import type { ListItem, ListSection } from '@/types/domain';
 
@@ -103,6 +107,8 @@ function Renglon({
 }) {
   const theme = useTheme();
   const hecho = item.completed_at !== null;
+  // Vencido solo mientras siga pendiente: una vez hecho, su fecha ya no reclama nada.
+  const vencido = !hecho && item.due_date !== null && item.due_date < toDayKey(new Date());
   return (
     <View style={styles.renglonContenedor}>
       <Pressable
@@ -126,10 +132,21 @@ function Renglon({
             style={hecho ? styles.tachado : null}>
             {item.title}
           </AppText>
-          {item.note ? (
-            <AppText variant="caption" color="textTertiary" numberOfLines={1}>
-              {item.note}
-            </AppText>
+          {item.due_date || item.note ? (
+            <View style={styles.meta}>
+              {item.due_date ? (
+                <AppText variant="micro" color={vencido ? 'today' : 'textTertiary'} tabular>
+                  {formatShortDate(fromDayKey(item.due_date))}
+                  {item.due_time ? ` · ${item.due_time.slice(0, 5)}` : ''}
+                </AppText>
+              ) : null}
+              {item.note ? (
+                <AppText variant="caption" color="textTertiary" numberOfLines={1} style={styles.nota}>
+                  {item.due_date ? '· ' : ''}
+                  {item.note}
+                </AppText>
+              ) : null}
+            </View>
           ) : null}
         </View>
       </Pressable>
@@ -173,6 +190,8 @@ export default function ListDetailScreen() {
   const [seccionNueva, setSeccionNueva] = useState(false);
   const [nombreSeccion, setNombreSeccion] = useState('');
   const [aparienciaAbierta, setAparienciaAbierta] = useState(false);
+  const [fechaAbierta, setFechaAbierta] = useState(false);
+  const [horaAbierta, setHoraAbierta] = useState(false);
   // `nueva=1` lo pone el botón + del inicio: solo entonces se enfoca el título.
   const { nueva } = useLocalSearchParams<{ nueva?: string }>();
 
@@ -249,6 +268,23 @@ export default function ListDetailScreen() {
         },
       },
     );
+  };
+
+  /**
+   * La fecha se guarda como `YYYY-MM-DD`, no como instante (RF-L11): es un día del
+   * calendario de quien la escribe, no un punto en el tiempo.
+   */
+  const ponerFecha = (item: ListItem, fecha: Date | null) => {
+    const due_date = fecha ? toDayKey(fecha) : null;
+    // Sin día no puede quedar una hora suelta: sería un recordatorio sin cuándo.
+    updateItem.mutate({ id: item.id, patch: { due_date, ...(due_date ? {} : { due_time: null }) } });
+    setEditando((e) => (e ? { ...e, due_date, ...(due_date ? {} : { due_time: null }) } : e));
+  };
+
+  const ponerHora = (item: ListItem, minutos: number | null) => {
+    const due_time = minutos === null ? null : `${String(Math.floor(minutos / 60)).padStart(2, '0')}:${String(minutos % 60).padStart(2, '0')}`;
+    updateItem.mutate({ id: item.id, patch: { due_time } });
+    setEditando((e) => (e ? { ...e, due_time } : e));
   };
 
   const mover = (item: ListItem, sectionId: string | null) => {
@@ -431,7 +467,44 @@ export default function ListDetailScreen() {
         />
       ) : null}
 
-      <Sheet visible={editando !== null} onClose={() => setEditando(null)} title="Elemento">
+      {editando ? (
+        <>
+          <DatePickerSheet
+            visible={fechaAbierta}
+            value={editando.due_date ? fromDayKey(editando.due_date) : new Date()}
+            title="Día del pendiente"
+            onClose={() => setFechaAbierta(false)}
+            onSelect={(fecha) => {
+              ponerFecha(editando, fecha);
+              setFechaAbierta(false);
+            }}
+          />
+          <TimePickerSheet
+            visible={horaAbierta}
+            value={
+              editando.due_time
+                ? Number(editando.due_time.slice(0, 2)) * 60 + Number(editando.due_time.slice(3, 5))
+                : 9 * 60
+            }
+            title="Hora del recordatorio"
+            onClose={() => setHoraAbierta(false)}
+            onSelect={(minutos) => {
+              ponerHora(editando, minutos);
+              setHoraAbierta(false);
+            }}
+          />
+        </>
+      ) : null}
+
+      {/*
+        La hoja del elemento se esconde mientras hay un selector abierto. Dos `Modal` de
+        React Native a la vez ya dieron problemas en este repo (T146): el de dentro
+        desprende el contenido del de fuera.
+      */}
+      <Sheet
+        visible={editando !== null && !fechaAbierta && !horaAbierta}
+        onClose={() => setEditando(null)}
+        title="Elemento">
         {editando ? (
           <View style={styles.hoja}>
             <TextField
@@ -448,6 +521,38 @@ export default function ListDetailScreen() {
               maxLength={500}
               multiline
             />
+
+            <View style={styles.fechas}>
+              <FieldButton
+                label="Día"
+                value={editando.due_date ? formatDayTitle(fromDayKey(editando.due_date)) : null}
+                placeholder="Sin fecha"
+                leading={<CalendarDays size={IconSize.inline} strokeWidth={IconStroke} color={theme.textSecondary} />}
+                onPress={() => setFechaAbierta(true)}
+              />
+              {/*
+                La hora solo aparece con un día puesto, y no coloca el elemento en la
+                rejilla del calendario: sirve para el recordatorio (RF-L12). Sin día, una
+                hora sería un "cuándo" sin cuándo.
+              */}
+              {editando.due_date ? (
+                <FieldButton
+                  label="Hora"
+                  value={editando.due_time ? editando.due_time.slice(0, 5) : null}
+                  placeholder="Sin hora"
+                  leading={<Clock size={IconSize.inline} strokeWidth={IconStroke} color={theme.textSecondary} />}
+                  onPress={() => setHoraAbierta(true)}
+                />
+              ) : null}
+              {editando.due_date ? (
+                <ActionRow
+                  icon={<X size={IconSize.action} strokeWidth={IconStroke} color={theme.textSecondary} />}
+                  label="Quitar la fecha"
+                  color="textSecondary"
+                  onPress={() => ponerFecha(editando, null)}
+                />
+              ) : null}
+            </View>
 
             {datos && datos.sections.length > 0 ? (
               <View style={styles.mover}>
@@ -527,6 +632,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   texto: { flex: 1, gap: 1 },
+  meta: { flexDirection: 'row', alignItems: 'center', gap: Spacing.xs },
+  nota: { flex: 1 },
   tachado: { textDecorationLine: 'line-through' },
   editar: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
   filaSeccion: {
@@ -546,6 +653,7 @@ const styles = StyleSheet.create({
     borderRadius: Radius.sm,
   },
   hoja: { gap: Spacing.md, paddingBottom: Spacing.md },
+  fechas: { gap: Spacing.sm },
   mover: { gap: Spacing.sm },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm },
   chip: {

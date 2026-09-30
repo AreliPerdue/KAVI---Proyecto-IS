@@ -376,6 +376,17 @@ un clic de más para llegar a lo mismo.
   (RF-L21), y de paso son parte de la fase 3 del concepto. **Van después de lo ya
   planeado**: primero se termina la fase 1 y el bloque de compartir. Dep: T195
 
+- [x] T212 Fechas en los elementos (RF-L11). Día y hora opcional desde la hoja de edición,
+  y la fecha visible en el propio renglón sin abrir nada —en el acento de aviso si ya pasó,
+  y solo mientras siga pendiente: una vez hecho su fecha ya no reclama nada—.
+  La hora solo aparece con un día puesto: sin día sería un "cuándo" sin cuándo. Y quitar la
+  fecha quita también la hora, por lo mismo.
+  Los selectores esconden la hoja del elemento mientras están abiertos: dos `Modal` de React
+  Native a la vez ya dieron problemas en este repo (T146). Dep: T200
+- [ ] T213 Buscar listas y elementos, completados incluidos (RF-L4). Dep: T195
+- [ ] T214 Reordenar con subir/bajar en el menú de cada elemento y de cada lista. El
+  arrastre de verdad va aparte, después de que todo lo demás esté bien (RF-L3, RF-L7). Dep: T200
+
 ### Pendientes sueltos
 - [ ] T196 Elegir idioma de la interfaz: **español o inglés**. Hoy los textos están
   incrustados en los componentes, así que esto es sobre todo el trabajo de extraerlos.
