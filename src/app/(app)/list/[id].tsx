@@ -205,6 +205,15 @@ export default function ListDetailScreen() {
   const [seccionNueva, setSeccionNueva] = useState(false);
   const [nombreSeccion, setNombreSeccion] = useState('');
   const [aparienciaAbierta, setAparienciaAbierta] = useState(false);
+  /**
+   * Si esta pantalla llegó a tocarse. No se deduce de los datos a propósito.
+   *
+   * La limpieza de listas intactas leía la copia en caché, y entre escribir el nombre y
+   * tocar atrás no da tiempo a que vuelva del servidor: la lista seguía llamándose "Sin
+   * título" para la caché, así que se borraba **con el nombre recién escrito dentro**. Una
+   * bandera local no puede llegar tarde.
+   */
+  const tocada = useRef(false);
   const [compartirAbierto, setCompartirAbierto] = useState(false);
   const [etiquetasAbierto, setEtiquetasAbierto] = useState(false);
   const [fechaAbierta, setFechaAbierta] = useState(false);
@@ -319,6 +328,7 @@ export default function ListDetailScreen() {
 
   const agregar = (sectionId: string | null) => (title: string) => {
     if (!id) return;
+    tocada.current = true;
     addItem.mutate({ listId: id, input: { title, section_id: sectionId } });
   };
 
@@ -358,6 +368,7 @@ export default function ListDetailScreen() {
       setSeccionNueva(false);
       return;
     }
+    tocada.current = true;
     addSection.mutate(
       { listId: id, name: nombre },
       {
@@ -417,6 +428,7 @@ export default function ListDetailScreen() {
    */
   const salir = () => {
     const intacta =
+      !tocada.current &&
       datos !== undefined &&
       datos.list.name === NOMBRE_POR_OMISION &&
       datos.items.length === 0 &&
@@ -461,7 +473,10 @@ export default function ListDetailScreen() {
           <TituloEditable
             value={datos.list.name}
             autoFocus={nueva === '1'}
-            onSave={(name) => updateList.mutate({ id: datos.list.id, patch: { name } })}
+            onSave={(name) => {
+              tocada.current = true;
+              updateList.mutate({ id: datos.list.id, patch: { name } });
+            }}
           />
 
           <ScrollView

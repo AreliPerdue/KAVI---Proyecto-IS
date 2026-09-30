@@ -215,3 +215,11 @@ juntarlo en una sesión dedicada a pruebas.
 - [ ] Soltar justo debajo del campo de captura de una sección cae en esa sección, no en la
   siguiente.
 - [ ] Encabezados y campos de captura no se pueden arrastrar pero sí cuentan para medir.
+
+## Crear listas (T229)
+
+- [ ] **La que faltaba**: crear, escribir el nombre y salir **sin confirmar** conserva la
+  lista. Es la carrera entre el guardado y la limpieza, y se veía como "el botón no sirve".
+- [ ] Crear y salir sin tocar nada sigue sin dejar una lista vacía.
+- [ ] Agregar solo un elemento (sin nombrar la lista) también la conserva.
+- [ ] Un fallo al crear muestra mensaje.

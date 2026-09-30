@@ -180,7 +180,12 @@ export default function ListsScreen() {
   const nuevaLista = () =>
     create.mutate(
       { name: NOMBRE_POR_OMISION, icon: 'tag', color: COLOR_POR_OMISION },
-      { onSuccess: (lista) => router.push({ pathname: '/(app)/list/[id]', params: { id: lista.id, nueva: '1' } }) },
+      {
+        onSuccess: (lista) => router.push({ pathname: '/(app)/list/[id]', params: { id: lista.id, nueva: '1' } }),
+        // Sin esto, un fallo al crear no se distinguía de un botón que no hace nada: la
+        // pantalla se quedaba igual y sin decir por qué.
+        onError: (e) => showSnackbar({ message: e instanceof Error ? e.message : 'No se pudo crear la lista.' }),
+      },
     );
 
   const alternarFijada = (lista: KaviList) => {

@@ -521,6 +521,16 @@ un clic de más para llegar a lo mismo.
   que queden antes y después. Mover algo de Frutas a Lácteos pasa a ser una sola acción y no
   un cambio de orden seguido de uno de sección. Dep: T225
 
+- [x] T229 Crear una lista, escribir su nombre y salir de inmediato la borraba **con el
+  nombre dentro**. La limpieza de listas intactas leía la copia en caché, y entre que el
+  campo guarda y el servidor responde no da tiempo: para la caché la lista seguía
+  llamándose "Sin título", así que cumplía la condición de intacta. Desde fuera se veía como
+  que el botón "+" no hacía nada.
+  Ahora la pantalla lleva una bandera local que se marca al escribir el nombre, agregar un
+  elemento o crear una sección: una bandera no puede llegar tarde, una consulta sí.
+  Además, crear dejaba de fallar en silencio: sin `onError` un fallo del backend era
+  indistinguible de un botón muerto. Dep: T207
+
 ### Pendientes sueltos
 - [ ] T196 Elegir idioma de la interfaz: **español o inglés**. Hoy los textos están
   incrustados en los componentes, así que esto es sobre todo el trabajo de extraerlos.
