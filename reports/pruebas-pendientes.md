@@ -243,3 +243,11 @@ juntarlo en una sesión dedicada a pruebas.
 - [ ] Palomear en la vuelta de ayer suma a ayer y no a hoy.
 - [ ] En una rutina, los elementos palomeados **no** se mueven a completados.
 - [ ] Demo y Supabase dan el mismo resultado para la misma regla y la misma fecha.
+
+## Resúmenes de rutina (T210)
+
+- [ ] `resumirVueltas` cuenta como completa solo si `completed_count >= total_count` y
+  `total_count > 0`: una vuelta sin elementos no es un éxito.
+- [ ] Ignora las vueltas vacías para el promedio pero las cuenta como registradas.
+- [ ] **La que importa de verdad**: que el resumen no devuelva porcentaje de incumplimiento
+  ni racha. Es una decisión de producto que una prueba puede proteger de un "mejor así".

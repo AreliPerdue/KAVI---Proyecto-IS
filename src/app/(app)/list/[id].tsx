@@ -8,6 +8,7 @@ import { arrastreReciente } from '@/components/lists/drag-guard';
 import { DraggableRows } from '@/components/lists/draggable-rows';
 import { ItemComposer } from '@/components/lists/item-composer';
 import { ListAppearanceSheet } from '@/components/lists/list-appearance-sheet';
+import { ListHistorySheet } from '@/components/lists/list-history-sheet';
 import { ListRepeatSheet } from '@/components/lists/list-repeat-sheet';
 import { ListShareSheet } from '@/components/lists/list-share-sheet';
 import { ListTagsSheet } from '@/components/lists/list-tags-sheet';
@@ -226,6 +227,7 @@ export default function ListDetailScreen() {
   const [compartirAbierto, setCompartirAbierto] = useState(false);
   const [etiquetasAbierto, setEtiquetasAbierto] = useState(false);
   const [repetirAbierto, setRepetirAbierto] = useState(false);
+  const [historialAbierto, setHistorialAbierto] = useState(false);
 
   /*
    * Una lista que se repite cambia de naturaleza: lo palomeado ya no es un estado del
@@ -520,6 +522,24 @@ export default function ListDetailScreen() {
           />
 
           {/*
+            Con la rutina puesta, una línea bajo el título dice cada cuándo se repite y
+            lleva al historial. Va aquí y no en la barra de abajo porque forma parte de lo
+            que **es** esta lista, no de lo que se puede hacer con ella.
+          */}
+          {esRutina ? (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Ver cómo te ha ido con esta rutina"
+              onPress={() => setHistorialAbierto(true)}
+              style={({ pressed }) => [styles.filaRutina, pressed ? { backgroundColor: theme.surfaceAlt } : null]}>
+              <Repeat size={14} strokeWidth={IconStroke} color={color} />
+              <AppText variant="caption" color="textSecondary">
+                {describeRecurrence(parseRRule(datos.list.recurrence_rule))} · cómo te ha ido
+              </AppText>
+            </Pressable>
+          ) : null}
+
+          {/*
             La vuelta de ayer sigue editable hasta las 15:00 (RF-L20). Se avisa en vez de
             mezclarla con la de hoy: son dos días distintos y palomear en la de ayer suma a
             ayer, que es justo lo que se pidió al elegir el periodo de gracia.
@@ -671,6 +691,15 @@ export default function ListDetailScreen() {
             <Repeat size={IconSize.action} strokeWidth={IconStroke} color={esRutina ? color : theme.textSecondary} />
           </Pressable>
         </View>
+      ) : null}
+
+      {datos ? (
+        <ListHistorySheet
+          visible={historialAbierto}
+          onClose={() => setHistorialAbierto(false)}
+          listId={datos.list.id}
+          accent={color}
+        />
       ) : null}
 
       {datos ? (
@@ -957,6 +986,15 @@ const styles = StyleSheet.create({
   hoja: { gap: Spacing.md, paddingBottom: Spacing.md },
   fechas: { gap: Spacing.sm },
   seccionAviso: { gap: Spacing.sm, marginTop: Spacing.xs },
+  filaRutina: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xs,
+    minHeight: 32,
+    paddingHorizontal: Spacing.xs,
+    borderRadius: Radius.sm,
+    borderCurve: 'continuous',
+  },
   avisoVuelta: {
     minHeight: 40,
     justifyContent: 'center',

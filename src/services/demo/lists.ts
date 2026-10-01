@@ -122,6 +122,37 @@ function buscarItem(itemId: string): ListItem {
     due_date: null, due_time: null, reminder_offset_minutes: null, created_at: t, updated_at: t, ...extra,
   });
 
+  /*
+   * Una rutina con historial, para poder ver el resumen sin esperar días. Los conteos
+   * imitan algo real: casi siempre completa, algunos días a medias, y uno flojo.
+   */
+  const rutina: StoredList = {
+    id: 'list-rutina', owner_id: owner, name: 'Rutina de la mañana', icon: 'sun', color: '#A96AE0',
+    view: 'checklist', is_pinned: false, is_archived: false, sort_order: STEP * 3,
+    created_at: t, updated_at: t,
+    recurrence_rule: 'FREQ=DAILY', recurrence_start: format(addDays(new Date(), -14), 'yyyy-MM-dd'),
+  };
+  lists.push(rutina);
+  items.push(
+    crear('it-dientes', rutina.id, 'Lavarme los dientes', null, STEP),
+    crear('it-cabello', rutina.id, 'Cepillarme el cabello', null, STEP * 2),
+    crear('it-cama', rutina.id, 'Tender la cama', null, STEP * 3),
+  );
+  // Catorce vueltas cerradas hacia atrás, de más reciente a más antigua.
+  const hechos = [3, 3, 2, 3, 3, 1, 3, 3, 3, 2, 3, 0, 3, 3];
+  hechos.forEach((n, i) => {
+    const dia = format(addDays(new Date(), -(i + 1)), 'yyyy-MM-dd');
+    runs.push({
+      id: `run-seed-${i}`,
+      list_id: rutina.id,
+      run_date: dia,
+      closed_at: t,
+      completed_count: n,
+      total_count: 3,
+      items: [],
+    });
+  });
+
   items.push(
     crear('it-manzanas', superLista.id, 'Manzanas', frutas.id, STEP),
     crear('it-jitomate', superLista.id, 'Jitomate', frutas.id, STEP * 2),

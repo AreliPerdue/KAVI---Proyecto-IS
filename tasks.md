@@ -382,9 +382,17 @@ un clic de más para llegar a lo mismo.
   mañana— y cerrar a medianoche registraría como incumplido algo que sí se hizo. Las dos
   vueltas conviven sin mezclarse: palomear en la de ayer suma a ayer, y la lista avisa
   arriba ("Ayer: 3 de 7") si la anterior sigue abierta. Dep: T208
-- [ ] T210 Resúmenes (RF-L21). **La redacción se escribe antes que la consulta.** Un resumen
-  que diga "dejaste el 25 % sin completar" es justo la presión que KAVI dijo que no iba a
-  ejercer: se cuenta lo hecho, no lo que falta, y no hay rachas que romper. Dep: T209
+- [x] T210 Resúmenes (RF-L21). "Cómo te ha ido": cuántas veces la hiciste completa, cuántas
+  vueltas hay registradas, el promedio de cosas por vuelta y el detalle de cada una como
+  "3 de 3".
+  **Sin porcentaje de incumplimiento, sin racha, sin nada que se pueda romper.** Un número
+  que se rompe convierte un mal día en una pérdida, y ese es el momento en que la gente
+  abandona la rutina y de paso la app que se la recuerda. Las vueltas completas llevan un
+  punto; las demás no se señalan, porque no hay nada que señalar.
+  La regla vive en `resumirVueltas` y está escrita ahí: esa función existe tanto para
+  calcular como para dejar fijada la decisión. Dep: T209
+- [x] T210b Semilla de demo con una rutina de catorce vueltas cerradas, para poder ver el
+  resumen lleno sin esperar días. Dep: T210
 - [x] T211 Etiquetas de listas (RF-L22). Tablas `list_tags` y `list_tag_links`, sugerencias
   en el cliente, hoja para poner y quitar desde la lista, y fila de filtro en el inicio.
   **Sin etiquetas del sistema**: las sugerencias no son filas, y elegir una crea una
