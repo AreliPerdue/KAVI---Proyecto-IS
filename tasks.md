@@ -541,6 +541,18 @@ un clic de más para llegar a lo mismo.
   deja la tabla inservible si falla a media ejecución. Las que vengan deben crear lo nuevo
   antes de quitar lo viejo, o ir envueltas en una transacción explícita. Dep: T219
 
+- [x] T231 `lists_select` no podía ver la fila recién insertada, así que **crear una lista
+  siempre fallaba** con el backend real. Al insertar con RETURNING, Postgres aplica la
+  política de lectura a la fila que devuelve; la política preguntaba `can_view_list(id)`, una
+  función `stable` que vuelve a consultar `lists`, y una función `stable` trabaja con la foto
+  anterior a la sentencia: no ve lo que esa misma sentencia acaba de insertar.
+  `activities` nunca lo tuvo porque compara `owner_id = auth.uid()` sobre la propia fila.
+  **Por qué costó tanto:** 42501 es el mismo código para una sesión caducada, una operación
+  ajena y esto, y la app lo traducía todo a "no tienes permiso". Se persiguieron tres
+  hipótesis falsas antes de comparar las dos políticas.
+  Lo que sí ayudó, y debió ser lo primero: reproducir la petición contra el proyecto real con
+  la clave pública, que estaba disponible desde el inicio. Dep: T219
+
 ### Pendientes sueltos
 - [ ] T196 Elegir idioma de la interfaz: **español o inglés**. Hoy los textos están
   incrustados en los componentes, así que esto es sobre todo el trabajo de extraerlos.

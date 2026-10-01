@@ -223,3 +223,11 @@ juntarlo en una sesión dedicada a pruebas.
 - [ ] Crear y salir sin tocar nada sigue sin dejar una lista vacía.
 - [ ] Agregar solo un elemento (sin nombrar la lista) también la conserva.
 - [ ] Un fallo al crear muestra mensaje.
+
+## Políticas de lectura e INSERT ... RETURNING (T231)
+
+- [ ] **La prueba que faltaba**: crear una lista contra un Postgres real con RLS. Toda la
+  verificación corre en modo demo, que no tiene políticas, así que este fallo era invisible
+  por construcción. Vale para las seis tablas del módulo.
+- [ ] Ninguna política de SELECT depende de una función que consulte su propia tabla.
+- [ ] Un 42501 distingue en la app entre sesión caducada y operación ajena.

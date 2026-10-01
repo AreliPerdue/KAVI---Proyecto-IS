@@ -322,6 +322,15 @@ del proyecto: "el sábado" no es un instante sino un día del calendario de quie
 y guardado como instante UTC se corre de día al cruzar husos horarios. La hora, cuando
 existe, va aparte en `due_time` y solo sirve para el recordatorio (spec 10, RF-L11).
 
+**Una política de SELECT no puede depender de una función que consulte su propia tabla.**
+Al insertar con `RETURNING` —que es lo que hace cualquier `insert().select()`— Postgres
+aplica la política de lectura a la fila que va a devolver, y una función `stable` trabaja con
+la foto anterior a la sentencia: no ve la fila recién insertada. Lo que se pueda resolver con
+columnas de la propia fila (`owner_id = auth.uid()`) se resuelve ahí; la función queda solo
+para lo que de verdad vive en otra tabla. `activities` siempre lo hizo así; `lists` no, y
+costó una tarde de depuración porque el síntoma es un 42501 idéntico al de una sesión
+caducada.
+
 **`can_edit_list()` existe desde la fase 1 aunque todavía no haya listas compartidas.** Las
 políticas de secciones y elementos preguntan por ella en vez de consultar `lists`
 directamente, así que cuando llegue `list_shares` solo cambia la función y ninguna política.
