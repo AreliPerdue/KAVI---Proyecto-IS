@@ -231,3 +231,15 @@ juntarlo en una sesión dedicada a pruebas.
   por construcción. Vale para las seis tablas del módulo.
 - [ ] Ninguna política de SELECT depende de una función que consulte su propia tabla.
 - [ ] Un 42501 distingue en la app entre sesión caducada y operación ajena.
+
+## Listas que se repiten (T208, T209)
+
+- [ ] `occursOn` con DAILY, WEEKLY con y sin `byDay`, MONTHLY en meses sin ese día, y
+  respetando `until`.
+- [ ] `graciaVencida`: una vuelta de ayer sigue viva antes de las 15:00 y caduca después.
+  Es la regla que decide si algo cuenta como hecho.
+- [ ] `syncRuns` cierra lo caducado con los conteos correctos, abre la de hoy solo si la
+  regla cae hoy, y no duplica la vuelta al llamarse dos veces.
+- [ ] Palomear en la vuelta de ayer suma a ayer y no a hoy.
+- [ ] En una rutina, los elementos palomeados **no** se mueven a completados.
+- [ ] Demo y Supabase dan el mismo resultado para la misma regla y la misma fecha.

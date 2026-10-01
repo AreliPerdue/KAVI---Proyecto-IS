@@ -359,11 +359,24 @@ un clic de más para llegar a lo mismo.
   secciones— se borra sola al salir, para que arrepentirse no deje basura en el inicio.
   (RF-L2) Dep: T199
 
-- [ ] T208 Listas que se repiten (RF-L19). Regla de recurrencia en `lists`, reutilizando
-  `lib/recurrence.ts` en vez de escribir una segunda expansión de RRULE. Dep: T195
-- [ ] T209 Historial de vueltas (RF-L20). Tabla `list_runs` con la fecha y cuántos elementos
-  se completaron de cuántos. Conteos, no copias: guardar cada elemento de cada día haría
-  crecer la tabla sin que nadie lo consulte.
+- [x] T208 Listas que se repiten (RF-L19). `recurrence_rule` y `recurrence_start` en `lists`,
+  reutilizando `lib/recurrence.ts`: se le agrega `occursOn`, que contesta "¿hoy toca?" sobre
+  días sueltos, en vez de escribir una segunda expansión de RRULE que acabaría divergiendo.
+  Hace falta `recurrence_start` porque sin ancla "cada lunes" no sabe cuál fue el primero.
+  La hoja ofrece cinco opciones y no un constructor de reglas: las rutinas reales caen casi
+  siempre en una de ellas, y elegir frecuencia, intervalo y días sería más configuración de
+  la que nadie quiere para "lavarme los dientes". Dep: T195
+- [x] T209 Historial de vueltas (RF-L20). `list_runs` con la fecha y los conteos, y
+  `list_run_items` con **solo lo palomeado de las vueltas abiertas**: hace falta porque
+  durante la gracia conviven dos vueltas y con un único `completed_at` por elemento no se
+  pueden distinguir. Al cerrar, sus filas se resumen en los conteos y se descartan — el
+  historial guarda cuántos de cuántos, no cuáles.
+  En una rutina los elementos **no bajan a completados**: se quedan en su sitio, marcados.
+  Una rutina se recorre entera cada vez, y ver desaparecer lo hecho deja la pantalla vacía
+  justo cuando uno quiere comprobar que no se saltó nada.
+  La regla del cierre vive en `lib/list-runs.ts` y la usan los dos backends: que el demo y
+  Supabase la calcularan por su cuenta es la clase de diferencia que no se nota hasta que
+  los números no cuadran.
   **Periodo de gracia**: una vuelta no se cierra al empezar la siguiente, sigue editable
   hasta las 15:00 del día siguiente. La gente palomea tarde —lo de ayer se anota hoy en la
   mañana— y cerrar a medianoche registraría como incumplido algo que sí se hizo. Las dos

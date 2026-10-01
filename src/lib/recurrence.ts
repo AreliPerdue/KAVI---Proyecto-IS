@@ -90,6 +90,29 @@ export function expandOccurrences(
   return result;
 }
 
+/**
+ * ¿La regla cae en este día? (RF-L19)
+ *
+ * Las listas preguntan otra cosa que las actividades: no "dame las próximas ocurrencias con
+ * su hora" sino "¿hoy toca?". Comparte la semántica de `expandOccurrences` —misma frecuencia,
+ * mismos días, mismo `until`— pero sobre días sueltos, porque una rutina ocupa un día y no
+ * un instante.
+ */
+export function occursOn(rule: RecurrenceRule, startDay: string, day: Date): boolean {
+  const inicio = startOfDay(fromDayKey(startDay));
+  const d = startOfDay(day);
+  if (d < inicio) return false;
+  if (rule.until && d > startOfDay(fromDayKey(rule.until))) return false;
+
+  if (rule.freq === 'DAILY') return true;
+  if (rule.freq === 'WEEKLY') {
+    const dias = rule.byDay.length > 0 ? rule.byDay : [mondayIndex(inicio)];
+    return dias.includes(mondayIndex(d));
+  }
+  // MONTHLY: el mismo día del mes. Los meses que no lo tienen simplemente no caen.
+  return d.getDate() === inicio.getDate();
+}
+
 export function describeRecurrence(rule: RecurrenceRule | null): string {
   if (!rule) return 'No se repite';
   const names = ['lun', 'mar', 'mié', 'jue', 'vie', 'sáb', 'dom'];

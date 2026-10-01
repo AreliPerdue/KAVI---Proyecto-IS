@@ -24,6 +24,8 @@ import {
   listListShares,
   type ListPermission,
   type ListShare,
+  listListRuns,
+  type ListRun,
   listsSharedWithMe,
   listTags,
   type ListTag,
@@ -31,6 +33,8 @@ import {
   removeListTag,
   renameListTag,
   setListTag,
+  setRunItem,
+  syncListRuns,
   tagsOfList,
   rescheduleListItems,
   searchLists,
@@ -52,6 +56,8 @@ export const listKeys = {
   sharedWithMe: (userId: string | null) => ['lists', 'shared-with-me', userId] as const,
   tags: (userId: string | null) => ['lists', 'tags', userId] as const,
   tagsOf: (listId: string) => ['lists', 'tags-of', listId] as const,
+  runs: (listId: string, hoy: string) => ['lists', 'runs', listId, hoy] as const,
+  history: (listId: string) => ['lists', 'history', listId] as const,
 };
 
 export function useLists() {
@@ -164,6 +170,31 @@ export function useTagsOfList(listId: string | undefined) {
     queryKey: listKeys.tagsOf(listId ?? ''),
     queryFn: () => tagsOfList(listId as string, userId as string),
     enabled: !!listId && !!userId,
+  });
+}
+
+/**
+ * Vueltas abiertas de una lista que se repite (RF-L20).
+ *
+ * La consulta **también escribe**: cierra lo caducado y abre la de hoy. Es deliberado — el
+ * ciclo de vida de una vuelta depende de la hora, no de que alguien pulse algo, y pedirle a
+ * la pantalla que lo orqueste sería darle una responsabilidad que no es suya. El día va en
+ * la clave para que al cruzar la medianoche se vuelva a preguntar solo.
+ */
+export function useListRuns(listId: string | undefined, hoy: string, enabled = true) {
+  return useQuery<ListRun[]>({
+    queryKey: listKeys.runs(listId ?? '', hoy),
+    queryFn: () => syncListRuns(listId as string, hoy),
+    enabled: !!listId && enabled,
+  });
+}
+
+/** Historial de vueltas ya cerradas, para los resúmenes (RF-L21). */
+export function useListHistory(listId: string | undefined, enabled = true) {
+  return useQuery<ListRun[]>({
+    queryKey: listKeys.history(listId ?? ''),
+    queryFn: () => listListRuns(listId as string),
+    enabled: !!listId && enabled,
   });
 }
 
@@ -312,6 +343,11 @@ export function useListMutations() {
                 : 1024;
         await reorderList(lista.id, orden);
       },
+      onSuccess: invalidar,
+    }),
+    toggleRunItem: useMutation({
+      mutationFn: ({ runId, itemId, done }: { runId: string; itemId: string; done: boolean }) =>
+        setRunItem(runId, itemId, userId as string, done),
       onSuccess: invalidar,
     }),
     toggleItem: useMutation({

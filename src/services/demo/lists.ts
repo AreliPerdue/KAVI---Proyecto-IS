@@ -9,7 +9,10 @@
 import { addDays, format } from 'date-fns';
 
 import type { ListDetail, ListPermission, ListSearchResults, ListShare, ListsApi } from '@/services/contracts';
-import type { ListTag } from '@/types/domain';
+import { fromDayKey } from '@/lib/dates';
+import { graciaVencida } from '@/lib/list-runs';
+import { occursOn, parseRRule } from '@/lib/recurrence';
+import type { ListRun, ListTag } from '@/types/domain';
 import { delay, demoState, emitDataChange, nextId } from '@/services/demo/store';
 import { AuthUiError } from '@/lib/auth-errors';
 import type { KaviList, ListItem, ListSection } from '@/types/domain';
@@ -22,6 +25,7 @@ const items: ListItem[] = [];
 const shares: Omit<ListShare, 'profile'>[] = [];
 const tags: Omit<ListTag, 'list_count'>[] = [];
 const tagLinks: { list_id: string; tag_id: string }[] = [];
+const runs: (Omit<ListRun, 'completed_item_ids'> & { items: { item_id: string; by: string }[] })[] = [];
 
 /** Separación entre órdenes contiguos, para que siempre quepa algo en medio. */
 const STEP = 1024;
@@ -96,10 +100,12 @@ function buscarItem(itemId: string): ListItem {
   const superLista: StoredList = {
     id: 'list-super', owner_id: owner, name: 'Súper', icon: 'shopping-cart', color: '#1F8A4C',
     view: 'checklist', is_pinned: true, is_archived: false, sort_order: STEP, created_at: t, updated_at: t,
+    recurrence_rule: null, recurrence_start: null,
   };
   const casa: StoredList = {
     id: 'list-casa', owner_id: owner, name: 'Pendientes de casa', icon: 'house-heart', color: '#DA6C50',
     view: 'checklist', is_pinned: false, is_archived: false, sort_order: STEP * 2, created_at: t, updated_at: t,
+    recurrence_rule: null, recurrence_start: null,
   };
   lists.push(superLista, casa);
 
@@ -164,6 +170,7 @@ export const demoLists: ListsApi = {
     const lista: StoredList = {
       id: nextId('list'), owner_id: userId, name: input.name.trim(), icon: input.icon, color: input.color,
       view: input.view ?? 'checklist', is_pinned: false, is_archived: false,
+      recurrence_rule: null, recurrence_start: null,
       sort_order: siguienteOrden(lists.filter((l) => l.owner_id === userId)),
       created_at: t, updated_at: t,
     };
@@ -181,6 +188,8 @@ export const demoLists: ListsApi = {
     if (patch.view !== undefined) lista.view = patch.view;
     if (patch.is_pinned !== undefined) lista.is_pinned = patch.is_pinned;
     if (patch.is_archived !== undefined) lista.is_archived = patch.is_archived;
+    if (patch.recurrence_rule !== undefined) lista.recurrence_rule = patch.recurrence_rule;
+    if (patch.recurrence_start !== undefined) lista.recurrence_start = patch.recurrence_start;
     lista.updated_at = ahora();
     emitDataChange();
     return conCuentas(lista);
@@ -431,6 +440,62 @@ export const demoLists: ListsApi = {
     if (puesta && i < 0) tagLinks.push({ list_id: listId, tag_id: tagId });
     if (!puesta && i >= 0) tagLinks.splice(i, 1);
     emitDataChange();
+  },
+
+  async syncRuns(listId, hoy) {
+    await delay();
+    const lista = buscarLista(listId);
+    const regla = parseRRule(lista.recurrence_rule);
+    if (!regla || !lista.recurrence_start) return [];
+
+    const deLaLista = runs.filter((r) => r.list_id === listId);
+
+    // 1. Cerrar lo que ya caducó, con los conteos que tuviera en ese momento.
+    for (const r of deLaLista) {
+      if (r.closed_at || !graciaVencida(r.run_date)) continue;
+      r.closed_at = ahora();
+      r.completed_count = r.items.length;
+      r.total_count = items.filter((i) => i.list_id === listId).length;
+      r.items = [];
+    }
+
+    // 2. Abrir la de hoy si la regla cae hoy y no existe ya.
+    if (occursOn(regla, lista.recurrence_start, fromDayKey(hoy)) && !deLaLista.some((r) => r.run_date === hoy)) {
+      runs.push({
+        id: nextId('run'),
+        list_id: listId,
+        run_date: hoy,
+        closed_at: null,
+        completed_count: 0,
+        total_count: 0,
+        items: [],
+      });
+    }
+
+    emitDataChange();
+    return runs
+      .filter((r) => r.list_id === listId && r.closed_at === null)
+      .sort((a, b) => b.run_date.localeCompare(a.run_date))
+      .map((r) => ({ ...r, completed_item_ids: r.items.map((i) => i.item_id) }));
+  },
+
+  async setRunItem(runId, itemId, userId, done) {
+    await delay(0);
+    const vuelta = runs.find((r) => r.id === runId);
+    if (!vuelta) throw new AuthUiError('Esa vuelta ya se cerró.');
+    const i = vuelta.items.findIndex((x) => x.item_id === itemId);
+    if (done && i < 0) vuelta.items.push({ item_id: itemId, by: userId });
+    if (!done && i >= 0) vuelta.items.splice(i, 1);
+    emitDataChange();
+  },
+
+  async listRuns(listId, limit = 30) {
+    await delay();
+    return runs
+      .filter((r) => r.list_id === listId && r.closed_at !== null)
+      .sort((a, b) => b.run_date.localeCompare(a.run_date))
+      .slice(0, limit)
+      .map((r) => ({ ...r, completed_item_ids: [] }));
   },
 
   async rescheduleItems(itemIds, dueDate) {

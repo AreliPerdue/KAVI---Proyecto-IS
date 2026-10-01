@@ -1,5 +1,5 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { ArrowDown, ArrowUp, Bell, CalendarDays, Check, Clock, FolderPlus, Palette, Tag, Trash2, UserPlus, X } from 'lucide-react-native';
+import { ArrowDown, ArrowUp, Bell, CalendarDays, Check, Clock, FolderPlus, Palette, Repeat, Tag, Trash2, UserPlus, X } from 'lucide-react-native';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Platform, Pressable, ScrollView, StyleSheet, TextInput, type TextStyle, View } from 'react-native';
 
@@ -8,9 +8,11 @@ import { arrastreReciente } from '@/components/lists/drag-guard';
 import { DraggableRows } from '@/components/lists/draggable-rows';
 import { ItemComposer } from '@/components/lists/item-composer';
 import { ListAppearanceSheet } from '@/components/lists/list-appearance-sheet';
+import { ListRepeatSheet } from '@/components/lists/list-repeat-sheet';
 import { ListShareSheet } from '@/components/lists/list-share-sheet';
 import { ListTagsSheet } from '@/components/lists/list-tags-sheet';
 import { NOMBRE_POR_OMISION } from '@/app/(app)/lists';
+import { tint } from '@/components/calendar/activity-style';
 import { ModalHeader } from '@/components/modal-header';
 import {
   ActionRow,
@@ -29,9 +31,10 @@ import {
 } from '@/components/ui';
 import { LIST_REMINDER_DEFAULT_HOUR, LIST_REMINDER_PRESETS } from '@/constants/reminders';
 import { Fonts, IconSize, IconStroke, Radius, Spacing, Typography } from '@/constants/theme';
-import { useList, useListMutations } from '@/hooks/use-lists';
+import { useList, useListMutations, useListRuns } from '@/hooks/use-lists';
 import { useTheme } from '@/hooks/use-theme';
 import { formatDayTitle, formatShortDate, fromDayKey, toDayKey } from '@/lib/dates';
+import { describeRecurrence, parseRRule } from '@/lib/recurrence';
 import { useConfirm, useSnackbar } from '@/providers';
 import type { ListItem, ListSection } from '@/types/domain';
 
@@ -103,16 +106,21 @@ function TituloEditable({
 function Renglon({
   item,
   color,
+  hecho,
   onToggle,
   onOpen,
 }: {
   item: ListItem;
   color: string;
+  /**
+   * Llega desde fuera y no se deduce de `completed_at`: en una lista que se repite, lo
+   * palomeado es estado de **la vuelta**, no del elemento (RF-L20).
+   */
+  hecho: boolean;
   onToggle: (done: boolean) => void;
   onOpen: () => void;
 }) {
   const theme = useTheme();
-  const hecho = item.completed_at !== null;
   // Vencido solo mientras siga pendiente: una vez hecho, su fecha ya no reclama nada.
   const vencido = !hecho && item.due_date !== null && item.due_date < toDayKey(new Date());
   /*
@@ -197,6 +205,7 @@ export default function ListDetailScreen() {
     remove: removeList,
     swapItems,
     placeItem,
+    toggleRunItem,
   } = useListMutations();
 
   const [verCompletados, setVerCompletados] = useState(false);
@@ -216,6 +225,21 @@ export default function ListDetailScreen() {
   const tocada = useRef(false);
   const [compartirAbierto, setCompartirAbierto] = useState(false);
   const [etiquetasAbierto, setEtiquetasAbierto] = useState(false);
+  const [repetirAbierto, setRepetirAbierto] = useState(false);
+
+  /*
+   * Una lista que se repite cambia de naturaleza: lo palomeado ya no es un estado del
+   * elemento sino de **esta vuelta**, y mañana vuelve a empezar. Por eso el estado marcado
+   * sale de la vuelta y no de `completed_at`.
+   */
+  const hoyClave = toDayKey(new Date());
+  const esRutina = !!detalle.data?.list.recurrence_rule;
+  const vueltas = useListRuns(id, hoyClave, esRutina);
+  const vueltaHoy = (vueltas.data ?? []).find((r) => r.run_date === hoyClave) ?? null;
+  // Durante la gracia conviven dos: la de ayer sigue editable hasta las 15:00 de hoy.
+  const vueltaPendiente = (vueltas.data ?? []).find((r) => r.run_date !== hoyClave) ?? null;
+  const [enVueltaDeAyer, setEnVueltaDeAyer] = useState(false);
+  const vueltaActiva = enVueltaDeAyer ? vueltaPendiente : vueltaHoy;
   const [fechaAbierta, setFechaAbierta] = useState(false);
   const [horaAbierta, setHoraAbierta] = useState(false);
   // `nueva=1` lo pone el botón + del inicio: solo entonces se enfoca el título.
@@ -230,7 +254,12 @@ export default function ListDetailScreen() {
    */
   const { sueltos, porSeccion, completados } = useMemo(() => {
     const items = datos?.items ?? [];
-    const pendientes = items.filter((i) => i.completed_at === null);
+    /*
+     * En una rutina los elementos **no** bajan a completados al palomearse: se quedan en su
+     * sitio, marcados. Una rutina se recorre entera cada vez, y ver desaparecer lo hecho
+     * deja la pantalla vacía justo cuando uno quiere comprobar que no se saltó nada.
+     */
+    const pendientes = esRutina ? items : items.filter((i) => i.completed_at === null);
     const grupos = new Map<string, ListItem[]>();
     for (const s of datos?.sections ?? []) grupos.set(s.id, []);
     const libres: ListItem[] = [];
@@ -238,8 +267,12 @@ export default function ListDetailScreen() {
       if (it.section_id && grupos.has(it.section_id)) grupos.get(it.section_id)!.push(it);
       else libres.push(it);
     }
-    return { sueltos: libres, porSeccion: grupos, completados: items.filter((i) => i.completed_at !== null) };
-  }, [datos]);
+    return {
+      sueltos: libres,
+      porSeccion: grupos,
+      completados: esRutina ? [] : items.filter((i) => i.completed_at !== null),
+    };
+  }, [datos, esRutina]);
 
   /**
    * Todo el cuerpo es **una sola** superficie arrastrable (RF-L7).
@@ -324,7 +357,14 @@ export default function ListDetailScreen() {
   };
 
   const color = datos?.list.color ?? theme.ink;
-  const alternar = (item: ListItem) => (done: boolean) => toggleItem.mutate({ id: item.id, done });
+  const estaHecho = (item: ListItem): boolean =>
+    esRutina ? (vueltaActiva?.completed_item_ids ?? []).includes(item.id) : item.completed_at !== null;
+
+  const alternar = (item: ListItem) => (done: boolean) => {
+    if (!esRutina) return toggleItem.mutate({ id: item.id, done });
+    if (!vueltaActiva) return;
+    toggleRunItem.mutate({ runId: vueltaActiva.id, itemId: item.id, done });
+  };
 
   const agregar = (sectionId: string | null) => (title: string) => {
     if (!id) return;
@@ -479,6 +519,31 @@ export default function ListDetailScreen() {
             }}
           />
 
+          {/*
+            La vuelta de ayer sigue editable hasta las 15:00 (RF-L20). Se avisa en vez de
+            mezclarla con la de hoy: son dos días distintos y palomear en la de ayer suma a
+            ayer, que es justo lo que se pidió al elegir el periodo de gracia.
+          */}
+          {esRutina && vueltaPendiente ? (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityState={{ selected: enVueltaDeAyer }}
+              accessibilityLabel={`Ver la vuelta del ${formatShortDate(fromDayKey(vueltaPendiente.run_date))}`}
+              onPress={() => setEnVueltaDeAyer((v) => !v)}
+              style={({ pressed }) => [
+                styles.avisoVuelta,
+                { borderColor: theme.today },
+                enVueltaDeAyer ? { backgroundColor: tint(theme.today, 0.16) } : null,
+                pressed ? styles.pressed : null,
+              ]}>
+              <AppText variant="caption" color="today">
+                {enVueltaDeAyer ? 'Estás en' : 'Sigue abierta'} la vuelta del{' '}
+                {formatShortDate(fromDayKey(vueltaPendiente.run_date))} ·{' '}
+                {vueltaPendiente.completed_item_ids.length} de {datos.items.length}
+              </AppText>
+            </Pressable>
+          ) : null}
+
           <ScrollView
             contentContainerStyle={styles.cuerpo}
             showsVerticalScrollIndicator={false}
@@ -498,7 +563,13 @@ export default function ListDetailScreen() {
               onReorder={soltarEn}
               renderItem={(e) =>
                 e.kind === 'item' ? (
-                  <Renglon item={e.item} color={color} onToggle={alternar(e.item)} onOpen={() => abrirEdicion(e.item)} />
+                  <Renglon
+                    item={e.item}
+                    color={color}
+                    hecho={estaHecho(e.item)}
+                    onToggle={alternar(e.item)}
+                    onOpen={() => abrirEdicion(e.item)}
+                  />
                 ) : e.kind === 'header' ? (
                   <AppText variant="caption" color="textTertiary" style={styles.encabezadoSeccion}>
                     {e.name.toUpperCase()}
@@ -557,6 +628,7 @@ export default function ListDetailScreen() {
                         key={it.id}
                         item={it}
                         color={color}
+                        hecho={estaHecho(it)}
                         onToggle={alternar(it)}
                         onOpen={() => abrirEdicion(it)}
                       />
@@ -591,7 +663,26 @@ export default function ListDetailScreen() {
             style={({ pressed }) => [styles.barraBoton, pressed ? { backgroundColor: theme.surfaceAlt } : null]}>
             <Tag size={IconSize.action} strokeWidth={IconStroke} color={theme.textSecondary} />
           </Pressable>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Cada cuándo se repite"
+            onPress={() => setRepetirAbierto(true)}
+            style={({ pressed }) => [styles.barraBoton, pressed ? { backgroundColor: theme.surfaceAlt } : null]}>
+            <Repeat size={IconSize.action} strokeWidth={IconStroke} color={esRutina ? color : theme.textSecondary} />
+          </Pressable>
         </View>
+      ) : null}
+
+      {datos ? (
+        <ListRepeatSheet
+          visible={repetirAbierto}
+          onClose={() => setRepetirAbierto(false)}
+          rule={datos.list.recurrence_rule}
+          onChange={(regla, inicio) => {
+            tocada.current = true;
+            updateList.mutate({ id: datos.list.id, patch: { recurrence_rule: regla, recurrence_start: inicio } });
+          }}
+        />
       ) : null}
 
       {datos ? (
@@ -866,6 +957,14 @@ const styles = StyleSheet.create({
   hoja: { gap: Spacing.md, paddingBottom: Spacing.md },
   fechas: { gap: Spacing.sm },
   seccionAviso: { gap: Spacing.sm, marginTop: Spacing.xs },
+  avisoVuelta: {
+    minHeight: 40,
+    justifyContent: 'center',
+    paddingHorizontal: Spacing.md,
+    borderWidth: 1,
+    borderRadius: Radius.md,
+    borderCurve: 'continuous',
+  },
   etiquetaAviso: { flexDirection: 'row', alignItems: 'center', gap: Spacing.xs },
   orden: { gap: 0 },
   mover: { gap: Spacing.sm },

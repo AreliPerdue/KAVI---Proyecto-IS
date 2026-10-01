@@ -2,7 +2,10 @@ import { AuthUiError } from '@/lib/auth-errors';
 import { getSupabase } from '@/lib/supabase';
 import type { ListDetail, ListSearchResults, ListShare, ListsApi } from '@/services/contracts';
 import { toError, unwrap } from '@/services/supabase/errors';
-import type { KaviList, ListItem, ListSection, ListTag } from '@/types/domain';
+import { fromDayKey } from '@/lib/dates';
+import { graciaVencida } from '@/lib/list-runs';
+import { occursOn, parseRRule } from '@/lib/recurrence';
+import type { KaviList, ListItem, ListRun, ListSection, ListTag } from '@/types/domain';
 
 /** Separación entre órdenes contiguos, para que siempre quepa algo en medio. */
 const STEP = 1024;
@@ -457,6 +460,84 @@ export const supabaseLists: ListsApi = {
       ? await q.upsert({ list_id: listId, tag_id: tagId })
       : await q.delete().eq('list_id', listId).eq('tag_id', tagId);
     if (error) throw toError(error);
+  },
+
+  async syncRuns(listId, hoy) {
+    const lista = await getLista(listId);
+    const regla = parseRRule(lista.recurrence_rule);
+    if (!regla || !lista.recurrence_start) return [];
+
+    const abiertas = unwrap(
+      await getSupabase()
+        .from('list_runs')
+        .select('*, list_run_items(item_id)')
+        .eq('list_id', listId)
+        .is('closed_at', null)
+        .order('run_date', { ascending: false }),
+    ) as unknown as (Omit<ListRun, 'completed_item_ids'> & { list_run_items: { item_id: string }[] })[];
+
+    /*
+     * Cerrar lo caducado. Los conteos se congelan aquí y las filas de palomeo se descartan:
+     * el historial guarda cuántos de cuántos, no cuáles (RF-L20).
+     */
+    const vencidas = abiertas.filter((r) => graciaVencida(r.run_date));
+    if (vencidas.length > 0) {
+      const total = lista.total_count;
+      for (const r of vencidas) {
+        const { error } = await getSupabase()
+          .from('list_runs')
+          .update({
+            closed_at: new Date().toISOString(),
+            completed_count: r.list_run_items.length,
+            total_count: total,
+          })
+          .eq('id', r.id);
+        if (error) throw toError(error);
+      }
+      const { error } = await getSupabase()
+        .from('list_run_items')
+        .delete()
+        .in('run_id', vencidas.map((r) => r.id));
+      if (error) throw toError(error);
+    }
+
+    const vivas = abiertas.filter((r) => !graciaVencida(r.run_date));
+    if (occursOn(regla, lista.recurrence_start, fromDayKey(hoy)) && !vivas.some((r) => r.run_date === hoy)) {
+      const { error } = await getSupabase()
+        .from('list_runs')
+        // `upsert` porque la vuelta de hoy puede haberla creado ya otro dispositivo: la
+        // unicidad es (list_id, run_date) y chocar ahí no es un error, es llegar segundo.
+        .upsert({ list_id: listId, run_date: hoy }, { onConflict: 'list_id,run_date' });
+      if (error) throw toError(error);
+      return supabaseLists.syncRuns(listId, hoy);
+    }
+
+    return vivas.map(({ list_run_items, ...r }) => ({
+      ...r,
+      completed_item_ids: list_run_items.map((x) => x.item_id),
+    }));
+  },
+
+  async setRunItem(runId, itemId, userId, done) {
+    const quien = await dueñoActual(userId);
+    const q = getSupabase().from('list_run_items');
+    const { error } = done
+      ? await q.upsert({ run_id: runId, item_id: itemId, completed_by: quien })
+      : await q.delete().eq('run_id', runId).eq('item_id', itemId);
+    if (error) throw toError(error);
+  },
+
+  async listRuns(listId, limit = 30) {
+    const rows = unwrap(
+      await getSupabase()
+        .from('list_runs')
+        .select('*')
+        .eq('list_id', listId)
+        .not('closed_at', 'is', null)
+        .order('run_date', { ascending: false })
+        .limit(limit),
+    ) as unknown as Omit<ListRun, 'completed_item_ids'>[];
+    return rows.map((r) => ({ ...r, completed_item_ids: [] }));
   },
 
   async rescheduleItems(itemIds, dueDate) {

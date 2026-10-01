@@ -272,6 +272,28 @@ export type KaviList = {
    * filtrar el inicio sin una consulta por tarjeta.
    */
   tag_ids: string[];
+  /** RRULE si la lista se repite; `null` si es de una sola vez (RF-L19). */
+  recurrence_rule: string | null;
+  /** Día desde el que cuenta la regla: sin ancla, "cada lunes" no sabe cuál fue el primero. */
+  recurrence_start: string | null;
+};
+
+/**
+ * Una vuelta de una lista que se repite (RF-L20).
+ *
+ * Sigue abierta y editable hasta las 15:00 del día siguiente —la gente palomea tarde— y al
+ * cerrarse se queda solo con los conteos: el historial no guarda copias de los elementos.
+ */
+export type ListRun = {
+  id: string;
+  list_id: string;
+  /** Día al que pertenece la vuelta, en `YYYY-MM-DD`. Es una fecha flotante, como `due_date`. */
+  run_date: string;
+  closed_at: string | null;
+  completed_count: number;
+  total_count: number;
+  /** Elementos palomeados en **esta** vuelta. Vacío en las ya cerradas. */
+  completed_item_ids: string[];
 };
 
 /** Etiqueta propia para agrupar listas por tema (RF-L22). */

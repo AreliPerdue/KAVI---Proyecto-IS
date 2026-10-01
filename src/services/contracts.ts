@@ -7,6 +7,7 @@ import type {
   ListItem,
   ListItemInput,
   ListSection,
+  ListRun,
   ListTag,
   AdminAccount,
   AdminStats,
@@ -202,7 +203,12 @@ export interface ListsApi {
   listArchived(userId: string): Promise<KaviList[]>;
   getById(listId: string): Promise<ListDetail>;
   create(userId: string, input: ListInput): Promise<KaviList>;
-  update(listId: string, patch: Partial<ListInput & Pick<KaviList, 'is_pinned' | 'is_archived' | 'view'>>): Promise<KaviList>;
+  update(
+    listId: string,
+    patch: Partial<
+      ListInput & Pick<KaviList, 'is_pinned' | 'is_archived' | 'view' | 'recurrence_rule' | 'recurrence_start'>
+    >,
+  ): Promise<KaviList>;
   remove(listId: string): Promise<void>;
   /** Copia la lista con sus secciones e ítems pendientes (RF-L2). */
   duplicate(listId: string): Promise<KaviList>;
@@ -259,7 +265,23 @@ export interface ListTagsApi {
   setListTag(listId: string, tagId: string, puesta: boolean): Promise<void>;
 }
 
-export interface ListsApi extends ListSharesApi, ListTagsApi {}
+export interface ListRunsApi {
+  /**
+   * Pone al día las vueltas de una lista que se repite y devuelve las **abiertas** (RF-L20).
+   *
+   * Hace tres cosas en una sola llamada porque ninguna tiene sentido sin las otras: cierra
+   * las vueltas cuya gracia ya venció, abre la de hoy si la regla cae hoy, y devuelve lo que
+   * quedó abierto. Separarlas obligaría a la pantalla a orquestar el ciclo de vida de algo
+   * que no le incumbe.
+   */
+  syncRuns(listId: string, hoy: string): Promise<ListRun[]>;
+  /** Palomea o despalomea un elemento **dentro de una vuelta**. */
+  setRunItem(runId: string, itemId: string, userId: string, done: boolean): Promise<void>;
+  /** Historial cerrado, de lo más reciente a lo más viejo (RF-L21). */
+  listRuns(listId: string, limit?: number): Promise<ListRun[]>;
+}
+
+export interface ListsApi extends ListSharesApi, ListTagsApi, ListRunsApi {}
 
 export type ListSearchResults = {
   lists: KaviList[];
