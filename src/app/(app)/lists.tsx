@@ -22,6 +22,7 @@ import {
 import { useDebouncedValue } from '@/hooks/use-debounced-value';
 import { useShrinkOnScroll } from '@/hooks/use-shrink-on-scroll';
 import { useTheme } from '@/hooks/use-theme';
+import { formatShortDate, fromDayKey } from '@/lib/dates';
 import { useConfirm, useSnackbar } from '@/providers';
 import type { ListSearchResults } from '@/services/lists';
 import type { KaviList, ListItem } from '@/types/domain';
@@ -37,9 +38,12 @@ const SIN_ANILLO: TextStyle =
   Platform.OS === 'web' ? ({ outlineStyle: 'none', outlineWidth: 0 } as unknown as TextStyle) : {};
 
 function subtitulo(lista: KaviList): string {
-  if (lista.total_count === 0) return 'Sin elementos';
-  if (lista.pending_count === 0) return `Todo listo · ${lista.total_count}`;
-  return `${lista.pending_count} ${lista.pending_count === 1 ? 'pendiente' : 'pendientes'} de ${lista.total_count}`;
+  // La fecha de la lista (RF-L23) se añade al final: una lista con fecha tiene que
+  // reconocerse desde la rejilla, o la fecha solo sirve a quien ya la abrió.
+  const fecha = lista.due_date ? ` · ${formatShortDate(fromDayKey(lista.due_date))}` : '';
+  if (lista.total_count === 0) return `Sin elementos${fecha}`;
+  if (lista.pending_count === 0) return `Todo listo · ${lista.total_count}${fecha}`;
+  return `${lista.pending_count} ${lista.pending_count === 1 ? 'pendiente' : 'pendientes'} de ${lista.total_count}${fecha}`;
 }
 
 /** Parte en filas de `COLUMNAS` para poder poner encabezados de ancho completo. */

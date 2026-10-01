@@ -1,10 +1,11 @@
+import { useEffect, useRef, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import { AppText, Sheet } from '@/components/ui';
 import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import { toDayKey } from '@/lib/dates';
-import { type RecurrenceRule, toRRule } from '@/lib/recurrence';
+import { toDayKey, WEEKDAY_LABELS, WEEKDAY_SHORT } from '@/lib/dates';
+import { parseRRule, type RecurrenceRule, toRRule } from '@/lib/recurrence';
 
 type Opcion = { id: string; label: string; regla: RecurrenceRule | null };
 
@@ -12,9 +13,14 @@ const OPCIONES: Opcion[] = [
   { id: 'none', label: 'No se repite', regla: null },
   { id: 'daily', label: 'Todos los días', regla: { freq: 'DAILY', byDay: [], until: null } },
   { id: 'weekdays', label: 'De lunes a viernes', regla: { freq: 'WEEKLY', byDay: [0, 1, 2, 3, 4], until: null } },
-  { id: 'weekly', label: 'Una vez por semana', regla: { freq: 'WEEKLY', byDay: [], until: null } },
   { id: 'monthly', label: 'Una vez al mes', regla: { freq: 'MONTHLY', byDay: [], until: null } },
 ];
+
+/** Qué días trae puesta una regla ya guardada; solo las semanales tienen. */
+function diasDe(rule: string | null): readonly number[] {
+  const regla = parseRRule(rule);
+  return regla?.freq === 'WEEKLY' ? regla.byDay : [];
+}
 
 export type ListRepeatSheetProps = {
   visible: boolean;
@@ -39,7 +45,35 @@ export function ListRepeatSheet({ visible, onClose, rule, onChange }: ListRepeat
   const theme = useTheme();
   const actual = rule ?? null;
 
+  /*
+   * Los días se llevan en estado propio **mientras la hoja está abierta**, y se vuelven a
+   * leer de la regla guardada cada vez que se abre.
+   *
+   * Leerlos de la regla en cada render parecía más limpio, pero perdía días: entre el toque
+   * y la regla nueva hay un guardado de por medio, así que tocar "lun, mié, jue" seguido
+   * calculaba el segundo y el tercero sobre una regla vieja y acababa con dos días. El
+   * estado local no es una copia que se quede atrás: es lo que la persona lleva elegido en
+   * esta sesión, y cada toque guarda el conjunto completo.
+   */
+  const [diasElegidos, setDiasElegidos] = useState<readonly number[]>(() => diasDe(actual));
+  const estabaVisible = useRef(visible);
+  useEffect(() => {
+    if (visible && !estabaVisible.current) setDiasElegidos(diasDe(actual));
+    estabaVisible.current = visible;
+  }, [visible, actual]);
+
+  const alternarDia = (indice: number) => {
+    const siguientes = diasElegidos.includes(indice)
+      ? diasElegidos.filter((d) => d !== indice)
+      : [...diasElegidos, indice].sort((a, b) => a - b);
+    setDiasElegidos(siguientes);
+    // Sin ningún día no hay regla semanal que valga: equivale a no repetirse.
+    if (siguientes.length === 0) return onChange(null, null);
+    onChange(toRRule({ freq: 'WEEKLY', byDay: siguientes, until: null }), toDayKey(new Date()));
+  };
+
   const elegir = (opcion: Opcion) => {
+    setDiasElegidos(opcion.regla?.freq === 'WEEKLY' ? opcion.regla.byDay : []);
     if (!opcion.regla) {
       onChange(null, null);
     } else {
@@ -81,6 +115,41 @@ export function ListRepeatSheet({ visible, onClose, rule, onChange }: ListRepeat
           );
         })}
 
+        {/*
+          Los días sueltos resuelven lo que los presets no: "lunes, miércoles y jueves" no
+          es ni diario ni entre semana. Van como chips y no como otra lista de opciones
+          porque la combinación es libre y enumerarlas sería imposible.
+        */}
+        <View style={styles.seccionDias}>
+          <AppText variant="label" color="textSecondary">
+            O elige los días
+          </AppText>
+          <View style={styles.dias}>
+            {WEEKDAY_LABELS.map((etiqueta, i) => {
+              const activo = diasElegidos.includes(i);
+              return (
+                <Pressable
+                  key={i}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: activo }}
+                  accessibilityLabel={WEEKDAY_SHORT[i]}
+                  onPress={() => alternarDia(i)}
+                  style={({ pressed }) => [
+                    styles.dia,
+                    activo
+                      ? { backgroundColor: theme.ink, borderColor: theme.ink }
+                      : { borderColor: theme.border },
+                    pressed ? styles.pressed : null,
+                  ]}>
+                  <AppText variant="label" color={activo ? 'onInk' : 'textSecondary'}>
+                    {etiqueta}
+                  </AppText>
+                </Pressable>
+              );
+            })}
+          </View>
+        </View>
+
         <AppText variant="caption" color="textTertiary">
           Una vuelta sigue editable hasta las 15:00 del día siguiente, por si apuntas lo de
           ayer en la mañana.
@@ -96,6 +165,17 @@ const styles = StyleSheet.create({
     minHeight: 52,
     justifyContent: 'center',
     paddingHorizontal: Spacing.md,
+    borderWidth: 1,
+    borderRadius: Radius.md,
+    borderCurve: 'continuous',
+  },
+  seccionDias: { gap: Spacing.sm, marginTop: Spacing.xs },
+  dias: { flexDirection: 'row', gap: Spacing.xs },
+  dia: {
+    flex: 1,
+    minHeight: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
     borderWidth: 1,
     borderRadius: Radius.md,
     borderCurve: 'continuous',

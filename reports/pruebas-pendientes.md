@@ -251,3 +251,16 @@ juntarlo en una sesión dedicada a pruebas.
 - [ ] Ignora las vueltas vacías para el promedio pero las cuenta como registradas.
 - [ ] **La que importa de verdad**: que el resumen no devuelva porcentaje de incumplimiento
   ni racha. Es una decisión de producto que una prueba puede proteger de un "mejor así".
+
+## Fecha de la lista completa (T232)
+- [ ] `lists.due_date` sobrevive a `update` en los dos backends (demo y Supabase) sin tocar
+  `due_date` de los elementos. Es la confusión obvia: dos columnas con el mismo nombre en
+  tablas distintas.
+- [ ] La X bajo el título la quita (`due_date: null`) y la línea desaparece.
+- [ ] Con fecha pasada, la línea va en `theme.today`.
+- [ ] El subtítulo de la tarjeta la muestra al final, también cuando la lista está vacía.
+
+## Días de la semana en la repetición (T232b)
+- [ ] Tocar L, M y J deja `FREQ=WEEKLY;BYDAY=MO,WE,TH` y la hoja los muestra prendidos al
+  reabrirse (se leen de la regla guardada, no de un estado aparte).
+- [ ] Apagar el último día quita la repetición en vez de dejar una regla sin días.

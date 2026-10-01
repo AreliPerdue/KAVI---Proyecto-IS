@@ -100,12 +100,12 @@ function buscarItem(itemId: string): ListItem {
   const superLista: StoredList = {
     id: 'list-super', owner_id: owner, name: 'Súper', icon: 'shopping-cart', color: '#1F8A4C',
     view: 'checklist', is_pinned: true, is_archived: false, sort_order: STEP, created_at: t, updated_at: t,
-    recurrence_rule: null, recurrence_start: null,
+    recurrence_rule: null, recurrence_start: null, due_date: null,
   };
   const casa: StoredList = {
     id: 'list-casa', owner_id: owner, name: 'Pendientes de casa', icon: 'house-heart', color: '#DA6C50',
     view: 'checklist', is_pinned: false, is_archived: false, sort_order: STEP * 2, created_at: t, updated_at: t,
-    recurrence_rule: null, recurrence_start: null,
+    recurrence_rule: null, recurrence_start: null, due_date: null,
   };
   lists.push(superLista, casa);
 
@@ -130,7 +130,7 @@ function buscarItem(itemId: string): ListItem {
     id: 'list-rutina', owner_id: owner, name: 'Rutina de la mañana', icon: 'sun', color: '#A96AE0',
     view: 'checklist', is_pinned: false, is_archived: false, sort_order: STEP * 3,
     created_at: t, updated_at: t,
-    recurrence_rule: 'FREQ=DAILY', recurrence_start: format(addDays(new Date(), -14), 'yyyy-MM-dd'),
+    recurrence_rule: 'FREQ=DAILY', recurrence_start: format(addDays(new Date(), -14), 'yyyy-MM-dd'), due_date: null,
   };
   lists.push(rutina);
   items.push(
@@ -201,7 +201,7 @@ export const demoLists: ListsApi = {
     const lista: StoredList = {
       id: nextId('list'), owner_id: userId, name: input.name.trim(), icon: input.icon, color: input.color,
       view: input.view ?? 'checklist', is_pinned: false, is_archived: false,
-      recurrence_rule: null, recurrence_start: null,
+      recurrence_rule: null, recurrence_start: null, due_date: null,
       sort_order: siguienteOrden(lists.filter((l) => l.owner_id === userId)),
       created_at: t, updated_at: t,
     };
@@ -221,6 +221,7 @@ export const demoLists: ListsApi = {
     if (patch.is_archived !== undefined) lista.is_archived = patch.is_archived;
     if (patch.recurrence_rule !== undefined) lista.recurrence_rule = patch.recurrence_rule;
     if (patch.recurrence_start !== undefined) lista.recurrence_start = patch.recurrence_start;
+    if (patch.due_date !== undefined) lista.due_date = patch.due_date;
     lista.updated_at = ahora();
     emitDataChange();
     return conCuentas(lista);

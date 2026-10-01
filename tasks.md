@@ -611,6 +611,14 @@ un clic de más para llegar a lo mismo.
   tiene a la mano. El buscador puede reutilizar `search_profiles`, que ya resuelve correo y
   `@usuario` (RF-S1). (RF-S7, RF-S8, RF-S15) Dep: —
 
+- [x] T232 Fecha de la lista completa (RF-L23). Columna `lists.due_date` (`date`, flotante),
+  botón de calendario en la barra de la lista y una línea bajo el título con la fecha, en el
+  acento de aviso si ya pasó y con una X para quitarla. En la rejilla del inicio se añade al
+  final del subtítulo. No toca las fechas de los elementos. Dep: T200
+- [x] T232b Días de la semana libres en la hoja de repetición: además de los presets, siete
+  chips (L M M J V S D) que arman `FREQ=WEEKLY;BYDAY=…`, para "lunes, miércoles y jueves".
+  Sustituye al preset "Una vez por semana", que era el mismo con un solo día. Dep: T208
+
 ### Largo plazo (cuando KAVI se lance al público)
 Distribución en iOS y cuenta de Apple Developer · notificaciones push con la app cerrada ·
 funciones con IA (categorización, lenguaje natural libre, sugerencias) · código de barras ·

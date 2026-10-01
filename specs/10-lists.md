@@ -42,6 +42,13 @@ Por eso **los ítems nunca entran en la rejilla de horas**, ni siquiera cuando l
   lista vacía en el inicio.
 - **RF-L3.** Fijar una lista la manda al principio. El orden entre listas se reordena arrastrando.
 - **RF-L4.** Buscar por nombre de lista y por texto de ítem, incluidos los ya completados.
+- **RF-L23. La lista completa puede tener fecha.** Aparte de la de cada elemento: dice para
+  cuándo tiene que estar **terminada entera**. "La maleta es para el sábado" no decide
+  cuándo compras el bloqueador, así que ponerle fecha a la lista no les pone ni les quita
+  fecha a sus elementos; son dos preguntas distintas y cada una se responde donde se hace.
+  Pasado el día, la fecha se muestra en el acento de aviso. Es una fecha flotante, como las
+  de los elementos, por la misma razón: es un día del calendario de quien la escribió.
+
 - **RF-L22. Etiquetas.** Una lista puede llevar varias (Casa, Escuela, Trabajo…), y el inicio
   se filtra tocando una: es la forma de ver juntas las listas de un mismo tema.
 

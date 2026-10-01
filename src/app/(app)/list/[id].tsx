@@ -228,6 +228,7 @@ export default function ListDetailScreen() {
   const [etiquetasAbierto, setEtiquetasAbierto] = useState(false);
   const [repetirAbierto, setRepetirAbierto] = useState(false);
   const [historialAbierto, setHistorialAbierto] = useState(false);
+  const [fechaListaAbierta, setFechaListaAbierta] = useState(false);
 
   /*
    * Una lista que se repite cambia de naturaleza: lo palomeado ya no es un estado del
@@ -433,6 +434,16 @@ export default function ListDetailScreen() {
     setEditando((e) => (e ? { ...e, due_date, ...(due_date ? {} : { due_time: null }) } : e));
   };
 
+  /**
+   * La fecha de la lista completa (RF-L23): para cuándo tiene que estar lista **entera**.
+   * No toca las de los elementos — "la maleta es para el sábado" no decide cuándo compras
+   * las pilas — así que se guarda sola y no arrastra nada más.
+   */
+  const ponerFechaLista = (listId: string, fecha: Date | null) => {
+    tocada.current = true;
+    updateList.mutate({ id: listId, patch: { due_date: fecha ? toDayKey(fecha) : null } });
+  };
+
   const ponerHora = (item: ListItem, minutos: number | null) => {
     const due_time = minutos === null ? null : `${String(Math.floor(minutos / 60)).padStart(2, '0')}:${String(minutos % 60).padStart(2, '0')}`;
     updateItem.mutate({ id: item.id, patch: { due_time } });
@@ -537,6 +548,38 @@ export default function ListDetailScreen() {
                 {describeRecurrence(parseRRule(datos.list.recurrence_rule))} · cómo te ha ido
               </AppText>
             </Pressable>
+          ) : null}
+
+          {/*
+            Y si la lista tiene fecha propia, otra línea igual. Con fecha pasada se pone en
+            el acento de aviso, como los pendientes vencidos: el día llegó y la lista no
+            está terminada. La X quita la fecha sin abrir nada.
+          */}
+          {datos.list.due_date ? (
+            <View style={styles.filaFechaLista}>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Cambiar para cuándo es la lista"
+                onPress={() => setFechaListaAbierta(true)}
+                style={({ pressed }) => [styles.filaRutina, pressed ? { backgroundColor: theme.surfaceAlt } : null]}>
+                <CalendarDays
+                  size={14}
+                  strokeWidth={IconStroke}
+                  color={datos.list.due_date < hoyClave ? theme.today : theme.textSecondary}
+                />
+                <AppText variant="caption" color={datos.list.due_date < hoyClave ? 'today' : 'textSecondary'}>
+                  Para el {formatShortDate(fromDayKey(datos.list.due_date))}
+                </AppText>
+              </Pressable>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Quitar la fecha de la lista"
+                hitSlop={8}
+                onPress={() => ponerFechaLista(datos.list.id, null)}
+                style={({ pressed }) => [styles.quitarFecha, pressed ? { backgroundColor: theme.surfaceAlt } : null]}>
+                <X size={14} strokeWidth={IconStroke} color={theme.textTertiary} />
+              </Pressable>
+            </View>
           ) : null}
 
           {/*
@@ -685,6 +728,17 @@ export default function ListDetailScreen() {
           </Pressable>
           <Pressable
             accessibilityRole="button"
+            accessibilityLabel="Para cuándo es la lista"
+            onPress={() => setFechaListaAbierta(true)}
+            style={({ pressed }) => [styles.barraBoton, pressed ? { backgroundColor: theme.surfaceAlt } : null]}>
+            <CalendarDays
+              size={IconSize.action}
+              strokeWidth={IconStroke}
+              color={datos.list.due_date ? color : theme.textSecondary}
+            />
+          </Pressable>
+          <Pressable
+            accessibilityRole="button"
             accessibilityLabel="Cada cuándo se repite"
             onPress={() => setRepetirAbierto(true)}
             style={({ pressed }) => [styles.barraBoton, pressed ? { backgroundColor: theme.surfaceAlt } : null]}>
@@ -699,6 +753,19 @@ export default function ListDetailScreen() {
           onClose={() => setHistorialAbierto(false)}
           listId={datos.list.id}
           accent={color}
+        />
+      ) : null}
+
+      {datos ? (
+        <DatePickerSheet
+          visible={fechaListaAbierta}
+          value={datos.list.due_date ? fromDayKey(datos.list.due_date) : new Date()}
+          title="Para cuándo es la lista"
+          onClose={() => setFechaListaAbierta(false)}
+          onSelect={(fecha) => {
+            ponerFechaLista(datos.list.id, fecha);
+            setFechaListaAbierta(false);
+          }}
         />
       ) : null}
 
@@ -986,6 +1053,15 @@ const styles = StyleSheet.create({
   hoja: { gap: Spacing.md, paddingBottom: Spacing.md },
   fechas: { gap: Spacing.sm },
   seccionAviso: { gap: Spacing.sm, marginTop: Spacing.xs },
+  filaFechaLista: { flexDirection: 'row', alignItems: 'center', gap: Spacing.xs },
+  quitarFecha: {
+    width: 28,
+    height: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: Radius.full,
+    borderCurve: 'continuous',
+  },
   filaRutina: {
     flexDirection: 'row',
     alignItems: 'center',

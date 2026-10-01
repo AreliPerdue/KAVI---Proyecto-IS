@@ -206,7 +206,8 @@ export interface ListsApi {
   update(
     listId: string,
     patch: Partial<
-      ListInput & Pick<KaviList, 'is_pinned' | 'is_archived' | 'view' | 'recurrence_rule' | 'recurrence_start'>
+      ListInput &
+        Pick<KaviList, 'is_pinned' | 'is_archived' | 'view' | 'recurrence_rule' | 'recurrence_start' | 'due_date'>
     >,
   ): Promise<KaviList>;
   remove(listId: string): Promise<void>;

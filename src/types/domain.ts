@@ -276,6 +276,12 @@ export type KaviList = {
   recurrence_rule: string | null;
   /** Día desde el que cuenta la regla: sin ancla, "cada lunes" no sabe cuál fue el primero. */
   recurrence_start: string | null;
+  /**
+   * Para cuándo tiene que estar lista **entera** (RF-L23). Fecha flotante, como la de los
+   * elementos. No sustituye a las suyas: "la maleta es para el sábado" y "comprar pilas el
+   * jueves" conviven.
+   */
+  due_date: string | null;
 };
 
 /**
