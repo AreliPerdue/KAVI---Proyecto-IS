@@ -81,17 +81,39 @@ async function siguienteOrden(tabla: 'lists' | 'list_sections' | 'list_items', c
  * implementación `this` llega `undefined`. `duplicate` lo usaba y habría fallado en cuanto
  * alguien tocara "Duplicar" con el backend real.
  */
+/**
+ * El dueño de una fila nueva se toma de la **sesión viva**, no del id que viaja por la app.
+ *
+ * La política de inserción exige `owner_id = auth.uid()`, y `auth.uid()` lo resuelve el
+ * servidor a partir del token de esa petición. Si el id que lleva la app se quedó atrás —una
+ * sesión renovada, una cuenta distinta antes, un estado restaurado a medias— el insert se
+ * rechaza con "no tienes permiso" y desde fuera parece que el botón no hace nada.
+ *
+ * Preguntarle al cliente quién es antes de escribir cuesta una llamada local y vuelve la
+ * operación correcta por construcción.
+ */
+async function dueñoActual(fallback: string): Promise<string> {
+  const { data } = await getSupabase().auth.getUser();
+  const sesion = data.user?.id;
+  if (sesion && sesion !== fallback) {
+    // eslint-disable-next-line no-console -- divergencia que explica fallos de permiso
+    console.warn('[kavi] el id de la app y el de la sesión no coinciden:', fallback, '≠', sesion);
+  }
+  return sesion ?? fallback;
+}
+
 async function crearLista(userId: string, input: Parameters<ListsApi['create']>[1]): Promise<KaviList> {
+  const owner = await dueñoActual(userId);
   const row = unwrap(
     await getSupabase()
       .from('lists')
       .insert({
-        owner_id: userId,
+        owner_id: owner,
         name: input.name.trim(),
         icon: input.icon,
         color: input.color,
         view_mode: input.view ?? 'checklist',
-        sort_order: await siguienteOrden('lists', 'owner_id', userId),
+        sort_order: await siguienteOrden('lists', 'owner_id', owner),
       })
       .select(SELECT_LISTA)
       .single(),
@@ -217,6 +239,7 @@ export const supabaseLists: ListsApi = {
   },
 
   async addItem(listId, userId, input) {
+    const autor = await dueñoActual(userId);
     return unwrap(
       await getSupabase()
         .from('list_items')
@@ -225,7 +248,7 @@ export const supabaseLists: ListsApi = {
           section_id: input.section_id ?? null,
           title: input.title.trim(),
           note: input.note ?? null,
-          created_by: userId,
+          created_by: autor,
           due_date: input.due_date ?? null,
           due_time: input.due_time ?? null,
           reminder_offset_minutes: input.reminder_offset_minutes ?? null,
@@ -391,12 +414,13 @@ export const supabaseLists: ListsApi = {
   },
 
   async createTag(userId, name) {
+    const owner = await dueñoActual(userId);
     const row = unwrap(
       await getSupabase()
         .from('list_tags')
         // `upsert` sobre (owner_id, name): pedir una etiqueta que ya existe devuelve esa,
         // que es lo que uno espera al volver a escribir "Casa".
-        .upsert({ owner_id: userId, name: name.trim() }, { onConflict: 'owner_id,name' })
+        .upsert({ owner_id: owner, name: name.trim() }, { onConflict: 'owner_id,name' })
         .select('*')
         .single(),
     ) as unknown as Omit<ListTag, 'list_count'>;
