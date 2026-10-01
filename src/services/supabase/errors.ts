@@ -1,7 +1,16 @@
 import { AUTH_MESSAGES, AuthUiError, isOfflineError } from '@/lib/auth-errors';
 
-/** Traduce un error de PostgREST al mensaje en español que ve la persona (NFR-13). */
-export function toError(error: { message: string; code?: string }): AuthUiError {
+/**
+ * Traduce un error de PostgREST al mensaje en español que ve la persona (NFR-13).
+ *
+ * Además lo deja crudo en la consola. El mensaje traducido está para que la persona sepa
+ * qué pasó, no para depurar: "no tienes permiso" cubre una política mal puesta, una sesión
+ * caducada y una columna que no existe, y sin el original no hay cómo distinguirlas. Pasó
+ * exactamente eso con el alta de listas.
+ */
+export function toError(error: { message: string; code?: string; details?: string; hint?: string }): AuthUiError {
+  // eslint-disable-next-line no-console -- el original es lo único que permite diagnosticar
+  console.error('[supabase]', error.code ?? 'sin código', error.message, error.details ?? '', error.hint ?? '');
   if (isOfflineError(error)) return new AuthUiError(AUTH_MESSAGES.offline, error);
   // 42501 = la RLS o un trigger rechazaron la operación.
   if (error.code === '42501') {
