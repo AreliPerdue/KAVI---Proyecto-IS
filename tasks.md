@@ -531,6 +531,16 @@ un clic de más para llegar a lo mismo.
   Además, crear dejaba de fallar en silencio: sin `onError` un fallo del backend era
   indistinguible de un botón muerto. Dep: T207
 
+- [ ] T230 Reparar las políticas de las tablas de listas. La migración de compartir borra
+  las políticas de `lists` para reemplazarlas; si no llega a terminar, `lists` queda con RLS
+  activo y **sin política de inserción**: se leen las listas pero no se puede crear ninguna,
+  y el fallo llega a la app como "no tienes permiso". El script deja el estado final correcto
+  venga de donde venga —borra cada política por nombre y la recrea— y correrlo dos veces no
+  hace daño.
+  **Lección de proceso:** una migración que empieza borrando políticas no es idempotente y
+  deja la tabla inservible si falla a media ejecución. Las que vengan deben crear lo nuevo
+  antes de quitar lo viejo, o ir envueltas en una transacción explícita. Dep: T219
+
 ### Pendientes sueltos
 - [ ] T196 Elegir idioma de la interfaz: **español o inglés**. Hoy los textos están
   incrustados en los componentes, así que esto es sobre todo el trabajo de extraerlos.
