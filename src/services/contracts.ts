@@ -241,6 +241,14 @@ export interface ListsApi {
    */
   listOverdue(userId: string, beforeDate: string): Promise<ListItem[]>;
 
+  /**
+   * Pendientes **sin fecha** de mis listas activas, para la bandeja de Algún día (RF-L25).
+   *
+   * Excluye las rutinas: sus elementos no están esperando a que alguien les ponga día, los
+   * repite la propia lista.
+   */
+  listUndated(userId: string): Promise<ListItem[]>;
+
   /** Mueve varios pendientes a una fecha nueva de una sola vez (reprogramar). */
   rescheduleItems(itemIds: readonly string[], dueDate: string): Promise<void>;
 

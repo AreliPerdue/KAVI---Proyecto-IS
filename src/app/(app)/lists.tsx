@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { Archive, ArchiveRestore, ArrowDown, ArrowUp, CircleCheck, Copy, Ellipsis, Pin, PinOff, Search, Trash2, X } from 'lucide-react-native';
+import { Archive, ArchiveRestore, ArrowDown, ArrowUp, CircleCheck, Copy, Ellipsis, Inbox, Pin, PinOff, Search, Sun, Trash2, X } from 'lucide-react-native';
 import { useCallback, useMemo, useState } from 'react';
 import { Platform, Pressable, ScrollView, StyleSheet, TextInput, type TextStyle, View } from 'react-native';
 
@@ -14,15 +14,17 @@ import { Fonts, IconSize, IconStroke, Radius, Spacing, Typography } from '@/cons
 import {
   useArchivedLists,
   useListMutations,
+  useListItemsByDate,
   useLists,
   useListSearch,
+  useOverdueListItems,
   useListsSharedWithMe,
   useListTags,
 } from '@/hooks/use-lists';
 import { useDebouncedValue } from '@/hooks/use-debounced-value';
 import { useShrinkOnScroll } from '@/hooks/use-shrink-on-scroll';
 import { useTheme } from '@/hooks/use-theme';
-import { formatShortDate, fromDayKey } from '@/lib/dates';
+import { formatShortDate, fromDayKey, toDayKey } from '@/lib/dates';
 import { useConfirm, useSnackbar } from '@/providers';
 import type { ListSearchResults } from '@/services/lists';
 import type { KaviList, ListItem } from '@/types/domain';
@@ -144,6 +146,15 @@ export default function ListsScreen() {
 
   const lists = useLists();
   const archivadas = useArchivedLists(verArchivadas);
+  /*
+   * El número de Hoy sale de las mismas dos consultas que alimentan la franja del
+   * calendario, así que normalmente ya está en caché y el acceso no cuesta una consulta
+   * nueva. Algún día no lleva número a propósito: su consulta es la más ancha del módulo
+   * —todo lo que no tiene día— y no vale la pena correrla solo para pintar un dígito.
+   */
+  const hoyClave = toDayKey(new Date());
+  const deHoy = useListItemsByDate(hoyClave, hoyClave, !verArchivadas);
+  const atrasados = useOverdueListItems(hoyClave, !verArchivadas);
   const compartidas = useListsSharedWithMe();
   const etiquetas = useListTags();
   const [etiquetaActiva, setEtiquetaActiva] = useState<string | null>(null);
@@ -151,6 +162,13 @@ export default function ListsScreen() {
   const { shrunk, onScroll } = useShrinkOnScroll();
 
   const consulta = verArchivadas ? archivadas : lists;
+
+  /* Lo palomeado de hoy no cuenta: el número dice cuánto falta, no cuánto hubo. */
+  const atrasadosHoy = (atrasados.data ?? []).length;
+  const pendientesHoy =
+    atrasadosHoy +
+    (deHoy.data ?? []).filter((i) => i.completed_at === null).length +
+    (lists.data ?? []).filter((l) => l.due_date !== null && l.due_date <= hoyClave).length;
 
   const abrir = useCallback((id: string) => router.push({ pathname: '/(app)/list/[id]', params: { id } }), [router]);
 
@@ -353,6 +371,53 @@ export default function ListsScreen() {
       </View>
 
       {/*
+        Hoy y Algún día (RF-L24, RF-L25): las dos preguntas que cruzan todas las listas.
+        Van arriba del todo porque son por donde se entra cuando uno no viene a una lista
+        en concreto, sino a ver qué hacer. Desaparecen al buscar y en Archivadas, donde
+        preguntar "¿qué me toca?" no tiene sentido.
+      */}
+      {!buscando && !verArchivadas ? (
+        <View style={styles.accesos}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={
+              pendientesHoy > 0 ? `Hoy, ${pendientesHoy} ${pendientesHoy === 1 ? 'pendiente' : 'pendientes'}` : 'Hoy'
+            }
+            onPress={() => router.push({ pathname: '/(app)/today', params: { vista: 'hoy' } })}
+            style={({ pressed }) => [
+              styles.acceso,
+              { borderColor: theme.border, backgroundColor: theme.surface },
+              pressed ? { backgroundColor: theme.surfaceAlt } : null,
+            ]}>
+            <Sun size={IconSize.action} strokeWidth={IconStroke} color={atrasadosHoy > 0 ? theme.today : theme.text} />
+            <AppText variant="bodyStrong" style={styles.accesoNombre}>
+              Hoy
+            </AppText>
+            {pendientesHoy > 0 ? (
+              <AppText variant="label" color={atrasadosHoy > 0 ? 'today' : 'textSecondary'} tabular>
+                {pendientesHoy}
+              </AppText>
+            ) : null}
+          </Pressable>
+
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Algún día: pendientes sin fecha"
+            onPress={() => router.push({ pathname: '/(app)/today', params: { vista: 'algun-dia' } })}
+            style={({ pressed }) => [
+              styles.acceso,
+              { borderColor: theme.border, backgroundColor: theme.surface },
+              pressed ? { backgroundColor: theme.surfaceAlt } : null,
+            ]}>
+            <Inbox size={IconSize.action} strokeWidth={IconStroke} color={theme.text} />
+            <AppText variant="bodyStrong" style={styles.accesoNombre}>
+              Algún día
+            </AppText>
+          </Pressable>
+        </View>
+      ) : null}
+
+      {/*
         Fila de etiquetas: es la forma de ver juntas las listas de un mismo tema (RF-L22).
         No aparece si no hay ninguna, para no ocupar alto prometiendo algo vacío.
       */}
@@ -526,6 +591,19 @@ const styles = StyleSheet.create({
     lineHeight: Typography.body.lineHeight,
     padding: 0,
   },
+  accesos: { flexDirection: 'row', gap: Spacing.sm },
+  acceso: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    minHeight: 52,
+    paddingHorizontal: Spacing.md,
+    borderWidth: 1,
+    borderRadius: Radius.md,
+    borderCurve: 'continuous',
+  },
+  accesoNombre: { flex: 1 },
   etiquetasScroll: { flexGrow: 0 },
   etiquetas: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm, paddingRight: Spacing.lg },
   etiqueta: {

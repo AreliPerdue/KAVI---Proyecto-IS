@@ -619,6 +619,15 @@ un clic de más para llegar a lo mismo.
   chips (L M M J V S D) que arman `FREQ=WEEKLY;BYDAY=…`, para "lunes, miércoles y jueves".
   Sustituye al preset "Una vez por semana", que era el mismo con un solo día. Dep: T208
 
+- [x] T233 Hoy (RF-L24). Pantalla `(app)/today` con lo que vence hoy y lo atrasado en dos
+  grupos separados, más las listas cuya fecha completa ya llegó, y un "Pasar todo a hoy"
+  que reprograma lo vencido de una vez. No hace falta backend nuevo: son las mismas dos
+  consultas que ya alimentan la franja del día. Dep: T212, T232
+- [x] T234 Algún día (RF-L25). Misma pantalla, segunda pestaña: los pendientes **sin fecha**
+  agrupados por lista, cada uno con un botón que les pone día ahí mismo. Quedan fuera los
+  de las rutinas, que no esperan a que nadie los agende. Método nuevo `listUndated` en los
+  dos backends. Entradas a las dos vistas arriba del inicio de Listas. Dep: T233
+
 ### Largo plazo (cuando KAVI se lance al público)
 Distribución en iOS y cuenta de Apple Developer · notificaciones push con la app cerrada ·
 funciones con IA (categorización, lenguaje natural libre, sugerencias) · código de barras ·

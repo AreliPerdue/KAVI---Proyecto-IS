@@ -16,6 +16,7 @@ import {
   listItemsByDateRange,
   listLists,
   listOverdueItems,
+  listUndatedItems,
   type ListSearchResults,
   removeList,
   removeListItem,
@@ -51,6 +52,7 @@ export const listKeys = {
   detail: (id: string) => ['lists', 'detail', id] as const,
   byDate: (userId: string | null, from: string, to: string) => ['lists', 'date', userId, from, to] as const,
   overdue: (userId: string | null, before: string) => ['lists', 'overdue', userId, before] as const,
+  undated: (userId: string | null) => ['lists', 'undated', userId] as const,
   search: (userId: string | null, term: string) => ['lists', 'search', userId, term] as const,
   shares: (listId: string) => ['lists', 'shares', listId] as const,
   sharedWithMe: (userId: string | null) => ['lists', 'shared-with-me', userId] as const,
@@ -112,6 +114,21 @@ export function useOverdueListItems(beforeDate: string, enabled = true) {
   return useQuery<ListItem[]>({
     queryKey: listKeys.overdue(userId, beforeDate),
     queryFn: () => listOverdueItems(userId as string, beforeDate),
+    enabled: !!userId && enabled,
+  });
+}
+
+/**
+ * Pendientes sin fecha, para la bandeja de Algún día (RF-L25).
+ *
+ * Solo se consulta cuando esa pestaña está a la vista: es la consulta más ancha del módulo
+ * —todo lo que no tiene día— y no tiene por qué correr cada vez que se abre el inicio.
+ */
+export function useUndatedListItems(enabled = true) {
+  const { userId } = useAuth();
+  return useQuery<ListItem[]>({
+    queryKey: listKeys.undated(userId),
+    queryFn: () => listUndatedItems(userId as string),
     enabled: !!userId && enabled,
   });
 }

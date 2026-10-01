@@ -376,6 +376,20 @@ export const demoLists: ListsApi = {
       .map(copia);
   },
 
+  async listUndated(userId) {
+    await delay();
+    const mias = new Set(
+      lists
+        .filter((l) => l.owner_id === userId && !l.is_archived && l.recurrence_rule === null)
+        .map((l) => l.id),
+    );
+    return items
+      .filter((i) => mias.has(i.list_id) && i.due_date === null && i.completed_at === null)
+      // Lo más reciente primero, igual que en Supabase.
+      .sort((a, b) => b.created_at.localeCompare(a.created_at))
+      .map(copia);
+  },
+
   async search(userId, term): Promise<ListSearchResults> {
     await delay();
     const q = term.trim().toLowerCase();

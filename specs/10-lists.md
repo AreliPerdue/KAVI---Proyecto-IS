@@ -176,6 +176,32 @@ Así quedan dos mecanismos para dos preguntas distintas, en vez de uno forzado p
 - **Agrupar listas para poder resumirlas.** El caso "de mis listas de trabajo" necesita
   etiquetas, que van después de lo ya planeado (fase 3).
 
+## Hoy y Algún día (RF-L24 – RF-L25) — fase 3
+
+Las listas responden "¿qué hay en el súper?". Estas dos vistas responden otras dos preguntas
+que ninguna lista puede contestar sola, porque cruzan todas: **qué me toca** y **qué dejé
+pendiente sin fecha**.
+
+- **RF-L24. Hoy.** Reúne, de todas mis listas activas, lo que vence hoy y lo que ya venció,
+  en dos grupos separados —lo atrasado arriba, en el acento de aviso— más las listas cuya
+  **fecha completa** (RF-L23) es hoy o ya pasó. Desde aquí se puede palomear, abrir el
+  elemento en su lista y reprogramar lo atrasado para hoy de una sola vez.
+
+  Lo atrasado y lo de hoy no se mezclan, por lo mismo que en la franja del día: son dos
+  cosas distintas y ordenarlas juntas esconde lo viejo entre lo nuevo.
+
+- **RF-L25. Algún día.** Los pendientes **sin fecha**, agrupados por su lista, con la acción
+  de ponerles día ahí mismo. Es la bandeja de triage: lo que quiero hacer pero no he
+  agendado.
+
+  **Quedan fuera las rutinas.** Los elementos de una lista que se repite nunca son "algún
+  día": son los de hoy, y ya tienen su vuelta. Incluirlos llenaría la bandeja de lo que
+  menos necesita decidirse.
+
+  Sigue habiendo mucho ruido posible —una lista del súper son veinte elementos sin fecha—,
+  y por eso se agrupa por lista en vez de mostrarse plana: así una lista larga se reconoce
+  y se salta de un vistazo.
+
 ## Compartir (RF-L14 – RF-L17) — fase 2
 - **RF-L14.** Una lista se comparte con contactos ya aceptados (misma regla que el
   calendario, spec 06). Junto a cada persona se elige entre **Ver** y **Editar** (agregar,

@@ -264,3 +264,13 @@ juntarlo en una sesión dedicada a pruebas.
 - [ ] Tocar L, M y J deja `FREQ=WEEKLY;BYDAY=MO,WE,TH` y la hoja los muestra prendidos al
   reabrirse (se leen de la regla guardada, no de un estado aparte).
 - [ ] Apagar el último día quita la repetición en vez de dejar una regla sin días.
+
+## Hoy y Algún día (T233, T234)
+- [ ] `listUndated` deja fuera los elementos de listas que se repiten, los archivados y los
+  ya palomeados, en **los dos** backends. Es la regla que más fácil se cae al tocar la
+  consulta de Supabase, porque el filtro va sobre la tabla unida (`lists.recurrence_rule`).
+- [ ] "Pasar todo a hoy" mueve todos los vencidos y deja el grupo "Atrasado" vacío.
+- [ ] Ponerle día a un elemento desde Algún día lo saca de la bandeja y lo mete en Hoy si la
+  fecha es hoy.
+- [ ] El número del acceso "Hoy" no cuenta lo ya palomeado.
+- [ ] Con todo agendado, Algún día muestra su estado vacío y no una lista de grupos vacíos.

@@ -337,6 +337,23 @@ export const supabaseLists: ListsApi = {
     return sinJoin(rows as unknown[]);
   },
 
+  async listUndated(userId) {
+    const rows = unwrap(
+      await getSupabase()
+        .from('list_items')
+        .select('*, lists!inner(owner_id, is_archived, recurrence_rule)')
+        .eq('lists.owner_id', userId)
+        .eq('lists.is_archived', false)
+        // Las rutinas no entran: sus elementos los repite la lista, no esperan fecha.
+        .is('lists.recurrence_rule', null)
+        .is('due_date', null)
+        .is('completed_at', null)
+        // Lo más reciente primero: lo que acabas de apuntar es lo que ibas a agendar.
+        .order('created_at', { ascending: false }),
+    );
+    return sinJoin(rows as unknown[]);
+  },
+
   async search(userId, term): Promise<ListSearchResults> {
     const q = term.trim();
     if (!q) return { lists: [], items: [] };

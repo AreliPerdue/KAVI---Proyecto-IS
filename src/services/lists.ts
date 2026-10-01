@@ -25,6 +25,7 @@ export const reorderListItem = listsApi.reorderItem;
 
 export const listItemsByDateRange = listsApi.listByDateRange;
 export const listOverdueItems = listsApi.listOverdue;
+export const listUndatedItems = listsApi.listUndated;
 export const rescheduleListItems = listsApi.rescheduleItems;
 export const searchLists = listsApi.search;
 
