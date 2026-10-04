@@ -45,18 +45,17 @@ export default function WorkoutScreen() {
   const saveExercise = (exercise: WorkoutExercise, patch: Parameters<typeof mutations.updateExercise.mutate>[0]['patch']) =>
     mutations.updateExercise.mutate({ id: exercise.id, patch }, { onSuccess: markSaved });
 
+  /**
+   * Borrar es suave (RF-F16), así que deshacer restaura la misma fila con sus series, en
+   * vez de crear una copia sin ellas como hacía v1 (RF-F6).
+   */
   const deleteExercise = (exercise: WorkoutExercise) => {
-    const snapshot = exercise;
     mutations.removeExercise.mutate(exercise.id, {
       onSuccess: () =>
         showSnackbar({
-          message: `"${snapshot.name || 'Ejercicio'}" eliminado.`,
+          message: `"${exercise.name || 'Ejercicio'}" eliminado.`,
           actionLabel: 'Deshacer',
-          onAction: () =>
-            mutations.addExercise.mutate({
-              workoutId: snapshot.workout_id,
-              input: { name: snapshot.name, sets: snapshot.sets, reps: snapshot.reps, weight: snapshot.weight, duration_minutes: snapshot.duration_minutes, notes: snapshot.notes, position: snapshot.position },
-            }),
+          onAction: () => mutations.restoreExercise.mutate(exercise.id),
         }),
     });
   };

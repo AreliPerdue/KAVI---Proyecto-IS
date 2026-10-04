@@ -243,8 +243,16 @@ create policy "rem_recipients_update_own" on public.reminder_recipients
 -- al aceptar un share → filas para los reminders existentes de esa actividad.
 ```
 
-## 9. Módulo fitness (mini gym tracker)
-Campos abiertos y sencillos: texto libre donde importa, números opcionales.
+## 9. Módulo fitness
+
+> **Fitness v2 (spec 07 v2).** El esquema de abajo es el de v1 y sigue vigente: nada se borró.
+> La migración `20261004100000_gym_v2.sql` agrega el catálogo (`exercises`), las preferencias
+> por ejercicio, grupos, series (`workout_sets`), segmentos (`set_segments`) y la racha
+> (`workout_streak_events`), más columnas nuevas en `workouts` y `workout_exercises`. Toda
+> tabla hija lleva `owner_id` heredado del padre por trigger (`gym_inherit_owner`), así que
+> todas sus políticas son `owner_id = auth.uid()`. Las reglas viven en la spec 07, §2.
+
+Esquema de v1 (campos abiertos y sencillos: texto libre donde importa, números opcionales).
 
 ```sql
 create table public.workouts (

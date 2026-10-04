@@ -36,6 +36,19 @@ jest.mock('@/hooks/use-availability', () => ({ useAvailability: () => mockDispon
 jest.mock('@/hooks/use-profile', () => ({ useMyProfile: () => mockPerfil }));
 jest.mock('@/hooks/use-workouts', () => ({ useWorkouts: () => mockEntrenamientos }));
 jest.mock('@/services/activities', () => ({ extendRecurrenceHorizon: () => mockExtend() }));
+// Lists en el calendario (RF-L12, RF-L26): aquí solo importa que no estorben. Sin
+// pendientes ni rutinas, la franja y el panel no se dibujan.
+jest.mock('@/hooks/use-lists', () => {
+  const vacio = { data: [], isSuccess: true };
+  const mutacion = { mutate: () => undefined };
+  return {
+    useLists: () => vacio,
+    useListItemsByDate: () => vacio,
+    useOverdueListItems: () => vacio,
+    useListRunsByDate: () => vacio,
+    useListMutations: () => ({ toggleItem: mutacion, reschedule: mutacion }),
+  };
+});
 
 /**
  * Las vistas del calendario se prueban por separado. Aqui cada una se sustituye

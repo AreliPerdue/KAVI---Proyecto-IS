@@ -19,6 +19,7 @@ const mockMut = {
   addExercise: { mutate: jest.fn() },
   updateExercise: { mutate: jest.fn() },
   removeExercise: { mutate: jest.fn() },
+  restoreExercise: { mutate: jest.fn() },
   duplicate: { mutate: jest.fn(), isPending: false },
   create: { mutate: jest.fn() },
 };
@@ -156,7 +157,7 @@ describe('ejercicios', () => {
     expect(mockSnackbar.mock.calls[0][0].actionLabel).toBe('Deshacer');
   });
 
-  it('deshacer lo vuelve a crear con sus valores y su posicion', async () => {
+  it('deshacer restaura el mismo ejercicio, con sus series (el borrado es suave)', async () => {
     mockMut.removeExercise.mutate.mockImplementation((_id: string, o: { onSuccess?: () => void }) => o?.onSuccess?.());
     await render(<Pantalla />);
 
@@ -165,9 +166,8 @@ describe('ejercicios', () => {
 
     mockSnackbar.mock.calls[0][0].onAction();
 
-    expect(mockMut.addExercise.mutate.mock.calls[0][0].input).toMatchObject({
-      name: 'Sentadilla', sets: 4, weight: '80 kg', position: 0,
-    });
+    expect(mockMut.restoreExercise.mutate).toHaveBeenCalledWith(expect.any(String));
+    expect(mockMut.addExercise.mutate).not.toHaveBeenCalled();
   });
 });
 

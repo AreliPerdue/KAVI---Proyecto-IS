@@ -643,10 +643,46 @@ un clic de más para llegar a lo mismo.
   rápido a todas las listas abajo; la rejilla toma el resto. La franja y el panel comparten
   los mismos renglones (`DayItemsList`). Dep: T236
 
+## Fase G — Fitness v2 (spec 07 v2)
+Plan y decisiones en `docs/gym/AUDITORIA.md`. Cada fase cierra con typecheck, lint y la suite completa.
+
+- [x] T238 Auditoría del módulo y spec 07 v2. La constitución no se toca (decisión D1); la
+  tensión con P2/P8 queda reconocida en la spec. Dep: —
+- [x] T239 Migración `gym_v2` (RF-F11 – RF-F16, RF-F58): catálogo `exercises`,
+  `user_exercise_prefs`, `exercise_groups`, `workout_sets`, `set_segments`,
+  `workout_streak_events`, más columnas nuevas en `workouts` y `workout_exercises`. Solo
+  agrega; el texto de v1 queda intacto. `owner_id` denormalizado con trigger de herencia,
+  así toda política es `owner_id = auth.uid()` y no se repite la trampa del `RETURNING` de
+  Lists. Verificada contra Postgres real (PGlite) con todas las migraciones desde cero: corre
+  dos veces, rellena dueños, RLS entre dos usuarias y upsert sin duplicar. De paso, `grants.sql`
+  ya no rompe un `db reset` desde cero. Dep: T238
+- [x] T240 Tipos de dominio, contrato y los dos backends: series con segmentos (`saveSets`
+  por upsert), borrado suave que suelta la actividad, restaurar ejercicio, lista y nombres
+  sin traer todo el historial, y la conversión de v1 (`listLegacyExercises`,
+  `markLegacyConverted`). Corrige tres bugs de v1: duplicar perdía el nombre de la sesión; la
+  duración del encabezado no se actualizaba; el autocompletado ordenaba distinto en demo y en
+  Supabase. Dep: T239
+- [x] T241 `lib/gym/`: unidades, RPE↔RIR, e1RM (Epley/Brzycki), volumen por tipo de
+  ejercicio, detección de PRs contra el historial sin la serie misma, UUID en el cliente sin
+  dependencias, y el parser del texto de v1 (convierte lo inequívoco, no adivina lo ambiguo).
+  Con pruebas. Dep: —
+- [ ] T242 Catálogo ≥ 530 ejercicios, búsqueda por alias y sin acentos, filtros, selector
+  virtualizado, personalizados, favoritos y recientes; mapeo de nombres de v1 (G2,
+  RF-F20 – RF-F26, RF-F63). Dep: T240
+- [ ] T243 Logger en vivo local-first con timer, PRs y herramientas; conversión de v1 en la
+  app; corrige los ejercicios fantasma de v1 (G3, RF-F17 – RF-F19, RF-F27 – RF-F38). Dep: T242
+- [ ] T244 Edición de sesiones pasadas con la misma UI, deshacer/rehacer y recálculo (G4,
+  RF-F39 – RF-F42). Dep: T243
+- [ ] T245 Intensificadores, agrupaciones, protocolos y modificadores (G5, RF-F43 – RF-F48). Dep: T243
+- [ ] T246 Notas en todos los niveles y nota fija por ejercicio (G6, RF-F49 – RF-F53). Dep: T243
+- [ ] T247 Modo Gymrat: Modo serio, trato elegible, PRs, logros, Racha de Hierro en pausa,
+  resumen y volumen por músculo (G7, RF-F54 – RF-F60). Dep: T243
+- [ ] T248 Calidad, accesibilidad, rendimiento y docs del módulo (G8). Dep: T242 – T247
+
 ### Largo plazo (cuando KAVI se lance al público)
 Distribución en iOS y cuenta de Apple Developer · notificaciones push con la app cerrada ·
 funciones con IA (categorización, lenguaje natural libre, sugerencias) · código de barras ·
 imágenes en listas (gratis en dinero, caro en horas) · sincronización offline real.
 
 ## Backlog futuro (NO implementar — P8)
-Estadísticas de entrenamientos · módulos de otras dimensiones (KAVI Reader, nutrición) · push remoto · export/import calendarios · offline completo · plantillas de rutina.
+Módulos de otras dimensiones (KAVI Reader, nutrición) · push remoto · export/import calendarios · offline completo · plantillas de rutina.

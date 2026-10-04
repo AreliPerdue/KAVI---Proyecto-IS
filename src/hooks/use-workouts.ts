@@ -11,6 +11,7 @@ import {
   listWorkouts,
   removeExercise,
   removeWorkout,
+  restoreExercise,
   updateExercise,
   updateWorkout,
   type Workout,
@@ -63,9 +64,25 @@ export function useWorkoutMutations() {
     addExercise: useMutation({ mutationFn: ({ workoutId, input }: { workoutId: string; input: WorkoutExerciseInput }) => addExercise(workoutId, input), onSuccess: invalidate }),
     updateExercise: useMutation({
       mutationFn: ({ id, patch }: { id: string; patch: Partial<WorkoutExerciseInput> }) => updateExercise(id, patch),
-      onSuccess: () => queryClient.invalidateQueries({ queryKey: workoutKeys.names(userId) }),
+      /*
+       * Se escribe el ejercicio guardado en el detalle en caché, en vez de invalidarlo.
+       * Invalidar refetcharía todos los ejercicios y cada tarjeta se reiniciaría con lo del
+       * servidor, borrando lo que se esté escribiendo en otra. Pero sin tocar el caché, la
+       * duración total del encabezado se quedaba vieja (bug de v1), así que se recalcula aquí.
+       */
+      onSuccess: (guardado) => {
+        queryClient.setQueryData<WorkoutDetail>(workoutKeys.detail(guardado.workout_id), (previo) => {
+          if (!previo) return previo;
+          const exercises = previo.exercises.map((e) => (e.id === guardado.id ? { ...e, ...guardado } : e));
+          const minutos = exercises.reduce((total, e) => total + (e.duration_minutes ?? 0), 0);
+          return { ...previo, exercises, duration_minutes: minutos > 0 ? minutos : null };
+        });
+        void queryClient.invalidateQueries({ queryKey: workoutKeys.names(userId) });
+        void queryClient.invalidateQueries({ queryKey: workoutKeys.list(userId) });
+      },
     }),
     removeExercise: useMutation({ mutationFn: (id: string) => removeExercise(id), onSuccess: invalidate }),
+    restoreExercise: useMutation({ mutationFn: (id: string) => restoreExercise(id), onSuccess: invalidate }),
     duplicate: useMutation({
       mutationFn: ({ workoutId, target }: { workoutId: string; target: { activityId: string | null; performedAt: string; keepValues: boolean } }) =>
         duplicateWorkout(uid(), workoutId, target),

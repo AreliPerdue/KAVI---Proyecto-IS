@@ -73,16 +73,22 @@ describe('navegacion', () => {
   });
 });
 
+/*
+ * El entorno de pruebas mide 750 px de ancho: ancho de sobra para la pastilla con las
+ * vistas fijadas (RF-C16). En pantallas angostas se reduce a un botón con menú, que se
+ * prueba en `view-switcher`.
+ */
 describe('cambio de vista', () => {
-  it('el control dice cual esta activa', async () => {
+  it('la pestaña de la vista activa está seleccionada', async () => {
     await montar({ view: 'week' });
-    expect(screen.getByLabelText(/vista: semana/i)).toBeTruthy();
+    expect(screen.getByRole('tab', { name: 'Semana' }).props.accessibilityState).toMatchObject({ selected: true });
+    expect(screen.getByRole('tab', { name: 'Mes' }).props.accessibilityState).toMatchObject({ selected: false });
   });
 
-  it('abre el menu de vistas', async () => {
+  it('el menú con todas las vistas se abre desde "Más vistas"', async () => {
     await montar();
 
-    await fireEvent.press(screen.getByLabelText(/cambiar vista/i));
+    await fireEvent.press(screen.getByLabelText('Más vistas'));
 
     await waitFor(() => expect(screen.getByText('Vista')).toBeTruthy());
   });

@@ -1,8 +1,8 @@
-/** Mini gym tracker (spec 07). Fachada sobre el backend activo. */
+/** Gym tracker (spec 07 v2). Fachada sobre el backend activo. */
 import { workoutsApi } from '@/services/backend';
 
-export type { WorkoutDetail } from '@/services/contracts';
-export type { Workout, WorkoutExercise, WorkoutExerciseInput, WorkoutInput } from '@/types/domain';
+export type { LegacyExercise, WorkoutDetail } from '@/services/contracts';
+export type { SetSegment, Workout, WorkoutExercise, WorkoutExerciseDetail, WorkoutExerciseInput, WorkoutInput, WorkoutSet } from '@/types/domain';
 
 export const listWorkouts = workoutsApi.list;
 export const getWorkout = workoutsApi.getById;
@@ -13,5 +13,10 @@ export const removeWorkout = workoutsApi.remove;
 export const addExercise = workoutsApi.addExercise;
 export const updateExercise = workoutsApi.updateExercise;
 export const removeExercise = workoutsApi.removeExercise;
+export const restoreExercise = workoutsApi.restoreExercise;
+export const saveWorkoutSets = workoutsApi.saveSets;
+export const removeWorkoutSets = workoutsApi.removeSets;
+export const listLegacyExercises = workoutsApi.listLegacyExercises;
+export const markLegacyConverted = workoutsApi.markLegacyConverted;
 export const listExerciseNames = workoutsApi.exerciseNames;
 export const duplicateWorkout = workoutsApi.duplicate;

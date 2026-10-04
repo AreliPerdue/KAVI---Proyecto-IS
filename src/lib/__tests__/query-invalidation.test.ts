@@ -23,18 +23,20 @@ function clienteFalso() {
 }
 
 describe('invalidateSharedData', () => {
-  it('invalida las cinco familias afectadas', () => {
+  it('invalida las seis familias afectadas', () => {
     const { client, llamadas } = clienteFalso();
     invalidateSharedData(client);
-    expect(llamadas).toHaveLength(5);
+    expect(llamadas).toHaveLength(6);
   });
 
-  it('cubre contactos, actividades, shares, recordatorios y disponibilidad', () => {
+  // Lists entró al compartir con la fase 2 (RF-L16): una lista compartida que cambia
+  // en otro dispositivo deja obsoletos la tarjeta, el detalle y la franja del día.
+  it('cubre contactos, actividades, shares, recordatorios, disponibilidad y listas', () => {
     const { client, llamadas } = clienteFalso();
     invalidateSharedData(client);
     const claves = llamadas.map((l) => (l as { queryKey: string[] }).queryKey[0]);
     expect(new Set(claves)).toEqual(
-      new Set(['connections', 'activities', 'shares', 'reminders', 'availability']),
+      new Set(['connections', 'activities', 'shares', 'reminders', 'availability', 'lists']),
     );
   });
 

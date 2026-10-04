@@ -25,6 +25,9 @@ import type {
   UpcomingReminder,
   Workout,
   WorkoutExercise,
+  WorkoutExerciseDetail,
+  WorkoutSet,
+  ExerciseGroup,
   WorkoutExerciseInput,
   WorkoutInput,
 } from '@/types/domain';
@@ -160,7 +163,11 @@ export interface RealtimeApi {
   subscribe(userId: string, onChange: () => void): () => void;
 }
 
-export type WorkoutDetail = Workout & { exercises: WorkoutExercise[] };
+/** Una sesión con sus ejercicios, cada uno con sus series y segmentos (spec 07 v2). */
+export type WorkoutDetail = Workout & { exercises: WorkoutExerciseDetail[]; groups: ExerciseGroup[] };
+
+/** Un ejercicio de v1 con texto todavía sin convertir, con la fecha de su sesión (RF-F62). */
+export type LegacyExercise = WorkoutExercise & { performed_at: string };
 
 export interface WorkoutsApi {
   /** Historial cronológico descendente (RF-F7). */
@@ -173,8 +180,23 @@ export interface WorkoutsApi {
   remove(id: string): Promise<void>;
   addExercise(workoutId: string, input: WorkoutExerciseInput): Promise<WorkoutExercise>;
   updateExercise(id: string, patch: Partial<WorkoutExerciseInput>): Promise<WorkoutExercise>;
+  /** Borrado suave (RF-F16): el ejercicio y sus series dejan de verse pero no se pierden. */
   removeExercise(id: string): Promise<void>;
-  /** Nombres de ejercicio usados antes por la persona (RF-F4). */
+  /** Deshace `removeExercise` (RF-F6). */
+  restoreExercise(id: string): Promise<void>;
+  /**
+   * Guarda series completas con sus segmentos: `upsert` por id, así reenviar tras un
+   * cierre no duplica (RF-F17, RF-F18). Los segmentos de esas series que ya no vienen se
+   * borran (suave): es como se quita un drop.
+   */
+  saveSets(sets: readonly WorkoutSet[]): Promise<void>;
+  /** Borrado suave de series. */
+  removeSets(ids: readonly string[]): Promise<void>;
+  /** Ejercicios con texto de v1 sin convertir todavía (RF-F62). */
+  listLegacyExercises(userId: string): Promise<LegacyExercise[]>;
+  /** Marca ejercicios como convertidos; así no se vuelven a convertir (RF-F62). */
+  markLegacyConverted(exerciseIds: readonly string[]): Promise<void>;
+  /** Nombres de ejercicio usados antes por la persona, del más usado al menos (RF-F4). */
   exerciseNames(userId: string): Promise<string[]>;
   /** Duplica en una actividad futura o como entrenamiento libre (RF-F8). */
   duplicate(userId: string, workoutId: string, target: { activityId: string | null; performedAt: string; keepValues: boolean }): Promise<WorkoutDetail>;
@@ -196,7 +218,8 @@ export type ListDetail = {
   items: ListItem[];
 };
 
-export interface ListsApi {
+/** Lo básico de Lists; `ListsApi` lo junta con compartir, etiquetas y vueltas. */
+export interface ListsCoreApi {
   /** Listas activas de quien mira, fijadas primero (RF-L1, RF-L3). */
   list(userId: string): Promise<KaviList[]>;
   /** Archivadas, que viven fuera del inicio (RF-L2). */
@@ -296,7 +319,7 @@ export interface ListRunsApi {
   listRunsByDateRange(userId: string, fromDate: string, toDate: string): Promise<ListRun[]>;
 }
 
-export interface ListsApi extends ListSharesApi, ListTagsApi, ListRunsApi {}
+export interface ListsApi extends ListsCoreApi, ListSharesApi, ListTagsApi, ListRunsApi {}
 
 export type ListSearchResults = {
   lists: KaviList[];

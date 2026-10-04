@@ -213,10 +213,23 @@ export type Workout = {
   duration_minutes: number | null;
   notes: string | null;
   created_at: string;
+  /** Spec 07 v2 · RF-F11. Las sesiones de v1 son `completed`. */
+  status: WorkoutStatus;
+  ended_at: string | null;
+  /** Peso corporal del día, para el volumen de ejercicios de peso corporal (RF-F36). */
+  bodyweight_kg: number | null;
+  energy: number | null;
+  pump: number | null;
+  tags: string[];
+  updated_at: string;
+  /** Se marca al editar una sesión ya terminada (RF-F42). */
+  edited_at: string | null;
   /** Título de la actividad ligada, si existe (RF-F7). */
   activity_title?: string | null;
   exercise_count?: number;
 };
+
+export type WorkoutStatus = 'active' | 'completed' | 'discarded';
 
 export type WorkoutExercise = {
   id: string;
@@ -228,13 +241,166 @@ export type WorkoutExercise = {
   weight: string | null;
   duration_minutes: number | null;
   notes: string | null;
+  /** Ejercicio del catálogo (RF-F13). `null` = solo nombre libre, como en v1. */
+  exercise_id?: string | null;
+  group_id?: string | null;
+  /** Posición dentro del grupo: 1 = A1, 2 = A2… */
+  group_position?: number | null;
+  protocol?: string | null;
+  protocol_config?: Record<string, unknown> | null;
+  rest_target_sec?: number | null;
+  /** Cuándo se convirtió el texto libre de v1 en series (RF-F62). */
+  legacy_converted_at?: string | null;
 };
+
+/** Un ejercicio de la sesión con sus series (RF-F13, RF-F14). */
+export type WorkoutExerciseDetail = WorkoutExercise & { workout_sets: WorkoutSet[] };
 
 export type WorkoutInput = {
   activity_id?: string | null;
   title?: string | null;
   performed_at: string;
   notes?: string | null;
+  status?: WorkoutStatus;
+  ended_at?: string | null;
+  bodyweight_kg?: number | null;
+  energy?: number | null;
+  pump?: number | null;
+  tags?: string[];
+  edited_at?: string | null;
+};
+
+// ── Gym tracker v2 (spec 07 v2) ────────────────────────────────────────────────────
+
+/** RF-F43 · Uno por serie. */
+export type SetType =
+  | 'warmup' | 'feeder' | 'working' | 'top_set' | 'backoff'
+  | 'failure' | 'amrap' | 'technique' | 'max_test';
+
+/** RF-F15 · Qué parte de la serie es un segmento. */
+export type SegmentKind =
+  | 'main' | 'drop' | 'rest_pause' | 'myo_activation' | 'myo_mini' | 'cluster'
+  | 'forced' | 'negative' | 'partials' | 'iso_hold' | 'loaded_stretch'
+  | 'twenty_ones_bottom' | 'twenty_ones_top' | 'twenty_ones_full' | 'bfr';
+
+/** RF-F21 · Qué se mide en un ejercicio. Decide qué campos pide la fila y cómo se suma el volumen. */
+export type TrackingType =
+  | 'weight_reps' | 'bodyweight_reps' | 'weighted_bodyweight' | 'assisted_bodyweight'
+  | 'reps_only' | 'duration' | 'weight_duration' | 'distance_duration' | 'weight_distance';
+
+export type WeightUnit = 'kg' | 'lb';
+
+/** RF-F45 */
+export type ExerciseGroupType =
+  | 'superset' | 'compound_set' | 'tri_set' | 'giant_set' | 'circuit'
+  | 'pre_exhaust' | 'post_exhaust' | 'contrast' | 'paired_sets';
+
+/** Ejercicio del catálogo: del sistema (`created_by` null) o personalizado (RF-F20, RF-F24). */
+export type Exercise = {
+  id: string;
+  slug: string;
+  name_es: string;
+  name_en: string | null;
+  aliases: string[];
+  family: string | null;
+  primary_muscles: string[];
+  secondary_muscles: string[];
+  equipment: string[];
+  movement_pattern: string | null;
+  mechanic: 'compound' | 'isolation' | null;
+  laterality: 'bilateral' | 'unilateral' | 'alternating' | null;
+  tracking_type: TrackingType;
+  created_by: string | null;
+  archived_at: string | null;
+};
+
+/** Lo planeado para una serie (objetivo de un protocolo o de la sesión duplicada). */
+export type SetTarget = {
+  reps_min?: number;
+  reps_max?: number;
+  weight_kg?: number;
+  rir?: number;
+  rpe?: number;
+  duration_sec?: number;
+};
+
+/** Modificadores de carga (RF-F47). */
+export type LoadMods = {
+  added_kg?: number;
+  assistance_kg?: number;
+  bands?: string;
+  chains_kg?: number;
+  deficit_cm?: number;
+  pin_height?: string;
+};
+
+/**
+ * Un tramo de la serie (RF-F15). Una serie normal es un `main`; un drop set triple, una
+ * serie con cuatro segmentos. El peso va siempre en kg; `input_unit` recuerda cómo se
+ * escribió para mostrarlo igual.
+ */
+export type SetSegment = {
+  id: string;
+  set_id: string;
+  sort_order: number;
+  kind: SegmentKind;
+  weight_kg: number | null;
+  input_unit: WeightUnit;
+  reps: number | null;
+  reps_left: number | null;
+  reps_right: number | null;
+  partial_reps: number | null;
+  forced_reps: number | null;
+  cheat_reps: number | null;
+  duration_sec: number | null;
+  distance_m: number | null;
+  rest_before_sec: number | null;
+  variant_exercise_id: string | null;
+  notes: string | null;
+};
+
+/** Una serie con sus segmentos (RF-F14). */
+export type WorkoutSet = {
+  id: string;
+  workout_exercise_id: string;
+  sort_order: number;
+  set_type: SetType;
+  intensifiers: string[];
+  target: SetTarget | null;
+  rpe: number | null;
+  rir: number | null;
+  failure: 'technical' | 'muscular' | 'absolute' | null;
+  tempo: string | null;
+  rom: 'full' | 'partial' | 'lengthened' | 'shortened' | null;
+  side: 'both' | 'left' | 'right' | 'alternating' | null;
+  load_mods: LoadMods | null;
+  gear: string[];
+  spotter: boolean;
+  rest_after_sec: number | null;
+  /** `null` = pendiente. */
+  completed_at: string | null;
+  notes: string | null;
+  tags: string[];
+  /** Creada por la conversión del texto de v1 (RF-F62). */
+  from_legacy: boolean;
+  segments: SetSegment[];
+};
+
+export type ExerciseGroup = {
+  id: string;
+  workout_id: string;
+  type: ExerciseGroupType;
+  rounds: number | null;
+  rest_after_round_sec: number | null;
+};
+
+/** Decisión sobre una semana sin entreno (RF-F58). */
+export type StreakEvent = {
+  id: string;
+  week_start: string;
+  decision: 'kept' | 'reset';
+  note: string | null;
+  reasons: string[];
 };
 
 export type WorkoutExerciseInput = Omit<WorkoutExercise, 'id' | 'workout_id' | 'position'> & { position?: number };

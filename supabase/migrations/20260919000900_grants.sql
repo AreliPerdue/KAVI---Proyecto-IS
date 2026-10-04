@@ -19,5 +19,5 @@ revoke execute on function public.is_admin(uuid) from anon;
 revoke execute on function public.admin_stats() from anon;
 revoke execute on function public.admin_accounts(int, int) from anon;
 
--- T195 · Lists. `can_edit_list` decide permisos, así que sin sesión no tiene nada que decir.
-revoke execute on function public.can_edit_list(uuid) from anon;
+-- (T195 añadía aquí el revoke de `can_edit_list`, pero esa función nace en la migración de
+-- Lists, posterior a esta, y un `db reset` desde cero fallaba. Se movió a gym_v2.)

@@ -200,14 +200,88 @@ describe('eliminar', () => {
     expect((await workouts.list(USER)).map((w) => w.id)).not.toContain(created.id);
   });
 
-  it('arrastra sus ejercicios', async () => {
+  it('es suave: deja de verse en el historial y en el detalle (RF-F16)', async () => {
     const workouts = fresh();
     const w = await workouts.create(USER, input());
-    const ex = await workouts.addExercise(w.id, { name: 'Curl', sets: null, reps: null, weight: null, duration_minutes: null, notes: null });
+    await workouts.addExercise(w.id, { name: 'Curl', sets: null, reps: null, weight: null, duration_minutes: null, notes: null });
 
     await workouts.remove(w.id);
 
-    // El ejercicio ya no puede editarse: se fue con su entrenamiento.
-    await expect(workouts.updateExercise(ex.id, { sets: 1 })).rejects.toThrow(/ya no existe/i);
+    expect((await workouts.list(USER)).some((x) => x.id === w.id)).toBe(false);
+    await expect(workouts.getById(w.id)).rejects.toThrow(/ya no existe/i);
+  });
+
+  it('suelta la actividad para que pueda registrar otro entrenamiento', async () => {
+    const workouts = fresh();
+    const w = await workouts.create(USER, input({ activity_id: 'act-1' }));
+    await workouts.remove(w.id);
+    await expect(workouts.create(USER, input({ activity_id: 'act-1' }))).resolves.toBeDefined();
+  });
+});
+
+describe('gym v2 en el demo (mismo contrato que Supabase)', () => {
+  const segmento = (id: string, setId: string, over = {}) => ({
+    id, set_id: setId, sort_order: 0, kind: 'main' as const, weight_kg: 100, input_unit: 'kg' as const, reps: 8,
+    reps_left: null, reps_right: null, partial_reps: null, forced_reps: null, cheat_reps: null, duration_sec: null,
+    distance_m: null, rest_before_sec: null, variant_exercise_id: null, notes: null, ...over,
+  });
+  const serie = (id: string, exId: string, segments: ReturnType<typeof segmento>[], over = {}) => ({
+    id, workout_exercise_id: exId, sort_order: 1, set_type: 'working' as const, intensifiers: [], target: null,
+    rpe: null, rir: null, failure: null, tempo: null, rom: null, side: null, load_mods: null, gear: [], spotter: false,
+    rest_after_sec: null, completed_at: null, notes: null, tags: [], from_legacy: false, segments, ...over,
+  });
+
+  it('un drop set triple se guarda como una serie con cuatro segmentos', async () => {
+    const workouts = fresh();
+    const w = await workouts.create(USER, input());
+    const ex = await workouts.addExercise(w.id, { name: 'Press', sets: null, reps: null, weight: null, duration_minutes: null, notes: null });
+    await workouts.saveSets([serie('s1', ex.id, [
+      segmento('g1', 's1'), segmento('g2', 's1', { kind: 'drop', sort_order: 1, weight_kg: 80 }),
+      segmento('g3', 's1', { kind: 'drop', sort_order: 2, weight_kg: 60 }), segmento('g4', 's1', { kind: 'drop', sort_order: 3, weight_kg: 40 }),
+    ])]);
+    const d = await workouts.getById(w.id);
+    expect(d.exercises[0].workout_sets).toHaveLength(1);
+    expect(d.exercises[0].workout_sets[0].segments.map((g) => g.weight_kg)).toEqual([100, 80, 60, 40]);
+  });
+
+  it('guardar dos veces la misma serie no la duplica, y quitar un drop lo borra', async () => {
+    const workouts = fresh();
+    const w = await workouts.create(USER, input());
+    const ex = await workouts.addExercise(w.id, { name: 'Press', sets: null, reps: null, weight: null, duration_minutes: null, notes: null });
+    await workouts.saveSets([serie('s1', ex.id, [segmento('g1', 's1'), segmento('g2', 's1', { kind: 'drop', sort_order: 1 })])]);
+    await workouts.saveSets([serie('s1', ex.id, [segmento('g1', 's1')], { rir: 1 })]);
+    const s = (await workouts.getById(w.id)).exercises[0].workout_sets;
+    expect(s).toHaveLength(1);
+    expect(s[0].rir).toBe(1);
+    expect(s[0].segments.map((g) => g.id)).toEqual(['g1']);
+  });
+
+  it('borrar series y restaurar ejercicios', async () => {
+    const workouts = fresh();
+    const w = await workouts.create(USER, input());
+    const ex = await workouts.addExercise(w.id, { name: 'Press', sets: null, reps: null, weight: null, duration_minutes: null, notes: null });
+    await workouts.saveSets([serie('s1', ex.id, [segmento('g1', 's1')])]);
+    await workouts.removeExercise(ex.id);
+    expect((await workouts.getById(w.id)).exercises).toHaveLength(0);
+    await workouts.restoreExercise(ex.id);
+    expect((await workouts.getById(w.id)).exercises[0].workout_sets).toHaveLength(1);
+    await workouts.removeSets(['s1']);
+    expect((await workouts.getById(w.id)).exercises[0].workout_sets).toHaveLength(0);
+  });
+
+  it('la conversión de v1 ve el texto sin convertir y deja de verlo al marcarlo', async () => {
+    const workouts = fresh();
+    const pendientes = await workouts.listLegacyExercises(USER);
+    expect(pendientes.map((e) => e.name)).toEqual(expect.arrayContaining(['Sentadilla', 'Prensa']));
+    expect(pendientes.every((e) => e.performed_at)).toBe(true);
+    await workouts.markLegacyConverted(pendientes.map((e) => e.id));
+    expect(await workouts.listLegacyExercises(USER)).toHaveLength(0);
+  });
+
+  it('duplicar copia el nombre de la sesión', async () => {
+    const workouts = fresh();
+    const w = await workouts.create(USER, input({ title: 'Empuje A' }));
+    const copia = await workouts.duplicate(USER, w.id, { activityId: null, performedAt: new Date().toISOString(), keepValues: false });
+    expect(copia.title).toBe('Empuje A');
   });
 });
