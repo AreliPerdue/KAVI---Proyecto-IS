@@ -65,8 +65,12 @@ function aEjercicio(row: EjercicioRow): WorkoutExerciseDetail {
   };
 }
 
-/** RF-F3 · La duración total se suma de los ejercicios; no hay columna que la guarde. */
-function totalMinutes(exercises: { duration_minutes: number | null }[]): number | null {
+/**
+ * Duración de la sesión. Con hora de fin (v2) es de que empezó a que terminó; sin ella
+ * (sesiones de v1), la suma de lo que se anotó en cada ejercicio (RF-F3).
+ */
+function totalMinutes(exercises: { duration_minutes: number | null }[], performedAt?: string, endedAt?: string | null): number | null {
+  if (performedAt && endedAt) return Math.max(1, Math.round((new Date(endedAt).getTime() - new Date(performedAt).getTime()) / 60_000));
   const total = exercises.reduce((sum, e) => sum + (e.duration_minutes ?? 0), 0);
   return total > 0 ? total : null;
 }
@@ -78,7 +82,7 @@ function aSesion(row: SesionRow): Workout {
     ...workout,
     activity_title: activity?.title ?? null,
     exercise_count: vivos.length,
-    duration_minutes: totalMinutes(vivos),
+    duration_minutes: totalMinutes(vivos, workout.performed_at, workout.ended_at),
   };
 }
 

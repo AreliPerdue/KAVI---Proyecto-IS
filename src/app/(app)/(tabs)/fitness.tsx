@@ -68,6 +68,7 @@ export default function FitnessScreen() {
             {formatShortDate(fromIso(item.performed_at))} · {formatTime(fromIso(item.performed_at))} · {item.exercise_count ?? 0}{' '}
             {item.exercise_count === 1 ? 'ejercicio' : 'ejercicios'}
             {item.duration_minutes ? ` · ${item.duration_minutes} min` : ''}
+            {item.edited_at ? ' · editado' : ''}
           </AppText>
         </View>
         <ChevronRight size={IconSize.inline} strokeWidth={IconStroke} color={theme.textTertiary} />

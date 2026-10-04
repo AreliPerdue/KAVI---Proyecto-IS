@@ -71,8 +71,13 @@ function find(id: string): StoredWorkout {
 
 const ejerciciosDe = (workoutId: string) => exercises.filter((e) => e.workout_id === workoutId && vivo(e));
 
-/** RF-F3 · La duración total se suma de los ejercicios; no se guarda. */
+/**
+ * Duración de la sesión: de inicio a fin si terminó (v2); si no, la suma de lo anotado en
+ * cada ejercicio, como en v1 (RF-F3). Igual que en Supabase.
+ */
 function totalMinutes(workoutId: string): number | null {
+  const w = workouts.find((x) => x.id === workoutId);
+  if (w?.ended_at) return Math.max(1, Math.round((new Date(w.ended_at).getTime() - new Date(w.performed_at).getTime()) / 60_000));
   const total = ejerciciosDe(workoutId).reduce((sum, e) => sum + (e.duration_minutes ?? 0), 0);
   return total > 0 ? total : null;
 }

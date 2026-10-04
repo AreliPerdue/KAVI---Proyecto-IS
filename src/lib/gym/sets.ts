@@ -231,3 +231,57 @@ export function sortOrderBetween(before: number | null, after: number | null): n
   if (after === null) return before + 1;
   return (before + after) / 2;
 }
+
+/**
+ * Partir una serie (RF-F39): cada tramo extra se vuelve su propia serie, justo después de
+ * la original. Sirve para corregir un drop que en realidad fueron series separadas. La
+ * primera conserva su id (y su historia); las nuevas heredan si estaba hecha.
+ */
+export function splitSet(set: WorkoutSet, nextSortOrderAfter: number | null): WorkoutSet[] {
+  if (set.segments.length <= 1) return [set];
+  const [primero, ...resto] = set.segments;
+  const original: WorkoutSet = {
+    ...set,
+    intensifiers: set.intensifiers.filter((k) => k !== 'drop_set' && k !== 'rest_pause'),
+    segments: [{ ...primero, sort_order: 0 }],
+  };
+  const tope = nextSortOrderAfter ?? set.sort_order + resto.length + 1;
+  const paso = (tope - set.sort_order) / (resto.length + 1);
+  const nuevas = resto.map((seg, i) => {
+    const id = uuidv4();
+    return {
+      ...original,
+      id,
+      sort_order: set.sort_order + paso * (i + 1),
+      notes: null,
+      from_legacy: false,
+      segments: [{ ...seg, id: uuidv4(), set_id: id, kind: 'main' as const, sort_order: 0, rest_before_sec: null }],
+    };
+  });
+  return [original, ...nuevas];
+}
+
+/**
+ * Unir dos series en una (RF-F39): los tramos de la segunda pasan a ser tramos de la
+ * primera, como drop o como rest-pause. La segunda se borra; quien llama se encarga.
+ */
+export function mergeSets(a: WorkoutSet, b: WorkoutSet, kind: 'drop' | 'rest_pause'): WorkoutSet {
+  const clave = kind === 'drop' ? 'drop_set' : 'rest_pause';
+  return {
+    ...a,
+    intensifiers: a.intensifiers.includes(clave) ? a.intensifiers : [...a.intensifiers, clave],
+    // Si cualquiera de las dos estaba hecha, la unida también: ya se hizo.
+    completed_at: a.completed_at ?? b.completed_at,
+    segments: [
+      ...a.segments,
+      ...b.segments.map((g, i) => ({
+        ...g,
+        id: uuidv4(),
+        set_id: a.id,
+        kind,
+        sort_order: a.segments.length + i,
+        rest_before_sec: kind === 'drop' ? 0 : g.rest_before_sec ?? 15,
+      })),
+    ],
+  };
+}

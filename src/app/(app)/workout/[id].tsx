@@ -1,7 +1,7 @@
 import { useQueries } from '@tanstack/react-query';
 import { addDays } from 'date-fns';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { ArrowDown, ArrowUp, CalendarDays, Copy, Pencil, Plus, Repeat2, Scale, Trash2, Wrench, X } from 'lucide-react-native';
+import { ArrowDown, ArrowUp, CalendarDays, Clock, Copy, Merge, Pencil, Plus, Redo2, Repeat2, Scale, Scissors, Timer, Trash2, Undo2, Wrench, X } from 'lucide-react-native';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
@@ -11,9 +11,10 @@ import { NumpadSheet, type NumpadField } from '@/components/fitness/numpad-sheet
 import { RestTimerBar } from '@/components/fitness/rest-timer-bar';
 import { ToolsSheet } from '@/components/fitness/tools-sheet';
 import { ModalHeader } from '@/components/modal-header';
-import { ActionRow, AppText, Banner, Button, Chip, DatePickerSheet, ErrorState, FieldButton, LoadingState, Screen, Sheet, SwitchRow, TextField } from '@/components/ui';
+import { ActionRow, AppText, Banner, Button, Chip, DatePickerSheet, ErrorState, FieldButton, IconButton, LoadingState, Screen, Sheet, SwitchRow, TextField, TimePickerSheet } from '@/components/ui';
 import { IconSize, IconStroke, Radius, Spacing } from '@/constants/theme';
 import { useActivitiesRange } from '@/hooks/use-activities-range';
+import { useEditHistory } from '@/hooks/use-edit-history';
 import { exerciseHistoryQuery, useLegacyConversion } from '@/hooks/use-exercise-history';
 import { useExercises } from '@/hooks/use-exercises';
 import { useSessionDetail, useSetActions } from '@/hooks/use-set-sync';
@@ -29,12 +30,14 @@ import {
   addMiniSet,
   columnsFor,
   duplicateSet,
+  mergeSets,
   newSet,
   nextSortOrder,
   removeSegment,
   segmentFieldValue,
   setSegmentField,
   sortOrderBetween,
+  splitSet,
   type SegmentField,
 } from '@/lib/gym/sets';
 import type { WarmupStep } from '@/lib/gym/tools';
@@ -86,7 +89,7 @@ export default function WorkoutScreen() {
   const { id, mode } = useLocalSearchParams<{ id: string; mode?: 'view' | 'edit' }>();
   useLegacyConversion();
   const sesion = useSessionDetail(id);
-  const { saveSet, removeSet } = useSetActions(id);
+  const { saveSet: enviarSerie, removeSet: retirarSerie } = useSetActions(id);
   const mutations = useWorkoutMutations();
   const catalogo = useExercises();
   const unit = useGymStore((s) => s.weightUnit);
@@ -113,6 +116,9 @@ export default function WorkoutScreen() {
   const [selector, setSelector] = useState<{ modo: 'agregar' } | { modo: 'cambiar'; exercise: WorkoutExercise } | null>(null);
   const [herramientasDe, setHerramientasDe] = useState<WorkoutExerciseDetail | null>(null);
   const [resumenAbierto, setResumenAbierto] = useState(false);
+  const [horaAbierta, setHoraAbierta] = useState(false);
+  const [duracionAbierta, setDuracionAbierta] = useState(false);
+  const [duracion, setDuracion] = useState<number | null>(null);
   /** Reloj de la sesión en curso: se lee aquí y se refresca cada 30 s, no en cada render. */
   const [ahora, setAhora] = useState(() => Date.now());
 
@@ -128,6 +134,45 @@ export default function WorkoutScreen() {
   const data = sesion.data;
   const ejercicios = useMemo(() => data?.exercises ?? [], [data]);
   const porId = useMemo(() => new Map((catalogo.data ?? []).map((e) => [e.id, e])), [catalogo.data]);
+
+  // ── Edición con deshacer (RF-F40) ────────────────────────────────────────────────────
+  const historia = useEditHistory();
+  const { record: registrar } = historia;
+  const seriePorId = useMemo(() => new Map(ejercicios.flatMap((e) => e.workout_sets).map((s) => [s.id, s])), [ejercicios]);
+  const yaEditada = useRef(false);
+  const estado = data?.status;
+  const updateWorkout = mutations.update.mutate;
+
+  /**
+   * Tocar una sesión ya terminada la marca como editada (RF-F42), una vez por visita. En
+   * vivo no: registrar una serie no es "editar".
+   */
+  const marcarSesionEditada = useCallback(() => {
+    if (estado === 'active' || yaEditada.current) return;
+    yaEditada.current = true;
+    updateWorkout({ id, patch: { edited_at: new Date().toISOString() } });
+  }, [estado, updateWorkout, id]);
+
+  /** Guarda una serie recordando cómo estaba, para poder deshacerlo. */
+  const guardar = useCallback(
+    (set: WorkoutSet) => {
+      const previa = seriePorId.get(set.id) ?? null;
+      enviarSerie(set);
+      marcarSesionEditada();
+      registrar({ undo: () => (previa ? enviarSerie(previa) : retirarSerie(set.id)), redo: () => enviarSerie(set) });
+    },
+    [seriePorId, enviarSerie, retirarSerie, marcarSesionEditada, registrar],
+  );
+
+  const quitar = useCallback(
+    (setId: string) => {
+      const previa = seriePorId.get(setId);
+      retirarSerie(setId);
+      marcarSesionEditada();
+      if (previa) registrar({ undo: () => enviarSerie(previa), redo: () => retirarSerie(setId) });
+    },
+    [seriePorId, enviarSerie, retirarSerie, marcarSesionEditada, registrar],
+  );
 
   // El historial de todos los ejercicios de la sesión, en paralelo.
   const historiales = useQueries({
@@ -187,9 +232,9 @@ export default function WorkoutScreen() {
       if (!a?.historyLoaded || e.workout_sets.length > 0 || sembrados.current.has(e.id)) continue;
       if (hasLegacyText(e) && !e.legacy_converted_at) continue;
       sembrados.current.add(e.id);
-      saveSet(newSet(e.id, 1, a.previous[0] ?? null, unit));
+      enviarSerie(newSet(e.id, 1, a.previous[0] ?? null, unit));
     }
-  }, [editing, data, ejercicios, analisis, saveSet, unit]);
+  }, [editing, data, ejercicios, analisis, enviarSerie, unit]);
 
   const close = () => (router.canGoBack() ? router.back() : router.replace('/(app)/(tabs)/fitness'));
 
@@ -201,16 +246,16 @@ export default function WorkoutScreen() {
     (exercise: WorkoutExerciseDetail) => {
       const ultima = exercise.workout_sets[exercise.workout_sets.length - 1] ?? null;
       const desde = ultima ?? analisis.get(exercise.id)?.previous[exercise.workout_sets.length] ?? null;
-      saveSet(newSet(exercise.id, nextSortOrder(exercise.workout_sets), desde, unit));
+      guardar(newSet(exercise.id, nextSortOrder(exercise.workout_sets), desde, unit));
     },
-    [analisis, saveSet, unit],
+    [analisis, guardar, unit],
   );
 
   const alternar = useCallback(
     (exercise: WorkoutExerciseDetail, set: WorkoutSet) => {
       const hecha = !set.completed_at;
       tap();
-      saveSet({ ...set, completed_at: hecha ? new Date().toISOString() : null });
+      guardar({ ...set, completed_at: hecha ? new Date().toISOString() : null });
       if (hecha && data?.status === 'active') {
         const indice = exercise.workout_sets.findIndex((s) => s.id === set.id);
         const siguiente = exercise.workout_sets[indice + 1];
@@ -218,7 +263,7 @@ export default function WorkoutScreen() {
         startRest(id, exercise.rest_target_sec ?? restDefault, etiqueta);
       }
     },
-    [saveSet, data?.status, startRest, id, restDefault],
+    [guardar, data?.status, startRest, id, restDefault],
   );
 
   const copiarAnterior = useCallback(
@@ -226,7 +271,7 @@ export default function WorkoutScreen() {
       tap();
       const fuente = previa.segments[0];
       if (!fuente) return;
-      saveSet({
+      guardar({
         ...set,
         segments: set.segments.map((g, i) =>
           i === 0
@@ -235,28 +280,35 @@ export default function WorkoutScreen() {
         ),
       });
     },
-    [saveSet],
+    [guardar],
   );
 
   const duplicar = useCallback(
     (exercise: WorkoutExerciseDetail, set: WorkoutSet) => {
       const i = exercise.workout_sets.findIndex((s) => s.id === set.id);
       const siguiente = exercise.workout_sets[i + 1]?.sort_order ?? null;
-      saveSet(duplicateSet(set, sortOrderBetween(set.sort_order, siguiente)));
+      guardar(duplicateSet(set, sortOrderBetween(set.sort_order, siguiente)));
     },
-    [saveSet],
+    [guardar],
   );
 
   const borrarSerie = useCallback(
     (_exercise: WorkoutExerciseDetail, set: WorkoutSet) => {
-      removeSet(set.id);
+      quitar(set.id);
       // El borrado es suave: deshacer es volver a guardar la misma serie (RF-F33).
-      showSnackbar({ message: 'Serie borrada.', actionLabel: 'Deshacer', onAction: () => saveSet(set) });
+      showSnackbar({ message: 'Serie borrada.', actionLabel: 'Deshacer', onAction: () => guardar(set) });
     },
-    [removeSet, saveSet, showSnackbar],
+    [quitar, guardar, showSnackbar],
   );
 
-  const quitarSegmento = useCallback((set: WorkoutSet, i: number) => saveSet(removeSegment(set, i)), [saveSet]);
+  /** Unir dos series en una: la segunda pasa a ser tramo de la primera (RF-F39). */
+  const unir = (a: WorkoutSet, b: WorkoutSet, kind: 'drop' | 'rest_pause') =>
+    historia.batch(() => {
+      guardar(mergeSets(a, b, kind));
+      quitar(b.id);
+    });
+
+  const quitarSegmento = useCallback((set: WorkoutSet, i: number) => guardar(removeSegment(set, i)), [guardar]);
 
   const abrirTeclado = useCallback(
     (target: EditTarget) => {
@@ -267,14 +319,14 @@ export default function WorkoutScreen() {
   );
 
   const cerrarTeclado = () => {
-    if (teclado) saveSet(teclado.draft);
+    if (teclado) guardar(teclado.draft);
     setTeclado(null);
   };
 
   /** Peso → reps → esfuerzo, y luego se cierra (RF-F28). */
   const siguienteCampo = () => {
     if (!teclado) return;
-    saveSet(teclado.draft);
+    guardar(teclado.draft);
     const ex = ejercicioDe(teclado.draft);
     const orden: (SegmentField | 'effort')[] = [...(analisis.get(ex?.id ?? '')?.columns ?? []), 'effort'];
     const i = orden.indexOf(teclado.target.field);
@@ -345,11 +397,11 @@ export default function WorkoutScreen() {
 
   const agregarCalentamiento = (exercise: WorkoutExerciseDetail, pasos: WarmupStep[]) => {
     const primera = exercise.workout_sets[0]?.sort_order ?? 1;
-    pasos.forEach((p, i) => {
+    historia.batch(() => pasos.forEach((p, i) => {
       let s: WorkoutSet = { ...newSet(exercise.id, primera - (pasos.length - i), null, unit), set_type: 'warmup' };
       s = setSegmentField(setSegmentField(s, 0, 'weight_kg', p.weight, unit), 0, 'reps', p.reps, unit);
-      saveSet(s);
-    });
+      guardar(s);
+    }));
     setHerramientasDe(null);
   };
 
@@ -408,12 +460,17 @@ export default function WorkoutScreen() {
   }
 
   const enCurso = data.status === 'active';
+  const siguienteDeMenu = menuSerie
+    ? menuSerie.exercise.workout_sets[menuSerie.exercise.workout_sets.findIndex((s) => s.id === menuSerie.set.id) + 1] ?? null
+    : null;
   const notesValue = notes ?? data.notes ?? '';
   const titleValue = title ?? data.title ?? '';
   const encabezado = data.title || data.activity_title || 'Entrenamiento libre';
   const minutos = enCurso ? Math.max(0, Math.round((ahora - fromIso(data.performed_at).getTime()) / 60_000)) : null;
   /** Editar una sesión ya terminada la marca como editada (RF-F42); en vivo, no. */
   const marcarEditado = () => (enCurso ? {} : { edited_at: new Date().toISOString() });
+  /** Duración de una sesión terminada: de que empezó a que se marcó terminada. */
+  const duracionMin = data.ended_at ? Math.max(1, Math.round((fromIso(data.ended_at).getTime() - fromIso(data.performed_at).getTime()) / 60_000)) : null;
 
   return (
     <View style={styles.raiz}>
@@ -421,7 +478,16 @@ export default function WorkoutScreen() {
         <ModalHeader
           title={enCurso ? 'Sesión en curso' : 'Entrenamiento'}
           right={
-            editing ? null : (
+            editing ? (
+              <View style={styles.historia}>
+                <IconButton label="Deshacer" onPress={historia.undo} disabled={!historia.canUndo}>
+                  <Undo2 size={IconSize.action} strokeWidth={IconStroke} color={historia.canUndo ? theme.text : theme.textTertiary} />
+                </IconButton>
+                <IconButton label="Rehacer" onPress={historia.redo} disabled={!historia.canRedo}>
+                  <Redo2 size={IconSize.action} strokeWidth={IconStroke} color={historia.canRedo ? theme.text : theme.textTertiary} />
+                </IconButton>
+              </View>
+            ) : (
               <Button title="Editar" variant="ghost" icon={<Pencil size={IconSize.inline} strokeWidth={IconStroke} color={theme.text} />} onPress={() => setEditing(true)} />
             )
           }
@@ -473,6 +539,30 @@ export default function WorkoutScreen() {
                     setPesoCorporalAbierto(true);
                   }}
                   leading={<Scale size={IconSize.inline} strokeWidth={IconStroke} color={theme.textSecondary} />}
+                />
+              </View>
+            </View>
+          ) : null}
+          {editing && !enCurso ? (
+            <View style={styles.camposFila}>
+              <View style={styles.flex}>
+                <FieldButton
+                  label="Hora"
+                  value={formatTime(fromIso(data.performed_at))}
+                  onPress={() => setHoraAbierta(true)}
+                  leading={<Clock size={IconSize.inline} strokeWidth={IconStroke} color={theme.textSecondary} />}
+                />
+              </View>
+              <View style={styles.flex}>
+                <FieldButton
+                  label="Duración"
+                  value={duracionMin !== null ? `${duracionMin} min` : null}
+                  placeholder="Sin registrar"
+                  onPress={() => {
+                    setDuracion(duracionMin);
+                    setDuracionAbierta(true);
+                  }}
+                  leading={<Timer size={IconSize.inline} strokeWidth={IconStroke} color={theme.textSecondary} />}
                 />
               </View>
             </View>
@@ -554,6 +644,35 @@ export default function WorkoutScreen() {
 
       <NumpadSheet visible={teclado !== null} field={campoTeclado} onChange={cambiarValor} onClose={cerrarTeclado} onNext={siguienteCampo} />
 
+      <TimePickerSheet
+        visible={horaAbierta}
+        value={fromIso(data.performed_at).getHours() * 60 + fromIso(data.performed_at).getMinutes()}
+        title="Hora de inicio"
+        onClose={() => setHoraAbierta(false)}
+        onSelect={(minutos) => {
+          // Cambiar la hora mueve la sesión entera: la duración se conserva.
+          const inicio = fromIso(data.performed_at);
+          const nuevo = new Date(inicio);
+          nuevo.setHours(Math.floor(minutos / 60), minutos % 60, 0, 0);
+          const corrimiento = nuevo.getTime() - inicio.getTime();
+          const fin = data.ended_at ? toIso(new Date(fromIso(data.ended_at).getTime() + corrimiento)) : null;
+          updateWorkout({ id: data.id, patch: { performed_at: toIso(nuevo), ended_at: fin, ...marcarEditado() } });
+          setHoraAbierta(false);
+        }}
+      />
+
+      <NumpadSheet
+        visible={duracionAbierta}
+        field={{ title: 'Duración de la sesión', value: duracion, step: 5, decimals: false, suffix: 'min', min: 1, max: 600 }}
+        onChange={setDuracion}
+        onClose={() => {
+          setDuracionAbierta(false);
+          if (duracion === duracionMin) return;
+          const fin = duracion ? toIso(new Date(fromIso(data.performed_at).getTime() + duracion * 60_000)) : null;
+          updateWorkout({ id: data.id, patch: { ended_at: fin, ...marcarEditado() } });
+        }}
+      />
+
       <NumpadSheet
         visible={pesoCorporalAbierto}
         field={{ title: 'Peso corporal de hoy', value: pesoCorporal, step: unit === 'kg' ? 0.5 : 1, decimals: true, suffix: unit, min: 0, max: 400 }}
@@ -578,7 +697,7 @@ export default function WorkoutScreen() {
                   label={t.label}
                   selected={menuSerie.set.set_type === t.value}
                   onPress={() => {
-                    saveSet({ ...menuSerie.set, set_type: t.value });
+                    guardar({ ...menuSerie.set, set_type: t.value });
                     setMenuSerie(null);
                   }}
                 />
@@ -588,7 +707,7 @@ export default function WorkoutScreen() {
               icon={<Plus size={IconSize.action} strokeWidth={IconStroke} color={theme.text} />}
               label={`+ Drop (−${dropPercent} %)`}
               onPress={() => {
-                saveSet(addDrop(menuSerie.set, dropPercent));
+                guardar(addDrop(menuSerie.set, dropPercent));
                 setMenuSerie(null);
               }}
             />
@@ -596,7 +715,7 @@ export default function WorkoutScreen() {
               icon={<Repeat2 size={IconSize.action} strokeWidth={IconStroke} color={theme.text} />}
               label="+ Mini-serie (rest-pause)"
               onPress={() => {
-                saveSet(addMiniSet(menuSerie.set));
+                guardar(addMiniSet(menuSerie.set));
                 setMenuSerie(null);
               }}
             />
@@ -609,6 +728,63 @@ export default function WorkoutScreen() {
                 setTeclado({ target: { setId: set.id, segmentIndex: 0, field: 'partial_reps' }, draft: set });
               }}
             />
+            {menuSerie.set.segments.length > 1 ? (
+              <ActionRow
+                icon={<Scissors size={IconSize.action} strokeWidth={IconStroke} color={theme.text} />}
+                label="Separar en series"
+                onPress={() => {
+                  const sets = menuSerie.exercise.workout_sets;
+                  const i = sets.findIndex((s) => s.id === menuSerie.set.id);
+                  const partes = splitSet(menuSerie.set, sets[i + 1]?.sort_order ?? null);
+                  historia.batch(() => partes.forEach(guardar));
+                  setMenuSerie(null);
+                }}
+              />
+            ) : null}
+            {siguienteDeMenu ? (
+              <>
+                <ActionRow
+                  icon={<Merge size={IconSize.action} strokeWidth={IconStroke} color={theme.text} />}
+                  label="Unir con la siguiente como drop"
+                  onPress={() => {
+                    unir(menuSerie.set, siguienteDeMenu, 'drop');
+                    setMenuSerie(null);
+                  }}
+                />
+                <ActionRow
+                  icon={<Merge size={IconSize.action} strokeWidth={IconStroke} color={theme.text} />}
+                  label="Unir con la siguiente como rest-pause"
+                  onPress={() => {
+                    unir(menuSerie.set, siguienteDeMenu, 'rest_pause');
+                    setMenuSerie(null);
+                  }}
+                />
+              </>
+            ) : null}
+            {ejercicios.length > 1 ? (
+              <>
+                <AppText variant="label" color="textSecondary">
+                  Mover a
+                </AppText>
+                <View style={styles.chips}>
+                  {ejercicios
+                    .filter((e) => e.id !== menuSerie.exercise.id)
+                    .map((destino) => (
+                      <Chip
+                        key={destino.id}
+                        compact
+                        label={destino.name}
+                        selected={false}
+                        onPress={() => {
+                          // La serie conserva todo; solo cambia de ejercicio y va al final.
+                          guardar({ ...menuSerie.set, workout_exercise_id: destino.id, sort_order: nextSortOrder(destino.workout_sets) });
+                          setMenuSerie(null);
+                        }}
+                      />
+                    ))}
+                </View>
+              </>
+            ) : null}
             <ActionRow
               icon={<Copy size={IconSize.action} strokeWidth={IconStroke} color={theme.text} />}
               label="Duplicar"
@@ -623,7 +799,7 @@ export default function WorkoutScreen() {
               onPress={() => {
                 const sets = menuSerie.exercise.workout_sets;
                 const i = sets.findIndex((s) => s.id === menuSerie.set.id);
-                if (i > 0) saveSet({ ...menuSerie.set, sort_order: sortOrderBetween(sets[i - 2]?.sort_order ?? null, sets[i - 1].sort_order) });
+                if (i > 0) guardar({ ...menuSerie.set, sort_order: sortOrderBetween(sets[i - 2]?.sort_order ?? null, sets[i - 1].sort_order) });
                 setMenuSerie(null);
               }}
             />
@@ -633,7 +809,7 @@ export default function WorkoutScreen() {
               onPress={() => {
                 const sets = menuSerie.exercise.workout_sets;
                 const i = sets.findIndex((s) => s.id === menuSerie.set.id);
-                if (i < sets.length - 1) saveSet({ ...menuSerie.set, sort_order: sortOrderBetween(sets[i + 1].sort_order, sets[i + 2]?.sort_order ?? null) });
+                if (i < sets.length - 1) guardar({ ...menuSerie.set, sort_order: sortOrderBetween(sets[i + 1].sort_order, sets[i + 2]?.sort_order ?? null) });
                 setMenuSerie(null);
               }}
             />
@@ -864,6 +1040,7 @@ const styles = StyleSheet.create({
   divider: { height: StyleSheet.hairlineWidth, marginVertical: Spacing.xs },
   timer: { position: 'absolute', left: Spacing.lg, right: Spacing.lg, bottom: Spacing.xl },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.xs },
+  historia: { flexDirection: 'row' },
   resumen: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm },
   cifra: { flexBasis: '47%', flexGrow: 1, padding: Spacing.md, borderRadius: Radius.md, borderCurve: 'continuous', gap: 2 },
 });

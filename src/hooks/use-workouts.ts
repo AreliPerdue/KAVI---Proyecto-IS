@@ -74,6 +74,8 @@ export function useWorkoutMutations() {
         queryClient.setQueryData<WorkoutDetail>(workoutKeys.detail(guardado.workout_id), (previo) => {
           if (!previo) return previo;
           const exercises = previo.exercises.map((e) => (e.id === guardado.id ? { ...e, ...guardado } : e));
+          // Con hora de fin la duración no depende de los ejercicios (sesión de v2).
+          if (previo.ended_at) return { ...previo, exercises };
           const minutos = exercises.reduce((total, e) => total + (e.duration_minutes ?? 0), 0);
           return { ...previo, exercises, duration_minutes: minutos > 0 ? minutos : null };
         });

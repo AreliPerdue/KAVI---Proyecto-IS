@@ -308,3 +308,16 @@ descartar, lectura). Falta:
 - [ ] Ajustes de gimnasio en Perfil.
 - [ ] Manual en nativo (Android): swipe izquierda/derecha, vibración, notificación de fin de
   descanso con la pantalla bloqueada.
+
+## Fitness v2 · G4 edición (T244)
+Probado a mano en el demo (sesión "Pierna"): drop → separar → deshacer ×2 → rehacer → unir →
+mover a otro ejercicio → duración y hora → "editado" en encabezado e historial. Falta:
+- [ ] `splitSet` / `mergeSets`: ids nuevos, órdenes entre vecinos, intensificadores que se
+  quitan o se agregan, la unida queda hecha si cualquiera lo estaba.
+- [ ] `useEditHistory`: `batch` agrupa en un paso; deshacer en orden inverso; una acción nueva
+  borra lo que se podía rehacer; tope de 50 pasos.
+- [ ] `applyOutbox` con una serie movida a otro ejercicio: sale de uno y aparece en el otro.
+- [ ] La sesión se marca editada una sola vez por visita y nunca en una sesión en curso.
+- [ ] Duración: `ended_at − performed_at` en los dos backends; suma por ejercicio solo sin
+  `ended_at`; el caché de `updateExercise` no la pisa.
+- [ ] Cambiar la hora corre también `ended_at`.

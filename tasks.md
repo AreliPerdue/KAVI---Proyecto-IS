@@ -695,8 +695,15 @@ Plan y decisiones en `docs/gym/AUDITORIA.md`. Cada fase cierra con typecheck, li
   **Pendiente**: reordenar con arrastre (por ahora Subir/Bajar en los menús) y el borrador de
   RF-F9 en el formulario de actividad, que sigue con texto libre (la conversión lo convierte
   después). Dep: T242
-- [ ] T244 Edición de sesiones pasadas con la misma UI, deshacer/rehacer y recálculo (G4,
-  RF-F39 – RF-F42). Dep: T243
+- [x] T244 Edición de sesiones pasadas (G4, RF-F39 – RF-F42). La misma pantalla del logger:
+  deshacer y rehacer (las acciones de varias series, como unir o el calentamiento, son un solo
+  paso); separar un drop en series; unir una serie con la siguiente como drop o rest-pause;
+  mover una serie a otro ejercicio de la sesión; hora y duración editables en sesiones
+  terminadas (cambiar la hora mueve la sesión entera y conserva la duración). Tocar una
+  sesión terminada la marca "editado" una vez, y se ve en el encabezado y en el historial.
+  Los PRs se recalculan solos porque se derivan de los datos. La duración de una sesión de
+  v2 es de inicio a fin; la suma por ejercicio queda solo para las de v1. Agrupar y
+  desagrupar ejercicios llega con las agrupaciones (G5). Dep: T243
 - [ ] T245 Intensificadores, agrupaciones, protocolos y modificadores (G5, RF-F43 – RF-F48). Dep: T243
 - [ ] T246 Notas en todos los niveles y nota fija por ejercicio (G6, RF-F49 – RF-F53). Dep: T243
 - [ ] T247 Modo Gymrat: Modo serio, trato elegible, PRs, logros, Racha de Hierro en pausa,

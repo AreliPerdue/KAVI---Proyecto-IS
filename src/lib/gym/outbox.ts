@@ -70,7 +70,11 @@ export function applyOutbox<T extends ConSeries>(detail: T, entries: readonly Ou
   return {
     ...detail,
     exercises: detail.exercises.map((ex) => {
-      const existentes = ex.workout_sets.filter((s) => !borradas.has(s.id)).map((s) => guardadas.get(s.id) ?? s);
+      // Una serie movida a otro ejercicio (RF-F39) sale de este y aparece en aquel.
+      const existentes = ex.workout_sets
+        .filter((s) => !borradas.has(s.id))
+        .map((s) => guardadas.get(s.id) ?? s)
+        .filter((s) => s.workout_exercise_id === ex.id);
       const nuevas = [...guardadas.values()].filter((s) => s.workout_exercise_id === ex.id && !ex.workout_sets.some((x) => x.id === s.id));
       return { ...ex, workout_sets: [...existentes, ...nuevas].sort((a, b) => a.sort_order - b.sort_order) };
     }),
