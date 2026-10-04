@@ -337,3 +337,19 @@ timer corriendo. Falta:
 - [ ] Descanso en grupos: solo al terminar el último del grupo y con `rest_after_round_sec`.
 - [ ] `IntervalTimerSheet`: fases trabajo/descanso, rondas, fin; calcula desde el inicio.
 - [ ] `SetDetailsSheet`: lb ↔ kg en lastre/asistencia/cadenas; vacío no guarda `load_mods`.
+
+## Fitness v2 · G6 notas (T246)
+Probado a mano en el demo: energía 4, pump 3 y dos etiquetas en una sesión en curso; nota fija
+y nota de hoy en un ejercicio; nota con etiquetas en una serie; las tres se ven en el logger y
+en modo lectura; buscar "rodilla" y "lenta" encuentra la nota correcta y abre la sesión; un
+término sin coincidencias muestra el vacío. Falta:
+- [ ] `searchNotes` en los dos backends: los tres niveles, mínimo dos letras, sin borrados ni
+  descartados (sesión, ejercicio o serie), orden de lo más reciente a lo más viejo, y que `%`
+  y `_` se busquen literales en Supabase.
+- [ ] `update` de la sesión escribe el parche en el caché al momento: dos chips seguidos no se
+  pisan.
+- [ ] `saveStickyNote`: optimista en las preferencias; vacío guarda `null`; solo para
+  ejercicios del catálogo.
+- [ ] `NoteSheet`: guarda texto recortado (vacío → `null`) y etiquetas; cerrar sin guardar
+  descarta.
+- [ ] `Chip` seleccionado sin color usa `onInk` (antes: blanco sobre tinta clara en oscuro).

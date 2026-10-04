@@ -181,6 +181,18 @@ export type ExerciseHistoryEntry = {
   sets: WorkoutSet[];
 };
 
+/** Una nota encontrada al buscar en el historial (RF-F53). */
+export type NoteHit = {
+  workout_id: string;
+  performed_at: string;
+  /** Nombre de la sesión, si tiene. */
+  title: string | null;
+  where: 'session' | 'exercise' | 'set';
+  /** El ejercicio donde está la nota, si no es de la sesión. */
+  exercise_name: string | null;
+  text: string;
+};
+
 /** Cómo se identifica un ejercicio en el historial: por catálogo o, si no está ligado, por nombre. */
 export type ExerciseRef = { exerciseId: string | null; name: string };
 
@@ -226,6 +238,8 @@ export interface WorkoutsApi {
    * borradas ni descartadas. Incluye la sesión actual si la hay: quien llama la filtra.
    */
   exerciseHistory(userId: string, ref: ExerciseRef, limit?: number): Promise<ExerciseHistoryEntry[]>;
+  /** Busca en las notas de sesiones, ejercicios y series (RF-F53), de lo más reciente a lo más viejo. */
+  searchNotes(userId: string, term: string): Promise<NoteHit[]>;
   /** Nombres de ejercicio usados antes por la persona, del más usado al menos (RF-F4). */
   exerciseNames(userId: string): Promise<string[]>;
   /** Duplica en una actividad futura o como entrenamiento libre (RF-F8). */

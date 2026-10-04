@@ -9,6 +9,7 @@ import {
   getWorkoutByActivity,
   listExerciseNames,
   listWorkouts,
+  searchWorkoutNotes,
   removeExercise,
   removeWorkout,
   restoreExercise,
@@ -16,6 +17,7 @@ import {
   removeExerciseGroup,
   updateExercise,
   updateWorkout,
+  type NoteHit,
   type Workout,
   type WorkoutDetail,
   type WorkoutExerciseInput,
@@ -53,6 +55,18 @@ export function useExerciseNames() {
   return useQuery<string[]>({ queryKey: workoutKeys.names(userId), queryFn: () => listExerciseNames(userId as string), enabled: !!userId, staleTime: 60_000 });
 }
 
+/** Búsqueda de notas del historial (RF-F53); con menos de dos letras no consulta. */
+export function useNoteSearch(term: string) {
+  const { userId } = useAuth();
+  const limpio = term.trim();
+  return useQuery<NoteHit[]>({
+    queryKey: ['workouts', 'notes', userId, limpio],
+    queryFn: () => searchWorkoutNotes(userId as string, limpio),
+    enabled: !!userId && limpio.length >= 2,
+    placeholderData: (previo) => previo,
+  });
+}
+
 export function useWorkoutMutations() {
   const { userId } = useAuth();
   const queryClient = useQueryClient();
@@ -61,7 +75,18 @@ export function useWorkoutMutations() {
 
   return {
     create: useMutation({ mutationFn: (input: WorkoutInput) => createWorkout(uid(), input), onSuccess: invalidate }),
-    update: useMutation({ mutationFn: ({ id, patch }: { id: string; patch: Partial<WorkoutInput> }) => updateWorkout(id, patch), onSuccess: invalidate }),
+    update: useMutation({
+      mutationFn: ({ id, patch }: { id: string; patch: Partial<WorkoutInput> }) => updateWorkout(id, patch),
+      /*
+       * El encabezado se actualiza al momento: los chips de energía, pump y etiquetas
+       * (RF-F49) se tocan seguido, y esperar al servidor entre toque y toque haría que el
+       * segundo partiera de datos viejos y borrara el primero.
+       */
+      onMutate: ({ id, patch }) => {
+        queryClient.setQueryData<WorkoutDetail>(workoutKeys.detail(id), (previo) => (previo ? { ...previo, ...patch } : previo));
+      },
+      onSettled: invalidate,
+    }),
     remove: useMutation({ mutationFn: (id: string) => removeWorkout(id), onSuccess: invalidate }),
     addExercise: useMutation({ mutationFn: ({ workoutId, input }: { workoutId: string; input: WorkoutExerciseInput }) => addExercise(workoutId, input), onSuccess: invalidate }),
     updateExercise: useMutation({

@@ -3,7 +3,7 @@ import { uuidv4 } from '@/lib/gym/ids';
 import { hasLegacyText } from '@/lib/gym/legacy';
 import { ordenarPorUso } from '@/lib/gym/names';
 import { getSupabase } from '@/lib/supabase';
-import type { ExerciseHistoryEntry, LegacyExercise, WorkoutDetail, WorkoutsApi } from '@/services/contracts';
+import type { ExerciseHistoryEntry, LegacyExercise, NoteHit, WorkoutDetail, WorkoutsApi } from '@/services/contracts';
 import { toError, unwrap } from '@/services/supabase/errors';
 import type { ExerciseGroup, SetSegment, Workout, WorkoutExercise, WorkoutExerciseDetail, WorkoutSet } from '@/types/domain';
 
@@ -354,6 +354,53 @@ export const supabaseWorkouts: WorkoutsApi = {
         sets: (r.workout_sets ?? []).filter(vivo).sort((a, b) => Number(a.sort_order) - Number(b.sort_order)).map(aSerie),
       }))
       .sort((a, b) => b.performed_at.localeCompare(a.performed_at));
+  },
+
+  /**
+   * Búsqueda de notas (RF-F53). Tres consultas, una por nivel, porque cada nota vive en su
+   * tabla. Lo borrado o descartado se descarta en el cliente, igual que en el detalle.
+   */
+  async searchNotes(userId, term) {
+    const q = term.trim();
+    if (q.length < 2) return [];
+    const patron = `%${q.replace(/[\\%_]/g, (c) => `\\${c}`)}%`;
+    const db = getSupabase();
+    const [sesiones, ejercicios, series] = await Promise.all([
+      db.from('workouts').select('id, performed_at, title, notes, deleted_at, status').eq('owner_id', userId).ilike('notes', patron).limit(50),
+      db
+        .from('workout_exercises')
+        .select('name, notes, deleted_at, workout_id, workouts!inner(performed_at, title, deleted_at, status)')
+        .eq('owner_id', userId)
+        .ilike('notes', patron)
+        .limit(50),
+      db
+        .from('workout_sets')
+        .select('notes, deleted_at, workout_exercises!inner(name, deleted_at, workout_id, workouts!inner(performed_at, title, deleted_at, status))')
+        .eq('owner_id', userId)
+        .ilike('notes', patron)
+        .limit(50),
+    ]);
+    type Ses = { performed_at: string; title: string | null; deleted_at: string | null; status: string };
+    const sesionViva = (w: Ses) => !w.deleted_at && w.status !== 'discarded';
+    const hits: NoteHit[] = [
+      ...((unwrap(sesiones) as unknown as (Ses & { id: string; notes: string })[])
+        .filter(sesionViva)
+        .map((w): NoteHit => ({ workout_id: w.id, performed_at: w.performed_at, title: w.title, where: 'session', exercise_name: null, text: w.notes }))),
+      ...((unwrap(ejercicios) as unknown as { name: string; notes: string; deleted_at: string | null; workout_id: string; workouts: Ses }[])
+        .filter((e) => !e.deleted_at && sesionViva(e.workouts))
+        .map((e): NoteHit => ({ workout_id: e.workout_id, performed_at: e.workouts.performed_at, title: e.workouts.title, where: 'exercise', exercise_name: e.name, text: e.notes }))),
+      ...((unwrap(series) as unknown as { notes: string; deleted_at: string | null; workout_exercises: { name: string; deleted_at: string | null; workout_id: string; workouts: Ses } }[])
+        .filter((s) => !s.deleted_at && !s.workout_exercises.deleted_at && sesionViva(s.workout_exercises.workouts))
+        .map((s): NoteHit => ({
+          workout_id: s.workout_exercises.workout_id,
+          performed_at: s.workout_exercises.workouts.performed_at,
+          title: s.workout_exercises.workouts.title,
+          where: 'set',
+          exercise_name: s.workout_exercises.name,
+          text: s.notes,
+        }))),
+    ];
+    return hits.sort((a, b) => b.performed_at.localeCompare(a.performed_at));
   },
 
   /** Autocompletado con lo que esta persona ya escribió antes, del más usado al menos (RF-F4). */

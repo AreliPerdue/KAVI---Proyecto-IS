@@ -1,7 +1,7 @@
 import { useQueries } from '@tanstack/react-query';
 import { addDays } from 'date-fns';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { ArrowDown, ArrowUp, CalendarDays, Clock, Copy, Link2, ListOrdered, Merge, Pencil, Plus, Redo2, Repeat2, Scale, Scissors, SlidersHorizontal, Sparkles, Timer, Trash2, Undo2, Unlink, Wrench, X } from 'lucide-react-native';
+import { ArrowDown, ArrowUp, CalendarDays, Clock, Copy, Link2, ListOrdered, Merge, MessageSquareText, Pencil, Pin, Plus, Redo2, Repeat2, Scale, Scissors, SlidersHorizontal, Sparkles, Timer, Trash2, Undo2, Unlink, Wrench, X } from 'lucide-react-native';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
@@ -11,17 +11,19 @@ import { GroupSheet } from '@/components/fitness/group-sheet';
 import { IntensifierSheet } from '@/components/fitness/intensifier-sheet';
 import { IntervalTimerSheet } from '@/components/fitness/interval-timer-sheet';
 import { SetDetailsSheet } from '@/components/fitness/set-details-sheet';
+import { NoteSheet } from '@/components/fitness/note-sheet';
 import { NumpadSheet, type NumpadField } from '@/components/fitness/numpad-sheet';
 import { RestTimerBar } from '@/components/fitness/rest-timer-bar';
 import { ToolsSheet } from '@/components/fitness/tools-sheet';
 import { ModalHeader } from '@/components/modal-header';
 import { ActionRow, AppText, Banner, Button, Chip, DatePickerSheet, ErrorState, FieldButton, IconButton, LoadingState, Screen, Sheet, SwitchRow, TextField, TimePickerSheet } from '@/components/ui';
+import { SESSION_TAGS, SET_TAGS, tagLabel } from '@/constants/gym-notes';
 import { PROTOCOLS, type ProtocolKey } from '@/constants/intensifiers';
 import { IconSize, IconStroke, Radius, Spacing } from '@/constants/theme';
 import { useActivitiesRange } from '@/hooks/use-activities-range';
 import { useEditHistory } from '@/hooks/use-edit-history';
 import { exerciseHistoryQuery, useLegacyConversion } from '@/hooks/use-exercise-history';
-import { useExercises } from '@/hooks/use-exercises';
+import { useExerciseMutations, useExercisePrefs, useExercises } from '@/hooks/use-exercises';
 import { useSessionDetail, useSetActions } from '@/hooks/use-set-sync';
 import { useTheme } from '@/hooks/use-theme';
 import { useWorkoutMutations, useWorkouts } from '@/hooks/use-workouts';
@@ -98,6 +100,8 @@ export default function WorkoutScreen() {
   const { saveSet: enviarSerie, removeSet: retirarSerie } = useSetActions(id);
   const mutations = useWorkoutMutations();
   const catalogo = useExercises();
+  const prefs = useExercisePrefs();
+  const { saveStickyNote } = useExerciseMutations();
   const unit = useGymStore((s) => s.weightUnit);
   const effortScale = useGymStore((s) => s.effortScale);
   const formula = useGymStore((s) => s.e1rmFormula);
@@ -130,6 +134,9 @@ export default function WorkoutScreen() {
   const [agruparDesde, setAgruparDesde] = useState<WorkoutExerciseDetail | null>(null);
   const [protocoloPara, setProtocoloPara] = useState<WorkoutExerciseDetail | null>(null);
   const [timerPara, setTimerPara] = useState<WorkoutExerciseDetail | null>(null);
+  const [notaEjercicio, setNotaEjercicio] = useState<WorkoutExerciseDetail | null>(null);
+  const [notaSerie, setNotaSerie] = useState<WorkoutSet | null>(null);
+  const [notaFija, setNotaFija] = useState<WorkoutExerciseDetail | null>(null);
   /** Reloj de la sesión en curso: se lee aquí y se refresca cada 30 s, no en cada render. */
   const [ahora, setAhora] = useState(() => Date.now());
 
@@ -145,6 +152,7 @@ export default function WorkoutScreen() {
   const data = sesion.data;
   const ejercicios = useMemo(() => data?.exercises ?? [], [data]);
   const porId = useMemo(() => new Map((catalogo.data ?? []).map((e) => [e.id, e])), [catalogo.data]);
+  const notasFijas = useMemo(() => new Map((prefs.data ?? []).filter((p) => p.sticky_note).map((p) => [p.exercise_id, p.sticky_note as string])), [prefs.data]);
 
   /*
    * Agrupaciones (RF-F45): una letra por grupo en el orden en que aparecen (A, B, C…) y un
@@ -537,6 +545,8 @@ export default function WorkoutScreen() {
   /** Editar una sesión ya terminada la marca como editada (RF-F42); en vivo, no. */
   const marcarEditado = () => (enCurso ? {} : { edited_at: new Date().toISOString() });
   /** Duración de una sesión terminada: de que empezó a que se marcó terminada. */
+  /** Energía, pump y etiquetas de la sesión en una línea, para el modo lectura (RF-F49). */
+  const sesionChips = [data.energy ? `Energía ${data.energy}/5` : null, data.pump ? `Pump ${data.pump}/5` : null, ...data.tags.map(tagLabel)].filter(Boolean).join(' · ');
   const duracionMin = data.ended_at ? Math.max(1, Math.round((fromIso(data.ended_at).getTime() - fromIso(data.performed_at).getTime()) / 60_000)) : null;
 
   return (
@@ -635,6 +645,30 @@ export default function WorkoutScreen() {
             </View>
           ) : null}
           {editing ? (
+            <>
+              <Escala titulo="Energía" valor={data.energy} onChange={(v) => updateWorkout({ id: data.id, patch: { energy: v, ...marcarEditado() } })} />
+              <Escala titulo="Pump" valor={data.pump} onChange={(v) => updateWorkout({ id: data.id, patch: { pump: v, ...marcarEditado() } })} />
+              <View style={styles.chips}>
+                {SESSION_TAGS.map((t) => {
+                  const puesta = data.tags.includes(t.value);
+                  return (
+                    <Chip
+                      key={t.value}
+                      compact
+                      label={t.label}
+                      selected={puesta}
+                      onPress={() => updateWorkout({ id: data.id, patch: { tags: puesta ? data.tags.filter((x) => x !== t.value) : [...data.tags, t.value], ...marcarEditado() } })}
+                    />
+                  );
+                })}
+              </View>
+            </>
+          ) : sesionChips ? (
+            <AppText variant="label" color="textSecondary">
+              {sesionChips}
+            </AppText>
+          ) : null}
+          {editing ? (
             <TextField
               label="Notas generales"
               value={notesValue}
@@ -670,6 +704,7 @@ export default function WorkoutScreen() {
                 legacyNote={a.legacyNote}
                 groupLabel={grupos.etiqueta.get(exercise.id) ?? null}
                 protocolLabel={PROTOCOLS.find((x) => x.key === exercise.protocol)?.label ?? null}
+                stickyNote={exercise.exercise_id ? notasFijas.get(exercise.exercise_id) ?? null : null}
                 onOpenTimer={exercise.protocol && protocolTimer(exercise.protocol as ProtocolKey) ? setTimerPara : undefined}
                 onAddSet={agregarSerie}
                 onEdit={abrirTeclado}
@@ -778,6 +813,14 @@ export default function WorkoutScreen() {
               label="Intensificador…"
               onPress={() => {
                 setIntensificadoresDe(menuSerie.set);
+                setMenuSerie(null);
+              }}
+            />
+            <ActionRow
+              icon={<MessageSquareText size={IconSize.action} strokeWidth={IconStroke} color={theme.text} />}
+              label={menuSerie.set.notes || menuSerie.set.tags.length ? 'Editar nota y etiquetas' : 'Nota y etiquetas'}
+              onPress={() => {
+                setNotaSerie(menuSerie.set);
                 setMenuSerie(null);
               }}
             />
@@ -938,6 +981,24 @@ export default function WorkoutScreen() {
         {menuEjercicio ? (
           <>
             <ActionRow
+              icon={<MessageSquareText size={IconSize.action} strokeWidth={IconStroke} color={theme.text} />}
+              label={menuEjercicio.notes ? 'Editar nota de hoy' : 'Nota de hoy'}
+              onPress={() => {
+                setNotaEjercicio(menuEjercicio);
+                setMenuEjercicio(null);
+              }}
+            />
+            {menuEjercicio.exercise_id ? (
+              <ActionRow
+                icon={<Pin size={IconSize.action} strokeWidth={IconStroke} color={theme.text} />}
+                label={notasFijas.has(menuEjercicio.exercise_id) ? 'Editar nota fija' : 'Nota fija (todas las sesiones)'}
+                onPress={() => {
+                  setNotaFija(menuEjercicio);
+                  setMenuEjercicio(null);
+                }}
+              />
+            ) : null}
+            <ActionRow
               icon={<Wrench size={IconSize.action} strokeWidth={IconStroke} color={theme.text} />}
               label="Discos, calentamiento y 1RM"
               onPress={() => {
@@ -1019,6 +1080,47 @@ export default function WorkoutScreen() {
           const nueva = activo ? applyIntensifier(actual, key, { dropPercent }) : removeIntensifier(actual, key);
           guardar(nueva);
           setIntensificadoresDe(nueva);
+        }}
+      />
+
+      <NoteSheet
+        visible={notaEjercicio !== null}
+        title="Nota de hoy"
+        hint={notaEjercicio ? `${notaEjercicio.name}, solo en esta sesión.` : undefined}
+        placeholder="Me dolió el hombro, subir el banco…"
+        initialText={notaEjercicio?.notes ?? null}
+        onClose={() => setNotaEjercicio(null)}
+        onSave={(texto) => {
+          if (!notaEjercicio) return;
+          mutations.updateExercise.mutate({ id: notaEjercicio.id, patch: { notes: texto } }, { onSuccess: () => void sesion.refetch() });
+          marcarSesionEditada();
+        }}
+      />
+
+      <NoteSheet
+        visible={notaSerie !== null}
+        title="Nota de la serie"
+        placeholder="Técnica rota en la última…"
+        maxLength={140}
+        initialText={notaSerie?.notes ?? null}
+        tagOptions={SET_TAGS}
+        initialTags={notaSerie?.tags}
+        onClose={() => setNotaSerie(null)}
+        onSave={(texto, tags) => {
+          const actual = notaSerie ? seriePorId.get(notaSerie.id) ?? notaSerie : null;
+          if (actual) guardar({ ...actual, notes: texto, tags });
+        }}
+      />
+
+      <NoteSheet
+        visible={notaFija !== null}
+        title="Nota fija"
+        hint={notaFija ? `Se verá arriba de ${notaFija.name} en cada sesión.` : undefined}
+        placeholder="Asiento en 4, respaldo en 2"
+        initialText={notaFija?.exercise_id ? notasFijas.get(notaFija.exercise_id) ?? null : null}
+        onClose={() => setNotaFija(null)}
+        onSave={(texto) => {
+          if (notaFija?.exercise_id) saveStickyNote.mutate({ exerciseId: notaFija.exercise_id, note: texto });
         }}
       />
 
@@ -1156,6 +1258,22 @@ function pesoMaximo(exercise: WorkoutExerciseDetail | null, unit: 'kg' | 'lb'): 
   return max > 0 ? round(fromKg(max, unit), 1) : null;
 }
 
+/** Una escala de 1 a 5 con chips; tocar el valor elegido lo quita (RF-F49). */
+function Escala({ titulo, valor, onChange }: { titulo: string; valor: number | null; onChange: (v: number | null) => void }) {
+  return (
+    <View style={styles.escala}>
+      <AppText variant="label" color="textSecondary" style={styles.escalaTitulo}>
+        {titulo}
+      </AppText>
+      <View style={styles.chips}>
+        {[1, 2, 3, 4, 5].map((n) => (
+          <Chip key={n} compact label={String(n)} selected={valor === n} onPress={() => onChange(valor === n ? null : n)} />
+        ))}
+      </View>
+    </View>
+  );
+}
+
 function Cifra({ valor, etiqueta }: { valor: string; etiqueta: string }) {
   const theme = useTheme();
   return (
@@ -1223,6 +1341,8 @@ const styles = StyleSheet.create({
   timer: { position: 'absolute', left: Spacing.lg, right: Spacing.lg, bottom: Spacing.xl },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.xs },
   historia: { flexDirection: 'row' },
+  escala: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm },
+  escalaTitulo: { width: 64 },
   resumen: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm },
   cifra: { flexBasis: '47%', flexGrow: 1, padding: Spacing.md, borderRadius: Radius.md, borderCurve: 'continuous', gap: 2 },
 });

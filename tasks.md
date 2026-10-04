@@ -716,10 +716,13 @@ Plan y decisiones en `docs/gym/AUDITORIA.md`. Cada fase cierra con typecheck, li
   registra cada uno en `docs/gym/intensificadores.md`. Pendiente: elegir la variante de un
   drop mecánico desde el tramo, y un aviso sonoro en el timer (pediría una librería de
   audio, decisión D5). Dep: T243
-- [ ] T246 Notas en todos los niveles y nota fija por ejercicio (G6, RF-F49 – RF-F53). Dep: T243
+- [x] T246 Notas en todos los niveles y nota fija por ejercicio (G6, RF-F49 – RF-F53). Dep: T243
 - [ ] T247 Modo Gymrat: Modo serio, trato elegible, PRs, logros, Racha de Hierro en pausa,
   resumen y volumen por músculo (G7, RF-F54 – RF-F60). Dep: T243
-- [ ] T248 Calidad, accesibilidad, rendimiento y docs del módulo (G8). Dep: T242 – T247
+- [ ] T248 Calidad, accesibilidad, rendimiento y docs del módulo (G8). Incluye agregar `expo-haptics`
+  (háptico en iOS) y `expo-audio` (aviso sonoro de los timers): son gratuitas y oficiales de Expo,
+  pero piden recompilar la app nativa, así que van juntas al final para recompilar una sola vez
+  (decisión D5, revisada el 4 oct). Dep: T242 – T247
 
 ### Bugs reportados
 - [ ] T249 **Una ocurrencia borrada de una serie vuelve a aparecer al recargar.** Reporte (4

@@ -77,6 +77,12 @@ export function useExerciseMutations() {
       onMutate: ({ exerciseId, favorite }) => aplicarPrefs(exerciseId, { is_favorite: favorite }),
       onError: () => qc.invalidateQueries({ queryKey: exerciseKeys.prefs(userId) }),
     }),
+    /** La nota fija de un ejercicio: se ve en cada sesión (RF-F52). */
+    saveStickyNote: useMutation({
+      mutationFn: ({ exerciseId, note }: { exerciseId: string; note: string | null }) => saveExercisePrefs(uid(), exerciseId, { sticky_note: note }),
+      onMutate: ({ exerciseId, note }) => aplicarPrefs(exerciseId, { sticky_note: note }),
+      onError: () => qc.invalidateQueries({ queryKey: exerciseKeys.prefs(userId) }),
+    }),
     /** Elegir un ejercicio lo vuelve reciente (RF-F22). */
     markUsed: useMutation({
       mutationFn: (exerciseId: string) => saveExercisePrefs(uid(), exerciseId, { last_used_at: new Date().toISOString() }),

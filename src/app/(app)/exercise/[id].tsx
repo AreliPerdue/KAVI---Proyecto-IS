@@ -1,16 +1,18 @@
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useMemo } from 'react';
+import { Pin } from 'lucide-react-native';
+import { useMemo, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
+import { NoteSheet } from '@/components/fitness/note-sheet';
 import { ProgressChart } from '@/components/fitness/progress-chart';
 import { ModalHeader } from '@/components/modal-header';
 import { AppText, EmptyState, ErrorState, LoadingState, Screen } from '@/components/ui';
 import { EQUIPMENT, MUSCLES } from '@/constants/exercise-catalog';
-import { Radius, Spacing } from '@/constants/theme';
+import { IconSize, IconStroke, Radius, Spacing } from '@/constants/theme';
 import { useExerciseHistory } from '@/hooks/use-exercise-history';
-import { useExercises } from '@/hooks/use-exercises';
+import { useExerciseMutations, useExercisePrefs, useExercises } from '@/hooks/use-exercises';
 import { useTheme } from '@/hooks/use-theme';
 import { e1rm as estimar } from '@/lib/gym/e1rm';
 import { formatSet } from '@/lib/gym/sets';
@@ -37,6 +39,10 @@ export default function ExerciseDetailScreen() {
   const history = useExerciseHistory(exercise ? { exerciseId: exercise.id, name: exercise.name_es } : null);
   const unit = useGymStore((s) => s.weightUnit);
   const formula = useGymStore((s) => s.e1rmFormula);
+  const prefs = useExercisePrefs();
+  const { saveStickyNote } = useExerciseMutations();
+  const [editandoNota, setEditandoNota] = useState(false);
+  const notaFija = (prefs.data ?? []).find((p) => p.exercise_id === id)?.sticky_note ?? null;
 
   const analisis = useMemo(() => {
     if (!exercise || !history.data) return null;
@@ -97,6 +103,20 @@ export default function ExerciseDetailScreen() {
         <AppText variant="title">{exercise.name_es}</AppText>
         <AppText color="textSecondary">{[musculos, equipo].filter(Boolean).join(' · ')}</AppText>
       </View>
+
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={notaFija ? `Nota fija: ${notaFija}. Toca para editarla` : 'Agregar nota fija'}
+        onPress={() => setEditandoNota(true)}
+        style={({ pressed }) => [styles.nota, { backgroundColor: pressed ? theme.border : theme.surfaceAlt }]}>
+        <Pin size={IconSize.inline} strokeWidth={IconStroke} color={theme.textSecondary} />
+        <View style={styles.flex}>
+          <AppText variant="caption" color="textSecondary">
+            Nota fija
+          </AppText>
+          <AppText color={notaFija ? 'text' : 'textTertiary'}>{notaFija ?? 'Ajustes de la máquina, agarre, lo que siempre olvidas…'}</AppText>
+        </View>
+      </Pressable>
 
       {sesiones.length === 0 ? (
         <EmptyState title="Todavía sin series" description="Cuando registres este ejercicio, aquí verás tu mejor serie y cómo vas." />
@@ -164,12 +184,23 @@ export default function ExerciseDetailScreen() {
           </View>
         </>
       )}
+      <NoteSheet
+        visible={editandoNota}
+        title="Nota fija"
+        hint={`Se verá arriba de ${exercise.name_es} en cada sesión.`}
+        placeholder="Asiento en 4, respaldo en 2"
+        initialText={notaFija}
+        onClose={() => setEditandoNota(false)}
+        onSave={(texto) => saveStickyNote.mutate({ exerciseId: exercise.id, note: texto })}
+      />
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
   cabecera: { gap: Spacing.xs },
+  nota: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm, minHeight: 52, padding: Spacing.md, borderRadius: Radius.md, borderCurve: 'continuous' },
+  flex: { flex: 1, gap: 2 },
   cifras: { flexDirection: 'row', gap: Spacing.sm },
   cifra: { flex: 1, padding: Spacing.md, borderRadius: Radius.md, borderCurve: 'continuous', gap: 2 },
   lista: { gap: Spacing.sm },

@@ -38,7 +38,8 @@ export function Chip({
         pressed ? styles.pressed : null,
       ]}>
       {icon}
-      <AppText variant="label" style={{ color: selected ? '#FFFFFF' : theme.text }}>
+      {/* Sobre un color de dimensión el texto va en blanco; sobre tinta, en su contraste (que en oscuro es casi negro). */}
+      <AppText variant="label" style={{ color: selected ? (color ? '#FFFFFF' : theme.onInk) : theme.text }}>
         {label}
       </AppText>
     </Pressable>

@@ -3,7 +3,7 @@ import { addDays, startOfWeek } from 'date-fns';
 import { AuthUiError } from '@/lib/auth-errors';
 import { hasLegacyText } from '@/lib/gym/legacy';
 import { ordenarPorUso } from '@/lib/gym/names';
-import type { WorkoutDetail, WorkoutsApi } from '@/services/contracts';
+import type { NoteHit, WorkoutDetail, WorkoutsApi } from '@/services/contracts';
 import { delay, demoState, emitDataChange, nextId } from '@/services/demo/store';
 import { uuidv4 } from '@/lib/gym/ids';
 import type { ExerciseGroup, SetSegment, Workout, WorkoutExercise, WorkoutSet } from '@/types/domain';
@@ -327,6 +327,28 @@ export const demoWorkouts: WorkoutsApi = {
       })
       .sort((a, b) => b.performed_at.localeCompare(a.performed_at))
       .slice(0, limit);
+  },
+
+  async searchNotes(userId, term) {
+    await delay(40);
+    const q = term.trim().toLowerCase();
+    if (q.length < 2) return [];
+    const contiene = (t: string | null) => !!t && t.toLowerCase().includes(q);
+    const sesion = (id: string) => workouts.find((w) => w.id === id && w.owner_id === userId && vivo(w) && w.status !== 'discarded');
+    const hits: NoteHit[] = [];
+    for (const w of workouts) if (w.owner_id === userId && vivo(w) && w.status !== 'discarded' && contiene(w.notes)) {
+      hits.push({ workout_id: w.id, performed_at: w.performed_at, title: w.title, where: 'session', exercise_name: null, text: w.notes as string });
+    }
+    for (const e of exercises) {
+      const w = vivo(e) ? sesion(e.workout_id) : undefined;
+      if (w && contiene(e.notes)) hits.push({ workout_id: w.id, performed_at: w.performed_at, title: w.title, where: 'exercise', exercise_name: e.name, text: e.notes as string });
+    }
+    for (const s of sets) {
+      const e = vivo(s) ? exercises.find((x) => x.id === s.workout_exercise_id && vivo(x)) : undefined;
+      const w = e ? sesion(e.workout_id) : undefined;
+      if (w && e && contiene(s.notes)) hits.push({ workout_id: w.id, performed_at: w.performed_at, title: w.title, where: 'set', exercise_name: e.name, text: s.notes as string });
+    }
+    return hits.sort((a, b) => b.performed_at.localeCompare(a.performed_at));
   },
 
   async exerciseNames(userId) {

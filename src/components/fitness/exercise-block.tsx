@@ -1,10 +1,11 @@
-import { Check, ChevronRight, Copy, Ellipsis, Plus, Timer, Trash2, X } from 'lucide-react-native';
+import { Check, ChevronRight, Copy, Ellipsis, MessageSquareText, Pin, Plus, Timer, Trash2, X } from 'lucide-react-native';
 import { memo, useRef } from 'react';
 import { Platform, Pressable, StyleSheet, View } from 'react-native';
 import ReanimatedSwipeable, { type SwipeableMethods } from 'react-native-gesture-handler/ReanimatedSwipeable';
 
 import { AppText, IconButton } from '@/components/ui';
 import { MUSCLES } from '@/constants/exercise-catalog';
+import { tagLabel } from '@/constants/gym-notes';
 import { intensifierLabel } from '@/constants/intensifiers';
 import { IconSize, IconStroke, Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
@@ -94,6 +95,8 @@ export type ExerciseBlockProps = {
   groupLabel: string | null;
   /** Nombre del protocolo aplicado, si hay (RF-F46). */
   protocolLabel: string | null;
+  /** La nota fija del ejercicio: va arriba en cada sesión (RF-F52). */
+  stickyNote: string | null;
   /** Abre el timer de intervalos del protocolo (EMOM, Tabata…). */
   onOpenTimer?: (exercise: WorkoutExerciseDetail) => void;
   onAddSet: (exercise: WorkoutExerciseDetail) => void;
@@ -117,7 +120,7 @@ export type ExerciseBlockProps = {
  * camino del registro en vivo.
  */
 export const ExerciseBlock = memo(function ExerciseBlock(props: ExerciseBlockProps) {
-  const { exercise, catalog, columns, previous, prs, pendientes, unit, effortScale, editable, legacyNote, groupLabel, protocolLabel } = props;
+  const { exercise, catalog, columns, previous, prs, pendientes, unit, effortScale, editable, legacyNote, groupLabel, protocolLabel, stickyNote } = props;
   const theme = useTheme();
   const sets = exercise.workout_sets;
   // El calentamiento no cuenta: la "serie 1" es la primera efectiva.
@@ -168,10 +171,21 @@ export const ExerciseBlock = memo(function ExerciseBlock(props: ExerciseBlockPro
         ) : null}
       </View>
 
+      {stickyNote ? (
+        <View style={[styles.nota, { backgroundColor: theme.surfaceAlt }]} accessibilityLabel={`Nota fija: ${stickyNote}`}>
+          <Pin size={14} strokeWidth={IconStroke} color={theme.textSecondary} />
+          <AppText variant="caption" color="textSecondary" style={styles.flex}>
+            {stickyNote}
+          </AppText>
+        </View>
+      ) : null}
       {exercise.notes ? (
-        <AppText variant="caption" color="textSecondary">
-          {exercise.notes}
-        </AppText>
+        <View style={styles.nota} accessibilityLabel={`Nota del ejercicio: ${exercise.notes}`}>
+          <MessageSquareText size={14} strokeWidth={IconStroke} color={theme.textSecondary} />
+          <AppText variant="caption" color="textSecondary" style={styles.flex}>
+            {exercise.notes}
+          </AppText>
+        </View>
       ) : null}
       {legacyNote ? (
         <View style={[styles.legado, { backgroundColor: theme.surfaceAlt }]}>
@@ -279,6 +293,8 @@ function FilaSerie(p: FilaProps) {
     </Pressable>
   );
 
+  const tieneNota = !!set.notes || set.tags.length > 0;
+
   const contenido = (
     <View style={[styles.serie, { backgroundColor: hecha ? theme.surfaceAlt : theme.surface }]}>
       <View style={styles.fila}>
@@ -349,8 +365,16 @@ function FilaSerie(p: FilaProps) {
         </View>
       ))}
 
-      {(main?.partial_reps || main?.forced_reps || main?.cheat_reps || detalle || p.prsSerie || p.pendiente || (main && isImbalanced(main))) ? (
+      {(main?.partial_reps || main?.forced_reps || main?.cheat_reps || detalle || tieneNota || p.prsSerie || p.pendiente || (main && isImbalanced(main))) ? (
         <View style={styles.extras}>
+          {tieneNota ? (
+            <View style={styles.notaSerie} accessibilityLabel={`Nota de la serie: ${[set.notes, ...set.tags.map(tagLabel)].filter(Boolean).join(', ')}`}>
+              <MessageSquareText size={12} strokeWidth={IconStroke} color={theme.textSecondary} />
+              <AppText variant="micro" color="textSecondary">
+                {[...set.tags.map(tagLabel), set.notes].filter(Boolean).join(' · ')}
+              </AppText>
+            </View>
+          ) : null}
           {detalle ? (
             <AppText variant="micro" color="textSecondary">
               {detalle}
@@ -440,6 +464,9 @@ const styles = StyleSheet.create({
   encabezado: { flexDirection: 'row', alignItems: 'center', gap: Spacing.xs },
   titulo: { flex: 1, gap: 2, minHeight: 44, justifyContent: 'center' },
   legado: { padding: Spacing.sm, borderRadius: Radius.sm, borderCurve: 'continuous' },
+  nota: { flexDirection: 'row', alignItems: 'flex-start', gap: Spacing.xs, paddingVertical: 2, paddingHorizontal: Spacing.xs, borderRadius: Radius.sm, borderCurve: 'continuous' },
+  notaSerie: { flexDirection: 'row', alignItems: 'center', gap: 4, flexShrink: 1 },
+  flex: { flex: 1 },
   filaCabecera: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingTop: Spacing.xs },
   serie: { borderRadius: Radius.sm, borderCurve: 'continuous', paddingVertical: 2 },
   fila: { flexDirection: 'row', alignItems: 'center', gap: 4, minHeight: 48 },
