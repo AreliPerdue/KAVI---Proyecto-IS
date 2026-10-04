@@ -719,10 +719,18 @@ Plan y decisiones en `docs/gym/AUDITORIA.md`. Cada fase cierra con typecheck, li
 - [x] T246 Notas en todos los niveles y nota fija por ejercicio (G6, RF-F49 – RF-F53). Dep: T243
 - [x] T247 Modo Gymrat: Modo serio, trato elegible, PRs, logros, Racha de Hierro en pausa,
   resumen y volumen por músculo (G7, RF-F54 – RF-F60). Dep: T243
-- [ ] T248 Calidad, accesibilidad, rendimiento y docs del módulo (G8). Incluye agregar `expo-haptics`
+- [x] T248 Calidad, accesibilidad, rendimiento y docs del módulo (G8). Incluye agregar `expo-haptics`
   (háptico en iOS) y `expo-audio` (aviso sonoro de los timers): son gratuitas y oficiales de Expo,
   pero piden recompilar la app nativa, así que van juntas al final para recompilar una sola vez
   (decisión D5, revisada el 4 oct). Dep: T242 – T247
+
+### Pendientes del upgrade de fitness
+- [ ] T250 Arrastrar para reordenar series y ejercicios en el logger (RF-F33). Hoy: "Subir" y
+  "Bajar" en los menús. Dep: T243
+- [ ] T251 El borrador del formulario de actividad usa el componente del logger (RF-F9), no el
+  editor de texto de v1. Dep: T243
+- [ ] T252 Drop mecánico: elegir la variante del ejercicio en el tramo (`variant_exercise_id`).
+  Dep: T245
 
 ### Bugs reportados
 - [ ] T249 **Una ocurrencia borrada de una serie vuelve a aparecer al recargar.** Reporte (4

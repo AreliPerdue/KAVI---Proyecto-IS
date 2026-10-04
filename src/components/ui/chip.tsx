@@ -14,6 +14,7 @@ export function Chip({
   color,
   icon,
   compact = false,
+  accessibilityLabel,
 }: {
   label: string;
   selected: boolean;
@@ -22,6 +23,8 @@ export function Chip({
   color?: string;
   icon?: ReactNode;
   compact?: boolean;
+  /** Si la etiqueta visible no se entiende sola ("3" en una escala), lo que se lee en voz alta. */
+  accessibilityLabel?: string;
 }) {
   const theme = useTheme();
   const accent = color ?? theme.ink;
@@ -29,8 +32,10 @@ export function Chip({
     <Pressable
       accessibilityRole="button"
       accessibilityState={{ selected }}
-      accessibilityLabel={label}
+      accessibilityLabel={accessibilityLabel ?? label}
       onPress={onPress}
+      // El chip mide 32–36 de alto; el área táctil llega a 44 sin cambiar cómo se ve.
+      hitSlop={{ top: compact ? 6 : 4, bottom: compact ? 6 : 4 }}
       style={({ pressed }) => [
         styles.chip,
         compact ? styles.compact : null,

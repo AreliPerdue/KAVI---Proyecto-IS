@@ -373,3 +373,18 @@ sesión con 105 kg → badge de PR y "Nuevo récord. Así se gobierna, mi reina.
   upsert por semana).
 - [ ] Modo serio: sin snackbars de humor, sin animación del badge, sin equivalencia ni frase
   en el resumen, sin "¿y la pierna?".
+
+## Fitness v2 · G8 calidad y dependencias nativas (T248)
+Probado a mano en el demo (web): descanso con pitidos en 3-2-1 y al terminar (4 sonidos),
+chip "Energía 3 de 5" encontrado por su etiqueta accesible, "Compartir" del resumen genera la
+imagen y, sin hoja de compartir del navegador, la descarga (`kavi-2026-10-21.png`). Falta:
+- [ ] **Antes de correr Jest:** mocks de `expo-haptics`, `expo-audio`, `expo-sharing` y
+  `react-native-view-shot` en `jest.setup.js`.
+- [ ] `playSound`: crea un reproductor por sonido una sola vez; un error de audio no rompe.
+- [ ] `RestTimerBar`: pita en 3, 2 y 1; al terminar suena y vibra solo si terminó hace menos
+  de 3 s (abrir la app con un descanso viejo no suena); sin sonido si `timerSound` es falso.
+- [ ] `IntervalTimerSheet`: pitido por fase y aviso distinto al final.
+- [ ] `shareImage`: nativo con `expo-sharing`; web con `navigator.share` de archivos o
+  descarga; `SessionSummarySheet` cae a texto si la captura falla.
+- [ ] `Chip`: `accessibilityLabel` opcional y área táctil de 44 con `hitSlop`.
+- [ ] Prueba en dispositivo: háptico en iOS (no hay Xcode en esta máquina) y en Android.

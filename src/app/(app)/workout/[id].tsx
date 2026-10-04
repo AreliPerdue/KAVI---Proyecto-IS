@@ -1264,7 +1264,7 @@ function Escala({ titulo, valor, onChange }: { titulo: string; valor: number | n
       </AppText>
       <View style={styles.chips}>
         {[1, 2, 3, 4, 5].map((n) => (
-          <Chip key={n} compact label={String(n)} selected={valor === n} onPress={() => onChange(valor === n ? null : n)} />
+          <Chip key={n} compact label={String(n)} accessibilityLabel={`${titulo} ${n} de 5`} selected={valor === n} onPress={() => onChange(valor === n ? null : n)} />
         ))}
       </View>
     </View>

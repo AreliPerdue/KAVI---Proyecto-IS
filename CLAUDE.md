@@ -58,6 +58,16 @@ kavi/
 ## Modo demo (frontend sin backend)
 `.env` con `EXPO_PUBLIC_DEMO_MODE=true` activa el backend en memoria (`src/services/demo/`). Cuenta: `demo@kavi.app` / `demo1234`. Toda función nueva de datos se implementa en Supabase y en demo (ver skill `kavi-dev`).
 
+## Módulo de fitness (gym tracker)
+Spec `specs/07-fitness.md` (v2); guía del módulo en `docs/gym/README.md`. Lo que más se olvida:
+- Jerarquía `workouts → workout_exercises → workout_sets → set_segments`. Las hijas heredan `owner_id` por el trigger `gym_inherit_owner()`: **no** lo mandes desde el cliente, y la única política es `owner_id = auth.uid()`.
+- Pesos siempre en kg (`input_unit` solo recuerda cómo se escribió). Borrado suave con `deleted_at`, filtrado en el cliente igual en Supabase y demo. Ids de series generados en el cliente (`lib/gym/ids.ts`) y guardados con `upsert`.
+- Las series de la sesión activa pasan por la cola local (`lib/gym/outbox.ts`, `hooks/use-set-sync.ts`); no las escribas directo al servicio desde la pantalla.
+- PRs, volumen, logros, racha y series por músculo se **calculan** del historial (`lib/gym/`), no se guardan.
+- Catálogo: fuente única `src/constants/exercise-catalog.ts`; tras cambiarlo, `pnpm db:seed-exercises` y una migración nueva.
+- Todo el humor vive en `src/constants/gymrat.ts` y se apaga con "Modo serio"; nada de bromas sueltas en componentes.
+- `expo-haptics`, `expo-audio`, `expo-sharing` y `react-native-view-shot` son nativas: agregarlas o actualizarlas pide recompilar.
+
 ## Comandos
 - `npx expo start` — desarrollo
 - `pnpm typecheck` (= `npx tsc --noEmit`) — verificación de tipos (correr antes de marcar una tarea)

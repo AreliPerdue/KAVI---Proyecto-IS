@@ -7,6 +7,7 @@ import { IconSize, IconStroke, Radius, Shadow, Spacing } from '@/constants/theme
 import { useTheme } from '@/hooks/use-theme';
 import { success } from '@/lib/haptics';
 import { formatDuration } from '@/lib/gym/sets';
+import { playSound } from '@/lib/sounds';
 import { useGymStore } from '@/store/gym-store';
 
 /**
@@ -23,6 +24,7 @@ export function RestTimerBar({ workoutId }: { workoutId: string }) {
   const rest = useGymStore((s) => s.rest);
   const adjustRest = useGymStore((s) => s.adjustRest);
   const stopRest = useGymStore((s) => s.stopRest);
+  const sonido = useGymStore((s) => s.timerSound);
   const [ahora, setAhora] = useState(() => Date.now());
 
   const activo = rest && rest.workoutId === workoutId;
@@ -36,13 +38,22 @@ export function RestTimerBar({ workoutId }: { workoutId: string }) {
   const restante = activo ? Math.max(0, Math.ceil((rest.endsAt - ahora) / 1000)) : 0;
   const termino = activo && restante === 0;
 
+  // Cuenta regresiva audible: 3, 2, 1 (RF-F34).
   useEffect(() => {
-    if (!termino) return;
-    success();
+    if (sonido && activo && restante >= 1 && restante <= 3) playSound('tick');
+  }, [sonido, activo, restante]);
+
+  useEffect(() => {
+    if (!termino || !rest) return;
+    // Si el descanso terminó hace rato (la app estaba cerrada), no se celebra al abrir.
+    if (Date.now() - rest.endsAt < 3000) {
+      success();
+      if (sonido) playSound('done');
+    }
     // Se queda unos segundos para que se vea, y luego se va solo.
     const t = setTimeout(stopRest, 8000);
     return () => clearTimeout(t);
-  }, [termino, stopRest]);
+  }, [termino, stopRest, rest, sonido]);
 
   if (!activo) return null;
 

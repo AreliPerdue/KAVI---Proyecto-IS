@@ -24,6 +24,8 @@ export type GymPrefs = {
   dropPercent: number;
   seriousMode: boolean;
   trato: Trato;
+  /** Pitidos de los timers (descanso e intervalos). */
+  timerSound: boolean;
 };
 
 export const DEFAULT_GYM_PREFS: GymPrefs = {
@@ -34,6 +36,7 @@ export const DEFAULT_GYM_PREFS: GymPrefs = {
   dropPercent: 20,
   seriousMode: false,
   trato: 'neutral',
+  timerSound: true,
 };
 
 /**
@@ -63,8 +66,8 @@ type GymState = GymPrefs & {
 const elegido = new Set<keyof GymPrefs>();
 
 function prefsDe(s: GymState): GymPrefs {
-  const { weightUnit, effortScale, e1rmFormula, restDefaultSec, dropPercent, seriousMode, trato } = s;
-  return { weightUnit, effortScale, e1rmFormula, restDefaultSec, dropPercent, seriousMode, trato };
+  const { weightUnit, effortScale, e1rmFormula, restDefaultSec, dropPercent, seriousMode, trato, timerSound } = s;
+  return { weightUnit, effortScale, e1rmFormula, restDefaultSec, dropPercent, seriousMode, trato, timerSound };
 }
 
 /** Aviso del sistema al terminar; se reprograma con cada ajuste y se cancela al parar. */

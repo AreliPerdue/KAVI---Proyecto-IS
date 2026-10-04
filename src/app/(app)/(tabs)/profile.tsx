@@ -20,6 +20,7 @@ import {
   Gauge,
   Crown,
   Smile,
+  Volume2,
   Timer,
   Weight,
   Users,
@@ -612,6 +613,7 @@ function FitnessSettings() {
   const dropPercent = useGymStore((s) => s.dropPercent);
   const seriousMode = useGymStore((s) => s.seriousMode);
   const trato = useGymStore((s) => s.trato);
+  const timerSound = useGymStore((s) => s.timerSound);
   const setPref = useGymStore((s) => s.setPref);
   const icono = (Icono: typeof Weight) => <Icono size={IconSize.inline} strokeWidth={IconStroke} color={theme.textSecondary} />;
 
@@ -655,6 +657,12 @@ function FitnessSettings() {
             onChange={(v) => setPref('dropPercent', Number(v))}
           />
         }
+      />
+      <SettingsRow
+        icon={icono(Volume2)}
+        label="Sonido de los timers"
+        hint="Un pitido en los últimos segundos del descanso y en cada cambio de intervalo. Suena sobre tu música."
+        right={<Toggle label="Sonido de los timers" value={timerSound} onValueChange={(v) => setPref('timerSound', v)} />}
       />
       <SettingsRow
         icon={icono(Smile)}

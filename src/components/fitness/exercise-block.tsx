@@ -479,7 +479,7 @@ const styles = StyleSheet.create({
   colAncha: { width: 64, textAlign: 'center' },
   colCorta: { width: 46, textAlign: 'center' },
   colCheck: { width: 44, alignItems: 'center', justifyContent: 'center' },
-  celda: { height: 40, alignItems: 'center', justifyContent: 'center', borderRadius: Radius.sm, borderCurve: 'continuous' },
+  celda: { height: 44, alignItems: 'center', justifyContent: 'center', borderRadius: Radius.sm, borderCurve: 'continuous' },
   check: { width: 30, height: 30, borderRadius: 15, borderWidth: 2, alignItems: 'center', justifyContent: 'center' },
   extras: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: Spacing.sm, paddingLeft: 34, paddingBottom: 4 },
   pr: { paddingHorizontal: 6, paddingVertical: 1, borderRadius: Radius.full },

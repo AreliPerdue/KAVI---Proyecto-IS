@@ -110,11 +110,12 @@ migración de la Fase G1; aquí las reglas.
   con botones visibles. Arrastrar reordena series y ejercicios.
 - RF-F34. **Timer de descanso** guardado como hora de fin, no como cuenta regresiva: sobrevive a cambiar
   de pantalla y a bloquear el teléfono. Notificación local al terminar (en web, aviso dentro de la app, P5),
-  ±15 s, y en superseries arranca al terminar la ronda.
+  ±15 s, y en superseries arranca al terminar la ronda. Pitidos en los últimos 3 s y al terminar, encima de
+  la música y respetando el modo silencio; se apagan en Perfil ("Sonido de los timers").
 - RF-F35. Herramientas: calculadora de discos, rampa de calentamiento a partir del top set y calculadora de 1RM.
 - RF-F36. Peso corporal del día (opcional), para el volumen de dominadas lastradas o asistidas y de fondos.
-- RF-F37. **Háptico:** vibración corta en Android al marcar ✓, contar una rep o lograr un PR.
-  En iOS y web, nada (sin dependencias nuevas, decisión D5).
+- RF-F37. **Háptico** (`expo-haptics`) en iOS y Android al marcar ✓, contar una rep, cambiar de fase en un
+  timer o lograr un PR. En web, nada.
 - RF-F38. "Terminar sesión" la pasa a `completed` y muestra el resumen (RF-F59). "Descartar" la pasa a `discarded`.
 - RF-F39. **Editar cualquier sesión pasada con la misma pantalla del logger.** Todo es editable: fecha y hora,
   duración, ejercicio (cambiarlo conserva las series), orden, tipo de serie, segmentos, intensificadores y notas.
@@ -190,9 +191,9 @@ Regla: **la diversión nunca agrega pasos** al registro.
   - La racha nace con la función: los huecos que terminaron antes de la semana del 28 de septiembre de
     2026 cuentan como reinicio y no se preguntan, para no abrir Fitness con meses de preguntas viejas.
 - RF-F59. **Resumen al terminar:** duración, volumen, PRs, músculos trabajados y una equivalencia de tonelaje
-  ("14,320 kg = 2.4 elefantes africanos"). Se puede compartir como texto con la hoja del sistema (en web,
-  la del navegador o el portapapeles). Compartirlo como imagen pide una librería nativa de captura y se
-  decide en G8.
+  ("14,320 kg = 2.4 elefantes africanos"). "Compartir" manda la tarjeta del resumen como imagen con la hoja
+  del sistema; en web, la del navegador o, si no acepta archivos, se descarga. Si la captura falla, se
+  comparte como texto.
 - RF-F60. **Volumen semanal por músculo** (series efectivas) con zonas de referencia visual, y calendario de entrenos.
   - Por grupo muscular (pecho, espalda, hombro…): una serie cuenta 1 para sus músculos primarios y ½ para los
     secundarios. La franja de referencia es 10–20 series por semana: orientación, no receta.

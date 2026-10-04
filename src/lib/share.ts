@@ -21,3 +21,32 @@ export async function shareText(text: string): Promise<'shared' | 'copied' | 'ca
   await nav?.clipboard?.writeText(text);
   return 'copied';
 }
+
+/**
+ * Comparte una imagen (RF-F59). En iOS y Android, un archivo temporal con la hoja del
+ * sistema; en web, la hoja del navegador si acepta archivos y, si no, se descarga.
+ */
+export async function shareImage(uri: string, fileName: string): Promise<'shared' | 'downloaded' | 'cancelled'> {
+  if (Platform.OS !== 'web') {
+    const Sharing = await import('expo-sharing');
+    if (!(await Sharing.isAvailableAsync())) throw new Error('Este dispositivo no puede compartir archivos.');
+    await Sharing.shareAsync(uri, { mimeType: 'image/png', UTI: 'public.png', dialogTitle: 'Compartir resumen' });
+    return 'shared';
+  }
+  const blob = await (await fetch(uri)).blob();
+  const file = new File([blob], fileName, { type: 'image/png' });
+  const nav = globalThis.navigator as Navigator | undefined;
+  if (nav?.canShare?.({ files: [file] })) {
+    try {
+      await nav.share({ files: [file] });
+      return 'shared';
+    } catch {
+      return 'cancelled';
+    }
+  }
+  const a = document.createElement('a');
+  a.href = uri;
+  a.download = fileName;
+  a.click();
+  return 'downloaded';
+}
