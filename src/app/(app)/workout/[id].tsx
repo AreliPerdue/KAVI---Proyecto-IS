@@ -5,12 +5,13 @@ import { ArrowDown, ArrowUp, CalendarDays, Clock, Copy, GripVertical, Link2, Lis
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { type EditTarget, ExerciseBlock, columnLabel } from '@/components/fitness/exercise-block';
+import { type EditTarget, ExerciseBlock } from '@/components/fitness/exercise-block';
 import { ExercisePicker } from '@/components/fitness/exercise-picker';
 import { GroupSheet } from '@/components/fitness/group-sheet';
 import { IntensifierSheet } from '@/components/fitness/intensifier-sheet';
 import { IntervalTimerSheet } from '@/components/fitness/interval-timer-sheet';
 import { SessionSummarySheet } from '@/components/fitness/session-summary';
+import { applyNumpadValue, nextNumpadTarget, numpadFieldFor } from '@/components/fitness/set-editing';
 import { SetDetailsSheet } from '@/components/fitness/set-details-sheet';
 import { NoteSheet } from '@/components/fitness/note-sheet';
 import { ReorderExercisesSheet } from '@/components/fitness/reorder-exercises-sheet';
@@ -44,7 +45,6 @@ import {
   newSet,
   nextSortOrder,
   removeSegment,
-  segmentFieldValue,
   setSegmentField,
   sortOrderBetween,
   splitSet,
@@ -407,11 +407,8 @@ export default function WorkoutScreen() {
     if (!teclado) return;
     guardar(teclado.draft);
     const ex = ejercicioDe(teclado.draft);
-    const orden: (SegmentField | 'effort')[] = [...(analisis.get(ex?.id ?? '')?.columns ?? []), 'effort'];
-    const i = orden.indexOf(teclado.target.field);
-    const proximo = orden[i + 1];
-    if (!proximo || teclado.target.segmentIndex > 0 || i < 0) return setTeclado(null);
-    setTeclado({ target: { ...teclado.target, field: proximo }, draft: teclado.draft });
+    const proximo = nextNumpadTarget(teclado.target, analisis.get(ex?.id ?? '')?.columns ?? []);
+    setTeclado(proximo ? { target: proximo, draft: teclado.draft } : null);
   };
 
   const campoTeclado = useMemo((): NumpadField | null => {
@@ -420,38 +417,12 @@ export default function WorkoutScreen() {
     const ex = ejercicioDe(draft);
     const numero = (ex?.workout_sets.findIndex((s) => s.id === draft.id) ?? 0) + 1;
     const prefijo = `${ex?.name ?? 'Serie'} · serie ${numero}${target.segmentIndex > 0 ? ` (tramo ${target.segmentIndex + 1})` : ''}`;
-    if (target.field === 'effort') {
-      const rir = effortScale === 'rir';
-      return { title: `${prefijo} · ${rir ? 'RIR' : 'RPE'}`, value: rir ? draft.rir : draft.rpe, step: rir ? 1 : 0.5, decimals: !rir, min: rir ? 0 : 1, max: 10 };
-    }
-    const seg = draft.segments[target.segmentIndex];
-    const valor = seg ? segmentFieldValue(seg, target.field, unit) : null;
-    switch (target.field) {
-      case 'weight_kg':
-        return { title: `${prefijo} · Peso`, value: valor, step: unit === 'kg' ? 2.5 : 5, decimals: true, suffix: unit };
-      case 'duration_sec':
-        return { title: `${prefijo} · Tiempo`, value: valor, step: 15, decimals: false, suffix: 's' };
-      case 'distance_m':
-        return { title: `${prefijo} · Distancia`, value: valor, step: 100, decimals: false, suffix: 'm' };
-      case 'partial_reps':
-        return { title: `${prefijo} · Parciales`, value: valor, step: 1, decimals: false, counter: true };
-      case 'forced_reps':
-        return { title: `${prefijo} · Reps forzadas`, value: valor, step: 1, decimals: false, counter: true };
-      case 'cheat_reps':
-        return { title: `${prefijo} · Reps con trampa`, value: valor, step: 1, decimals: false, counter: true };
-      default:
-        return { title: `${prefijo} · ${columnLabel(target.field, unit)}`, value: valor, step: 1, decimals: false, counter: true, max: 999 };
-    }
+    return numpadFieldFor(target, draft, prefijo, effortScale, unit);
   }, [teclado, ejercicioDe, effortScale, unit]);
 
   const cambiarValor = (valor: number | null) => {
     if (!teclado) return;
-    const { draft, target } = teclado;
-    const siguiente =
-      target.field === 'effort'
-        ? { ...draft, [effortScale]: valor }
-        : setSegmentField(draft, target.segmentIndex, target.field, valor, unit);
-    setTeclado({ target, draft: siguiente });
+    setTeclado({ target: teclado.target, draft: applyNumpadValue(teclado.draft, teclado.target, valor, effortScale, unit) });
   };
 
   // ── Acciones de ejercicio ────────────────────────────────────────────────────────────

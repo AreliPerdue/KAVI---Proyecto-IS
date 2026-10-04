@@ -38,17 +38,32 @@ export function useGymProgress() {
   const [ahora] = useState(() => new Date());
 
   const catalog = useMemo(() => new Map<string, Exercise>((catalogo.data ?? []).map((e) => [e.id, e])), [catalogo.data]);
+  /**
+   * Las sesiones que de verdad pasaron. Un plan del formulario de actividad (RF-F9) se
+   * guarda como sesión con series sin marcar: no cuenta mientras no llegue su hora ni si
+   * nunca se marcó nada. Las de v1 sin series estructuradas sí cuentan.
+   */
+  const sessions = useMemo(
+    () =>
+      (log.data ?? []).filter((w) => {
+        if (new Date(w.performed_at) > ahora) return false;
+        const series = w.exercises.flatMap((e) => e.workout_sets);
+        return series.length === 0 || series.some((s) => s.completed_at !== null);
+      }),
+    [log.data, ahora],
+  );
   const streak = useMemo<StreakState | null>(() => {
     if (!log.data || !events.data) return null;
-    return computeStreak(log.data.map((w) => new Date(w.performed_at)), events.data, ahora);
-  }, [log.data, events.data, ahora]);
+    return computeStreak(sessions.map((w) => new Date(w.performed_at)), events.data, ahora);
+  }, [log.data, sessions, events.data, ahora]);
   const achievements = useMemo<Achievement[] | null>(() => {
     if (!log.data || !streak) return null;
-    return computeAchievements(log.data, catalog, streak.best, trato);
-  }, [log.data, catalog, streak, trato]);
+    return computeAchievements(sessions, catalog, streak.best, trato);
+  }, [log.data, sessions, catalog, streak, trato]);
 
   return {
     log,
+    sessions,
     events,
     catalog,
     streak,

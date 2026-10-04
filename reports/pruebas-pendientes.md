@@ -402,3 +402,19 @@ segundo pasa a primero y "Guardar orden" lo aplica en la sesión. Falta:
   momento; marca la sesión como editada.
 - [ ] En dispositivo (iOS y Android): mantener presionado no pelea con el deslizar de la fila
   ni con el scroll (el scroll se apaga mientras se arrastra); dentro de la hoja en Android.
+
+## Borrador del formulario de actividad con el logger (T251)
+Probado a mano en el demo: nueva actividad → "Actividad de gimnasio" → "Añadir ejercicio"
+abre el catálogo; el bloque es el del logger; 100 kg con el teclado y "+ Serie" copia la
+anterior; "Crear actividad" guarda la sesión con el ejercicio ligado al catálogo y sus dos
+series. Falta:
+- [ ] **Reescribir `workout-draft.test.tsx`** (se quitó: probaba las tarjetas de texto de
+  v1). Casos: vacío invita a añadir; elegir del catálogo crea el ejercicio con su primera
+  serie prellenada con la vez pasada; teclado, + Serie, duplicar, borrar, arrastrar;
+  cambiar y quitar ejercicio; con entrenamiento existente ofrece abrirlo.
+- [ ] `saveExercises` (activity/new): crea la sesión, cada ejercicio en orden con su
+  `exercise_id` y sus series reasignadas al id creado; un fallo no pierde la actividad.
+- [ ] `useGymProgress.sessions`: excluye sesiones futuras y las que tienen series pero
+  ninguna marcada; incluye las de v1 sin series.
+- [ ] Logger tras extraer `set-editing.ts`: el teclado, "Siguiente" y el esfuerzo se
+  comportan igual que antes.

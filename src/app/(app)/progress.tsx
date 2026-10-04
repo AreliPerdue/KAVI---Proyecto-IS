@@ -33,26 +33,26 @@ export default function ProgressScreen() {
 
   const dias = useMemo(() => {
     const m = new Map<string, number>();
-    for (const w of progreso.log.data ?? []) {
+    for (const w of progreso.sessions) {
       const k = format(new Date(w.performed_at), 'yyyy-MM-dd');
       m.set(k, (m.get(k) ?? 0) + 1);
     }
     return m;
-  }, [progreso.log.data]);
+  }, [progreso.sessions]);
   const justificadas = useMemo(() => new Map((progreso.events.data ?? []).map((e) => [e.week_start, e])), [progreso.events.data]);
 
   const inicioVolumen = addWeeks(weekStart(now), semanaVolumen);
   const volumen = useMemo(() => {
     const desde = inicioVolumen.getTime();
     const hasta = addWeeks(inicioVolumen, 1).getTime();
-    const ejercicios = (progreso.log.data ?? []).filter((w) => {
+    const ejercicios = progreso.sessions.filter((w) => {
       const t = new Date(w.performed_at).getTime();
       return t >= desde && t < hasta;
     }).flatMap((w) => w.exercises);
     return setsByGroup(ejercicios, progreso.catalog);
     // `inicioVolumen` se deriva de `semanaVolumen` y `now`.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [progreso.log.data, progreso.catalog, semanaVolumen, now]);
+  }, [progreso.sessions, progreso.catalog, semanaVolumen, now]);
 
   if (progreso.isPending) {
     return (

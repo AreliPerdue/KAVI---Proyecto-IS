@@ -13,6 +13,7 @@ import {
   removeExercise,
   removeWorkout,
   restoreExercise,
+  saveWorkoutSets,
   createExerciseGroup,
   removeExerciseGroup,
   updateExercise,
@@ -22,6 +23,7 @@ import {
   type WorkoutDetail,
   type WorkoutExerciseInput,
   type WorkoutInput,
+  type WorkoutSet,
 } from '@/services/workouts';
 
 export const workoutKeys = {
@@ -111,6 +113,8 @@ export function useWorkoutMutations() {
       },
     }),
     removeExercise: useMutation({ mutationFn: (id: string) => removeExercise(id), onSuccess: invalidate }),
+    /** Series completas de una vez: el borrador del formulario de actividad al guardarse (RF-F9). */
+    saveSets: useMutation({ mutationFn: (sets: readonly WorkoutSet[]) => saveWorkoutSets(sets), onSuccess: invalidate }),
     restoreExercise: useMutation({ mutationFn: (id: string) => restoreExercise(id), onSuccess: invalidate }),
     createGroup: useMutation({
       mutationFn: ({ workoutId, input }: { workoutId: string; input: Parameters<typeof createExerciseGroup>[1] }) => createExerciseGroup(workoutId, input),

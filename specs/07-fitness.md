@@ -188,6 +188,9 @@ Regla: **la diversión nunca agrega pasos** al registro.
   - Se guarda en `workout_streak_events` (semana, decisión, nota y chips), con RLS por dueño.
   - Las semanas vacías seguidas forman un solo hueco y se deciden juntas: tres semanas de vacaciones son
     una pregunta, no tres.
+  - Cuenta una sesión que ya pasó y tiene al menos una serie marcada (o que es de v1, sin series
+    estructuradas). Un plan del formulario de actividad (RF-F9) no cuenta antes de su hora ni si nunca
+    se marcó nada. La misma regla vale para los logros.
   - La racha nace con la función: los huecos que terminaron antes de la semana del 28 de septiembre de
     2026 cuentan como reinicio y no se preguntan, para no abrir Fitness con meses de preguntas viejas.
 - RF-F59. **Resumen al terminar:** duración, volumen, PRs, músculos trabajados y una equivalencia de tonelaje

@@ -49,14 +49,20 @@ export default function ActivityFormScreen() {
   const existingWorkout = useWorkoutByActivity(id, editing);
   const workouts = useWorkoutMutations();
 
-  /** Crea el entrenamiento de la actividad y le añade los ejercicios en orden (RF-F9). */
+  /**
+   * Crea el entrenamiento de la actividad con los ejercicios y series del borrador, en orden
+   * (RF-F9). Las series se guardan tal cual, colgadas del ejercicio ya creado.
+   */
   const saveExercises = async (activityId: string, performedAt: string, exercises: ExerciseDraft[]) => {
-    const usable = exercises.filter((e) => e.name.trim().length > 0);
-    if (usable.length === 0) return;
+    if (exercises.length === 0) return;
     const workout = await workouts.create.mutateAsync({ activity_id: activityId, performed_at: performedAt });
-    for (const [index, draft] of usable.entries()) {
-      const { key: _key, ...input } = draft;
-      await workouts.addExercise.mutateAsync({ workoutId: workout.id, input: { ...input, name: draft.name.trim(), position: index } });
+    for (const [index, draft] of exercises.entries()) {
+      const creado = await workouts.addExercise.mutateAsync({
+        workoutId: workout.id,
+        input: { name: draft.name, exercise_id: draft.exercise_id ?? null, position: index, sets: null, reps: null, weight: null, duration_minutes: null, notes: draft.notes },
+      });
+      const series = draft.workout_sets.map((s) => ({ ...s, workout_exercise_id: creado.id }));
+      if (series.length > 0) await workouts.saveSets.mutateAsync(series);
     }
   };
 

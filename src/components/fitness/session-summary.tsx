@@ -56,10 +56,10 @@ function Contenido({ workout, summary, catalog, unit, onClose }: Omit<SessionSum
   const equivalencia = serio ? null : tonnageEquivalence(summary.volumeKg, workout.id);
   /** Solo cuando el historial ya trae esta sesión: antes, todo parecería "nuevo". */
   const logros = useMemo(() => {
-    const log = progreso.log.data;
-    if (!log || !progreso.streak || !log.some((w) => w.id === workout.id)) return [];
+    const log = progreso.sessions;
+    if (!progreso.streak || !log.some((w) => w.id === workout.id)) return [];
     return unlockedBy(workout.id, log, progreso.catalog, progreso.streak.best, trato);
-  }, [progreso.log.data, progreso.streak, progreso.catalog, workout.id, trato]);
+  }, [progreso.sessions, progreso.streak, progreso.catalog, workout.id, trato]);
 
   const compartirTexto = async () => {
     const lineas = [

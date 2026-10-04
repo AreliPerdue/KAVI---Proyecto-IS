@@ -37,7 +37,7 @@ export function StreakCard() {
 
   /** "¿Y la pierna?": entrena, pero lleva más de 7 días sin pierna (RF-F55). */
   const sinPierna = useMemo(() => {
-    const log = progreso.log.data ?? [];
+    const log = progreso.sessions;
     if (serio || log.length === 0) return null;
     const hace = (dias: number) => progreso.now.getTime() - dias * 86_400_000;
     const ultima = log[log.length - 1];
@@ -45,11 +45,11 @@ export function StreakCard() {
     const pierna = [...log].reverse().find((w) => isLegDay(w.exercises, progreso.catalog));
     if (pierna && new Date(pierna.performed_at).getTime() >= hace(7)) return null;
     return gymratLineFor('no_legs', trato, serio, weekKey(progreso.now));
-  }, [progreso.log.data, progreso.catalog, progreso.now, serio, trato]);
+  }, [progreso.sessions, progreso.catalog, progreso.now, serio, trato]);
 
   if (!streak) return null;
   if (streak.paused) return <Pausa key={streak.paused.weeks.join()} weeks={streak.paused.weeks} semanas={streak.weeks} />;
-  if (progreso.log.data?.length === 0) return null;
+  if (progreso.sessions.length === 0) return null;
 
   return (
     <View style={styles.pila}>
