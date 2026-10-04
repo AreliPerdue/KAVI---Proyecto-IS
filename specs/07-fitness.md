@@ -139,6 +139,9 @@ que se copian a `docs/gym/intensificadores.md` en la Fase G5. Aquí, las claves.
   `rest_pause`, `myo_reps`, `myo_match`, `dc_rest_pause`, `cluster`, `forced_reps`, `negatives`, `partials`,
   `one_and_half`, `twenty_ones`, `paused_reps`, `iso_hold`, `loaded_stretch`, `peak_contraction`, `tempo`,
   `super_slow`, `cheat_reps`, `burns`, `bfr`, `accommodating` y `dynamic_effort`.
+  - Drop mecánico: al aplicarlo se elige la variante del tramo (mismo peso, otra variante). Se sugieren
+    las del mismo grupo muscular y mecánica, primero con el mismo equipo y lo mejor de cada familia;
+    cualquier otra, desde el catálogo. Tocar el tramo la cambia o la quita.
 - RF-F45. **Agrupaciones:** `superset`, `compound_set`, `tri_set`, `giant_set`, `circuit`, `pre_exhaust`,
   `post_exhaust`, `contrast` y `paired_sets`. Se eligen varios ejercicios y se toca "Agrupar como…".
   Llevan etiquetas A1/A2 con color, el logger salta solo al siguiente del grupo y el descanso corre al terminar la ronda.

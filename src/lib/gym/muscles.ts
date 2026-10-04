@@ -22,6 +22,9 @@ export const MUSCLE_GROUPS: { key: string; label: string; muscles: Muscle[]; leg
 ];
 
 const GRUPO_DE = new Map<string, string>(MUSCLE_GROUPS.flatMap((g) => g.muscles.map((m) => [m, g.key] as const)));
+/** Grupo de un músculo del catálogo ("chest_upper" → "chest"); `undefined` si no está en ninguno. */
+export const muscleGroupOf = (muscle: string): string | undefined => GRUPO_DE.get(muscle);
+
 const PIERNA = new Set(MUSCLE_GROUPS.filter((g) => g.legs).map((g) => g.key));
 
 /** Zonas de referencia en series efectivas por semana: orientación, no receta. */

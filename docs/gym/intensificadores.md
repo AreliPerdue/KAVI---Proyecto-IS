@@ -28,7 +28,7 @@ Una serie normal es un tramo `main`. Los intensificadores van en `workout_sets.i
 |---|---|---|
 | Drop set | `drop_set` | + tramo `drop`, peso −% configurable (20 % por omisión), descanso 0 |
 | Strip set | `strip_set` | + tramo `drop` con nota `strip` |
-| Drop mecánico | `mechanical_drop` | + tramo `drop` con el mismo peso; `variant_exercise_id` para la variante |
+| Drop mecánico | `mechanical_drop` | + tramo `drop` con el mismo peso; `variant_exercise_id` para la variante. Al aplicarlo se pregunta la variante: sugerencias de `suggestVariants` (mismo grupo y mecánica; pesa más el mismo equipo) o el catálogo completo; se cambia tocando el tramo |
 | Rest-pause | `rest_pause` | + 2 tramos `rest_pause`, mismo peso, 15 s antes de cada uno |
 | Myo-reps | `myo_reps` | el principal pasa a `myo_activation` + 3 tramos `myo_mini` (15 s) |
 | Myo-rep match | `myo_match` | igual que myo-reps; la meta es igualar las reps de la activación |

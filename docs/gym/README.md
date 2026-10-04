@@ -80,8 +80,6 @@ puede adelantar el reloj (Playwright: `page.clock.setSystemTime`).
 - **Pruebas automáticas.** Por decisión (D8) se pospusieron; la lista por fase está en
   `reports/pruebas-pendientes.md`. Antes de correr Jest hay que agregar mocks de
   `expo-haptics`, `expo-audio`, `expo-sharing` y `react-native-view-shot` en `jest.setup.js`.
-- **Drop mecánico:** el modelo guarda la variante (`set_segments.variant_exercise_id`), pero
-  falta el selector en la interfaz (T252).
 - **iOS:** la app está hecha y probada en simulador; falta la cuenta de Apple Developer para
   distribuirla.
 

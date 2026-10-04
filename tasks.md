@@ -729,7 +729,7 @@ Plan y decisiones en `docs/gym/AUDITORIA.md`. Cada fase cierra con typecheck, li
   "Bajar" en los menús. Dep: T243
 - [x] T251 El borrador del formulario de actividad usa el componente del logger (RF-F9), no el
   editor de texto de v1. Dep: T243
-- [ ] T252 Drop mecánico: elegir la variante del ejercicio en el tramo (`variant_exercise_id`).
+- [x] T252 Drop mecánico: elegir la variante del ejercicio en el tramo (`variant_exercise_id`).
   Dep: T245
 
 ### Bugs reportados

@@ -13,6 +13,7 @@ import { IntervalTimerSheet } from '@/components/fitness/interval-timer-sheet';
 import { SessionSummarySheet } from '@/components/fitness/session-summary';
 import { applyNumpadValue, nextNumpadTarget, numpadFieldFor } from '@/components/fitness/set-editing';
 import { SetDetailsSheet } from '@/components/fitness/set-details-sheet';
+import { VariantSheet } from '@/components/fitness/variant-sheet';
 import { NoteSheet } from '@/components/fitness/note-sheet';
 import { ReorderExercisesSheet } from '@/components/fitness/reorder-exercises-sheet';
 import { NumpadSheet, type NumpadField } from '@/components/fitness/numpad-sheet';
@@ -129,7 +130,9 @@ export default function WorkoutScreen() {
   const [pesoCorporal, setPesoCorporal] = useState<number | null>(null);
   const [menuSerie, setMenuSerie] = useState<{ exercise: WorkoutExerciseDetail; set: WorkoutSet } | null>(null);
   const [menuEjercicio, setMenuEjercicio] = useState<WorkoutExerciseDetail | null>(null);
-  const [selector, setSelector] = useState<{ modo: 'agregar' } | { modo: 'cambiar'; exercise: WorkoutExercise } | null>(null);
+  const [selector, setSelector] = useState<{ modo: 'agregar' } | { modo: 'cambiar'; exercise: WorkoutExercise } | { modo: 'variante'; setId: string; segmentIndex: number } | null>(null);
+  /** El tramo de drop mecánico cuya variante se está eligiendo (RF-F44). */
+  const [varianteDe, setVarianteDe] = useState<{ setId: string; segmentIndex: number } | null>(null);
   const [herramientasDe, setHerramientasDe] = useState<WorkoutExerciseDetail | null>(null);
   const [resumenAbierto, setResumenAbierto] = useState(false);
   const [horaAbierta, setHoraAbierta] = useState(false);
@@ -386,6 +389,18 @@ export default function WorkoutScreen() {
     },
     [guardar],
   );
+
+  /** Pone (o quita) la variante del tramo de un drop mecánico. */
+  const ponerVariante = useCallback(
+    (setId: string, segmentIndex: number, variantId: string | null) => {
+      const set = seriePorId.get(setId);
+      if (!set) return;
+      guardar({ ...set, segments: set.segments.map((g, i) => (i === segmentIndex ? { ...g, variant_exercise_id: variantId } : g)) });
+    },
+    [seriePorId, guardar],
+  );
+  const abrirVariante = useCallback((set: WorkoutSet, segmentIndex: number) => setVarianteDe({ setId: set.id, segmentIndex }), []);
+  const nombreEjercicio = useCallback((exId: string) => porId.get(exId)?.name_es ?? null, [porId]);
 
   const quitarSegmento = useCallback((set: WorkoutSet, i: number) => guardar(removeSegment(set, i)), [guardar]);
 
@@ -735,6 +750,8 @@ export default function WorkoutScreen() {
                 onDelete={borrarSerie}
                 onRemoveSegment={quitarSegmento}
                 onMoveSet={moverSerie}
+                onPickVariant={abrirVariante}
+                exerciseName={nombreEjercicio}
                 onDragStateChange={setArrastrando}
                 onExerciseMenu={setMenuEjercicio}
                 onOpenDetail={(ex) => {
@@ -1119,6 +1136,13 @@ export default function WorkoutScreen() {
           if (!actual) return;
           const nueva = activo ? applyIntensifier(actual, key, { dropPercent }) : removeIntensifier(actual, key);
           guardar(nueva);
+          if (activo && key === 'mechanical_drop') {
+            // El drop mecánico necesita saber a qué variante se pasa: se pregunta de una vez.
+            const tramo = nueva.segments.map((g) => g.kind).lastIndexOf('drop');
+            setIntensificadoresDe(null);
+            if (tramo > 0) setVarianteDe({ setId: nueva.id, segmentIndex: tramo });
+            return;
+          }
           setIntensificadoresDe(nueva);
         }}
       />
@@ -1172,6 +1196,23 @@ export default function WorkoutScreen() {
         onSave={reordenarEjercicios}
       />
 
+      <VariantSheet
+        visible={varianteDe !== null}
+        base={(() => {
+          const set = varianteDe ? seriePorId.get(varianteDe.setId) : undefined;
+          const ex = set ? ejercicioDe(set) : null;
+          return ex?.exercise_id ? porId.get(ex.exercise_id) ?? null : null;
+        })()}
+        catalog={catalogo.data ?? []}
+        currentId={varianteDe ? seriePorId.get(varianteDe.setId)?.segments[varianteDe.segmentIndex]?.variant_exercise_id ?? null : null}
+        onClose={() => setVarianteDe(null)}
+        onPick={(variantId) => varianteDe && ponerVariante(varianteDe.setId, varianteDe.segmentIndex, variantId)}
+        onSearchAll={() => {
+          if (varianteDe) setSelector({ modo: 'variante', ...varianteDe });
+          setVarianteDe(null);
+        }}
+      />
+
       <SetDetailsSheet visible={detallesDe !== null} set={detallesDe} unit={unit} onClose={() => setDetallesDe(null)} onSave={guardar} />
 
       <GroupSheet
@@ -1211,6 +1252,10 @@ export default function WorkoutScreen() {
         onClose={() => setSelector(null)}
         onPick={(elegido) => {
           if (!selector) return;
+          if (selector.modo === 'variante') {
+            ponerVariante(selector.setId, selector.segmentIndex, elegido.id);
+            return;
+          }
           if (selector.modo === 'cambiar') {
             // Cambiar de ejercicio conserva sus series (RF-F39).
             mutations.updateExercise.mutate({ id: selector.exercise.id, patch: { name: elegido.name_es, exercise_id: elegido.id } }, { onSuccess: () => void sesion.refetch() });

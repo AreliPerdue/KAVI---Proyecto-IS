@@ -418,3 +418,12 @@ series. Falta:
   ninguna marcada; incluye las de v1 sin series.
 - [ ] Logger tras extraer `set-editing.ts`: el teclado, "Siguiente" y el esfuerzo se
   comportan igual que antes.
+
+## Variante del drop mecánico (T252)
+Probado a mano en el demo: press inclinado con barra → "Drop mecánico" abre "Variante del
+drop" con press plano y declinado con barra primero; elegir plano lo muestra en el tramo;
+tocar el tramo → "Buscar en todo el catálogo" → declinado lo reemplaza. Falta:
+- [ ] `suggestVariants`: mismo grupo y mecánica; sin equipo ni patrón en común no entra; el
+  mismo equipo gana; lo mejor de cada familia primero; excluye el propio y los archivados.
+- [ ] Logger: aplicar `mechanical_drop` abre la hoja en el último tramo `drop`; "Sin
+  variante" la quita; se puede deshacer.

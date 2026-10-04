@@ -13,7 +13,7 @@ import { useTheme } from '@/hooks/use-theme';
 import type { PrKind } from '@/lib/gym/records';
 import { formatDuration, formatSegment, isImbalanced, segmentFieldValue, type SegmentField } from '@/lib/gym/sets';
 import type { EffortScale } from '@/store/gym-store';
-import type { Exercise, SetType, WeightUnit, WorkoutExerciseDetail, WorkoutSet } from '@/types/domain';
+import type { Exercise, SetSegment, SetType, WeightUnit, WorkoutExerciseDetail, WorkoutSet } from '@/types/domain';
 
 /** Lo que se edita con el teclado: un campo de un segmento, o el esfuerzo de la serie. */
 export type EditTarget = { setId: string; segmentIndex: number; field: SegmentField | 'effort' };
@@ -114,6 +114,10 @@ export type ExerciseBlockProps = {
   onMoveSet: (exercise: WorkoutExerciseDetail, from: number, to: number) => void;
   /** Mientras se arrastra una serie, la pantalla no debe desplazarse. */
   onDragStateChange?: (dragging: boolean) => void;
+  /** Elegir la variante del tramo de un drop mecánico (RF-F44). Sin él, solo se muestra. */
+  onPickVariant?: (set: WorkoutSet, segmentIndex: number) => void;
+  /** Nombre de un ejercicio del catálogo, para mostrar la variante elegida. */
+  exerciseName?: (exerciseId: string) => string | null;
   onExerciseMenu: (exercise: WorkoutExerciseDetail) => void;
   onOpenDetail: (exercise: WorkoutExerciseDetail) => void;
 };
@@ -368,9 +372,13 @@ function FilaSerie(p: FilaProps) {
       {set.segments.slice(1).map((seg, j) => (
         <View key={seg.id} style={styles.fila}>
           <View style={styles.colNumero} />
-          <AppText variant="caption" color="textSecondary" style={styles.colAnterior}>
-            ↳ {NOMBRE_SEGMENTO[seg.kind] ?? seg.kind}
-          </AppText>
+          {seg.kind === 'drop' && set.intensifiers.includes('mechanical_drop') ? (
+            <TramoVariante {...p} seg={seg} indice={j + 1} />
+          ) : (
+            <AppText variant="caption" color="textSecondary" style={styles.colAnterior}>
+              ↳ {NOMBRE_SEGMENTO[seg.kind] ?? seg.kind}
+            </AppText>
+          )}
           {columns.map((c) => celda(j + 1, c))}
           <View style={styles.colCorta} />
           {editable ? (
@@ -476,6 +484,25 @@ function FilaSerie(p: FilaProps) {
   );
 }
 
+/** El tramo de un drop mecánico: muestra la variante y, si se puede editar, la elige. */
+function TramoVariante(p: FilaProps & { seg: SetSegment; indice: number }) {
+  const theme = useTheme();
+  const nombre = p.seg.variant_exercise_id ? p.exerciseName?.(p.seg.variant_exercise_id) ?? 'Variante' : null;
+  const puedeElegir = p.editable && !!p.onPickVariant;
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={nombre ? `Variante del drop: ${nombre}. Cambiar` : 'Elegir la variante del drop'}
+      disabled={!puedeElegir}
+      onPress={() => p.onPickVariant?.(p.set, p.indice)}
+      style={({ pressed }) => [styles.colAnterior, styles.variante, pressed ? { backgroundColor: theme.surfaceAlt } : null]}>
+      <AppText variant="caption" color={nombre ? 'text' : puedeElegir ? 'textSecondary' : 'textTertiary'} numberOfLines={2}>
+        ↳ {nombre ?? (puedeElegir ? 'Elegir variante' : 'variante')}
+      </AppText>
+    </Pressable>
+  );
+}
+
 const styles = StyleSheet.create({
   grupo: { minWidth: 32, height: 26, paddingHorizontal: 6, alignItems: 'center', justifyContent: 'center', borderRadius: Radius.sm, borderCurve: 'continuous' },
   bloque: { padding: Spacing.md, borderWidth: 1, borderRadius: Radius.lg, borderCurve: 'continuous', gap: Spacing.xs },
@@ -514,4 +541,5 @@ const styles = StyleSheet.create({
   accionIzq: { justifyContent: 'flex-start' },
   accionDer: { justifyContent: 'flex-end' },
   pressed: { opacity: 0.75 },
+  variante: { minHeight: 44, justifyContent: 'center', borderRadius: Radius.sm, borderCurve: 'continuous' },
 });
