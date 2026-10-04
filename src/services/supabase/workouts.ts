@@ -254,6 +254,42 @@ export const supabaseWorkouts: WorkoutsApi = {
 
   saveSets: guardarSeries,
 
+  async createGroup(workoutId, input) {
+    const id = uuidv4();
+    const grupo = unwrap(
+      await getSupabase()
+        .from('exercise_groups')
+        .insert({ id, workout_id: workoutId, type: input.type, rounds: input.rounds ?? null, rest_after_round_sec: input.rest_after_round_sec ?? null })
+        .select('*')
+        .single(),
+    ) as ExerciseGroup & Borrable;
+
+    // Los ejercicios del grupo quedan seguidos, en la posición del primero, para que el
+    // logger los recorra en orden (A1 → A2 → A3).
+    const actuales = unwrap(
+      await getSupabase().from('workout_exercises').select('id, position').eq('workout_id', workoutId).is('deleted_at', null).order('position'),
+    ) as { id: string; position: number }[];
+    const enGrupo = new Set(input.exerciseIds);
+    const ancla = actuales.findIndex((e) => enGrupo.has(e.id));
+    const resto = actuales.filter((e) => !enGrupo.has(e.id)).map((e) => e.id);
+    const orden = [...resto.slice(0, ancla), ...input.exerciseIds, ...resto.slice(ancla)];
+    for (const [posicion, exerciseId] of orden.entries()) {
+      const i = input.exerciseIds.indexOf(exerciseId);
+      const cambios = i >= 0 ? { position: posicion, group_id: id, group_position: i + 1 } : { position: posicion };
+      const { error } = await getSupabase().from('workout_exercises').update(cambios).eq('id', exerciseId);
+      if (error) throw toError(error);
+    }
+    return sinInternos(grupo) as ExerciseGroup;
+  },
+
+  async removeGroup(groupId) {
+    const db = getSupabase();
+    const sueltos = await db.from('workout_exercises').update({ group_id: null, group_position: null }).eq('group_id', groupId);
+    if (sueltos.error) throw toError(sueltos.error);
+    const { error } = await db.from('exercise_groups').update({ deleted_at: ahora() }).eq('id', groupId);
+    if (error) throw toError(error);
+  },
+
   async removeSets(ids) {
     if (ids.length === 0) return;
     const { error } = await getSupabase().from('workout_sets').update({ deleted_at: ahora() }).in('id', [...ids]);

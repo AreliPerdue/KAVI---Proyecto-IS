@@ -1,17 +1,22 @@
 import { useQueries } from '@tanstack/react-query';
 import { addDays } from 'date-fns';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { ArrowDown, ArrowUp, CalendarDays, Clock, Copy, Merge, Pencil, Plus, Redo2, Repeat2, Scale, Scissors, Timer, Trash2, Undo2, Wrench, X } from 'lucide-react-native';
+import { ArrowDown, ArrowUp, CalendarDays, Clock, Copy, Link2, ListOrdered, Merge, Pencil, Plus, Redo2, Repeat2, Scale, Scissors, SlidersHorizontal, Sparkles, Timer, Trash2, Undo2, Unlink, Wrench, X } from 'lucide-react-native';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { type EditTarget, ExerciseBlock, columnLabel } from '@/components/fitness/exercise-block';
 import { ExercisePicker } from '@/components/fitness/exercise-picker';
+import { GroupSheet } from '@/components/fitness/group-sheet';
+import { IntensifierSheet } from '@/components/fitness/intensifier-sheet';
+import { IntervalTimerSheet } from '@/components/fitness/interval-timer-sheet';
+import { SetDetailsSheet } from '@/components/fitness/set-details-sheet';
 import { NumpadSheet, type NumpadField } from '@/components/fitness/numpad-sheet';
 import { RestTimerBar } from '@/components/fitness/rest-timer-bar';
 import { ToolsSheet } from '@/components/fitness/tools-sheet';
 import { ModalHeader } from '@/components/modal-header';
 import { ActionRow, AppText, Banner, Button, Chip, DatePickerSheet, ErrorState, FieldButton, IconButton, LoadingState, Screen, Sheet, SwitchRow, TextField, TimePickerSheet } from '@/components/ui';
+import { PROTOCOLS, type ProtocolKey } from '@/constants/intensifiers';
 import { IconSize, IconStroke, Radius, Spacing } from '@/constants/theme';
 import { useActivitiesRange } from '@/hooks/use-activities-range';
 import { useEditHistory } from '@/hooks/use-edit-history';
@@ -41,6 +46,7 @@ import {
   type SegmentField,
 } from '@/lib/gym/sets';
 import type { WarmupStep } from '@/lib/gym/tools';
+import { applyIntensifier, protocolRestSec, protocolSets, protocolTimer, removeIntensifier } from '@/lib/gym/transforms';
 import { formatWeight, fromKg, round, toKg } from '@/lib/gym/units';
 import { useAuth, useConfirm, useSnackbar } from '@/providers';
 import type { ExerciseHistoryEntry } from '@/services/workouts';
@@ -119,6 +125,11 @@ export default function WorkoutScreen() {
   const [horaAbierta, setHoraAbierta] = useState(false);
   const [duracionAbierta, setDuracionAbierta] = useState(false);
   const [duracion, setDuracion] = useState<number | null>(null);
+  const [intensificadoresDe, setIntensificadoresDe] = useState<WorkoutSet | null>(null);
+  const [detallesDe, setDetallesDe] = useState<WorkoutSet | null>(null);
+  const [agruparDesde, setAgruparDesde] = useState<WorkoutExerciseDetail | null>(null);
+  const [protocoloPara, setProtocoloPara] = useState<WorkoutExerciseDetail | null>(null);
+  const [timerPara, setTimerPara] = useState<WorkoutExerciseDetail | null>(null);
   /** Reloj de la sesión en curso: se lee aquí y se refresca cada 30 s, no en cada render. */
   const [ahora, setAhora] = useState(() => Date.now());
 
@@ -134,6 +145,22 @@ export default function WorkoutScreen() {
   const data = sesion.data;
   const ejercicios = useMemo(() => data?.exercises ?? [], [data]);
   const porId = useMemo(() => new Map((catalogo.data ?? []).map((e) => [e.id, e])), [catalogo.data]);
+
+  /*
+   * Agrupaciones (RF-F45): una letra por grupo en el orden en que aparecen (A, B, C…) y un
+   * número por posición dentro del grupo. Lo que no está agrupado no lleva etiqueta.
+   */
+  const grupos = useMemo(() => {
+    const vivos = new Map((data?.groups ?? []).map((g) => [g.id, g]));
+    const letra = new Map<string, string>();
+    const etiqueta = new Map<string, string>();
+    for (const e of ejercicios) {
+      if (!e.group_id || !vivos.has(e.group_id)) continue;
+      if (!letra.has(e.group_id)) letra.set(e.group_id, String.fromCharCode(65 + letra.size));
+      etiqueta.set(e.id, `${letra.get(e.group_id)}${e.group_position ?? ''}`);
+    }
+    return { porId: vivos, etiqueta };
+  }, [data?.groups, ejercicios]);
 
   // ── Edición con deshacer (RF-F40) ────────────────────────────────────────────────────
   const historia = useEditHistory();
@@ -257,13 +284,29 @@ export default function WorkoutScreen() {
       tap();
       guardar({ ...set, completed_at: hecha ? new Date().toISOString() : null });
       if (hecha && data?.status === 'active') {
+        const grupo = exercise.group_id ? grupos.porId.get(exercise.group_id) : undefined;
+        if (grupo) {
+          /*
+           * En una agrupación no se descansa entre ejercicios: se pasa al siguiente del grupo
+           * y el descanso corre al terminar la ronda (RF-F45).
+           */
+          const miembros = ejercicios.filter((e) => e.group_id === grupo.id).sort((a, b) => (a.group_position ?? 0) - (b.group_position ?? 0));
+          const i = miembros.findIndex((e) => e.id === exercise.id);
+          const siguienteEj = miembros[i + 1];
+          if (siguienteEj) {
+            showSnackbar({ message: `Sigue: ${grupos.etiqueta.get(siguienteEj.id) ?? ''} ${siguienteEj.name}` });
+            return;
+          }
+          startRest(id, grupo.rest_after_round_sec ?? exercise.rest_target_sec ?? restDefault, `${grupos.etiqueta.get(miembros[0].id) ?? ''} ${miembros[0].name}, siguiente ronda`);
+          return;
+        }
         const indice = exercise.workout_sets.findIndex((s) => s.id === set.id);
         const siguiente = exercise.workout_sets[indice + 1];
         const etiqueta = siguiente ? `${exercise.name}, serie ${indice + 2}` : exercise.name;
         startRest(id, exercise.rest_target_sec ?? restDefault, etiqueta);
       }
     },
-    [guardar, data?.status, startRest, id, restDefault],
+    [guardar, data?.status, startRest, id, restDefault, grupos, ejercicios, showSnackbar],
   );
 
   const copiarAnterior = useCallback(
@@ -356,6 +399,10 @@ export default function WorkoutScreen() {
         return { title: `${prefijo} · Distancia`, value: valor, step: 100, decimals: false, suffix: 'm' };
       case 'partial_reps':
         return { title: `${prefijo} · Parciales`, value: valor, step: 1, decimals: false, counter: true };
+      case 'forced_reps':
+        return { title: `${prefijo} · Reps forzadas`, value: valor, step: 1, decimals: false, counter: true };
+      case 'cheat_reps':
+        return { title: `${prefijo} · Reps con trampa`, value: valor, step: 1, decimals: false, counter: true };
       default:
         return { title: `${prefijo} · ${columnLabel(target.field, unit)}`, value: valor, step: 1, decimals: false, counter: true, max: 999 };
     }
@@ -403,6 +450,26 @@ export default function WorkoutScreen() {
       guardar(s);
     }));
     setHerramientasDe(null);
+  };
+
+  /**
+   * Un protocolo genera las series con sus objetivos (RF-F46). Lo pendiente de ese
+   * ejercicio se reemplaza; lo ya hecho se queda, y las nuevas van después. El peso de
+   * trabajo es el de la última serie, o el de la vez pasada.
+   */
+  const aplicarProtocolo = (exercise: WorkoutExerciseDetail, key: ProtocolKey) => {
+    const hechas = exercise.workout_sets.filter((s) => s.completed_at);
+    const pendientes = exercise.workout_sets.filter((s) => !s.completed_at);
+    const pesoTrabajo =
+      [...exercise.workout_sets].reverse().find((s) => s.segments[0]?.weight_kg)?.segments[0]?.weight_kg ??
+      analisis.get(exercise.id)?.previous[0]?.segments[0]?.weight_kg ??
+      null;
+    const nuevas = protocolSets(key, exercise.id, nextSortOrder(hechas), pesoTrabajo, unit);
+    historia.batch(() => {
+      pendientes.forEach((s) => quitar(s.id));
+      nuevas.forEach(guardar);
+    });
+    mutations.updateExercise.mutate({ id: exercise.id, patch: { protocol: key, rest_target_sec: protocolRestSec(key) } }, { onSuccess: () => void sesion.refetch() });
   };
 
   // ── Sesión ───────────────────────────────────────────────────────────────────────────
@@ -601,6 +668,9 @@ export default function WorkoutScreen() {
                 effortScale={effortScale}
                 editable={editing}
                 legacyNote={a.legacyNote}
+                groupLabel={grupos.etiqueta.get(exercise.id) ?? null}
+                protocolLabel={PROTOCOLS.find((x) => x.key === exercise.protocol)?.label ?? null}
+                onOpenTimer={exercise.protocol && protocolTimer(exercise.protocol as ProtocolKey) ? setTimerPara : undefined}
                 onAddSet={agregarSerie}
                 onEdit={abrirTeclado}
                 onToggle={alternar}
@@ -703,6 +773,44 @@ export default function WorkoutScreen() {
                 />
               ))}
             </View>
+            <ActionRow
+              icon={<Sparkles size={IconSize.action} strokeWidth={IconStroke} color={theme.text} />}
+              label="Intensificador…"
+              onPress={() => {
+                setIntensificadoresDe(menuSerie.set);
+                setMenuSerie(null);
+              }}
+            />
+            <ActionRow
+              icon={<SlidersHorizontal size={IconSize.action} strokeWidth={IconStroke} color={theme.text} />}
+              label="Detalles: fallo, ROM, tempo, carga"
+              onPress={() => {
+                setDetallesDe(menuSerie.set);
+                setMenuSerie(null);
+              }}
+            />
+            {menuSerie.set.intensifiers.includes('forced_reps') ? (
+              <ActionRow
+                icon={<Plus size={IconSize.action} strokeWidth={IconStroke} color={theme.text} />}
+                label="Reps forzadas"
+                onPress={() => {
+                  const set = menuSerie.set;
+                  setMenuSerie(null);
+                  setTeclado({ target: { setId: set.id, segmentIndex: 0, field: 'forced_reps' }, draft: set });
+                }}
+              />
+            ) : null}
+            {menuSerie.set.intensifiers.includes('cheat_reps') ? (
+              <ActionRow
+                icon={<Plus size={IconSize.action} strokeWidth={IconStroke} color={theme.text} />}
+                label="Reps con trampa"
+                onPress={() => {
+                  const set = menuSerie.set;
+                  setMenuSerie(null);
+                  setTeclado({ target: { setId: set.id, segmentIndex: 0, field: 'cheat_reps' }, draft: set });
+                }}
+              />
+            ) : null}
             <ActionRow
               icon={<Plus size={IconSize.action} strokeWidth={IconStroke} color={theme.text} />}
               label={`+ Drop (−${dropPercent} %)`}
@@ -837,6 +945,33 @@ export default function WorkoutScreen() {
                 setMenuEjercicio(null);
               }}
             />
+            {menuEjercicio.group_id && grupos.porId.has(menuEjercicio.group_id) ? (
+              <ActionRow
+                icon={<Unlink size={IconSize.action} strokeWidth={IconStroke} color={theme.text} />}
+                label="Desagrupar"
+                onPress={() => {
+                  if (menuEjercicio.group_id) mutations.removeGroup.mutate(menuEjercicio.group_id, { onSuccess: () => void sesion.refetch() });
+                  setMenuEjercicio(null);
+                }}
+              />
+            ) : (
+              <ActionRow
+                icon={<Link2 size={IconSize.action} strokeWidth={IconStroke} color={theme.text} />}
+                label="Agrupar como superserie, circuito…"
+                onPress={() => {
+                  setAgruparDesde(menuEjercicio);
+                  setMenuEjercicio(null);
+                }}
+              />
+            )}
+            <ActionRow
+              icon={<ListOrdered size={IconSize.action} strokeWidth={IconStroke} color={theme.text} />}
+              label="Aplicar protocolo…"
+              onPress={() => {
+                setProtocoloPara(menuEjercicio);
+                setMenuEjercicio(null);
+              }}
+            />
             <ActionRow
               icon={<Repeat2 size={IconSize.action} strokeWidth={IconStroke} color={theme.text} />}
               label="Cambiar ejercicio"
@@ -873,6 +1008,53 @@ export default function WorkoutScreen() {
           </>
         ) : null}
       </Sheet>
+
+      <IntensifierSheet
+        visible={intensificadoresDe !== null}
+        active={intensificadoresDe ? seriePorId.get(intensificadoresDe.id)?.intensifiers ?? intensificadoresDe.intensifiers : []}
+        onClose={() => setIntensificadoresDe(null)}
+        onToggle={(key, activo) => {
+          const actual = intensificadoresDe ? seriePorId.get(intensificadoresDe.id) ?? intensificadoresDe : null;
+          if (!actual) return;
+          const nueva = activo ? applyIntensifier(actual, key, { dropPercent }) : removeIntensifier(actual, key);
+          guardar(nueva);
+          setIntensificadoresDe(nueva);
+        }}
+      />
+
+      <SetDetailsSheet visible={detallesDe !== null} set={detallesDe} unit={unit} onClose={() => setDetallesDe(null)} onSave={guardar} />
+
+      <GroupSheet
+        visible={agruparDesde !== null}
+        from={agruparDesde}
+        candidates={ejercicios.filter((e) => e.id !== agruparDesde?.id && !(e.group_id && grupos.porId.has(e.group_id)))}
+        onClose={() => setAgruparDesde(null)}
+        onCreate={(input) => mutations.createGroup.mutate({ workoutId: data.id, input }, { onSuccess: () => void sesion.refetch() })}
+      />
+
+      <Sheet visible={protocoloPara !== null} onClose={() => setProtocoloPara(null)} title="Aplicar protocolo">
+        <AppText variant="caption" color="textSecondary">
+          Genera las series con sus objetivos a partir de tu peso de trabajo. Las series pendientes de este ejercicio se reemplazan; las hechas se quedan.
+        </AppText>
+        {PROTOCOLS.map((pr) => (
+          <ActionRow
+            key={pr.key}
+            icon={<ListOrdered size={IconSize.action} strokeWidth={IconStroke} color={theme.text} />}
+            label={`${pr.label} — ${pr.description}`}
+            onPress={() => {
+              if (protocoloPara) aplicarProtocolo(protocoloPara, pr.key);
+              setProtocoloPara(null);
+            }}
+          />
+        ))}
+      </Sheet>
+
+      <IntervalTimerSheet
+        visible={timerPara !== null}
+        title={PROTOCOLS.find((x) => x.key === timerPara?.protocol)?.label ?? 'Timer'}
+        config={timerPara?.protocol ? protocolTimer(timerPara.protocol as ProtocolKey) : null}
+        onClose={() => setTimerPara(null)}
+      />
 
       <ExercisePicker
         visible={selector !== null}

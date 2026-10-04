@@ -210,6 +210,13 @@ export interface WorkoutsApi {
   saveSets(sets: readonly WorkoutSet[]): Promise<void>;
   /** Borrado suave de series. */
   removeSets(ids: readonly string[]): Promise<void>;
+  /**
+   * Agrupa ejercicios de la sesión (RF-F45): superserie, circuito… El orden de los ids es
+   * el de A1, A2, A3; quedan seguidos en la sesión, en la posición del primero.
+   */
+  createGroup(workoutId: string, input: { type: ExerciseGroup['type']; exerciseIds: readonly string[]; rounds?: number | null; rest_after_round_sec?: number | null }): Promise<ExerciseGroup>;
+  /** Deshace un grupo: sus ejercicios vuelven a ser sueltos y conservan sus series. */
+  removeGroup(groupId: string): Promise<void>;
   /** Ejercicios con texto de v1 sin convertir todavía (RF-F62). */
   listLegacyExercises(userId: string): Promise<LegacyExercise[]>;
   /** Marca ejercicios como convertidos; así no se vuelven a convertir (RF-F62). */

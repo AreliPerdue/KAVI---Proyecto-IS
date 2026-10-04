@@ -10,7 +10,7 @@ import { formatWeight, fromKg, round } from './units';
  * una secuencia de cambios.
  */
 
-export type SegmentField = 'weight_kg' | 'reps' | 'reps_left' | 'reps_right' | 'partial_reps' | 'forced_reps' | 'duration_sec' | 'distance_m';
+export type SegmentField = 'weight_kg' | 'reps' | 'reps_left' | 'reps_right' | 'partial_reps' | 'forced_reps' | 'cheat_reps' | 'duration_sec' | 'distance_m';
 
 /** Qué columnas pide la fila según lo que mide el ejercicio (RF-F30). */
 export function columnsFor(tracking: TrackingType, unilateral: boolean): SegmentField[] {

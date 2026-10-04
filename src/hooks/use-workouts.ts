@@ -12,6 +12,8 @@ import {
   removeExercise,
   removeWorkout,
   restoreExercise,
+  createExerciseGroup,
+  removeExerciseGroup,
   updateExercise,
   updateWorkout,
   type Workout,
@@ -85,6 +87,11 @@ export function useWorkoutMutations() {
     }),
     removeExercise: useMutation({ mutationFn: (id: string) => removeExercise(id), onSuccess: invalidate }),
     restoreExercise: useMutation({ mutationFn: (id: string) => restoreExercise(id), onSuccess: invalidate }),
+    createGroup: useMutation({
+      mutationFn: ({ workoutId, input }: { workoutId: string; input: Parameters<typeof createExerciseGroup>[1] }) => createExerciseGroup(workoutId, input),
+      onSuccess: invalidate,
+    }),
+    removeGroup: useMutation({ mutationFn: (groupId: string) => removeExerciseGroup(groupId), onSuccess: invalidate }),
     duplicate: useMutation({
       mutationFn: ({ workoutId, target }: { workoutId: string; target: { activityId: string | null; performedAt: string; keepValues: boolean } }) =>
         duplicateWorkout(uid(), workoutId, target),

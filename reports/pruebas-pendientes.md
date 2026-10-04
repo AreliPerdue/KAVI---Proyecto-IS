@@ -321,3 +321,19 @@ mover a otro ejercicio → duración y hora → "editado" en encabezado e histor
 - [ ] Duración: `ended_at − performed_at` en los dos backends; suma por ejercicio solo sin
   `ended_at`; el caché de `updateExercise` no la pisa.
 - [ ] Cambiar la hora corre también `ended_at`.
+
+## Fitness v2 · G5 intensificadores (T245)
+Probado a mano en el demo: 21s + tempo sobre una serie, fallo en Detalles, superserie A1/A2
+(sin descanso tras A1, descanso de ronda tras A2), pirámide en otro ejercicio, EMOM con su
+timer corriendo. Falta:
+- [ ] `applyIntensifier` para cada una de las 24 claves (tramos, tipos, descansos, tempo) y
+  que aplicar dos veces no duplique la etiqueta.
+- [ ] `removeIntensifier` quita solo los tramos que trajo y devuelve el principal a `main`.
+- [ ] `protocolSets` para los 14 protocolos: número de series, objetivos, pesos redondeados,
+  tipos (top set / back-off / fallo).
+- [ ] `unusualCombination`: cada aviso y ningún falso positivo en una serie normal.
+- [ ] `createGroup` / `removeGroup` en los dos backends: posiciones contiguas en el lugar del
+  primero, `group_position` en orden, desagrupar conserva las series.
+- [ ] Descanso en grupos: solo al terminar el último del grupo y con `rest_after_round_sec`.
+- [ ] `IntervalTimerSheet`: fases trabajo/descanso, rondas, fin; calcula desde el inicio.
+- [ ] `SetDetailsSheet`: lb ↔ kg en lastre/asistencia/cadenas; vacío no guarda `load_mods`.

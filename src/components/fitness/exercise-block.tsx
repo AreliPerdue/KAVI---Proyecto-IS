@@ -1,10 +1,11 @@
-import { Check, ChevronRight, Copy, Ellipsis, Plus, Trash2, X } from 'lucide-react-native';
+import { Check, ChevronRight, Copy, Ellipsis, Plus, Timer, Trash2, X } from 'lucide-react-native';
 import { memo, useRef } from 'react';
 import { Platform, Pressable, StyleSheet, View } from 'react-native';
 import ReanimatedSwipeable, { type SwipeableMethods } from 'react-native-gesture-handler/ReanimatedSwipeable';
 
 import { AppText, IconButton } from '@/components/ui';
 import { MUSCLES } from '@/constants/exercise-catalog';
+import { intensifierLabel } from '@/constants/intensifiers';
 import { IconSize, IconStroke, Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import type { PrKind } from '@/lib/gym/records';
@@ -89,6 +90,12 @@ export type ExerciseBlockProps = {
   editable: boolean;
   /** Texto de v1 que no se pudo convertir sin adivinar (RF-F62). */
   legacyNote: string | null;
+  /** "A1", "B2"… si el ejercicio está en una agrupación (RF-F45). */
+  groupLabel: string | null;
+  /** Nombre del protocolo aplicado, si hay (RF-F46). */
+  protocolLabel: string | null;
+  /** Abre el timer de intervalos del protocolo (EMOM, Tabata…). */
+  onOpenTimer?: (exercise: WorkoutExerciseDetail) => void;
   onAddSet: (exercise: WorkoutExerciseDetail) => void;
   onEdit: (target: EditTarget) => void;
   onToggle: (exercise: WorkoutExerciseDetail, set: WorkoutSet) => void;
@@ -110,7 +117,7 @@ export type ExerciseBlockProps = {
  * camino del registro en vivo.
  */
 export const ExerciseBlock = memo(function ExerciseBlock(props: ExerciseBlockProps) {
-  const { exercise, catalog, columns, previous, prs, pendientes, unit, effortScale, editable, legacyNote } = props;
+  const { exercise, catalog, columns, previous, prs, pendientes, unit, effortScale, editable, legacyNote, groupLabel, protocolLabel } = props;
   const theme = useTheme();
   const sets = exercise.workout_sets;
   // El calentamiento no cuenta: la "serie 1" es la primera efectiva.
@@ -126,6 +133,13 @@ export const ExerciseBlock = memo(function ExerciseBlock(props: ExerciseBlockPro
   return (
     <View style={[styles.bloque, { borderColor: theme.border, backgroundColor: theme.surface }]}>
       <View style={styles.encabezado}>
+        {groupLabel ? (
+          <View style={[styles.grupo, { backgroundColor: theme.ink }]} accessibilityLabel={`Agrupación ${groupLabel}`}>
+            <AppText variant="label" color="onInk">
+              {groupLabel}
+            </AppText>
+          </View>
+        ) : null}
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={catalog ? `Ver el progreso de ${exercise.name}` : exercise.name}
@@ -135,12 +149,17 @@ export const ExerciseBlock = memo(function ExerciseBlock(props: ExerciseBlockPro
           <AppText variant="bodyStrong" numberOfLines={2}>
             {exercise.name || 'Ejercicio sin nombre'}
           </AppText>
-          {musculos ? (
+          {musculos || protocolLabel ? (
             <AppText variant="caption" color="textTertiary" numberOfLines={1}>
-              {musculos}
+              {[protocolLabel, musculos].filter(Boolean).join(' · ')}
             </AppText>
           ) : null}
         </Pressable>
+        {props.onOpenTimer ? (
+          <IconButton label={`Timer de ${protocolLabel ?? 'intervalos'}`} onPress={() => props.onOpenTimer?.(exercise)}>
+            <Timer size={IconSize.action} strokeWidth={IconStroke} color={theme.text} />
+          </IconButton>
+        ) : null}
         {catalog ? <ChevronRight size={IconSize.inline} strokeWidth={IconStroke} color={theme.textTertiary} /> : null}
         {editable ? (
           <IconButton label={`Opciones de ${exercise.name}`} onPress={() => props.onExerciseMenu(exercise)}>
@@ -226,7 +245,21 @@ function FilaSerie(p: FilaProps) {
   const hecha = set.completed_at !== null;
   const esfuerzo = effortScale === 'rir' ? set.rir : set.rpe;
   const main = set.segments[0];
-  const textoAnterior = p.anterior?.segments[0] ? formatSegment(p.anterior.segments[0], unit) : '–';
+  const textoAnterior = p.anterior?.segments[0]
+    ? formatSegment(p.anterior.segments[0], unit)
+    : set.target?.reps_min
+      ? `obj. ${set.target.reps_min}${set.target.reps_max && set.target.reps_max !== set.target.reps_min ? `–${set.target.reps_max}` : ''}`
+      : '–';
+  /** Lo que la serie tiene de especial, en una línea: "Drop set · tempo 3-1-X-0 · fallo". */
+  const detalle = [
+    ...set.intensifiers.map(intensifierLabel),
+    set.tempo ? `tempo ${set.tempo}` : null,
+    set.failure ? 'fallo' : null,
+    set.load_mods?.added_kg ? `+${set.load_mods.added_kg} kg lastre` : null,
+    set.spotter ? 'con spotter' : null,
+  ]
+    .filter(Boolean)
+    .join(' · ');
 
   const celda = (segmentIndex: number, field: SegmentField) => (
     <Pressable
@@ -316,8 +349,23 @@ function FilaSerie(p: FilaProps) {
         </View>
       ))}
 
-      {(main?.partial_reps || p.prsSerie || p.pendiente || (main && isImbalanced(main))) ? (
+      {(main?.partial_reps || main?.forced_reps || main?.cheat_reps || detalle || p.prsSerie || p.pendiente || (main && isImbalanced(main))) ? (
         <View style={styles.extras}>
+          {detalle ? (
+            <AppText variant="micro" color="textSecondary">
+              {detalle}
+            </AppText>
+          ) : null}
+          {main?.forced_reps ? (
+            <AppText variant="micro" color="textSecondary">
+              + {main.forced_reps} forzadas
+            </AppText>
+          ) : null}
+          {main?.cheat_reps ? (
+            <AppText variant="micro" color="textSecondary">
+              + {main.cheat_reps} con trampa
+            </AppText>
+          ) : null}
           {main?.partial_reps ? (
             <AppText variant="micro" color="textSecondary">
               + {main.partial_reps} parciales
@@ -387,6 +435,7 @@ function FilaSerie(p: FilaProps) {
 }
 
 const styles = StyleSheet.create({
+  grupo: { minWidth: 32, height: 26, paddingHorizontal: 6, alignItems: 'center', justifyContent: 'center', borderRadius: Radius.sm, borderCurve: 'continuous' },
   bloque: { padding: Spacing.md, borderWidth: 1, borderRadius: Radius.lg, borderCurve: 'continuous', gap: Spacing.xs },
   encabezado: { flexDirection: 'row', alignItems: 'center', gap: Spacing.xs },
   titulo: { flex: 1, gap: 2, minHeight: 44, justifyContent: 'center' },

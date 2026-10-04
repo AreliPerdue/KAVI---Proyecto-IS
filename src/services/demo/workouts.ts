@@ -5,7 +5,8 @@ import { hasLegacyText } from '@/lib/gym/legacy';
 import { ordenarPorUso } from '@/lib/gym/names';
 import type { WorkoutDetail, WorkoutsApi } from '@/services/contracts';
 import { delay, demoState, emitDataChange, nextId } from '@/services/demo/store';
-import type { SetSegment, Workout, WorkoutExercise, WorkoutSet } from '@/types/domain';
+import { uuidv4 } from '@/lib/gym/ids';
+import type { ExerciseGroup, SetSegment, Workout, WorkoutExercise, WorkoutSet } from '@/types/domain';
 
 /** Lo que guarda el demo por sesión: lo mismo que la fila, más el borrado suave. */
 type StoredWorkout = Omit<Workout, 'activity_title' | 'exercise_count' | 'duration_minutes'> & { deleted_at: string | null };
@@ -17,6 +18,7 @@ const workouts: StoredWorkout[] = [];
 const exercises: StoredExercise[] = [];
 const sets: StoredSet[] = [];
 const segments: StoredSegment[] = [];
+const groups: (ExerciseGroup & { deleted_at: string | null })[] = [];
 
 const ahora = () => new Date().toISOString();
 
@@ -116,7 +118,7 @@ function detail(workout: StoredWorkout): WorkoutDetail {
     exercises: ejerciciosDe(workout.id)
       .sort((a, b) => a.position - b.position)
       .map((e) => ({ ...limpio(e), workout_sets: seriesDe(e.id) })),
-    groups: [],
+    groups: groups.filter((g) => g.workout_id === workout.id && vivo(g)).map((g) => ({ ...limpio(g) })),
   };
 }
 
@@ -254,6 +256,41 @@ export const demoWorkouts: WorkoutsApi = {
         else segments.push({ ...g, deleted_at: null });
       }
     }
+  },
+
+  async createGroup(workoutId, input) {
+    await delay(40);
+    const grupo = { id: uuidv4(), workout_id: workoutId, type: input.type, rounds: input.rounds ?? null, rest_after_round_sec: input.rest_after_round_sec ?? null, deleted_at: null };
+    groups.push(grupo);
+    // Igual que en Supabase: el grupo queda seguido, en la posición del primero.
+    const actuales = ejerciciosDe(workoutId).sort((a, b) => a.position - b.position);
+    const enGrupo = new Set(input.exerciseIds);
+    const ancla = actuales.findIndex((e) => enGrupo.has(e.id));
+    const resto = actuales.filter((e) => !enGrupo.has(e.id)).map((e) => e.id);
+    const orden = [...resto.slice(0, ancla), ...input.exerciseIds, ...resto.slice(ancla)];
+    orden.forEach((exerciseId, posicion) => {
+      const e = exercises.find((x) => x.id === exerciseId);
+      if (!e) return;
+      e.position = posicion;
+      const i = input.exerciseIds.indexOf(exerciseId);
+      if (i >= 0) {
+        e.group_id = grupo.id;
+        e.group_position = i + 1;
+      }
+    });
+    emitDataChange();
+    return { ...limpio(grupo) };
+  },
+
+  async removeGroup(groupId) {
+    await delay(40);
+    for (const e of exercises) if (e.group_id === groupId) {
+      e.group_id = null;
+      e.group_position = null;
+    }
+    const g = groups.find((x) => x.id === groupId);
+    if (g) g.deleted_at = ahora();
+    emitDataChange();
   },
 
   async removeSets(ids) {

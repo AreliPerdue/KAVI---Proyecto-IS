@@ -704,7 +704,18 @@ Plan y decisiones en `docs/gym/AUDITORIA.md`. Cada fase cierra con typecheck, li
   Los PRs se recalculan solos porque se derivan de los datos. La duración de una sesión de
   v2 es de inicio a fin; la suma por ejercicio queda solo para las de v1. Agrupar y
   desagrupar ejercicios llega con las agrupaciones (G5). Dep: T243
-- [ ] T245 Intensificadores, agrupaciones, protocolos y modificadores (G5, RF-F43 – RF-F48). Dep: T243
+- [x] T245 Intensificadores, agrupaciones, protocolos y modificadores (G5, RF-F43 – RF-F48).
+  Hoja de los 24 intensificadores con buscador, descripción y "cómo se hace"; elegir uno
+  transforma la serie (21s → tres tramos de 7, myo-reps → activación + mini-series, BFR →
+  30-15-15-15…) y son componibles. Detalles de la serie: fallo, ROM, lado, tempo, lastre,
+  asistencia, cadenas, déficit, bandas, pines, equipo y spotter, con avisos suaves que no
+  bloquean. Agrupaciones (superserie, circuito y las otras siete) con etiquetas A1/A2: en vivo
+  no se descansa entre ejercicios del grupo y el descanso corre al terminar la ronda. Los 14
+  protocolos generan las series con objetivos; EMOM, Tabata, AMRAP por tiempo y densidad
+  traen timer de intervalos (vibra al cambiar de fase en Android). Detalle de cómo se
+  registra cada uno en `docs/gym/intensificadores.md`. Pendiente: elegir la variante de un
+  drop mecánico desde el tramo, y un aviso sonoro en el timer (pediría una librería de
+  audio, decisión D5). Dep: T243
 - [ ] T246 Notas en todos los niveles y nota fija por ejercicio (G6, RF-F49 – RF-F53). Dep: T243
 - [ ] T247 Modo Gymrat: Modo serio, trato elegible, PRs, logros, Racha de Hierro en pausa,
   resumen y volumen por músculo (G7, RF-F54 – RF-F60). Dep: T243
