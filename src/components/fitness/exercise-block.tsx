@@ -4,7 +4,7 @@ import { Platform, Pressable, StyleSheet, View } from 'react-native';
 import ReanimatedSwipeable, { type SwipeableMethods } from 'react-native-gesture-handler/ReanimatedSwipeable';
 import Animated, { ZoomIn } from 'react-native-reanimated';
 
-import { AppText, IconButton } from '@/components/ui';
+import { AppText, type DragControls, IconButton, ReorderableColumn } from '@/components/ui';
 import { MUSCLES } from '@/constants/exercise-catalog';
 import { tagLabel } from '@/constants/gym-notes';
 import { intensifierLabel } from '@/constants/intensifiers';
@@ -110,6 +110,10 @@ export type ExerciseBlockProps = {
   onDuplicate: (exercise: WorkoutExerciseDetail, set: WorkoutSet) => void;
   onDelete: (exercise: WorkoutExerciseDetail, set: WorkoutSet) => void;
   onRemoveSegment: (set: WorkoutSet, segmentIndex: number) => void;
+  /** Arrastrar una serie a otra posición del mismo ejercicio (RF-F33). */
+  onMoveSet: (exercise: WorkoutExerciseDetail, from: number, to: number) => void;
+  /** Mientras se arrastra una serie, la pantalla no debe desplazarse. */
+  onDragStateChange?: (dragging: boolean) => void;
   onExerciseMenu: (exercise: WorkoutExerciseDetail) => void;
   onOpenDetail: (exercise: WorkoutExerciseDetail) => void;
 };
@@ -218,20 +222,26 @@ export const ExerciseBlock = memo(function ExerciseBlock(props: ExerciseBlockPro
         </View>
       ) : null}
 
-      {sets.map((set, i) => {
-        const anterior = previous[i] ?? null;
-        return (
+      {/* Mantener presionado el número de la serie y arrastrar la cambia de lugar (RF-F33). */}
+      <ReorderableColumn
+        items={sets}
+        keyOf={(s) => s.id}
+        enabled={editable && sets.length > 1}
+        gap={Spacing.xs}
+        onMove={(from, to) => props.onMoveSet(exercise, from, to)}
+        onDragStateChange={props.onDragStateChange}
+        renderItem={(set, i, drag) => (
           <FilaSerie
-            key={set.id}
             {...props}
             set={set}
             etiqueta={etiquetas[i]}
-            anterior={anterior}
+            anterior={previous[i] ?? null}
             prsSerie={prs.get(set.id)}
             pendiente={pendientes.has(set.id)}
+            drag={drag}
           />
-        );
-      })}
+        )}
+      />
 
       {editable ? (
         <Pressable
@@ -253,6 +263,7 @@ type FilaProps = ExerciseBlockProps & {
   anterior: WorkoutSet | null;
   prsSerie: PrKind[] | undefined;
   pendiente: boolean;
+  drag: DragControls;
 };
 
 function FilaSerie(p: FilaProps) {
@@ -301,16 +312,20 @@ function FilaSerie(p: FilaProps) {
   const contenido = (
     <View style={[styles.serie, { backgroundColor: hecha ? theme.surfaceAlt : theme.surface }]}>
       <View style={styles.fila}>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={`Opciones de la serie ${p.etiqueta}`}
-          disabled={!editable}
-          onPress={() => p.onSetMenu(exercise, set)}
-          style={[styles.colNumero, styles.numero]}>
-          <AppText variant="label" color={set.set_type === 'working' ? 'text' : 'textSecondary'}>
-            {p.etiqueta}
-          </AppText>
-        </Pressable>
+        {p.drag.handle(
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={`Opciones de la serie ${p.etiqueta}`}
+            accessibilityHint={editable ? 'Mantén presionado y arrastra para cambiarla de lugar.' : undefined}
+            disabled={!editable}
+            // Al soltar un arrastre no se abre el menú.
+            onPress={() => (p.drag.justDragged() ? undefined : p.onSetMenu(exercise, set))}
+            style={[styles.colNumero, styles.numero]}>
+            <AppText variant="label" color={set.set_type === 'working' ? 'text' : 'textSecondary'}>
+              {p.etiqueta}
+            </AppText>
+          </Pressable>,
+        )}
 
         <Pressable
           accessibilityRole="button"

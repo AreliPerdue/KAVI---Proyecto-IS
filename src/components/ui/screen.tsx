@@ -22,6 +22,8 @@ export type ScreenProps = {
   contentStyle?: ViewStyle;
   /** Acceso al ScrollView, para llevar el foco a una sección concreta al abrir. */
   scrollRef?: RefObject<ScrollView | null>;
+  /** Apaga el scroll un momento, por ejemplo mientras se arrastra una fila. */
+  scrollEnabled?: boolean;
 };
 
 /**
@@ -29,7 +31,7 @@ export type ScreenProps = {
  * El contenido se estira al ancho disponible y se centra solo cuando supera `maxWidth`
  * (nunca desborda en horizontal, NFR-9).
  */
-export function Screen({ children, maxWidth = MaxContentWidth, scroll = false, centered = false, modal = false, contentStyle, scrollRef }: ScreenProps) {
+export function Screen({ children, maxWidth = MaxContentWidth, scroll = false, centered = false, modal = false, contentStyle, scrollRef, scrollEnabled = true }: ScreenProps) {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
   const paddingTop = (modal && Platform.OS === 'ios' ? 0 : insets.top) + Spacing.lg;
@@ -77,6 +79,7 @@ export function Screen({ children, maxWidth = MaxContentWidth, scroll = false, c
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView
         ref={scrollRef}
+        scrollEnabled={scrollEnabled}
         style={styles.scroll}
         contentContainerStyle={[styles.scrollContent, centered ? styles.centered : null]}
         keyboardShouldPersistTaps="handled"

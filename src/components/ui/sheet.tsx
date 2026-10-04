@@ -1,6 +1,7 @@
 import { X } from 'lucide-react-native';
 import { type ReactNode } from 'react';
 import { useEffect, useState } from 'react';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { Keyboard, Modal, Platform, Pressable, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -59,7 +60,8 @@ export function Sheet({ visible, onClose, title, children, maxHeightRatio = 0.85
 
   return (
     <Modal visible={visible} transparent animationType={centered ? 'fade' : 'slide'} onRequestClose={onClose}>
-      <View style={[styles.root, centered ? styles.rootCentered : null]}>
+      {/* En Android un Modal queda fuera de la raíz de gestos: sin esto, arrastrar no responde. */}
+      <GestureHandlerRootView style={[styles.root, centered ? styles.rootCentered : null]}>
         <Pressable accessibilityRole="button" accessibilityLabel="Cerrar" onPress={onClose} style={[StyleSheet.absoluteFill, { backgroundColor: theme.overlay }]} />
         <View
           style={[
@@ -95,7 +97,7 @@ export function Sheet({ visible, onClose, title, children, maxHeightRatio = 0.85
             <View style={styles.contentFijo}>{children}</View>
           )}
         </View>
-      </View>
+      </GestureHandlerRootView>
     </Modal>
   );
 }

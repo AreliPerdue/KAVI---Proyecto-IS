@@ -388,3 +388,17 @@ imagen y, sin hoja de compartir del navegador, la descarga (`kavi-2026-10-21.png
   descarga; `SessionSummarySheet` cae a texto si la captura falla.
 - [ ] `Chip`: `accessibilityLabel` opcional y área táctil de 44 con `hitSlop`.
 - [ ] Prueba en dispositivo: háptico en iOS (no hay Xcode en esta máquina) y en Android.
+
+## Arrastrar para reordenar (T250)
+Probado a mano en el demo (web): la serie 3 arrastrada hasta arriba queda primera
+(40 · 20 · 30), soltar no abre el menú y un toque corto sí; en "Reordenar ejercicios" el
+segundo pasa a primero y "Guardar orden" lo aplica en la sesión. Falta:
+- [ ] `ReorderableColumn`: destino según centros con filas de alto distinto; las demás se
+  recorren el alto de la arrastrada; soltar en el mismo lugar no llama `onMove`; cancelar
+  restaura; `justDragged` evita abrir el menú al soltar.
+- [ ] `moverSerie`: `sort_order` entre los nuevos vecinos (arriba, en medio, al final) y se
+  puede deshacer.
+- [ ] `reordenarEjercicios`: solo guarda las posiciones que cambiaron; el caché se reordena al
+  momento; marca la sesión como editada.
+- [ ] En dispositivo (iOS y Android): mantener presionado no pelea con el deslizar de la fila
+  ni con el scroll (el scroll se apaga mientras se arrastra); dentro de la hoja en Android.

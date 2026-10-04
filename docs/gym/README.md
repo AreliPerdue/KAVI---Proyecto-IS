@@ -66,6 +66,8 @@ de hace tres), así que la racha y la conversión del texto viejo se ven desde e
 2. Toca el peso, escribe 100 y luego las reps. Toca ✓: corre el descanso, con pitidos en 3-2-1.
 3. Menú de la serie (toca el número): intensificador, detalles, nota y etiquetas.
 4. Menú del ejercicio (⋯): nota de hoy, nota fija, agrupar, protocolo.
+   Mantener presionado el número de una serie y arrastrar la cambia de lugar; "Reordenar
+   ejercicios" abre una lista corta para arrastrar ejercicios.
 5. Terminar sesión: resumen con equivalencia, músculos y logros, y "Compartir" como imagen.
 6. Fitness → fila de la racha → Progreso.
 7. Perfil → Gimnasio: unidad, esfuerzo, fórmula, descanso, sonido, Modo serio y trato.
@@ -78,8 +80,6 @@ puede adelantar el reloj (Playwright: `page.clock.setSystemTime`).
 - **Pruebas automáticas.** Por decisión (D8) se pospusieron; la lista por fase está en
   `reports/pruebas-pendientes.md`. Antes de correr Jest hay que agregar mocks de
   `expo-haptics`, `expo-audio`, `expo-sharing` y `react-native-view-shot` en `jest.setup.js`.
-- **Arrastrar para reordenar** series y ejercicios (spec §5). Hoy se reordena con "Subir" y
-  "Bajar" en los menús (T250).
 - **RF-F9:** el borrador de ejercicios del formulario de actividad sigue siendo el editor de
   texto de v1, no el componente del logger (T251).
 - **Drop mecánico:** el modelo guarda la variante (`set_segments.variant_exercise_id`), pero

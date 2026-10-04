@@ -1,7 +1,7 @@
-import { useQueries } from '@tanstack/react-query';
+import { useQueries, useQueryClient } from '@tanstack/react-query';
 import { addDays } from 'date-fns';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { ArrowDown, ArrowUp, CalendarDays, Clock, Copy, Link2, ListOrdered, Merge, MessageSquareText, Pencil, Pin, Plus, Redo2, Repeat2, Scale, Scissors, SlidersHorizontal, Sparkles, Timer, Trash2, Undo2, Unlink, Wrench, X } from 'lucide-react-native';
+import { ArrowDown, ArrowUp, CalendarDays, Clock, Copy, GripVertical, Link2, ListOrdered, Merge, MessageSquareText, Pencil, Pin, Plus, Redo2, Repeat2, Scale, Scissors, SlidersHorizontal, Sparkles, Timer, Trash2, Undo2, Unlink, Wrench, X } from 'lucide-react-native';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
@@ -13,6 +13,7 @@ import { IntervalTimerSheet } from '@/components/fitness/interval-timer-sheet';
 import { SessionSummarySheet } from '@/components/fitness/session-summary';
 import { SetDetailsSheet } from '@/components/fitness/set-details-sheet';
 import { NoteSheet } from '@/components/fitness/note-sheet';
+import { ReorderExercisesSheet } from '@/components/fitness/reorder-exercises-sheet';
 import { NumpadSheet, type NumpadField } from '@/components/fitness/numpad-sheet';
 import { RestTimerBar } from '@/components/fitness/rest-timer-bar';
 import { ToolsSheet } from '@/components/fitness/tools-sheet';
@@ -28,7 +29,7 @@ import { exerciseHistoryQuery, useLegacyConversion } from '@/hooks/use-exercise-
 import { useExerciseMutations, useExercisePrefs, useExercises } from '@/hooks/use-exercises';
 import { useSessionDetail, useSetActions } from '@/hooks/use-set-sync';
 import { useTheme } from '@/hooks/use-theme';
-import { useWorkoutMutations, useWorkouts } from '@/hooks/use-workouts';
+import { useWorkoutMutations, useWorkouts, workoutKeys } from '@/hooks/use-workouts';
 import { formatDate, formatShortDate, formatTime, fromIso, startOfDay, toIso } from '@/lib/dates';
 import { success, tap } from '@/lib/haptics';
 import { hasLegacyText, parseLegacy } from '@/lib/gym/legacy';
@@ -53,7 +54,7 @@ import type { WarmupStep } from '@/lib/gym/tools';
 import { applyIntensifier, protocolRestSec, protocolSets, protocolTimer, removeIntensifier } from '@/lib/gym/transforms';
 import { formatWeight, fromKg, round, toKg } from '@/lib/gym/units';
 import { useAuth, useConfirm, useSnackbar } from '@/providers';
-import type { ExerciseHistoryEntry } from '@/services/workouts';
+import type { ExerciseHistoryEntry, WorkoutDetail } from '@/services/workouts';
 import { useGymStore } from '@/store/gym-store';
 import { usePreferencesStore } from '@/store/preferences-store';
 import type { Exercise, SetType, WorkoutExercise, WorkoutExerciseDetail, WorkoutSet } from '@/types/domain';
@@ -101,6 +102,7 @@ export default function WorkoutScreen() {
   const sesion = useSessionDetail(id);
   const { saveSet: enviarSerie, removeSet: retirarSerie } = useSetActions(id);
   const mutations = useWorkoutMutations();
+  const queryClient = useQueryClient();
   const catalogo = useExercises();
   const prefs = useExercisePrefs();
   const { saveStickyNote } = useExerciseMutations();
@@ -141,6 +143,8 @@ export default function WorkoutScreen() {
   const [notaEjercicio, setNotaEjercicio] = useState<WorkoutExerciseDetail | null>(null);
   const [notaSerie, setNotaSerie] = useState<WorkoutSet | null>(null);
   const [notaFija, setNotaFija] = useState<WorkoutExerciseDetail | null>(null);
+  const [reordenando, setReordenando] = useState(false);
+  const [arrastrando, setArrastrando] = useState(false);
   /** Reloj de la sesión en curso: se lee aquí y se refresca cada 30 s, no en cada render. */
   const [ahora, setAhora] = useState(() => Date.now());
 
@@ -372,6 +376,17 @@ export default function WorkoutScreen() {
       quitar(b.id);
     });
 
+  /** Arrastrar una serie: su nuevo `sort_order` queda entre sus nuevos vecinos (RF-F33). */
+  const moverSerie = useCallback(
+    (exercise: WorkoutExerciseDetail, from: number, to: number) => {
+      const resto = exercise.workout_sets.filter((_, i) => i !== from);
+      const set = exercise.workout_sets[from];
+      if (!set || from === to) return;
+      guardar({ ...set, sort_order: sortOrderBetween(resto[to - 1]?.sort_order ?? null, resto[to]?.sort_order ?? null) });
+    },
+    [guardar],
+  );
+
   const quitarSegmento = useCallback((set: WorkoutSet, i: number) => guardar(removeSegment(set, i)), [guardar]);
 
   const abrirTeclado = useCallback(
@@ -461,6 +476,26 @@ export default function WorkoutScreen() {
     const [a, b] = otro.position === exercise.position ? [i + direccion, i] : [otro.position, exercise.position];
     mutations.updateExercise.mutate({ id: exercise.id, patch: { position: a } });
     mutations.updateExercise.mutate({ id: otro.id, patch: { position: b } }, { onSuccess: () => void sesion.refetch() });
+  };
+
+  /**
+   * Nuevo orden de ejercicios desde la hoja de reordenar (RF-F33). Se ve al instante en el
+   * caché y se guardan solo las posiciones que cambiaron.
+   */
+  const reordenarEjercicios = (ids: string[]) => {
+    const cambios = ids.map((exId, posicion) => ({ exId, posicion })).filter(({ exId, posicion }) => ejercicios.find((e) => e.id === exId)?.position !== posicion);
+    if (cambios.length === 0) return;
+    queryClient.setQueryData<WorkoutDetail>(workoutKeys.detail(id), (previo) => {
+      if (!previo) return previo;
+      const porId = new Map(previo.exercises.map((e) => [e.id, e]));
+      const ordenados = ids.flatMap((exId, posicion) => {
+        const e = porId.get(exId);
+        return e ? [{ ...e, position: posicion }] : [];
+      });
+      return { ...previo, exercises: ordenados };
+    });
+    marcarSesionEditada();
+    void Promise.allSettled(cambios.map(({ exId, posicion }) => mutations.updateExercise.mutateAsync({ id: exId, patch: { position: posicion } }))).then(() => sesion.refetch());
   };
 
   const agregarCalentamiento = (exercise: WorkoutExerciseDetail, pasos: WarmupStep[]) => {
@@ -564,7 +599,7 @@ export default function WorkoutScreen() {
 
   return (
     <View style={styles.raiz}>
-      <Screen modal scroll maxWidth={MAX_WIDTH}>
+      <Screen modal scroll scrollEnabled={!arrastrando} maxWidth={MAX_WIDTH}>
         <ModalHeader
           title={enCurso ? 'Sesión en curso' : 'Entrenamiento'}
           right={
@@ -728,6 +763,8 @@ export default function WorkoutScreen() {
                 onDuplicate={duplicar}
                 onDelete={borrarSerie}
                 onRemoveSegment={quitarSegmento}
+                onMoveSet={moverSerie}
+                onDragStateChange={setArrastrando}
                 onExerciseMenu={setMenuEjercicio}
                 onOpenDetail={(ex) => {
                   if (ex.exercise_id) router.push({ pathname: '/(app)/exercise/[id]', params: { id: ex.exercise_id } });
@@ -735,6 +772,14 @@ export default function WorkoutScreen() {
               />
             );
           })}
+          {editing && ejercicios.length > 1 ? (
+            <Button
+              title="Reordenar ejercicios"
+              variant="ghost"
+              icon={<GripVertical size={IconSize.inline} strokeWidth={IconStroke} color={theme.text} />}
+              onPress={() => setReordenando(true)}
+            />
+          ) : null}
           {editing ? (
             <Button
               title="Ejercicio"
@@ -1055,6 +1100,16 @@ export default function WorkoutScreen() {
                 setMenuEjercicio(null);
               }}
             />
+            {ejercicios.length > 1 ? (
+              <ActionRow
+                icon={<GripVertical size={IconSize.action} strokeWidth={IconStroke} color={theme.text} />}
+                label="Reordenar ejercicios…"
+                onPress={() => {
+                  setReordenando(true);
+                  setMenuEjercicio(null);
+                }}
+              />
+            ) : null}
             <ActionRow
               icon={<ArrowUp size={IconSize.action} strokeWidth={IconStroke} color={theme.text} />}
               label="Subir"
@@ -1136,6 +1191,14 @@ export default function WorkoutScreen() {
         onSave={(texto) => {
           if (notaFija?.exercise_id) saveStickyNote.mutate({ exerciseId: notaFija.exercise_id, note: texto });
         }}
+      />
+
+      <ReorderExercisesSheet
+        visible={reordenando}
+        exercises={ejercicios}
+        groupLabel={(exId) => grupos.etiqueta.get(exId) ?? null}
+        onClose={() => setReordenando(false)}
+        onSave={reordenarEjercicios}
       />
 
       <SetDetailsSheet visible={detallesDe !== null} set={detallesDe} unit={unit} onClose={() => setDetallesDe(null)} onSave={guardar} />

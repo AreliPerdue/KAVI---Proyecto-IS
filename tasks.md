@@ -725,7 +725,7 @@ Plan y decisiones en `docs/gym/AUDITORIA.md`. Cada fase cierra con typecheck, li
   (decisión D5, revisada el 4 oct). Dep: T242 – T247
 
 ### Pendientes del upgrade de fitness
-- [ ] T250 Arrastrar para reordenar series y ejercicios en el logger (RF-F33). Hoy: "Subir" y
+- [x] T250 Arrastrar para reordenar series y ejercicios en el logger (RF-F33). Hoy: "Subir" y
   "Bajar" en los menús. Dep: T243
 - [ ] T251 El borrador del formulario de actividad usa el componente del logger (RF-F9), no el
   editor de texto de v1. Dep: T243
