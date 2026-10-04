@@ -23,4 +23,7 @@ export const markLegacyConverted = workoutsApi.markLegacyConverted;
 export const listExerciseNames = workoutsApi.exerciseNames;
 export const getExerciseHistory = workoutsApi.exerciseHistory;
 export const searchWorkoutNotes = workoutsApi.searchNotes;
+export const getTrainingLog = workoutsApi.trainingLog;
+export const listStreakEvents = workoutsApi.listStreakEvents;
+export const saveStreakEvents = workoutsApi.saveStreakEvents;
 export const duplicateWorkout = workoutsApi.duplicate;

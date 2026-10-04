@@ -353,3 +353,23 @@ término sin coincidencias muestra el vacío. Falta:
 - [ ] `NoteSheet`: guarda texto recortado (vacío → `null`) y etiquetas; cerrar sin guardar
   descarta.
 - [ ] `Chip` seleccionado sin color usa `onInk` (antes: blanco sobre tinta clara en oscuro).
+
+## Fitness v2 · G7 Modo Gymrat (T247)
+Probado a mano en el demo con el reloj del navegador en el 21 oct: tarjeta de pausa por la
+semana del 5 oct, "Viaje" + nota + "Mi racha sigue" → 2 semanas; trato "Reina" en Perfil;
+100 kg × 5 en banca → resumen con "Listo, mi reina…", equivalencia, músculos y logro Club 100 kg;
+Progreso con racha, semana justificada en el calendario, series por músculo y logros; otra
+sesión con 105 kg → badge de PR y "Nuevo récord. Así se gobierna, mi reina." Falta:
+- [ ] `computeStreak`: semana actual vacía no rompe; hueco sin decidir pausa y congela; "sigue"
+  no suma ni rompe; "reiniciar" pone en cero; huecos antes de `STREAK_SINCE` reinician sin
+  preguntar; mejor racha. (Siete casos ya revisados a mano en Node.)
+- [ ] `computeAchievements` / `unlockedBy`: cada meta, warmups y series sin marcar no cuentan,
+  clubes solo con barra y reps ≥ 1, el nombre del drop sigue el trato, la racha no se atribuye
+  a una sesión.
+- [ ] `setsByGroup`: primario 1, secundario ½, sin doble conteo; `isLegDay` con 6 series.
+- [ ] `gymratLine`: nunca la misma frase dos veces seguidas; `null` en Modo serio; `{voc}` por
+  trato. `tonnageEquivalence`: rango 2–30, semilla estable, nada bajo 140 kg.
+- [ ] `trainingLog` y `saveStreakEvents` en los dos backends (solo `completed`, sin borradas;
+  upsert por semana).
+- [ ] Modo serio: sin snackbars de humor, sin animación del badge, sin equivalencia ni frase
+  en el resumen, sin "¿y la pierna?".

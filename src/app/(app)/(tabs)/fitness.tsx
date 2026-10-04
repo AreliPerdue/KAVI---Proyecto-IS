@@ -3,6 +3,7 @@ import { ChevronRight, Dumbbell, MessageSquareText, Play, Plus, Search, X } from
 import { useCallback, useState } from 'react';
 import { FlatList, Platform, Pressable, StyleSheet, TextInput, type TextStyle, View } from 'react-native';
 
+import { StreakCard } from '@/components/fitness/streak-card';
 import { AppText, Button, EmptyState, ErrorState, IconButton, LoadingState, Screen } from '@/components/ui';
 import { IconSize, IconStroke, Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
@@ -148,6 +149,7 @@ export default function FitnessScreen() {
             <ChevronRight size={IconSize.inline} strokeWidth={IconStroke} color={theme.onInk} />
           </Pressable>
         ) : null}
+        <StreakCard />
       </View>
       <View style={[styles.buscador, { borderColor: theme.border, backgroundColor: theme.surfaceAlt }]}>
         <Search size={IconSize.inline} strokeWidth={IconStroke} color={theme.textTertiary} />

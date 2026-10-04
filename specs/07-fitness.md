@@ -172,6 +172,11 @@ Regla: **la diversión nunca agrega pasos** al registro.
 - RF-F57. **Logros:** Rey o Reina del Drop Set (50 drops; el nombre sigue el trato elegido), Myo-maníaco,
   Leg Day Survivor, Club 100/140/180 kg (banca, sentadilla, peso muerto), Racha de Hierro, Madrugador
   (antes de las 6) y Titán del Tonelaje.
+  - Metas: 50 drops; 25 series de myo-reps; 10 sesiones de pierna (6 series efectivas de pierna o más);
+    100 kg en banca, 140 kg en sentadilla y 180 kg en peso muerto, con barra y al menos una rep;
+    12 semanas de racha; 5 sesiones empezadas antes de las 6 a. m.; 100,000 kg en total. En neutral, el
+    primero se llama "Realeza del Drop Set".
+  - Se calculan del historial y no se guardan: editar una sesión los recalcula, igual que los PRs.
 - RF-F58. **Racha de Hierro: la racha no se pierde sola.**
   - La unidad es la **semana** (lunes a domingo) con al menos un entreno completado. No se cuentan días, porque el descanso es parte del entrenamiento y una racha diaria lo castigaría.
   - Cuando termina una semana sin entreno, la racha queda **en pausa**, no en cero. La próxima vez que abras Fitness, una tarjeta pregunta: *"La semana del 5 de octubre no registraste entreno. ¿Qué pasó?"*.
@@ -180,9 +185,18 @@ Regla: **la diversión nunca agrega pasos** al registro.
   - **Decide la persona**, porque solo ella sabe si fue un mal día o si la racha dejó de motivarla. Sin respuesta, la racha sigue en pausa indefinidamente.
   - Las notas de semanas justificadas se ven en el calendario de entrenos.
   - Se guarda en `workout_streak_events` (semana, decisión, nota y chips), con RLS por dueño.
+  - Las semanas vacías seguidas forman un solo hueco y se deciden juntas: tres semanas de vacaciones son
+    una pregunta, no tres.
+  - La racha nace con la función: los huecos que terminaron antes de la semana del 28 de septiembre de
+    2026 cuentan como reinicio y no se preguntan, para no abrir Fitness con meses de preguntas viejas.
 - RF-F59. **Resumen al terminar:** duración, volumen, PRs, músculos trabajados y una equivalencia de tonelaje
-  ("14,320 kg = 2.4 elefantes africanos"). Se puede compartir como imagen.
+  ("14,320 kg = 2.4 elefantes africanos"). Se puede compartir como texto con la hoja del sistema (en web,
+  la del navegador o el portapapeles). Compartirlo como imagen pide una librería nativa de captura y se
+  decide en G8.
 - RF-F60. **Volumen semanal por músculo** (series efectivas) con zonas de referencia visual, y calendario de entrenos.
+  - Por grupo muscular (pecho, espalda, hombro…): una serie cuenta 1 para sus músculos primarios y ½ para los
+    secundarios. La franja de referencia es 10–20 series por semana: orientación, no receta.
+  - El calendario muestra las últimas 12 semanas, con las notas y motivos de las semanas justificadas.
 
 ## 9. Datos de v1
 

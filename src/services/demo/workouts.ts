@@ -6,7 +6,7 @@ import { ordenarPorUso } from '@/lib/gym/names';
 import type { NoteHit, WorkoutDetail, WorkoutsApi } from '@/services/contracts';
 import { delay, demoState, emitDataChange, nextId } from '@/services/demo/store';
 import { uuidv4 } from '@/lib/gym/ids';
-import type { ExerciseGroup, SetSegment, Workout, WorkoutExercise, WorkoutSet } from '@/types/domain';
+import type { ExerciseGroup, SetSegment, StreakEvent, Workout, WorkoutExercise, WorkoutSet } from '@/types/domain';
 
 /** Lo que guarda el demo por sesión: lo mismo que la fila, más el borrado suave. */
 type StoredWorkout = Omit<Workout, 'activity_title' | 'exercise_count' | 'duration_minutes'> & { deleted_at: string | null };
@@ -19,6 +19,7 @@ const exercises: StoredExercise[] = [];
 const sets: StoredSet[] = [];
 const segments: StoredSegment[] = [];
 const groups: (ExerciseGroup & { deleted_at: string | null })[] = [];
+const streakEvents: (StreakEvent & { owner_id: string })[] = [];
 
 const ahora = () => new Date().toISOString();
 
@@ -50,6 +51,25 @@ function sesionNueva(base: Omit<StoredWorkout, 'status' | 'ended_at' | 'bodyweig
     { position: 3, name: 'Plancha', sets: 3, reps: 'al fallo', weight: 'corporal', duration_minutes: 5, notes: null },
   ];
   for (const row of rows) exercises.push({ ...exercisePorOmision(), id: nextId('ex'), workout_id: workout.id, ...row });
+
+  // Otra de hace tres semanas: con la semana vacía entre las dos se ve la Racha de Hierro.
+  const antes = addDays(monday, -21);
+  antes.setHours(18, 0, 0, 0);
+  const empuje = sesionNueva({
+    id: 'wo-seed-empuje',
+    activity_id: null,
+    owner_id: workout.owner_id,
+    title: 'Empuje',
+    performed_at: antes.toISOString(),
+    notes: null,
+    created_at: antes.toISOString(),
+  });
+  workouts.push(empuje);
+  const filas: Omit<WorkoutExercise, 'id' | 'workout_id'>[] = [
+    { position: 0, name: 'Press de banca', sets: 4, reps: '8', weight: '60 kg', duration_minutes: null, notes: null },
+    { position: 1, name: 'Press militar', sets: 3, reps: '10', weight: '30 kg', duration_minutes: null, notes: null },
+  ];
+  for (const row of filas) exercises.push({ ...exercisePorOmision(), id: nextId('ex'), workout_id: empuje.id, ...row });
 })();
 
 /** Columnas de v2 de un ejercicio, con sus valores por omisión. */
@@ -349,6 +369,33 @@ export const demoWorkouts: WorkoutsApi = {
       if (w && e && contiene(s.notes)) hits.push({ workout_id: w.id, performed_at: w.performed_at, title: w.title, where: 'set', exercise_name: e.name, text: s.notes as string });
     }
     return hits.sort((a, b) => b.performed_at.localeCompare(a.performed_at));
+  },
+
+  async trainingLog(userId) {
+    await delay(60);
+    return workouts
+      .filter((w) => w.owner_id === userId && vivo(w) && w.status === 'completed')
+      .sort((a, b) => a.performed_at.localeCompare(b.performed_at))
+      .map(detail);
+  },
+
+  async listStreakEvents(userId) {
+    await delay(30);
+    return streakEvents
+      .filter((e) => e.owner_id === userId)
+      .sort((a, b) => a.week_start.localeCompare(b.week_start))
+      .map(({ owner_id: _o, ...e }) => ({ ...e, reasons: [...e.reasons] }));
+  },
+
+  async saveStreakEvents(userId, events) {
+    await delay(30);
+    for (const e of events) {
+      const i = streakEvents.findIndex((x) => x.owner_id === userId && x.week_start === e.week_start);
+      const fila = { ...e, reasons: [...e.reasons], id: i >= 0 ? streakEvents[i].id : uuidv4(), owner_id: userId };
+      if (i >= 0) streakEvents[i] = fila;
+      else streakEvents.push(fila);
+    }
+    emitDataChange();
   },
 
   async exerciseNames(userId) {

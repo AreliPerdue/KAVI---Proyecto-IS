@@ -18,6 +18,8 @@ import {
   Repeat2,
   SunMoon,
   Gauge,
+  Crown,
+  Smile,
   Timer,
   Weight,
   Users,
@@ -54,6 +56,7 @@ import { useIsAdmin } from '@/hooks/use-admin';
 import { useResolvedScheme, useTheme } from '@/hooks/use-theme';
 import { useThemes } from '@/hooks/use-themes';
 import { useWorkouts } from '@/hooks/use-workouts';
+import { TRATOS } from '@/constants/gymrat';
 import { NOBIS, nobiIdDesde, nobiUrl } from '@/constants/nobi';
 import { formatDayAndMonth, fromDayKey, rangeForView, toDayKey } from '@/lib/dates';
 import { env } from '@/lib/env';
@@ -607,6 +610,8 @@ function FitnessSettings() {
   const e1rmFormula = useGymStore((s) => s.e1rmFormula);
   const restDefaultSec = useGymStore((s) => s.restDefaultSec);
   const dropPercent = useGymStore((s) => s.dropPercent);
+  const seriousMode = useGymStore((s) => s.seriousMode);
+  const trato = useGymStore((s) => s.trato);
   const setPref = useGymStore((s) => s.setPref);
   const icono = (Icono: typeof Weight) => <Icono size={IconSize.inline} strokeWidth={IconStroke} color={theme.textSecondary} />;
 
@@ -651,6 +656,19 @@ function FitnessSettings() {
           />
         }
       />
+      <SettingsRow
+        icon={icono(Smile)}
+        label="Modo serio"
+        hint="Sin bromas ni celebraciones. Los PRs y logros se siguen viendo."
+        right={<Toggle label="Modo serio" value={seriousMode} onValueChange={(v) => setPref('seriousMode', v)} />}
+      />
+      {seriousMode ? null : (
+        <SettingsRow
+          icon={icono(Crown)}
+          label="Cómo te hablo"
+          right={<Segmented options={TRATOS} value={trato} onChange={(v) => setPref('trato', v)} />}
+        />
+      )}
     </SettingsGroup>
   );
 }

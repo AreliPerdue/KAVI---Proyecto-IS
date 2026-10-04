@@ -2,6 +2,7 @@
 import type { RecurrenceRule } from '@/lib/recurrence';
 import type {
   Activity,
+  StreakEvent,
   KaviList,
   ListInput,
   ListItem,
@@ -242,6 +243,16 @@ export interface WorkoutsApi {
   searchNotes(userId: string, term: string): Promise<NoteHit[]>;
   /** Nombres de ejercicio usados antes por la persona, del más usado al menos (RF-F4). */
   exerciseNames(userId: string): Promise<string[]>;
+  /**
+   * Sesiones terminadas con todo su detalle, de la más vieja a la más reciente. De aquí se
+   * calculan logros, racha y volumen por músculo (RF-F57 – RF-F60): nada de eso se guarda
+   * aparte, así que editar una sesión los recalcula solo.
+   */
+  trainingLog(userId: string): Promise<WorkoutDetail[]>;
+  /** Decisiones sobre semanas sin entreno (RF-F58). */
+  listStreakEvents(userId: string): Promise<StreakEvent[]>;
+  /** Guarda una decisión por semana; si la semana ya tenía una, la reemplaza. */
+  saveStreakEvents(userId: string, events: readonly Omit<StreakEvent, 'id'>[]): Promise<void>;
   /** Duplica en una actividad futura o como entrenamiento libre (RF-F8). */
   duplicate(userId: string, workoutId: string, target: { activityId: string | null; performedAt: string; keepValues: boolean }): Promise<WorkoutDetail>;
 }

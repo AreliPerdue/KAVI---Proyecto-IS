@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 
+import { gymratLine } from '@/constants/gymrat';
 import type { E1rmFormula } from '@/lib/gym/e1rm';
 import { cancelRestEnd, scheduleRestEnd } from '@/lib/notifications';
 import { getJson, setJson } from '@/lib/storage';
@@ -67,12 +68,14 @@ function prefsDe(s: GymState): GymPrefs {
 }
 
 /** Aviso del sistema al terminar; se reprograma con cada ajuste y se cancela al parar. */
-function avisar(rest: RestTimer | null): void {
+function avisar(rest: RestTimer | null, prefs?: Pick<GymPrefs, 'trato' | 'seriousMode'>): void {
   if (!rest) {
     void cancelRestEnd();
     return;
   }
-  void scheduleRestEnd(new Date(rest.endsAt), 'Se acabó el descanso', rest.label ? `Sigue: ${rest.label}` : 'A la siguiente serie.');
+  // Con humor, el título es la frase del Modo Gymrat (RF-F55); en Modo serio, sobrio.
+  const titulo = (prefs && gymratLine('rest_end', prefs.trato, prefs.seriousMode)) ?? 'Se acabó el descanso';
+  void scheduleRestEnd(new Date(rest.endsAt), titulo, rest.label ? `Sigue: ${rest.label}` : 'A la siguiente serie.');
 }
 
 /** Preferencias del módulo de fitness y el timer de descanso, por dispositivo. */
@@ -91,7 +94,7 @@ export const useGymStore = create<GymState>((set, get) => ({
     const rest: RestTimer = { endsAt: Date.now() + durationSec * 1000, durationSec, workoutId, label };
     set({ rest });
     void setJson(REST_KEY, rest);
-    avisar(rest);
+    avisar(rest, get());
   },
 
   adjustRest: (deltaSec) => {
@@ -101,7 +104,7 @@ export const useGymStore = create<GymState>((set, get) => ({
     const rest = { ...actual, endsAt, durationSec: Math.max(0, actual.durationSec + deltaSec) };
     set({ rest });
     void setJson(REST_KEY, rest);
-    avisar(rest);
+    avisar(rest, get());
   },
 
   stopRest: () => {

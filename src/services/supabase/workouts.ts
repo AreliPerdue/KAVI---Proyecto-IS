@@ -5,7 +5,7 @@ import { ordenarPorUso } from '@/lib/gym/names';
 import { getSupabase } from '@/lib/supabase';
 import type { ExerciseHistoryEntry, LegacyExercise, NoteHit, WorkoutDetail, WorkoutsApi } from '@/services/contracts';
 import { toError, unwrap } from '@/services/supabase/errors';
-import type { ExerciseGroup, SetSegment, Workout, WorkoutExercise, WorkoutExerciseDetail, WorkoutSet } from '@/types/domain';
+import type { ExerciseGroup, SetSegment, StreakEvent, Workout, WorkoutExercise, WorkoutExerciseDetail, WorkoutSet } from '@/types/domain';
 
 /**
  * Detalle completo: sesión → ejercicios → series → segmentos, más los grupos.
@@ -401,6 +401,35 @@ export const supabaseWorkouts: WorkoutsApi = {
         }))),
     ];
     return hits.sort((a, b) => b.performed_at.localeCompare(a.performed_at));
+  },
+
+  async trainingLog(userId) {
+    const rows = unwrap(
+      await getSupabase()
+        .from('workouts')
+        .select(SELECT_DETALLE)
+        .eq('owner_id', userId)
+        .eq('status', 'completed')
+        .is('deleted_at', null)
+        .order('performed_at', { ascending: true }),
+    ) as unknown as SesionRow[];
+    return rows.map(toDetail);
+  },
+
+  async listStreakEvents(userId) {
+    const rows = unwrap(
+      await getSupabase().from('workout_streak_events').select('id, week_start, decision, note, reasons').eq('owner_id', userId).order('week_start'),
+    ) as StreakEvent[];
+    return rows;
+  },
+
+  async saveStreakEvents(userId, events) {
+    if (events.length === 0) return;
+    unwrap(
+      await getSupabase()
+        .from('workout_streak_events')
+        .upsert(events.map((e) => ({ ...e, owner_id: userId })), { onConflict: 'owner_id,week_start' }),
+    );
   },
 
   /** Autocompletado con lo que esta persona ya escribió antes, del más usado al menos (RF-F4). */

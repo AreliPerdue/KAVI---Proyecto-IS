@@ -10,6 +10,7 @@ import { ExercisePicker } from '@/components/fitness/exercise-picker';
 import { GroupSheet } from '@/components/fitness/group-sheet';
 import { IntensifierSheet } from '@/components/fitness/intensifier-sheet';
 import { IntervalTimerSheet } from '@/components/fitness/interval-timer-sheet';
+import { SessionSummarySheet } from '@/components/fitness/session-summary';
 import { SetDetailsSheet } from '@/components/fitness/set-details-sheet';
 import { NoteSheet } from '@/components/fitness/note-sheet';
 import { NumpadSheet, type NumpadField } from '@/components/fitness/numpad-sheet';
@@ -18,6 +19,7 @@ import { ToolsSheet } from '@/components/fitness/tools-sheet';
 import { ModalHeader } from '@/components/modal-header';
 import { ActionRow, AppText, Banner, Button, Chip, DatePickerSheet, ErrorState, FieldButton, IconButton, LoadingState, Screen, Sheet, SwitchRow, TextField, TimePickerSheet } from '@/components/ui';
 import { SESSION_TAGS, SET_TAGS, tagLabel } from '@/constants/gym-notes';
+import { gymratLine } from '@/constants/gymrat';
 import { PROTOCOLS, type ProtocolKey } from '@/constants/intensifiers';
 import { IconSize, IconStroke, Radius, Spacing } from '@/constants/theme';
 import { useActivitiesRange } from '@/hooks/use-activities-range';
@@ -108,6 +110,8 @@ export default function WorkoutScreen() {
   const restDefault = useGymStore((s) => s.restDefaultSec);
   const dropPercent = useGymStore((s) => s.dropPercent);
   const startRest = useGymStore((s) => s.startRest);
+  const serio = useGymStore((s) => s.seriousMode);
+  const trato = useGymStore((s) => s.trato);
   const hydrateGym = useGymStore((s) => s.hydrate);
   const setLastWorkoutTitle = usePreferencesStore((s) => s.setLastWorkoutTitle);
 
@@ -249,9 +253,14 @@ export default function WorkoutScreen() {
   const totalPRs = useMemo(() => [...analisis.values()].reduce((n, a) => n + a.prs.size, 0), [analisis]);
   const prsPrevios = useRef<number | null>(null);
   useEffect(() => {
-    if (prsPrevios.current !== null && totalPRs > prsPrevios.current) success();
+    if (prsPrevios.current !== null && totalPRs > prsPrevios.current) {
+      success();
+      // Celebración corta (RF-F56); en Modo serio solo queda el badge de la serie.
+      const frase = gymratLine('pr', trato, serio);
+      if (frase) showSnackbar({ message: frase });
+    }
     prsPrevios.current = totalPRs;
-  }, [totalPRs]);
+  }, [totalPRs, trato, serio, showSnackbar]);
 
   /*
    * Un ejercicio recién agregado nace con su primera serie, prellenada con la de la vez
@@ -308,13 +317,17 @@ export default function WorkoutScreen() {
           startRest(id, grupo.rest_after_round_sec ?? exercise.rest_target_sec ?? restDefault, `${grupos.etiqueta.get(miembros[0].id) ?? ''} ${miembros[0].name}, siguiente ronda`);
           return;
         }
+        // Un drop o unas myo terminadas tienen su frase (RF-F55); un PR la reemplaza después.
+        const kinds = set.segments.map((g) => g.kind);
+        const frase = kinds.includes('drop') ? gymratLine('drop', trato, serio) : kinds.some((k) => k === 'myo_activation' || k === 'myo_mini') ? gymratLine('myo', trato, serio) : null;
+        if (frase) showSnackbar({ message: frase });
         const indice = exercise.workout_sets.findIndex((s) => s.id === set.id);
         const siguiente = exercise.workout_sets[indice + 1];
         const etiqueta = siguiente ? `${exercise.name}, serie ${indice + 2}` : exercise.name;
         startRest(id, exercise.rest_target_sec ?? restDefault, etiqueta);
       }
     },
-    [guardar, data?.status, startRest, id, restDefault, grupos, ejercicios, showSnackbar],
+    [guardar, data?.status, startRest, id, restDefault, grupos, ejercicios, showSnackbar, trato, serio],
   );
 
   const copiarAnterior = useCallback(
@@ -705,6 +718,7 @@ export default function WorkoutScreen() {
                 groupLabel={grupos.etiqueta.get(exercise.id) ?? null}
                 protocolLabel={PROTOCOLS.find((x) => x.key === exercise.protocol)?.label ?? null}
                 stickyNote={exercise.exercise_id ? notasFijas.get(exercise.exercise_id) ?? null : null}
+                celebrate={!serio}
                 onOpenTimer={exercise.protocol && protocolTimer(exercise.protocol as ProtocolKey) ? setTimerPara : undefined}
                 onAddSet={agregarSerie}
                 onEdit={abrirTeclado}
@@ -1185,36 +1199,19 @@ export default function WorkoutScreen() {
         onAddWarmup={herramientasDe && editing ? (pasos) => agregarCalentamiento(herramientasDe, pasos) : undefined}
       />
 
-      <Sheet
-        visible={resumenAbierto}
-        onClose={() => {
-          setResumenAbierto(false);
-          close();
-        }}
-        title="Sesión terminada">
-        {resumen ? (
-          <>
-            <View style={styles.resumen}>
-              <Cifra valor={resumen.durationMin ? `${resumen.durationMin} min` : '—'} etiqueta="Duración" />
-              <Cifra valor={formatWeight(resumen.volumeKg, unit)} etiqueta="Volumen" />
-              <Cifra valor={String(resumen.setsDone)} etiqueta="Series" />
-              <Cifra valor={String(resumen.prCount)} etiqueta="PRs" />
-            </View>
-            {resumen.setsPending > 0 ? (
-              <AppText variant="caption" color="textTertiary">
-                {resumen.setsPending} {resumen.setsPending === 1 ? 'serie quedó' : 'series quedaron'} sin marcar y no cuentan.
-              </AppText>
-            ) : null}
-            <Button
-              title="Listo"
-              onPress={() => {
-                setResumenAbierto(false);
-                close();
-              }}
-            />
-          </>
-        ) : null}
-      </Sheet>
+      {resumen ? (
+        <SessionSummarySheet
+          visible={resumenAbierto}
+          workout={data}
+          summary={resumen}
+          catalog={porId}
+          unit={unit}
+          onClose={() => {
+            setResumenAbierto(false);
+            close();
+          }}
+        />
+      ) : null}
 
       <DatePickerSheet
         visible={pickingDate}
@@ -1274,20 +1271,6 @@ function Escala({ titulo, valor, onChange }: { titulo: string; valor: number | n
   );
 }
 
-function Cifra({ valor, etiqueta }: { valor: string; etiqueta: string }) {
-  const theme = useTheme();
-  return (
-    <View style={[styles.cifra, { backgroundColor: theme.surfaceAlt }]}>
-      <AppText variant="heading" tabular>
-        {valor}
-      </AppText>
-      <AppText variant="caption" color="textSecondary">
-        {etiqueta}
-      </AppText>
-    </View>
-  );
-}
-
 /** Elegir destino de duplicado: actividad de gym futura sin workout, o entrenamiento libre (RF-F8). */
 function DuplicateSheet({
   visible,
@@ -1343,6 +1326,4 @@ const styles = StyleSheet.create({
   historia: { flexDirection: 'row' },
   escala: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm },
   escalaTitulo: { width: 64 },
-  resumen: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm },
-  cifra: { flexBasis: '47%', flexGrow: 1, padding: Spacing.md, borderRadius: Radius.md, borderCurve: 'continuous', gap: 2 },
 });

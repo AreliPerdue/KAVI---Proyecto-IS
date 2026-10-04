@@ -2,6 +2,7 @@ import { Check, ChevronRight, Copy, Ellipsis, MessageSquareText, Pin, Plus, Time
 import { memo, useRef } from 'react';
 import { Platform, Pressable, StyleSheet, View } from 'react-native';
 import ReanimatedSwipeable, { type SwipeableMethods } from 'react-native-gesture-handler/ReanimatedSwipeable';
+import Animated, { ZoomIn } from 'react-native-reanimated';
 
 import { AppText, IconButton } from '@/components/ui';
 import { MUSCLES } from '@/constants/exercise-catalog';
@@ -97,6 +98,8 @@ export type ExerciseBlockProps = {
   protocolLabel: string | null;
   /** La nota fija del ejercicio: va arriba en cada sesión (RF-F52). */
   stickyNote: string | null;
+  /** El badge de PR entra con una animación corta; en Modo serio, quieto (RF-F54, RF-F56). */
+  celebrate: boolean;
   /** Abre el timer de intervalos del protocolo (EMOM, Tabata…). */
   onOpenTimer?: (exercise: WorkoutExerciseDetail) => void;
   onAddSet: (exercise: WorkoutExerciseDetail) => void;
@@ -401,11 +404,11 @@ function FilaSerie(p: FilaProps) {
             </AppText>
           ) : null}
           {p.prsSerie ? (
-            <View style={[styles.pr, { backgroundColor: theme.ink }]}>
+            <Animated.View entering={p.celebrate ? ZoomIn.springify().damping(12) : undefined} style={[styles.pr, { backgroundColor: theme.ink }]}>
               <AppText variant="micro" color="onInk">
                 PR {p.prsSerie.map((k) => NOMBRE_PR[k]).join(' · ')}
               </AppText>
-            </View>
+            </Animated.View>
           ) : null}
           {p.pendiente ? (
             <AppText variant="micro" color="textTertiary">

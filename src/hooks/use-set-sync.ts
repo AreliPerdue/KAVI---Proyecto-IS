@@ -47,6 +47,7 @@ export async function flushOutbox(qc: QueryClient): Promise<void> {
     useOutboxStore.getState().setEntries((actuales) => actuales.filter((e) => confirmado.get(idDe(e)) !== e.at));
     await acknowledge(lote);
     void qc.invalidateQueries({ queryKey: ['workouts', 'history'] });
+    void qc.invalidateQueries({ queryKey: ['workouts', 'log'] });
   } catch {
     if (!reintento) {
       reintento = setTimeout(() => {
