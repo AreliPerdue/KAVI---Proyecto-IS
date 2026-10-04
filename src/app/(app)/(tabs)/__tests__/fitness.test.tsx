@@ -33,6 +33,11 @@ jest.mock('@/hooks/use-workouts', () => ({
   useWorkouts: () => mockWorkouts,
   useWorkoutMutations: () => ({ create: mockCreate }),
 }));
+// La cola local y la conversión de v1 tienen sus propias pruebas; aquí solo se montan.
+const mockBootstrap = jest.fn();
+const mockConversion = jest.fn();
+jest.mock('@/hooks/use-set-sync', () => ({ useOutboxBootstrap: () => mockBootstrap() }));
+jest.mock('@/hooks/use-exercise-history', () => ({ useLegacyConversion: () => mockConversion() }));
 
 beforeEach(() => {
   mockWorkouts = consulta();
@@ -149,13 +154,13 @@ describe('historial', () => {
 });
 
 describe('entrenamiento libre', () => {
-  it('lo crea sin ligarlo a ninguna actividad', async () => {
+  it('lo crea sin ligarlo a ninguna actividad, como sesión en curso', async () => {
     await render(<FitnessScreen />);
 
     await fireEvent.press(screen.getByText('Entrenamiento libre'));
 
     expect(mockCreate.mutate).toHaveBeenCalledWith(
-      expect.objectContaining({ activity_id: null }),
+      expect.objectContaining({ activity_id: null, status: 'active' }),
       expect.any(Object),
     );
   });
@@ -208,5 +213,28 @@ describe('entrenamiento libre', () => {
   it('explica como registrar una sesion ya agendada', async () => {
     await render(<FitnessScreen />);
     expect(screen.getByText(/ábrela en el calendario/i)).toBeTruthy();
+  });
+});
+
+describe('sesión en curso (spec 07 v2, RF-F18)', () => {
+  it('ofrece retomar la sesión que quedó abierta', async () => {
+    mockWorkouts = consulta({ data: [entreno({ id: 'abierta', title: 'Empuje A', status: 'active' }), entreno({ id: 'vieja' })] });
+    await render(<FitnessScreen />);
+
+    await fireEvent.press(screen.getByLabelText(/continuar la sesión en curso: empuje a/i));
+
+    expect(globalThis.mockRouter.push).toHaveBeenCalledWith({ pathname: '/(app)/workout/[id]', params: { id: 'abierta', mode: 'edit' } });
+  });
+
+  it('sin sesión abierta no hay aviso', async () => {
+    mockWorkouts = consulta({ data: [entreno({ status: 'completed' })] });
+    await render(<FitnessScreen />);
+    expect(screen.queryByText('Sesión en curso')).toBeNull();
+  });
+
+  it('al entrar se recupera lo pendiente y se convierte lo de v1', async () => {
+    await render(<FitnessScreen />);
+    expect(mockBootstrap).toHaveBeenCalled();
+    expect(mockConversion).toHaveBeenCalled();
   });
 });

@@ -1,11 +1,13 @@
 import { useRouter } from 'expo-router';
-import { ChevronRight, Dumbbell, Plus } from 'lucide-react-native';
+import { ChevronRight, Dumbbell, Play, Plus } from 'lucide-react-native';
 import { useCallback } from 'react';
 import { FlatList, Pressable, StyleSheet, View } from 'react-native';
 
 import { AppText, Button, EmptyState, ErrorState, LoadingState, Screen } from '@/components/ui';
 import { IconSize, IconStroke, Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { useLegacyConversion } from '@/hooks/use-exercise-history';
+import { useOutboxBootstrap } from '@/hooks/use-set-sync';
 import { useWorkoutMutations, useWorkouts } from '@/hooks/use-workouts';
 import { formatShortDate, formatTime, fromIso } from '@/lib/dates';
 import { usePreferencesStore } from '@/store/preferences-store';
@@ -23,6 +25,11 @@ export default function FitnessScreen() {
   const workouts = useWorkouts();
   const { create } = useWorkoutMutations();
   const lastWorkoutTitle = usePreferencesStore((s) => s.lastWorkoutTitle);
+  // Al entrar a Fitness se recupera lo que quedó sin enviar y se convierte lo de v1.
+  useOutboxBootstrap();
+  useLegacyConversion();
+  /** La sesión que se quedó abierta: se ofrece retomarla antes que empezar otra. */
+  const enCurso = (workouts.data ?? []).find((w) => w.status === 'active') ?? null;
 
   const openWorkout = useCallback(
     (id: string, mode: 'view' | 'edit') => router.push({ pathname: '/(app)/workout/[id]', params: { id, mode } }),
@@ -41,7 +48,7 @@ export default function FitnessScreen() {
    */
   const startFree = () =>
     create.mutate(
-      { activity_id: null, title: lastWorkoutTitle, performed_at: new Date().toISOString() },
+      { activity_id: null, title: lastWorkoutTitle, performed_at: new Date().toISOString(), status: 'active' },
       { onSuccess: (w) => openWorkout(w.id, 'edit') },
     );
 
@@ -85,6 +92,24 @@ export default function FitnessScreen() {
         <AppText variant="caption" color="textTertiary">
           Para registrar una sesión agendada, ábrela en el calendario y toca “Registrar entrenamiento”.
         </AppText>
+        {enCurso ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={`Continuar la sesión en curso: ${nombreDe(enCurso)}`}
+            onPress={() => openWorkout(enCurso.id, 'edit')}
+            style={({ pressed }) => [styles.enCurso, { backgroundColor: theme.ink }, pressed ? { opacity: 0.85 } : null]}>
+            <Play size={IconSize.inline} strokeWidth={IconStroke} color={theme.onInk} fill={theme.onInk} />
+            <View style={styles.text}>
+              <AppText variant="bodyStrong" color="onInk">
+                Sesión en curso
+              </AppText>
+              <AppText variant="caption" color="onInk">
+                {nombreDe(enCurso)} · desde las {formatTime(fromIso(enCurso.performed_at))}
+              </AppText>
+            </View>
+            <ChevronRight size={IconSize.inline} strokeWidth={IconStroke} color={theme.onInk} />
+          </Pressable>
+        ) : null}
       </View>
       {workouts.isPending ? <LoadingState /> : null}
       {workouts.isError ? <ErrorState message={workouts.error.message} onRetry={() => workouts.refetch()} /> : null}
@@ -114,4 +139,5 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: Spacing.md, minHeight: 64, padding: Spacing.md, borderWidth: 1, borderRadius: Radius.md, borderCurve: 'continuous' },
   icon: { width: 40, height: 40, borderRadius: Radius.sm, borderCurve: 'continuous', alignItems: 'center', justifyContent: 'center' },
   text: { flex: 1, gap: 2 },
+  enCurso: { flexDirection: 'row', alignItems: 'center', gap: Spacing.md, minHeight: 64, padding: Spacing.md, borderRadius: Radius.md, borderCurve: 'continuous' },
 });

@@ -105,7 +105,16 @@ export async function syncNotifications(items: readonly ScheduledReminder[]): Pr
   const granted = await ensureNotificationPermission();
   if (!granted) return 0;
 
-  await Notifications.cancelAllScheduledNotificationsAsync();
+  /*
+   * Se cancela todo **menos** el aviso de fin de descanso del gym: lo programa otra parte
+   * de la app, y reconstruir los recordatorios a media serie lo borraba.
+   */
+  const programadas = await Notifications.getAllScheduledNotificationsAsync();
+  await Promise.all(
+    programadas
+      .filter((n) => n.identifier !== REST_NOTIFICATION_ID)
+      .map((n) => Notifications.cancelScheduledNotificationAsync(n.identifier)),
+  );
   const now = Date.now();
   let scheduled = 0;
   for (const item of items) {
@@ -146,4 +155,34 @@ export async function presentNow(title: string, body: string, data?: Record<stri
     trigger: null, // null = ahora mismo
   });
   return true;
+}
+
+/** Identificador fijo del aviso de fin de descanso: siempre hay a lo más uno. */
+export const REST_NOTIFICATION_ID = 'kavi-gym-rest';
+
+/**
+ * Programa el aviso de fin de descanso (spec 07 v2, RF-F34). Llega aunque la pantalla esté
+ * bloqueada o la app en segundo plano, porque lo dispara el sistema a la hora fijada. En
+ * web no hay notificaciones locales: el aviso va dentro de la app (P5, NFR-10).
+ */
+export async function scheduleRestEnd(fireAt: Date, title: string, body: string): Promise<boolean> {
+  const Notifications = load();
+  if (!Notifications) return false;
+  ensureHandler(Notifications);
+  const current = await Notifications.getPermissionsAsync();
+  if (!current.granted) return false;
+  await Notifications.cancelScheduledNotificationAsync(REST_NOTIFICATION_ID).catch(() => undefined);
+  if (fireAt.getTime() <= Date.now()) return false;
+  await Notifications.scheduleNotificationAsync({
+    identifier: REST_NOTIFICATION_ID,
+    content: { title, body, data: { kind: 'gym-rest' } },
+    trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: fireAt },
+  });
+  return true;
+}
+
+export async function cancelRestEnd(): Promise<void> {
+  const Notifications = load();
+  if (!Notifications) return;
+  await Notifications.cancelScheduledNotificationAsync(REST_NOTIFICATION_ID).catch(() => undefined);
 }

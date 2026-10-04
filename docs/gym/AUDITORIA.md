@@ -278,7 +278,7 @@ Decisiones de diseño que vale la pena leer:
 | D5 | **Cero dependencias nuevas.** No esperar al servidor se resuelve con almacenamiento asíncrono (`lib/storage`). Los IDs se generan en el cliente con un generador UUID v4 propio, que no necesita ser criptográfico: la seguridad la da la RLS, no lo impredecible del id. Para el háptico se usa `Vibration` de RN solo en Android; en iOS y web, nada. |
 | D6 | Cola local solo para la sesión activa (no es un modo offline general). |
 | D7 | El catálogo se construye antes que el logger. |
-| D8 | Typecheck y lint en cada tarea; la suite completa al cerrar cada fase. |
+| D8 | Typecheck, lint y prueba manual en la app. **Sin pruebas automáticas por ahora** (indicación de Areli, 4 oct): lo que haría falta probar se apunta en `reports/pruebas-pendientes.md` para una sesión dedicada. |
 | D9 | Sin plantillas en este upgrade. |
 
 ## 8.1 Contradicciones originales (para la historia)

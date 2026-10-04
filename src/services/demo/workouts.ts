@@ -274,6 +274,19 @@ export const demoWorkouts: WorkoutsApi = {
     for (const e of exercises) if (marcar.has(e.id)) e.legacy_converted_at = t;
   },
 
+  async exerciseHistory(userId, ref, limit = 60) {
+    await delay(40);
+    const nombre = ref.name.trim().toLowerCase();
+    return exercises
+      .filter((e) => vivo(e) && (ref.exerciseId ? e.exercise_id === ref.exerciseId : !e.exercise_id && e.name.trim().toLowerCase() === nombre))
+      .flatMap((e) => {
+        const w = workouts.find((x) => x.id === e.workout_id && x.owner_id === userId && vivo(x) && x.status !== 'discarded');
+        return w ? [{ workout_id: w.id, workout_exercise_id: e.id, performed_at: w.performed_at, bodyweight_kg: w.bodyweight_kg, sets: seriesDe(e.id) }] : [];
+      })
+      .sort((a, b) => b.performed_at.localeCompare(a.performed_at))
+      .slice(0, limit);
+  },
+
   async exerciseNames(userId) {
     await delay(40);
     const mine = new Set(workouts.filter((w) => w.owner_id === userId && vivo(w)).map((w) => w.id));

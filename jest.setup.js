@@ -223,6 +223,18 @@ jest.mock('react-native-gesture-handler', () => {
 });
 
 /**
+ * El swipe de filas del gym (`ReanimatedSwipeable`) es un sub-módulo y no lo cubre el mock
+ * de arriba. Pinta a sus hijos: las acciones de deslizar se prueban por el menú de la fila,
+ * que ofrece lo mismo.
+ */
+jest.mock('react-native-gesture-handler/ReanimatedSwipeable', () => {
+  const React = require('react');
+  const Swipeable = React.forwardRef(({ children }, _ref) => React.createElement(React.Fragment, null, children));
+  Swipeable.displayName = 'ReanimatedSwipeable';
+  return { __esModule: true, default: Swipeable, SwipeDirection: { LEFT: 'left', RIGHT: 'right' } };
+});
+
+/**
  * `react-native-worklets` es el motor que Reanimated 4 usa para ejecutar codigo
  * en el hilo de UI; en Jest no existe ese hilo. `runOnJS` devuelve la funcion
  * tal cual, que es justo su efecto observable desde JavaScript.

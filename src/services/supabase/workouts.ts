@@ -3,7 +3,7 @@ import { uuidv4 } from '@/lib/gym/ids';
 import { hasLegacyText } from '@/lib/gym/legacy';
 import { ordenarPorUso } from '@/lib/gym/names';
 import { getSupabase } from '@/lib/supabase';
-import type { LegacyExercise, WorkoutDetail, WorkoutsApi } from '@/services/contracts';
+import type { ExerciseHistoryEntry, LegacyExercise, WorkoutDetail, WorkoutsApi } from '@/services/contracts';
 import { toError, unwrap } from '@/services/supabase/errors';
 import type { ExerciseGroup, SetSegment, Workout, WorkoutExercise, WorkoutExerciseDetail, WorkoutSet } from '@/types/domain';
 
@@ -278,6 +278,42 @@ export const supabaseWorkouts: WorkoutsApi = {
     if (ids.length === 0) return;
     const { error } = await getSupabase().from('workout_exercises').update({ legacy_converted_at: ahora() }).in('id', [...ids]);
     if (error) throw toError(error);
+  },
+
+  /**
+   * Historial de un ejercicio (RF-F26). Por catálogo si está ligado; si no, por el nombre
+   * exacto (sin distinguir mayúsculas) entre los que tampoco están ligados.
+   *
+   * PostgREST no ordena filas padre por una columna de la tabla unida, así que se ordena
+   * por la creación del ejercicio —que sigue a la de la sesión— y luego, ya en el cliente,
+   * por la fecha real de la sesión.
+   */
+  async exerciseHistory(userId, ref, limit = 60) {
+    let q = getSupabase()
+      .from('workout_exercises')
+      .select('id, workout_id, workouts!inner(performed_at, bodyweight_kg, deleted_at, status), workout_sets(*, set_segments(*))')
+      .eq('owner_id', userId)
+      .is('deleted_at', null)
+      .is('workouts.deleted_at', null)
+      .neq('workouts.status', 'discarded');
+    q = ref.exerciseId
+      ? q.eq('exercise_id', ref.exerciseId)
+      : q.is('exercise_id', null).ilike('name', ref.name.trim().replace(/[\\%_]/g, (c) => `\\${c}`));
+    const rows = unwrap(await q.order('id', { ascending: false }).limit(limit)) as unknown as {
+      id: string;
+      workout_id: string;
+      workouts: { performed_at: string; bodyweight_kg: number | null };
+      workout_sets: SerieRow[];
+    }[];
+    return rows
+      .map((r): ExerciseHistoryEntry => ({
+        workout_id: r.workout_id,
+        workout_exercise_id: r.id,
+        performed_at: r.workouts.performed_at,
+        bodyweight_kg: r.workouts.bodyweight_kg,
+        sets: (r.workout_sets ?? []).filter(vivo).sort((a, b) => Number(a.sort_order) - Number(b.sort_order)).map(aSerie),
+      }))
+      .sort((a, b) => b.performed_at.localeCompare(a.performed_at));
   },
 
   /** Autocompletado con lo que esta persona ya escribió antes, del más usado al menos (RF-F4). */

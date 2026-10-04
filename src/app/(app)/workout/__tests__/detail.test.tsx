@@ -1,336 +1,264 @@
 /**
- * Pantalla de entrenamiento (RF-F3 a RF-F6, RF-F8).
+ * Sesión de gym: el logger en vivo (spec 07 v2, RF-F27 – RF-F42).
  *
- * La pantalla se abre en captura o en lectura segun el parametro de ruta, y
- * eliminar un ejercicio ofrece deshacer: la accion es destructiva pero frecuente
- * durante una sesion, asi que en vez de confirmar cada vez se permite revertir
- * (NFR-12).
+ * Fija lo que hace el logger y no se ve en el código de cada pieza: una serie se registra
+ * con un toque si se repite (nace prellenada), marcarla arranca el descanso, el teclado
+ * guarda al cerrarse, un drop es un segmento más de la misma serie, borrar ofrece
+ * deshacer, y la sesión se termina o se descarta explícitamente.
  */
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 
+import { newSet, setSegmentField } from '@/lib/gym/sets';
+import { useGymStore } from '@/store/gym-store';
 import { usePreferencesStore } from '@/store/preferences-store';
+import type { Exercise, WorkoutSet } from '@/types/domain';
 
 const mockConfirm = jest.fn();
 const mockSnackbar = jest.fn();
-/** Prefijo mock obligatorio: Jest eleva la fabrica de jest.mock. */
+const mockSave = jest.fn();
+const mockRemove = jest.fn();
 const mockMut = {
-  update: { mutate: jest.fn() },
+  update: { mutate: jest.fn(), error: null },
   remove: { mutate: jest.fn() },
-  addExercise: { mutate: jest.fn() },
+  addExercise: { mutate: jest.fn(), isPending: false, error: null },
   updateExercise: { mutate: jest.fn() },
   removeExercise: { mutate: jest.fn() },
   restoreExercise: { mutate: jest.fn() },
   duplicate: { mutate: jest.fn(), isPending: false },
   create: { mutate: jest.fn() },
 };
-let mockWorkout: Record<string, unknown>;
+let mockSesion: Record<string, unknown>;
 
-// El selector del catálogo pide sus propios datos; aquí solo importa que no estorbe.
-jest.mock('@/components/fitness/exercise-picker', () => ({ ExercisePicker: () => null }));
-jest.mock('@/hooks/use-workouts', () => ({
-  useWorkout: () => mockWorkout,
-  useExerciseNames: () => ({ data: ['Sentadilla'] }),
-  useWorkouts: () => ({ data: [] }),
-  useWorkoutMutations: () => mockMut,
+const BANCA: Exercise = {
+  id: 'cat-banca', slug: 'press-de-banca-plano-con-barra', name_es: 'Press de banca plano con barra', name_en: 'Barbell bench press',
+  aliases: ['banca'], family: 'Press plano', primary_muscles: ['chest_mid'], secondary_muscles: [], equipment: ['barbell'],
+  movement_pattern: 'horizontal_push', mechanic: 'compound', laterality: 'bilateral', tracking_type: 'weight_reps', created_by: null, archived_at: null,
+};
+
+jest.mock('@/hooks/use-set-sync', () => ({
+  useSessionDetail: () => mockSesion,
+  useSetActions: () => ({ saveSet: mockSave, removeSet: mockRemove }),
 }));
+jest.mock('@/hooks/use-exercise-history', () => ({
+  // Sin historial: lo de "Anterior" y los PRs tienen sus propias pruebas en lib/gym.
+  exerciseHistoryQuery: (_u: string, ref: { name: string }) => ({ queryKey: ['historial', ref.name], queryFn: async () => [] }),
+  useLegacyConversion: () => undefined,
+}));
+jest.mock('@/hooks/use-exercises', () => ({ useExercises: () => ({ data: [mockBanca()], index: new Map() }) }));
+function mockBanca() {
+  return BANCA;
+}
+jest.mock('@/hooks/use-workouts', () => ({ useWorkouts: () => ({ data: [] }), useWorkoutMutations: () => mockMut }));
 jest.mock('@/hooks/use-activities-range', () => ({ useActivitiesRange: () => ({ data: [] }) }));
-jest.mock('@/providers', () => ({ useConfirm: () => mockConfirm, useSnackbar: () => mockSnackbar }));
-jest.mock('@/components/fitness/exercise-card', () => {
+jest.mock('@/lib/notifications', () => ({ scheduleRestEnd: async () => false, cancelRestEnd: async () => undefined }));
+jest.mock('@/providers', () => ({ useConfirm: () => mockConfirm, useSnackbar: () => mockSnackbar, useAuth: () => ({ userId: 'u1' }) }));
+/** El selector real pide el catálogo; aquí un botón elige la banca. */
+jest.mock('@/components/fitness/exercise-picker', () => {
   /* eslint-disable @typescript-eslint/no-require-imports -- las fabricas de jest.mock se elevan */
   const React = require('react');
-  const { Pressable, Text, View } = require('react-native');
+  const { Pressable, Text } = require('react-native');
   /* eslint-enable @typescript-eslint/no-require-imports */
-  const ExerciseCard = (props: {
-    exercise: { id: string; name: string };
-    onDelete: (e: { id: string; name: string }) => void;
-  }) =>
-    React.createElement(
-      View,
-      null,
-      React.createElement(Text, null, props.exercise.name),
-      React.createElement(
-        Pressable,
-        {
-          accessibilityRole: 'button',
-          accessibilityLabel: `borrar ${props.exercise.name}`,
-          onPress: () => props.onDelete(props.exercise),
-        },
-        React.createElement(Text, null, 'borrar'),
-      ),
-    );
-  ExerciseCard.displayName = 'ExerciseCard';
-  return { ExerciseCard };
+  const ExercisePicker = (props: { visible: boolean; onPick: (e: unknown) => void }) =>
+    props.visible
+      ? React.createElement(Pressable, { accessibilityRole: 'button', accessibilityLabel: 'elegir banca', onPress: () => props.onPick(mockBanca()) }, React.createElement(Text, null, 'elegir'))
+      : null;
+  return { ExercisePicker };
 });
 
 /* eslint-disable-next-line @typescript-eslint/no-require-imports -- tras los mocks */
 const Pantalla = require('@/app/(app)/workout/[id]').default as () => React.ReactElement;
 
+function serie(kg: number | null, reps: number | null, over: Partial<WorkoutSet> = {}): WorkoutSet {
+  let s = newSet('e1', over.sort_order ?? 1, null, 'kg');
+  if (kg !== null) s = setSegmentField(s, 0, 'weight_kg', kg, 'kg');
+  if (reps !== null) s = setSegmentField(s, 0, 'reps', reps, 'kg');
+  return { ...s, ...over };
+}
+
 const ejercicio = (over = {}) => ({
-  id: 'e1', workout_id: 'w1', position: 0, name: 'Sentadilla',
-  sets: 4, reps: '8', weight: '80 kg', duration_minutes: null, notes: null, ...over,
+  id: 'e1', workout_id: 'w1', position: 0, name: 'Press de banca plano con barra', exercise_id: 'cat-banca',
+  sets: null, reps: null, weight: null, duration_minutes: null, notes: null, legacy_converted_at: null,
+  workout_sets: [serie(100, 8, { id: 's1' })], ...over,
 });
-const ENTRENAMIENTO = (over = {}) => ({
-  id: 'w1', owner_id: 'u1', activity_id: null, activity_title: null, title: null,
-  performed_at: new Date(2026, 8, 7, 7, 30).toISOString(),
-  notes: null, created_at: 'x', duration_minutes: null,
+const sesion = (over = {}) => ({
+  id: 'w1', owner_id: 'u1', activity_id: null, activity_title: null, title: 'Empuje A', status: 'active',
+  performed_at: new Date().toISOString(), ended_at: null, bodyweight_kg: null, energy: null, pump: null, tags: [],
+  notes: null, created_at: 'x', updated_at: 'x', edited_at: null, duration_minutes: null, groups: [],
   exercises: [ejercicio()], ...over,
 });
 
+async function montar() {
+  // `gcTime: Infinity` no programa la limpieza del caché: sin eso, sus temporizadores de 5
+  // minutos dejan a Jest esperando después de la última prueba.
+  const qc = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: Infinity } } });
+  await render(
+    <QueryClientProvider client={qc}>
+      <Pantalla />
+    </QueryClientProvider>,
+  );
+}
+
+const ultimoGuardado = (): WorkoutSet => mockSave.mock.calls.at(-1)?.[0];
+
 beforeEach(() => {
   usePreferencesStore.setState({ lastWorkoutTitle: null });
+  useGymStore.setState({ rest: null, weightUnit: 'kg', effortScale: 'rir', restDefaultSec: 120, dropPercent: 20, hydrated: true });
   mockConfirm.mockReset().mockResolvedValue(true);
   mockSnackbar.mockReset();
+  mockSave.mockReset();
+  mockRemove.mockReset();
   for (const mut of Object.values(mockMut)) mut.mutate.mockReset();
-  mockWorkout = { data: ENTRENAMIENTO(), isPending: false, isError: false, error: null, refetch: jest.fn() };
+  mockSesion = { data: sesion(), isPending: false, isError: false, error: null, refetch: jest.fn(), pendientes: new Set() };
   globalThis.setParametrosDeRuta({ id: 'w1', mode: 'edit' });
 });
 
-describe('modo de apertura', () => {
-  it('con mode=edit abre en captura', async () => {
-    await render(<Pantalla />);
-    expect(screen.getByRole('button', { name: 'Listo' })).toBeTruthy();
+describe('estados', () => {
+  it('mientras carga no pinta la sesión', async () => {
+    mockSesion = { ...mockSesion, data: undefined, isPending: true };
+    await montar();
+    expect(screen.queryByText('Empuje A')).toBeNull();
   });
 
-  it('con mode=view abre en lectura y ofrece editar', async () => {
-    globalThis.setParametrosDeRuta({ id: 'w1', mode: 'view' });
-    await render(<Pantalla />);
-
-    expect(screen.getByRole('button', { name: 'Editar' })).toBeTruthy();
-    expect(screen.queryByRole('button', { name: 'Listo' })).toBeNull();
-  });
-
-  it('desde lectura se puede pasar a edicion', async () => {
-    globalThis.setParametrosDeRuta({ id: 'w1', mode: 'view' });
-    await render(<Pantalla />);
-
-    await fireEvent.press(screen.getByRole('button', { name: 'Editar' }));
-
-    await waitFor(() => expect(screen.getByRole('button', { name: 'Listo' })).toBeTruthy());
-  });
-});
-
-describe('contenido', () => {
-  it('lista los ejercicios', async () => {
-    await render(<Pantalla />);
-    expect(screen.getByText('Sentadilla')).toBeTruthy();
-  });
-
-  it('muestra la fecha del entrenamiento', async () => {
-    await render(<Pantalla />);
-    expect(screen.getByText(/7 sep 2026/)).toBeTruthy();
-  });
-
-  it('mientras carga lo indica', async () => {
-    mockWorkout = { ...mockWorkout, data: undefined, isPending: true };
-    await render(<Pantalla />);
-
-    expect(screen.getByText('Cargando…')).toBeTruthy();
-  });
-
-  it('si ya no existe ofrece reintentar', async () => {
+  it('si falla explica y deja reintentar', async () => {
     const refetch = jest.fn();
-    mockWorkout = { data: undefined, isPending: false, isError: true, error: new Error('Ese entrenamiento ya no existe.'), refetch };
-    await render(<Pantalla />);
-
-    expect(screen.getByText('Ese entrenamiento ya no existe.')).toBeTruthy();
-    await fireEvent.press(screen.getByRole('button', { name: 'Reintentar' }));
+    mockSesion = { ...mockSesion, data: undefined, isError: true, error: new Error('Sin conexión'), refetch };
+    await montar();
+    await fireEvent.press(screen.getByText('Reintentar'));
     expect(refetch).toHaveBeenCalled();
   });
 });
 
-describe('ejercicios', () => {
-  it('se puede anadir uno', async () => {
-    await render(<Pantalla />);
-
-    await fireEvent.press(screen.getByRole('button', { name: 'Ejercicio' }));
-
-    expect(mockMut.addExercise.mutate).toHaveBeenCalled();
-    expect(mockMut.addExercise.mutate.mock.calls[0][0]).toMatchObject({ workoutId: 'w1' });
+describe('registrar series (RF-F27, RF-F31)', () => {
+  it('pinta la serie con su peso y sus reps', async () => {
+    await montar();
+    expect(screen.getByLabelText('kg de la serie 1: 100')).toBeTruthy();
+    expect(screen.getByLabelText('Reps de la serie 1: 8')).toBeTruthy();
   });
 
-  it('eliminar uno no pide confirmacion: ofrece deshacer (NFR-12)', async () => {
-    mockMut.removeExercise.mutate.mockImplementation((_id: string, o: { onSuccess?: () => void }) => o?.onSuccess?.());
-    await render(<Pantalla />);
+  it('marcar ✓ guarda la serie como hecha y arranca el descanso', async () => {
+    await montar();
+    await fireEvent.press(screen.getByRole('checkbox', { name: 'Marcar hecha la serie 1' }));
 
-    await fireEvent.press(screen.getByLabelText('borrar Sentadilla'));
-
-    expect(mockConfirm).not.toHaveBeenCalled();
-    await waitFor(() => expect(mockSnackbar).toHaveBeenCalled());
-    expect(mockSnackbar.mock.calls[0][0].actionLabel).toBe('Deshacer');
+    expect(ultimoGuardado().id).toBe('s1');
+    expect(ultimoGuardado().completed_at).toEqual(expect.any(String));
+    expect(useGymStore.getState().rest).toMatchObject({ workoutId: 'w1', durationSec: 120 });
   });
 
-  it('deshacer restaura el mismo ejercicio, con sus series (el borrado es suave)', async () => {
-    mockMut.removeExercise.mutate.mockImplementation((_id: string, o: { onSuccess?: () => void }) => o?.onSuccess?.());
-    await render(<Pantalla />);
+  it('desmarcar la deja pendiente otra vez', async () => {
+    mockSesion = { ...mockSesion, data: sesion({ exercises: [ejercicio({ workout_sets: [serie(100, 8, { id: 's1', completed_at: '2026-10-04T10:00:00Z' })] })] }) };
+    await montar();
+    await fireEvent.press(screen.getByRole('checkbox', { name: 'Desmarcar la serie 1' }));
+    expect(ultimoGuardado().completed_at).toBeNull();
+  });
 
-    await fireEvent.press(screen.getByLabelText('borrar Sentadilla'));
-    await waitFor(() => expect(mockSnackbar).toHaveBeenCalled());
+  it('"+ Serie" crea otra prellenada con la última: repetirla es solo ✓', async () => {
+    await montar();
+    await fireEvent.press(screen.getByLabelText('Agregar serie a Press de banca plano con barra'));
 
+    const nueva = ultimoGuardado();
+    expect(nueva.id).not.toBe('s1');
+    expect(nueva.segments[0]).toMatchObject({ weight_kg: 100, reps: 8 });
+    expect(nueva.completed_at).toBeNull();
+  });
+
+  it('el teclado propio guarda al cerrarse', async () => {
+    await montar();
+    await fireEvent.press(screen.getByLabelText('kg de la serie 1: 100'));
+    await fireEvent.press(screen.getByRole('button', { name: '1' }));
+    await fireEvent.press(screen.getByRole('button', { name: '0' }));
+    await fireEvent.press(screen.getByRole('button', { name: '5' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Listo' }));
+
+    expect(ultimoGuardado().segments[0].weight_kg).toBe(105);
+  });
+});
+
+describe('menú de la serie (RF-F32, RF-F44)', () => {
+  it('+ Drop agrega un segmento a la misma serie, 20 % más ligero', async () => {
+    await montar();
+    await fireEvent.press(screen.getByLabelText('Opciones de la serie 1'));
+    await fireEvent.press(screen.getByText('+ Drop (−20 %)'));
+
+    const s = ultimoGuardado();
+    expect(s.id).toBe('s1');
+    expect(s.segments.map((g) => [g.kind, g.weight_kg])).toEqual([['main', 100], ['drop', 80]]);
+  });
+
+  it('cambiar el tipo de serie', async () => {
+    await montar();
+    await fireEvent.press(screen.getByLabelText('Opciones de la serie 1'));
+    await fireEvent.press(screen.getByText('Calentamiento'));
+    expect(ultimoGuardado().set_type).toBe('warmup');
+  });
+
+  it('borrar ofrece deshacer, que vuelve a guardar la misma serie', async () => {
+    await montar();
+    await fireEvent.press(screen.getByLabelText('Opciones de la serie 1'));
+    await fireEvent.press(screen.getByText('Borrar serie'));
+
+    expect(mockRemove).toHaveBeenCalledWith('s1');
     mockSnackbar.mock.calls[0][0].onAction();
-
-    expect(mockMut.restoreExercise.mutate).toHaveBeenCalledWith(expect.any(String));
-    expect(mockMut.addExercise.mutate).not.toHaveBeenCalled();
+    expect(ultimoGuardado().id).toBe('s1');
   });
 });
 
-describe('duplicar (RF-F8)', () => {
-  it('se ofrece en lectura', async () => {
-    globalThis.setParametrosDeRuta({ id: 'w1', mode: 'view' });
-    await render(<Pantalla />);
+describe('ejercicios', () => {
+  it('"+ Ejercicio" elige del catálogo y lo liga (sin ejercicios vacíos)', async () => {
+    await montar();
+    await fireEvent.press(screen.getByRole('button', { name: 'Ejercicio' }));
+    await fireEvent.press(screen.getByLabelText('elegir banca'));
 
+    expect(mockMut.addExercise.mutate).toHaveBeenCalledWith(
+      expect.objectContaining({ workoutId: 'w1', input: expect.objectContaining({ name: BANCA.name_es, exercise_id: 'cat-banca', position: 1 }) }),
+    );
+  });
+
+  it('un ejercicio nuevo nace con su primera serie', async () => {
+    mockSesion = { ...mockSesion, data: sesion({ exercises: [ejercicio({ workout_sets: [] })] }) };
+    await montar();
+    await waitFor(() => expect(mockSave).toHaveBeenCalled());
+    expect(ultimoGuardado().workout_exercise_id).toBe('e1');
+  });
+
+  it('lo de v1 que no se pudo convertir sin adivinar se sigue viendo', async () => {
+    mockSesion = {
+      ...mockSesion,
+      data: sesion({ exercises: [ejercicio({ exercise_id: null, reps: '12/10/8', weight: '40kg + cadena', legacy_converted_at: '2026-10-04T10:00:00Z' })] }),
+    };
+    await montar();
+    expect(screen.getByText(/Texto original: 12\/10\/8 · 40kg \+ cadena/)).toBeTruthy();
+  });
+});
+
+describe('sesión', () => {
+  it('terminar la marca como completada y muestra el resumen', async () => {
+    await montar();
+    await fireEvent.press(screen.getByRole('button', { name: 'Terminar sesión' }));
+
+    expect(mockMut.update.mutate).toHaveBeenCalledWith({ id: 'w1', patch: expect.objectContaining({ status: 'completed', ended_at: expect.any(String) }) });
+    expect(screen.getByText('Sesión terminada')).toBeTruthy();
+  });
+
+  it('descartar pide confirmación', async () => {
+    await montar();
+    await fireEvent.press(screen.getByRole('button', { name: 'Descartar sesión' }));
+    await waitFor(() => expect(mockMut.update.mutate).toHaveBeenCalledWith({ id: 'w1', patch: { status: 'discarded' } }, expect.any(Object)));
+    expect(mockConfirm).toHaveBeenCalled();
+  });
+
+  it('en lectura no se puede marcar ni agregar, y se ofrece editar', async () => {
+    globalThis.setParametrosDeRuta({ id: 'w1', mode: 'view' });
+    mockSesion = { ...mockSesion, data: sesion({ status: 'completed' }) };
+    await montar();
+
+    expect(screen.getByRole('button', { name: 'Editar' })).toBeTruthy();
+    expect(screen.queryByLabelText('Agregar serie a Press de banca plano con barra')).toBeNull();
+    expect(screen.getByRole('checkbox', { name: 'Marcar hecha la serie 1' }).props.accessibilityState).toMatchObject({ disabled: true });
+  });
+
+  it('duplicar sigue disponible', async () => {
+    await montar();
     expect(screen.getByRole('button', { name: 'Duplicar en…' })).toBeTruthy();
-  });
-
-  it('abre la hoja con la opcion de conservar valores', async () => {
-    globalThis.setParametrosDeRuta({ id: 'w1', mode: 'view' });
-    await render(<Pantalla />);
-
-    await fireEvent.press(screen.getByRole('button', { name: 'Duplicar en…' }));
-
-    await waitFor(() => expect(screen.getByText(/conservar series, reps y peso/i)).toBeTruthy());
-  });
-
-  it('permite duplicar como entrenamiento libre', async () => {
-    globalThis.setParametrosDeRuta({ id: 'w1', mode: 'view' });
-    await render(<Pantalla />);
-    await fireEvent.press(screen.getByRole('button', { name: 'Duplicar en…' }));
-    await waitFor(() => expect(screen.getByRole('button', { name: /entrenamiento libre/i })).toBeTruthy());
-
-    await fireEvent.press(screen.getByRole('button', { name: /entrenamiento libre/i }));
-
-    await waitFor(() => expect(mockMut.duplicate.mutate).toHaveBeenCalled());
-    expect(mockMut.duplicate.mutate.mock.calls[0][0]).toMatchObject({ workoutId: 'w1' });
-  });
-});
-
-describe('eliminar el entrenamiento', () => {
-  it('pide confirmacion', async () => {
-    mockConfirm.mockResolvedValue(false);
-    await render(<Pantalla />);
-
-    await fireEvent.press(screen.getByRole('button', { name: 'Eliminar entrenamiento' }));
-
-    await waitFor(() => expect(mockConfirm).toHaveBeenCalled());
-    expect(mockMut.remove.mutate).not.toHaveBeenCalled();
-  });
-
-  it('al confirmar lo elimina', async () => {
-    await render(<Pantalla />);
-
-    await fireEvent.press(screen.getByRole('button', { name: 'Eliminar entrenamiento' }));
-
-    await waitFor(() => expect(mockMut.remove.mutate).toHaveBeenCalled());
-  });
-});
-
-
-/**
- * Nombre propio de la sesion (RF-F7).
- *
- * El encabezado era fijo —"Entrenamiento libre"— y no se podia cambiar. Ahora es
- * un campo mas, con la misma mecanica que las notas: se guarda al salir de el. Y
- * al guardarlo se recuerda, para proponerlo en el siguiente entrenamiento.
- */
-describe('nombre del entrenamiento', () => {
-  it('en lectura se muestra el nombre propio', async () => {
-    mockWorkout = { ...mockWorkout, data: ENTRENAMIENTO({ title: 'Empuje A' }) };
-    globalThis.setParametrosDeRuta({ id: 'w1', mode: 'view' });
-    await render(<Pantalla />);
-    expect(screen.getByText('Empuje A')).toBeTruthy();
-  });
-
-  it('sin nombre propio se usa el de la actividad', async () => {
-    mockWorkout = { ...mockWorkout, data: ENTRENAMIENTO({ title: null, activity_title: 'Gimnasio · pierna' }) };
-    globalThis.setParametrosDeRuta({ id: 'w1', mode: 'view' });
-    await render(<Pantalla />);
-    expect(screen.getByText('Gimnasio · pierna')).toBeTruthy();
-  });
-
-  it('sin ninguno de los dos queda el texto de reserva', async () => {
-    globalThis.setParametrosDeRuta({ id: 'w1', mode: 'view' });
-    await render(<Pantalla />);
-    expect(screen.getByText('Entrenamiento libre')).toBeTruthy();
-  });
-
-  it('en edicion es un campo, no un titulo fijo', async () => {
-    globalThis.setParametrosDeRuta({ id: 'w1', mode: 'edit' });
-    await render(<Pantalla />);
-    expect(screen.getByLabelText('Nombre')).toBeTruthy();
-  });
-
-  it('se guarda al salir del campo', async () => {
-    globalThis.setParametrosDeRuta({ id: 'w1', mode: 'edit' });
-    await render(<Pantalla />);
-
-    await fireEvent.changeText(screen.getByLabelText('Nombre'), 'Pierna');
-    await fireEvent(screen.getByLabelText('Nombre'), 'blur');
-
-    expect(mockMut.update.mutate).toHaveBeenCalledWith(
-      { id: 'w1', patch: { title: 'Pierna' } },
-      expect.any(Object),
-    );
-  });
-
-  it('escribir sin salir del campo todavia no guarda', async () => {
-    globalThis.setParametrosDeRuta({ id: 'w1', mode: 'edit' });
-    await render(<Pantalla />);
-
-    await fireEvent.changeText(screen.getByLabelText('Nombre'), 'Pierna');
-
-    expect(mockMut.update.mutate).not.toHaveBeenCalled();
-  });
-
-  it('borrarlo lo deja sin nombre, no en cadena vacia', async () => {
-    mockWorkout = { ...mockWorkout, data: ENTRENAMIENTO({ title: 'Pierna' }) };
-    globalThis.setParametrosDeRuta({ id: 'w1', mode: 'edit' });
-    await render(<Pantalla />);
-
-    await fireEvent.changeText(screen.getByLabelText('Nombre'), '   ');
-    await fireEvent(screen.getByLabelText('Nombre'), 'blur');
-
-    expect(mockMut.update.mutate).toHaveBeenCalledWith(
-      { id: 'w1', patch: { title: null } },
-      expect.any(Object),
-    );
-  });
-
-  /** Sin esto cada blur dispararia una escritura aunque no se hubiera tocado nada. */
-  it('salir del campo sin cambiar nada no guarda', async () => {
-    mockWorkout = { ...mockWorkout, data: ENTRENAMIENTO({ title: 'Pierna' }) };
-    globalThis.setParametrosDeRuta({ id: 'w1', mode: 'edit' });
-    await render(<Pantalla />);
-
-    await fireEvent(screen.getByLabelText('Nombre'), 'blur');
-
-    expect(mockMut.update.mutate).not.toHaveBeenCalled();
-  });
-});
-
-describe('el nombre se recuerda para el siguiente entrenamiento', () => {
-  /** El guardado es optimista de cara al usuario, pero solo se recuerda si el backend confirma. */
-  it('al confirmar el backend queda como propuesta del proximo', async () => {
-    globalThis.setParametrosDeRuta({ id: 'w1', mode: 'edit' });
-    await render(<Pantalla />);
-
-    await fireEvent.changeText(screen.getByLabelText('Nombre'), 'Empuje A');
-    await fireEvent(screen.getByLabelText('Nombre'), 'blur');
-    const [, opciones] = mockMut.update.mutate.mock.calls[0];
-    opciones.onSuccess();
-
-    expect(usePreferencesStore.getState().lastWorkoutTitle).toBe('Empuje A');
-  });
-
-  it('borrar el nombre no deja una propuesta vacia', async () => {
-    usePreferencesStore.setState({ lastWorkoutTitle: 'Pierna' });
-    mockWorkout = { ...mockWorkout, data: ENTRENAMIENTO({ title: 'Pierna' }) };
-    globalThis.setParametrosDeRuta({ id: 'w1', mode: 'edit' });
-    await render(<Pantalla />);
-
-    await fireEvent.changeText(screen.getByLabelText('Nombre'), '');
-    await fireEvent(screen.getByLabelText('Nombre'), 'blur');
-    const [, opciones] = mockMut.update.mutate.mock.calls[0];
-    opciones.onSuccess();
-
-    expect(usePreferencesStore.getState().lastWorkoutTitle).toBe('Pierna');
   });
 });

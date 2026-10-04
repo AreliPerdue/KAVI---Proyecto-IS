@@ -644,7 +644,7 @@ un clic de más para llegar a lo mismo.
   los mismos renglones (`DayItemsList`). Dep: T236
 
 ## Fase G — Fitness v2 (spec 07 v2)
-Plan y decisiones en `docs/gym/AUDITORIA.md`. Cada fase cierra con typecheck, lint y la suite completa.
+Plan y decisiones en `docs/gym/AUDITORIA.md`. Cada fase cierra con typecheck, lint y prueba manual en la app; las pruebas automáticas que falten se apuntan en `reports/pruebas-pendientes.md` (decisión D8).
 
 - [x] T238 Auditoría del módulo y spec 07 v2. La constitución no se toca (decisión D1); la
   tensión con P2/P8 queda reconocida en la spec. Dep: —
@@ -677,9 +677,24 @@ Plan y decisiones en `docs/gym/AUDITORIA.md`. Cada fase cierra con typecheck, li
   entrenamiento (botón junto al nombre). `matchCatalog` deja listo el ligado de nombres de v1
   (RF-F63), que corre en G3 junto con la conversión. **El detalle del ejercicio (RF-F26) pasa
   a G3**: sin series registradas no tiene historial que mostrar. (G2, RF-F20 – RF-F25) Dep: T240
-- [ ] T243 Logger en vivo local-first con timer, PRs y herramientas; conversión de v1 en la
-  app con ligado al catálogo; detalle del ejercicio con historial y gráficas; corrige los
-  ejercicios fantasma de v1 (G3, RF-F17 – RF-F19, RF-F26, RF-F27 – RF-F38, RF-F63). Dep: T242
+- [x] T243 Logger en vivo (G3, RF-F17 – RF-F19, RF-F26 – RF-F38, RF-F63). La pantalla de
+  sesión se reescribe: fila `# · Anterior · kg · Reps · RIR · ✓`; series que nacen prellenadas
+  (repetir es solo ✓) y "Anterior" que copia de un toque; teclado propio con ± y modo contador;
+  columnas según lo que mide el ejercicio (peso, peso corporal, I/D en unilaterales, tiempo,
+  distancia); + drop, + mini-serie, parciales y tipo de serie en el menú de la fila; deslizar
+  para borrar o duplicar en nativo. **Sin esperar al servidor**: cada serie va primero a una
+  cola en el dispositivo y se envía por detrás, con reintento y recuperación tras un cierre.
+  Descanso guardado como hora de fin, ±15 s, con notificación local que ya no se borra al
+  sincronizar los recordatorios. PRs en vivo contra el historial y contra las series previas
+  de la sesión; vibración en Android. Discos, rampa de calentamiento y 1RM. Peso corporal del
+  día. Terminar/Descartar con resumen. Las sesiones nuevas nacen "en curso" y Fitness ofrece
+  retomarlas. La conversión de v1 corre al abrir Fitness o una sesión y liga los nombres al
+  catálogo. Detalle del ejercicio con mejor serie, peso máximo y gráficas de e1RM y volumen.
+  Ajustes de gimnasio en Perfil (unidad, RIR/RPE, fórmula, descanso, % del drop).
+  "+ Ejercicio" pasa por el selector, así que ya no quedan ejercicios vacíos (bug 3 de v1).
+  **Pendiente**: reordenar con arrastre (por ahora Subir/Bajar en los menús) y el borrador de
+  RF-F9 en el formulario de actividad, que sigue con texto libre (la conversión lo convierte
+  después). Dep: T242
 - [ ] T244 Edición de sesiones pasadas con la misma UI, deshacer/rehacer y recálculo (G4,
   RF-F39 – RF-F42). Dep: T243
 - [ ] T245 Intensificadores, agrupaciones, protocolos y modificadores (G5, RF-F43 – RF-F48). Dep: T243

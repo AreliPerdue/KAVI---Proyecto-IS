@@ -17,12 +17,16 @@ import {
   Pencil,
   Repeat2,
   SunMoon,
+  Gauge,
+  Timer,
+  Weight,
   Users,
 } from 'lucide-react-native';
 import { useEffect, useMemo, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { Pressable, StyleSheet, View } from 'react-native';
 
+import { useGymStore } from '@/store/gym-store';
 import { usePreferencesStore } from '@/store/preferences-store';
 
 import {
@@ -404,6 +408,8 @@ export default function ProfileScreen() {
         />
       </SettingsGroup>
 
+      <FitnessSettings />
+
       <SettingsGroup title="Avisos">{notificationsRow()}</SettingsGroup>
 
       {/* Solo existe para cuentas `adminkavi` (RF-AD3). Ocultarlo no es el control de
@@ -589,3 +595,62 @@ const styles = StyleSheet.create({
     borderCurve: 'continuous',
   },
 });
+
+/**
+ * Ajustes del gym tracker (spec 07 v2, §10). Son del dispositivo, como la apariencia: cada
+ * quien entrena en kg o en lb según el gimnasio donde esté, no según su cuenta.
+ */
+function FitnessSettings() {
+  const theme = useTheme();
+  const weightUnit = useGymStore((s) => s.weightUnit);
+  const effortScale = useGymStore((s) => s.effortScale);
+  const e1rmFormula = useGymStore((s) => s.e1rmFormula);
+  const restDefaultSec = useGymStore((s) => s.restDefaultSec);
+  const dropPercent = useGymStore((s) => s.dropPercent);
+  const setPref = useGymStore((s) => s.setPref);
+  const icono = (Icono: typeof Weight) => <Icono size={IconSize.inline} strokeWidth={IconStroke} color={theme.textSecondary} />;
+
+  return (
+    <SettingsGroup title="Gimnasio" footer="Los pesos se guardan siempre en kg; cambiar la unidad solo cambia cómo se ven.">
+      <SettingsRow
+        icon={icono(Weight)}
+        label="Unidad"
+        right={<Segmented options={[{ value: 'kg', label: 'kg' }, { value: 'lb', label: 'lb' }]} value={weightUnit} onChange={(v) => setPref('weightUnit', v)} />}
+      />
+      <SettingsRow
+        icon={icono(Gauge)}
+        label="Esfuerzo"
+        hint="RIR: reps que te quedaban. RPE: esfuerzo del 1 al 10."
+        right={<Segmented options={[{ value: 'rir', label: 'RIR' }, { value: 'rpe', label: 'RPE' }]} value={effortScale} onChange={(v) => setPref('effortScale', v)} />}
+      />
+      <SettingsRow
+        icon={icono(Dumbbell)}
+        label="Fórmula de 1RM"
+        right={<Segmented options={[{ value: 'epley', label: 'Epley' }, { value: 'brzycki', label: 'Brzycki' }]} value={e1rmFormula} onChange={(v) => setPref('e1rmFormula', v)} />}
+      />
+      <SettingsRow
+        icon={icono(Timer)}
+        label="Descanso"
+        below={
+          <Segmented
+            fullWidth
+            options={[{ value: '60', label: '1:00' }, { value: '90', label: '1:30' }, { value: '120', label: '2:00' }, { value: '180', label: '3:00' }]}
+            value={String(restDefaultSec) as '60' | '90' | '120' | '180'}
+            onChange={(v) => setPref('restDefaultSec', Number(v))}
+          />
+        }
+      />
+      <SettingsRow
+        icon={icono(Dumbbell)}
+        label="Cuánto baja un drop"
+        right={
+          <Segmented
+            options={[{ value: '10', label: '10 %' }, { value: '20', label: '20 %' }, { value: '25', label: '25 %' }]}
+            value={String(dropPercent) as '10' | '20' | '25'}
+            onChange={(v) => setPref('dropPercent', Number(v))}
+          />
+        }
+      />
+    </SettingsGroup>
+  );
+}

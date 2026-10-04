@@ -169,6 +169,21 @@ export interface RealtimeApi {
 /** Una sesión con sus ejercicios, cada uno con sus series y segmentos (spec 07 v2). */
 export type WorkoutDetail = Workout & { exercises: WorkoutExerciseDetail[]; groups: ExerciseGroup[] };
 
+/**
+ * Lo hecho en un ejercicio en una sesión pasada (RF-F26, RF-F27, RF-F56). Es la base de
+ * "Anterior", de los PRs y del detalle del ejercicio.
+ */
+export type ExerciseHistoryEntry = {
+  workout_id: string;
+  workout_exercise_id: string;
+  performed_at: string;
+  bodyweight_kg: number | null;
+  sets: WorkoutSet[];
+};
+
+/** Cómo se identifica un ejercicio en el historial: por catálogo o, si no está ligado, por nombre. */
+export type ExerciseRef = { exerciseId: string | null; name: string };
+
 /** Un ejercicio de v1 con texto todavía sin convertir, con la fecha de su sesión (RF-F62). */
 export type LegacyExercise = WorkoutExercise & { performed_at: string };
 
@@ -199,6 +214,11 @@ export interface WorkoutsApi {
   listLegacyExercises(userId: string): Promise<LegacyExercise[]>;
   /** Marca ejercicios como convertidos; así no se vuelven a convertir (RF-F62). */
   markLegacyConverted(exerciseIds: readonly string[]): Promise<void>;
+  /**
+   * Historial de un ejercicio, de la sesión más reciente a la más antigua. Sin sesiones
+   * borradas ni descartadas. Incluye la sesión actual si la hay: quien llama la filtra.
+   */
+  exerciseHistory(userId: string, ref: ExerciseRef, limit?: number): Promise<ExerciseHistoryEntry[]>;
   /** Nombres de ejercicio usados antes por la persona, del más usado al menos (RF-F4). */
   exerciseNames(userId: string): Promise<string[]>;
   /** Duplica en una actividad futura o como entrenamiento libre (RF-F8). */

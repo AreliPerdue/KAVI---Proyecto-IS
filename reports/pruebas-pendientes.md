@@ -285,3 +285,26 @@ juntarlo en una sesión dedicada a pruebas.
 - [ ] Un fin anterior al inicio se empuja al inicio.
 - [ ] En web ≥ 900 px y vista diaria aparece el panel y **no** la franja; a 899 px, al revés.
 - [ ] Tocar un chip de rutina o de pendiente en la agenda abre su lista.
+
+## Fitness v2 · G3 logger en vivo (T243)
+Ya cubierto con pruebas al escribirlo: `lib/gym/{sets,session,tools,outbox}` y la pantalla
+`workout/[id]` (registro, ✓, + Serie, teclado, + Drop, tipo, borrar con deshacer, terminar,
+descartar, lectura). Falta:
+- [ ] `useSetActions` / `flushOutbox`: un envío que falla deja la serie pendiente y se
+  reintenta a los 10 s; al volver la app al frente se reenvía; dos cambios durante un envío
+  no se pierden.
+- [ ] `useLegacyConversion`: convierte, liga al catálogo solo coincidencias únicas, marca
+  convertido; si falla a la mitad, la siguiente vez termina sin duplicar.
+- [ ] `exerciseHistory` en los dos backends: por `exercise_id` y, sin ligar, por nombre exacto;
+  sin sesiones borradas ni descartadas; ordenado por fecha de la sesión.
+- [ ] `gym-store`: el descanso se calcula desde `endsAt`; ±15 s reprograma el aviso; uno
+  terminado mientras la app estaba cerrada no aparece al hidratar.
+- [ ] `RestTimerBar`: al llegar a 0 avisa y se va solo a los 8 s.
+- [ ] `NumpadSheet`: la primera tecla reemplaza y las siguientes agregan (bug encontrado a
+  mano: 1-0-0 daba 0); modo contador; "Siguiente" peso → reps → esfuerzo.
+- [ ] `ExerciseBlock`: columnas I/D en unilaterales y aviso de desbalance; etiqueta C/F/T…
+  por tipo; el calentamiento no cuenta en la numeración.
+- [ ] Detalle del ejercicio: mejor serie, peso máximo, gráficas con 1 y con 2+ sesiones.
+- [ ] Ajustes de gimnasio en Perfil.
+- [ ] Manual en nativo (Android): swipe izquierda/derecha, vibración, notificación de fin de
+  descanso con la pantalla bloqueada.

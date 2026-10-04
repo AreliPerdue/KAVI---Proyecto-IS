@@ -29,6 +29,8 @@ const mockNativo = {
   requestPermissionsAsync: jest.fn(),
   setNotificationHandler: jest.fn(),
   cancelAllScheduledNotificationsAsync: jest.fn(),
+  getAllScheduledNotificationsAsync: jest.fn(),
+  cancelScheduledNotificationAsync: jest.fn(),
   scheduleNotificationAsync: jest.fn(),
   SchedulableTriggerInputTypes: { DATE: 'date' },
 };
@@ -63,6 +65,8 @@ beforeEach(() => {
   mockNativo.getPermissionsAsync.mockResolvedValue({ granted: true });
   mockNativo.requestPermissionsAsync.mockResolvedValue({ granted: true });
   mockNativo.cancelAllScheduledNotificationsAsync.mockResolvedValue(undefined);
+  mockNativo.getAllScheduledNotificationsAsync.mockResolvedValue([{ identifier: 'viejo' }, { identifier: 'kavi-gym-rest' }]);
+  mockNativo.cancelScheduledNotificationAsync.mockResolvedValue(undefined);
   mockNativo.scheduleNotificationAsync.mockResolvedValue('id');
 });
 
@@ -173,10 +177,16 @@ describe('programar recordatorios', () => {
   it('cancela todo lo anterior antes de reconstruir', async () => {
     await fresh().syncNotifications([recordatorio(30)]);
 
-    expect(mockNativo.cancelAllScheduledNotificationsAsync).toHaveBeenCalled();
-    const ordenCancelar = mockNativo.cancelAllScheduledNotificationsAsync.mock.invocationCallOrder[0];
+    expect(mockNativo.cancelScheduledNotificationAsync).toHaveBeenCalledWith('viejo');
+    const ordenCancelar = mockNativo.cancelScheduledNotificationAsync.mock.invocationCallOrder[0];
     const ordenProgramar = mockNativo.scheduleNotificationAsync.mock.invocationCallOrder[0];
     expect(ordenCancelar).toBeLessThan(ordenProgramar);
+  });
+
+  /** El aviso de fin de descanso lo programa el gym; reconstruir recordatorios no lo toca. */
+  it('no cancela el aviso del descanso del gym', async () => {
+    await fresh().syncNotifications([recordatorio(30)]);
+    expect(mockNativo.cancelScheduledNotificationAsync).not.toHaveBeenCalledWith('kavi-gym-rest');
   });
 
   /** Un recordatorio vencido ya no avisa de nada: programarlo dispararia al instante. */
@@ -209,7 +219,7 @@ describe('programar recordatorios', () => {
   it('sin recordatorios solo cancela', async () => {
     await expect(fresh().syncNotifications([])).resolves.toBe(0);
 
-    expect(mockNativo.cancelAllScheduledNotificationsAsync).toHaveBeenCalled();
+    expect(mockNativo.cancelScheduledNotificationAsync).toHaveBeenCalledWith('viejo');
   });
 
   /** El manejador es global: instalarlo en cada sincronizacion seria trabajo repetido. */

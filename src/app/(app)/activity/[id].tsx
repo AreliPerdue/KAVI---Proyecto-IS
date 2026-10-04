@@ -252,7 +252,8 @@ export default function ActivityDetailScreen() {
               return;
             }
             workoutMutations.create.mutate(
-              { activity_id: data.id, performed_at: data.start_at },
+              // Registrar desde la actividad abre la sesión en vivo (spec 07 v2, RF-F38).
+              { activity_id: data.id, performed_at: data.start_at, status: 'active' },
               { onSuccess: (created) => router.push({ pathname: '/(app)/workout/[id]', params: { id: created.id, mode: 'edit' } }) },
             );
           }}

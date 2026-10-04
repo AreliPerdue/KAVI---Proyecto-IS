@@ -6,6 +6,7 @@ import { Platform } from 'react-native';
 import { useRealtimeInvalidation } from '@/hooks/use-realtime';
 import { useReminderSync } from '@/hooks/use-reminders';
 import { useSocialNotifications } from '@/hooks/use-social-notifications';
+import { useGymStore } from '@/store/gym-store';
 import { usePreferencesStore } from '@/store/preferences-store';
 
 export function ErrorBoundary(props: ErrorBoundaryProps) {
@@ -27,9 +28,12 @@ function ReminderSync() {
  */
 function Preferencias() {
   const hydrate = usePreferencesStore((s) => s.hydrate);
+  const hydrateGym = useGymStore((s) => s.hydrate);
   useEffect(() => {
     void hydrate();
-  }, [hydrate]);
+    // El descanso en curso y las unidades del gym también viven en el dispositivo.
+    void hydrateGym();
+  }, [hydrate, hydrateGym]);
   return null;
 }
 
@@ -46,6 +50,7 @@ export default function AppLayout() {
       <Stack.Screen name="activity/share" options={{ presentation: modal }} />
       <Stack.Screen name="shared/availability" options={{ presentation: modal }} />
       <Stack.Screen name="workout/[id]" options={{ presentation: modal }} />
+      <Stack.Screen name="exercise/[id]" options={{ presentation: modal }} />
       <Stack.Screen name="themes" options={{ presentation: modal }} />
       <Stack.Screen name="admin" options={{ presentation: modal }} />
       <Stack.Screen name="theme/new" options={{ presentation: modal }} />
