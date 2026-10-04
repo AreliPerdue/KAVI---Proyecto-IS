@@ -24,6 +24,10 @@ El calendario es la pantalla principal y el hub de toda la app (P1). Desde él s
 - RF-C6. Crear también desde la vista diaria/semanal tocando un slot vacío (hora pre-llenada, con la precisión de 30 min de la rejilla de RF-C13). El selector de hora del formulario permite cualquier **minuto de 00 a 59**, no solo múltiplos de la rejilla.
 - RF-C7. Tocar una actividad → hoja de detalle con acciones: editar, eliminar, compartir, reminders, y **"Registrar entrenamiento"** si `is_gym` (ver `07-fitness.md`).
 - RF-C8. Recurrencia: sin repetición / diaria / semanal (elige días) / mensual, con fin opcional (fecha o nunca→horizonte 90 días, ver spec 02). Al editar/eliminar una recurrente, preguntar "¿Solo esta ocurrencia o toda la serie?".
+  - Una ocurrencia borrada con "solo esta" no vuelve a aparecer: su día queda excluido de la serie
+    (`recurrence_exdates`, el `EXDATE` de la madre). Lo mismo el día original de una ocurrencia que se
+    mueve a otro día. Al completar la serie, un día que ya tiene instancia (aunque con otra hora) no se
+    vuelve a generar.
 
 ### Reminders (propios)
 - RF-C9. Presets: al momento, 10 min, 30 min, 1 h, 1 día antes; múltiples permitidos.

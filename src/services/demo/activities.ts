@@ -1,14 +1,15 @@
 import { addDays } from 'date-fns';
 
 import { AuthUiError } from '@/lib/auth-errors';
-import { durationMinutes, fromIso, toIso } from '@/lib/dates';
+import { durationMinutes, fromIso, toDayKey, toIso } from '@/lib/dates';
 import {
-  expandOccurrences,
   horizonEnd,
+  missingOccurrences,
   parseRRule,
   RECURRENCE_EXTEND_THRESHOLD_DAYS,
   type RecurrenceRule,
   toRRule,
+  withExdate,
 } from '@/lib/recurrence';
 import type { ActivitiesApi, CreateActivityInput } from '@/services/contracts';
 import { removeRemindersForActivities, syncRecipients } from '@/services/demo/reminders';
@@ -33,15 +34,18 @@ function seriesRoot(activity: Activity): Activity {
   return activity.recurrence_parent_id ? find(activity.recurrence_parent_id) : activity;
 }
 
+/** Excluye de su serie el día de una instancia (la borrada o la que se movió de día). */
+function excluirDia(instance: Activity) {
+  const root = seriesRoot(instance);
+  demoState.activities = demoState.activities.map((a) => (a.id === root.id ? { ...a, recurrence_exdates: withExdate(a.recurrence_exdates, instance.start_at) } : a));
+}
+
 /** Crea instancias de una serie desde `after` hasta el horizonte. */
 function materialize(parent: Activity, rule: RecurrenceRule, after: Date) {
   const duration = durationMinutes(parent.start_at, parent.end_at);
-  const existing = new Set(
-    demoState.activities.filter((a) => a.recurrence_parent_id === parent.id).map((a) => a.start_at),
-  );
-  for (const start of expandOccurrences(rule, parent.start_at, after, horizonEnd())) {
+  const existing = demoState.activities.filter((a) => a.recurrence_parent_id === parent.id).map((a) => a.start_at);
+  for (const start of missingOccurrences(rule, parent.start_at, after, horizonEnd(), existing, parent.recurrence_exdates ?? [])) {
     const startIso = toIso(start);
-    if (existing.has(startIso)) continue;
     demoState.activities.push({
       ...parent,
       id: nextId('act'),
@@ -120,6 +124,8 @@ export const demoActivities: ActivitiesApi = {
     await delay();
     const current = find(id);
     if (scope === 'this' || (!current.recurrence_rule && !current.recurrence_parent_id)) {
+      // Una instancia que se va a otro día deja libre el suyo: se excluye para que no se recree.
+      if (current.recurrence_parent_id && patch.start_at && toDayKey(fromIso(patch.start_at)) !== toDayKey(fromIso(current.start_at))) excluirDia(current);
       const updated = applyPatch(current, patch);
       demoState.activities = demoState.activities.map((a) => (a.id === id ? updated : a));
       syncRecipients(id);
@@ -177,7 +183,7 @@ export const demoActivities: ActivitiesApi = {
       demoState.activities = demoState.activities.filter((a) => a.id !== current.id);
       if (heir) {
         demoState.activities = demoState.activities.map((a) => {
-          if (a.id === heir.id) return { ...a, recurrence_rule: current.recurrence_rule, recurrence_parent_id: null };
+          if (a.id === heir.id) return { ...a, recurrence_rule: current.recurrence_rule, recurrence_exdates: current.recurrence_exdates ?? [], recurrence_parent_id: null };
           if (a.recurrence_parent_id === current.id) return { ...a, recurrence_parent_id: heir.id };
           return a;
         });
@@ -185,6 +191,8 @@ export const demoActivities: ActivitiesApi = {
       finish();
       return;
     }
+    // Una instancia borrada queda excluida de la serie: así no se vuelve a crear (T249).
+    if (current.recurrence_parent_id) excluirDia(current);
     demoState.activities = demoState.activities.filter((a) => a.id !== id);
     finish();
   },

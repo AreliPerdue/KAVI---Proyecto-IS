@@ -1,14 +1,15 @@
 import { addDays } from 'date-fns';
 
 import { AuthUiError } from '@/lib/auth-errors';
-import { durationMinutes, fromIso, toIso } from '@/lib/dates';
+import { durationMinutes, fromIso, toDayKey, toIso } from '@/lib/dates';
 import {
-  expandOccurrences,
   horizonEnd,
+  missingOccurrences,
   parseRRule,
   RECURRENCE_EXTEND_THRESHOLD_DAYS,
   type RecurrenceRule,
   toRRule,
+  withExdate,
 } from '@/lib/recurrence';
 import { getSupabase } from '@/lib/supabase';
 import type { ActivitiesApi } from '@/services/contracts';
@@ -39,12 +40,11 @@ async function materialize(parent: Activity, rule: RecurrenceRule, after: Date):
   const existing = unwrap(
     await getSupabase().from('activities').select('start_at').eq('recurrence_parent_id', parent.id),
   ) as { start_at: string }[];
-  const taken = new Set(existing.map((r) => r.start_at));
 
   const rows = [];
-  for (const start of expandOccurrences(rule, parent.start_at, after, horizonEnd())) {
+  const faltan = missingOccurrences(rule, parent.start_at, after, horizonEnd(), existing.map((r) => r.start_at), parent.recurrence_exdates ?? []);
+  for (const start of faltan) {
     const startIso = toIso(start);
-    if (taken.has(startIso)) continue;
     rows.push({
       owner_id: parent.owner_id,
       title: parent.title,
@@ -63,6 +63,16 @@ async function materialize(parent: Activity, rule: RecurrenceRule, after: Date):
   }
   if (rows.length === 0) return;
   const { error } = await getSupabase().from('activities').insert(rows);
+  if (error) throw toError(error);
+}
+
+/** Excluye de su serie el día de una instancia (la borrada o la que se movió de día). */
+async function excluirDia(instance: Activity): Promise<void> {
+  const root = await findRoot(instance);
+  const { error } = await getSupabase()
+    .from('activities')
+    .update({ recurrence_exdates: withExdate(root.recurrence_exdates, instance.start_at) })
+    .eq('id', root.id);
   if (error) throw toError(error);
 }
 
@@ -175,6 +185,10 @@ export const supabaseActivities: ActivitiesApi = {
     const { recurrence, ...fields } = patch;
 
     if (scope === 'this' || (!current.recurrence_rule && !current.recurrence_parent_id)) {
+      // Una instancia que se va a otro día deja libre el suyo: se excluye para que no se recree.
+      if (current.recurrence_parent_id && fields.start_at && toDayKey(fromIso(fields.start_at)) !== toDayKey(fromIso(current.start_at))) {
+        await excluirDia(current);
+      }
       const updated = unwrap(
         await getSupabase().from('activities').update(fields).eq('id', id).select('*').single(),
       ) as Activity;
@@ -259,7 +273,7 @@ export const supabaseActivities: ActivitiesApi = {
       if (heir) {
         const { error: heirError } = await db
           .from('activities')
-          .update({ recurrence_rule: current.recurrence_rule, recurrence_parent_id: null })
+          .update({ recurrence_rule: current.recurrence_rule, recurrence_exdates: current.recurrence_exdates ?? [], recurrence_parent_id: null })
           .eq('id', heir.id);
         if (heirError) throw toError(heirError);
         const { error: rest } = await db
@@ -269,6 +283,9 @@ export const supabaseActivities: ActivitiesApi = {
         if (rest) throw toError(rest);
       }
     }
+
+    // Una instancia borrada queda excluida de la serie: así no se vuelve a crear (T249).
+    if (current.recurrence_parent_id) await excluirDia(current);
 
     const { error } = await db.from('activities').delete().eq('id', id);
     if (error) throw toError(error);

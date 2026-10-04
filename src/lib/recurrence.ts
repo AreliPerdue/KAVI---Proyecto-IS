@@ -132,4 +132,30 @@ export function horizonEnd(from = new Date()): Date {
   return addDays(startOfDay(from), RECURRENCE_HORIZON_DAYS);
 }
 
+/**
+ * Las ocurrencias que hay que crear para completar una serie (T249).
+ *
+ * Se salta cada día que ya tiene instancia —aunque se le haya cambiado la hora: el día
+ * cuenta, no el instante— y cada día excluido (`recurrence_exdates`, el `EXDATE` de la
+ * madre). Sin esto, borrar o mover la última ocurrencia hacía que el calendario la volviera
+ * a crear al abrirse. Es la misma regla en Supabase y en el demo.
+ */
+export function missingOccurrences(
+  rule: RecurrenceRule,
+  baseStartIso: string,
+  after: Date,
+  horizon: Date,
+  existingStartsIso: readonly string[],
+  exdates: readonly string[] = [],
+): Date[] {
+  const ocupados = new Set([...existingStartsIso.map((s) => toDayKey(fromIso(s))), ...exdates]);
+  return expandOccurrences(rule, baseStartIso, after, horizon).filter((d) => !ocupados.has(toDayKey(d)));
+}
+
+/** Agrega un día a los excluidos de la serie, sin repetirlo. */
+export function withExdate(exdates: readonly string[] | undefined, startIso: string): string[] {
+  const dia = toDayKey(fromIso(startIso));
+  return [...new Set([...(exdates ?? []), dia])].sort();
+}
+
 export { toDayKey, toIso };

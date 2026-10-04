@@ -85,6 +85,8 @@ export type Activity = {
   all_day: boolean;
   recurrence_rule: string | null;
   recurrence_parent_id: string | null;
+  /** Días 'yyyy-MM-dd' que la serie ya no genera (EXDATE, T249). Solo en la madre. */
+  recurrence_exdates?: string[];
   is_gym: boolean;
   /** Quién ve el título. El nivel del calendario sigue siendo el techo (RF-C14). */
   visibility: ActivityVisibility;

@@ -427,3 +427,17 @@ tocar el tramo → "Buscar en todo el catálogo" → declinado lo reemplaza. Fal
   mismo equipo gana; lo mejor de cada familia primero; excluye el propio y los archivados.
 - [ ] Logger: aplicar `mechanical_drop` abre la hoja en el último tramo `drop`; "Sin
   variante" la quita; se puede deshacer.
+
+## Ocurrencia borrada que reaparecía (T249)
+Reproducido antes de arreglar con un script suelto sobre el backend demo (serie lunes a
+viernes de 3 semanas, luego `extendRecurrenceHorizon`): fallaban 3 de 6 casos y tras el
+arreglo pasan los 6. Migración probada en PGlite (columna, RLS, idempotente) y aplicada en
+producción. Falta convertir esos casos en pruebas del repo (demo y Supabase):
+- [ ] Borrar la última ocurrencia de una serie con fin: no reaparece al reabrir el
+  calendario (el caso del reporte).
+- [ ] Borrar una de en medio: no reaparece.
+- [ ] Mover la última a otro día (antes o después): su día original no se recrea.
+- [ ] Cambiar solo la hora de la última (más tarde o más temprano): no se duplica.
+- [ ] Borrar la madre: la heredera conserva `recurrence_exdates`.
+- [ ] Editar toda la serie (incluso cambiando la hora): los días excluidos siguen excluidos.
+- [ ] `missingOccurrences` y `withExdate` en `lib/recurrence.ts`.

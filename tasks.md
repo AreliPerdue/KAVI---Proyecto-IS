@@ -733,7 +733,7 @@ Plan y decisiones en `docs/gym/AUDITORIA.md`. Cada fase cierra con typecheck, li
   Dep: T245
 
 ### Bugs reportados
-- [ ] T249 **Una ocurrencia borrada de una serie vuelve a aparecer al recargar.** Reporte (4
+- [x] T249 **Una ocurrencia borrada de una serie vuelve a aparecer al recargar.** Reporte (4
   oct 2026): actividad de lunes a viernes con fecha de fin; se borró solo un viernes y al
   refrescar regresó. Causa probable: borrar "solo esta" elimina la fila, pero no queda registro
   de que esa fecha se excluyó, y `extendRecurrenceHorizon` —que corre cada vez que se abre el

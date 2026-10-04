@@ -85,6 +85,7 @@ create table public.activities (
   all_day boolean not null default false,
   recurrence_rule text,              -- RRULE (RFC 5545) simplificada: DAILY/WEEKLY/MONTHLY + BYDAY + UNTIL/COUNT
   recurrence_parent_id uuid references public.activities(id) on delete cascade,
+  recurrence_exdates date[] not null default '{}', -- días excluidos de la serie (EXDATE), solo en la madre (T249)
   is_gym boolean not null default false,  -- habilita módulo fitness (se activa con tema Gimnasio o manualmente)
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
@@ -96,7 +97,7 @@ alter table public.activities enable row level security;
 ```
 Políticas (dependen de shares, definidas abajo en §7 para evitar referencias circulares).
 
-**Recurrencia (decisión):** se guarda la regla en la actividad "madre" y se **materializan instancias** hasta un horizonte de 90 días (filas con `recurrence_parent_id`). Editar "esta ocurrencia" edita la instancia; editar "toda la serie" regenera instancias futuras. Simple y consultable con SQL normal.
+**Recurrencia (decisión):** se guarda la regla en la actividad "madre" y se **materializan instancias** hasta un horizonte de 90 días (filas con `recurrence_parent_id`). Editar "esta ocurrencia" edita la instancia; editar "toda la serie" regenera instancias futuras. Borrar "esta ocurrencia" (o moverla de día) agrega su día a `recurrence_exdates`, y la materialización salta esos días y los que ya tienen instancia (`missingOccurrences` en `lib/recurrence.ts`, igual en Supabase y demo). Simple y consultable con SQL normal.
 
 ## 4. Conexiones (contactos)
 ```sql
