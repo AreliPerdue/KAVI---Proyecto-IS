@@ -628,6 +628,21 @@ un clic de más para llegar a lo mismo.
   de las rutinas, que no esperan a que nadie los agende. Método nuevo `listUndated` en los
   dos backends. Entradas a las dos vistas arriba del inicio de Listas. Dep: T233
 
+- [x] T235 Inicio y fin de una rutina (RF-L19b). En la hoja de repetición, con la regla
+  puesta: "Empieza" y "Termina en una fecha", igual que en las actividades. Se conservan al
+  cambiar de frecuencia, y elegir una opción ya no cierra la hoja salvo "No se repite". Sin
+  cambios en la base: `recurrence_start` ya existía y el fin va en el `UNTIL` de la regla.
+  Dep: T208
+- [x] T236 Rutinas en el calendario (RF-L26). Una pieza por rutina y día con su avance:
+  fila en la franja del día, chip ○✓ en mes y agenda. Los días se calculan con la regla
+  (`rutinasEnRango`) y el avance sale de `listRunsByDateRange`, una sola consulta de solo
+  lectura. Tocar un chip de lista en la agenda ahora abre su lista en vez del aviso de "no
+  se edita desde aquí". Dep: T208, T235
+- [x] T237 Panel de listas a la izquierda en la vista diaria de web (RF-L27). Con ventana
+  de 900 px o más, la franja pasa a un panel lateral con lo del día arriba y un acceso
+  rápido a todas las listas abajo; la rejilla toma el resto. La franja y el panel comparten
+  los mismos renglones (`DayItemsList`). Dep: T236
+
 ### Largo plazo (cuando KAVI se lance al público)
 Distribución en iOS y cuenta de Apple Developer · notificaciones push con la app cerrada ·
 funciones con IA (categorización, lenguaje natural libre, sugerencias) · código de barras ·

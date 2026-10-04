@@ -274,3 +274,14 @@ juntarlo en una sesión dedicada a pruebas.
   fecha es hoy.
 - [ ] El número del acceso "Hoy" no cuenta lo ya palomeado.
 - [ ] Con todo agendado, Algún día muestra su estado vacío y no una lista de grupos vacíos.
+
+## Rutinas en el calendario e inicio/fin (T235 – T237)
+- [ ] `rutinasEnRango`: una regla de lunes a viernes da cinco días en una semana, ninguno
+  antes de `recurrence_start` ni después del `UNTIL`; una lista archivada no da ninguno.
+- [ ] El avance sale de la vuelta cerrada si la hay (conteos congelados) y de la abierta si
+  no; sin vuelta es 0/total. Nunca pasa de total aunque se haya borrado algo palomeado.
+- [ ] `listRunsByDateRange` no abre ni cierra vueltas (comparar filas antes y después).
+- [ ] Cambiar de "todos los días" a chips de días conserva el inicio y el fin.
+- [ ] Un fin anterior al inicio se empuja al inicio.
+- [ ] En web ≥ 900 px y vista diaria aparece el panel y **no** la franja; a 899 px, al revés.
+- [ ] Tocar un chip de rutina o de pendiente en la agenda abre su lista.

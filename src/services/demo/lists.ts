@@ -495,10 +495,19 @@ export const demoLists: ListsApi = {
     if (!regla || !lista.recurrence_start) return [];
 
     const deLaLista = runs.filter((r) => r.list_id === listId);
+    /*
+     * Solo se avisa del cambio si de verdad hubo uno. Avisar siempre armaba un bucle: el
+     * aviso invalida las consultas de listas, eso vuelve a llamar a `syncRuns`, que volvía
+     * a avisar, y la pantalla de una rutina se recargaba cada 300 ms sin parar. En Supabase
+     * no pasa porque el tiempo real solo dispara con escrituras reales; el demo tiene que
+     * comportarse igual.
+     */
+    let cambio = false;
 
     // 1. Cerrar lo que ya caducó, con los conteos que tuviera en ese momento.
     for (const r of deLaLista) {
       if (r.closed_at || !graciaVencida(r.run_date)) continue;
+      cambio = true;
       r.closed_at = ahora();
       r.completed_count = r.items.length;
       r.total_count = items.filter((i) => i.list_id === listId).length;
@@ -507,6 +516,7 @@ export const demoLists: ListsApi = {
 
     // 2. Abrir la de hoy si la regla cae hoy y no existe ya.
     if (occursOn(regla, lista.recurrence_start, fromDayKey(hoy)) && !deLaLista.some((r) => r.run_date === hoy)) {
+      cambio = true;
       runs.push({
         id: nextId('run'),
         list_id: listId,
@@ -518,7 +528,7 @@ export const demoLists: ListsApi = {
       });
     }
 
-    emitDataChange();
+    if (cambio) emitDataChange();
     return runs
       .filter((r) => r.list_id === listId && r.closed_at === null)
       .sort((a, b) => b.run_date.localeCompare(a.run_date))
@@ -542,6 +552,14 @@ export const demoLists: ListsApi = {
       .sort((a, b) => b.run_date.localeCompare(a.run_date))
       .slice(0, limit)
       .map((r) => ({ ...r, completed_item_ids: [] }));
+  },
+
+  async listRunsByDateRange(userId, fromDate, toDate) {
+    await delay();
+    const mias = new Set(lists.filter((l) => l.owner_id === userId).map((l) => l.id));
+    return runs
+      .filter((r) => mias.has(r.list_id) && r.run_date >= fromDate && r.run_date <= toDate)
+      .map(({ items: palomeados, ...r }) => ({ ...r, completed_item_ids: palomeados.map((x) => x.item_id) }));
   },
 
   async rescheduleItems(itemIds, dueDate) {

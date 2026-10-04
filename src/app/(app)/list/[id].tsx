@@ -774,6 +774,7 @@ export default function ListDetailScreen() {
           visible={repetirAbierto}
           onClose={() => setRepetirAbierto(false)}
           rule={datos.list.recurrence_rule}
+          start={datos.list.recurrence_start}
           onChange={(regla, inicio) => {
             tocada.current = true;
             updateList.mutate({ id: datos.list.id, patch: { recurrence_rule: regla, recurrence_start: inicio } });

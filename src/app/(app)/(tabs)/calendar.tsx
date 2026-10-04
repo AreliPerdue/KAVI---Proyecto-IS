@@ -1,6 +1,6 @@
 import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Platform, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { runOnJS } from 'react-native-worklets';
 
@@ -10,12 +10,16 @@ import { CalendarDays } from 'lucide-react-native';
 import { AgendaView } from '@/components/calendar/agenda-view';
 import { ThreeDaysView } from '@/components/calendar/three-days-view';
 import { DayItemsStrip } from '@/components/lists/day-items-strip';
+import { DayListsPanel } from '@/components/lists/day-lists-panel';
 import {
   birthdaysToActivities,
   cumpleañerosDe,
   isDerivedActivity,
+  isListDerived,
   LIST_ITEM_PREFIX,
   listItemsToActivities,
+  routineListIdOf,
+  routinesToActivities,
   workoutsToActivities,
 } from '@/components/calendar/derived';
 import { blocksToActivities, isOverlayActivity } from '@/components/calendar/overlay';
@@ -28,14 +32,15 @@ import { useContacts, usePeopleColors } from '@/hooks/use-connections';
 import { useMyProfile } from '@/hooks/use-profile';
 import { useWorkouts } from '@/hooks/use-workouts';
 import { usePreferencesStore } from '@/store/preferences-store';
-import { useListItemsByDate, useListMutations, useLists, useOverdueListItems } from '@/hooks/use-lists';
+import { useListItemsByDate, useListMutations, useLists, useListRunsByDate, useOverdueListItems } from '@/hooks/use-lists';
+import { rutinasEnRango } from '@/lib/list-runs';
 import { useShrinkOnScroll } from '@/hooks/use-shrink-on-scroll';
 import { useTheme } from '@/hooks/use-theme';
 import { fromDayKey, rangeForView, shiftAnchor, toDayKey } from '@/lib/dates';
 import { useAuth, useSnackbar } from '@/providers';
 import { extendRecurrenceHorizon } from '@/services/activities';
 import { DEFAULT_VIEW, useCalendarStore } from '@/store/calendar-store';
-import type { Activity } from '@/types/domain';
+import type { Activity, ListItem } from '@/types/domain';
 
 /** Calendario: la estrella (P1). Vistas mes/semana/día, personas superpuestas, FAB (spec 04). */
 export default function CalendarScreen() {
@@ -131,6 +136,18 @@ export default function CalendarScreen() {
   );
 
   const openActivity = (activity: Activity) => {
+    /*
+     * Lo que viene de Lists sí se abre: lleva a su lista. Es el único derivado que tiene
+     * casa propia donde editarse, y mandarlo al aviso de "no se edita desde aquí" dejaba
+     * el chip como un callejón sin salida.
+     */
+    if (isListDerived(activity)) {
+      const listId =
+        routineListIdOf(activity) ??
+        (itemsDelRango.data ?? []).find((i) => `${LIST_ITEM_PREFIX}${i.id}` === activity.id)?.list_id;
+      if (listId) router.push({ pathname: '/(app)/list/[id]', params: { id: listId } });
+      return;
+    }
     if (isDerivedActivity(activity)) {
       showSnackbar({ message: `${activity.title} · no se edita desde aquí.` });
       return;
@@ -192,6 +209,28 @@ export default function CalendarScreen() {
   const { toggleItem: toggleListItem, reschedule } = useListMutations();
   const [franjaPlegada, setFranjaPlegada] = useState(false);
 
+  /*
+   * Rutinas en los días que les tocan (RF-L26). Los días se calculan con la regla —así
+   * aparece el lunes que viene aunque nadie haya abierto la lista todavía— y las vueltas
+   * solo ponen el avance. Se piden para el rango visible: en la vista diaria es un día.
+   */
+  const desdeKey = toDayKey(range.from);
+  const hastaKey = toDayKey(range.to);
+  const vueltas = useListRunsByDate(desdeKey, hastaKey);
+  const rutinas = useMemo(
+    () => rutinasEnRango(misListas.data ?? [], vueltas.data ?? [], desdeKey, hastaKey),
+    [misListas.data, vueltas.data, desdeKey, hastaKey],
+  );
+  const rutinasDelDia = useMemo(() => rutinas.filter((r) => r.day === diaKey), [rutinas, diaKey]);
+
+  /*
+   * En web ancho, las listas de la vista diaria pasan de la franja de arriba a un panel a
+   * la izquierda (RF-L27). En teléfono no: ahí el ancho es lo que falta y la rejilla lo
+   * necesita entero.
+   */
+  const { width: anchoVentana } = useWindowDimensions();
+  const panelDeListas = Platform.OS === 'web' && anchoVentana >= 900;
+
   /**
    * Capas derivadas: entrenamientos sueltos y cumpleaños. No son actividades
    * guardadas sino una vista sobre datos que ya existen, así que se pueden apagar
@@ -206,7 +245,10 @@ export default function CalendarScreen() {
   const derivadas = useMemo(() => {
     const extras: Activity[] = [];
     if (showWorkouts && workouts.data) extras.push(...workoutsToActivities(workouts.data));
-    if (sinRejilla) extras.push(...listItemsToActivities(itemsDelRango.data ?? [], misListas.data ?? []));
+    if (sinRejilla) {
+      extras.push(...listItemsToActivities(itemsDelRango.data ?? [], misListas.data ?? []));
+      extras.push(...routinesToActivities(rutinas));
+    }
     if (showBirthdays) {
       extras.push(...birthdaysToActivities(cumpleañerosDe(profile.data ?? undefined, contacts.data ?? []), range.from, range.to));
     }
@@ -222,6 +264,7 @@ export default function CalendarScreen() {
     sinRejilla,
     itemsDelRango.data,
     misListas.data,
+    rutinas,
   ]);
 
   const data = useMemo(() => {
@@ -231,7 +274,7 @@ export default function CalendarScreen() {
      * rejilla queda vacía y lo que se ve es la franja de arriba, que es donde viven.
      */
     if (filters.onlyListItems) {
-      return derivadas.filter((a) => a.id.startsWith(LIST_ITEM_PREFIX));
+      return derivadas.filter(isListDerived);
     }
     const propias = [...(activities.data ?? []), ...derivadas];
     const all = [...applyFilters(propias, filters), ...overlayActivities];
@@ -289,20 +332,22 @@ export default function CalendarScreen() {
      * sin nada agendado, donde además es la forma de crear tocando una hora (RF-C3, RF-C6)—.
      * El aviso de vacío va encima sin taparla (NFR-11). La vista semanal ya se comportaba así.
      */
-    body = (
+    const abrirLista = (listId: string) => router.push({ pathname: '/(app)/list/[id]', params: { id: listId } });
+    const delDia = {
+      items: itemsDelDia.data ?? [],
+      overdue: diaKey === hoyKey ? (vencidos.data ?? []) : [],
+      routines: rutinasDelDia,
+      onReschedule: () => reschedule.mutate({ ids: (vencidos.data ?? []).map((i) => i.id), dueDate: hoyKey }),
+      lists: misListas.data ?? [],
+      onToggleItem: (item: ListItem, done: boolean) => toggleListItem.mutate({ id: item.id, done }),
+      onOpenItem: (item: ListItem) => abrirLista(item.list_id),
+      onOpenList: abrirLista,
+    };
+    const rejilla = (
       <View style={styles.dayBody}>
-        <DayItemsStrip
-          items={itemsDelDia.data ?? []}
-          overdue={diaKey === hoyKey ? (vencidos.data ?? []) : []}
-          onReschedule={() =>
-            reschedule.mutate({ ids: (vencidos.data ?? []).map((i) => i.id), dueDate: hoyKey })
-          }
-          lists={misListas.data ?? []}
-          collapsed={franjaPlegada}
-          onToggleCollapsed={() => setFranjaPlegada((v) => !v)}
-          onToggleItem={(item, done) => toggleListItem.mutate({ id: item.id, done })}
-          onOpenItem={(item) => router.push({ pathname: '/(app)/list/[id]', params: { id: item.list_id } })}
-        />
+        {panelDeListas ? null : (
+          <DayItemsStrip {...delDia} collapsed={franjaPlegada} onToggleCollapsed={() => setFranjaPlegada((v) => !v)} />
+        )}
         {showEmpty ? (
           <AppText variant="caption" color="textSecondary" style={styles.dayEmptyHint}>
             Sin actividades este día. Toca una hora para agendar.
@@ -310,6 +355,14 @@ export default function CalendarScreen() {
         ) : null}
         <DayView day={anchor} activities={data} onPressSlot={createAt} onPressActivity={openActivity} isSharedActivity={isShared} onScroll={onScroll} />
       </View>
+    );
+    body = panelDeListas ? (
+      <View style={styles.dayConPanel}>
+        <DayListsPanel {...delDia} day={anchor} onOpenAll={() => router.push('/(app)/lists')} />
+        {rejilla}
+      </View>
+    ) : (
+      rejilla
     );
   }
 
@@ -345,5 +398,6 @@ const styles = StyleSheet.create({
   body: { flex: 1, paddingHorizontal: Spacing.sm },
   skeleton: { gap: Spacing.sm, paddingTop: Spacing.sm, paddingHorizontal: Spacing.sm },
   dayBody: { flex: 1 },
+  dayConPanel: { flex: 1, flexDirection: 'row', gap: Spacing.md },
   dayEmptyHint: { paddingHorizontal: Spacing.sm, paddingBottom: Spacing.xs },
 });

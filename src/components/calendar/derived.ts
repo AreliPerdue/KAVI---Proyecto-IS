@@ -1,9 +1,12 @@
 import { fromDayKey, fromIso, setTimeOfDay, startOfDay, toIso } from '@/lib/dates';
 import type { Activity, Contact, KaviList, ListItem, Profile, Workout } from '@/types/domain';
+import type { RutinaDelDia } from '@/lib/list-runs';
 
 export const WORKOUT_PREFIX = 'workout-';
 export const BIRTHDAY_PREFIX = 'birthday-';
 export const LIST_ITEM_PREFIX = 'listitem-';
+/** Una rutina en uno de sus días (RF-L26). El id es `listrutina-<lista>@<día>`. */
+export const LIST_ROUTINE_PREFIX = 'listrutina-';
 
 /**
  * Iconos de las capas derivadas. Van nombrados y exportados porque nadie los elige a
@@ -19,8 +22,24 @@ export function isDerivedActivity(activity: Pick<Activity, 'id'>): boolean {
   return (
     activity.id.startsWith(WORKOUT_PREFIX) ||
     activity.id.startsWith(BIRTHDAY_PREFIX) ||
-    activity.id.startsWith(LIST_ITEM_PREFIX)
+    activity.id.startsWith(LIST_ITEM_PREFIX) ||
+    activity.id.startsWith(LIST_ROUTINE_PREFIX)
   );
+}
+
+/**
+ * Viene de Lists —un pendiente con fecha o una rutina— y no del calendario. Es lo que
+ * decide que el chip lleve el círculo con la palomita en vez de la hora, y lo que deja
+ * pasar el filtro "solo listas".
+ */
+export function isListDerived(activity: Pick<Activity, 'id'>): boolean {
+  return activity.id.startsWith(LIST_ITEM_PREFIX) || activity.id.startsWith(LIST_ROUTINE_PREFIX);
+}
+
+/** La lista detrás del chip de una rutina, para abrirla al tocarlo. */
+export function routineListIdOf(activity: Pick<Activity, 'id'>): string | null {
+  if (!activity.id.startsWith(LIST_ROUTINE_PREFIX)) return null;
+  return activity.id.slice(LIST_ROUTINE_PREFIX.length).split('@')[0] ?? null;
 }
 
 /** El id del elemento de lista detrás de un bloque derivado, para poder abrirlo. */
@@ -169,4 +188,29 @@ export function listItemsToActivities(
         updated_at: item.updated_at,
       } as Activity;
     });
+}
+
+/**
+ * Rutinas como bloques del mes y la agenda (RF-L26).
+ *
+ * Una sola pieza por rutina y día, no una por elemento: una rutina de ocho pasos llenaría
+ * la celda, y además mentiría, porque los elementos no tienen día propio —el día es de la
+ * vuelta—. El avance va en el título porque el chip no tiene otro sitio donde decirlo.
+ */
+export function routinesToActivities(rutinas: readonly RutinaDelDia[]): Activity[] {
+  return rutinas.map(({ list, day, hechos, total }) => {
+    const dia = fromDayKey(day);
+    return {
+      ...base(`${LIST_ROUTINE_PREFIX}${list.id}@${day}`, list.owner_id),
+      title: total > 0 ? `${list.name} ${hechos}/${total}` : list.name,
+      dimension: null,
+      color: list.color,
+      icon: LIST_ITEM_ICON,
+      start_at: toIso(startOfDay(dia)),
+      end_at: toIso(setTimeOfDay(dia, 1440)),
+      all_day: true,
+      created_at: list.created_at,
+      updated_at: list.updated_at,
+    } as Activity;
+  });
 }

@@ -3,6 +3,8 @@ import { addDays, startOfDay } from 'date-fns';
 import { fromIso, toDayKey } from '@/lib/dates';
 import type { Activity } from '@/types/domain';
 
+import { isListDerived } from './derived';
+
 export type ActivitiesByDay = Map<string, Activity[]>;
 
 /**
@@ -23,8 +25,19 @@ export function groupByDay(activities: readonly Activity[]): ActivitiesByDay {
       else map.set(key, [activity]);
     }
   }
+  /*
+   * Lo que viene de Lists va al final del día. Son "de todo el día", así que por hora
+   * quedaban primero, y una rutina diaria ocupaba el primer lugar de cada celda del mes y
+   * mandaba las citas de verdad al "+N". El mes sirve para ver qué tienes agendado; los
+   * pendientes y las rutinas lo acompañan, no lo tapan.
+   */
   for (const list of map.values()) {
-    list.sort((a, b) => a.start_at.localeCompare(b.start_at) || a.title.localeCompare(b.title));
+    list.sort(
+      (a, b) =>
+        Number(isListDerived(a)) - Number(isListDerived(b)) ||
+        a.start_at.localeCompare(b.start_at) ||
+        a.title.localeCompare(b.title),
+    );
   }
   return map;
 }

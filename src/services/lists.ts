@@ -44,3 +44,4 @@ export const setListTag = listsApi.setListTag;
 export const syncListRuns = listsApi.syncRuns;
 export const setRunItem = listsApi.setRunItem;
 export const listListRuns = listsApi.listRuns;
+export const listRunsByDateRange = listsApi.listRunsByDateRange;

@@ -26,6 +26,7 @@ import {
   type ListPermission,
   type ListShare,
   listListRuns,
+  listRunsByDateRange,
   type ListRun,
   listsSharedWithMe,
   listTags,
@@ -59,6 +60,7 @@ export const listKeys = {
   tags: (userId: string | null) => ['lists', 'tags', userId] as const,
   tagsOf: (listId: string) => ['lists', 'tags-of', listId] as const,
   runs: (listId: string, hoy: string) => ['lists', 'runs', listId, hoy] as const,
+  runsByDate: (userId: string | null, from: string, to: string) => ['lists', 'runs-date', userId, from, to] as const,
   history: (listId: string) => ['lists', 'history', listId] as const,
 };
 
@@ -207,6 +209,19 @@ export function useListRuns(listId: string | undefined, hoy: string, enabled = t
 }
 
 /** Historial de vueltas ya cerradas, para los resúmenes (RF-L21). */
+/**
+ * Vueltas de mis rutinas en un rango, para el avance que pinta el calendario (RF-L26).
+ * Solo lectura: no abre la vuelta de hoy, eso pasa al entrar a la lista.
+ */
+export function useListRunsByDate(fromDate: string, toDate: string, enabled = true) {
+  const { userId } = useAuth();
+  return useQuery<ListRun[]>({
+    queryKey: listKeys.runsByDate(userId, fromDate, toDate),
+    queryFn: () => listRunsByDateRange(userId as string, fromDate, toDate),
+    enabled: !!userId && enabled,
+  });
+}
+
 export function useListHistory(listId: string | undefined, enabled = true) {
   return useQuery<ListRun[]>({
     queryKey: listKeys.history(listId ?? ''),

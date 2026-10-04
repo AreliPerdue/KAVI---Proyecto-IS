@@ -288,6 +288,12 @@ export interface ListRunsApi {
   setRunItem(runId: string, itemId: string, userId: string, done: boolean): Promise<void>;
   /** Historial cerrado, de lo más reciente a lo más viejo (RF-L21). */
   listRuns(listId: string, limit?: number): Promise<ListRun[]>;
+  /**
+   * Vueltas de **todas** mis rutinas dentro de [from, to], abiertas y cerradas, para que el
+   * calendario pinte el avance de cada día (RF-L26). Solo lee: no abre ni cierra ninguna,
+   * eso sigue siendo cosa de `syncRuns` al abrir la lista.
+   */
+  listRunsByDateRange(userId: string, fromDate: string, toDate: string): Promise<ListRun[]>;
 }
 
 export interface ListsApi extends ListSharesApi, ListTagsApi, ListRunsApi {}

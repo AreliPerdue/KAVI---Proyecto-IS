@@ -2,7 +2,7 @@ import { memo, useCallback, useMemo, useState } from 'react';
 import { type LayoutChangeEvent, PixelRatio, Pressable, StyleSheet, View } from 'react-native';
 
 import { activityColor, tint } from './activity-style';
-import { LIST_ITEM_PREFIX } from './derived';
+import { isListDerived } from './derived';
 import { groupByDay } from './group-by-day';
 import { isOverlayActivity } from './overlay';
 
@@ -126,7 +126,7 @@ const DayCell = memo(function DayCell({ date, inMonth, weekend, activities, them
             const foreign = isOverlayActivity(activity) || !!activity.owner_name;
             // Un pendiente de lista no lleva hora: lleva su círculo, que de un vistazo dice
             // que eso no es una cita sino algo por hacer (RF-L12).
-            const esPendiente = activity.id.startsWith(LIST_ITEM_PREFIX);
+            const esPendiente = isListDerived(activity);
             return (
               <View
                 key={activity.id}

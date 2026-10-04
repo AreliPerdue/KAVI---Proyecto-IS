@@ -557,6 +557,24 @@ export const supabaseLists: ListsApi = {
     return rows.map((r) => ({ ...r, completed_item_ids: [] }));
   },
 
+  async listRunsByDateRange(userId, fromDate, toDate) {
+    const rows = unwrap(
+      await getSupabase()
+        .from('list_runs')
+        .select('*, list_run_items(item_id), lists!inner(owner_id)')
+        .eq('lists.owner_id', userId)
+        .gte('run_date', fromDate)
+        .lte('run_date', toDate),
+    ) as unknown as (Omit<ListRun, 'completed_item_ids'> & {
+      list_run_items: { item_id: string }[];
+      lists: unknown;
+    })[];
+    return rows.map(({ list_run_items, lists: _unido, ...r }) => ({
+      ...r,
+      completed_item_ids: list_run_items.map((x) => x.item_id),
+    }));
+  },
+
   async rescheduleItems(itemIds, dueDate) {
     if (itemIds.length === 0) return;
     const { error } = await getSupabase().from('list_items').update({ due_date: dueDate }).in('id', [...itemIds]);

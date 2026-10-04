@@ -1,6 +1,6 @@
 import { format, isYesterday } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { ChevronDown, ChevronRight, Check } from 'lucide-react-native';
+import { ChevronDown, ChevronRight, Check, Repeat } from 'lucide-react-native';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import { tint } from '@/components/calendar/activity-style';
@@ -8,6 +8,7 @@ import { AppText, ThemeIcon } from '@/components/ui';
 import { IconStroke, Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { fromDayKey } from '@/lib/dates';
+import type { RutinaDelDia } from '@/lib/list-runs';
 import type { KaviList, ListItem } from '@/types/domain';
 
 /** Más allá de esto la franja deja de ser "una franja" y se come el día. */
@@ -19,7 +20,7 @@ function fechaVencida(dayKey: string): string {
   return isYesterday(fecha) ? 'ayer' : format(fecha, 'd MMM', { locale: es });
 }
 
-export type DayItemsStripProps = {
+export type DayItemsListProps = {
   items: readonly ListItem[];
   /**
    * Pendientes de días anteriores que siguen sin palomear (RF-L18).
@@ -28,13 +29,180 @@ export type DayItemsStripProps = {
    * de lo que toca hoy, y ordenarlo junto lo escondería entre lo demás.
    */
   overdue: readonly ListItem[];
+  /** Rutinas a las que les toca este día, con lo que llevan hecho (RF-L26). */
+  routines: readonly RutinaDelDia[];
   onReschedule: () => void;
   /** Listas activas, para saber el icono y el color de cada elemento. */
   lists: readonly KaviList[];
-  collapsed: boolean;
-  onToggleCollapsed: () => void;
   onToggleItem: (item: ListItem, done: boolean) => void;
   onOpenItem: (item: ListItem) => void;
+  onOpenList: (listId: string) => void;
+  /** Renglones más altos y con más aire, para el panel lateral de web. */
+  roomy?: boolean;
+};
+
+/** Cuántos renglones hay que mostrar; sin ninguno, ni la franja ni el panel dibujan nada. */
+export function cuentaDelDia({ items, overdue, routines }: Pick<DayItemsListProps, 'items' | 'overdue' | 'routines'>) {
+  return items.length + overdue.length + routines.length;
+}
+
+/**
+ * Los renglones del día: vencidos, rutinas y pendientes con fecha.
+ *
+ * Es la misma pieza en la franja de arriba de la rejilla (teléfono y ventanas angostas) y
+ * en el panel lateral de web. Que sea una sola evita que las dos vistas del mismo día
+ * empiecen a decir cosas distintas.
+ */
+export function DayItemsList({
+  items,
+  overdue,
+  routines,
+  onReschedule,
+  lists,
+  onToggleItem,
+  onOpenItem,
+  onOpenList,
+  roomy = false,
+}: DayItemsListProps) {
+  const theme = useTheme();
+  const porId = new Map(lists.map((l) => [l.id, l]));
+  const alto = roomy ? styles.altoAmplio : null;
+
+  return (
+    <>
+      {overdue.length > 0 ? (
+        <View style={styles.vencidosCabecera}>
+          <AppText variant="caption" color="today">
+            Vencidos
+          </AppText>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={`Reprogramar ${overdue.length} ${overdue.length === 1 ? 'pendiente' : 'pendientes'} para hoy`}
+            hitSlop={8}
+            onPress={onReschedule}
+            style={({ pressed }) => [styles.reprogramar, pressed ? styles.pressed : null]}>
+            <AppText variant="caption" color="today">
+              Reprogramar para hoy
+            </AppText>
+          </Pressable>
+        </View>
+      ) : null}
+
+      {overdue.map((item) => fila(item, true))}
+
+      {/*
+        Las rutinas van como **una** fila cada una, no un renglón por elemento: una rutina
+        de ocho pasos se comería la franja, y sus elementos no tienen día propio —el día es
+        de la vuelta—. El círculo dice si ya está completa; tocar la fila abre la lista en
+        la vuelta de hoy, que es donde se palomea paso por paso.
+      */}
+      {routines.map((r) => {
+        const color = r.list.color;
+        return (
+          <View key={`${r.list.id}@${r.day}`} style={styles.fila}>
+            <View style={[styles.casillaToque, alto]}>
+              <View
+                style={[
+                  styles.casilla,
+                  { borderColor: r.completa ? color : theme.border, backgroundColor: r.completa ? color : 'transparent' },
+                ]}>
+                {r.completa ? <Check size={11} strokeWidth={3} color={theme.onInk} /> : null}
+              </View>
+            </View>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={`Abrir la rutina ${r.list.name}: ${r.hechos} de ${r.total} hechos`}
+              onPress={() => onOpenList(r.list.id)}
+              style={({ pressed }) => [
+                styles.toque,
+                alto,
+                { backgroundColor: tint(color, r.completa ? 0.06 : 0.16) },
+                pressed ? styles.pressed : null,
+              ]}>
+              <ThemeIcon name={r.list.icon} color={color} size={14} />
+              <AppText
+                variant="caption"
+                color={r.completa ? 'textTertiary' : 'text'}
+                numberOfLines={1}
+                style={[styles.titulo, r.completa ? styles.tachado : null]}>
+                {r.list.name}
+              </AppText>
+              <Repeat size={12} strokeWidth={IconStroke} color={theme.textTertiary} />
+              {r.total > 0 ? (
+                <AppText variant="micro" color="textSecondary" tabular>
+                  {r.hechos}/{r.total}
+                </AppText>
+              ) : null}
+              <ChevronRight size={14} strokeWidth={IconStroke} color={theme.textTertiary} />
+            </Pressable>
+          </View>
+        );
+      })}
+
+      {items.map((item) => fila(item, false))}
+    </>
+  );
+
+  function fila(item: ListItem, vencido: boolean) {
+    const lista = porId.get(item.list_id);
+    const color = lista?.color ?? theme.neutralActivity;
+    const hecho = item.completed_at !== null;
+    return (
+      <View key={item.id} style={styles.fila}>
+        {/*
+          Misma regla que dentro de la lista: palomear es del círculo y tocar el texto
+          abre. Aquí importa todavía más, porque la franja vive pegada a la rejilla del
+          calendario y se toca de pasada.
+        */}
+        <Pressable
+          accessibilityRole="checkbox"
+          accessibilityState={{ checked: hecho }}
+          accessibilityLabel={hecho ? `Marcar ${item.title} como pendiente` : `Marcar ${item.title} como hecho`}
+          hitSlop={8}
+          onPress={() => onToggleItem(item, !hecho)}
+          style={({ pressed }) => [styles.casillaToque, alto, pressed ? styles.pressed : null]}>
+          <View
+            style={[
+              styles.casilla,
+              { borderColor: hecho ? color : theme.border, backgroundColor: hecho ? color : 'transparent' },
+            ]}>
+            {hecho ? <Check size={11} strokeWidth={3} color={theme.onInk} /> : null}
+          </View>
+        </Pressable>
+
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={`Abrir ${lista?.name ?? 'la lista'}: ${item.title}`}
+          onPress={() => onOpenItem(item)}
+          style={({ pressed }) => [
+            styles.toque,
+            alto,
+            { backgroundColor: tint(color, hecho ? 0.06 : 0.16) },
+            pressed ? styles.pressed : null,
+          ]}>
+          {lista ? <ThemeIcon name={lista.icon} color={color} size={14} /> : null}
+          <AppText
+            variant="caption"
+            color={hecho ? 'textTertiary' : 'text'}
+            numberOfLines={1}
+            style={[styles.titulo, hecho ? styles.tachado : null]}>
+            {item.title}
+          </AppText>
+          {vencido && item.due_date ? (
+            <AppText variant="micro" color="today" tabular>
+              {fechaVencida(item.due_date)}
+            </AppText>
+          ) : null}
+          <ChevronRight size={14} strokeWidth={IconStroke} color={theme.textTertiary} />
+        </Pressable>
+      </View>
+    );
+  }
+}
+
+export type DayItemsStripProps = DayItemsListProps & {
+  collapsed: boolean;
+  onToggleCollapsed: () => void;
 };
 
 /**
@@ -48,21 +216,14 @@ export type DayItemsStripProps = {
  * Sin pendientes no se dibuja nada: una franja vacía le robaría alto a la rejilla todos
  * los días para no decir nada.
  */
-export function DayItemsStrip({
-  items,
-  overdue,
-  onReschedule,
-  lists,
-  collapsed,
-  onToggleCollapsed,
-  onToggleItem,
-  onOpenItem,
-}: DayItemsStripProps) {
+export function DayItemsStrip({ collapsed, onToggleCollapsed, ...lista }: DayItemsStripProps) {
   const theme = useTheme();
-  if (items.length === 0 && overdue.length === 0) return null;
+  if (cuentaDelDia(lista) === 0) return null;
 
-  const porId = new Map(lists.map((l) => [l.id, l]));
-  const pendientes = items.filter((i) => i.completed_at === null).length + overdue.length;
+  const pendientes =
+    lista.items.filter((i) => i.completed_at === null).length +
+    lista.overdue.length +
+    lista.routines.filter((r) => !r.completa).length;
 
   return (
     <View style={[styles.contenedor, { borderColor: theme.border }]}>
@@ -87,79 +248,7 @@ export function DayItemsStrip({
 
       {collapsed ? null : (
         <ScrollView style={styles.lista} contentContainerStyle={styles.listaContenido} showsVerticalScrollIndicator={false}>
-          {overdue.length > 0 ? (
-            <View style={styles.vencidosCabecera}>
-              <AppText variant="caption" color="today">
-                Vencidos
-              </AppText>
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel={`Reprogramar ${overdue.length} ${overdue.length === 1 ? 'pendiente' : 'pendientes'} para hoy`}
-                hitSlop={8}
-                onPress={onReschedule}
-                style={({ pressed }) => [styles.reprogramar, pressed ? styles.pressed : null]}>
-                <AppText variant="caption" color="today">
-                  Reprogramar para hoy
-                </AppText>
-              </Pressable>
-            </View>
-          ) : null}
-
-          {[...overdue, ...items].map((item) => {
-            const vencido = item.due_date !== null && overdue.some((o) => o.id === item.id);
-            const lista = porId.get(item.list_id);
-            const color = lista?.color ?? theme.neutralActivity;
-            const hecho = item.completed_at !== null;
-            return (
-              <View key={item.id} style={styles.fila}>
-                {/*
-                  Misma regla que dentro de la lista: palomear es del círculo y tocar el
-                  texto abre. Aquí importa todavía más, porque la franja vive pegada a la
-                  rejilla del calendario y se toca de pasada.
-                */}
-                <Pressable
-                  accessibilityRole="checkbox"
-                  accessibilityState={{ checked: hecho }}
-                  accessibilityLabel={hecho ? `Marcar ${item.title} como pendiente` : `Marcar ${item.title} como hecho`}
-                  hitSlop={8}
-                  onPress={() => onToggleItem(item, !hecho)}
-                  style={({ pressed }) => [styles.casillaToque, pressed ? styles.pressed : null]}>
-                  <View
-                    style={[
-                      styles.casilla,
-                      { borderColor: hecho ? color : theme.border, backgroundColor: hecho ? color : 'transparent' },
-                    ]}>
-                    {hecho ? <Check size={11} strokeWidth={3} color={theme.onInk} /> : null}
-                  </View>
-                </Pressable>
-
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityLabel={`Abrir ${lista?.name ?? 'la lista'}: ${item.title}`}
-                  onPress={() => onOpenItem(item)}
-                  style={({ pressed }) => [
-                    styles.toque,
-                    { backgroundColor: tint(color, hecho ? 0.06 : 0.16) },
-                    pressed ? styles.pressed : null,
-                  ]}>
-                  {lista ? <ThemeIcon name={lista.icon} color={color} size={14} /> : null}
-                  <AppText
-                    variant="caption"
-                    color={hecho ? 'textTertiary' : 'text'}
-                    numberOfLines={1}
-                    style={[styles.titulo, hecho ? styles.tachado : null]}>
-                    {item.title}
-                  </AppText>
-                  {vencido && item.due_date ? (
-                    <AppText variant="micro" color="today" tabular>
-                      {fechaVencida(item.due_date)}
-                    </AppText>
-                  ) : null}
-                  <ChevronRight size={14} strokeWidth={IconStroke} color={theme.textTertiary} />
-                </Pressable>
-              </View>
-            );
-          })}
+          <DayItemsList {...lista} />
         </ScrollView>
       )}
     </View>
@@ -189,6 +278,7 @@ const styles = StyleSheet.create({
   listaContenido: { gap: 2 },
   fila: { flexDirection: 'row', alignItems: 'center' },
   casillaToque: { width: 28, height: 32, alignItems: 'center', justifyContent: 'center' },
+  altoAmplio: { minHeight: 40, height: undefined },
   toque: {
     flex: 1,
     flexDirection: 'row',

@@ -124,12 +124,32 @@ Hoy KAVI no sabe distinguirlas, y por eso tampoco puede decir nada sobre cómo t
 - **RF-L19. Una lista puede repetirse.** Con una regla de recurrencia (diaria, ciertos días
   de la semana, mensual). Se reutiliza `lib/recurrence.ts`, que ya expande RRULE para las
   actividades: una segunda implementación abriría la puerta a que las dos difieran.
+  - **RF-L19b. Inicio y fin.** Como en las actividades: la rutina empieza un día (por
+    omisión hoy, porque una lista no tiene fecha propia de la que tomarlo) y puede terminar
+    en otro —"lavar los trastes entre semana, hasta que acabe el semestre"—. Antes de
+    empezar y después de terminar no se abren vueltas.
 - **RF-L20. Cada vuelta queda registrada.** Al empezar una nueva vuelta, la anterior se
   cierra guardando **cuántos elementos se completaron de cuántos** y en qué fecha, y los
   elementos se despalomean para poder hacerla otra vez. El historial es de conteos, no de
   copias: guardar cada elemento de cada día haría crecer la tabla sin que nadie lo consulte.
 - **RF-L21. Resúmenes.** A partir de ese historial: cuántas veces se completó entera una
   rutina, y qué proporción se cumplió en un conjunto de listas.
+
+- **RF-L26. La rutina aparece en el calendario los días que le tocan.** Como **una** pieza
+  por rutina y día, nunca un renglón por elemento: los elementos no tienen día propio —el
+  día es de la vuelta— y una rutina de ocho pasos se comería la franja. En la vista diaria
+  es una fila con su avance (1/3) y un círculo que se llena al completarla; en mes y agenda,
+  un chip con el círculo en lugar de la hora. Tocarla abre la lista en la vuelta de ese día.
+
+  Los días se **calculan** con la regla y no se leen de las vueltas: la vuelta solo existe
+  desde que alguien abre la lista ese día, y el calendario tiene que mostrar el lunes que
+  viene aunque nadie lo haya abierto. Ver el calendario no abre vueltas.
+
+- **RF-L27. En web, las listas del día van a la izquierda.** En la vista diaria y con la
+  ventana ancha, lo que en teléfono es la franja de arriba se vuelve un panel lateral: arriba
+  lo de ese día (vencidos, rutinas, pendientes con fecha) y abajo un acceso rápido a todas las
+  listas. La rejilla toma el ancho restante. En teléfono sigue la franja: ahí el ancho es lo
+  que falta.
 
 ### El riesgo que esta función trae
 La sección "KAVI no debe caer en la productividad tóxica" de este mismo concepto aplica

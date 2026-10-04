@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
-import { AppText, Sheet } from '@/components/ui';
+import { AppText, DatePickerSheet, FieldButton, Sheet, SwitchRow } from '@/components/ui';
 import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import { toDayKey, WEEKDAY_LABELS, WEEKDAY_SHORT } from '@/lib/dates';
+import { formatDate, fromDayKey, toDayKey, WEEKDAY_LABELS, WEEKDAY_SHORT } from '@/lib/dates';
 import { parseRRule, type RecurrenceRule, toRRule } from '@/lib/recurrence';
 
 type Opcion = { id: string; label: string; regla: RecurrenceRule | null };
@@ -27,6 +27,8 @@ export type ListRepeatSheetProps = {
   onClose: () => void;
   /** RRULE actual de la lista, o `null` si no se repite. */
   rule: string | null;
+  /** Día desde el que cuenta la regla (`recurrence_start`). */
+  start: string | null;
   onChange: (rule: string | null, start: string | null) => void;
 };
 
@@ -41,9 +43,27 @@ export type ListRepeatSheetProps = {
  * siempre en una de ellas, y un selector de frecuencia, intervalo y días sería más
  * configuración de la que nadie quiere para "lavarme los dientes".
  */
-export function ListRepeatSheet({ visible, onClose, rule, onChange }: ListRepeatSheetProps) {
+export function ListRepeatSheet({ visible, onClose, rule, start, onChange }: ListRepeatSheetProps) {
   const theme = useTheme();
   const actual = rule ?? null;
+  const reglaGuardada = parseRRule(actual);
+  /*
+   * Inicio y fin se conservan al cambiar de frecuencia: pasar de "todos los días" a
+   * "lunes, miércoles y jueves" no tendría por qué olvidar que la rutina acaba con el
+   * semestre. Sin inicio guardado, cuenta desde hoy.
+   */
+  const inicio = start ?? toDayKey(new Date());
+  const hasta = reglaGuardada?.until ?? null;
+
+  /** Qué selector de fecha está abierto, si alguno. */
+  const [eligiendo, setEligiendo] = useState<'inicio' | 'fin' | null>(null);
+
+  /** Guarda la regla con su inicio y su fin; la frecuencia viene de quien llama. */
+  const guardar = (regla: RecurrenceRule, nuevoInicio = inicio, nuevoFin = hasta) => {
+    // Terminar antes de empezar no significa nada: el fin se empuja al inicio.
+    const fin = nuevoFin && nuevoFin < nuevoInicio ? nuevoInicio : nuevoFin;
+    onChange(toRRule({ ...regla, until: fin }), nuevoInicio);
+  };
 
   /*
    * Los días se llevan en estado propio **mientras la hoja está abierta**, y se vuelven a
@@ -69,25 +89,37 @@ export function ListRepeatSheet({ visible, onClose, rule, onChange }: ListRepeat
     setDiasElegidos(siguientes);
     // Sin ningún día no hay regla semanal que valga: equivale a no repetirse.
     if (siguientes.length === 0) return onChange(null, null);
-    onChange(toRRule({ freq: 'WEEKLY', byDay: siguientes, until: null }), toDayKey(new Date()));
+    guardar({ freq: 'WEEKLY', byDay: siguientes, until: null });
   };
 
+  /*
+   * Elegir una opción ya no cierra la hoja, salvo "No se repite": debajo quedan el inicio
+   * y el fin, y cerrar al primer toque los escondía justo cuando tocaba ajustarlos.
+   */
   const elegir = (opcion: Opcion) => {
     setDiasElegidos(opcion.regla?.freq === 'WEEKLY' ? opcion.regla.byDay : []);
     if (!opcion.regla) {
       onChange(null, null);
-    } else {
-      // El ancla es hoy: "cada lunes" necesita saber desde qué lunes cuenta.
-      onChange(toRRule(opcion.regla), toDayKey(new Date()));
+      onClose();
+      return;
     }
-    onClose();
+    guardar(opcion.regla);
   };
 
-  const esActual = (opcion: Opcion) =>
-    opcion.regla ? actual === toRRule(opcion.regla) : actual === null;
+  /** Se compara sin el fin: "todos los días hasta diciembre" sigue siendo "todos los días". */
+  const esActual = (opcion: Opcion) => {
+    if (!opcion.regla) return actual === null;
+    if (!reglaGuardada) return false;
+    return toRRule({ ...reglaGuardada, until: null }) === toRRule(opcion.regla);
+  };
 
   return (
-    <Sheet visible={visible} onClose={onClose} title="¿Se repite?">
+    <>
+    {/*
+      La hoja se esconde mientras hay un selector de fecha abierto: dos `Modal` de React
+      Native apilados se pelean por el frente y el de abajo puede tapar al de arriba.
+    */}
+    <Sheet visible={visible && eligiendo === null} onClose={onClose} title="¿Se repite?">
       <ScrollView contentContainerStyle={styles.cuerpo} showsVerticalScrollIndicator={false}>
         <AppText variant="caption" color="textTertiary">
           Una lista que se repite se vuelve una rutina: cada vuelta queda registrada y los
@@ -150,12 +182,47 @@ export function ListRepeatSheet({ visible, onClose, rule, onChange }: ListRepeat
           </View>
         </View>
 
+        {/*
+          Inicio y fin, igual que en las actividades (RF-L19b). Solo con la rutina puesta:
+          sin regla no hay nada que empiece ni que termine.
+        */}
+        {reglaGuardada ? (
+          <View style={styles.seccionDias}>
+            <FieldButton label="Empieza" value={formatDate(fromDayKey(inicio))} onPress={() => setEligiendo('inicio')} />
+            <SwitchRow
+              label="Termina en una fecha"
+              hint={hasta ? undefined : 'Si no, se repite sin fin. Para algo del semestre, marca hasta cuándo dura.'}
+              value={hasta !== null}
+              onValueChange={(on) => guardar(reglaGuardada, inicio, on ? inicio : null)}
+            />
+            {hasta ? (
+              <FieldButton label="Hasta" value={formatDate(fromDayKey(hasta))} onPress={() => setEligiendo('fin')} />
+            ) : null}
+          </View>
+        ) : null}
+
         <AppText variant="caption" color="textTertiary">
           Una vuelta sigue editable hasta las 15:00 del día siguiente, por si apuntas lo de
           ayer en la mañana.
         </AppText>
       </ScrollView>
     </Sheet>
+
+    {reglaGuardada && eligiendo ? (
+      <DatePickerSheet
+        visible
+        value={fromDayKey(eligiendo === 'inicio' ? inicio : (hasta ?? inicio))}
+        title={eligiendo === 'inicio' ? 'Empieza el' : 'Se repite hasta'}
+        onClose={() => setEligiendo(null)}
+        onSelect={(fecha) => {
+          const dia = toDayKey(fecha);
+          if (eligiendo === 'inicio') guardar(reglaGuardada, dia, hasta);
+          else guardar(reglaGuardada, inicio, dia);
+          setEligiendo(null);
+        }}
+      />
+    ) : null}
+    </>
   );
 }
 

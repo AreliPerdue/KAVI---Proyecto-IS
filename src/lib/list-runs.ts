@@ -1,6 +1,8 @@
-import { addDays } from 'date-fns';
+import { addDays, eachDayOfInterval } from 'date-fns';
 
-import { fromDayKey } from '@/lib/dates';
+import { fromDayKey, toDayKey } from '@/lib/dates';
+import { occursOn, parseRRule } from '@/lib/recurrence';
+import type { KaviList, ListRun } from '@/types/domain';
 
 /**
  * Hora del día siguiente a la que caduca una vuelta (RF-L20).
@@ -68,4 +70,56 @@ export function resumirVueltas(
     promedioHechos: redondear(suma((v) => v.completed_count) / conElementos.length),
     promedioTotal: redondear(suma((v) => v.total_count) / conElementos.length),
   };
+}
+
+/** Una rutina en uno de los días en que le toca, con lo que lleva hecho (RF-L26). */
+export type RutinaDelDia = {
+  list: KaviList;
+  /** Día en `YYYY-MM-DD`. */
+  day: string;
+  hechos: number;
+  total: number;
+  /** Se hizo entera. Una rutina sin elementos nunca cuenta como completa: no había nada. */
+  completa: boolean;
+};
+
+/**
+ * En qué días de [from, to] cae cada rutina, y cuánto lleva cada uno.
+ *
+ * Los días se **calculan** con la regla y no se leen de las vueltas: la vuelta solo existe
+ * desde que alguien abre la lista ese día, y el calendario tiene que mostrar el lunes que
+ * viene aunque nadie lo haya abierto todavía. Las vueltas solo aportan el avance:
+ *
+ *  - abierta → lo palomeado hasta ahora contra los elementos actuales de la lista;
+ *  - cerrada → los conteos que quedaron congelados al cerrarse (RF-L20);
+ *  - sin vuelta → nada hecho todavía.
+ */
+export function rutinasEnRango(
+  lists: readonly KaviList[],
+  runs: readonly ListRun[],
+  fromDate: string,
+  toDate: string,
+): RutinaDelDia[] {
+  if (fromDate > toDate) return [];
+  const dias = eachDayOfInterval({ start: fromDayKey(fromDate), end: fromDayKey(toDate) });
+  const vueltaDe = new Map(runs.map((r) => [`${r.list_id}|${r.run_date}`, r]));
+  const salida: RutinaDelDia[] = [];
+
+  for (const list of lists) {
+    const regla = parseRRule(list.recurrence_rule);
+    if (!regla || !list.recurrence_start || list.is_archived) continue;
+    for (const d of dias) {
+      if (!occursOn(regla, list.recurrence_start, d)) continue;
+      const day = toDayKey(d);
+      const vuelta = vueltaDe.get(`${list.id}|${day}`);
+      const total = vuelta?.closed_at ? vuelta.total_count : list.total_count;
+      // Un elemento palomeado y luego borrado sigue en la vuelta: se acota para no pasar de 3/3.
+      const hechos = Math.min(
+        total,
+        vuelta ? (vuelta.closed_at ? vuelta.completed_count : vuelta.completed_item_ids.length) : 0,
+      );
+      salida.push({ list, day, hechos, total, completa: total > 0 && hechos >= total });
+    }
+  }
+  return salida;
 }
