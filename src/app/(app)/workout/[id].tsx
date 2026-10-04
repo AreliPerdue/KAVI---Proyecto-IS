@@ -5,6 +5,7 @@ import { useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { ExerciseCard } from '@/components/fitness/exercise-card';
+import { ExercisePicker } from '@/components/fitness/exercise-picker';
 import { ModalHeader } from '@/components/modal-header';
 import { AppText, Banner, Button, DatePickerSheet, ErrorState, FieldButton, LoadingState, Screen, Sheet, SwitchRow, TextField } from '@/components/ui';
 import { IconSize, IconStroke, Radius, Spacing } from '@/constants/theme';
@@ -35,6 +36,8 @@ export default function WorkoutScreen() {
   const [keepValues, setKeepValues] = useState(true);
   const [notes, setNotes] = useState<string | null>(null);
   const [title, setTitle] = useState<string | null>(null);
+  /** Ejercicio al que se le está eligiendo nombre del catálogo. Un solo selector para todos. */
+  const [catalogoPara, setCatalogoPara] = useState<WorkoutExercise | null>(null);
   const setLastWorkoutTitle = usePreferencesStore((s) => s.setLastWorkoutTitle);
 
   const data = workout.data;
@@ -181,6 +184,7 @@ export default function WorkoutScreen() {
             suggestions={names.data ?? []}
             onSave={(patch) => saveExercise(exercise, patch)}
             onDelete={() => deleteExercise(exercise)}
+            onOpenCatalog={() => setCatalogoPara(exercise)}
           />
         ))}
         {editing ? (
@@ -204,6 +208,14 @@ export default function WorkoutScreen() {
         {editing ? <Button title="Eliminar entrenamiento" variant="danger" icon={<Trash2 size={IconSize.inline} strokeWidth={IconStroke} color={theme.danger} />} onPress={deleteWorkout} /> : null}
         {editing ? <Button title="Listo" onPress={close} /> : null}
       </View>
+
+      <ExercisePicker
+        visible={catalogoPara !== null}
+        onClose={() => setCatalogoPara(null)}
+        onPick={(elegido) => {
+          if (catalogoPara) saveExercise(catalogoPara, { name: elegido.name_es, exercise_id: elegido.id });
+        }}
+      />
 
       <DatePickerSheet
         visible={pickingDate}

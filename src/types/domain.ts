@@ -394,6 +394,22 @@ export type ExerciseGroup = {
   rest_after_round_sec: number | null;
 };
 
+/** Lo que una persona marca de un ejercicio: favorito, nota fija y último uso (RF-F25, RF-F52). */
+export type ExercisePrefs = {
+  exercise_id: string;
+  is_favorite: boolean;
+  sticky_note: string | null;
+  last_used_at: string | null;
+};
+
+/** Ejercicio personalizado (RF-F24). Solo el nombre es obligatorio. */
+export type CustomExerciseInput = {
+  name_es: string;
+  tracking_type?: TrackingType;
+  primary_muscles?: string[];
+  equipment?: string[];
+};
+
 /** Decisión sobre una semana sin entreno (RF-F58). */
 export type StreakEvent = {
   id: string;

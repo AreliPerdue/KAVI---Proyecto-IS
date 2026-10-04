@@ -28,6 +28,9 @@ import type {
   WorkoutExerciseDetail,
   WorkoutSet,
   ExerciseGroup,
+  Exercise,
+  ExercisePrefs,
+  CustomExerciseInput,
   WorkoutExerciseInput,
   WorkoutInput,
 } from '@/types/domain';
@@ -200,6 +203,22 @@ export interface WorkoutsApi {
   exerciseNames(userId: string): Promise<string[]>;
   /** Duplica en una actividad futura o como entrenamiento libre (RF-F8). */
   duplicate(userId: string, workoutId: string, target: { activityId: string | null; performedAt: string; keepValues: boolean }): Promise<WorkoutDetail>;
+}
+
+/** Catálogo de ejercicios y lo que cada persona marca de ellos (spec 07 v2, §4). */
+export interface ExercisesApi {
+  /**
+   * Catálogo del sistema más los personalizados propios, archivados incluidos: el historial
+   * tiene que poder nombrar un ejercicio aunque ya no se ofrezca en el selector.
+   */
+  list(userId: string): Promise<Exercise[]>;
+  /** Crea un personalizado; también al escribir un nombre que no existe (RF-F24). */
+  createCustom(userId: string, input: CustomExerciseInput): Promise<Exercise>;
+  /** Renombra o archiva un personalizado. Los del sistema no se tocan. */
+  updateCustom(id: string, patch: Partial<CustomExerciseInput> & { archived?: boolean }): Promise<Exercise>;
+  listPrefs(userId: string): Promise<ExercisePrefs[]>;
+  /** Guarda solo lo que viene: marcar favorito no borra la nota fija. */
+  savePrefs(userId: string, exerciseId: string, patch: Partial<Omit<ExercisePrefs, 'exercise_id'>>): Promise<void>;
 }
 
 /**

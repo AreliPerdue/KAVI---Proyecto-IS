@@ -25,6 +25,8 @@ const mockMut = {
 };
 let mockWorkout: Record<string, unknown>;
 
+// El selector del catálogo pide sus propios datos; aquí solo importa que no estorbe.
+jest.mock('@/components/fitness/exercise-picker', () => ({ ExercisePicker: () => null }));
 jest.mock('@/hooks/use-workouts', () => ({
   useWorkout: () => mockWorkout,
   useExerciseNames: () => ({ data: ['Sentadilla'] }),

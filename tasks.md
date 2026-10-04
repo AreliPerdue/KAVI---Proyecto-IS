@@ -666,11 +666,20 @@ Plan y decisiones en `docs/gym/AUDITORIA.md`. Cada fase cierra con typecheck, li
   ejercicio, detección de PRs contra el historial sin la serie misma, UUID en el cliente sin
   dependencias, y el parser del texto de v1 (convierte lo inequívoco, no adivina lo ambiguo).
   Con pruebas. Dep: —
-- [ ] T242 Catálogo ≥ 530 ejercicios, búsqueda por alias y sin acentos, filtros, selector
-  virtualizado, personalizados, favoritos y recientes; mapeo de nombres de v1 (G2,
-  RF-F20 – RF-F26, RF-F63). Dep: T240
+- [x] T242 Catálogo de 530 ejercicios (el Apéndice A completo, con nombre en inglés, alias y
+  músculos por familia; equipo, lateralidad y tipo de registro inferidos del nombre con
+  excepciones a mano). Una sola fuente, `constants/exercise-catalog.ts`, alimenta al demo y a
+  la migración de siembra que genera `pnpm db:seed-exercises`; una prueba falla si se
+  desincronizan, y los ids salen del slug, así que son los mismos en demo y producción.
+  Búsqueda sin acentos y por alias/slang que solo empareja al inicio de palabra, con recientes y
+  favoritos primero; selector virtualizado con filtros por músculo, equipo, patrón y tipo;
+  personalizados al vuelo y archivables; favoritos. Ya se usa desde la pantalla actual de
+  entrenamiento (botón junto al nombre). `matchCatalog` deja listo el ligado de nombres de v1
+  (RF-F63), que corre en G3 junto con la conversión. **El detalle del ejercicio (RF-F26) pasa
+  a G3**: sin series registradas no tiene historial que mostrar. (G2, RF-F20 – RF-F25) Dep: T240
 - [ ] T243 Logger en vivo local-first con timer, PRs y herramientas; conversión de v1 en la
-  app; corrige los ejercicios fantasma de v1 (G3, RF-F17 – RF-F19, RF-F27 – RF-F38). Dep: T242
+  app con ligado al catálogo; detalle del ejercicio con historial y gráficas; corrige los
+  ejercicios fantasma de v1 (G3, RF-F17 – RF-F19, RF-F26, RF-F27 – RF-F38, RF-F63). Dep: T242
 - [ ] T244 Edición de sesiones pasadas con la misma UI, deshacer/rehacer y recálculo (G4,
   RF-F39 – RF-F42). Dep: T243
 - [ ] T245 Intensificadores, agrupaciones, protocolos y modificadores (G5, RF-F43 – RF-F48). Dep: T243
@@ -678,6 +687,17 @@ Plan y decisiones en `docs/gym/AUDITORIA.md`. Cada fase cierra con typecheck, li
 - [ ] T247 Modo Gymrat: Modo serio, trato elegible, PRs, logros, Racha de Hierro en pausa,
   resumen y volumen por músculo (G7, RF-F54 – RF-F60). Dep: T243
 - [ ] T248 Calidad, accesibilidad, rendimiento y docs del módulo (G8). Dep: T242 – T247
+
+### Bugs reportados
+- [ ] T249 **Una ocurrencia borrada de una serie vuelve a aparecer al recargar.** Reporte (4
+  oct 2026): actividad de lunes a viernes con fecha de fin; se borró solo un viernes y al
+  refrescar regresó. Causa probable: borrar "solo esta" elimina la fila, pero no queda registro
+  de que esa fecha se excluyó, y `extendRecurrenceHorizon` —que corre cada vez que se abre el
+  calendario— rematerializa las fechas que faltan después de la última ocurrencia existente
+  (`materialize` solo salta las que ya tienen fila). Si la borrada era la última de una serie
+  con fin, queda como hueco y se recrea. Arreglo: guardar las fechas excluidas en la madre
+  (equivalente a `EXDATE`) y que `materialize` las respete en los dos backends; confirmar con
+  una prueba que reproduzca el caso exacto antes de tocar nada. (RF-C8) Dep: —
 
 ### Largo plazo (cuando KAVI se lance al público)
 Distribución en iOS y cuenta de Apple Developer · notificaciones push con la app cerrada ·

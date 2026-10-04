@@ -20,6 +20,12 @@ export type SheetProps = {
   children: ReactNode;
   /** Altura máxima relativa a la ventana (0–1). */
   maxHeightRatio?: number;
+  /**
+   * El contenido trae su propio scroll (una `FlatList`). La hoja deja de envolverlo en un
+   * `ScrollView`, que anidaría dos listas y apagaría la virtualización, y toma la altura
+   * completa para que la lista sepa cuánto espacio tiene.
+   */
+  scrollable?: boolean;
 };
 
 /**
@@ -43,7 +49,7 @@ function useKeyboardHeight(): number {
 }
 
 /** Hoja inferior (móvil) / diálogo centrado (web ancho) con scrim y cierre accesible. */
-export function Sheet({ visible, onClose, title, children, maxHeightRatio = 0.85 }: SheetProps) {
+export function Sheet({ visible, onClose, title, children, maxHeightRatio = 0.85, scrollable = true }: SheetProps) {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
   const { width, height } = useWindowDimensions();
@@ -61,7 +67,9 @@ export function Sheet({ visible, onClose, title, children, maxHeightRatio = 0.85
             centered ? styles.panelCentered : styles.panelBottom,
             {
               backgroundColor: theme.surface,
-              maxHeight: available * maxHeightRatio,
+              // Con scroll propio la hoja necesita alto fijo: una lista flexible dentro de
+              // un alto máximo se encoge a nada.
+              ...(scrollable ? { maxHeight: available * maxHeightRatio } : { height: available * maxHeightRatio }),
               // Con el teclado abierto la hoja sube por encima de él y el inset ya no aplica.
               marginBottom: centered ? 0 : keyboard,
               paddingBottom: centered || keyboard > 0 ? Spacing.lg : insets.bottom + Spacing.lg,
@@ -79,9 +87,13 @@ export function Sheet({ visible, onClose, title, children, maxHeightRatio = 0.85
               </IconButton>
             </View>
           ) : null}
-          <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.content}>
-            {children}
-          </ScrollView>
+          {scrollable ? (
+            <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.content}>
+              {children}
+            </ScrollView>
+          ) : (
+            <View style={styles.contentFijo}>{children}</View>
+          )}
         </View>
       </View>
     </Modal>
@@ -98,4 +110,5 @@ const styles = StyleSheet.create({
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginRight: -OPTICAL_INSET },
   title: { flex: 1 },
   content: { gap: Spacing.md, paddingBottom: Spacing.sm },
+  contentFijo: { flex: 1, gap: Spacing.md },
 });

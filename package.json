@@ -74,7 +74,8 @@
     "db:migration": "supabase migration new",
     "db:reset": "supabase db reset",
     "db:push": "supabase db push",
-    "db:types": "supabase gen types typescript --local > src/types/database.ts"
+    "db:types": "supabase gen types typescript --local > src/types/database.ts",
+    "db:seed-exercises": "node --no-warnings scripts/gen-exercise-seed.mjs"
   },
   "private": true
 }

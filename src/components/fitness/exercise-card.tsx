@@ -1,4 +1,4 @@
-import { Trash2 } from 'lucide-react-native';
+import { Library, Trash2 } from 'lucide-react-native';
 import { memo, useEffect, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
@@ -14,6 +14,8 @@ export type ExerciseCardProps = {
   suggestions: readonly string[];
   onSave: (patch: Partial<WorkoutExerciseInput>) => void;
   onDelete: () => void;
+  /** Abre el selector del catálogo para este ejercicio (RF-F20). */
+  onOpenCatalog?: () => void;
 };
 
 const toInt = (text: string): number | null => {
@@ -22,7 +24,7 @@ const toInt = (text: string): number | null => {
 };
 
 /** Tarjeta de ejercicio con campos abiertos; guarda cada campo al perder el foco (RF-F4, RF-F5). */
-export const ExerciseCard = memo(function ExerciseCard({ exercise, index, readOnly = false, suggestions, onSave, onDelete }: ExerciseCardProps) {
+export const ExerciseCard = memo(function ExerciseCard({ exercise, index, readOnly = false, suggestions, onSave, onDelete, onOpenCatalog }: ExerciseCardProps) {
   const theme = useTheme();
   const [name, setName] = useState(exercise.name);
   const [sets, setSets] = useState(exercise.sets?.toString() ?? '');
@@ -79,19 +81,38 @@ export const ExerciseCard = memo(function ExerciseCard({ exercise, index, readOn
           <Trash2 size={IconSize.inline} strokeWidth={IconStroke} color={theme.textSecondary} />
         </IconButton>
       </View>
-      <TextField
-        label="Nombre"
-        value={name}
-        onChangeText={setName}
-        onFocus={() => setNameFocused(true)}
-        onBlur={() => {
-          setNameFocused(false);
-          if (name.trim() && name.trim() !== exercise.name) onSave({ name: name.trim() });
-        }}
-        placeholder="Press banca, sentadilla…"
-        autoCapitalize="sentences"
-        returnKeyType="done"
-      />
+      {/*
+        El nombre se puede seguir escribiendo libre, como en v1; el botón de al lado lo elige
+        del catálogo y además liga el ejercicio (`exercise_id`), que es lo que habilita PRs e
+        historial por ejercicio. Escribir a mano después lo desliga: ya es otro nombre.
+      */}
+      <View style={styles.nombreFila}>
+        <View style={styles.cell}>
+          <TextField
+            label="Nombre"
+            value={name}
+            onChangeText={setName}
+            onFocus={() => setNameFocused(true)}
+            onBlur={() => {
+              setNameFocused(false);
+              if (name.trim() && name.trim() !== exercise.name) onSave({ name: name.trim(), exercise_id: null });
+            }}
+            placeholder="Press banca, sentadilla…"
+            autoCapitalize="sentences"
+            returnKeyType="done"
+          />
+        </View>
+        {onOpenCatalog ? (
+          <IconButton label="Elegir del catálogo" onPress={onOpenCatalog}>
+            <Library size={IconSize.action} strokeWidth={IconStroke} color={exercise.exercise_id ? theme.text : theme.textSecondary} />
+          </IconButton>
+        ) : null}
+      </View>
+      {exercise.exercise_id ? (
+        <AppText variant="caption" color="textTertiary">
+          Del catálogo
+        </AppText>
+      ) : null}
       {matches.length ? (
         <View style={styles.suggestions}>
           {matches.map((s) => (
@@ -134,6 +155,7 @@ const styles = StyleSheet.create({
   card: { padding: Spacing.md, borderWidth: 1, borderRadius: Radius.lg, borderCurve: 'continuous', gap: Spacing.sm },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   row: { flexDirection: 'row', gap: Spacing.sm },
+  nombreFila: { flexDirection: 'row', alignItems: 'flex-end', gap: Spacing.xs },
   cell: { flex: 1 },
   suggestions: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.xs },
   suggestion: { paddingHorizontal: Spacing.md, minHeight: 36, justifyContent: 'center', borderWidth: 1, borderRadius: Radius.full },
