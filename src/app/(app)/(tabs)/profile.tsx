@@ -73,7 +73,7 @@ import { changePasswordSchema, type ChangePasswordValues, profileSchema, type Pr
 import { useAuth, useConfirm, useSnackbar } from '@/providers';
 import { StackedModuleBack } from '@/components/navigation/stacked-module';
 import { useModuleNav } from '@/hooks/use-modules';
-import { useT } from '@/i18n';
+import { useLanguage, useT } from '@/i18n';
 
 const PROFILE_MAX_WIDTH = 560;
 
@@ -128,6 +128,7 @@ export default function ProfileScreen() {
   const language = usePreferencesStore((s) => s.language);
   const setLanguage = usePreferencesStore((s) => s.setLanguage);
   const tx = useT();
+  const lang = useLanguage();
   const showWorkouts = usePreferencesStore((s) => s.showWorkouts);
   const setShowWorkouts = usePreferencesStore((s) => s.setShowWorkouts);
   const showBirthdays = usePreferencesStore((s) => s.showBirthdays);
@@ -176,7 +177,7 @@ export default function ProfileScreen() {
       {
         onSuccess: () => {
           setEditing(false);
-          showSnackbar({ message: 'Perfil actualizado.' });
+          showSnackbar({ message: tx.profile.updated });
         },
       },
     ),
@@ -194,7 +195,7 @@ export default function ProfileScreen() {
         onSuccess: () => {
           setChangingPassword(false);
           passwordForm.reset();
-          showSnackbar({ message: 'Contraseña actualizada.' });
+          showSnackbar({ message: tx.profile.passwordUpdated });
         },
       },
     ),
@@ -209,9 +210,9 @@ export default function ProfileScreen() {
 
   const confirmSignOut = async () => {
     const ok = await confirm({
-      title: 'Cerrar sesión',
-      message: 'Tendrás que volver a entrar con tu correo y contraseña.',
-      confirmLabel: 'Cerrar sesión',
+      title: tx.profile.signOut,
+      message: tx.profile.signOutMessage,
+      confirmLabel: tx.profile.signOut,
       destructive: true,
     });
     if (ok) signOut.mutate();
@@ -222,8 +223,8 @@ export default function ProfileScreen() {
       return (
         <SettingsRow
           icon={<BellOff size={IconSize.inline} strokeWidth={IconStroke} color={theme.textTertiary} />}
-          label="Recordatorios"
-          hint="En navegador no hay avisos del sistema: verás el recordatorio dentro de la app. En el móvil sí llegan."
+          label={tx.profile.reminders}
+          hint={tx.profile.remindersWebHint}
           disabled
         />
       );
@@ -232,7 +233,7 @@ export default function ProfileScreen() {
       return (
         <SettingsRow
           icon={<Bell size={IconSize.inline} strokeWidth={IconStroke} color={theme.textSecondary} />}
-          label="Recordatorios"
+          label={tx.profile.reminders}
           value="…"
           disabled
         />
@@ -247,9 +248,9 @@ export default function ProfileScreen() {
             <BellOff size={IconSize.inline} strokeWidth={IconStroke} color={theme.textSecondary} />
           )
         }
-        label="Recordatorios"
-        hint={notifications ? undefined : 'Actívalos en Ajustes para recibir tus avisos.'}
-        value={notifications ? 'Activados' : 'Desactivados'}
+        label={tx.profile.reminders}
+        hint={notifications ? undefined : tx.profile.remindersOffHint}
+        value={notifications ? tx.profile.on : tx.profile.off}
       />
     );
   };
@@ -258,10 +259,10 @@ export default function ProfileScreen() {
     <Screen scroll maxWidth={PROFILE_MAX_WIDTH} contentStyle={styles.content}>
       <StackedModuleBack />
       <AppText variant="title" accessibilityRole="header">
-        Perfil
+        {tx.profile.title}
       </AppText>
 
-      {profile.isPending ? <LoadingState label="Cargando tu perfil…" /> : null}
+      {profile.isPending ? <LoadingState label={tx.profile.loading} /> : null}
       {profile.isError ? <ErrorState message={profile.error.message} onRetry={() => profile.refetch()} /> : null}
 
       {profile.data ? (
@@ -269,7 +270,7 @@ export default function ProfileScreen() {
           {/* La identidad y todo lo editable de la cuenta viven en esta tarjeta. */}
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel={`Editar perfil de ${profile.data.display_name ?? user?.email}`}
+            accessibilityLabel={tx.profile.editProfileOf(profile.data.display_name ?? user?.email ?? '')}
             onPress={() => setEditing(true)}
             style={({ pressed }) => [
               styles.hero,
@@ -279,7 +280,7 @@ export default function ProfileScreen() {
             <Avatar profile={profile.data} size={64} />
             <View style={styles.heroText}>
               <AppText variant="heading" numberOfLines={1}>
-                {profile.data.display_name ?? 'Sin nombre'}
+                {profile.data.display_name ?? tx.profile.noName}
               </AppText>
               <AppText color="textSecondary" numberOfLines={1}>
                 @{profile.data.username}
@@ -294,37 +295,37 @@ export default function ProfileScreen() {
           </Pressable>
 
           <View style={styles.stats}>
-            <StatTile value={monthCount} label="Actividades este mes" />
-            <StatTile value={acceptedContacts} label="Amigos" />
-            <StatTile value={ownThemes} label="Temas propios" />
-            <StatTile value={workoutCount} label="Entrenamientos" />
+            <StatTile value={monthCount} label={tx.profile.stats.month} />
+            <StatTile value={acceptedContacts} label={tx.profile.stats.friends} />
+            <StatTile value={ownThemes} label={tx.profile.stats.themes} />
+            <StatTile value={workoutCount} label={tx.profile.stats.workouts} />
           </View>
         </>
       ) : null}
 
-      <SettingsGroup title="Calendario">
+      <SettingsGroup title={tx.profile.calendarSection}>
         <SettingsRow
           icon={<Palette size={IconSize.inline} strokeWidth={IconStroke} color={theme.textSecondary} />}
-          label="Mis temas"
-          hint="Colores e iconos de tus actividades."
+          label={tx.profile.myThemes}
+          hint={tx.profile.myThemesHint}
           value={String(ownThemes)}
           onPress={() => router.push('/(app)/themes')}
         />
         <SettingsRow
           icon={<Users size={IconSize.inline} strokeWidth={IconStroke} color={theme.textSecondary} />}
-          label="Amigos y compartido"
+          label={tx.profile.friendsShared}
           value={String(acceptedContacts)}
           onPress={() => abrirModulo('shared')}
         />
         <SettingsRow
           icon={<CalendarSearch size={IconSize.inline} strokeWidth={IconStroke} color={theme.textSecondary} />}
-          label="Disponibilidad"
-          hint="Horarios en común con tus amigos."
+          label={tx.profile.availability}
+          hint={tx.profile.availabilityHint}
           onPress={() => router.push('/(app)/shared/availability')}
         />
       </SettingsGroup>
 
-      <SettingsGroup title="Tu Nobi" footer="Nobi es la mascota de KAVI. El color que elijas lo verán también tus contactos.">
+      <SettingsGroup title={tx.profile.nobiSection} footer={tx.profile.nobiFooter}>
         <View style={styles.nobis}>
           {NOBIS.map((nobi) => {
             const elegido = nobiIdDesde(profile.data?.avatar_url) === nobi.id;
@@ -332,14 +333,14 @@ export default function ProfileScreen() {
               <Pressable
                 key={nobi.id}
                 accessibilityRole="button"
-                accessibilityLabel={`Nobi ${nobi.label}`}
+                accessibilityLabel={tx.profile.nobiA11y(tx.colors[nobi.id] ?? nobi.label)}
                 accessibilityState={{ selected: elegido }}
                 disabled={update.isPending}
                 onPress={() => {
                   // Volver a tocar el elegido lo quita y devuelve las iniciales.
                   update.mutate(
                     { avatar_url: elegido ? null : nobiUrl(nobi.id) },
-                    { onSuccess: () => showSnackbar({ message: elegido ? 'Nobi quitado.' : `Nobi ${nobi.label.toLowerCase()}.` }) },
+                    { onSuccess: () => showSnackbar({ message: elegido ? tx.profile.nobiRemoved : tx.profile.nobiChosen((tx.colors[nobi.id] ?? nobi.label).toLowerCase()) }) },
                   );
                 }}
                 style={({ pressed }) => [
@@ -354,24 +355,24 @@ export default function ProfileScreen() {
         </View>
       </SettingsGroup>
 
-      <SettingsGroup title="Qué se ve en el calendario">
+      <SettingsGroup title={tx.profile.calendarShows}>
         <SettingsRow
           icon={<Dumbbell size={IconSize.inline} strokeWidth={IconStroke} color={theme.textSecondary} />}
-          label="Entrenamientos"
-          hint="Los que registras sin agendar aparecen en su hora."
-          right={<Toggle label="Entrenamientos en el calendario" value={showWorkouts} onValueChange={setShowWorkouts} />}
+          label={tx.profile.workouts}
+          hint={tx.profile.workoutsHint}
+          right={<Toggle label={tx.profile.workoutsToggle} value={showWorkouts} onValueChange={setShowWorkouts} />}
         />
         <SettingsRow
           icon={<Cake size={IconSize.inline} strokeWidth={IconStroke} color={theme.textSecondary} />}
-          label="Cumpleaños"
-          hint="El tuyo y el de tus contactos."
-          right={<Toggle label="Cumpleaños en el calendario" value={showBirthdays} onValueChange={setShowBirthdays} />}
+          label={tx.profile.birthdays}
+          hint={tx.profile.birthdaysHint}
+          right={<Toggle label={tx.profile.birthdaysToggle} value={showBirthdays} onValueChange={setShowBirthdays} />}
         />
         <SettingsRow
           icon={<Cake size={IconSize.inline} strokeWidth={IconStroke} color={theme.textSecondary} />}
-          label="Mi cumpleaños"
-          hint={profile.data?.birthday ? 'Tus contactos lo verán en su calendario.' : 'Sin definir. Tus contactos lo verán en su calendario.'}
-          value={profile.data?.birthday ? formatDayAndMonth(fromDayKey(profile.data.birthday)) : 'Elegir'}
+          label={tx.profile.myBirthday}
+          hint={profile.data?.birthday ? tx.profile.birthdaySetHint : tx.profile.birthdayUnsetHint}
+          value={profile.data?.birthday ? formatDayAndMonth(fromDayKey(profile.data.birthday), lang) : tx.profile.choose}
           onPress={() => setPickingBirthday(true)}
         />
       </SettingsGroup>
@@ -381,31 +382,31 @@ export default function ProfileScreen() {
       <DateInputSheet
         visible={pickingBirthday}
         value={profile.data?.birthday ? fromDayKey(profile.data.birthday) : null}
-        title="Tu cumpleaños"
+        title={tx.profile.yourBirthday}
         maxDate={new Date()}
         onClose={() => setPickingBirthday(false)}
         onSelect={(fecha) => {
           setPickingBirthday(false);
           update.mutate(
             { birthday: toDayKey(fecha) },
-            { onSuccess: () => showSnackbar({ message: 'Cumpleaños guardado.' }) },
+            { onSuccess: () => showSnackbar({ message: tx.profile.birthdaySaved }) },
           );
         }}
       />
 
-      <SettingsGroup title="Presentación" footer="Se aplica al calendario, a los recordatorios y al historial de entrenamientos.">
+      <SettingsGroup title={tx.profile.presentation} footer={tx.profile.presentationFooter}>
         {/* Debajo y no a la derecha: tres opciones no caben junto a la etiqueta en 375 px. */}
         <SettingsRow
           icon={<SunMoon size={IconSize.inline} strokeWidth={IconStroke} color={theme.textSecondary} />}
-          label="Apariencia"
-          hint="«Sistema» sigue el ajuste de tu teléfono o navegador."
+          label={tx.profile.appearance}
+          hint={tx.profile.appearanceHint}
           below={
             <Segmented
               fullWidth
               options={[
-                { value: 'system', label: 'Sistema' },
-                { value: 'light', label: 'Claro' },
-                { value: 'dark', label: 'Oscuro' },
+                { value: 'system', label: tx.profile.appearanceOptions.system },
+                { value: 'light', label: tx.profile.appearanceOptions.light },
+                { value: 'dark', label: tx.profile.appearanceOptions.dark },
               ]}
               value={appearance}
               onChange={setAppearance}
@@ -431,7 +432,7 @@ export default function ProfileScreen() {
         />
         <SettingsRow
           icon={<Clock size={IconSize.inline} strokeWidth={IconStroke} color={theme.textSecondary} />}
-          label="Formato de hora"
+          label={tx.profile.timeFormat}
           right={
             <Segmented
               options={[
@@ -447,28 +448,28 @@ export default function ProfileScreen() {
 
       <FitnessSettings />
 
-      <SettingsGroup title="Avisos">{notificationsRow()}</SettingsGroup>
+      <SettingsGroup title={tx.profile.notices}>{notificationsRow()}</SettingsGroup>
 
       {/* Solo existe para cuentas `adminkavi` (RF-AD3). Ocultarlo no es el control de
           acceso: las funciones del panel comprueban el rol en la base (RF-AD6). */}
       {isAdmin ? (
-        <SettingsGroup title="Administración" footer="Números agregados del producto. No incluye el contenido de ninguna cuenta.">
+        <SettingsGroup title={tx.profile.admin} footer={tx.profile.adminFooter}>
           <SettingsRow
             icon={<ChartNoAxesColumn size={IconSize.inline} strokeWidth={IconStroke} color={theme.textSecondary} />}
-            label="Estadísticas de KAVI"
-            hint="Cuentas registradas y uso."
+            label={tx.profile.adminStats}
+            hint={tx.profile.adminStatsHint}
             onPress={() => router.push('/(app)/admin')}
           />
         </SettingsGroup>
       ) : null}
 
       {env.isDemoMode ? (
-        <SettingsGroup title="Modo demo" footer="Cambia de cuenta para probar el calendario compartido. Los datos se reinician al recargar.">
+        <SettingsGroup title={tx.profile.demoSection} footer={tx.profile.demoFooter}>
           {DEMO_SWITCH.filter((d) => d.email !== user?.email).map((d) => (
             <SettingsRow
               key={d.email}
               icon={<Repeat2 size={IconSize.inline} strokeWidth={IconStroke} color={theme.textSecondary} />}
-              label={`Entrar como ${d.label}`}
+              label={tx.profile.signInAs(d.label)}
               onPress={() => signIn.mutate({ email: d.email, password: 'demo1234' })}
               disabled={signIn.isPending}
             />
@@ -476,15 +477,15 @@ export default function ProfileScreen() {
         </SettingsGroup>
       ) : null}
 
-      <SettingsGroup title="Acerca de">
+      <SettingsGroup title={tx.profile.about}>
         <SettingsRow
           icon={<Info size={IconSize.inline} strokeWidth={IconStroke} color={theme.textSecondary} />}
-          label="Versión"
+          label={tx.profile.version}
           value={env.isDemoMode ? `${version} · demo` : version}
         />
         <SettingsRow
           icon={<ShieldCheck size={IconSize.inline} strokeWidth={IconStroke} color={theme.textSecondary} />}
-          label="Aviso de privacidad"
+          label={tx.profile.privacy}
           onPress={() => router.push('/privacidad')}
         />
       </SettingsGroup>
@@ -493,7 +494,7 @@ export default function ProfileScreen() {
       <SettingsGroup>
         <SettingsRow
           icon={<LogOut size={IconSize.inline} strokeWidth={IconStroke} color={theme.danger} />}
-          label="Cerrar sesión"
+          label={tx.profile.signOut}
           destructive
           disabled={signOut.isPending}
           onPress={confirmSignOut}
@@ -501,29 +502,29 @@ export default function ProfileScreen() {
       </SettingsGroup>
 
       {/* RF-A12: aparte y al final, para que no se toque por error junto a "Cerrar sesión". */}
-      <SettingsGroup footer="Borra tu cuenta y todos tus datos de inmediato. No se puede deshacer.">
+      <SettingsGroup footer={tx.profile.deleteFooter}>
         <SettingsRow
           icon={<UserX size={IconSize.inline} strokeWidth={IconStroke} color={theme.danger} />}
-          label="Eliminar cuenta"
+          label={tx.profile.deleteAccount}
           destructive
           onPress={() => setEliminando(true)}
         />
       </SettingsGroup>
       <DeleteAccountSheet visible={eliminando} email={user?.email ?? ''} onClose={() => setEliminando(false)} />
 
-      <Sheet visible={editing} onClose={() => setEditing(false)} title="Editar perfil">
+      <Sheet visible={editing} onClose={() => setEditing(false)} title={tx.profile.editProfile}>
         {update.error ? <Banner tone="error" message={update.error.message} /> : null}
         <Controller
           control={control}
           name="displayName"
           render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
             <TextField
-              label="Nombre"
+              label={tx.profile.name}
               value={value}
               onChangeText={onChange}
               onBlur={onBlur}
               error={error?.message}
-              hint="Así te ven tus amigos en el calendario compartido."
+              hint={tx.profile.nameHint}
               autoComplete="name"
               textContentType="name"
               maxLength={60}
@@ -536,12 +537,12 @@ export default function ProfileScreen() {
           name="username"
           render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
             <TextField
-              label="Usuario"
+              label={tx.profile.username}
               value={value}
               onChangeText={(text) => onChange(text.replace(/^@+/, '').toLowerCase())}
               onBlur={onBlur}
               error={error?.message}
-              hint="Con esto te encuentran tus amigos. Puedes cambiarlo cuando quieras."
+              hint={tx.profile.usernameHint}
               autoCapitalize="none"
               autoCorrect={false}
               maxLength={30}
@@ -549,28 +550,28 @@ export default function ProfileScreen() {
           )}
         />
         <TextField
-          label="Correo"
+          label={tx.profile.email}
           value={user?.email ?? ''}
           editable={false}
-          hint="Es tu identificador en KAVI y no se puede cambiar."
+          hint={tx.profile.emailHint}
         />
-        <Button title="Guardar cambios" onPress={onSubmit} loading={update.isPending} disabled={!formState.isDirty} />
+        <Button title={tx.profile.saveChanges} onPress={onSubmit} loading={update.isPending} disabled={!formState.isDirty} />
         <Button
-          title="Cambiar contraseña"
+          title={tx.profile.changePassword}
           variant="secondary"
           onPress={openPasswordSheet}
           icon={<KeyRound size={IconSize.inline} strokeWidth={IconStroke} color={theme.text} />}
         />
       </Sheet>
 
-      <Sheet visible={changingPassword} onClose={() => setChangingPassword(false)} title="Cambiar contraseña">
+      <Sheet visible={changingPassword} onClose={() => setChangingPassword(false)} title={tx.profile.changePassword}>
         {changePassword.error ? <Banner tone="error" message={changePassword.error.message} /> : null}
         <Controller
           control={passwordForm.control}
           name="currentPassword"
           render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
             <TextField
-              label="Contraseña actual"
+              label={tx.profile.currentPassword}
               value={value}
               onChangeText={onChange}
               onBlur={onBlur}
@@ -586,12 +587,12 @@ export default function ProfileScreen() {
           name="password"
           render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
             <TextField
-              label="Contraseña nueva"
+              label={tx.profile.newPassword}
               value={value}
               onChangeText={onChange}
               onBlur={onBlur}
               error={error?.message}
-              hint="Mínimo 8 caracteres."
+              hint={tx.profile.newPasswordHint}
               secure
               autoComplete="new-password"
               textContentType="newPassword"
@@ -603,7 +604,7 @@ export default function ProfileScreen() {
           name="confirmPassword"
           render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
             <TextField
-              label="Confirmar contraseña nueva"
+              label={tx.profile.confirmNewPassword}
               value={value}
               onChangeText={onChange}
               onBlur={onBlur}
@@ -614,7 +615,7 @@ export default function ProfileScreen() {
             />
           )}
         />
-        <Button title="Actualizar contraseña" onPress={submitPassword} loading={changePassword.isPending} />
+        <Button title={tx.profile.updatePassword} onPress={submitPassword} loading={changePassword.isPending} />
       </Sheet>
     </Screen>
   );
@@ -655,6 +656,7 @@ const styles = StyleSheet.create({
  */
 function FitnessSettings() {
   const theme = useTheme();
+  const tx = useT();
   const weightUnit = useGymStore((s) => s.weightUnit);
   const effortScale = useGymStore((s) => s.effortScale);
   const e1rmFormula = useGymStore((s) => s.e1rmFormula);
@@ -667,15 +669,15 @@ function FitnessSettings() {
   const icono = (Icono: typeof Weight) => <Icono size={IconSize.inline} strokeWidth={IconStroke} color={theme.textSecondary} />;
 
   return (
-    <SettingsGroup title="Gimnasio">
+    <SettingsGroup title={tx.fitness.settings.title}>
       <SettingsRow
         icon={icono(Weight)}
-        label="Unidad de peso"
-        hint="Cambiarla no altera lo que ya registraste: solo cambia cómo lo ves."
+        label={tx.fitness.settings.weightUnit}
+        hint={tx.fitness.settings.weightUnitHint}
         below={
           <Segmented
             fullWidth
-            options={[{ value: 'kg', label: 'Kilos (kg)' }, { value: 'lb', label: 'Libras (lb)' }]}
+            options={[{ value: 'kg', label: tx.fitness.settings.kilos }, { value: 'lb', label: tx.fitness.settings.pounds }]}
             value={weightUnit}
             onChange={(v) => setPref('weightUnit', v)}
           />
@@ -683,12 +685,12 @@ function FitnessSettings() {
       />
       <SettingsRow
         icon={icono(Gauge)}
-        label="Cómo anotas el esfuerzo de cada serie"
-        hint="Reps en reserva (RIR): cuántas repeticiones más te salían antes de no poder; 0 es al fallo. Escala del 1 al 10 (RPE): qué tan pesada se sintió; 10 es tu máximo. Anotarlo es opcional."
+        label={tx.fitness.settings.effort}
+        hint={tx.fitness.settings.effortHint}
         below={
           <Segmented
             fullWidth
-            options={[{ value: 'rir', label: 'Reps en reserva' }, { value: 'rpe', label: 'Escala del 1 al 10' }]}
+            options={[{ value: 'rir', label: tx.fitness.settings.rir }, { value: 'rpe', label: tx.fitness.settings.rpe }]}
             value={effortScale}
             onChange={(v) => setPref('effortScale', v)}
           />
@@ -696,12 +698,12 @@ function FitnessSettings() {
       />
       <SettingsRow
         icon={icono(Dumbbell)}
-        label="Cálculo de tu peso máximo"
-        hint="Con el peso y las repeticiones de tus series, KAVI estima cuánto podrías levantar en una sola repetición (tu 1RM) para mostrarte cómo vas. Epley y Brzycki son dos fórmulas conocidas que dan casi lo mismo; si no sabes cuál, deja Epley."
+        label={tx.fitness.settings.e1rm}
+        hint={tx.fitness.settings.e1rmHint}
         below={
           <Segmented
             fullWidth
-            options={[{ value: 'epley', label: 'Epley (estándar)' }, { value: 'brzycki', label: 'Brzycki' }]}
+            options={[{ value: 'epley', label: tx.fitness.settings.epley }, { value: 'brzycki', label: tx.fitness.settings.brzycki }]}
             value={e1rmFormula}
             onChange={(v) => setPref('e1rmFormula', v)}
           />
@@ -709,8 +711,8 @@ function FitnessSettings() {
       />
       <SettingsRow
         icon={icono(Timer)}
-        label="Descanso entre series"
-        hint="Al marcar una serie como hecha arranca un temporizador con este tiempo. Mientras corre puedes sumarle o quitarle 15 segundos."
+        label={tx.fitness.settings.rest}
+        hint={tx.fitness.settings.restHint}
         below={
           <Segmented
             fullWidth
@@ -722,8 +724,8 @@ function FitnessSettings() {
       />
       <SettingsRow
         icon={icono(Dumbbell)}
-        label="Peso que quitas en un drop set"
-        hint="En un drop set terminas la serie y sigues sin descanso con menos peso. Cada drop que agregas empieza con este porcentaje menos: de 50 kg con 20 % pasas a 40 kg."
+        label={tx.fitness.settings.drop}
+        hint={tx.fitness.settings.dropHint}
         below={
           <Segmented
             fullWidth
@@ -735,23 +737,23 @@ function FitnessSettings() {
       />
       <SettingsRow
         icon={icono(Volume2)}
-        label="Sonido de los temporizadores"
-        hint="Pita en los últimos 3 segundos del descanso y en cada cambio de un temporizador de intervalos (EMOM, Tabata). Suena encima de tu música, sin pausarla."
-        right={<Toggle label="Sonido de los temporizadores" value={timerSound} onValueChange={(v) => setPref('timerSound', v)} />}
+        label={tx.fitness.settings.timerSound}
+        hint={tx.fitness.settings.timerSoundHint}
+        right={<Toggle label={tx.fitness.settings.timerSound} value={timerSound} onValueChange={(v) => setPref('timerSound', v)} />}
       />
       <SettingsRow
         icon={icono(Smile)}
-        label="Modo serio"
-        hint="Quita las bromas, frases y celebraciones. Tus récords personales (PR) y logros se siguen mostrando."
-        right={<Toggle label="Modo serio" value={seriousMode} onValueChange={(v) => setPref('seriousMode', v)} />}
+        label={tx.fitness.settings.serious}
+        hint={tx.fitness.settings.seriousHint}
+        right={<Toggle label={tx.fitness.settings.serious} value={seriousMode} onValueChange={(v) => setPref('seriousMode', v)} />}
       />
       <DatosDeSalud icono={icono(HeartPulse)} />
       {seriousMode ? null : (
         <SettingsRow
           icon={icono(Crown)}
-          label="Cómo te habla KAVI"
-          hint="En las frases y celebraciones: «¡PR, mi rey!» o «¡PR, mi reina!». Neutral no usa ninguno."
-          below={<Segmented fullWidth options={TRATOS} value={trato} onChange={(v) => setPref('trato', v)} />}
+          label={tx.fitness.settings.voice}
+          hint={tx.fitness.settings.voiceHint}
+          below={<Segmented fullWidth options={TRATOS.map((o) => ({ value: o.value, label: tx.fitness.settings.voiceOptions[o.value] }))} value={trato} onChange={(v) => setPref('trato', v)} />}
         />
       )}
     </SettingsGroup>
@@ -763,6 +765,7 @@ function FitnessSettings() {
  * leído; los permisos de la plataforma se quitan desde sus propios ajustes.
  */
 function DatosDeSalud({ icono }: { icono: ReactNode }) {
+  const tx = useT();
   const confirm = useConfirm();
   const showSnackbar = useSnackbar();
   const disponible = useHealthAvailability();
@@ -772,36 +775,36 @@ function DatosDeSalud({ icono }: { icono: ReactNode }) {
 
   if (!estado) return null;
   if (estado.status !== 'available') {
-    return <SettingsRow icon={icono} label="Datos de salud" hint={estado.message} />;
+    return <SettingsRow icon={icono} label={tx.fitness.health.title} hint={estado.message} />;
   }
   const conectado = anyPermission(permisos.data);
-  const que = HEALTH_METRICS.filter((m) => permisos.data?.[m.id]).map((m) => m.label.toLowerCase());
+  const que = HEALTH_METRICS.filter((m) => permisos.data?.[m.id]).map((m) => tx.fitness.health.metrics[m.id].toLowerCase());
   return (
     <SettingsRow
       icon={icono}
-      label="Datos de salud"
+      label={tx.fitness.health.title}
       hint={
         conectado
-          ? `Conectado a ${HEALTH_SOURCE_LABEL[estado.source]}: ${que.join(', ')}. Solo se leen en este dispositivo; KAVI no los sube a internet.`
-          : 'Pasos, distancia, calorías activas y entrenamientos de otras apps, para verlos en Fitness → Actividad. Solo se leen en este dispositivo.'
+          ? tx.fitness.health.connectedTo(HEALTH_SOURCE_LABEL[estado.source], que.join(', '))
+          : tx.fitness.health.notConnected
       }
       below={
         conectado ? (
           <Button
-            title="Desconectar"
+            title={tx.fitness.health.disconnect}
             variant="secondary"
             loading={disconnect.isPending}
             onPress={async () => {
               const ok = await confirm({
-                title: 'Desconectar datos de salud',
-                message: 'KAVI deja de leerlos y olvida lo que tenía en este dispositivo. Tus entrenamientos de KAVI no cambian.',
-                confirmLabel: 'Desconectar',
+                title: tx.fitness.health.disconnectTitle,
+                message: tx.fitness.health.disconnectMessage,
+                confirmLabel: tx.fitness.health.disconnect,
               });
-              if (ok) disconnect.mutate(undefined, { onSuccess: () => showSnackbar({ message: 'Datos de salud desconectados.' }) });
+              if (ok) disconnect.mutate(undefined, { onSuccess: () => showSnackbar({ message: tx.fitness.health.disconnected }) });
             }}
           />
         ) : (
-          <Button title="Conectar" variant="secondary" loading={connect.isPending} onPress={() => connect.mutate(HEALTH_METRICS.map((m) => m.id))} />
+          <Button title={tx.fitness.health.connect} variant="secondary" loading={connect.isPending} onPress={() => connect.mutate(HEALTH_METRICS.map((m) => m.id))} />
         )
       }
     />
