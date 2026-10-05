@@ -56,6 +56,13 @@ Fuente de verdad del avance. Reglas: trabajar en orden, respetar dependencias, m
 - [x] T072 Reprogramación al editar horario/eliminar actividad; sync al login y foreground. (RF-C10) Dep: T071
 - [x] T073 Fallback web: banner in-app de reminders vencidos. (RF-C10, NFR-10) Dep: T071
 - [ ] T074 ✅ HITO: notificación local llega en iOS y Android con el título correcto (requiere build nativo recompilado). Dep: T072
+  **Android ✓ (5 oct 2026, emulador Pixel 8 Pro, build de desarrollo en demo):** actividad "Prueba T074" a las
+  10:38 con recordatorio "Al momento" → llega "Prueba T074 · Empieza a las 10:38" con la app en segundo plano;
+  "Cerrada T074" a las 10:42 → llega igual con el proceso detenido (`am kill`). **Falta iOS** (cuenta de Apple
+  Developer). Dos observaciones, sin cambiar nada todavía: (1) llegan entre 50 y 90 s tarde porque Android usa
+  alarmas inexactas; para que sean puntuales haría falta `SCHEDULE_EXACT_ALARM`/`USE_EXACT_ALARM`, que Google
+  Play permite a apps de calendario. (2) Van por el canal genérico de Expo (`expo_notifications_fallback…`), que
+  en Ajustes de Android sale como "Miscellaneous"; un canal propio "Recordatorios" se vería mejor.
 - [x] T153 Reactivar `expo-notifications` con la versión del SDK 57 (~57.0.20). La incompatibilidad era de versión, no de implementación: la instalada era para SDK 53.
 - [x] T155 Los entrenamientos sueltos se pintan en el calendario como capa derivada, con interruptor en Perfil (RF-F10, spec actualizada). Se derivan en vez de crear actividades: alcanza tambien a los ya registrados y se puede ocultar sin borrar nada.
 - [x] T160 Fecha escrita en lugar de navegada (cumpleanos y fin de recurrencia): el calendario mensual exige tantos toques como meses de distancia.
