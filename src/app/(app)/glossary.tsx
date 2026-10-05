@@ -6,10 +6,12 @@ import { Platform, Pressable, StyleSheet, TextInput, type TextStyle, View } from
 import { GlossaryEntryBody } from '@/components/fitness/glossary-entry';
 import { ModalHeader } from '@/components/modal-header';
 import { AppText, IconButton, Screen } from '@/components/ui';
-import { GLOSSARY, GLOSSARY_TOPICS } from '@/constants/glossary';
+import { GLOSSARY_TOPICS } from '@/constants/glossary';
 import { IconSize, IconStroke, Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { glossaryEntries } from '@/lib/glossary';
 import { normalizar } from '@/lib/gym/search';
+import { useLanguage, useT } from '@/i18n';
 
 const MAX_WIDTH = 640;
 const SIN_ANILLO: TextStyle = Platform.OS === 'web' ? ({ outlineStyle: 'none', outlineWidth: 0 } as unknown as TextStyle) : {};
@@ -21,17 +23,20 @@ const SIN_ANILLO: TextStyle = Platform.OS === 'web' ? ({ outlineStyle: 'none', o
  */
 export default function GlossaryScreen() {
   const theme = useTheme();
+  const lang = useLanguage();
+  const g = useT().glossary;
   const { term } = useLocalSearchParams<{ term?: string }>();
   const [busqueda, setBusqueda] = useState('');
   const [abiertos, setAbiertos] = useState<Set<string>>(() => new Set(term ? [term] : []));
 
   const q = normalizar(busqueda.trim());
   const secciones = useMemo(() => {
-    const entradas = q
-      ? GLOSSARY.filter((e) => [e.term, e.also ?? '', e.meaning, e.short].some((t) => normalizar(t).includes(q)))
-      : GLOSSARY;
-    return GLOSSARY_TOPICS.map((t) => ({ ...t, entradas: entradas.filter((e) => e.topic === t.id) })).filter((t) => t.entradas.length > 0);
-  }, [q]);
+    const todas = glossaryEntries(lang);
+    const entradas = q ? todas.filter((e) => [e.term, e.also ?? '', e.meaning, e.short].some((t) => normalizar(t).includes(q))) : todas;
+    return GLOSSARY_TOPICS.map((t) => ({ id: t.id, label: g.topics[t.id], entradas: entradas.filter((e) => e.topic === t.id) })).filter(
+      (t) => t.entradas.length > 0,
+    );
+  }, [q, lang, g]);
 
   const alternar = (id: string) =>
     setAbiertos((prev) => {
@@ -43,10 +48,9 @@ export default function GlossaryScreen() {
 
   return (
     <Screen modal scroll maxWidth={MAX_WIDTH}>
-      <ModalHeader back title="Glosario" />
+      <ModalHeader back title={g.title} />
       <AppText color="textSecondary">
-        Lo que significa cada término del gimnasio, con un ejemplo. No necesitas saberlos para entrenar: aquí están por si te topas con
-        uno.
+        {g.intro}
       </AppText>
 
       <View style={[styles.buscador, { borderColor: theme.border, backgroundColor: theme.surfaceAlt }]}>
@@ -54,14 +58,14 @@ export default function GlossaryScreen() {
         <TextInput
           value={busqueda}
           onChangeText={setBusqueda}
-          placeholder="RIR, drop set, superserie…"
+          placeholder={g.searchPlaceholder}
           placeholderTextColor={theme.textTertiary}
-          accessibilityLabel="Buscar en el glosario"
+          accessibilityLabel={g.searchA11y}
           autoCorrect={false}
           style={[styles.input, SIN_ANILLO, { color: theme.text }]}
         />
         {busqueda ? (
-          <IconButton label="Limpiar búsqueda" onPress={() => setBusqueda('')}>
+          <IconButton label={g.clearSearch} onPress={() => setBusqueda('')}>
             <X size={IconSize.inline} strokeWidth={IconStroke} color={theme.textTertiary} />
           </IconButton>
         ) : null}
@@ -69,7 +73,7 @@ export default function GlossaryScreen() {
 
       {secciones.length === 0 ? (
         <AppText color="textSecondary" style={styles.vacio}>
-          Ningún término dice eso.
+          {g.noMatch}
         </AppText>
       ) : null}
 
