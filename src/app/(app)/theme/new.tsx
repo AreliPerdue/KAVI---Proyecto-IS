@@ -14,11 +14,15 @@ import { useTheme } from '@/hooks/use-theme';
 import { useThemeMutations, useThemes } from '@/hooks/use-themes';
 import { themeFormSchema, type ThemeFormValues } from '@/lib/schemas/theme';
 import { useConfirm, useSnackbar } from '@/providers';
+import { useLanguage, useT } from '@/i18n';
+import { dimensionName, themeName } from '@/lib/theme-name';
 
 const MAX_WIDTH = 640;
 
 /** Crear/editar tema propio: nombre + dimensión + color (12) + icono (~40) (RF-T2). */
 export default function ThemeFormScreen() {
+  const tx = useT();
+  const lang = useLanguage();
   const theme = useTheme();
   const router = useRouter();
   const confirm = useConfirm();
@@ -41,7 +45,8 @@ export default function ThemeFormScreen() {
   useEffect(() => {
     if (editing) {
       reset({
-        name: editing.name,
+        // Un tema del sistema se edita desde su nombre en el idioma activo (spec 12).
+        name: themeName(editing),
         dimension: editing.dimension,
         color: (THEME_PALETTE as readonly string[]).includes(editing.color) ? (editing.color as ThemeFormValues['color']) : THEME_PALETTE[0],
         icon: editing.icon,
@@ -54,28 +59,28 @@ export default function ThemeFormScreen() {
 
   const onSubmit = handleSubmit((values) => {
     if (editing) {
-      update.mutate({ id: editing.id, patch: values }, { onSuccess: () => { showSnackbar({ message: 'Tema actualizado.' }); close(); } });
+      update.mutate({ id: editing.id, patch: values }, { onSuccess: () => { showSnackbar({ message: tx.themes.editor.updated }); close(); } });
     } else {
-      create.mutate(values, { onSuccess: () => { showSnackbar({ message: 'Tema creado.' }); close(); } });
+      create.mutate(values, { onSuccess: () => { showSnackbar({ message: tx.themes.editor.created }); close(); } });
     }
   });
 
   const onDelete = async () => {
     if (!editing) return;
     const ok = await confirm({
-      title: 'Eliminar tema',
-      message: 'Las actividades que lo usan conservarán su color e icono y quedarán sin tema.',
-      confirmLabel: 'Eliminar',
+      title: tx.themes.editor.delete,
+      message: tx.themes.editor.deleteMessage,
+      confirmLabel: tx.themes.editor.deleteConfirm,
       destructive: true,
     });
     if (!ok) return;
-    remove.mutate(editing.id, { onSuccess: () => { showSnackbar({ message: 'Tema eliminado.' }); close(); } });
+    remove.mutate(editing.id, { onSuccess: () => { showSnackbar({ message: tx.themes.editor.deleted }); close(); } });
   };
 
   if (id && themes.isPending) {
     return (
       <Screen modal maxWidth={MAX_WIDTH}>
-        <ModalHeader title="Editar tema" />
+        <ModalHeader title={tx.themes.editor.edit} />
         <LoadingState />
       </Screen>
     );
@@ -83,29 +88,29 @@ export default function ThemeFormScreen() {
   if (id && themes.isSuccess && !editing) {
     return (
       <Screen modal maxWidth={MAX_WIDTH}>
-        <ModalHeader title="Editar tema" />
-        <ErrorState message="Ese tema ya no existe." />
+        <ModalHeader title={tx.themes.editor.edit} />
+        <ErrorState message={tx.themes.editor.notFound} />
       </Screen>
     );
   }
 
   return (
     <Screen modal scroll maxWidth={MAX_WIDTH}>
-      <ModalHeader title={delSistema ? 'Personalizar tema' : editing ? 'Editar tema' : 'Nuevo tema'} />
+      <ModalHeader title={delSistema ? tx.themes.editor.customize : editing ? tx.themes.editor.edit : tx.themes.manage.newTheme} />
       {mutation.error ? <Banner tone="error" message={mutation.error.message} /> : null}
 
       <View style={[styles.preview, { backgroundColor: `${color}22`, borderColor: color }]}>
         <View style={[styles.previewSwatch, { backgroundColor: color }]}>
           <ThemeIcon name={icon} color="#FFFFFF" size={IconSize.action} />
         </View>
-        <AppText variant="bodyStrong">{name.trim() || 'Nombre del tema'}</AppText>
+        <AppText variant="bodyStrong">{name.trim() || tx.themes.editor.namePlaceholderPreview}</AppText>
       </View>
 
       <Controller
         control={control}
         name="name"
         render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
-          <TextField label="Nombre" value={value} onChangeText={onChange} onBlur={onBlur} error={error?.message} placeholder="Ej. Piano, Voluntariado…" maxLength={40} />
+          <TextField label={tx.themes.editor.name} value={value} onChangeText={onChange} onBlur={onBlur} error={error?.message} placeholder={tx.themes.editor.namePlaceholder} maxLength={40} />
         )}
       />
 
@@ -115,11 +120,11 @@ export default function ThemeFormScreen() {
         render={({ field: { onChange, value } }) => (
           <View style={styles.section}>
             <AppText variant="label" color="textSecondary">
-              Dimensión
+              {tx.themes.editor.dimension}
             </AppText>
             <View style={styles.chips}>
               {DIMENSIONS.map((d) => (
-                <Chip key={d.key} label={d.label} color={d.color} selected={value === d.key} onPress={() => onChange(d.key)} />
+                <Chip key={d.key} label={dimensionName(d.key, lang)} color={d.color} selected={value === d.key} onPress={() => onChange(d.key)} />
               ))}
             </View>
           </View>
@@ -132,14 +137,14 @@ export default function ThemeFormScreen() {
         render={({ field: { onChange, value } }) => (
           <View style={styles.section}>
             <AppText variant="label" color="textSecondary">
-              Color
+              {tx.themes.editor.colorSection}
             </AppText>
             <View style={styles.chips}>
               {THEME_PALETTE.map((c) => (
                 <Pressable
                   key={c}
                   accessibilityRole="button"
-                  accessibilityLabel={`Color ${c}`}
+                  accessibilityLabel={tx.themes.editor.color(c)}
                   accessibilityState={{ selected: value === c }}
                   onPress={() => onChange(c)}
                   style={({ pressed }) => [styles.colorDot, { backgroundColor: c }, pressed ? styles.pressed : null]}>
@@ -157,7 +162,7 @@ export default function ThemeFormScreen() {
         render={({ field: { onChange, value } }) => (
           <View style={styles.section}>
             <AppText variant="label" color="textSecondary">
-              Icono
+              {tx.themes.editor.iconSection}
             </AppText>
             <View style={styles.chips}>
               {THEME_ICON_NAMES.map((n) => {
@@ -166,7 +171,7 @@ export default function ThemeFormScreen() {
                   <Pressable
                     key={n}
                     accessibilityRole="button"
-                    accessibilityLabel={`Icono ${n}`}
+                    accessibilityLabel={tx.themes.editor.icon(n)}
                     accessibilityState={{ selected }}
                     onPress={() => onChange(n)}
                     style={({ pressed }) => [
@@ -183,9 +188,9 @@ export default function ThemeFormScreen() {
         )}
       />
 
-      <Button title={editing ? 'Guardar cambios' : 'Crear tema'} onPress={onSubmit} loading={mutation.isPending} />
+      <Button title={editing ? tx.themes.editor.saveChanges : tx.themes.editor.create} onPress={onSubmit} loading={mutation.isPending} />
       {/* Un tema del sistema se personaliza, no se borra: su fila la comparten todas las cuentas. */}
-      {editing && !delSistema ? <Button title="Eliminar tema" variant="danger" onPress={onDelete} loading={remove.isPending} /> : null}
+      {editing && !delSistema ? <Button title={tx.themes.editor.delete} variant="danger" onPress={onDelete} loading={remove.isPending} /> : null}
     </Screen>
   );
 }

@@ -6,5 +6,6 @@ import { dates } from './dates';
 import { errors } from './errors';
 import { nav } from './nav';
 import { profile } from './profile';
+import { themes } from './themes';
 
-export const en: Dictionary = { auth, calendar, common, dates, errors, nav, profile };
+export const en: Dictionary = { auth, calendar, common, dates, errors, nav, profile, themes };

@@ -8,6 +8,8 @@ import { IconSize, IconStroke, Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useThemes, useThemesByDimension } from '@/hooks/use-themes';
 import type { Theme } from '@/types/domain';
+import { useLanguage, useT } from '@/i18n';
+import { dimensionName, themeName } from '@/lib/theme-name';
 
 function normalize(text: string): string {
   return text.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
@@ -28,6 +30,8 @@ export function ThemePicker({
   const theme = useTheme();
   const router = useRouter();
   const themes = useThemes();
+  const tx = useT();
+  const lang = useLanguage();
   const [query, setQuery] = useState('');
   const groups = useThemesByDimension(themes.data);
 
@@ -35,13 +39,16 @@ export function ThemePicker({
     const q = normalize(query.trim());
     if (!q) return groups;
     return groups
-      .map((g) => ({ ...g, themes: g.themes.filter((t) => normalize(t.name).includes(q) || normalize(g.dimension.label).includes(q)) }))
+      .map((g) => ({
+        ...g,
+        themes: g.themes.filter((t) => normalize(themeName(t, lang)).includes(q) || normalize(dimensionName(g.dimension.key, lang)).includes(q)),
+      }))
       .filter((g) => g.themes.length > 0);
-  }, [groups, query]);
+  }, [groups, query, lang]);
 
   return (
-    <Sheet visible={visible} onClose={onClose} title="Tema">
-      <TextField label="Buscar" value={query} onChangeText={setQuery} placeholder="Gimnasio, lectura, familia…" autoCorrect={false} />
+    <Sheet visible={visible} onClose={onClose} title={tx.themes.picker.title}>
+      <TextField label={tx.common.search} value={query} onChangeText={setQuery} placeholder={tx.themes.picker.searchPlaceholder} autoCorrect={false} />
 
       <Pressable
         accessibilityRole="button"
@@ -49,18 +56,18 @@ export function ThemePicker({
         onPress={() => onSelect(null)}
         style={({ pressed }) => [styles.row, pressed ? { backgroundColor: theme.surfaceAlt } : null]}>
         <View style={[styles.swatch, { backgroundColor: theme.neutralActivity }]} />
-        <AppText style={styles.rowLabel}>Sin tema</AppText>
+        <AppText style={styles.rowLabel}>{tx.themes.picker.none}</AppText>
         {value === null ? <Check size={IconSize.inline} strokeWidth={IconStroke} color={theme.ink} /> : null}
       </Pressable>
 
-      {themes.isPending ? <LoadingState label="Cargando temas…" /> : null}
+      {themes.isPending ? <LoadingState label={tx.themes.manage.loading} /> : null}
 
       {filtered.map(({ dimension, themes: list }) => (
         <View key={dimension.key} style={styles.group}>
           <View style={styles.groupHeader}>
             <View style={[styles.dimensionDot, { backgroundColor: dimension.color }]} />
             <AppText variant="label" color="textSecondary">
-              {dimension.label}
+              {dimensionName(dimension.key, lang)}
             </AppText>
           </View>
           <View style={styles.grid}>
@@ -70,7 +77,7 @@ export function ThemePicker({
                 <Pressable
                   key={t.id}
                   accessibilityRole="button"
-                  accessibilityLabel={t.name}
+                  accessibilityLabel={themeName(t, lang)}
                   accessibilityState={{ selected }}
                   onPress={() => onSelect(t)}
                   style={({ pressed }) => [
@@ -80,7 +87,7 @@ export function ThemePicker({
                   ]}>
                   <ThemeIcon name={t.icon} color={t.color} size={IconSize.action} />
                   <AppText variant="caption" numberOfLines={2} style={styles.tileLabel}>
-                    {t.name}
+                    {themeName(t, lang)}
                   </AppText>
                 </Pressable>
               );
@@ -91,12 +98,12 @@ export function ThemePicker({
 
       {themes.isSuccess && filtered.length === 0 ? (
         <AppText color="textSecondary" style={styles.empty}>
-          No hay temas con ese nombre.
+          {tx.themes.picker.noMatch}
         </AppText>
       ) : null}
 
       <Button
-        title="Gestionar mis temas"
+        title={tx.themes.picker.manage}
         variant="secondary"
         icon={<Settings2 size={IconSize.inline} strokeWidth={IconStroke} color={theme.text} />}
         onPress={() => {

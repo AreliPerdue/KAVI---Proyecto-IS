@@ -13,7 +13,13 @@ describe('presets', () => {
 });
 
 describe('describeOffset', () => {
-  it.each(REMINDER_PRESETS.map((p) => [p.offset, p.label]))(
+  it.each([
+    [0, 'Al momento'],
+    [10, '10 min antes'],
+    [30, '30 min antes'],
+    [60, '1 h antes'],
+    [1440, '1 día antes'],
+  ])(
     'usa la etiqueta del preset para %p',
     (offset, label) => {
       expect(describeOffset(offset as number)).toBe(label);

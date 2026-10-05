@@ -68,7 +68,7 @@ export function RemindersField({ value, onChange }: { value: number[]; onChange:
         {REMINDER_PRESETS.map((preset) => (
           <Chip
             key={preset.offset}
-            label={preset.label}
+            label={describeOffset(preset.offset)}
             selected={value.includes(preset.offset)}
             onPress={() => alternar(preset.offset)}
           />

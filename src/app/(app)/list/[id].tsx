@@ -30,7 +30,7 @@ import {
   ThemeIcon,
   TimePickerSheet,
 } from '@/components/ui';
-import { LIST_REMINDER_DEFAULT_HOUR, LIST_REMINDER_PRESETS } from '@/constants/reminders';
+import { describeListOffset, LIST_REMINDER_DEFAULT_HOUR, LIST_REMINDER_PRESETS } from '@/constants/reminders';
 import { Fonts, IconSize, IconStroke, Radius, Spacing, Typography } from '@/constants/theme';
 import { useList, useListMutations, useListRuns } from '@/hooks/use-lists';
 import { useTheme } from '@/hooks/use-theme';
@@ -911,7 +911,7 @@ export default function ListDetailScreen() {
                       ponerRecordatorio(editando, null),
                     )}
                     {LIST_REMINDER_PRESETS.map((preset) =>
-                      chipSeccion(editando.reminder_offset_minutes === preset.offset, preset.label, () =>
+                      chipSeccion(editando.reminder_offset_minutes === preset.offset, describeListOffset(preset.offset), () =>
                         ponerRecordatorio(editando, preset.offset),
                       ),
                     )}
