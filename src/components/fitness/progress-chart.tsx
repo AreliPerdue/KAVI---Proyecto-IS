@@ -5,6 +5,7 @@ import Svg, { Circle, Line, Path } from 'react-native-svg';
 import { AppText } from '@/components/ui';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { useT } from '@/i18n';
 
 export type ChartPoint = { label: string; value: number };
 
@@ -36,6 +37,7 @@ function ticksDe(min: number, max: number): number[] {
  */
 export function ProgressChart({ title, points, format }: { title: string; points: ChartPoint[]; format: (v: number) => string }) {
   const theme = useTheme();
+  const c = useT().fitness.chart;
   const [ancho, setAncho] = useState(0);
   const [elegido, setElegido] = useState<number | null>(null);
 
@@ -46,7 +48,7 @@ export function ProgressChart({ title, points, format }: { title: string; points
           {title}
         </AppText>
         <AppText variant="caption" color="textTertiary">
-          Con dos sesiones o más aquí aparece la tendencia.
+          {c.needsTwo}
         </AppText>
       </View>
     );
@@ -73,7 +75,7 @@ export function ProgressChart({ title, points, format }: { title: string; points
           {points[activo].label} · {format(points[activo].value)}
         </AppText>
       </View>
-      <View onLayout={(e: LayoutChangeEvent) => setAncho(e.nativeEvent.layout.width)} accessibilityLabel={`${title}: de ${format(points[0].value)} a ${format(points[points.length - 1].value)}`}>
+      <View onLayout={(e: LayoutChangeEvent) => setAncho(e.nativeEvent.layout.width)} accessibilityLabel={c.rangeA11y(title, format(points[0].value), format(points[points.length - 1].value))}>
         {ancho > 0 ? (
           <Svg width={ancho} height={ALTO}>
             {ticks.map((t) => (

@@ -6,7 +6,7 @@ import { NO_PERMISSIONS, type HealthApi } from './types';
  */
 export const platformHealth: HealthApi = {
   async availability() {
-    return { status: 'unsupported', source: null, message: 'Pronto: KAVI todavía no lee la actividad de este iPhone.' };
+    return { status: 'unsupported', source: null, reason: 'ios_soon' };
   },
   async permissions() {
     return NO_PERMISSIONS;

@@ -13,26 +13,27 @@ import { useOutboxBootstrap } from '@/hooks/use-set-sync';
 import { useExternalSessions, useHealthAvailability, useHealthPermissions } from '@/hooks/use-health';
 import { useNoteSearch, useWorkoutMutations, useWorkouts } from '@/hooks/use-workouts';
 import { kaviSpan, matchSessions } from '@/lib/health/match';
-import { HEALTH_SOURCE_LABEL } from '@/services/health';
 import { formatShortDate, formatTime, fromIso } from '@/lib/dates';
 import type { NoteHit } from '@/services/workouts';
 import { usePreferencesStore } from '@/store/preferences-store';
 import type { Workout } from '@/types/domain';
 import { StackedModuleBack } from '@/components/navigation/stacked-module';
+import { type Dictionary, useLanguage, useT } from '@/i18n';
 
 const SIN_ANILLO: TextStyle =
   Platform.OS === 'web' ? ({ outlineStyle: 'none', outlineWidth: 0 } as unknown as TextStyle) : {};
 
-const DONDE: Record<NoteHit['where'], string> = { session: 'Nota de la sesión', exercise: 'Nota del ejercicio', set: 'Nota de serie' };
-
 /** Nombre propio > título de la actividad ligada > texto de reserva (RF-F7). */
-function nombreDe(workout: Workout): string {
-  return workout.title || workout.activity_title || 'Entrenamiento libre';
+function nombreDe(workout: Workout, tx: Dictionary): string {
+  return workout.title || workout.activity_title || tx.fitness.tab.freeWorkout;
 }
 
 /** Historial de entrenamientos + entrenamiento libre (RF-F2, RF-F7). */
 export default function FitnessScreen() {
   const theme = useTheme();
+  const tx = useT();
+  const lang = useLanguage();
+  const f = tx.fitness.tab;
   const router = useRouter();
   const workouts = useWorkouts();
   const { create } = useWorkoutMutations();
@@ -79,7 +80,7 @@ export default function FitnessScreen() {
       return (
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel={`${nombreDe(item)}, ${formatShortDate(fromIso(item.performed_at))}, ${item.exercise_count ?? 0} ejercicios`}
+        accessibilityLabel={`${nombreDe(item, tx)}, ${formatShortDate(fromIso(item.performed_at), lang)}, ${f.exercisesCount(item.exercise_count ?? 0)}`}
         onPress={() => openWorkout(item.id, 'view')}
         style={({ pressed }) => [styles.row, { borderColor: theme.border, backgroundColor: pressed ? theme.surfaceAlt : theme.surface }]}>
         <View style={[styles.icon, { backgroundColor: theme.surfaceAlt }]}>
@@ -88,19 +89,18 @@ export default function FitnessScreen() {
         <View style={styles.text}>
           <View style={styles.tituloFila}>
             <AppText variant="bodyStrong" style={styles.flexTexto}>
-              {nombreDe(item)}
+              {nombreDe(item, tx)}
             </AppText>
-            {item.notes ? <MessageSquareText size={14} strokeWidth={IconStroke} color={theme.textTertiary} accessibilityLabel="Tiene nota" /> : null}
+            {item.notes ? <MessageSquareText size={14} strokeWidth={IconStroke} color={theme.textTertiary} accessibilityLabel={f.hasNote} /> : null}
           </View>
           <AppText variant="caption" color="textSecondary" tabular>
-            {formatShortDate(fromIso(item.performed_at))} · {formatTime(fromIso(item.performed_at))} · {item.exercise_count ?? 0}{' '}
-            {item.exercise_count === 1 ? 'ejercicio' : 'ejercicios'}
+            {formatShortDate(fromIso(item.performed_at), lang)} · {formatTime(fromIso(item.performed_at), lang)} · {f.exercisesCount(item.exercise_count ?? 0)}
             {item.duration_minutes ? ` · ${item.duration_minutes} min` : ''}
-            {item.edited_at ? ' · editado' : ''}
+            {item.edited_at ? ` · ${f.edited}` : ''}
           </AppText>
           {reloj?.activeKcal != null ? (
             <AppText variant="caption" color="textTertiary" tabular>
-              {Math.round(reloj.activeKcal)} kcal activas · {reloj.app ?? HEALTH_SOURCE_LABEL[reloj.source]}
+              {f.activeKcal(Math.round(reloj.activeKcal), reloj.app ?? tx.fitness.health.sources[reloj.source])}
             </AppText>
           ) : null}
         </View>
@@ -108,14 +108,14 @@ export default function FitnessScreen() {
       </Pressable>
       );
     },
-    [theme, openWorkout, delReloj],
+    [theme, openWorkout, delReloj, tx, lang, f],
   );
 
   const renderNota = useCallback(
     ({ item }: { item: NoteHit }) => (
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel={`${DONDE[item.where]}, ${formatShortDate(fromIso(item.performed_at))}: ${item.text}`}
+        accessibilityLabel={`${f.where[item.where]}, ${formatShortDate(fromIso(item.performed_at), lang)}: ${item.text}`}
         onPress={() => openWorkout(item.workout_id, 'view')}
         style={({ pressed }) => [styles.row, { borderColor: theme.border, backgroundColor: pressed ? theme.surfaceAlt : theme.surface }]}>
         <View style={[styles.icon, { backgroundColor: theme.surfaceAlt }]}>
@@ -123,7 +123,7 @@ export default function FitnessScreen() {
         </View>
         <View style={styles.text}>
           <AppText variant="caption" color="textSecondary" tabular>
-            {formatShortDate(fromIso(item.performed_at))} · {item.title || DONDE[item.where]}
+            {formatShortDate(fromIso(item.performed_at), lang)} · {item.title || f.where[item.where]}
             {item.exercise_name ? ` · ${item.exercise_name}` : ''}
           </AppText>
           <AppText numberOfLines={3}>{item.text}</AppText>
@@ -131,7 +131,7 @@ export default function FitnessScreen() {
         <ChevronRight size={IconSize.inline} strokeWidth={IconStroke} color={theme.textTertiary} />
       </Pressable>
     ),
-    [theme, openWorkout],
+    [theme, openWorkout, lang, f],
   );
 
   return (
@@ -139,12 +139,12 @@ export default function FitnessScreen() {
       <StackedModuleBack />
       <View style={styles.header}>
         <AppText variant="title" accessibilityRole="header">
-          Fitness
+          {f.title}
         </AppText>
         {/* Spec 11: Ejercicio es el Gym Tracker de siempre; Actividad, lo que mide el teléfono. */}
         <Segmented
           fullWidth
-          options={[{ value: 'ejercicio', label: 'Ejercicio' }, { value: 'actividad', label: 'Actividad' }]}
+          options={[{ value: 'ejercicio', label: f.exercise }, { value: 'actividad', label: f.activity }]}
           value={parte}
           onChange={setParte}
         />
@@ -157,39 +157,39 @@ export default function FitnessScreen() {
         <>
           <View style={styles.header}>
             <Button
-              title="Entrenamiento libre"
+              title={f.freeWorkout}
               variant="secondary"
               icon={<Plus size={IconSize.inline} strokeWidth={IconStroke} color={theme.text} />}
               loading={create.isPending}
               onPress={startFree}
             />
             <AppText variant="caption" color="textTertiary">
-              Para registrar una sesión agendada, ábrela en el calendario y toca “Registrar entrenamiento”.
+              {f.scheduledHint}
             </AppText>
             {/* RF-F64: entrenar no exige saber jerga; el glosario está a un toque. */}
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel="Glosario: qué significa cada término del gimnasio"
+              accessibilityLabel={f.glossaryA11y}
               onPress={() => router.push('/(app)/glossary')}
               style={({ pressed }) => [styles.glosario, pressed ? { opacity: 0.75 } : null]}>
               <BookOpen size={IconSize.inline} strokeWidth={IconStroke} color={theme.textSecondary} />
               <AppText variant="label" color="textSecondary">
-                ¿Qué es RIR, un drop set o una superserie? Ver el glosario
+                {f.glossaryLink}
               </AppText>
             </Pressable>
             {enCurso ? (
               <Pressable
                 accessibilityRole="button"
-                accessibilityLabel={`Continuar la sesión en curso: ${nombreDe(enCurso)}`}
+                accessibilityLabel={f.continueA11y(nombreDe(enCurso, tx))}
                 onPress={() => openWorkout(enCurso.id, 'edit')}
                 style={({ pressed }) => [styles.enCurso, { backgroundColor: theme.ink }, pressed ? { opacity: 0.85 } : null]}>
                 <Play size={IconSize.inline} strokeWidth={IconStroke} color={theme.onInk} fill={theme.onInk} />
                 <View style={styles.text}>
                   <AppText variant="bodyStrong" color="onInk">
-                    Sesión en curso
+                    {f.inProgress}
                   </AppText>
                   <AppText variant="caption" color="onInk">
-                    {nombreDe(enCurso)} · desde las {formatTime(fromIso(enCurso.performed_at))}
+                    {f.since(nombreDe(enCurso, tx), formatTime(fromIso(enCurso.performed_at), lang))}
                   </AppText>
                 </View>
                 <ChevronRight size={IconSize.inline} strokeWidth={IconStroke} color={theme.onInk} />
@@ -202,15 +202,15 @@ export default function FitnessScreen() {
             <TextInput
               value={busqueda}
               onChangeText={setBusqueda}
-              placeholder="Buscar en tus notas"
+              placeholder={f.searchNotes}
               placeholderTextColor={theme.textTertiary}
-              accessibilityLabel="Buscar en tus notas"
+              accessibilityLabel={f.searchNotes}
               autoCorrect={false}
               returnKeyType="search"
               style={[styles.input, SIN_ANILLO, { color: theme.text }]}
             />
             {busqueda ? (
-              <IconButton label="Limpiar búsqueda" onPress={() => setBusqueda('')}>
+              <IconButton label={tx.fitness.picker.clearSearch} onPress={() => setBusqueda('')}>
                 <X size={IconSize.inline} strokeWidth={IconStroke} color={theme.textTertiary} />
               </IconButton>
             ) : null}
@@ -230,8 +230,8 @@ export default function FitnessScreen() {
                 ListEmptyComponent={
                   <EmptyState
                     icon={<MessageSquareText size={32} strokeWidth={IconStroke} color={theme.textTertiary} />}
-                    title="Ninguna nota dice eso"
-                    description="Busca en las notas de tus sesiones, ejercicios y series."
+                    title={f.noNotesTitle}
+                    description={f.noNotesDescription}
                   />
                 }
               />
@@ -248,8 +248,8 @@ export default function FitnessScreen() {
               ListEmptyComponent={
                 <EmptyState
                   icon={<Dumbbell size={32} strokeWidth={IconStroke} color={theme.textTertiary} />}
-                  title="Aún no registras entrenamientos"
-                  description="Tu historial aparecerá aquí, ligado a tus actividades de gimnasio."
+                  title={f.emptyTitle}
+                  description={f.emptyDescription}
                 />
               }
             />

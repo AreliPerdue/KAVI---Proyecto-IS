@@ -35,6 +35,10 @@ export function equipmentName(clave: string, lang: Language = getLanguage()): st
   return etiqueta(t(lang).catalog.equipment, clave);
 }
 
+export function muscleGroupName(clave: string, lang: Language = getLanguage()): string {
+  return etiqueta(t(lang).catalog.muscleGroups, clave);
+}
+
 export function patternName(clave: string, lang: Language = getLanguage()): string {
   return etiqueta(t(lang).catalog.patterns, clave);
 }

@@ -1,6 +1,5 @@
 import { Share2, Trophy } from 'lucide-react-native';
 import { format } from 'date-fns';
-import { es } from 'date-fns/locale';
 import { useMemo, useRef, useState } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 import { captureRef } from 'react-native-view-shot';
@@ -10,7 +9,9 @@ import { gymratLineFor, tonnageEquivalence } from '@/constants/gymrat';
 import { IconSize, IconStroke, Radius, Spacing } from '@/constants/theme';
 import { useGymProgress } from '@/hooks/use-gym-progress';
 import { useTheme } from '@/hooks/use-theme';
+import { formatDayAndMonth } from '@/lib/dates';
 import { unlockedBy } from '@/lib/gym/achievements';
+import { muscleGroupName } from '@/lib/gym/display-names';
 import { isLegDay, musclesWorked } from '@/lib/gym/muscles';
 import type { SessionSummary } from '@/lib/gym/session';
 import { formatWeight } from '@/lib/gym/units';
@@ -19,6 +20,7 @@ import { useSnackbar } from '@/providers';
 import type { WorkoutDetail } from '@/services/workouts';
 import { useGymStore } from '@/store/gym-store';
 import type { Exercise, WeightUnit } from '@/types/domain';
+import { useLanguage, useT } from '@/i18n';
 
 export type SessionSummarySheetProps = {
   visible: boolean;
@@ -35,8 +37,9 @@ export type SessionSummarySheetProps = {
  * si la captura falla, se comparte como texto.
  */
 export function SessionSummarySheet({ visible, onClose, ...rest }: SessionSummarySheetProps) {
+  const tx = useT();
   return (
-    <Sheet visible={visible} onClose={onClose} title="Sesión terminada">
+    <Sheet visible={visible} onClose={onClose} title={tx.fitness.summary.title}>
       {visible ? <Contenido onClose={onClose} {...rest} /> : null}
     </Sheet>
   );
@@ -44,6 +47,8 @@ export function SessionSummarySheet({ visible, onClose, ...rest }: SessionSummar
 
 function Contenido({ workout, summary, catalog, unit, onClose }: Omit<SessionSummarySheetProps, 'visible'>) {
   const theme = useTheme();
+  const lang = useLanguage();
+  const r = useT().fitness.summary;
   const showSnackbar = useSnackbar();
   const serio = useGymStore((s) => s.seriousMode);
   const trato = useGymStore((s) => s.trato);
@@ -51,36 +56,36 @@ function Contenido({ workout, summary, catalog, unit, onClose }: Omit<SessionSum
   const tarjeta = useRef<View>(null);
   const [compartiendo, setCompartiendo] = useState(false);
 
-  const musculos = useMemo(() => musclesWorked(workout.exercises, catalog), [workout.exercises, catalog]);
-  const frase = gymratLineFor(isLegDay(workout.exercises, catalog) ? 'leg_day' : 'session_done', trato, serio, workout.id);
-  const equivalencia = serio ? null : tonnageEquivalence(summary.volumeKg, workout.id);
+  const musculos = useMemo(() => musclesWorked(workout.exercises, catalog).map((g) => muscleGroupName(g, lang)), [workout.exercises, catalog, lang]);
+  const frase = gymratLineFor(isLegDay(workout.exercises, catalog) ? 'leg_day' : 'session_done', trato, serio, workout.id, lang);
+  const equivalencia = serio ? null : tonnageEquivalence(summary.volumeKg, workout.id, lang);
   /** Solo cuando el historial ya trae esta sesión: antes, todo parecería "nuevo". */
   const logros = useMemo(() => {
     const log = progreso.sessions;
     if (!progreso.streak || !log.some((w) => w.id === workout.id)) return [];
-    return unlockedBy(workout.id, log, progreso.catalog, progreso.streak.best, trato);
-  }, [progreso.sessions, progreso.streak, progreso.catalog, workout.id, trato]);
+    return unlockedBy(workout.id, log, progreso.catalog, progreso.streak.best, trato, lang);
+  }, [progreso.sessions, progreso.streak, progreso.catalog, workout.id, trato, lang]);
 
   const compartirTexto = async () => {
     const lineas = [
-      `${workout.title || workout.activity_title || 'Entrenamiento'} · KAVI`,
-      [summary.durationMin ? `${summary.durationMin} min` : null, `${formatWeight(summary.volumeKg, unit)} de volumen`, `${summary.setsDone} series`, summary.prCount ? `${summary.prCount} PRs` : null]
+      `${workout.title || workout.activity_title || r.workoutFallback} · KAVI`,
+      [summary.durationMin ? `${summary.durationMin} min` : null, r.volumeOf(formatWeight(summary.volumeKg, unit)), r.sets(summary.setsDone), summary.prCount ? r.prs(summary.prCount) : null]
         .filter(Boolean)
         .join(' · '),
-      musculos.length ? `Trabajé: ${musculos.join(', ')}` : null,
-      equivalencia ? `Moví el equivalente a ${equivalencia}.` : null,
-      logros.length ? `Logro desbloqueado: ${logros.map((l) => l.title).join(', ')}` : null,
+      musculos.length ? r.worked(musculos.join(', ')) : null,
+      equivalencia ? r.movedEquivalent(equivalencia) : null,
+      logros.length ? r.unlocked(logros.map((l) => l.title).join(', ')) : null,
     ].filter(Boolean);
-    const r = await shareText(lineas.join('\n'));
-    if (r === 'copied') showSnackbar({ message: 'Resumen copiado.' });
+    const resultado = await shareText(lineas.join('\n'));
+    if (resultado === 'copied') showSnackbar({ message: r.copied });
   };
 
   const compartir = async () => {
     setCompartiendo(true);
     try {
       const uri = await captureRef(tarjeta, { format: 'png', quality: 1, result: Platform.OS === 'web' ? 'data-uri' : 'tmpfile' });
-      const r = await shareImage(uri, `kavi-${format(new Date(workout.performed_at), 'yyyy-MM-dd')}.png`);
-      if (r === 'downloaded') showSnackbar({ message: 'Imagen descargada.' });
+      const resultado = await shareImage(uri, `kavi-${format(new Date(workout.performed_at), 'yyyy-MM-dd')}.png`);
+      if (resultado === 'downloaded') showSnackbar({ message: r.downloaded });
     } catch {
       await compartirTexto();
     } finally {
@@ -93,14 +98,14 @@ function Contenido({ workout, summary, catalog, unit, onClose }: Omit<SessionSum
       {/* Lo que sale en la imagen: lleva su propio fondo para verse igual fuera de la app. */}
       <View ref={tarjeta} collapsable={false} style={[styles.tarjeta, { backgroundColor: theme.surface }]}>
         <AppText variant="caption" color="textSecondary">
-          {workout.title || workout.activity_title || 'Entrenamiento'} · {format(new Date(workout.performed_at), "d 'de' MMMM", { locale: es })} · KAVI
+          {workout.title || workout.activity_title || r.workoutFallback} · {formatDayAndMonth(new Date(workout.performed_at), lang)} · KAVI
         </AppText>
         {frase ? <AppText variant="bodyStrong">{frase}</AppText> : null}
         <View style={styles.cifras}>
-          <Cifra valor={summary.durationMin ? `${summary.durationMin} min` : '—'} etiqueta="Duración" />
-          <Cifra valor={formatWeight(summary.volumeKg, unit)} etiqueta="Volumen" />
-          <Cifra valor={String(summary.setsDone)} etiqueta="Series" />
-          <Cifra valor={String(summary.prCount)} etiqueta="PRs" />
+          <Cifra valor={summary.durationMin ? `${summary.durationMin} min` : '—'} etiqueta={r.duration} />
+          <Cifra valor={formatWeight(summary.volumeKg, unit)} etiqueta={r.volume} />
+          <Cifra valor={String(summary.setsDone)} etiqueta={r.setsLabel} />
+          <Cifra valor={String(summary.prCount)} etiqueta={r.prsLabel} />
         </View>
         {equivalencia ? (
           <AppText color="textSecondary">
@@ -110,13 +115,13 @@ function Contenido({ workout, summary, catalog, unit, onClose }: Omit<SessionSum
         {musculos.length > 0 ? (
           <View style={styles.grupo}>
             <AppText variant="label" color="textSecondary">
-              Músculos trabajados
+              {r.musclesWorked}
             </AppText>
             <AppText>{musculos.join(' · ')}</AppText>
           </View>
         ) : null}
         {logros.map((l) => (
-          <View key={l.id} style={[styles.logro, { backgroundColor: theme.ink }]} accessibilityLabel={`Logro desbloqueado: ${l.title}. ${l.description}`}>
+          <View key={l.id} style={[styles.logro, { backgroundColor: theme.ink }]} accessibilityLabel={r.unlockedA11y(l.title, l.description)}>
             <Trophy size={IconSize.action} strokeWidth={IconStroke} color={theme.onInk} />
             <View style={styles.flex}>
               <AppText variant="bodyStrong" color="onInk">
@@ -131,11 +136,11 @@ function Contenido({ workout, summary, catalog, unit, onClose }: Omit<SessionSum
       </View>
       {summary.setsPending > 0 ? (
         <AppText variant="caption" color="textTertiary">
-          {summary.setsPending} {summary.setsPending === 1 ? 'serie quedó' : 'series quedaron'} sin marcar y no cuentan.
+          {r.pending(summary.setsPending)}
         </AppText>
       ) : null}
-      <Button title="Compartir" variant="secondary" loading={compartiendo} icon={<Share2 size={IconSize.inline} strokeWidth={IconStroke} color={theme.text} />} onPress={() => void compartir()} />
-      <Button title="Listo" onPress={onClose} />
+      <Button title={r.share} variant="secondary" loading={compartiendo} icon={<Share2 size={IconSize.inline} strokeWidth={IconStroke} color={theme.text} />} onPress={() => void compartir()} />
+      <Button title={r.done} onPress={onClose} />
     </>
   );
 }

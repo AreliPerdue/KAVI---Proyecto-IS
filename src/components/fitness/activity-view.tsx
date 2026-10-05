@@ -1,5 +1,4 @@
-import { format, parseISO } from 'date-fns';
-import { es } from 'date-fns/locale';
+import { parseISO } from 'date-fns';
 import { useRouter } from 'expo-router';
 import { Activity as ActivityIcon, ChevronRight, Footprints, Link2, ShieldCheck, Smartphone } from 'lucide-react-native';
 import { useMemo } from 'react';
@@ -10,16 +9,17 @@ import { IconSize, IconStroke, Radius, Spacing } from '@/constants/theme';
 import { anyPermission, useDailyTotals, useExternalSessions, useHealthAvailability, useHealthConnection, useHealthPermissions } from '@/hooks/use-health';
 import { useTheme } from '@/hooks/use-theme';
 import { useWorkouts } from '@/hooks/use-workouts';
-import { formatShortDate, formatTime, fromIso } from '@/lib/dates';
+import { formatDayTitle, formatShortDate, formatTime, formatWeekdayAndDay, fromIso } from '@/lib/dates';
 import { kaviSpan, matchSessions } from '@/lib/health/match';
-import { HEALTH_METRICS, HEALTH_SOURCE_LABEL, type DailyTotals, type HealthSourceId } from '@/services/health';
+import { HEALTH_METRICS, type DailyTotals, type HealthSourceId } from '@/services/health';
+import { formatNumber, type Language, useLanguage, useT } from '@/i18n';
 
 const DIAS = 7;
 /** Los entrenamientos de otras apps se miran dos semanas atrás: son menos y se consultan menos. */
 const DIAS_SESIONES = 14;
 
-const km = (m: number) => (m / 1000).toLocaleString('es-MX', { maximumFractionDigits: 1 });
-const entero = (n: number) => Math.round(n).toLocaleString('es-MX');
+const km = (m: number, lang: Language) => formatNumber(m / 1000, lang, { maximumFractionDigits: 1 });
+const entero = (n: number, lang: Language) => formatNumber(Math.round(n), lang);
 
 /**
  * Fitness → Actividad (spec 11): lo que el teléfono o el reloj ya miden, en solo lectura y con
@@ -28,6 +28,8 @@ const entero = (n: number) => Math.round(n).toLocaleString('es-MX');
  */
 export function ActivityView() {
   const theme = useTheme();
+  const tx = useT();
+  const a = tx.fitness.activity;
   const disponible = useHealthAvailability();
   const estado = disponible.data;
   const permisos = useHealthPermissions(estado?.status === 'available');
@@ -40,10 +42,10 @@ export function ActivityView() {
     return (
       <View style={[styles.tarjeta, { backgroundColor: theme.surfaceAlt }]}>
         <Smartphone size={IconSize.action} strokeWidth={IconStroke} color={theme.textSecondary} />
-        <AppText variant="bodyStrong">{estado?.status === 'web' ? 'Tu actividad vive en tu teléfono' : 'Actividad no disponible'}</AppText>
-        <AppText color="textSecondary">{estado?.message ?? 'No se pudo saber si este dispositivo tiene datos de actividad.'}</AppText>
+        <AppText variant="bodyStrong">{estado?.status === 'web' ? a.webTitle : a.unavailableTitle}</AppText>
+        <AppText color="textSecondary">{estado ? tx.fitness.health.unavailable[estado.reason] : a.unknown}</AppText>
         <AppText variant="caption" color="textTertiary">
-          Tus entrenamientos de KAVI siguen completos en Ejercicio.
+          {a.kaviStillComplete}
         </AppText>
       </View>
     );
@@ -53,27 +55,26 @@ export function ActivityView() {
     return (
       <View style={[styles.tarjeta, { backgroundColor: theme.surfaceAlt }]}>
         <ActivityIcon size={IconSize.action} strokeWidth={IconStroke} color={theme.text} />
-        <AppText variant="heading">Conecta tu actividad</AppText>
+        <AppText variant="heading">{a.connectTitle}</AppText>
         <AppText color="textSecondary">
-          KAVI puede mostrar lo que tu teléfono o reloj ya miden ({HEALTH_SOURCE_LABEL[estado.source]}), junto a tus entrenamientos. Tú eliges qué
-          compartir:
+          {a.connectIntro(tx.fitness.health.sources[estado.source])}
         </AppText>
         {HEALTH_METRICS.map((m) => (
           <View key={m.id} style={styles.metrica}>
-            <AppText variant="bodyStrong">{m.label}</AppText>
+            <AppText variant="bodyStrong">{tx.fitness.health.metrics[m.id]}</AppText>
             <AppText variant="caption" color="textSecondary">
-              {m.why}
+              {tx.fitness.health.why[m.id]}
             </AppText>
           </View>
         ))}
         <View style={styles.privacidad}>
           <ShieldCheck size={IconSize.inline} strokeWidth={IconStroke} color={theme.textSecondary} />
           <AppText variant="caption" color="textSecondary" style={styles.flex}>
-            Solo se leen en este dispositivo. KAVI no los sube a internet ni los comparte, y puedes desconectarlos cuando quieras desde Perfil.
+            {a.privacy}
           </AppText>
         </View>
         {connect.error ? <Banner tone="error" message={connect.error.message} /> : null}
-        <Button title="Conectar" loading={connect.isPending} onPress={() => connect.mutate(HEALTH_METRICS.map((m) => m.id))} />
+        <Button title={a.connect} loading={connect.isPending} onPress={() => connect.mutate(HEALTH_METRICS.map((m) => m.id))} />
       </View>
     );
   }
@@ -83,11 +84,14 @@ export function ActivityView() {
 
 function Conectado({ source, permisos }: { source: HealthSourceId; permisos: NonNullable<ReturnType<typeof useHealthPermissions>['data']> }) {
   const theme = useTheme();
+  const tx = useT();
+  const lang = useLanguage();
+  const a = tx.fitness.activity;
   const router = useRouter();
   const totales = useDailyTotals(DIAS, true);
   const externas = useExternalSessions(DIAS_SESIONES, permisos.exercise_sessions);
   const workouts = useWorkouts();
-  const fuente = HEALTH_SOURCE_LABEL[source];
+  const fuente = tx.fitness.health.sources[source];
 
   const hoy = totales.data?.[totales.data.length - 1];
   const relacion = useMemo(
@@ -98,10 +102,10 @@ function Conectado({ source, permisos }: { source: HealthSourceId; permisos: Non
     const m = new Map<string, { id: string; nombre: string }>();
     for (const [kaviId, ext] of relacion.byKavi) {
       const w = workouts.data?.find((x) => x.id === kaviId);
-      if (w) m.set(ext.id, { id: w.id, nombre: w.title || w.activity_title || 'Entrenamiento' });
+      if (w) m.set(ext.id, { id: w.id, nombre: w.title || w.activity_title || a.workoutFallback });
     }
     return m;
-  }, [relacion, workouts.data]);
+  }, [relacion, workouts.data, a]);
 
   if (totales.isPending) return <LoadingState />;
 
@@ -109,19 +113,19 @@ function Conectado({ source, permisos }: { source: HealthSourceId; permisos: Non
     <View style={styles.pila}>
       <View style={styles.encabezado}>
         <AppText variant="heading" accessibilityRole="header">
-          Hoy
+          {a.today}
         </AppText>
         <AppText variant="caption" color="textTertiary">
-          Fuente: {fuente}
+          {a.source(fuente)}
         </AppText>
       </View>
       <View style={styles.cifras}>
-        <Cifra valor={permisos.steps && hoy?.steps != null ? entero(hoy.steps) : '—'} etiqueta="Pasos" nota={permisos.steps ? null : 'Sin permiso'} />
-        <Cifra valor={permisos.distance && hoy?.distanceM != null ? `${km(hoy.distanceM)} km` : '—'} etiqueta="Distancia" nota={permisos.distance ? null : 'Sin permiso'} />
+        <Cifra valor={permisos.steps && hoy?.steps != null ? entero(hoy.steps, lang) : '—'} etiqueta={a.steps} nota={permisos.steps ? null : a.noPermission} />
+        <Cifra valor={permisos.distance && hoy?.distanceM != null ? `${km(hoy.distanceM, lang)} km` : '—'} etiqueta={a.distance} nota={permisos.distance ? null : a.noPermission} />
         <Cifra
-          valor={permisos.active_calories && hoy?.activeKcal != null ? entero(hoy.activeKcal) : '—'}
-          etiqueta="Calorías activas (kcal)"
-          nota={permisos.active_calories ? null : 'Sin permiso'}
+          valor={permisos.active_calories && hoy?.activeKcal != null ? entero(hoy.activeKcal, lang) : '—'}
+          etiqueta={a.activeKcalLabel}
+          nota={permisos.active_calories ? null : a.noPermission}
         />
       </View>
 
@@ -129,12 +133,12 @@ function Conectado({ source, permisos }: { source: HealthSourceId; permisos: Non
 
       <View style={styles.pila}>
         <AppText variant="heading" accessibilityRole="header">
-          Entrenamientos de otras apps
+          {a.otherApps}
         </AppText>
         {!permisos.exercise_sessions ? (
-          <AppText color="textSecondary">Sin permiso para leerlos. Puedes darlo desde Perfil → Datos de salud.</AppText>
+          <AppText color="textSecondary">{a.noSessionsPermission}</AppText>
         ) : (externas.data ?? []).length === 0 ? (
-          <AppText color="textSecondary">Ninguno en los últimos {DIAS_SESIONES} días.</AppText>
+          <AppText color="textSecondary">{a.noneInDays(DIAS_SESIONES)}</AppText>
         ) : (
           [...(externas.data ?? [])]
             .sort((a, b) => b.startAt.localeCompare(a.startAt))
@@ -146,17 +150,17 @@ function Conectado({ source, permisos }: { source: HealthSourceId; permisos: Non
                   <View style={styles.flex}>
                     <AppText variant="bodyStrong">{s.title}</AppText>
                     <AppText variant="caption" color="textSecondary" tabular>
-                      {formatShortDate(fromIso(s.startAt))} · {formatTime(fromIso(s.startAt))} · {minutos} min
-                      {s.activeKcal != null ? ` · ${entero(s.activeKcal)} kcal activas` : ''}
+                      {formatShortDate(fromIso(s.startAt), lang)} · {formatTime(fromIso(s.startAt), lang)} · {minutos} min
+                      {s.activeKcal != null ? a.kcalSuffix(entero(s.activeKcal, lang)) : ''}
                     </AppText>
                     <AppText variant="caption" color="textTertiary">
-                      Fuente: {s.app ? `${s.app} vía ${fuente}` : fuente}
+                      {a.source(s.app ? a.via(s.app, fuente) : fuente)}
                     </AppText>
                     {suya ? (
                       <View style={styles.relacion}>
                         <Link2 size={14} strokeWidth={IconStroke} color={theme.textSecondary} />
                         <AppText variant="caption" color="textSecondary" style={styles.flex}>
-                          Es tu sesión «{suya.nombre}» de KAVI: se cuenta una sola vez.
+                          {a.isYours(suya.nombre)}
                         </AppText>
                       </View>
                     ) : null}
@@ -168,7 +172,7 @@ function Conectado({ source, permisos }: { source: HealthSourceId; permisos: Non
                 <Pressable
                   key={s.id}
                   accessibilityRole="button"
-                  accessibilityLabel={`${s.title}, es tu sesión ${suya.nombre} de KAVI. Abrirla`}
+                  accessibilityLabel={a.isYoursA11y(s.title, suya.nombre)}
                   onPress={() => router.push({ pathname: '/(app)/workout/[id]', params: { id: suya.id, mode: 'view' } })}
                   style={({ pressed }) => [styles.fila, { borderColor: theme.border, backgroundColor: pressed ? theme.surfaceAlt : theme.surface }]}>
                   {contenido}
@@ -207,25 +211,27 @@ function Cifra({ valor, etiqueta, nota }: { valor: string; etiqueta: string; not
 /** Pasos de los últimos 7 días: una sola serie, barras con su número (sin eje doble ni leyenda). */
 function PasosSemana({ dias }: { dias: DailyTotals[] }) {
   const theme = useTheme();
+  const lang = useLanguage();
+  const a = useT().fitness.activity;
   const max = Math.max(1, ...dias.map((d) => d.steps ?? 0));
   return (
     <View style={styles.pila}>
       <View style={styles.encabezado}>
         <Footprints size={IconSize.inline} strokeWidth={IconStroke} color={theme.textSecondary} />
         <AppText variant="label" color="textSecondary">
-          Pasos, últimos {DIAS} días
+          {a.stepsLastDays(DIAS)}
         </AppText>
       </View>
       {dias.map((d) => (
-        <View key={d.date} style={styles.barraFila} accessible accessibilityLabel={`${format(parseISO(d.date), "EEEE d 'de' MMMM", { locale: es })}: ${d.steps ?? 0} pasos`}>
+        <View key={d.date} style={styles.barraFila} accessible accessibilityLabel={a.stepsA11y(formatDayTitle(parseISO(d.date), lang), d.steps ?? 0)}>
           <AppText variant="caption" color="textSecondary" style={styles.barraDia}>
-            {format(parseISO(d.date), 'EEE d', { locale: es })}
+            {formatWeekdayAndDay(parseISO(d.date), lang)}
           </AppText>
           <View style={[styles.pista, { backgroundColor: theme.surfaceAlt }]}>
             <View style={[styles.barra, { width: `${((d.steps ?? 0) / max) * 100}%`, backgroundColor: theme.ink }]} />
           </View>
           <AppText variant="caption" tabular style={styles.barraValor}>
-            {d.steps != null ? entero(d.steps) : '—'}
+            {d.steps != null ? entero(d.steps, lang) : '—'}
           </AppText>
         </View>
       ))}

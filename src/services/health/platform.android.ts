@@ -123,9 +123,9 @@ export const platformHealth: HealthApi = {
     const estado = await getSdkStatus().catch(() => SdkAvailabilityStatus.SDK_UNAVAILABLE);
     if (estado === SdkAvailabilityStatus.SDK_AVAILABLE) return { status: 'available', source: 'health_connect' };
     if (estado === SdkAvailabilityStatus.SDK_UNAVAILABLE_PROVIDER_UPDATE_REQUIRED) {
-      return { status: 'needs_install', source: null, message: 'Instala o actualiza Health Connect desde Google Play para conectar tu actividad.' };
+      return { status: 'needs_install', source: null, reason: 'needs_health_connect' };
     }
-    return { status: 'unsupported', source: null, message: 'Este teléfono no tiene Health Connect.' };
+    return { status: 'unsupported', source: null, reason: 'no_health_connect' };
   },
 
   async permissions() {

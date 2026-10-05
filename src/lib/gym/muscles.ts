@@ -63,10 +63,10 @@ export function setsByGroup(exercises: readonly WorkoutExerciseDetail[], catalog
   return total;
 }
 
-/** Grupos trabajados como primarios en la sesión, para el resumen (RF-F59). */
+/** Grupos trabajados en la sesión, para el resumen (RF-F59). Devuelve claves; el nombre lo pone `muscleGroupName`. */
 export function musclesWorked(exercises: readonly WorkoutExerciseDetail[], catalog: ReadonlyMap<string, Exercise>): string[] {
   const porGrupo = setsByGroup(exercises, catalog);
-  return MUSCLE_GROUPS.filter((g) => (porGrupo.get(g.key) ?? 0) >= 1).map((g) => g.label);
+  return MUSCLE_GROUPS.filter((g) => (porGrupo.get(g.key) ?? 0) >= 1).map((g) => g.key);
 }
 
 /** Leg day: al menos 6 series efectivas de pierna como músculo primario (logro y microcopy). */

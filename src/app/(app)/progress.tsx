@@ -1,5 +1,4 @@
-import { addDays, addWeeks, format, parseISO } from 'date-fns';
-import { es } from 'date-fns/locale';
+import { addDays, addWeeks, format } from 'date-fns';
 import { ChevronLeft, ChevronRight, Info, Lock, Trophy } from 'lucide-react-native';
 import { useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -12,14 +11,17 @@ import { streakReasonLabel } from '@/constants/gymrat';
 import { IconSize, IconStroke, Radius, Spacing } from '@/constants/theme';
 import { useGymProgress } from '@/hooks/use-gym-progress';
 import { useTheme } from '@/hooks/use-theme';
+import { formatDayAndMonth, formatDayMonthShort } from '@/lib/dates';
 import type { Achievement } from '@/lib/gym/achievements';
+import { muscleGroupName } from '@/lib/gym/display-names';
 import { MUSCLE_GROUPS, setsByGroup, WEEKLY_ZONES } from '@/lib/gym/muscles';
 import { weekKey, weekStart } from '@/lib/gym/streak';
 import { useGymStore } from '@/store/gym-store';
+import { formatNumber, useLanguage, useT } from '@/i18n';
 
 const MAX_WIDTH = 640;
 const SEMANAS = 12;
-const DIAS = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
+const DIAS = 7;
 
 /**
  * Progreso (spec 07 v2, §8): Racha de Hierro, calendario de entrenos con las semanas
@@ -27,6 +29,10 @@ const DIAS = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
  */
 export default function ProgressScreen() {
   const theme = useTheme();
+  const tx = useT();
+  const lang = useLanguage();
+  const p = tx.fitness.progress;
+  const s = tx.fitness.streak;
   const progreso = useGymProgress();
   const trato = useGymStore((s) => s.trato);
   const { streak, achievements, now } = progreso;
@@ -59,7 +65,7 @@ export default function ProgressScreen() {
   if (progreso.isPending) {
     return (
       <Screen modal maxWidth={MAX_WIDTH}>
-        <ModalHeader back title="Progreso" />
+        <ModalHeader back title={p.title} />
         <LoadingState />
       </Screen>
     );
@@ -67,8 +73,8 @@ export default function ProgressScreen() {
   if (progreso.isError || !streak || !achievements) {
     return (
       <Screen modal maxWidth={MAX_WIDTH}>
-        <ModalHeader back title="Progreso" />
-        <ErrorState message={progreso.error?.message ?? 'No se pudo cargar tu progreso.'} onRetry={() => void progreso.log.refetch()} />
+        <ModalHeader back title={p.title} />
+        <ErrorState message={progreso.error?.message ?? p.loadFailed} onRetry={() => void progreso.log.refetch()} />
       </Screen>
     );
   }
@@ -79,37 +85,37 @@ export default function ProgressScreen() {
 
   return (
     <Screen modal scroll maxWidth={MAX_WIDTH}>
-      <ModalHeader back title="Progreso" />
+      <ModalHeader back title={p.title} />
 
       <View style={[styles.tarjeta, { backgroundColor: theme.surfaceAlt }]}>
         <View style={styles.tituloFila}>
           <AppText variant="label" color="textSecondary" style={styles.flex}>
-            Racha de Hierro
+            {p.ironStreak}
           </AppText>
-          <IconButton label="Qué es la Racha de Hierro" onPress={() => setTermino('iron_streak')}>
+          <IconButton label={p.whatIsStreak} onPress={() => setTermino('iron_streak')}>
             <Info size={IconSize.inline} strokeWidth={IconStroke} color={theme.textTertiary} />
           </IconButton>
         </View>
         <AppText variant="display" tabular>
-          {streak.weeks} {streak.weeks === 1 ? 'semana' : 'semanas'}
+          {s.weeks(streak.weeks)}
         </AppText>
         <AppText color="textSecondary">
           {streak.paused
-            ? `En pausa: ${gapLabel(streak.paused.weeks).toLowerCase()} sin entreno. Decide en Fitness si sigue.`
+            ? p.pausedLine(gapLabel(streak.paused.weeks, lang))
             : streak.trainedThisWeek
-              ? 'Esta semana ya cuenta.'
-              : 'Entrena esta semana para sumar otra.'}
-          {streak.best > streak.weeks ? ` Tu mejor racha: ${streak.best} semanas.` : ''}
+              ? s.countsThisWeek
+              : s.trainThisWeek}
+          {streak.best > streak.weeks ? p.best(streak.best) : ''}
         </AppText>
       </View>
 
       <View style={styles.seccion}>
         <AppText variant="heading" accessibilityRole="header">
-          Calendario de entrenos
+          {p.calendar}
         </AppText>
         <View style={styles.filaCal}>
           <View style={styles.etiquetaSemana} />
-          {DIAS.map((d, i) => (
+          {tx.dates.weekdayInitials.map((d, i) => (
             <AppText key={i} variant="micro" color="textTertiary" style={styles.celdaTexto}>
               {d}
             </AppText>
@@ -118,16 +124,16 @@ export default function ProgressScreen() {
         {semanas.map((lunes) => {
           const clave = weekKey(lunes);
           const evento = justificadas.get(clave);
-          const entrenos = DIAS.map((_, i) => dias.get(format(addDays(lunes, i), 'yyyy-MM-dd')) ?? 0);
+          const entrenos = Array.from({ length: DIAS }, (_, i) => dias.get(format(addDays(lunes, i), 'yyyy-MM-dd')) ?? 0);
           const total = entrenos.reduce((a, b) => a + b, 0);
           return (
             <View key={clave} style={styles.semana}>
               <View
                 style={styles.filaCal}
                 accessible
-                accessibilityLabel={`Semana del ${format(lunes, "d 'de' MMMM", { locale: es })}: ${total} ${total === 1 ? 'entreno' : 'entrenos'}${evento ? `, justificada${evento.decision === 'reset' ? ' y racha reiniciada' : ''}` : ''}`}>
+                accessibilityLabel={p.weekA11y(formatDayAndMonth(lunes, lang), total, evento ? evento.decision : null)}>
                 <AppText variant="caption" color="textSecondary" tabular style={styles.etiquetaSemana}>
-                  {format(lunes, 'd MMM', { locale: es })}
+                  {formatDayMonthShort(lunes, lang)}
                 </AppText>
                 {entrenos.map((n, i) => (
                   <View key={i} style={[styles.celda, { backgroundColor: n > 0 ? theme.ink : theme.surfaceAlt }]} />
@@ -135,8 +141,8 @@ export default function ProgressScreen() {
               </View>
               {evento ? (
                 <AppText variant="caption" color="textTertiary" style={styles.notaSemana}>
-                  {evento.decision === 'reset' ? 'Racha reiniciada' : 'Justificada'}
-                  {evento.reasons.length ? ` · ${evento.reasons.map((r) => streakReasonLabel(r, trato)).join(', ')}` : ''}
+                  {evento.decision === 'reset' ? p.resetDone : p.justified}
+                  {evento.reasons.length ? ` · ${evento.reasons.map((r) => streakReasonLabel(r, trato, lang)).join(', ')}` : ''}
                   {evento.note ? ` · ${evento.note}` : ''}
                 </AppText>
               ) : null}
@@ -148,29 +154,30 @@ export default function ProgressScreen() {
       <View style={styles.seccion}>
         <View style={styles.tituloFila}>
           <AppText variant="heading" accessibilityRole="header" style={styles.flex}>
-            Series por músculo
+            {p.setsPerMuscle}
           </AppText>
-          <IconButton label="Qué son las series por músculo" onPress={() => setTermino('muscle_sets')}>
+          <IconButton label={p.whatIsMuscleSets} onPress={() => setTermino('muscle_sets')}>
             <Info size={IconSize.inline} strokeWidth={IconStroke} color={theme.textTertiary} />
           </IconButton>
-          <IconButton label="Semana anterior" onPress={() => setSemanaVolumen((s) => s - 1)}>
+          <IconButton label={p.prevWeek} onPress={() => setSemanaVolumen((s) => s - 1)}>
             <ChevronLeft size={IconSize.action} strokeWidth={IconStroke} color={theme.text} />
           </IconButton>
-          <IconButton label="Semana siguiente" disabled={semanaVolumen >= 0} onPress={() => setSemanaVolumen((s) => Math.min(0, s + 1))}>
+          <IconButton label={p.nextWeek} disabled={semanaVolumen >= 0} onPress={() => setSemanaVolumen((s) => Math.min(0, s + 1))}>
             <ChevronRight size={IconSize.action} strokeWidth={IconStroke} color={semanaVolumen >= 0 ? theme.textTertiary : theme.text} />
           </IconButton>
         </View>
         <AppText variant="caption" color="textSecondary">
-          {semanaVolumen === 0 ? 'Esta semana' : `Semana del ${format(inicioVolumen, "d 'de' MMMM", { locale: es })}`} · series efectivas; el músculo secundario cuenta media. La franja marca {WEEKLY_ZONES.low}–
-          {WEEKLY_ZONES.high} series, un rango de referencia.
+          {semanaVolumen === 0 ? p.thisWeek : p.weekOf(formatDayAndMonth(inicioVolumen, lang))}
+          {p.setsExplain(WEEKLY_ZONES.low, WEEKLY_ZONES.high)}
         </AppText>
         {MUSCLE_GROUPS.map((g) => {
           const n = volumen.get(g.key) ?? 0;
-          const zona = n === 0 ? '' : n < WEEKLY_ZONES.low ? 'debajo del rango' : n > WEEKLY_ZONES.high ? 'arriba del rango' : 'en rango';
+          const zona = n === 0 ? '' : n < WEEKLY_ZONES.low ? p.below : n > WEEKLY_ZONES.high ? p.above : p.inRange;
+          const nombre = muscleGroupName(g.key, lang);
           return (
-            <View key={g.key} style={styles.barraFila} accessible accessibilityLabel={`${g.label}: ${n} series${zona ? `, ${zona}` : ''}`}>
+            <View key={g.key} style={styles.barraFila} accessible accessibilityLabel={p.muscleA11y(nombre, n, zona)}>
               <AppText variant="caption" style={styles.barraEtiqueta} numberOfLines={1}>
-                {g.label}
+                {nombre}
               </AppText>
               <View style={[styles.pista, { backgroundColor: theme.surfaceAlt }]}>
                 <View style={[styles.zona, { left: pct(WEEKLY_ZONES.low), width: pct(WEEKLY_ZONES.high - WEEKLY_ZONES.low), borderColor: theme.textTertiary, backgroundColor: theme.border }]} />
@@ -186,10 +193,10 @@ export default function ProgressScreen() {
 
       <View style={[styles.seccion, styles.final]}>
         <AppText variant="heading" accessibilityRole="header">
-          Logros
+          {p.achievements}
         </AppText>
         <AppText variant="caption" color="textSecondary">
-          {achievements.filter((a) => a.unlocked).length} de {achievements.length} desbloqueados. Se recalculan si editas una sesión.
+          {p.unlockedCount(achievements.filter((a) => a.unlocked).length, achievements.length)}
         </AppText>
         {achievements.map((a) => (
           <Logro key={a.id} logro={a} />
@@ -202,12 +209,14 @@ export default function ProgressScreen() {
 
 function Logro({ logro }: { logro: Achievement }) {
   const theme = useTheme();
-  const progreso = `${logro.progress.toLocaleString('es-MX')} / ${logro.goal.toLocaleString('es-MX')} ${logro.unit}`;
+  const lang = useLanguage();
+  const p = useT().fitness.progress;
+  const progreso = `${formatNumber(logro.progress, lang)} / ${formatNumber(logro.goal, lang)} ${logro.unit}`;
   return (
     <View
       style={[styles.logro, { borderColor: logro.unlocked ? theme.ink : theme.border }]}
       accessible
-      accessibilityLabel={`${logro.title}, ${logro.unlocked ? 'desbloqueado' : `bloqueado, ${progreso}`}. ${logro.description}`}>
+      accessibilityLabel={p.achievementA11y(logro.title, logro.unlocked ? null : progreso, logro.description)}>
       <View style={[styles.logroIcono, { backgroundColor: logro.unlocked ? theme.ink : theme.surfaceAlt }]}>
         {logro.unlocked ? (
           <Trophy size={IconSize.inline} strokeWidth={IconStroke} color={theme.onInk} />

@@ -63,7 +63,7 @@ import { useResolvedScheme, useTheme } from '@/hooks/use-theme';
 import { useThemes } from '@/hooks/use-themes';
 import { anyPermission, useHealthAvailability, useHealthConnection, useHealthPermissions } from '@/hooks/use-health';
 import { useWorkouts } from '@/hooks/use-workouts';
-import { HEALTH_METRICS, HEALTH_SOURCE_LABEL } from '@/services/health';
+import { HEALTH_METRICS } from '@/services/health';
 import { TRATOS } from '@/constants/gymrat';
 import { NOBIS, nobiIdDesde, nobiUrl } from '@/constants/nobi';
 import { formatDayAndMonth, fromDayKey, rangeForView, toDayKey } from '@/lib/dates';
@@ -775,7 +775,7 @@ function DatosDeSalud({ icono }: { icono: ReactNode }) {
 
   if (!estado) return null;
   if (estado.status !== 'available') {
-    return <SettingsRow icon={icono} label={tx.fitness.health.title} hint={estado.message} />;
+    return <SettingsRow icon={icono} label={tx.fitness.health.title} hint={tx.fitness.health.unavailable[estado.reason]} />;
   }
   const conectado = anyPermission(permisos.data);
   const que = HEALTH_METRICS.filter((m) => permisos.data?.[m.id]).map((m) => tx.fitness.health.metrics[m.id].toLowerCase());
@@ -785,7 +785,7 @@ function DatosDeSalud({ icono }: { icono: ReactNode }) {
       label={tx.fitness.health.title}
       hint={
         conectado
-          ? tx.fitness.health.connectedTo(HEALTH_SOURCE_LABEL[estado.source], que.join(', '))
+          ? tx.fitness.health.connectedTo(tx.fitness.health.sources[estado.source], que.join(', '))
           : tx.fitness.health.notConnected
       }
       below={

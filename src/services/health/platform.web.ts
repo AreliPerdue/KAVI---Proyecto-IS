@@ -6,7 +6,7 @@ import { NO_PERMISSIONS, type HealthApi } from './types';
  */
 export const platformHealth: HealthApi = {
   async availability() {
-    return { status: 'web', source: null, message: 'Tu actividad del teléfono (pasos, distancia, entrenamientos de otras apps) se ve en la app de KAVI para iOS y Android.' };
+    return { status: 'web', source: null, reason: 'web' };
   },
   async permissions() {
     return NO_PERMISSIONS;

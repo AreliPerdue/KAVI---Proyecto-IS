@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 
+import { useLanguage } from '@/i18n';
 import { computeAchievements, type Achievement } from '@/lib/gym/achievements';
 import { computeStreak, type StreakState } from '@/lib/gym/streak';
 import { useAuth } from '@/providers';
@@ -35,6 +36,7 @@ export function useGymProgress() {
   const events = useStreakEvents();
   const catalogo = useExercises();
   const trato = useGymStore((s) => s.trato);
+  const lang = useLanguage();
   const [ahora] = useState(() => new Date());
 
   const catalog = useMemo(() => new Map<string, Exercise>((catalogo.data ?? []).map((e) => [e.id, e])), [catalogo.data]);
@@ -58,8 +60,8 @@ export function useGymProgress() {
   }, [log.data, sessions, events.data, ahora]);
   const achievements = useMemo<Achievement[] | null>(() => {
     if (!log.data || !streak) return null;
-    return computeAchievements(sessions, catalog, streak.best, trato);
-  }, [log.data, sessions, catalog, streak, trato]);
+    return computeAchievements(sessions, catalog, streak.best, trato, lang);
+  }, [log.data, sessions, catalog, streak, trato, lang]);
 
   return {
     log,

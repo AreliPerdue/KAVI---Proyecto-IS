@@ -6,6 +6,7 @@
 /** De dónde viene un dato (RF-H5). `demo` son datos de ejemplo del modo demo. */
 export type HealthSourceId = 'health_connect' | 'healthkit' | 'demo';
 
+/** Nombre de cada fuente en español; en pantalla se usa `fitness.health.sources` del idioma activo. */
 export const HEALTH_SOURCE_LABEL: Record<HealthSourceId, string> = {
   health_connect: 'Health Connect',
   healthkit: 'Salud de Apple',
@@ -30,7 +31,14 @@ export const HEALTH_METRICS: { id: HealthMetric; label: string; why: string }[] 
  */
 export type HealthAvailability =
   | { status: 'available'; source: HealthSourceId }
-  | { status: 'web' | 'unsupported' | 'needs_install'; source: null; message: string };
+  | { status: 'web' | 'unsupported' | 'needs_install'; source: null; reason: HealthUnavailableReason };
+
+/**
+ * Por qué no hay datos, como clave: el texto lo pone la pantalla en el idioma activo
+ * (`fitness.health.unavailable`), porque esta respuesta se guarda en caché y no se repide
+ * al cambiar de idioma.
+ */
+export type HealthUnavailableReason = 'web' | 'ios_soon' | 'needs_health_connect' | 'no_health_connect';
 
 export type HealthPermissions = Record<HealthMetric, boolean>;
 

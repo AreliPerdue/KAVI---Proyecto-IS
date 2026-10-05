@@ -1,5 +1,4 @@
-import { addDays, format, parseISO } from 'date-fns';
-import { es } from 'date-fns/locale';
+import { addDays, parseISO } from 'date-fns';
 import { useRouter } from 'expo-router';
 import { ChevronRight, Flame, PauseCircle } from 'lucide-react-native';
 import { useMemo, useState } from 'react';
@@ -10,17 +9,19 @@ import { gymratLineFor, STREAK_REASONS, streakReasonLabel } from '@/constants/gy
 import { IconSize, IconStroke, Radius, Spacing } from '@/constants/theme';
 import { useGymProgress, useStreakDecision } from '@/hooks/use-gym-progress';
 import { useTheme } from '@/hooks/use-theme';
+import { formatDayAndMonth } from '@/lib/dates';
 import { isLegDay } from '@/lib/gym/muscles';
 import { weekKey } from '@/lib/gym/streak';
 import { useGymStore } from '@/store/gym-store';
+import { getLanguage, t, type Language, useLanguage, useT } from '@/i18n';
 
-/** "La semana del 5 de octubre" o "Del 5 al 25 de octubre". */
-export function gapLabel(weeks: readonly string[]): string {
-  const dia = (d: Date) => format(d, "d 'de' MMMM", { locale: es });
+/** "La semana del 5 de octubre" o "Del 5 de octubre al 25 de octubre" ("The week of October 5"…). */
+export function gapLabel(weeks: readonly string[], lang: Language = getLanguage()): string {
+  const s = t(lang).fitness.streak;
   const inicio = parseISO(weeks[0]);
-  if (weeks.length === 1) return `La semana del ${dia(inicio)}`;
+  if (weeks.length === 1) return s.gapOne(formatDayAndMonth(inicio, lang));
   const fin = addDays(parseISO(weeks[weeks.length - 1]), 6);
-  return `Del ${dia(inicio)} al ${dia(fin)}`;
+  return s.gapRange(formatDayAndMonth(inicio, lang), formatDayAndMonth(fin, lang));
 }
 
 /**
@@ -29,6 +30,8 @@ export function gapLabel(weeks: readonly string[]): string {
  */
 export function StreakCard() {
   const theme = useTheme();
+  const lang = useLanguage();
+  const s = useT().fitness.streak;
   const router = useRouter();
   const progreso = useGymProgress();
   const serio = useGymStore((s) => s.seriousMode);
@@ -44,8 +47,8 @@ export function StreakCard() {
     if (new Date(ultima.performed_at).getTime() < hace(7)) return null;
     const pierna = [...log].reverse().find((w) => isLegDay(w.exercises, progreso.catalog));
     if (pierna && new Date(pierna.performed_at).getTime() >= hace(7)) return null;
-    return gymratLineFor('no_legs', trato, serio, weekKey(progreso.now));
-  }, [progreso.sessions, progreso.catalog, progreso.now, serio, trato]);
+    return gymratLineFor('no_legs', trato, serio, weekKey(progreso.now), lang);
+  }, [progreso.sessions, progreso.catalog, progreso.now, serio, trato, lang]);
 
   if (!streak) return null;
   if (streak.paused) return <Pausa key={streak.paused.weeks.join()} weeks={streak.paused.weeks} semanas={streak.weeks} />;
@@ -55,7 +58,7 @@ export function StreakCard() {
     <View style={styles.pila}>
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel={`Racha de Hierro: ${streak.weeks} ${streak.weeks === 1 ? 'semana' : 'semanas'}. Ver progreso`}
+        accessibilityLabel={s.a11y(s.weeks(streak.weeks))}
         onPress={() => router.push('/(app)/progress')}
         style={({ pressed }) => [styles.fila, { borderColor: theme.border, backgroundColor: pressed ? theme.surfaceAlt : theme.surface }]}>
         <View style={[styles.icono, { backgroundColor: theme.surfaceAlt }]}>
@@ -63,10 +66,10 @@ export function StreakCard() {
         </View>
         <View style={styles.flex}>
           <AppText variant="bodyStrong" tabular>
-            Racha de Hierro · {streak.weeks} {streak.weeks === 1 ? 'semana' : 'semanas'}
+            {s.title(s.weeks(streak.weeks))}
           </AppText>
           <AppText variant="caption" color="textSecondary">
-            {streak.trainedThisWeek ? 'Esta semana ya cuenta.' : 'Entrena esta semana para sumar otra.'} Ver progreso y logros
+            {streak.trainedThisWeek ? s.countsThisWeek : s.trainThisWeek} {s.seeProgress}
           </AppText>
         </View>
         <ChevronRight size={IconSize.inline} strokeWidth={IconStroke} color={theme.textTertiary} />
@@ -82,7 +85,9 @@ export function StreakCard() {
 
 function Pausa({ weeks, semanas }: { weeks: string[]; semanas: number }) {
   const theme = useTheme();
-  const trato = useGymStore((s) => s.trato);
+  const lang = useLanguage();
+  const s = useT().fitness.streak;
+  const trato = useGymStore((x) => x.trato);
   const decidir = useStreakDecision();
   const [nota, setNota] = useState('');
   const [motivos, setMotivos] = useState<string[]>([]);
@@ -94,27 +99,27 @@ function Pausa({ weeks, semanas }: { weeks: string[]; semanas: number }) {
         <PauseCircle size={IconSize.action} strokeWidth={IconStroke} color={theme.text} />
         <View style={styles.flex}>
           <AppText variant="bodyStrong">
-            {gapLabel(weeks)} no registraste entreno. ¿Qué pasó?
+            {s.whatHappened(gapLabel(weeks, lang))}
           </AppText>
           <AppText variant="caption" color="textSecondary">
-            Tu racha de {semanas} {semanas === 1 ? 'semana' : 'semanas'} está en pausa, no en cero. Tú decides.
+            {s.paused(s.weeks(semanas))}
           </AppText>
         </View>
       </View>
       <View style={styles.chips}>
         {STREAK_REASONS.map((r) => {
           const puesto = motivos.includes(r);
-          return <Chip key={r} compact label={streakReasonLabel(r, trato)} selected={puesto} onPress={() => setMotivos((xs) => (puesto ? xs.filter((x) => x !== r) : [...xs, r]))} />;
+          return <Chip key={r} compact label={streakReasonLabel(r, trato, lang)} selected={puesto} onPress={() => setMotivos((xs) => (puesto ? xs.filter((x) => x !== r) : [...xs, r]))} />;
         })}
       </View>
-      <TextField label="Nota (opcional)" value={nota} onChangeText={setNota} placeholder="Cierre de mes, gripa…" maxLength={500} multiline />
+      <TextField label={s.note} value={nota} onChangeText={setNota} placeholder={s.notePlaceholder} maxLength={500} multiline />
       {decidir.error ? <Banner tone="error" message={decidir.error.message} /> : null}
       <View style={styles.botones}>
         <View style={styles.flex}>
-          <Button title="Reiniciar racha" variant="secondary" disabled={decidir.isPending} onPress={() => enviar('reset')} />
+          <Button title={s.reset} variant="secondary" disabled={decidir.isPending} onPress={() => enviar('reset')} />
         </View>
         <View style={styles.flex}>
-          <Button title="Mi racha sigue" loading={decidir.isPending} onPress={() => enviar('kept')} />
+          <Button title={s.keep} loading={decidir.isPending} onPress={() => enviar('kept')} />
         </View>
       </View>
     </View>

@@ -109,4 +109,18 @@ export const catalog: Dictionary['catalog'] = {
     distance_duration: 'Distance and time',
     weight_distance: 'Weight and distance',
   },
+  muscleGroups: {
+    chest: 'Chest',
+    back: 'Back',
+    shoulders: 'Shoulders',
+    biceps: 'Biceps',
+    triceps: 'Triceps',
+    forearms: 'Forearms',
+    quads: 'Quads',
+    hamstrings: 'Hamstrings',
+    glutes: 'Glutes',
+    adductors: 'Adductors',
+    calves: 'Calves',
+    core: 'Core',
+  },
 };
