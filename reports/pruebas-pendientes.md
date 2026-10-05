@@ -454,3 +454,11 @@ Falta:
 - [ ] `lowContrastOutline` en bloque, chip y punto del mes, y en la agenda.
 - [ ] `currentColor` en el color propio guardado en el dispositivo y en el formulario de
   una lista vieja.
+
+## Paleta de personas v3 (vibrante sin chillar)
+Reajuste en OKLCH tras T202: los 21 pasan 3:1 sobre `#131313` y `#1A1A1A`, par más cercano
+a 16.5. Migración v3 probada en PGlite (las tres paletas anteriores, personalizado intacto,
+idempotente) y aplicada en producción. Visto en el demo: menú "Tu color" y pestaña "Tú".
+Falta:
+- [ ] `people-colors.test.ts`: que ningún color necesite contorno sobre el fondo y las hojas
+  del tema oscuro; que `currentColor` traduzca las tres paletas anteriores.

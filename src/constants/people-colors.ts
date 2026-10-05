@@ -11,13 +11,14 @@ import { NOBIS } from '@/constants/nobi';
  * Son **veintiuno**, emparejados uno a uno con los Nobi (`constants/nobi`): el color que
  * alguien eligió para su mascota es el que lo representa en el calendario de los demás.
  *
- * Desde T202 los hex **son los del Nobi**, tal cual, porque el color es la personalidad de
- * cada quien y los tonos ajustados para contraste dejaban "morado claro" y "lila" casi
- * iguales y a varios lejos del Nobi que representan. Los más oscuros (negro, azul marino,
- * rojo vino…) no llegan a 3:1 sobre la tinta de la app: en vez de aclararlos —que juntaba
- * rojo con rojo vino y azul con azul marino— sus marcas llevan un contorno claro
- * (`needsOutline` en `lib/color.ts`). Con el nombre siempre al lado, el color nunca es el
- * único indicador.
+ * Los tonos parten del matiz de cada Nobi pero **no son los del PNG**: se ajustaron en
+ * OKLCH para que sean vibrantes sin llegar a chillones (saturación media-alta, nunca al
+ * tope) y para que **todos** se lean sobre la tinta de la app (≥ 3:1 contra `#131313`),
+ * también sobre el fondo de las hojas (`#1A1A1A`) y también los de nombre oscuro: rojo vino, azul marino, verde bandera, morado y negro.
+ * Dentro de cada familia los separa la luminosidad (rosa claro, magenta medio…), y ningún
+ * par queda a menos de 16 de distancia perceptual. Si algún día se usan sobre un fondo
+ * donde no llegan a 3:1, sus marcas llevan contorno (`needsOutline` en `lib/color.ts`).
+ * Con el nombre siempre al lado, el color nunca es el único indicador.
  *
  * Dos órdenes distintos:
  * - `PEOPLE_COLORS` es el del **reparto automático** a quien no ha elegido color. Va
@@ -31,27 +32,27 @@ import { NOBIS } from '@/constants/nobi';
 export type PersonColor = { id: string; label: string; hex: string };
 
 export const PEOPLE_COLORS: readonly PersonColor[] = [
-  { id: 'baby_blue', label: 'Azul cielo', hex: '#89CFF0' },
-  { id: 'orange', label: 'Naranja', hex: '#FE6E00' },
-  { id: 'lime_green', label: 'Verde lima', hex: '#AAFF00' },
-  { id: 'pink', label: 'Rosa', hex: '#FFC0F3' },
-  { id: 'turquois', label: 'Turquesa', hex: '#00CED1' },
-  { id: 'yellow', label: 'Amarillo', hex: '#EDE609' },
-  { id: 'lilac', label: 'Lila', hex: '#B47EDE' },
-  { id: 'coral', label: 'Coral', hex: '#F86061' },
-  { id: 'gray', label: 'Gris', hex: '#AAABB0' },
-  { id: 'olive_green', label: 'Verde oliva', hex: '#636B2F' },
-  { id: 'white', label: 'Blanco', hex: '#D3D3D3' },
-  { id: 'magenta', label: 'Magenta', hex: '#AA0664' },
-  { id: 'light_purple', label: 'Morado intermedio', hex: '#6F2DA8' },
-  { id: 'red', label: 'Rojo', hex: '#980002' },
-  { id: 'indigo', label: 'Índigo', hex: '#3A00E7' },
-  { id: 'blue', label: 'Azul', hex: '#0028B3' },
-  { id: 'deep_red', label: 'Rojo vino', hex: '#430000' },
-  { id: 'green', label: 'Verde bandera', hex: '#002D04' },
-  { id: 'navy_blue', label: 'Azul marino', hex: '#000435' },
-  { id: 'purple', label: 'Morado', hex: '#35063E' },
-  { id: 'black', label: 'Negro', hex: '#232323' },
+  { id: 'baby_blue', label: 'Azul cielo', hex: '#86CBF3' },
+  { id: 'orange', label: 'Naranja', hex: '#F68C36' },
+  { id: 'lime_green', label: 'Verde lima', hex: '#A2DD5C' },
+  { id: 'pink', label: 'Rosa', hex: '#F6A9CD' },
+  { id: 'turquois', label: 'Turquesa', hex: '#3ACCC5' },
+  { id: 'yellow', label: 'Amarillo', hex: '#F1D35D' },
+  { id: 'lilac', label: 'Lila', hex: '#C9AAEE' },
+  { id: 'coral', label: 'Coral', hex: '#F68675' },
+  { id: 'gray', label: 'Gris', hex: '#9FA5AE' },
+  { id: 'olive_green', label: 'Verde oliva', hex: '#8A9348' },
+  { id: 'white', label: 'Blanco', hex: '#EAE8E0' },
+  { id: 'magenta', label: 'Magenta', hex: '#DB509C' },
+  { id: 'light_purple', label: 'Morado intermedio', hex: '#A878DB' },
+  { id: 'red', label: 'Rojo', hex: '#E24947' },
+  { id: 'indigo', label: 'Índigo', hex: '#7067E9' },
+  { id: 'blue', label: 'Azul', hex: '#4087EE' },
+  { id: 'deep_red', label: 'Rojo vino', hex: '#B24755' },
+  { id: 'green', label: 'Verde bandera', hex: '#318C4C' },
+  { id: 'navy_blue', label: 'Azul marino', hex: '#496BBA' },
+  { id: 'purple', label: 'Morado', hex: '#934FA8' },
+  { id: 'black', label: 'Negro', hex: '#666B71' },
 ] as const;
 
 /** El orden de los menús de color (el de los Nobi): por familias, de claro a oscuro. */
@@ -70,10 +71,17 @@ export const PEOPLE_COLORS_DISPLAY: readonly PersonColor[] = COLOR_DISPLAY_ORDER
 
 /**
  * Hex de paletas anteriores → id del color actual. Lo guardado antes de T202 (colores de
- * contacto, de lista, el propio) se traduce al leerlo; la migración
- * `20261004130000_people_colors_t202.sql` hace lo mismo en la base.
+ * contacto, de lista, el propio) se traduce al leerlo; las migraciones
+ * `20261004130000_people_colors_t202.sql` y `20261004140000_people_colors_v3.sql` hacen lo
+ * mismo en la base.
  */
 const ANTERIORES: Record<string, string> = {
+  // HEX exactos de los Nobi (T202, 4 oct 2026): demasiado saturados u oscuros.
+  '#FFC0F3': 'pink', '#AA0664': 'magenta', '#F86061': 'coral', '#980002': 'red', '#430000': 'deep_red',
+  '#FE6E00': 'orange', '#EDE609': 'yellow', '#AAFF00': 'lime_green', '#636B2F': 'olive_green', '#002D04': 'green',
+  '#00CED1': 'turquois', '#89CFF0': 'baby_blue', '#0028B3': 'blue', '#000435': 'navy_blue', '#3A00E7': 'indigo',
+  '#B47EDE': 'lilac', '#6F2DA8': 'light_purple', '#35063E': 'purple', '#D3D3D3': 'white', '#AAABB0': 'gray',
+  '#232323': 'black',
   // Paleta ajustada de 21 (23 sep – 4 oct 2026).
   '#176BFF': 'blue', '#E3291F': 'red', '#1F8A4C': 'green', '#8E3FBE': 'purple', '#B95D16': 'orange',
   '#12878C': 'turquois', '#B02A78': 'magenta', '#4F8C22': 'lime_green', '#6A5ACD': 'indigo', '#B03A44': 'deep_red',

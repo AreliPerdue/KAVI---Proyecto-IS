@@ -98,12 +98,12 @@ function buscarItem(itemId: string): ListItem {
   const t = ahora();
 
   const superLista: StoredList = {
-    id: 'list-super', owner_id: owner, name: 'Súper', icon: 'shopping-cart', color: '#AAFF00',
+    id: 'list-super', owner_id: owner, name: 'Súper', icon: 'shopping-cart', color: '#A2DD5C',
     view: 'checklist', is_pinned: true, is_archived: false, sort_order: STEP, created_at: t, updated_at: t,
     recurrence_rule: null, recurrence_start: null, due_date: null,
   };
   const casa: StoredList = {
-    id: 'list-casa', owner_id: owner, name: 'Pendientes de casa', icon: 'house-heart', color: '#F86061',
+    id: 'list-casa', owner_id: owner, name: 'Pendientes de casa', icon: 'house-heart', color: '#F68675',
     view: 'checklist', is_pinned: false, is_archived: false, sort_order: STEP * 2, created_at: t, updated_at: t,
     recurrence_rule: null, recurrence_start: null, due_date: null,
   };
@@ -127,7 +127,7 @@ function buscarItem(itemId: string): ListItem {
    * imitan algo real: casi siempre completa, algunos días a medias, y uno flojo.
    */
   const rutina: StoredList = {
-    id: 'list-rutina', owner_id: owner, name: 'Rutina de la mañana', icon: 'sun', color: '#B47EDE',
+    id: 'list-rutina', owner_id: owner, name: 'Rutina de la mañana', icon: 'sun', color: '#C9AAEE',
     view: 'checklist', is_pinned: false, is_archived: false, sort_order: STEP * 3,
     created_at: t, updated_at: t,
     recurrence_rule: 'FREQ=DAILY', recurrence_start: format(addDays(new Date(), -14), 'yyyy-MM-dd'), due_date: null,
