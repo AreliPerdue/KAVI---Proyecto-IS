@@ -7,11 +7,15 @@ import { Sheet } from './sheet';
 
 import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import { formatMinutes } from '@/lib/dates';
+import { Segmented } from './segmented';
+
+import { formatMinutes, getTimeFormat } from '@/lib/dates';
 
 const ITEM_HEIGHT = 44;
 const VISIBLE = 5;
 const HOURS = Array.from({ length: 24 }, (_, i) => i);
+/** En 12 h la rueda va de 12 a 11, como un reloj; a.m. o p.m. se elige aparte. */
+const HOURS_12 = [12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
 /** Minuto a minuto: se puede agendar a las 14:07 igual que a las 14:00 (RF-C5). */
 const MINUTES = Array.from({ length: 60 }, (_, i) => i);
 
@@ -22,11 +26,13 @@ function Column<T extends number>({
   value,
   onChange,
   label,
+  format = pad,
 }: {
   data: readonly T[];
   value: T;
   onChange: (v: T) => void;
   label: string;
+  format?: (v: T) => string;
 }) {
   const theme = useTheme();
   const listRef = useRef<FlatList<T>>(null);
@@ -44,17 +50,17 @@ function Column<T extends number>({
       return (
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel={`${label} ${pad(item)}`}
+          accessibilityLabel={`${label} ${format(item)}`}
           accessibilityState={{ selected }}
           onPress={() => onChange(item)}
           style={styles.item}>
           <AppText variant={selected ? 'heading' : 'body'} color={selected ? 'text' : 'textTertiary'} tabular>
-            {pad(item)}
+            {format(item)}
           </AppText>
         </Pressable>
       );
     },
-    [value, onChange, label],
+    [value, onChange, label, format],
   );
 
   return (
@@ -86,6 +92,9 @@ function TimePickerBody({ value, onSelect }: { value: number; onSelect: (minutes
   const [hour, setHour] = useState(() => Math.floor(value / 60) % 24);
   const [minute, setMinute] = useState(() => value % 60);
   const current = hour * 60 + minute;
+  // Con reloj de 12 h la rueda muestra 12–11 y a.m./p.m. va aparte; por dentro sigue 0–23.
+  const doce = getTimeFormat() === '12h';
+  const pm = hour >= 12;
 
   return (
     <>
@@ -93,18 +102,33 @@ function TimePickerBody({ value, onSelect }: { value: number; onSelect: (minutes
         {formatMinutes(current)}
       </AppText>
       <View style={styles.columns}>
-        <Column data={HOURS} value={hour} onChange={setHour} label="Hora" />
+        {doce ? (
+          <Column data={HOURS_12} value={hour % 12 === 0 ? 12 : hour % 12} onChange={(h) => setHour((h % 12) + (pm ? 12 : 0))} label="Hora" format={String} />
+        ) : (
+          <Column data={HOURS} value={hour} onChange={setHour} label="Hora" />
+        )}
         <AppText variant="display" color="textTertiary" style={styles.colon}>
           :
         </AppText>
         <Column data={MINUTES} value={minute} onChange={setMinute} label="Minuto" />
       </View>
+      {doce ? (
+        <Segmented
+          fullWidth
+          options={[{ value: 'am', label: 'a.m.' }, { value: 'pm', label: 'p.m.' }]}
+          value={pm ? 'pm' : 'am'}
+          onChange={(v) => setHour((hour % 12) + (v === 'pm' ? 12 : 0))}
+        />
+      ) : null}
       <Button title="Listo" onPress={() => onSelect(current)} />
     </>
   );
 }
 
-/** Selector de hora en formato 24 h: hora 00–23 y minuto 00–59. `value` en minutos desde medianoche. */
+/**
+ * Selector de hora: hora y minuto en rueda, con a.m./p.m. si la preferencia es de 12 h.
+ * `value` y lo que devuelve son minutos desde medianoche (0–1439) en los dos formatos.
+ */
 export function TimePickerSheet({
   visible,
   value,

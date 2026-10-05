@@ -170,6 +170,8 @@ function buscarItem(itemId: string): ListItem {
     }),
     crear('it-plomero', casa.id, 'Llamar al plomero', null, STEP * 4, {
       due_date: format(addDays(new Date(), -1), 'yyyy-MM-dd'),
+      // Con hora, como la guarda Postgres (`time`): se muestra en el formato elegido.
+      due_time: '17:30:00',
     }),
   );
 })();

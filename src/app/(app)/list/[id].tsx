@@ -34,7 +34,7 @@ import { LIST_REMINDER_DEFAULT_HOUR, LIST_REMINDER_PRESETS } from '@/constants/r
 import { Fonts, IconSize, IconStroke, Radius, Spacing, Typography } from '@/constants/theme';
 import { useList, useListMutations, useListRuns } from '@/hooks/use-lists';
 import { useTheme } from '@/hooks/use-theme';
-import { formatDayTitle, formatShortDate, fromDayKey, toDayKey } from '@/lib/dates';
+import { formatClock, formatDayTitle, formatHour, formatShortDate, fromDayKey, toDayKey } from '@/lib/dates';
 import { describeRecurrence, parseRRule } from '@/lib/recurrence';
 import { useConfirm, useSnackbar } from '@/providers';
 import type { ListItem, ListSection } from '@/types/domain';
@@ -171,7 +171,7 @@ function Renglon({
               {item.due_date ? (
                 <AppText variant="micro" color={vencido ? 'today' : 'textTertiary'} tabular>
                   {formatShortDate(fromDayKey(item.due_date))}
-                  {item.due_time ? ` · ${item.due_time.slice(0, 5)}` : ''}
+                  {item.due_time ? ` · ${formatClock(item.due_time)}` : ''}
                 </AppText>
               ) : null}
               {item.note ? (
@@ -829,7 +829,7 @@ export default function ListDetailScreen() {
                 ? Number(editando.due_time.slice(0, 2)) * 60 + Number(editando.due_time.slice(3, 5))
                 : 9 * 60
             }
-            title="Hora del recordatorio"
+            title="Hora del pendiente"
             onClose={() => setHoraAbierta(false)}
             onSelect={(minutos) => {
               ponerHora(editando, minutos);
@@ -882,7 +882,7 @@ export default function ListDetailScreen() {
                 <>
                   <FieldButton
                     label="Hora"
-                    value={editando.due_time ? editando.due_time.slice(0, 5) : null}
+                    value={editando.due_time ? formatClock(editando.due_time) : null}
                     placeholder="Sin hora"
                     leading={<Clock size={IconSize.inline} strokeWidth={IconStroke} color={theme.textSecondary} />}
                     onPress={() => setHoraAbierta(true)}
@@ -918,7 +918,7 @@ export default function ListDetailScreen() {
                   </View>
                   {editando.reminder_offset_minutes !== null && !editando.due_time ? (
                     <AppText variant="caption" color="textTertiary">
-                      Se cuenta desde las {LIST_REMINDER_DEFAULT_HOUR}:00 del día, porque este pendiente no tiene hora.
+                      Se cuenta desde las {formatHour(LIST_REMINDER_DEFAULT_HOUR)} del día, porque este pendiente no tiene hora.
                     </AppText>
                   ) : null}
                 </View>

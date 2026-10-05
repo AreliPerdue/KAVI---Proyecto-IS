@@ -237,6 +237,21 @@ export function formatTime(date: Date): string {
 }
 
 /**
+ * Una hora guardada como texto ("14:30" o "14:30:00", la columna `time` de Postgres) en el
+ * formato elegido: "14:30" o "2:30 p.m." Nunca se muestra el texto crudo, porque ignoraría
+ * la preferencia de 12 h.
+ */
+export function formatClock(hhmm: string): string {
+  const [h, m] = hhmm.split(':').map(Number);
+  return formatMinutes((h || 0) * 60 + (m || 0));
+}
+
+/** Una hora en punto del día ("las 15:00" / "las 3:00 p.m."), para textos de ayuda. */
+export function formatHour(hour: number): string {
+  return formatMinutes(hour * 60);
+}
+
+/**
  * Etiqueta de hora para el timeline: "00:00", "14:00". En 12 h se omiten los
  * minutos —"2 p.m."— porque la columna es estrecha y el ":00" no aporta nada.
  */

@@ -4,7 +4,8 @@ import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { AppText, DatePickerSheet, FieldButton, Sheet, SwitchRow } from '@/components/ui';
 import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import { formatDate, fromDayKey, toDayKey, WEEKDAY_LABELS, WEEKDAY_SHORT } from '@/lib/dates';
+import { formatDate, formatHour, fromDayKey, toDayKey, WEEKDAY_LABELS, WEEKDAY_SHORT } from '@/lib/dates';
+import { HORA_CIERRE_VUELTA } from '@/lib/list-runs';
 import { parseRRule, type RecurrenceRule, toRRule } from '@/lib/recurrence';
 
 type Opcion = { id: string; label: string; regla: RecurrenceRule | null };
@@ -202,7 +203,7 @@ export function ListRepeatSheet({ visible, onClose, rule, start, onChange }: Lis
         ) : null}
 
         <AppText variant="caption" color="textTertiary">
-          Una vuelta sigue editable hasta las 15:00 del día siguiente, por si apuntas lo de
+          Una vuelta sigue editable hasta las {formatHour(HORA_CIERRE_VUELTA)} del día siguiente, por si apuntas lo de
           ayer en la mañana.
         </AppText>
       </ScrollView>

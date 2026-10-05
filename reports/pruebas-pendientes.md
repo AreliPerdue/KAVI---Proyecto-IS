@@ -462,3 +462,11 @@ idempotente) y aplicada en producción. Visto en el demo: menú "Tu color" y pes
 Falta:
 - [ ] `people-colors.test.ts`: que ningún color necesite contorno sobre el fondo y las hojas
   del tema oscuro; que `currentColor` traduzca las tres paletas anteriores.
+
+## Formato de 12 horas en toda la app
+Probado a mano en el demo (360 px, 12 h): el pendiente con hora muestra "5:30 p.m." en la
+lista y al editarlo; el selector de hora usa rueda 12–11 con a.m./p.m. Falta:
+- [ ] `formatClock` ("17:30:00" → "5:30 p.m." / "17:30") y `formatHour`.
+- [ ] `TimePickerSheet` en 12 h: 12 a.m. = 0:00, 12 p.m. = 12:00; cambiar a.m./p.m. conserva
+  la hora; devuelve minutos 0–1439 igual que en 24 h.
+- [ ] Ninguna hora visible se arma a mano (buscar `.slice(0, 5)` sobre horas en la UI).
