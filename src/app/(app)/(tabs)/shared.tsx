@@ -15,27 +15,27 @@ import type { CalendarVisibility, Contact } from '@/services/connections';
 import { usePreferencesStore } from '@/store/preferences-store';
 import { useMyProfile } from '@/hooks/use-profile';
 import { StackedModuleBack } from '@/components/navigation/stacked-module';
+import { type Dictionary, useT } from '@/i18n';
 
 const MAX_WIDTH = 720;
 
-const VISIBILITY_OPTIONS: { value: CalendarVisibility | null; label: string; hint: string }[] = [
-  { value: null, label: 'No compartir', hint: 'No ve nada de tu calendario.' },
-  { value: 'busy', label: 'Solo disponibilidad', hint: 'Ve bloques ocupados, sin títulos.' },
-  { value: 'details', label: 'Con detalles', hint: 'Ve título, tema y horario.' },
-];
+const VISIBILIDADES: readonly (CalendarVisibility | null)[] = [null, 'busy', 'details'];
 
-function visibilityLabel(v: CalendarVisibility | null): string {
-  return VISIBILITY_OPTIONS.find((o) => o.value === v)?.label ?? 'No compartir';
+/** Nombre y explicación de cada nivel con que compartes tu calendario, en el idioma activo. */
+function visibilityText(v: CalendarVisibility | null, tx: Dictionary): { label: string; hint: string } {
+  return tx.shared.visibility[v ?? 'none'];
 }
 
 /** Tab Compartido: invitaciones, solicitudes, contactos y acceso a disponibilidad (spec 06 UI). */
 /** Nombre del color en la paleta; si no está, se dice «personalizado» y no un hex. */
-function nombreDeColor(hex: string): string {
-  return PEOPLE_COLORS.find((c) => c.hex === currentColor(hex))?.label ?? 'Personalizado';
+function nombreDeColor(hex: string, tx: Dictionary): string {
+  const color = PEOPLE_COLORS.find((c) => c.hex === currentColor(hex));
+  return color ? (tx.colors[color.id] ?? color.label) : tx.shared.customColor;
 }
 
 export default function SharedScreen() {
   const theme = useTheme();
+  const tx = useT();
   const router = useRouter();
   const confirm = useConfirm();
   const showSnackbar = useSnackbar();
@@ -67,14 +67,14 @@ export default function SharedScreen() {
   const error = connections.request.error ?? connections.accept.error ?? connections.remove.error ?? shares.respond.error;
 
   const removeContact = async (contact: Contact) => {
-    const name = contact.profile.display_name ?? 'este contacto';
+    const name = contact.profile.display_name ?? tx.shared.thisContact;
     const ok = await confirm({
-      title: contact.kind === 'accepted' ? 'Eliminar contacto' : 'Eliminar solicitud',
-      message: contact.kind === 'accepted' ? `Dejarás de compartir con ${name} y se revocará todo lo compartido entre ustedes.` : undefined,
-      confirmLabel: 'Eliminar',
+      title: contact.kind === 'accepted' ? tx.shared.deleteContact : tx.shared.deleteRequest,
+      message: contact.kind === 'accepted' ? tx.shared.deleteContactMessage(name) : undefined,
+      confirmLabel: tx.shared.delete,
       destructive: true,
     });
-    if (ok) connections.remove.mutate(contact.connection.id, { onSuccess: () => showSnackbar({ message: 'Listo.' }) });
+    if (ok) connections.remove.mutate(contact.connection.id, { onSuccess: () => showSnackbar({ message: tx.shared.done }) });
   };
 
   return (
@@ -82,15 +82,15 @@ export default function SharedScreen() {
       <StackedModuleBack />
       <View style={styles.titleRow}>
         <AppText variant="title" accessibilityRole="header" style={styles.title}>
-          Compartido
+          {tx.shared.title}
         </AppText>
-        <IconButton label="Buscar personas" onPress={() => setSearchOpen(true)}>
+        <IconButton label={tx.shared.searchPeople} onPress={() => setSearchOpen(true)}>
           <Search size={IconSize.action} strokeWidth={IconStroke} color={theme.text} />
         </IconButton>
       </View>
 
       <Button
-        title="Disponibilidad y horarios en común"
+        title={tx.shared.availabilityLink}
         variant="secondary"
         icon={<CalendarSearch size={IconSize.inline} strokeWidth={IconStroke} color={theme.text} />}
         onPress={() => router.push('/(app)/shared/availability')}
@@ -102,7 +102,7 @@ export default function SharedScreen() {
 
       {(invitations.data?.length ?? 0) > 0 ? (
         <View style={styles.section}>
-          <AppText variant="heading">Invitaciones a actividades</AppText>
+          <AppText variant="heading">{tx.shared.invitations}</AppText>
           {invitations.data?.map(({ share, activity, owner }) => (
             <View key={share.id} style={[styles.card, { borderColor: theme.border, backgroundColor: theme.surface }]}>
               <View style={styles.cardRow}>
@@ -113,7 +113,7 @@ export default function SharedScreen() {
                     {formatShortDate(fromIso(activity.start_at))} · {formatTimeRange(activity.start_at, activity.end_at, activity.all_day)}
                   </AppText>
                   <AppText variant="caption" color="textTertiary">
-                    Compartida por {owner.display_name ?? 'un contacto'}
+                    {tx.shared.sharedBy(owner.display_name ?? null)}
                   </AppText>
                 </View>
               </View>
@@ -122,26 +122,26 @@ export default function SharedScreen() {
                   quien organiza es indistinguible de no haberla visto. */}
               <View style={styles.cardActions}>
                 <Button
-                  title="No voy"
+                  title={tx.shared.notGoing}
                   variant="secondary"
                   onPress={() => shares.respond.mutate({ shareId: share.id, respuesta: 'declined' })}
                 />
                 <Button
-                  title="Tal vez"
+                  title={tx.shared.maybe}
                   variant="secondary"
                   onPress={() =>
                     shares.respond.mutate(
                       { shareId: share.id, respuesta: 'maybe' },
-                      { onSuccess: () => showSnackbar({ message: 'Marcada como «tal vez». Entra a tu calendario.' }) },
+                      { onSuccess: () => showSnackbar({ message: tx.shared.markedMaybe }) },
                     )
                   }
                 />
                 <Button
-                  title="Voy"
+                  title={tx.shared.going}
                   onPress={() =>
                     shares.respond.mutate(
                       { shareId: share.id, respuesta: 'accepted' },
-                      { onSuccess: () => showSnackbar({ message: 'Actividad añadida a tu calendario.' }) },
+                      { onSuccess: () => showSnackbar({ message: tx.shared.addedToCalendar }) },
                     )
                   }
                 />
@@ -153,22 +153,22 @@ export default function SharedScreen() {
 
       {incoming.length > 0 ? (
         <View style={styles.section}>
-          <AppText variant="heading">Solicitudes recibidas</AppText>
+          <AppText variant="heading">{tx.shared.receivedRequests}</AppText>
           {incoming.map((c) => (
             <View key={c.connection.id} style={[styles.row, { borderColor: theme.border }]}>
               <Avatar profile={c.profile} />
               <View style={styles.cardText}>
-                <AppText variant="bodyStrong">{c.profile.display_name ?? 'Sin nombre'}</AppText>
+                <AppText variant="bodyStrong">{c.profile.display_name ?? tx.shared.noName}</AppText>
               </View>
-              <IconButton label="Rechazar solicitud" onPress={() => removeContact(c)}>
+              <IconButton label={tx.shared.rejectRequest} onPress={() => removeContact(c)}>
                 <X size={IconSize.inline} strokeWidth={IconStroke} color={theme.textSecondary} />
               </IconButton>
               <IconButton
-                label="Aceptar solicitud"
+                label={tx.shared.acceptRequest}
                 onPress={() =>
                   connections.accept.mutate(c.connection.id, {
                     onSuccess: () => {
-                      showSnackbar({ message: `${c.profile.display_name?.split(' ')[0] ?? 'Contacto'} ya es tu contacto.` });
+                      showSnackbar({ message: tx.shared.nowContact(c.profile.display_name?.split(' ')[0] ?? tx.shared.contactFallback) });
                       setContactSheetFor(c.profile.id);
                     },
                   })
@@ -181,49 +181,49 @@ export default function SharedScreen() {
       ) : null}
 
       <View style={styles.section}>
-        <AppText variant="heading">Contactos</AppText>
+        <AppText variant="heading">{tx.shared.contacts}</AppText>
         {/*
           * Mi propia fila va con las demás y no en Perfil: el color solo significa algo
           * al lado del de los otros, que es donde se ve si choca con alguno.
           */}
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel={`Tú. Tu color en el calendario: ${nombreDeColor(miColor)}`}
+          accessibilityLabel={tx.shared.meColorA11y(nombreDeColor(miColor, tx))}
           onPress={() => setEligiendoMiColor(true)}
           style={({ pressed }) => [styles.row, { borderColor: theme.border }, pressed ? { backgroundColor: theme.surfaceAlt } : null]}>
           <ColorDot hex={miColor} />
           {profile.data ? <Avatar profile={profile.data} /> : null}
           <View style={styles.cardText}>
-            <AppText variant="bodyStrong">Tú</AppText>
+            <AppText variant="bodyStrong">{tx.shared.me}</AppText>
             <AppText variant="caption" color="textSecondary">
-              Tu color: {nombreDeColor(miColor).toLowerCase()}
+              {tx.shared.myColorHint(nombreDeColor(miColor, tx).toLowerCase())}
             </AppText>
           </View>
         </Pressable>
         {contacts.isSuccess && accepted.length === 0 ? (
           <EmptyState
-            title="Aún no tienes contactos"
-            description="Busca a alguien por su username y envíale una solicitud."
-            action={<Button title="Buscar personas" variant="secondary" onPress={() => setSearchOpen(true)} />}
+            title={tx.shared.noContactsTitle}
+            description={tx.shared.noContactsDescription}
+            action={<Button title={tx.shared.searchPeople} variant="secondary" onPress={() => setSearchOpen(true)} />}
           />
         ) : null}
         {accepted.map((c) => (
           <Pressable
             key={c.connection.id}
             accessibilityRole="button"
-            accessibilityLabel={`${c.profile.display_name ?? 'Contacto'}. Tu calendario: ${visibilityLabel(c.myCalendarVisibility)}`}
+            accessibilityLabel={tx.shared.contactA11y(c.profile.display_name ?? tx.shared.contactFallback, visibilityText(c.myCalendarVisibility, tx).label)}
             onPress={() => setContactSheetFor(c.profile.id)}
             style={({ pressed }) => [styles.row, { borderColor: theme.border }, pressed ? { backgroundColor: theme.surfaceAlt } : null]}>
             <ColorDot hex={peopleColors.get(c.profile.id) ?? theme.border} />
             <Avatar profile={c.profile} />
             <View style={styles.cardText}>
-              <AppText variant="bodyStrong">{c.profile.display_name ?? 'Sin nombre'}</AppText>
+              <AppText variant="bodyStrong">{c.profile.display_name ?? tx.shared.noName}</AppText>
               <AppText variant="caption" color="textSecondary">
-                Tu calendario: {visibilityLabel(c.myCalendarVisibility)}
+                {tx.shared.yourCalendar(visibilityText(c.myCalendarVisibility, tx).label)}
               </AppText>
               {c.theirCalendarVisibility ? (
                 <AppText variant="caption" color="textTertiary">
-                  Te comparte: {visibilityLabel(c.theirCalendarVisibility).toLowerCase()}
+                  {tx.shared.theyShare(visibilityText(c.theirCalendarVisibility, tx).label.toLowerCase())}
                 </AppText>
               ) : null}
             </View>
@@ -233,17 +233,17 @@ export default function SharedScreen() {
 
       {outgoing.length > 0 ? (
         <View style={styles.section}>
-          <AppText variant="heading">Solicitudes enviadas</AppText>
+          <AppText variant="heading">{tx.shared.sentRequests}</AppText>
           {outgoing.map((c) => (
             <View key={c.connection.id} style={[styles.row, { borderColor: theme.border }]}>
               <Avatar profile={c.profile} />
               <View style={styles.cardText}>
-                <AppText variant="bodyStrong">{c.profile.display_name ?? 'Sin nombre'}</AppText>
+                <AppText variant="bodyStrong">{c.profile.display_name ?? tx.shared.noName}</AppText>
                 <AppText variant="caption" color="textSecondary">
-                  Pendiente
+                  {tx.shared.pending}
                 </AppText>
               </View>
-              <IconButton label="Cancelar solicitud" onPress={() => removeContact(c)}>
+              <IconButton label={tx.shared.cancelRequest} onPress={() => removeContact(c)}>
                 <X size={IconSize.inline} strokeWidth={IconStroke} color={theme.textSecondary} />
               </IconButton>
             </View>
@@ -251,47 +251,47 @@ export default function SharedScreen() {
         </View>
       ) : null}
 
-      <Sheet visible={searchOpen} onClose={() => setSearchOpen(false)} title="Buscar personas">
+      <Sheet visible={searchOpen} onClose={() => setSearchOpen(false)} title={tx.shared.searchPeople}>
         <TextField
-          label="Correo o usuario"
+          label={tx.shared.emailOrUser}
           value={query}
           onChangeText={setQuery}
-          placeholder="@usuario  ·  nombre@correo.com"
+          placeholder={tx.shared.searchPlaceholder}
           keyboardType="email-address"
           autoCapitalize="none"
           autoCorrect={false}
-          hint="Escribe las primeras letras del usuario, o el correo completo."
+          hint={tx.shared.searchHint}
         />
         {!canSearch && query.trim().length > 0 ? (
           <AppText variant="caption" color="textTertiary">
             Escribe al menos {SEARCH_MIN_LENGTH} letras.
           </AppText>
         ) : null}
-        {canSearch && search.isFetching ? <LoadingState label="Buscando…" /> : null}
+        {canSearch && search.isFetching ? <LoadingState label={tx.shared.searching} /> : null}
         {/* Sin esto una búsqueda que falla se ve igual que una sin resultados: en blanco. */}
         {canSearch && search.isError ? (
           <ErrorState message={search.error.message} onRetry={() => search.refetch()} />
         ) : null}
         {canSearch && search.isSuccess && search.data.length === 0 ? (
-          <AppText color="textSecondary">Nadie con ese usuario o correo.</AppText>
+          <AppText color="textSecondary">{tx.shared.nobodyFound}</AppText>
         ) : null}
         {(canSearch ? search.data : [])?.map((p) => (
           <View key={p.id} style={[styles.row, { borderColor: theme.border }]}>
             <Avatar profile={p} />
             <View style={styles.cardText}>
-              <AppText variant="bodyStrong">{p.display_name ?? 'Sin nombre'}</AppText>
+              <AppText variant="bodyStrong">{p.display_name ?? tx.shared.noName}</AppText>
               <AppText variant="caption" color="textSecondary">
                 @{p.username}
               </AppText>
             </View>
             {knownIds.has(p.id) ? (
               <AppText variant="caption" color="textTertiary">
-                Ya en tu lista
+                {tx.shared.alreadyListed}
               </AppText>
             ) : (
               <IconButton
-                label={`Enviar solicitud a ${p.display_name ?? 'esta persona'}`}
-                onPress={() => connections.request.mutate(p.id, { onSuccess: () => showSnackbar({ message: 'Solicitud enviada.' }) })}>
+                label={tx.shared.sendRequestTo(p.display_name ?? null)}
+                onPress={() => connections.request.mutate(p.id, { onSuccess: () => showSnackbar({ message: tx.shared.requestSent }) })}>
                 <UserPlus size={IconSize.inline} strokeWidth={IconStroke} color={theme.ink} />
               </IconButton>
             )}
@@ -299,9 +299,9 @@ export default function SharedScreen() {
         ))}
       </Sheet>
 
-      <Sheet visible={eligiendoMiColor} onClose={() => setEligiendoMiColor(false)} title="Tu color">
+      <Sheet visible={eligiendoMiColor} onClose={() => setEligiendoMiColor(false)} title={tx.shared.yourColor}>
         <AppText variant="caption" color="textTertiary">
-          Con el que verás tus actividades cuando superpongas el calendario de alguien más.
+          {tx.shared.yourColorHint}
         </AppText>
         <View style={styles.chips}>
           {PEOPLE_COLORS_DISPLAY.map((c) => {
@@ -310,12 +310,12 @@ export default function SharedScreen() {
               <ColorSwatch
                 key={c.id}
                 hex={c.hex}
-                label={c.label}
+                label={tx.colors[c.id] ?? c.label}
                 selected={selected}
                 onPress={() => {
                   // Volver a tocar el elegido lo devuelve al color del Nobi.
                   setSelfColor(selected ? null : c.hex);
-                  showSnackbar({ message: selected ? 'Tu color vuelve al de tu Nobi.' : `Tu color: ${c.label.toLowerCase()}.` });
+                  showSnackbar({ message: selected ? tx.shared.colorBackToNobi : tx.shared.yourColorIs((tx.colors[c.id] ?? c.label).toLowerCase()) });
                 }}
               />
             );
@@ -323,12 +323,12 @@ export default function SharedScreen() {
         </View>
       </Sheet>
 
-      <Sheet visible={sheetContact !== null} onClose={() => setContactSheetFor(null)} title={sheetContact?.profile.display_name ?? 'Contacto'}>
+      <Sheet visible={sheetContact !== null} onClose={() => setContactSheetFor(null)} title={sheetContact?.profile.display_name ?? tx.shared.contactFallback}>
         <AppText variant="label" color="textSecondary">
-          Color en el calendario
+          {tx.shared.calendarColor}
         </AppText>
         <AppText variant="caption" color="textTertiary">
-          Con el que verás sus actividades al superponer su calendario con el tuyo.
+          {tx.shared.calendarColorHint}
         </AppText>
         <View style={styles.chips}>
           {/* El mío se excluye: ofrecerlo permitiría no distinguirme de un contacto. */}
@@ -339,14 +339,14 @@ export default function SharedScreen() {
               <ColorSwatch
                 key={c.id}
                 hex={c.hex}
-                label={c.label}
+                label={tx.colors[c.id] ?? c.label}
                 selected={selected}
                 onPress={() => {
                   if (!sheetContact) return;
                   // Volver a tocar el color asignado lo devuelve a automático.
                   connections.setColor.mutate(
                     { contactUserId: sheetContact.profile.id, color: manual ? null : c.hex },
-                    { onSuccess: () => showSnackbar({ message: manual ? 'Color automático.' : `Color: ${c.label.toLowerCase()}.` }) },
+                    { onSuccess: () => showSnackbar({ message: manual ? tx.shared.automaticColor : tx.shared.colorIs((tx.colors[c.id] ?? c.label).toLowerCase()) }) },
                   );
                 }}
               />
@@ -360,9 +360,9 @@ export default function SharedScreen() {
         )}
 
         <AppText variant="label" color="textSecondary" style={styles.sheetSection}>
-          Compartir mi calendario
+          {tx.shared.shareMyCalendar}
         </AppText>
-        {VISIBILITY_OPTIONS.map((option) => {
+        {VISIBILIDADES.map((value) => ({ value, ...visibilityText(value, tx) })).map((option) => {
           const selected = (sheetContact?.myCalendarVisibility ?? null) === option.value;
           return (
             <Pressable
@@ -373,7 +373,7 @@ export default function SharedScreen() {
                 if (!sheetContact) return;
                 connections.setVisibility.mutate(
                   { contactUserId: sheetContact.profile.id, visibility: option.value },
-                  { onSuccess: () => showSnackbar({ message: `Calendario: ${option.label.toLowerCase()}.` }) },
+                  { onSuccess: () => showSnackbar({ message: tx.shared.calendarIs(option.label.toLowerCase()) }) },
                 );
               }}
               style={({ pressed }) => [styles.option, { borderColor: selected ? theme.ink : theme.border }, pressed ? { backgroundColor: theme.surfaceAlt } : null]}>
@@ -388,10 +388,10 @@ export default function SharedScreen() {
           );
         })}
         <AppText variant="caption" color="textTertiary" style={styles.sheetHint}>
-          Los cambios se guardan solos.
+          {tx.shared.savedAutomatically}
         </AppText>
         <Button
-          title="Eliminar contacto"
+          title={tx.shared.deleteContact}
           variant="danger"
           onPress={() => {
             if (!sheetContact) return;
@@ -400,7 +400,7 @@ export default function SharedScreen() {
             void removeContact(contact);
           }}
         />
-        <Button title="Listo" onPress={() => setContactSheetFor(null)} />
+        <Button title={tx.shared.done2} onPress={() => setContactSheetFor(null)} />
       </Sheet>
     </Screen>
   );

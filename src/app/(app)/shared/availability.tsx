@@ -11,6 +11,7 @@ import { useContacts } from '@/hooks/use-connections';
 import { useTheme } from '@/hooks/use-theme';
 import { clampToDay, findFreeSlots, formatHourLabel, formatShortDate, formatTime, formatWeekTitle, fromIso, isToday, minutesSinceMidnight, rangeForView, shiftAnchor, toDayKey, weekdayShort, weekDays } from '@/lib/dates';
 import { useAuth } from '@/providers';
+import { useLanguage, useT } from '@/i18n';
 
 const MAX_WIDTH = 1100;
 const HOUR_HEIGHT = 28;
@@ -29,6 +30,8 @@ const DURATIONS: readonly SegmentedOption<'30' | '60' | '90' | '120'>[] = [
 /** Disponibilidad de contactos + Encontrar horario (RF-S8, RF-S9). */
 export default function AvailabilityScreen() {
   const theme = useTheme();
+  const tx = useT();
+  const lang = useLanguage();
   const router = useRouter();
   const { userId } = useAuth();
   const { width } = useWindowDimensions();
@@ -57,13 +60,13 @@ export default function AvailabilityScreen() {
     const index = selected.indexOf(id);
     return palette[index % palette.length] ?? theme.neutralActivity;
   };
-  const nameFor = (id: string) => (id === userId ? 'Tú' : sharing.find((c) => c.profile.id === id)?.profile.display_name ?? 'Contacto');
+  const nameFor = (id: string) => (id === userId ? tx.shared.availability.me : sharing.find((c) => c.profile.id === id)?.profile.display_name ?? tx.shared.contactFallback);
 
   const compact = width < 720;
 
   return (
     <Screen modal scroll maxWidth={MAX_WIDTH}>
-      <ModalHeader title="Disponibilidad" />
+      <ModalHeader title={tx.shared.availability.title} />
 
       {contacts.isPending ? <LoadingState /> : null}
       {/* Sin esta rama un fallo al cargar contactos dejaba la pantalla en blanco,
@@ -72,14 +75,14 @@ export default function AvailabilityScreen() {
         <ErrorState message={contacts.error.message} onRetry={() => contacts.refetch()} />
       ) : null}
       {contacts.isSuccess && sharing.length === 0 ? (
-        <EmptyState title="Nadie te comparte su calendario todavía" description="Pide a tus contactos que compartan su disponibilidad contigo desde su pestaña Compartido." />
+        <EmptyState title={tx.shared.availability.nobodyTitle} description={tx.shared.availability.nobodyDescription} />
       ) : null}
 
       {sharing.length > 0 ? (
         <>
           <View style={styles.section}>
             <AppText variant="label" color="textSecondary">
-              Contactos
+              {tx.shared.availability.contacts}
             </AppText>
             <View style={styles.chips}>
               {sharing.map((c) => {
@@ -87,7 +90,7 @@ export default function AvailabilityScreen() {
                 return (
                   <Chip
                     key={c.profile.id}
-                    label={c.profile.display_name ?? 'Contacto'}
+                    label={c.profile.display_name ?? tx.shared.contactFallback}
                     color={isSelected ? colorFor(c.profile.id) : undefined}
                     selected={isSelected}
                     icon={<Avatar profile={c.profile} size={20} />}
@@ -99,19 +102,19 @@ export default function AvailabilityScreen() {
           </View>
 
           <View style={styles.weekRow}>
-            <IconButton label="Semana anterior" onPress={() => setAnchor(shiftAnchor('week', anchor, -1))}>
+            <IconButton label={tx.shared.availability.previousWeek} onPress={() => setAnchor(shiftAnchor('week', anchor, -1))}>
               <ChevronLeft size={IconSize.action} strokeWidth={IconStroke} color={theme.text} />
             </IconButton>
-            <AppText variant="bodyStrong">{formatWeekTitle(anchor)}</AppText>
-            <IconButton label="Semana siguiente" onPress={() => setAnchor(shiftAnchor('week', anchor, 1))}>
+            <AppText variant="bodyStrong">{formatWeekTitle(anchor, lang)}</AppText>
+            <IconButton label={tx.shared.availability.nextWeek} onPress={() => setAnchor(shiftAnchor('week', anchor, 1))}>
               <ChevronRight size={IconSize.action} strokeWidth={IconStroke} color={theme.text} />
             </IconButton>
           </View>
 
           {selected.length === 0 ? (
-            <AppText color="textSecondary">Elige al menos un contacto para superponer su disponibilidad con la tuya.</AppText>
+            <AppText color="textSecondary">{tx.shared.availability.pickSomeone}</AppText>
           ) : availability.isPending ? (
-            <LoadingState label="Calculando disponibilidad…" />
+            <LoadingState label={tx.shared.availability.calculating} />
           ) : availability.isError ? (
             <ErrorState message={availability.error.message} onRetry={() => availability.refetch()} />
           ) : (
@@ -134,7 +137,7 @@ export default function AvailabilityScreen() {
                     {HOURS.map((h) => (
                       <View key={h} style={{ height: HOUR_HEIGHT }}>
                         <AppText variant="caption" color="textTertiary" tabular>
-                          {formatHourLabel(h)}
+                          {formatHourLabel(h, lang)}
                         </AppText>
                       </View>
                     ))}
@@ -143,7 +146,7 @@ export default function AvailabilityScreen() {
                     <View key={toDayKey(day)} style={[styles.dayColumn, { borderLeftColor: theme.border }]}>
                       <View style={styles.dayHeader}>
                         <AppText variant="caption" color={isToday(day) ? 'today' : 'textSecondary'}>
-                          {weekdayShort()[dayIndex]} {day.getDate()}
+                          {weekdayShort(lang)[dayIndex]} {day.getDate()}
                         </AppText>
                       </View>
                       <View style={{ height: HOURS.length * HOUR_HEIGHT }}>
@@ -161,7 +164,7 @@ export default function AvailabilityScreen() {
                           return (
                             <View
                               key={`${block.user_id}-${i}`}
-                              accessibilityLabel={`${nameFor(block.user_id)} ocupado de ${formatTime(fromIso(block.start_at))} a ${formatTime(fromIso(block.end_at))}`}
+                              accessibilityLabel={tx.shared.availability.busyA11y(nameFor(block.user_id), formatTime(fromIso(block.start_at), lang), formatTime(fromIso(block.end_at), lang))}
                               style={[
                                 styles.block,
                                 { top, height: bottom - top, left: `${lane * laneWidth}%`, width: `${laneWidth}%`, backgroundColor: `${colorFor(block.user_id)}55` },
@@ -181,17 +184,17 @@ export default function AvailabilityScreen() {
               </ScrollView>
 
               <View style={styles.section}>
-                <AppText variant="heading">Encontrar horario</AppText>
+                <AppText variant="heading">{tx.shared.availability.findTime}</AppText>
                 <Segmented options={DURATIONS} value={duration} onChange={setDuration} />
                 {slots.length === 0 ? (
-                  <AppText color="textSecondary">No hay huecos libres de esa duración en lo que queda de la semana.</AppText>
+                  <AppText color="textSecondary">{tx.shared.availability.noSlots}</AppText>
                 ) : (
                   <View style={styles.slots}>
                     {slots.map((slot) => (
                       <Pressable
                         key={slot.start.toISOString()}
                         accessibilityRole="button"
-                        accessibilityLabel={`Crear actividad el ${formatShortDate(slot.start)} de ${formatTime(slot.start)} a ${formatTime(slot.end)}`}
+                        accessibilityLabel={tx.shared.availability.createAtA11y(formatShortDate(slot.start, lang), formatTime(slot.start, lang), formatTime(slot.end, lang))}
                         onPress={() =>
                           router.push({
                             pathname: '/(app)/activity/new',
@@ -203,16 +206,16 @@ export default function AvailabilityScreen() {
                           })
                         }
                         style={({ pressed }) => [styles.slot, { borderColor: theme.border, backgroundColor: theme.surface }, pressed ? { backgroundColor: theme.surfaceAlt } : null]}>
-                        <AppText variant="label">{formatShortDate(slot.start)}</AppText>
+                        <AppText variant="label">{formatShortDate(slot.start, lang)}</AppText>
                         <AppText variant="caption" color="textSecondary" tabular>
-                          {formatTime(slot.start)} – {formatTime(slot.end)}
+                          {formatTime(slot.start, lang)} – {formatTime(slot.end, lang)}
                         </AppText>
                       </Pressable>
                     ))}
                   </View>
                 )}
                 <AppText variant="caption" color="textTertiary">
-                  Toca un hueco para crear la actividad y compartirla después desde su detalle.
+                  {tx.shared.availability.tapSlotHint}
                 </AppText>
               </View>
             </>
