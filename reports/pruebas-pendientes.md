@@ -470,3 +470,14 @@ lista y al editarlo; el selector de hora usa rueda 12–11 con a.m./p.m. Falta:
 - [ ] `TimePickerSheet` en 12 h: 12 a.m. = 0:00, 12 p.m. = 12:00; cambiar a.m./p.m. conserva
   la hora; devuelve minutos 0–1439 igual que en 24 h.
 - [ ] Ninguna hora visible se arma a mano (buscar `.slice(0, 5)` sobre horas en la UI).
+
+## Glosario y estimaciones (T253, T254)
+Probado a mano en el demo (360 px): enlace al glosario en Fitness; pantalla con 8 temas;
+buscar "rir" despliega Reps en reserva; tocar "RIR" en el logger abre su explicación con
+"Ver todo el glosario"; el detalle del ejercicio muestra "≈ 101.3 kg máximo estimado" y abre
+su explicación. Falta:
+- [ ] `glossary.ts`: ids únicos; cada entrada con significado, ejemplo y "en pocas palabras";
+  todo `topic` existe en `GLOSSARY_TOPICS`.
+- [ ] Pantalla Glosario: búsqueda sin acentos (por término, otros nombres y texto); `?term=`
+  abre desplegado; vacío con "Ningún término dice eso."
+- [ ] RF-F65: ningún valor calculado sin "≈"/"estimado" (detalle, gráfica, herramientas).

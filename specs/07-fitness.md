@@ -217,8 +217,24 @@ Regla: **la diversión nunca agrega pasos** al registro.
   personalizado con ese nombre. Lo que no se pudo ligar se reporta en el detalle, no se descarta en silencio.
 
 ## 10. Ajustes del módulo (Perfil → Fitness, por dispositivo)
-Unidad (kg o lb) · esfuerzo en RPE o RIR · fórmula de e1RM (Epley o Brzycki) · "Modo serio" ·
+Unidad (kg o lb) · esfuerzo en RPE o RIR · cálculo del peso máximo estimado (Epley o Brzycki) · "Modo serio" ·
 "Cómo te hablo" · % del drop por omisión (−20 %) · descanso por omisión · entrenamientos en el calendario (v1).
+
+## 11. Glosario y estimaciones
+
+Principio (documento "KAVI Fitness · Arquitectura, glosario y desarrollo conceptual", oct 2026): la
+complejidad vive en el sistema, no en la experiencia. Entrenar en KAVI no debe exigir saber jerga de
+gimnasio.
+
+- RF-F64. **Glosario contextual.** Una sola fuente de términos (`src/constants/glossary.ts`), cada uno con
+  *qué significa*, *un ejemplo* y *en pocas palabras*, en español latinoamericano; el término en inglés solo
+  cuando ayuda a reconocerlo en otras apps. Tocar un término técnico abre su explicación: la columna de
+  esfuerzo del logger (RIR/RPE), el peso máximo estimado del detalle del ejercicio, la Racha de Hierro y las
+  series por músculo en Progreso. Dentro de una hoja la explicación se despliega en el sitio (sin modales
+  anidados). Fitness tiene una pantalla **Glosario** con búsqueda sin acentos, agrupada por temas.
+- RF-F65. **Las estimaciones se marcan.** Todo valor calculado y no registrado se muestra con "≈" y la palabra
+  "estimado" o "estimación" (hoy: el peso máximo estimado). Lo registrado —peso, reps, volumen, PR— va sin
+  marca. Nada se presenta como medición si es un cálculo.
 
 ## Reglas de negocio
 - Los workouts y todo lo que cuelga de ellos (series, segmentos, grupos, notas, racha) son **privados**.

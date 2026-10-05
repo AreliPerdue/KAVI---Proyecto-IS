@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { ChevronRight, Dumbbell, MessageSquareText, Play, Plus, Search, X } from 'lucide-react-native';
+import { BookOpen, ChevronRight, Dumbbell, MessageSquareText, Play, Plus, Search, X } from 'lucide-react-native';
 import { useCallback, useState } from 'react';
 import { FlatList, Platform, Pressable, StyleSheet, TextInput, type TextStyle, View } from 'react-native';
 
@@ -131,6 +131,17 @@ export default function FitnessScreen() {
         <AppText variant="caption" color="textTertiary">
           Para registrar una sesión agendada, ábrela en el calendario y toca “Registrar entrenamiento”.
         </AppText>
+        {/* RF-F64: entrenar no exige saber jerga; el glosario está a un toque. */}
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Glosario: qué significa cada término del gimnasio"
+          onPress={() => router.push('/(app)/glossary')}
+          style={({ pressed }) => [styles.glosario, pressed ? { opacity: 0.75 } : null]}>
+          <BookOpen size={IconSize.inline} strokeWidth={IconStroke} color={theme.textSecondary} />
+          <AppText variant="label" color="textSecondary">
+            ¿Qué es RIR, un drop set o una superserie? Ver el glosario
+          </AppText>
+        </Pressable>
         {enCurso ? (
           <Pressable
             accessibilityRole="button"
@@ -219,6 +230,7 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: Spacing.md, minHeight: 64, padding: Spacing.md, borderWidth: 1, borderRadius: Radius.md, borderCurve: 'continuous' },
   icon: { width: 40, height: 40, borderRadius: Radius.sm, borderCurve: 'continuous', alignItems: 'center', justifyContent: 'center' },
   text: { flex: 1, gap: 2 },
+  glosario: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm, minHeight: 44 },
   tituloFila: { flexDirection: 'row', alignItems: 'center', gap: Spacing.xs },
   flexTexto: { flexShrink: 1 },
   buscador: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm, minHeight: 48, paddingLeft: Spacing.md, borderWidth: 1, borderRadius: Radius.md, borderCurve: 'continuous' },

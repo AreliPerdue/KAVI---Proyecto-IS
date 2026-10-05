@@ -7,6 +7,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { type EditTarget, ExerciseBlock } from '@/components/fitness/exercise-block';
 import { ExercisePicker } from '@/components/fitness/exercise-picker';
+import { GlossarySheet } from '@/components/fitness/glossary-sheet';
 import { GroupSheet } from '@/components/fitness/group-sheet';
 import { IntensifierSheet } from '@/components/fitness/intensifier-sheet';
 import { IntervalTimerSheet } from '@/components/fitness/interval-timer-sheet';
@@ -136,6 +137,8 @@ export default function WorkoutScreen() {
   const [notaFija, setNotaFija] = useState<WorkoutExerciseDetail | null>(null);
   const [reordenando, setReordenando] = useState(false);
   const [arrastrando, setArrastrando] = useState(false);
+  /** Término del glosario abierto (RF-F64). */
+  const [termino, setTermino] = useState<string | null>(null);
   /** Reloj de la sesión en curso: se lee aquí y se refresca cada 30 s, no en cada render. */
   const [ahora, setAhora] = useState(() => Date.now());
 
@@ -739,6 +742,7 @@ export default function WorkoutScreen() {
                 onRemoveSegment={quitarSegmento}
                 onMoveSet={moverSerie}
                 onPickVariant={abrirVariante}
+                onExplain={setTermino}
                 exerciseName={nombreEjercicio}
                 onDragStateChange={setArrastrando}
                 onExerciseMenu={setMenuEjercicio}
@@ -1188,6 +1192,8 @@ export default function WorkoutScreen() {
         onClose={() => setReordenando(false)}
         onSave={reordenarEjercicios}
       />
+
+      <GlossarySheet termId={termino} onClose={() => setTermino(null)} />
 
       <VariantSheet
         visible={varianteDe !== null}

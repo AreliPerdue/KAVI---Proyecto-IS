@@ -116,6 +116,8 @@ export type ExerciseBlockProps = {
   onDragStateChange?: (dragging: boolean) => void;
   /** Elegir la variante del tramo de un drop mecánico (RF-F44). Sin él, solo se muestra. */
   onPickVariant?: (set: WorkoutSet, segmentIndex: number) => void;
+  /** Abre la explicación de un término del glosario (RF-F64), p. ej. al tocar "RIR". */
+  onExplain?: (termId: string) => void;
   /** Nombre de un ejercicio del catálogo, para mostrar la variante elegida. */
   exerciseName?: (exerciseId: string) => string | null;
   onExerciseMenu: (exercise: WorkoutExerciseDetail) => void;
@@ -219,9 +221,23 @@ export const ExerciseBlock = memo(function ExerciseBlock(props: ExerciseBlockPro
               {columnLabel(c, unit)}
             </AppText>
           ))}
-          <AppText variant="micro" color="textTertiary" style={styles.colCorta}>
-            {effortScale === 'rir' ? 'RIR' : 'RPE'}
-          </AppText>
+          {props.onExplain ? (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={effortScale === 'rir' ? 'Qué es RIR' : 'Qué es RPE'}
+              hitSlop={8}
+              onPress={() => props.onExplain?.(effortScale)}
+              style={styles.colCorta}>
+              {/* Subrayado punteado: la señal de "toca para saber qué es". */}
+              <AppText variant="micro" color="textSecondary" style={styles.termino}>
+                {effortScale === 'rir' ? 'RIR' : 'RPE'}
+              </AppText>
+            </Pressable>
+          ) : (
+            <AppText variant="micro" color="textTertiary" style={styles.colCorta}>
+              {effortScale === 'rir' ? 'RIR' : 'RPE'}
+            </AppText>
+          )}
           <View style={styles.colCheck} />
         </View>
       ) : null}
@@ -541,5 +557,6 @@ const styles = StyleSheet.create({
   accionIzq: { justifyContent: 'flex-start' },
   accionDer: { justifyContent: 'flex-end' },
   pressed: { opacity: 0.75 },
+  termino: { textAlign: 'center', textDecorationLine: 'underline', textDecorationStyle: 'dotted' },
   variante: { minHeight: 44, justifyContent: 'center', borderRadius: Radius.sm, borderCurve: 'continuous' },
 });

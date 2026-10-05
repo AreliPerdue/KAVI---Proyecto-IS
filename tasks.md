@@ -731,6 +731,9 @@ Plan y decisiones en `docs/gym/AUDITORIA.md`. Cada fase cierra con typecheck, li
   editor de texto de v1. Dep: T243
 - [x] T252 Drop mecánico: elegir la variante del ejercicio en el tramo (`variant_exercise_id`).
   Dep: T245
+- [x] T253 Glosario contextual de fitness: fuente única de términos, explicación al tocar un término
+  y pantalla Glosario con búsqueda (RF-F64). Dep: T248
+- [x] T254 Marcar las estimaciones con "≈" y "estimado" en todo el módulo (RF-F65). Dep: T248
 
 ### Bugs reportados
 - [x] T249 **Una ocurrencia borrada de una serie vuelve a aparecer al recargar.** Reporte (4

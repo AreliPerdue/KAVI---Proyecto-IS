@@ -1,9 +1,10 @@
 import { addDays, addWeeks, format, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { ChevronLeft, ChevronRight, Lock, Trophy } from 'lucide-react-native';
+import { ChevronLeft, ChevronRight, Info, Lock, Trophy } from 'lucide-react-native';
 import { useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
+import { GlossarySheet } from '@/components/fitness/glossary-sheet';
 import { gapLabel } from '@/components/fitness/streak-card';
 import { ModalHeader } from '@/components/modal-header';
 import { AppText, ErrorState, IconButton, LoadingState, Screen } from '@/components/ui';
@@ -30,6 +31,7 @@ export default function ProgressScreen() {
   const trato = useGymStore((s) => s.trato);
   const { streak, achievements, now } = progreso;
   const [semanaVolumen, setSemanaVolumen] = useState(0);
+  const [termino, setTermino] = useState<string | null>(null);
 
   const dias = useMemo(() => {
     const m = new Map<string, number>();
@@ -80,9 +82,14 @@ export default function ProgressScreen() {
       <ModalHeader back title="Progreso" />
 
       <View style={[styles.tarjeta, { backgroundColor: theme.surfaceAlt }]}>
-        <AppText variant="label" color="textSecondary">
-          Racha de Hierro
-        </AppText>
+        <View style={styles.tituloFila}>
+          <AppText variant="label" color="textSecondary" style={styles.flex}>
+            Racha de Hierro
+          </AppText>
+          <IconButton label="Qué es la Racha de Hierro" onPress={() => setTermino('iron_streak')}>
+            <Info size={IconSize.inline} strokeWidth={IconStroke} color={theme.textTertiary} />
+          </IconButton>
+        </View>
         <AppText variant="display" tabular>
           {streak.weeks} {streak.weeks === 1 ? 'semana' : 'semanas'}
         </AppText>
@@ -143,6 +150,9 @@ export default function ProgressScreen() {
           <AppText variant="heading" accessibilityRole="header" style={styles.flex}>
             Series por músculo
           </AppText>
+          <IconButton label="Qué son las series por músculo" onPress={() => setTermino('muscle_sets')}>
+            <Info size={IconSize.inline} strokeWidth={IconStroke} color={theme.textTertiary} />
+          </IconButton>
           <IconButton label="Semana anterior" onPress={() => setSemanaVolumen((s) => s - 1)}>
             <ChevronLeft size={IconSize.action} strokeWidth={IconStroke} color={theme.text} />
           </IconButton>
@@ -185,6 +195,7 @@ export default function ProgressScreen() {
           <Logro key={a.id} logro={a} />
         ))}
       </View>
+      <GlossarySheet termId={termino} onClose={() => setTermino(null)} />
     </Screen>
   );
 }

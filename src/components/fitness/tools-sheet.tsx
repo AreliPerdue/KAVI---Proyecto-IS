@@ -100,10 +100,14 @@ export function ToolsSheet({ visible, onClose, unit, formula, topWeight, onAddWa
       {vista === '1rm' && tabla ? (
         <View style={[styles.caja, { backgroundColor: theme.surfaceAlt }]}>
           <AppText variant="label" color="textSecondary">
-            1RM estimado ({formula === 'epley' ? 'Epley' : 'Brzycki'})
+            Peso máximo estimado ({formula === 'epley' ? 'Epley' : 'Brzycki'})
           </AppText>
           <AppText variant="title" tabular>
-            {tabla.e1rm} {unit}
+            ≈ {tabla.e1rm} {unit}
+          </AppText>
+          <AppText variant="caption" color="textSecondary">
+            Lo que podrías levantar en una sola repetición, calculado con esta serie. Es una estimación, no un peso que hayas
+            levantado. Abajo, cuánto equivale cada porcentaje.
           </AppText>
           {Number(reps) > 12 ? (
             <AppText variant="caption" color="today">

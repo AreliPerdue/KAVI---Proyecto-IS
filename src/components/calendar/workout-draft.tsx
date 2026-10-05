@@ -6,6 +6,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { type EditTarget, ExerciseBlock } from '@/components/fitness/exercise-block';
 import { ExercisePicker } from '@/components/fitness/exercise-picker';
+import { GlossarySheet } from '@/components/fitness/glossary-sheet';
 import { NumpadSheet, type NumpadField } from '@/components/fitness/numpad-sheet';
 import { applyNumpadValue, nextNumpadTarget, numpadFieldFor } from '@/components/fitness/set-editing';
 import { ActionRow, AppText, Button, Chip, Sheet } from '@/components/ui';
@@ -57,6 +58,7 @@ export function WorkoutDraft({ exercises, onChange, existingCount, onOpenExistin
   const [teclado, setTeclado] = useState<{ target: EditTarget; draft: WorkoutSet } | null>(null);
   const [menuSerie, setMenuSerie] = useState<{ exercise: ExerciseDraft; set: WorkoutSet } | null>(null);
   const [menuEjercicio, setMenuEjercicio] = useState<ExerciseDraft | null>(null);
+  const [termino, setTermino] = useState<string | null>(null);
 
   const porId = useMemo(() => new Map((catalogo.data ?? []).map((e) => [e.id, e])), [catalogo.data]);
   const notasFijas = useMemo(() => new Map((prefs.data ?? []).filter((p) => p.sticky_note).map((p) => [p.exercise_id, p.sticky_note as string])), [prefs.data]);
@@ -215,6 +217,7 @@ export function WorkoutDraft({ exercises, onChange, existingCount, onOpenExistin
               if (set) guardarSerie({ ...set, sort_order: sortOrderBetween(resto[to - 1]?.sort_order ?? null, resto[to]?.sort_order ?? null) });
             }}
             onExerciseMenu={setMenuEjercicio}
+            onExplain={setTermino}
             onOpenDetail={(ex) => {
               if (ex.exercise_id) router.push({ pathname: '/(app)/exercise/[id]', params: { id: ex.exercise_id } });
             }}
@@ -228,6 +231,8 @@ export function WorkoutDraft({ exercises, onChange, existingCount, onOpenExistin
         icon={<Plus size={IconSize.inline} strokeWidth={IconStroke} color={theme.text} />}
         onPress={() => setSelector({ modo: 'agregar' })}
       />
+
+      <GlossarySheet termId={termino} onClose={() => setTermino(null)} />
 
       <ExercisePicker visible={selector !== null} onClose={() => setSelector(null)} onPick={elegir} />
 

@@ -1,10 +1,11 @@
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Pin } from 'lucide-react-native';
+import { Info, Pin } from 'lucide-react-native';
 import { useMemo, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
+import { GlossarySheet } from '@/components/fitness/glossary-sheet';
 import { NoteSheet } from '@/components/fitness/note-sheet';
 import { ProgressChart } from '@/components/fitness/progress-chart';
 import { ModalHeader } from '@/components/modal-header';
@@ -42,6 +43,7 @@ export default function ExerciseDetailScreen() {
   const prefs = useExercisePrefs();
   const { saveStickyNote } = useExerciseMutations();
   const [editandoNota, setEditandoNota] = useState(false);
+  const [termino, setTermino] = useState<string | null>(null);
   const notaFija = (prefs.data ?? []).find((p) => p.exercise_id === id)?.sticky_note ?? null;
 
   const analisis = useMemo(() => {
@@ -131,14 +133,22 @@ export default function ExerciseDetailScreen() {
                 {analisis?.mejor ? formatSet(analisis.mejor.set, unit) : '—'}
               </AppText>
               {analisis?.mejor && analisis.mejor.e1rm > 0 ? (
-                <AppText variant="caption" color="textTertiary" tabular>
-                  Máximo estimado: {enUnidad(analisis.mejor.e1rm)} {unit} · {fecha(analisis.mejor.fecha)}
-                </AppText>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={`Peso máximo estimado: aproximadamente ${enUnidad(analisis.mejor.e1rm)} ${unit}. Qué significa`}
+                  onPress={() => setTermino('max_estimate')}
+                  style={styles.estimado}>
+                  {/* RF-F65: es un cálculo, así que lleva "≈" y "estimado". */}
+                  <AppText variant="caption" color="textTertiary" tabular style={styles.flexTexto}>
+                    ≈ {enUnidad(analisis.mejor.e1rm)} {unit} máximo estimado · {fecha(analisis.mejor.fecha)}
+                  </AppText>
+                  <Info size={14} strokeWidth={IconStroke} color={theme.textTertiary} />
+                </Pressable>
               ) : null}
             </View>
             <View style={[styles.cifra, { backgroundColor: theme.surfaceAlt }]}>
               <AppText variant="caption" color="textSecondary">
-                Peso máximo
+                Peso más alto
               </AppText>
               <AppText variant="bodyStrong" tabular>
                 {analisis && analisis.pesoMax > 0 ? formatWeight(analisis.pesoMax, unit) : '—'}
@@ -150,11 +160,23 @@ export default function ExerciseDetailScreen() {
           </View>
 
           {conE1rm.length > 0 ? (
-            <ProgressChart
-              title="Peso máximo estimado por sesión"
-              points={conE1rm.map((s) => ({ label: fecha(s.fecha), value: enUnidad(s.e1rm) }))}
-              format={(v) => `${v} ${unit}`}
-            />
+            <View>
+              <ProgressChart
+                title="Peso máximo estimado por sesión"
+                points={conE1rm.map((s) => ({ label: fecha(s.fecha), value: enUnidad(s.e1rm) }))}
+                format={(v) => `≈ ${v} ${unit}`}
+              />
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Es una estimación. Qué significa el peso máximo estimado"
+                onPress={() => setTermino('max_estimate')}
+                style={styles.estimado}>
+                <Info size={14} strokeWidth={IconStroke} color={theme.textTertiary} />
+                <AppText variant="caption" color="textTertiary">
+                  Es una estimación, no un peso que hayas levantado · ¿qué significa?
+                </AppText>
+              </Pressable>
+            </View>
           ) : null}
           <ProgressChart
             title="Volumen por sesión"
@@ -184,6 +206,7 @@ export default function ExerciseDetailScreen() {
           </View>
         </>
       )}
+      <GlossarySheet termId={termino} onClose={() => setTermino(null)} />
       <NoteSheet
         visible={editandoNota}
         title="Nota fija"
@@ -199,6 +222,8 @@ export default function ExerciseDetailScreen() {
 
 const styles = StyleSheet.create({
   cabecera: { gap: Spacing.xs },
+  estimado: { flexDirection: 'row', alignItems: 'center', gap: 4, minHeight: 32 },
+  flexTexto: { flexShrink: 1 },
   nota: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm, minHeight: 52, padding: Spacing.md, borderRadius: Radius.md, borderCurve: 'continuous' },
   flex: { flex: 1, gap: 2 },
   cifras: { flexDirection: 'row', gap: Spacing.sm },

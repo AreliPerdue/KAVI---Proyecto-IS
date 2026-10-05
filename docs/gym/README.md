@@ -29,6 +29,7 @@ spec que manda es `specs/07-fitness.md`; aquí está lo que hace falta para trab
 src/app/(app)/workout/[id].tsx     logger: en vivo, lectura y edición en una pantalla
 src/app/(app)/exercise/[id].tsx    detalle de un ejercicio: mejor serie, gráficas, nota fija
 src/app/(app)/progress.tsx         racha, calendario de entrenos, series por músculo, logros
+src/app/(app)/glossary.tsx         glosario de términos (RF-F64); fuente en src/constants/glossary.ts
 src/app/(app)/(tabs)/fitness.tsx   historial, sesión en curso, racha, búsqueda de notas
 src/components/fitness/            bloques, hojas (teclado, notas, intensificadores…), resumen
 src/lib/gym/                       lógica pura: volumen, e1RM, PRs, series, racha, logros…
@@ -71,6 +72,7 @@ de hace tres), así que la racha y la conversión del texto viejo se ven desde e
 5. Terminar sesión: resumen con equivalencia, músculos y logros, y "Compartir" como imagen.
 6. Fitness → fila de la racha → Progreso.
 7. Perfil → Gimnasio: unidad, esfuerzo, fórmula, descanso, sonido, Modo serio y trato.
+8. Fitness → "Ver el glosario", o toca "RIR" en el logger: la explicación de cada término.
 
 Para ver la pausa de la racha hace falta una semana terminada sin entreno. En el navegador se
 puede adelantar el reloj (Playwright: `page.clock.setSystemTime`).

@@ -52,6 +52,7 @@ export default function AppLayout() {
       <Stack.Screen name="workout/[id]" options={{ presentation: modal }} />
       <Stack.Screen name="exercise/[id]" options={{ presentation: modal }} />
       <Stack.Screen name="progress" options={{ presentation: modal }} />
+      <Stack.Screen name="glossary" options={{ presentation: modal }} />
       <Stack.Screen name="themes" options={{ presentation: modal }} />
       <Stack.Screen name="admin" options={{ presentation: modal }} />
       <Stack.Screen name="theme/new" options={{ presentation: modal }} />
