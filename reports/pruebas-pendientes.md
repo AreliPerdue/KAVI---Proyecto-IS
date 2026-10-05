@@ -527,7 +527,10 @@ calendario. `/privacidad` y un enlace inválido se abren sin sesión. Falta:
 - [ ] Rechazado y vencido muestran su texto; "Volver a enviar" y "Cambiar el correo".
 - [ ] Función de Vercel `api/guardian-consent`: sin sesión 401; correo inválido 400; mensajes
   22023 de la base pasan tal cual; sin variables de entorno 503.
-- [ ] En producción, con una cuenta de prueba de 17 años creada para eso: llega el correo (revisar
-  spam), el enlace abre `/consentimiento`, aprobar abre la app; el enlace ya usado dice
-  "Aprobaste…"; eliminar después la cuenta de prueba.
+- [ ] **Correo real en producción** (Vercel ya tiene SMTP_USER, SMTP_PASSWORD y KAVI_EMAIL_SECRET
+  desde el 5 oct 2026; la función responde 401/400 como debe). Lo hace Areli con alias de Gmail:
+  en ventana privada, crear `perdue.areli28+prueba@gmail.com`, fecha de hace 17 años, adulto
+  `perdue.areli28+tutor@gmail.com`; llega "… te pide permiso para usar KAVI" (revisar spam), el
+  enlace abre `/consentimiento`, aprobar abre la app en ≤ 15 s; el enlace ya usado dice
+  "Aprobaste…". Al final, eliminar la cuenta de prueba desde Perfil.
 - [ ] Cuentas existentes (la de Areli) ven "Antes de empezar" una vez al entrar.
