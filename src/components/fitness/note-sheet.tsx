@@ -3,6 +3,8 @@ import { StyleSheet, View } from 'react-native';
 
 import { AppText, Button, Chip, Sheet, TextField } from '@/components/ui';
 import { Spacing } from '@/constants/theme';
+import { tagLabel } from '@/lib/gym/display-names';
+import { useLanguage, useT } from '@/i18n';
 
 export type NoteSheetProps = {
   visible: boolean;
@@ -34,6 +36,8 @@ export function NoteSheet({ visible, title, onClose, ...rest }: NoteSheetProps) 
 }
 
 function Contenido({ hint, placeholder, initialText, tagOptions, initialTags, maxLength, onClose, onSave }: Omit<NoteSheetProps, 'visible' | 'title'>) {
+  const lang = useLanguage();
+  const h = useT().fitness.sheets;
   const [texto, setTexto] = useState(initialText ?? '');
   const [tags, setTags] = useState<string[]>([...(initialTags ?? [])]);
 
@@ -48,18 +52,18 @@ function Contenido({ hint, placeholder, initialText, tagOptions, initialTags, ma
       {tagOptions?.length ? (
         <View style={styles.grupo}>
           <AppText variant="label" color="textSecondary">
-            Etiquetas
+            {h.tags}
           </AppText>
           <View style={styles.chips}>
             {tagOptions.map((t) => {
               const puesta = tags.includes(t.value);
-              return <Chip key={t.value} compact label={t.label} selected={puesta} onPress={() => setTags((xs) => (puesta ? xs.filter((x) => x !== t.value) : [...xs, t.value]))} />;
+              return <Chip key={t.value} compact label={tagLabel(t.value, lang)} selected={puesta} onPress={() => setTags((xs) => (puesta ? xs.filter((x) => x !== t.value) : [...xs, t.value]))} />;
             })}
           </View>
         </View>
       ) : null}
       <Button
-        title="Guardar"
+        title={h.save}
         onPress={() => {
           onSave(texto.trim() || null, tags);
           onClose();

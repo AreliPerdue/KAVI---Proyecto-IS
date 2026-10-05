@@ -9,6 +9,7 @@ import { success } from '@/lib/haptics';
 import { formatDuration } from '@/lib/gym/sets';
 import { playSound } from '@/lib/sounds';
 import { useGymStore } from '@/store/gym-store';
+import { useT } from '@/i18n';
 
 /**
  * Descanso en curso (RF-F34).
@@ -21,6 +22,7 @@ import { useGymStore } from '@/store/gym-store';
  */
 export function RestTimerBar({ workoutId }: { workoutId: string }) {
   const theme = useTheme();
+  const h = useT().fitness.sheets;
   const rest = useGymStore((s) => s.rest);
   const adjustRest = useGymStore((s) => s.adjustRest);
   const stopRest = useGymStore((s) => s.stopRest);
@@ -62,27 +64,27 @@ export function RestTimerBar({ workoutId }: { workoutId: string }) {
   return (
     <View
       accessibilityRole="timer"
-      accessibilityLabel={termino ? 'Se acabó el descanso' : `Descanso, faltan ${formatDuration(restante)}`}
+      accessibilityLabel={termino ? h.restOver : h.restLeft(formatDuration(restante))}
       style={[styles.barra, { backgroundColor: termino ? theme.ink : theme.surface, borderColor: theme.border, boxShadow: Shadow.floating }]}>
       <View style={[styles.progreso, { width: `${Math.min(100, progreso * 100)}%`, backgroundColor: theme.surfaceAlt }]} />
       <Timer size={IconSize.inline} strokeWidth={IconStroke} color={termino ? theme.onInk : theme.text} />
       <View style={styles.texto}>
         <AppText variant="bodyStrong" color={termino ? 'onInk' : 'text'} tabular>
-          {termino ? 'Se acabó el descanso' : formatDuration(restante)}
+          {termino ? h.restOver : formatDuration(restante)}
         </AppText>
         {rest.label ? (
           <AppText variant="caption" color={termino ? 'onInk' : 'textTertiary'} numberOfLines={1}>
-            Sigue: {rest.label}
+            {h.nextUp(rest.label)}
           </AppText>
         ) : null}
       </View>
       {termino ? null : (
         <>
-          <Boton etiqueta="−15" descripcion="Quitar 15 segundos" onPress={() => adjustRest(-15)} />
-          <Boton etiqueta="+15" descripcion="Sumar 15 segundos" onPress={() => adjustRest(15)} />
+          <Boton etiqueta="−15" descripcion={h.minus15} onPress={() => adjustRest(-15)} />
+          <Boton etiqueta="+15" descripcion={h.plus15} onPress={() => adjustRest(15)} />
         </>
       )}
-      <IconButton label="Terminar el descanso" onPress={stopRest}>
+      <IconButton label={h.endRest} onPress={stopRest}>
         <X size={IconSize.inline} strokeWidth={IconStroke} color={termino ? theme.onInk : theme.textSecondary} />
       </IconButton>
     </View>

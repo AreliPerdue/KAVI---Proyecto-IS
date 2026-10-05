@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 
 import { gymratLine } from '@/constants/gymrat';
+import { t } from '@/i18n';
 import type { E1rmFormula } from '@/lib/gym/e1rm';
 import { cancelRestEnd, scheduleRestEnd } from '@/lib/notifications';
 import { getJson, setJson } from '@/lib/storage';
@@ -77,8 +78,9 @@ function avisar(rest: RestTimer | null, prefs?: Pick<GymPrefs, 'trato' | 'seriou
     return;
   }
   // Con humor, el título es la frase del Modo Gymrat (RF-F55); en Modo serio, sobrio.
-  const titulo = (prefs && gymratLine('rest_end', prefs.trato, prefs.seriousMode)) ?? 'Se acabó el descanso';
-  void scheduleRestEnd(new Date(rest.endsAt), titulo, rest.label ? `Sigue: ${rest.label}` : 'A la siguiente serie.');
+  const h = t().fitness.sheets;
+  const titulo = (prefs && gymratLine('rest_end', prefs.trato, prefs.seriousMode)) ?? h.restOver;
+  void scheduleRestEnd(new Date(rest.endsAt), titulo, rest.label ? h.nextUp(rest.label) : h.toNextSet);
 }
 
 /** Preferencias del módulo de fitness y el timer de descanso, por dispositivo. */

@@ -8,6 +8,7 @@ import { success, tap } from '@/lib/haptics';
 import { formatDuration } from '@/lib/gym/sets';
 import { playSound } from '@/lib/sounds';
 import { useGymStore } from '@/store/gym-store';
+import { useT } from '@/i18n';
 
 export type IntervalConfig = { workSec: number; restSec: number; rounds: number };
 
@@ -29,6 +30,7 @@ export function IntervalTimerSheet({ visible, title, config, onClose }: { visibl
 
 function Reloj({ config }: { config: IntervalConfig }) {
   const theme = useTheme();
+  const h = useT().fitness.sheets;
   const [inicio, setInicio] = useState<number | null>(null);
   const [ahora, setAhora] = useState(() => Date.now());
   const fasePrevia = useRef<string | null>(null);
@@ -64,23 +66,23 @@ function Reloj({ config }: { config: IntervalConfig }) {
     <>
       <View
         accessibilityRole="timer"
-        accessibilityLabel={terminado ? 'Terminado' : `Ronda ${ronda} de ${config.rounds}, ${trabajando ? 'trabajo' : 'descanso'}, faltan ${restante} segundos`}
+        accessibilityLabel={terminado ? h.finished : h.roundA11y(ronda, config.rounds, trabajando, restante)}
         style={[styles.reloj, { backgroundColor: trabajando && !terminado && inicio !== null ? theme.ink : theme.surfaceAlt }]}>
         <AppText variant="label" color={trabajando && !terminado && inicio !== null ? 'onInk' : 'textSecondary'}>
-          {inicio === null ? 'Listo para empezar' : terminado ? 'Terminado' : trabajando ? 'Trabajo' : 'Descanso'}
+          {inicio === null ? h.readyToStart : terminado ? h.finished : trabajando ? h.work : h.rest}
         </AppText>
         <AppText variant="display" tabular color={trabajando && !terminado && inicio !== null ? 'onInk' : 'text'}>
           {formatDuration(inicio === null ? config.workSec : restante)}
         </AppText>
         {config.rounds > 1 ? (
           <AppText variant="caption" color={trabajando && !terminado && inicio !== null ? 'onInk' : 'textSecondary'} tabular>
-            Ronda {inicio === null ? 1 : ronda} de {config.rounds}
+            {h.roundOf(inicio === null ? 1 : ronda, config.rounds)}
           </AppText>
         ) : null}
       </View>
       {inicio === null || terminado ? (
         <Button
-          title={terminado ? 'Otra vez' : 'Empezar'}
+          title={terminado ? h.again : h.start}
           onPress={() => {
             fasePrevia.current = null;
             setAhora(Date.now());
@@ -88,7 +90,7 @@ function Reloj({ config }: { config: IntervalConfig }) {
           }}
         />
       ) : (
-        <Button title="Detener" variant="secondary" onPress={() => setInicio(null)} />
+        <Button title={h.stop} variant="secondary" onPress={() => setInicio(null)} />
       )}
     </>
   );

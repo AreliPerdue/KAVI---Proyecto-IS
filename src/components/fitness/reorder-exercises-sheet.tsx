@@ -6,6 +6,7 @@ import { AppText, Button, ReorderableColumn, Sheet } from '@/components/ui';
 import { IconSize, IconStroke, Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import type { WorkoutExerciseDetail } from '@/types/domain';
+import { useT } from '@/i18n';
 
 export type ReorderExercisesSheetProps = {
   visible: boolean;
@@ -22,8 +23,9 @@ export type ReorderExercisesSheetProps = {
  * cada uno es una fila corta y caben todos. El orden se aplica con "Guardar orden".
  */
 export function ReorderExercisesSheet({ visible, onClose, ...rest }: ReorderExercisesSheetProps) {
+  const h = useT().fitness.sheets;
   return (
-    <Sheet visible={visible} onClose={onClose} title="Reordenar ejercicios">
+    <Sheet visible={visible} onClose={onClose} title={h.reorderTitle}>
       {visible ? <Lista onClose={onClose} {...rest} /> : null}
     </Sheet>
   );
@@ -31,6 +33,7 @@ export function ReorderExercisesSheet({ visible, onClose, ...rest }: ReorderExer
 
 function Lista({ exercises, groupLabel, onClose, onSave }: Omit<ReorderExercisesSheetProps, 'visible'>) {
   const theme = useTheme();
+  const h = useT().fitness.sheets;
   const [orden, setOrden] = useState(() => exercises.map((e) => e.id));
   const porId = new Map(exercises.map((e) => [e.id, e]));
   const items = orden.map((id) => porId.get(id)).filter((e): e is WorkoutExerciseDetail => !!e);
@@ -38,7 +41,7 @@ function Lista({ exercises, groupLabel, onClose, onSave }: Omit<ReorderExercises
   return (
     <>
       <AppText variant="caption" color="textSecondary">
-        Mantén presionado un ejercicio y arrástralo a su lugar.
+        {h.reorderHint}
       </AppText>
       <ReorderableColumn
         items={items}
@@ -68,17 +71,17 @@ function Lista({ exercises, groupLabel, onClose, onSave }: Omit<ReorderExercises
                 </View>
               ) : null}
               <AppText variant="bodyStrong" numberOfLines={1} style={styles.flex}>
-                {e.name || 'Ejercicio sin nombre'}
+                {e.name || h.unnamed}
               </AppText>
               <AppText variant="caption" color="textTertiary" tabular>
-                {e.workout_sets.length} {e.workout_sets.length === 1 ? 'serie' : 'series'}
+                {h.setsCount(e.workout_sets.length)}
               </AppText>
             </View>,
           )
         }
       />
       <Button
-        title="Guardar orden"
+        title={h.saveOrder}
         onPress={() => {
           onSave(orden);
           onClose();

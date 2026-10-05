@@ -35,7 +35,7 @@ import { useTheme } from '@/hooks/use-theme';
 import { useWorkoutMutations, useWorkouts, workoutKeys } from '@/hooks/use-workouts';
 import { formatDate, formatShortDate, formatTime, fromIso, startOfDay, toIso } from '@/lib/dates';
 import { success, tap } from '@/lib/haptics';
-import { setTypeDescription, tagLabel } from '@/lib/gym/display-names';
+import { exerciseName, protocolLabel, setTypeDescription, setTypeLabel, tagLabel, workoutExerciseName } from '@/lib/gym/display-names';
 import { hasLegacyText, parseLegacy } from '@/lib/gym/legacy';
 import type { PrKind } from '@/lib/gym/records';
 import { previousSets, sessionPRs, sessionSummary } from '@/lib/gym/session';
@@ -62,6 +62,7 @@ import { useModuleNav } from '@/hooks/use-modules';
 import { useGymStore } from '@/store/gym-store';
 import { usePreferencesStore } from '@/store/preferences-store';
 import type { Exercise, WorkoutExercise, WorkoutExerciseDetail, WorkoutSet } from '@/types/domain';
+import { useLanguage, useT } from '@/i18n';
 
 const MAX_WIDTH = 640;
 
@@ -99,6 +100,9 @@ export default function WorkoutScreen() {
   const catalogo = useExercises();
   const prefs = useExercisePrefs();
   const { saveStickyNote } = useExerciseMutations();
+  const tx = useT();
+  const lang = useLanguage();
+  const w = tx.fitness.workout;
   const unit = useGymStore((s) => s.weightUnit);
   const effortScale = useGymStore((s) => s.effortScale);
   const formula = useGymStore((s) => s.e1rmFormula);
@@ -157,6 +161,11 @@ export default function WorkoutScreen() {
   const data = sesion.data;
   const ejercicios = useMemo(() => data?.exercises ?? [], [data]);
   const porId = useMemo(() => new Map((catalogo.data ?? []).map((e) => [e.id, e])), [catalogo.data]);
+  /** Nombre del ejercicio en el idioma activo, salvo que la persona lo haya cambiado (RF-I4). */
+  const nombreDe = useCallback(
+    (e: { name: string; exercise_id?: string | null }) => workoutExerciseName(e.name, e.exercise_id ? porId.get(e.exercise_id) : null, lang),
+    [porId, lang],
+  );
   const notasFijas = useMemo(() => new Map((prefs.data ?? []).filter((p) => p.sticky_note).map((p) => [p.exercise_id, p.sticky_note as string])), [prefs.data]);
 
   /*
@@ -236,7 +245,7 @@ export default function WorkoutScreen() {
       const parse = hasLegacyText(e) ? parseLegacy(e) : null;
       const legacyNote =
         parse?.ambiguous && e.legacy_converted_at
-          ? `Texto original: ${[e.sets ? `${e.sets} series` : null, e.reps, e.weight].filter(Boolean).join(' · ')}. ${parse.reasons[0] ?? ''}`
+          ? w.legacyOriginal([e.sets ? w.legacySets(e.sets) : null, e.reps, e.weight].filter(Boolean).join(' · '), parse.reasons[0] ?? '')
           : null;
       m.set(e.id, {
         catalog,
@@ -248,7 +257,7 @@ export default function WorkoutScreen() {
       });
     }
     return m;
-  }, [ejercicios, porId, historialDe, id, data?.bodyweight_kg, formula]);
+  }, [ejercicios, porId, historialDe, id, data?.bodyweight_kg, formula, w]);
 
   // Un PR nuevo vibra (Android). Se compara contra el total anterior para no vibrar al abrir.
   const totalPRs = useMemo(() => [...analisis.values()].reduce((n, a) => n + a.prs.size, 0), [analisis]);
@@ -312,23 +321,23 @@ export default function WorkoutScreen() {
           const i = miembros.findIndex((e) => e.id === exercise.id);
           const siguienteEj = miembros[i + 1];
           if (siguienteEj) {
-            showSnackbar({ message: `Sigue: ${grupos.etiqueta.get(siguienteEj.id) ?? ''} ${siguienteEj.name}` });
+            showSnackbar({ message: w.next(grupos.etiqueta.get(siguienteEj.id) ?? '', nombreDe(siguienteEj)) });
             return;
           }
-          startRest(id, grupo.rest_after_round_sec ?? exercise.rest_target_sec ?? restDefault, `${grupos.etiqueta.get(miembros[0].id) ?? ''} ${miembros[0].name}, siguiente ronda`);
+          startRest(id, grupo.rest_after_round_sec ?? exercise.rest_target_sec ?? restDefault, w.nextRound(grupos.etiqueta.get(miembros[0].id) ?? '', nombreDe(miembros[0])));
           return;
         }
         // Un drop o unas myo terminadas tienen su frase (RF-F55); un PR la reemplaza después.
         const kinds = set.segments.map((g) => g.kind);
-        const frase = kinds.includes('drop') ? gymratLine('drop', trato, serio) : kinds.some((k) => k === 'myo_activation' || k === 'myo_mini') ? gymratLine('myo', trato, serio) : null;
+        const frase = kinds.includes('drop') ? gymratLine('drop', trato, serio, lang) : kinds.some((k) => k === 'myo_activation' || k === 'myo_mini') ? gymratLine('myo', trato, serio, lang) : null;
         if (frase) showSnackbar({ message: frase });
         const indice = exercise.workout_sets.findIndex((s) => s.id === set.id);
         const siguiente = exercise.workout_sets[indice + 1];
-        const etiqueta = siguiente ? `${exercise.name}, serie ${indice + 2}` : exercise.name;
+        const etiqueta = siguiente ? w.restSet(nombreDe(exercise), indice + 2) : nombreDe(exercise);
         startRest(id, exercise.rest_target_sec ?? restDefault, etiqueta);
       }
     },
-    [guardar, data?.status, startRest, id, restDefault, grupos, ejercicios, showSnackbar, trato, serio],
+    [guardar, data?.status, startRest, id, restDefault, grupos, ejercicios, showSnackbar, trato, serio, lang, w, nombreDe],
   );
 
   const copiarAnterior = useCallback(
@@ -361,9 +370,9 @@ export default function WorkoutScreen() {
     (_exercise: WorkoutExerciseDetail, set: WorkoutSet) => {
       quitar(set.id);
       // El borrado es suave: deshacer es volver a guardar la misma serie (RF-F33).
-      showSnackbar({ message: 'Serie borrada.', actionLabel: 'Deshacer', onAction: () => guardar(set) });
+      showSnackbar({ message: w.setDeleted, actionLabel: w.undo, onAction: () => guardar(set) });
     },
-    [quitar, guardar, showSnackbar],
+    [quitar, guardar, showSnackbar, w],
   );
 
   /** Unir dos series en una: la segunda pasa a ser tramo de la primera (RF-F39). */
@@ -394,7 +403,7 @@ export default function WorkoutScreen() {
     [seriePorId, guardar],
   );
   const abrirVariante = useCallback((set: WorkoutSet, segmentIndex: number) => setVarianteDe({ setId: set.id, segmentIndex }), []);
-  const nombreEjercicio = useCallback((exId: string) => porId.get(exId)?.name_es ?? null, [porId]);
+  const nombreEjercicio = useCallback((exId: string) => { const ex = porId.get(exId); return ex ? exerciseName(ex, lang) : null; }, [porId, lang]);
 
   const quitarSegmento = useCallback((set: WorkoutSet, i: number) => guardar(removeSegment(set, i)), [guardar]);
 
@@ -425,9 +434,9 @@ export default function WorkoutScreen() {
     const { draft, target } = teclado;
     const ex = ejercicioDe(draft);
     const numero = (ex?.workout_sets.findIndex((s) => s.id === draft.id) ?? 0) + 1;
-    const prefijo = `${ex?.name ?? 'Serie'} · serie ${numero}${target.segmentIndex > 0 ? ` (tramo ${target.segmentIndex + 1})` : ''}`;
-    return numpadFieldFor(target, draft, prefijo, effortScale, unit);
-  }, [teclado, ejercicioDe, effortScale, unit]);
+    const prefijo = w.numpadTitle(ex ? nombreDe(ex) : w.setFallback, numero, target.segmentIndex > 0 ? target.segmentIndex + 1 : null);
+    return numpadFieldFor(target, draft, prefijo, effortScale, unit, lang);
+  }, [teclado, ejercicioDe, effortScale, unit, w, nombreDe, lang]);
 
   const cambiarValor = (valor: number | null) => {
     if (!teclado) return;
@@ -441,8 +450,8 @@ export default function WorkoutScreen() {
     mutations.removeExercise.mutate(exercise.id, {
       onSuccess: () =>
         showSnackbar({
-          message: `"${exercise.name || 'Ejercicio'}" eliminado.`,
-          actionLabel: 'Deshacer',
+          message: w.exerciseRemoved(nombreDe(exercise) || w.exerciseFallback),
+          actionLabel: w.undo,
           onAction: () => mutations.restoreExercise.mutate(exercise.id),
         }),
     });
@@ -519,7 +528,7 @@ export default function WorkoutScreen() {
 
   const descartar = async () => {
     if (!data) return;
-    const ok = await confirm({ title: 'Descartar sesión', message: 'No contará en tu historial ni en tus récords.', confirmLabel: 'Descartar', destructive: true });
+    const ok = await confirm({ title: w.discardTitle, message: w.discardMessage, confirmLabel: w.discard, destructive: true });
     if (!ok) return;
     useGymStore.getState().stopRest();
     mutations.update.mutate({ id: data.id, patch: { status: 'discarded' } }, { onSuccess: close });
@@ -527,9 +536,9 @@ export default function WorkoutScreen() {
 
   const deleteWorkout = async () => {
     if (!data) return;
-    const ok = await confirm({ title: 'Eliminar entrenamiento', message: 'Se borrarán sus ejercicios y series.', confirmLabel: 'Eliminar', destructive: true });
+    const ok = await confirm({ title: w.deleteTitle, message: w.deleteMessage, confirmLabel: w.delete, destructive: true });
     if (!ok) return;
-    mutations.remove.mutate(data.id, { onSuccess: () => { showSnackbar({ message: 'Entrenamiento eliminado.' }); close(); } });
+    mutations.remove.mutate(data.id, { onSuccess: () => { showSnackbar({ message: w.deleted }); close(); } });
   };
 
   const resumen = useMemo(() => {
@@ -548,7 +557,7 @@ export default function WorkoutScreen() {
   if (sesion.isPending) {
     return (
       <Screen modal maxWidth={MAX_WIDTH}>
-        <ModalHeader title="Entrenamiento" />
+        <ModalHeader title={w.title} />
         <LoadingState />
       </Screen>
     );
@@ -556,8 +565,8 @@ export default function WorkoutScreen() {
   if (sesion.isError || !data) {
     return (
       <Screen modal maxWidth={MAX_WIDTH}>
-        <ModalHeader title="Entrenamiento" />
-        <ErrorState message={sesion.error?.message ?? 'Ese entrenamiento ya no existe.'} onRetry={() => sesion.refetch()} />
+        <ModalHeader title={w.title} />
+        <ErrorState message={sesion.error?.message ?? w.notFound} onRetry={() => sesion.refetch()} />
       </Screen>
     );
   }
@@ -568,32 +577,32 @@ export default function WorkoutScreen() {
     : null;
   const notesValue = notes ?? data.notes ?? '';
   const titleValue = title ?? data.title ?? '';
-  const encabezado = data.title || data.activity_title || 'Entrenamiento libre';
+  const encabezado = data.title || data.activity_title || w.freeWorkout;
   const minutos = enCurso ? Math.max(0, Math.round((ahora - fromIso(data.performed_at).getTime()) / 60_000)) : null;
   /** Editar una sesión ya terminada la marca como editada (RF-F42); en vivo, no. */
   const marcarEditado = () => (enCurso ? {} : { edited_at: new Date().toISOString() });
   /** Duración de una sesión terminada: de que empezó a que se marcó terminada. */
   /** Energía, pump y etiquetas de la sesión en una línea, para el modo lectura (RF-F49). */
-  const sesionChips = [data.energy ? `Energía ${data.energy}/5` : null, data.pump ? `Pump ${data.pump}/5` : null, ...data.tags.map((g) => tagLabel(g))].filter(Boolean).join(' · ');
+  const sesionChips = [data.energy ? w.energyChip(data.energy) : null, data.pump ? w.pumpChip(data.pump) : null, ...data.tags.map((g) => tagLabel(g, lang))].filter(Boolean).join(' · ');
   const duracionMin = data.ended_at ? Math.max(1, Math.round((fromIso(data.ended_at).getTime() - fromIso(data.performed_at).getTime()) / 60_000)) : null;
 
   return (
     <View style={styles.raiz}>
       <Screen modal scroll scrollEnabled={!arrastrando} maxWidth={MAX_WIDTH}>
         <ModalHeader
-          title={enCurso ? 'Sesión en curso' : 'Entrenamiento'}
+          title={enCurso ? w.inProgress : w.title}
           right={
             editing ? (
               <View style={styles.historia}>
-                <IconButton label="Deshacer" onPress={historia.undo} disabled={!historia.canUndo}>
+                <IconButton label={w.undo} onPress={historia.undo} disabled={!historia.canUndo}>
                   <Undo2 size={IconSize.action} strokeWidth={IconStroke} color={historia.canUndo ? theme.text : theme.textTertiary} />
                 </IconButton>
-                <IconButton label="Rehacer" onPress={historia.redo} disabled={!historia.canRedo}>
+                <IconButton label={w.redo} onPress={historia.redo} disabled={!historia.canRedo}>
                   <Redo2 size={IconSize.action} strokeWidth={IconStroke} color={historia.canRedo ? theme.text : theme.textTertiary} />
                 </IconButton>
               </View>
             ) : (
-              <Button title="Editar" variant="ghost" icon={<Pencil size={IconSize.inline} strokeWidth={IconStroke} color={theme.text} />} onPress={() => setEditing(true)} />
+              <Button title={w.edit} variant="ghost" icon={<Pencil size={IconSize.inline} strokeWidth={IconStroke} color={theme.text} />} onPress={() => setEditing(true)} />
             )
           }
         />
@@ -605,7 +614,7 @@ export default function WorkoutScreen() {
         <View style={[styles.headerCard, { backgroundColor: theme.surfaceAlt }]}>
           {editing ? (
             <TextField
-              label="Nombre"
+              label={w.name}
               value={titleValue}
               onChangeText={setTitle}
               onBlur={() => {
@@ -613,7 +622,7 @@ export default function WorkoutScreen() {
                 if (limpio === (data.title ?? '')) return;
                 mutations.update.mutate({ id: data.id, patch: { title: limpio || null } }, { onSuccess: () => { if (limpio) setLastWorkoutTitle(limpio); } });
               }}
-              placeholder={data.activity_title ?? 'Pierna, empuje A…'}
+              placeholder={data.activity_title ?? w.namePlaceholder}
               autoCapitalize="sentences"
               returnKeyType="done"
             />
@@ -621,24 +630,24 @@ export default function WorkoutScreen() {
             <AppText variant="heading">{encabezado}</AppText>
           )}
           <AppText color="textSecondary">
-            {formatDate(fromIso(data.performed_at))}
-            {minutos !== null ? ` · ${minutos} min en curso` : data.edited_at ? ' · editado' : ''}
+            {formatDate(fromIso(data.performed_at), lang)}
+            {minutos !== null ? w.minutesRunning(minutos) : data.edited_at ? w.edited : ''}
           </AppText>
           {editing ? (
             <View style={styles.camposFila}>
               <View style={styles.flex}>
                 <FieldButton
-                  label="Fecha"
-                  value={formatShortDate(fromIso(data.performed_at))}
+                  label={w.date}
+                  value={formatShortDate(fromIso(data.performed_at), lang)}
                   onPress={() => setPickingDate(true)}
                   leading={<CalendarDays size={IconSize.inline} strokeWidth={IconStroke} color={theme.textSecondary} />}
                 />
               </View>
               <View style={styles.flex}>
                 <FieldButton
-                  label="Peso corporal"
+                  label={w.bodyweight}
                   value={data.bodyweight_kg ? formatWeight(data.bodyweight_kg, unit) : null}
-                  placeholder="Opcional"
+                  placeholder={w.optional}
                   onPress={() => {
                     setPesoCorporal(data.bodyweight_kg ? round(fromKg(data.bodyweight_kg, unit), 1) : null);
                     setPesoCorporalAbierto(true);
@@ -652,17 +661,17 @@ export default function WorkoutScreen() {
             <View style={styles.camposFila}>
               <View style={styles.flex}>
                 <FieldButton
-                  label="Hora"
-                  value={formatTime(fromIso(data.performed_at))}
+                  label={w.time}
+                  value={formatTime(fromIso(data.performed_at), lang)}
                   onPress={() => setHoraAbierta(true)}
                   leading={<Clock size={IconSize.inline} strokeWidth={IconStroke} color={theme.textSecondary} />}
                 />
               </View>
               <View style={styles.flex}>
                 <FieldButton
-                  label="Duración"
+                  label={w.duration}
                   value={duracionMin !== null ? `${duracionMin} min` : null}
-                  placeholder="Sin registrar"
+                  placeholder={w.notLogged}
                   onPress={() => {
                     setDuracion(duracionMin);
                     setDuracionAbierta(true);
@@ -674,8 +683,8 @@ export default function WorkoutScreen() {
           ) : null}
           {editing ? (
             <>
-              <Escala titulo="Energía" valor={data.energy} onChange={(v) => updateWorkout({ id: data.id, patch: { energy: v, ...marcarEditado() } })} />
-              <Escala titulo="Pump" valor={data.pump} onChange={(v) => updateWorkout({ id: data.id, patch: { pump: v, ...marcarEditado() } })} />
+              <Escala titulo={w.energy} valor={data.energy} onChange={(v) => updateWorkout({ id: data.id, patch: { energy: v, ...marcarEditado() } })} />
+              <Escala titulo={w.pump} valor={data.pump} onChange={(v) => updateWorkout({ id: data.id, patch: { pump: v, ...marcarEditado() } })} />
               <View style={styles.chips}>
                 {SESSION_TAGS.map((t) => {
                   const puesta = data.tags.includes(t.value);
@@ -683,7 +692,7 @@ export default function WorkoutScreen() {
                     <Chip
                       key={t.value}
                       compact
-                      label={t.label}
+                      label={tagLabel(t.value, lang)}
                       selected={puesta}
                       onPress={() => updateWorkout({ id: data.id, patch: { tags: puesta ? data.tags.filter((x) => x !== t.value) : [...data.tags, t.value], ...marcarEditado() } })}
                     />
@@ -698,11 +707,11 @@ export default function WorkoutScreen() {
           ) : null}
           {editing ? (
             <TextField
-              label="Notas generales"
+              label={w.generalNotes}
               value={notesValue}
               onChangeText={setNotes}
               onBlur={() => mutations.update.mutate({ id: data.id, patch: { notes: notesValue.trim() || null } })}
-              placeholder="Cómo te sentiste, qué cambiar…"
+              placeholder={w.notesPlaceholder}
               multiline
             />
           ) : data.notes ? (
@@ -712,7 +721,7 @@ export default function WorkoutScreen() {
 
         <View style={styles.section}>
           {ejercicios.length === 0 ? (
-            <AppText color="textSecondary">{editing ? 'Agrega tu primer ejercicio.' : 'Sin ejercicios registrados.'}</AppText>
+            <AppText color="textSecondary">{editing ? w.addFirst : w.noExercises}</AppText>
           ) : null}
           {ejercicios.map((exercise) => {
             const a = analisis.get(exercise.id);
@@ -731,7 +740,7 @@ export default function WorkoutScreen() {
                 editable={editing}
                 legacyNote={a.legacyNote}
                 groupLabel={grupos.etiqueta.get(exercise.id) ?? null}
-                protocolLabel={PROTOCOLS.find((x) => x.key === exercise.protocol)?.label ?? null}
+                protocolLabel={exercise.protocol ? protocolLabel(exercise.protocol, lang) : null}
                 stickyNote={exercise.exercise_id ? notasFijas.get(exercise.exercise_id) ?? null : null}
                 celebrate={!serio}
                 onOpenTimer={exercise.protocol && protocolTimer(exercise.protocol as ProtocolKey) ? setTimerPara : undefined}
@@ -757,7 +766,7 @@ export default function WorkoutScreen() {
           })}
           {editing && ejercicios.length > 1 ? (
             <Button
-              title="Reordenar ejercicios"
+              title={w.reorder}
               variant="ghost"
               icon={<GripVertical size={IconSize.inline} strokeWidth={IconStroke} color={theme.text} />}
               onPress={() => setReordenando(true)}
@@ -765,7 +774,7 @@ export default function WorkoutScreen() {
           ) : null}
           {editing ? (
             <Button
-              title="Ejercicio"
+              title={w.addExercise}
               variant="secondary"
               icon={<Plus size={IconSize.inline} strokeWidth={IconStroke} color={theme.text} />}
               loading={mutations.addExercise.isPending}
@@ -775,13 +784,13 @@ export default function WorkoutScreen() {
         </View>
 
         <View style={[styles.actions, { borderTopColor: theme.border }]}>
-          {enCurso ? <Button title="Terminar sesión" onPress={terminar} /> : null}
-          <Button title="Duplicar en…" variant="secondary" icon={<Copy size={IconSize.inline} strokeWidth={IconStroke} color={theme.text} />} onPress={() => setDuplicateOpen(true)} />
-          {enCurso ? <Button title="Descartar sesión" variant="ghost" onPress={descartar} /> : null}
+          {enCurso ? <Button title={w.finish} onPress={terminar} /> : null}
+          <Button title={w.duplicateIn} variant="secondary" icon={<Copy size={IconSize.inline} strokeWidth={IconStroke} color={theme.text} />} onPress={() => setDuplicateOpen(true)} />
+          {enCurso ? <Button title={w.discardSession} variant="ghost" onPress={descartar} /> : null}
           {editing && !enCurso ? (
-            <Button title="Eliminar entrenamiento" variant="danger" icon={<Trash2 size={IconSize.inline} strokeWidth={IconStroke} color={theme.danger} />} onPress={deleteWorkout} />
+            <Button title={w.deleteWorkout} variant="danger" icon={<Trash2 size={IconSize.inline} strokeWidth={IconStroke} color={theme.danger} />} onPress={deleteWorkout} />
           ) : null}
-          {editing && !enCurso ? <Button title="Listo" onPress={close} /> : null}
+          {editing && !enCurso ? <Button title={w.done} onPress={close} /> : null}
         </View>
       </Screen>
 
@@ -794,7 +803,7 @@ export default function WorkoutScreen() {
       <TimePickerSheet
         visible={horaAbierta}
         value={fromIso(data.performed_at).getHours() * 60 + fromIso(data.performed_at).getMinutes()}
-        title="Hora de inicio"
+        title={w.startTime}
         onClose={() => setHoraAbierta(false)}
         onSelect={(minutos) => {
           // Cambiar la hora mueve la sesión entera: la duración se conserva.
@@ -810,7 +819,7 @@ export default function WorkoutScreen() {
 
       <NumpadSheet
         visible={duracionAbierta}
-        field={{ title: 'Duración de la sesión', value: duracion, step: 5, decimals: false, suffix: 'min', min: 1, max: 600 }}
+        field={{ title: w.sessionDuration, value: duracion, step: 5, decimals: false, suffix: 'min', min: 1, max: 600 }}
         onChange={setDuracion}
         onClose={() => {
           setDuracionAbierta(false);
@@ -822,7 +831,7 @@ export default function WorkoutScreen() {
 
       <NumpadSheet
         visible={pesoCorporalAbierto}
-        field={{ title: 'Peso corporal de hoy', value: pesoCorporal, step: unit === 'kg' ? 0.5 : 1, decimals: true, suffix: unit, min: 0, max: 400 }}
+        field={{ title: w.bodyweightToday, value: pesoCorporal, step: unit === 'kg' ? 0.5 : 1, decimals: true, suffix: unit, min: 0, max: 400 }}
         onChange={setPesoCorporal}
         onClose={() => {
           setPesoCorporalAbierto(false);
@@ -830,18 +839,18 @@ export default function WorkoutScreen() {
         }}
       />
 
-      <Sheet visible={menuSerie !== null} onClose={() => setMenuSerie(null)} title="Serie">
+      <Sheet visible={menuSerie !== null} onClose={() => setMenuSerie(null)} title={w.setSheet}>
         {menuSerie ? (
           <>
             <AppText variant="label" color="textSecondary">
-              Tipo de serie
+              {w.setType}
             </AppText>
             <View style={styles.chips}>
               {SET_TYPES.map((t) => (
                 <Chip
                   key={t.value}
                   compact
-                  label={t.label}
+                  label={setTypeLabel(t.value, lang)}
                   selected={menuSerie.set.set_type === t.value}
                   onPress={() => {
                     // La hoja sigue abierta: así se lee qué significa cada tipo antes de cerrar.
@@ -853,11 +862,11 @@ export default function WorkoutScreen() {
               ))}
             </View>
             <AppText variant="caption" color="textTertiary">
-              {setTypeDescription(menuSerie.set.set_type)}
+              {setTypeDescription(menuSerie.set.set_type, lang)}
             </AppText>
             <ActionRow
               icon={<Sparkles size={IconSize.action} strokeWidth={IconStroke} color={theme.text} />}
-              label="Intensificador…"
+              label={w.intensifier}
               onPress={() => {
                 setIntensificadoresDe(menuSerie.set);
                 setMenuSerie(null);
@@ -865,7 +874,7 @@ export default function WorkoutScreen() {
             />
             <ActionRow
               icon={<MessageSquareText size={IconSize.action} strokeWidth={IconStroke} color={theme.text} />}
-              label={menuSerie.set.notes || menuSerie.set.tags.length ? 'Editar nota y etiquetas' : 'Nota y etiquetas'}
+              label={menuSerie.set.notes || menuSerie.set.tags.length ? w.editNoteTags : w.noteTags}
               onPress={() => {
                 setNotaSerie(menuSerie.set);
                 setMenuSerie(null);
@@ -873,7 +882,7 @@ export default function WorkoutScreen() {
             />
             <ActionRow
               icon={<SlidersHorizontal size={IconSize.action} strokeWidth={IconStroke} color={theme.text} />}
-              label="Detalles: fallo, rango, tempo, carga"
+              label={w.details}
               onPress={() => {
                 setDetallesDe(menuSerie.set);
                 setMenuSerie(null);
@@ -882,7 +891,7 @@ export default function WorkoutScreen() {
             {menuSerie.set.intensifiers.includes('forced_reps') ? (
               <ActionRow
                 icon={<Plus size={IconSize.action} strokeWidth={IconStroke} color={theme.text} />}
-                label="Reps forzadas"
+                label={w.forcedReps}
                 onPress={() => {
                   const set = menuSerie.set;
                   setMenuSerie(null);
@@ -893,7 +902,7 @@ export default function WorkoutScreen() {
             {menuSerie.set.intensifiers.includes('cheat_reps') ? (
               <ActionRow
                 icon={<Plus size={IconSize.action} strokeWidth={IconStroke} color={theme.text} />}
-                label="Reps con trampa"
+                label={w.cheatReps}
                 onPress={() => {
                   const set = menuSerie.set;
                   setMenuSerie(null);
@@ -903,7 +912,7 @@ export default function WorkoutScreen() {
             ) : null}
             <ActionRow
               icon={<Plus size={IconSize.action} strokeWidth={IconStroke} color={theme.text} />}
-              label={`+ Drop (−${dropPercent} %)`}
+              label={w.addDrop(dropPercent)}
               onPress={() => {
                 guardar(addDrop(menuSerie.set, dropPercent));
                 setMenuSerie(null);
@@ -911,7 +920,7 @@ export default function WorkoutScreen() {
             />
             <ActionRow
               icon={<Repeat2 size={IconSize.action} strokeWidth={IconStroke} color={theme.text} />}
-              label="+ Mini-serie (rest-pause)"
+              label={w.addMini}
               onPress={() => {
                 guardar(addMiniSet(menuSerie.set));
                 setMenuSerie(null);
@@ -919,7 +928,7 @@ export default function WorkoutScreen() {
             />
             <ActionRow
               icon={<Plus size={IconSize.action} strokeWidth={IconStroke} color={theme.text} />}
-              label="Reps parciales"
+              label={w.partialReps}
               onPress={() => {
                 const set = menuSerie.set;
                 setMenuSerie(null);
@@ -929,7 +938,7 @@ export default function WorkoutScreen() {
             {menuSerie.set.segments.length > 1 ? (
               <ActionRow
                 icon={<Scissors size={IconSize.action} strokeWidth={IconStroke} color={theme.text} />}
-                label="Separar en series"
+                label={w.split}
                 onPress={() => {
                   const sets = menuSerie.exercise.workout_sets;
                   const i = sets.findIndex((s) => s.id === menuSerie.set.id);
@@ -943,7 +952,7 @@ export default function WorkoutScreen() {
               <>
                 <ActionRow
                   icon={<Merge size={IconSize.action} strokeWidth={IconStroke} color={theme.text} />}
-                  label="Unir con la siguiente como drop"
+                  label={w.mergeDrop}
                   onPress={() => {
                     unir(menuSerie.set, siguienteDeMenu, 'drop');
                     setMenuSerie(null);
@@ -951,7 +960,7 @@ export default function WorkoutScreen() {
                 />
                 <ActionRow
                   icon={<Merge size={IconSize.action} strokeWidth={IconStroke} color={theme.text} />}
-                  label="Unir con la siguiente como rest-pause"
+                  label={w.mergeRestPause}
                   onPress={() => {
                     unir(menuSerie.set, siguienteDeMenu, 'rest_pause');
                     setMenuSerie(null);
@@ -962,7 +971,7 @@ export default function WorkoutScreen() {
             {ejercicios.length > 1 ? (
               <>
                 <AppText variant="label" color="textSecondary">
-                  Mover a
+                  {w.moveTo}
                 </AppText>
                 <View style={styles.chips}>
                   {ejercicios
@@ -971,7 +980,7 @@ export default function WorkoutScreen() {
                       <Chip
                         key={destino.id}
                         compact
-                        label={destino.name}
+                        label={nombreDe(destino)}
                         selected={false}
                         onPress={() => {
                           // La serie conserva todo; solo cambia de ejercicio y va al final.
@@ -985,7 +994,7 @@ export default function WorkoutScreen() {
             ) : null}
             <ActionRow
               icon={<Copy size={IconSize.action} strokeWidth={IconStroke} color={theme.text} />}
-              label="Duplicar"
+              label={w.duplicate}
               onPress={() => {
                 duplicar(menuSerie.exercise, menuSerie.set);
                 setMenuSerie(null);
@@ -993,7 +1002,7 @@ export default function WorkoutScreen() {
             />
             <ActionRow
               icon={<ArrowUp size={IconSize.action} strokeWidth={IconStroke} color={theme.text} />}
-              label="Subir"
+              label={w.moveUp}
               onPress={() => {
                 const sets = menuSerie.exercise.workout_sets;
                 const i = sets.findIndex((s) => s.id === menuSerie.set.id);
@@ -1003,7 +1012,7 @@ export default function WorkoutScreen() {
             />
             <ActionRow
               icon={<ArrowDown size={IconSize.action} strokeWidth={IconStroke} color={theme.text} />}
-              label="Bajar"
+              label={w.moveDown}
               onPress={() => {
                 const sets = menuSerie.exercise.workout_sets;
                 const i = sets.findIndex((s) => s.id === menuSerie.set.id);
@@ -1013,7 +1022,7 @@ export default function WorkoutScreen() {
             />
             <ActionRow
               icon={<Trash2 size={IconSize.action} strokeWidth={IconStroke} color={theme.danger} />}
-              label="Borrar serie"
+              label={w.deleteSet}
               color="danger"
               onPress={() => {
                 borrarSerie(menuSerie.exercise, menuSerie.set);
@@ -1024,12 +1033,12 @@ export default function WorkoutScreen() {
         ) : null}
       </Sheet>
 
-      <Sheet visible={menuEjercicio !== null} onClose={() => setMenuEjercicio(null)} title={menuEjercicio?.name ?? 'Ejercicio'}>
+      <Sheet visible={menuEjercicio !== null} onClose={() => setMenuEjercicio(null)} title={menuEjercicio ? nombreDe(menuEjercicio) : w.exerciseFallback}>
         {menuEjercicio ? (
           <>
             <ActionRow
               icon={<MessageSquareText size={IconSize.action} strokeWidth={IconStroke} color={theme.text} />}
-              label={menuEjercicio.notes ? 'Editar nota de hoy' : 'Nota de hoy'}
+              label={menuEjercicio.notes ? w.editTodayNote : w.todayNote}
               onPress={() => {
                 setNotaEjercicio(menuEjercicio);
                 setMenuEjercicio(null);
@@ -1038,7 +1047,7 @@ export default function WorkoutScreen() {
             {menuEjercicio.exercise_id ? (
               <ActionRow
                 icon={<Pin size={IconSize.action} strokeWidth={IconStroke} color={theme.text} />}
-                label={notasFijas.has(menuEjercicio.exercise_id) ? 'Editar nota fija' : 'Nota fija (todas las sesiones)'}
+                label={notasFijas.has(menuEjercicio.exercise_id) ? w.editPinnedNote : w.pinnedNoteAll}
                 onPress={() => {
                   setNotaFija(menuEjercicio);
                   setMenuEjercicio(null);
@@ -1047,7 +1056,7 @@ export default function WorkoutScreen() {
             ) : null}
             <ActionRow
               icon={<Wrench size={IconSize.action} strokeWidth={IconStroke} color={theme.text} />}
-              label="Discos, calentamiento y peso máximo"
+              label={w.tools}
               onPress={() => {
                 setHerramientasDe(menuEjercicio);
                 setMenuEjercicio(null);
@@ -1056,7 +1065,7 @@ export default function WorkoutScreen() {
             {menuEjercicio.group_id && grupos.porId.has(menuEjercicio.group_id) ? (
               <ActionRow
                 icon={<Unlink size={IconSize.action} strokeWidth={IconStroke} color={theme.text} />}
-                label="Desagrupar"
+                label={w.ungroup}
                 onPress={() => {
                   if (menuEjercicio.group_id) mutations.removeGroup.mutate(menuEjercicio.group_id, { onSuccess: () => void sesion.refetch() });
                   setMenuEjercicio(null);
@@ -1065,7 +1074,7 @@ export default function WorkoutScreen() {
             ) : (
               <ActionRow
                 icon={<Link2 size={IconSize.action} strokeWidth={IconStroke} color={theme.text} />}
-                label="Agrupar como superserie, circuito…"
+                label={w.group}
                 onPress={() => {
                   setAgruparDesde(menuEjercicio);
                   setMenuEjercicio(null);
@@ -1074,7 +1083,7 @@ export default function WorkoutScreen() {
             )}
             <ActionRow
               icon={<ListOrdered size={IconSize.action} strokeWidth={IconStroke} color={theme.text} />}
-              label="Aplicar protocolo…"
+              label={w.applyProtocol}
               onPress={() => {
                 setProtocoloPara(menuEjercicio);
                 setMenuEjercicio(null);
@@ -1082,7 +1091,7 @@ export default function WorkoutScreen() {
             />
             <ActionRow
               icon={<Repeat2 size={IconSize.action} strokeWidth={IconStroke} color={theme.text} />}
-              label="Cambiar ejercicio"
+              label={w.changeExercise}
               onPress={() => {
                 setSelector({ modo: 'cambiar', exercise: menuEjercicio });
                 setMenuEjercicio(null);
@@ -1091,7 +1100,7 @@ export default function WorkoutScreen() {
             {ejercicios.length > 1 ? (
               <ActionRow
                 icon={<GripVertical size={IconSize.action} strokeWidth={IconStroke} color={theme.text} />}
-                label="Reordenar ejercicios…"
+                label={w.reorderMore}
                 onPress={() => {
                   setReordenando(true);
                   setMenuEjercicio(null);
@@ -1100,7 +1109,7 @@ export default function WorkoutScreen() {
             ) : null}
             <ActionRow
               icon={<ArrowUp size={IconSize.action} strokeWidth={IconStroke} color={theme.text} />}
-              label="Subir"
+              label={w.moveUp}
               onPress={() => {
                 mover(menuEjercicio, -1);
                 setMenuEjercicio(null);
@@ -1108,7 +1117,7 @@ export default function WorkoutScreen() {
             />
             <ActionRow
               icon={<ArrowDown size={IconSize.action} strokeWidth={IconStroke} color={theme.text} />}
-              label="Bajar"
+              label={w.moveDown}
               onPress={() => {
                 mover(menuEjercicio, 1);
                 setMenuEjercicio(null);
@@ -1116,7 +1125,7 @@ export default function WorkoutScreen() {
             />
             <ActionRow
               icon={<X size={IconSize.action} strokeWidth={IconStroke} color={theme.danger} />}
-              label="Quitar ejercicio"
+              label={w.removeExercise}
               color="danger"
               onPress={() => {
                 deleteExercise(menuEjercicio);
@@ -1149,9 +1158,9 @@ export default function WorkoutScreen() {
 
       <NoteSheet
         visible={notaEjercicio !== null}
-        title="Nota de hoy"
-        hint={notaEjercicio ? `${notaEjercicio.name}, solo en esta sesión.` : undefined}
-        placeholder="Me dolió el hombro, subir el banco…"
+        title={w.todayNote}
+        hint={notaEjercicio ? w.todayNoteHint(nombreDe(notaEjercicio)) : undefined}
+        placeholder={w.todayNotePlaceholder}
         initialText={notaEjercicio?.notes ?? null}
         onClose={() => setNotaEjercicio(null)}
         onSave={(texto) => {
@@ -1163,8 +1172,8 @@ export default function WorkoutScreen() {
 
       <NoteSheet
         visible={notaSerie !== null}
-        title="Nota de la serie"
-        placeholder="Técnica rota en la última…"
+        title={w.setNote}
+        placeholder={w.setNotePlaceholder}
         maxLength={140}
         initialText={notaSerie?.notes ?? null}
         tagOptions={SET_TAGS}
@@ -1178,9 +1187,9 @@ export default function WorkoutScreen() {
 
       <NoteSheet
         visible={notaFija !== null}
-        title="Nota fija"
-        hint={notaFija ? `Se verá arriba de ${notaFija.name} en cada sesión.` : undefined}
-        placeholder="Asiento en 4, respaldo en 2"
+        title={w.pinnedNote}
+        hint={notaFija ? w.pinnedNoteHint(nombreDe(notaFija)) : undefined}
+        placeholder={w.pinnedNoteExample}
         initialText={notaFija?.exercise_id ? notasFijas.get(notaFija.exercise_id) ?? null : null}
         onClose={() => setNotaFija(null)}
         onSave={(texto) => {
@@ -1190,7 +1199,7 @@ export default function WorkoutScreen() {
 
       <ReorderExercisesSheet
         visible={reordenando}
-        exercises={ejercicios}
+        exercises={ejercicios.map((e) => ({ ...e, name: nombreDe(e) }))}
         groupLabel={(exId) => grupos.etiqueta.get(exId) ?? null}
         onClose={() => setReordenando(false)}
         onSave={reordenarEjercicios}
@@ -1219,21 +1228,23 @@ export default function WorkoutScreen() {
 
       <GroupSheet
         visible={agruparDesde !== null}
-        from={agruparDesde}
-        candidates={ejercicios.filter((e) => e.id !== agruparDesde?.id && !(e.group_id && grupos.porId.has(e.group_id)))}
+        from={agruparDesde ? { ...agruparDesde, name: nombreDe(agruparDesde) } : null}
+        candidates={ejercicios
+          .filter((e) => e.id !== agruparDesde?.id && !(e.group_id && grupos.porId.has(e.group_id)))
+          .map((e) => ({ ...e, name: nombreDe(e) }))}
         onClose={() => setAgruparDesde(null)}
         onCreate={(input) => mutations.createGroup.mutate({ workoutId: data.id, input }, { onSuccess: () => void sesion.refetch() })}
       />
 
-      <Sheet visible={protocoloPara !== null} onClose={() => setProtocoloPara(null)} title="Aplicar protocolo">
+      <Sheet visible={protocoloPara !== null} onClose={() => setProtocoloPara(null)} title={w.protocolTitle}>
         <AppText variant="caption" color="textSecondary">
-          Genera las series con sus objetivos a partir de tu peso de trabajo. Las series pendientes de este ejercicio se reemplazan; las hechas se quedan.
+          {w.protocolIntro}
         </AppText>
         {PROTOCOLS.map((pr) => (
           <ActionRow
             key={pr.key}
             icon={<ListOrdered size={IconSize.action} strokeWidth={IconStroke} color={theme.text} />}
-            label={`${pr.label} — ${pr.description}`}
+            label={`${tx.training.protocols[pr.key].label} — ${tx.training.protocols[pr.key].description}`}
             onPress={() => {
               if (protocoloPara) aplicarProtocolo(protocoloPara, pr.key);
               setProtocoloPara(null);
@@ -1244,7 +1255,7 @@ export default function WorkoutScreen() {
 
       <IntervalTimerSheet
         visible={timerPara !== null}
-        title={PROTOCOLS.find((x) => x.key === timerPara?.protocol)?.label ?? 'Timer'}
+        title={timerPara?.protocol ? protocolLabel(timerPara.protocol, lang) : w.timer}
         config={timerPara?.protocol ? protocolTimer(timerPara.protocol as ProtocolKey) : null}
         onClose={() => setTimerPara(null)}
       />
@@ -1318,7 +1329,7 @@ export default function WorkoutScreen() {
             { workoutId: data.id, target: { ...target, keepValues } },
             {
               onSuccess: (created) => {
-                showSnackbar({ message: 'Entrenamiento duplicado.' });
+                showSnackbar({ message: w.duplicated });
                 router.replace({ pathname: '/(app)/workout/[id]', params: { id: created.id } });
               },
             },
@@ -1338,6 +1349,7 @@ function pesoMaximo(exercise: WorkoutExerciseDetail | null, unit: 'kg' | 'lb'): 
 
 /** Una escala de 1 a 5 con chips; tocar el valor elegido lo quita (RF-F49). */
 function Escala({ titulo, valor, onChange }: { titulo: string; valor: number | null; onChange: (v: number | null) => void }) {
+  const w = useT().fitness.workout;
   return (
     <View style={styles.escala}>
       <AppText variant="label" color="textSecondary" style={styles.escalaTitulo}>
@@ -1345,7 +1357,7 @@ function Escala({ titulo, valor, onChange }: { titulo: string; valor: number | n
       </AppText>
       <View style={styles.chips}>
         {[1, 2, 3, 4, 5].map((n) => (
-          <Chip key={n} compact label={String(n)} accessibilityLabel={`${titulo} ${n} de 5`} selected={valor === n} onPress={() => onChange(valor === n ? null : n)} />
+          <Chip key={n} compact label={String(n)} accessibilityLabel={w.scaleA11y(titulo, n)} selected={valor === n} onPress={() => onChange(valor === n ? null : n)} />
         ))}
       </View>
     </View>
@@ -1367,6 +1379,8 @@ function DuplicateSheet({
   onPick: (target: { activityId: string | null; performedAt: string }) => void;
 }) {
   const theme = useTheme();
+  const lang = useLanguage();
+  const w = useT().fitness.workout;
   const range = useMemo(() => ({ from: startOfDay(new Date()), to: addDays(startOfDay(new Date()), 30) }), []);
   const activities = useActivitiesRange(range);
   const workouts = useWorkouts();
@@ -1374,22 +1388,22 @@ function DuplicateSheet({
   const candidates = (activities.data ?? []).filter((a) => a.is_gym && !taken.has(a.id) && !a.owner_name);
 
   return (
-    <Sheet visible={visible} onClose={onClose} title="Duplicar en…">
-      <SwitchRow label="Conservar series y pesos" hint="Desactívalo para copiar solo la lista de ejercicios." value={keepValues} onValueChange={onKeepValuesChange} />
+    <Sheet visible={visible} onClose={onClose} title={w.duplicateIn}>
+      <SwitchRow label={w.keepValues} hint={w.keepValuesHint} value={keepValues} onValueChange={onKeepValuesChange} />
       <AppText variant="label" color="textSecondary">
-        Próximas actividades de gimnasio
+        {w.upcomingGym}
       </AppText>
-      {candidates.length === 0 ? <AppText color="textSecondary">No hay actividades de gimnasio sin entrenamiento en los próximos 30 días.</AppText> : null}
+      {candidates.length === 0 ? <AppText color="textSecondary">{w.noUpcomingGym}</AppText> : null}
       {candidates.map((a) => (
         <Button
           key={a.id}
-          title={`${a.title} · ${formatShortDate(fromIso(a.start_at))} ${formatTime(fromIso(a.start_at))}`}
+          title={`${a.title} · ${formatShortDate(fromIso(a.start_at), lang)} ${formatTime(fromIso(a.start_at), lang)}`}
           variant="secondary"
           onPress={() => onPick({ activityId: a.id, performedAt: a.start_at })}
         />
       ))}
       <View style={[styles.divider, { backgroundColor: theme.border }]} />
-      <Button title="Entrenamiento libre (ahora)" onPress={() => onPick({ activityId: null, performedAt: new Date().toISOString() })} />
+      <Button title={w.freeNow} onPress={() => onPick({ activityId: null, performedAt: new Date().toISOString() })} />
     </Sheet>
   );
 }

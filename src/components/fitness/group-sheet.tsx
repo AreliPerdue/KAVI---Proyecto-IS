@@ -3,8 +3,10 @@ import { StyleSheet, View } from 'react-native';
 
 import { AppText, Button, Chip, Sheet, TextField } from '@/components/ui';
 import { GROUP_TYPES } from '@/constants/intensifiers';
+import { groupTypeLabel } from '@/lib/gym/display-names';
 import { Spacing } from '@/constants/theme';
 import type { ExerciseGroupType, WorkoutExercise } from '@/types/domain';
+import { useLanguage, useT } from '@/i18n';
 
 export type GroupSheetProps = {
   visible: boolean;
@@ -22,15 +24,19 @@ export type GroupSheetProps = {
  * ejercicios: es lo que hace distinta a una superserie.
  */
 export function GroupSheet({ visible, from, candidates, onClose, onCreate }: GroupSheetProps) {
+  const h = useT().fitness.sheets;
   if (!from) return null;
   return (
-    <Sheet visible={visible} onClose={onClose} title="Agrupar como…">
+    <Sheet visible={visible} onClose={onClose} title={h.groupTitle}>
       <Contenido key={from.id} from={from} candidates={candidates} onClose={onClose} onCreate={onCreate} />
     </Sheet>
   );
 }
 
 function Contenido({ from, candidates, onClose, onCreate }: Omit<GroupSheetProps, 'visible' | 'from'> & { from: WorkoutExercise }) {
+  const tx = useT();
+  const lang = useLanguage();
+  const h = tx.fitness.sheets;
   const [tipo, setTipo] = useState<ExerciseGroupType>('superset');
   const [elegidos, setElegidos] = useState<string[]>([]);
   const [rondas, setRondas] = useState('3');
@@ -43,17 +49,17 @@ function Contenido({ from, candidates, onClose, onCreate }: Omit<GroupSheetProps
     <>
       <View style={styles.chips}>
         {GROUP_TYPES.map((g) => (
-          <Chip key={g.value} compact label={g.label} selected={tipo === g.value} onPress={() => setTipo(g.value)} />
+          <Chip key={g.value} compact label={groupTypeLabel(g.value, lang)} selected={tipo === g.value} onPress={() => setTipo(g.value)} />
         ))}
       </View>
       {info ? (
         <AppText variant="caption" color="textSecondary">
-          {info.description}
+          {tx.training.groups[info.value].description}
         </AppText>
       ) : null}
 
       <AppText variant="label" color="textSecondary">
-        Con quién, en orden
+        {h.withWhom}
       </AppText>
       <View style={styles.chips}>
         {candidates.map((c) => {
@@ -70,7 +76,7 @@ function Contenido({ from, candidates, onClose, onCreate }: Omit<GroupSheetProps
         })}
       </View>
       {candidates.length === 0 ? (
-        <AppText color="textSecondary">Agrega otro ejercicio a la sesión para agruparlo con este.</AppText>
+        <AppText color="textSecondary">{h.groupNeedsAnother}</AppText>
       ) : null}
 
       {elegidos.length > 0 ? (
@@ -82,16 +88,16 @@ function Contenido({ from, candidates, onClose, onCreate }: Omit<GroupSheetProps
       <View style={styles.dos}>
         {info?.rounds ? (
           <View style={styles.flex}>
-            <TextField label="Rondas" value={rondas} onChangeText={setRondas} keyboardType="number-pad" />
+            <TextField label={h.rounds} value={rondas} onChangeText={setRondas} keyboardType="number-pad" />
           </View>
         ) : null}
         <View style={styles.flex}>
-          <TextField label="Descanso al terminar la ronda (s)" value={descanso} onChangeText={setDescanso} keyboardType="number-pad" />
+          <TextField label={h.restAfterRound} value={descanso} onChangeText={setDescanso} keyboardType="number-pad" />
         </View>
       </View>
 
       <Button
-        title="Agrupar"
+        title={h.group}
         disabled={elegidos.length === 0}
         onPress={() => {
           onCreate({

@@ -1,5 +1,6 @@
 import type { NumpadField } from '@/components/fitness/numpad-sheet';
 import { columnLabel, type EditTarget } from '@/components/fitness/exercise-block';
+import { getLanguage, type Language, t } from '@/i18n';
 import { segmentFieldValue, setSegmentField, type SegmentField } from '@/lib/gym/sets';
 import type { EffortScale } from '@/store/gym-store';
 import type { WeightUnit, WorkoutSet } from '@/types/domain';
@@ -11,7 +12,15 @@ import type { WeightUnit, WorkoutSet } from '@/types/domain';
  */
 
 /** El teclado para una celda. `prefijo` dice dónde se está: "Banca · serie 2". */
-export function numpadFieldFor(target: EditTarget, draft: WorkoutSet, prefijo: string, effortScale: EffortScale, unit: WeightUnit): NumpadField {
+export function numpadFieldFor(
+  target: EditTarget,
+  draft: WorkoutSet,
+  prefijo: string,
+  effortScale: EffortScale,
+  unit: WeightUnit,
+  lang: Language = getLanguage(),
+): NumpadField {
+  const n = t(lang).fitness.workout.numpad;
   if (target.field === 'effort') {
     const rir = effortScale === 'rir';
     return { title: `${prefijo} · ${rir ? 'RIR' : 'RPE'}`, value: rir ? draft.rir : draft.rpe, step: rir ? 1 : 0.5, decimals: !rir, min: rir ? 0 : 1, max: 10 };
@@ -20,19 +29,19 @@ export function numpadFieldFor(target: EditTarget, draft: WorkoutSet, prefijo: s
   const valor = seg ? segmentFieldValue(seg, target.field, unit) : null;
   switch (target.field) {
     case 'weight_kg':
-      return { title: `${prefijo} · Peso`, value: valor, step: unit === 'kg' ? 2.5 : 5, decimals: true, suffix: unit };
+      return { title: `${prefijo} · ${n.weight}`, value: valor, step: unit === 'kg' ? 2.5 : 5, decimals: true, suffix: unit };
     case 'duration_sec':
-      return { title: `${prefijo} · Tiempo`, value: valor, step: 15, decimals: false, suffix: 's' };
+      return { title: `${prefijo} · ${n.time}`, value: valor, step: 15, decimals: false, suffix: 's' };
     case 'distance_m':
-      return { title: `${prefijo} · Distancia`, value: valor, step: 100, decimals: false, suffix: 'm' };
+      return { title: `${prefijo} · ${n.distance}`, value: valor, step: 100, decimals: false, suffix: 'm' };
     case 'partial_reps':
-      return { title: `${prefijo} · Parciales`, value: valor, step: 1, decimals: false, counter: true };
+      return { title: `${prefijo} · ${n.partials}`, value: valor, step: 1, decimals: false, counter: true };
     case 'forced_reps':
-      return { title: `${prefijo} · Reps forzadas`, value: valor, step: 1, decimals: false, counter: true };
+      return { title: `${prefijo} · ${n.forced}`, value: valor, step: 1, decimals: false, counter: true };
     case 'cheat_reps':
-      return { title: `${prefijo} · Reps con trampa`, value: valor, step: 1, decimals: false, counter: true };
+      return { title: `${prefijo} · ${n.cheat}`, value: valor, step: 1, decimals: false, counter: true };
     default:
-      return { title: `${prefijo} · ${columnLabel(target.field, unit)}`, value: valor, step: 1, decimals: false, counter: true, max: 999 };
+      return { title: `${prefijo} · ${columnLabel(target.field, unit, lang)}`, value: valor, step: 1, decimals: false, counter: true, max: 999 };
   }
 }
 

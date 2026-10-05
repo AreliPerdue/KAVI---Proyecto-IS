@@ -6,6 +6,7 @@ import { AppText, Button, Sheet } from '@/components/ui';
 import { IconSize, IconStroke, Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { tap } from '@/lib/haptics';
+import { useT } from '@/i18n';
 
 export type NumpadField = {
   /** "Serie 2 · Peso" */
@@ -65,6 +66,7 @@ export function NumpadSheet({ visible, field, onChange, onClose, onNext }: Numpa
 
 function Teclado({ field, onChange, onClose, onNext }: Omit<NumpadSheetProps, 'visible' | 'field'> & { field: NumpadField }) {
   const theme = useTheme();
+  const h = useT().fitness.sheets;
   const [texto, setTexto] = useState(() => aTexto(field.value));
   const [contando, setContando] = useState(false);
   /**
@@ -132,11 +134,11 @@ function Teclado({ field, onChange, onClose, onNext }: Omit<NumpadSheetProps, 'v
         <Pressable
           accessibilityRole="button"
           accessibilityState={{ selected: contando }}
-          accessibilityLabel={contando ? 'Dejar de contar' : 'Contar reps con un toque'}
+          accessibilityLabel={contando ? h.stopCounting : h.countReps}
           onPress={() => setContando((v) => !v)}
           style={styles.toggleContador}>
           <AppText variant="label" color="textSecondary">
-            {contando ? 'Volver al teclado' : 'Modo contador'}
+            {contando ? h.backToKeypad : h.counterMode}
           </AppText>
         </Pressable>
       ) : null}
@@ -144,7 +146,7 @@ function Teclado({ field, onChange, onClose, onNext }: Omit<NumpadSheetProps, 'v
       {contando ? (
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel="Una rep más"
+          accessibilityLabel={h.oneMoreRep}
           onPress={() => sumar(1)}
           style={({ pressed }) => [styles.contador, { backgroundColor: pressed ? theme.surfaceAlt : theme.ink }]}>
           {({ pressed }) => (
@@ -161,7 +163,7 @@ function Teclado({ field, onChange, onClose, onNext }: Omit<NumpadSheetProps, 'v
               <Pressable
                 key={t}
                 accessibilityRole="button"
-                accessibilityLabel={t === 'borrar' ? 'Borrar' : t === '.' ? 'Punto decimal' : t}
+                accessibilityLabel={t === 'borrar' ? h.backspace : t === '.' ? h.decimalPoint : t}
                 disabled={deshabilitada}
                 onPress={() => pulsar(t)}
                 style={({ pressed }) => [
@@ -182,11 +184,11 @@ function Teclado({ field, onChange, onClose, onNext }: Omit<NumpadSheetProps, 'v
       <View style={styles.acciones}>
         {onNext ? (
           <View style={styles.flex}>
-            <Button title="Siguiente" variant="secondary" onPress={onNext} />
+            <Button title={h.next} variant="secondary" onPress={onNext} />
           </View>
         ) : null}
         <View style={styles.flex}>
-          <Button title="Listo" onPress={onClose} />
+          <Button title={h.done} onPress={onClose} />
         </View>
       </View>
     </>

@@ -3,30 +3,34 @@ import { StyleSheet, View } from 'react-native';
 
 import { AppText, Button, Chip, Sheet, SwitchRow, TextField } from '@/components/ui';
 import { GEAR } from '@/constants/intensifiers';
+import { gearLabel } from '@/lib/gym/display-names';
 import { Spacing } from '@/constants/theme';
 import { unusualCombination } from '@/lib/gym/transforms';
 import { fromKg, round, toKg } from '@/lib/gym/units';
 import type { LoadMods, WeightUnit, WorkoutSet } from '@/types/domain';
+import { type Dictionary, useLanguage, useT } from '@/i18n';
 
 type Opcion<T> = { value: T; label: string };
 
-const FALLOS: Opcion<WorkoutSet['failure']>[] = [
-  { value: null, label: 'Sin fallo' },
-  { value: 'technical', label: 'Técnico' },
-  { value: 'muscular', label: 'Muscular' },
-  { value: 'absolute', label: 'Absoluto' },
+type Textos = Dictionary['fitness']['sheets'];
+
+const fallos = (h: Textos): Opcion<WorkoutSet['failure']>[] => [
+  { value: null, label: h.failures.none },
+  { value: 'technical', label: h.failures.technical },
+  { value: 'muscular', label: h.failures.muscular },
+  { value: 'absolute', label: h.failures.absolute },
 ];
-const ROMS: Opcion<WorkoutSet['rom']>[] = [
-  { value: null, label: 'Completo' },
-  { value: 'partial', label: 'Parcial' },
-  { value: 'lengthened', label: 'Alargado' },
-  { value: 'shortened', label: 'Acortado' },
+const roms = (h: Textos): Opcion<WorkoutSet['rom']>[] => [
+  { value: null, label: h.roms.full },
+  { value: 'partial', label: h.roms.partial },
+  { value: 'lengthened', label: h.roms.lengthened },
+  { value: 'shortened', label: h.roms.shortened },
 ];
-const LADOS: Opcion<WorkoutSet['side']>[] = [
-  { value: null, label: 'Bilateral' },
-  { value: 'left', label: 'Izquierdo' },
-  { value: 'right', label: 'Derecho' },
-  { value: 'alternating', label: 'Alternado' },
+const lados = (h: Textos): Opcion<WorkoutSet['side']>[] => [
+  { value: null, label: h.sides.both },
+  { value: 'left', label: h.sides.left },
+  { value: 'right', label: h.sides.right },
+  { value: 'alternating', label: h.sides.alternating },
 ];
 
 const aNumero = (t: string): number | undefined => {
@@ -48,15 +52,18 @@ export type SetDetailsSheetProps = {
  * un toque, y se guarda al cerrar. Las combinaciones raras se avisan sin bloquear (RF-F48).
  */
 export function SetDetailsSheet({ visible, set, unit, onClose, onSave }: SetDetailsSheetProps) {
+  const h = useT().fitness.sheets;
   if (!set) return null;
   return (
-    <Sheet visible={visible} onClose={onClose} title="Detalles de la serie">
+    <Sheet visible={visible} onClose={onClose} title={h.detailsTitle}>
       <Detalles key={set.id} set={set} unit={unit} onClose={onClose} onSave={onSave} />
     </Sheet>
   );
 }
 
 function Detalles({ set, unit, onClose, onSave }: Omit<SetDetailsSheetProps, 'visible' | 'set'> & { set: WorkoutSet }) {
+  const lang = useLanguage();
+  const h = useT().fitness.sheets;
   const [borrador, setBorrador] = useState(set);
   const mods = borrador.load_mods ?? {};
   const kg = (v: number | undefined) => (v === undefined ? '' : String(round(fromKg(v, unit), 1)));
@@ -107,11 +114,11 @@ function Detalles({ set, unit, onClose, onSave }: Omit<SetDetailsSheetProps, 'vi
           {aviso}
         </AppText>
       ) : null}
-      {fila('Fallo', FALLOS, borrador.failure, (v) => cambiar({ failure: v }))}
-      {fila('Rango de movimiento', ROMS, borrador.rom, (v) => cambiar({ rom: v }))}
-      {fila('Lado', LADOS, borrador.side, (v) => cambiar({ side: v }))}
+      {fila(h.failure, fallos(h), borrador.failure, (v) => cambiar({ failure: v }))}
+      {fila(h.rom, roms(h), borrador.rom, (v) => cambiar({ rom: v }))}
+      {fila(h.side, lados(h), borrador.side, (v) => cambiar({ side: v }))}
       <TextField
-        label="Tempo"
+        label={h.tempo}
         value={borrador.tempo ?? ''}
         onChangeText={(t) => cambiar({ tempo: t.trim() ? t.toUpperCase().slice(0, 20) : null })}
         placeholder="3-1-X-0"
@@ -119,31 +126,31 @@ function Detalles({ set, unit, onClose, onSave }: Omit<SetDetailsSheetProps, 'vi
       />
       <View style={styles.dos}>
         <View style={styles.flex}>
-          <TextField label={`Lastre (${unit})`} value={lastre} onChangeText={setLastre} keyboardType="decimal-pad" placeholder="0" />
+          <TextField label={h.addedWeight(unit)} value={lastre} onChangeText={setLastre} keyboardType="decimal-pad" placeholder="0" />
         </View>
         <View style={styles.flex}>
-          <TextField label={`Asistencia (${unit})`} value={asistencia} onChangeText={setAsistencia} keyboardType="decimal-pad" placeholder="0" />
-        </View>
-      </View>
-      <View style={styles.dos}>
-        <View style={styles.flex}>
-          <TextField label={`Cadenas (${unit})`} value={cadenas} onChangeText={setCadenas} keyboardType="decimal-pad" placeholder="0" />
-        </View>
-        <View style={styles.flex}>
-          <TextField label="Déficit (cm)" value={deficit} onChangeText={setDeficit} keyboardType="decimal-pad" placeholder="0" />
+          <TextField label={h.assistance(unit)} value={asistencia} onChangeText={setAsistencia} keyboardType="decimal-pad" placeholder="0" />
         </View>
       </View>
       <View style={styles.dos}>
         <View style={styles.flex}>
-          <TextField label="Bandas" value={mods.bands ?? ''} onChangeText={(t) => cambiarMods({ bands: t.trim() ? t : undefined })} placeholder="Roja, ligera…" />
+          <TextField label={h.chains(unit)} value={cadenas} onChangeText={setCadenas} keyboardType="decimal-pad" placeholder="0" />
         </View>
         <View style={styles.flex}>
-          <TextField label="Pines / bloques" value={mods.pin_height ?? ''} onChangeText={(t) => cambiarMods({ pin_height: t.trim() ? t : undefined })} placeholder="Altura 4" />
+          <TextField label={h.deficit} value={deficit} onChangeText={setDeficit} keyboardType="decimal-pad" placeholder="0" />
+        </View>
+      </View>
+      <View style={styles.dos}>
+        <View style={styles.flex}>
+          <TextField label={h.bands} value={mods.bands ?? ''} onChangeText={(t) => cambiarMods({ bands: t.trim() ? t : undefined })} placeholder={h.bandsPlaceholder} />
+        </View>
+        <View style={styles.flex}>
+          <TextField label={h.pins} value={mods.pin_height ?? ''} onChangeText={(t) => cambiarMods({ pin_height: t.trim() ? t : undefined })} placeholder={h.pinsPlaceholder} />
         </View>
       </View>
       <View style={styles.grupo}>
         <AppText variant="label" color="textSecondary">
-          Equipo
+          {h.gear}
         </AppText>
         <View style={styles.chips}>
           {GEAR.map((g) => {
@@ -152,7 +159,7 @@ function Detalles({ set, unit, onClose, onSave }: Omit<SetDetailsSheetProps, 'vi
               <Chip
                 key={g.value}
                 compact
-                label={g.label}
+                label={gearLabel(g.value, lang)}
                 selected={puesto}
                 onPress={() => cambiar({ gear: puesto ? borrador.gear.filter((x) => x !== g.value) : [...borrador.gear, g.value] })}
               />
@@ -160,8 +167,8 @@ function Detalles({ set, unit, onClose, onSave }: Omit<SetDetailsSheetProps, 'vi
           })}
         </View>
       </View>
-      <SwitchRow label="Con spotter" value={borrador.spotter} onValueChange={(v) => cambiar({ spotter: v })} />
-      <Button title="Guardar" onPress={guardar} />
+      <SwitchRow label={h.spotter} value={borrador.spotter} onValueChange={(v) => cambiar({ spotter: v })} />
+      <Button title={h.save} onPress={guardar} />
     </>
   );
 }

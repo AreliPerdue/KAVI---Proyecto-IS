@@ -7,6 +7,7 @@ import { INTENSIFIERS, type IntensifierKey } from '@/constants/intensifiers';
 import { IconSize, IconStroke, Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { normalizar } from '@/lib/gym/search';
+import { useT } from '@/i18n';
 
 const SIN_ANILLO: TextStyle =
   Platform.OS === 'web' ? ({ outlineStyle: 'none', outlineWidth: 0 } as unknown as TextStyle) : {};
@@ -27,30 +28,36 @@ export type IntensifierSheetProps = {
  */
 export function IntensifierSheet({ visible, active, onClose, onToggle }: IntensifierSheetProps) {
   const theme = useTheme();
+  const tx = useT();
+  const h = tx.fitness.sheets;
+  /** Texto del intensificador en el idioma activo; la búsqueda acepta también el español y los alias. */
+  const textos = tx.training.intensifiers;
   const [busqueda, setBusqueda] = useState('');
   const [abierto, setAbierto] = useState<string | null>(null);
 
   const lista = useMemo(() => {
     const q = normalizar(busqueda);
     if (!q) return INTENSIFIERS;
-    return INTENSIFIERS.filter((i) => [i.label, i.description, ...i.aliases].some((t) => normalizar(t).includes(q)));
-  }, [busqueda]);
+    return INTENSIFIERS.filter((i) =>
+      [textos[i.key].label, textos[i.key].description, i.label, i.description, ...i.aliases].some((t) => normalizar(t).includes(q)),
+    );
+  }, [busqueda, textos]);
 
   return (
-    <Sheet visible={visible} onClose={onClose} title="Intensificador">
+    <Sheet visible={visible} onClose={onClose} title={h.intensifierTitle}>
       <View style={[styles.buscador, { borderColor: theme.border, backgroundColor: theme.surfaceAlt }]}>
         <Search size={IconSize.inline} strokeWidth={IconStroke} color={theme.textTertiary} />
         <TextInput
           value={busqueda}
           onChangeText={setBusqueda}
-          placeholder="Drop, myo, 21s, tempo…"
+          placeholder={h.intensifierPlaceholder}
           placeholderTextColor={theme.textTertiary}
-          accessibilityLabel="Buscar intensificador"
+          accessibilityLabel={h.searchIntensifier}
           autoCorrect={false}
           style={[styles.input, SIN_ANILLO, { color: theme.text }]}
         />
         {busqueda ? (
-          <IconButton label="Limpiar búsqueda" onPress={() => setBusqueda('')}>
+          <IconButton label={h.clearSearch} onPress={() => setBusqueda('')}>
             <X size={IconSize.inline} strokeWidth={IconStroke} color={theme.textTertiary} />
           </IconButton>
         ) : null}
@@ -63,23 +70,23 @@ export function IntensifierSheet({ visible, active, onClose, onToggle }: Intensi
             <Pressable
               accessibilityRole="button"
               accessibilityState={{ selected: activo }}
-              accessibilityLabel={activo ? `Quitar ${i.label}` : `Aplicar ${i.label}`}
+              accessibilityLabel={activo ? h.remove(textos[i.key].label) : h.apply(textos[i.key].label)}
               onPress={() => onToggle(i.key, !activo)}
               style={({ pressed }) => [styles.cuerpo, pressed ? styles.pressed : null]}>
               <View style={styles.flex}>
-                <AppText variant="bodyStrong">{i.label}</AppText>
+                <AppText variant="bodyStrong">{textos[i.key].label}</AppText>
                 <AppText variant="caption" color="textSecondary">
-                  {i.description}
+                  {textos[i.key].description}
                 </AppText>
                 {abierto === i.key ? (
                   <AppText variant="caption" color="textTertiary" style={styles.como}>
-                    {i.howTo}
+                    {textos[i.key].howTo}
                   </AppText>
                 ) : null}
               </View>
               {activo ? <Check size={IconSize.inline} strokeWidth={IconStroke} color={theme.text} /> : null}
             </Pressable>
-            <IconButton label={`Cómo se hace ${i.label}`} onPress={() => setAbierto((a) => (a === i.key ? null : i.key))}>
+            <IconButton label={h.howTo(textos[i.key].label)} onPress={() => setAbierto((a) => (a === i.key ? null : i.key))}>
               <Info size={IconSize.inline} strokeWidth={IconStroke} color={theme.textTertiary} />
             </IconButton>
           </View>
@@ -87,7 +94,7 @@ export function IntensifierSheet({ visible, active, onClose, onToggle }: Intensi
       })}
       {lista.length === 0 ? (
         <AppText color="textSecondary" style={styles.vacio}>
-          Ninguno se llama así.
+          {h.noneNamed}
         </AppText>
       ) : null}
     </Sheet>
