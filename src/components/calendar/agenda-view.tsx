@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { FlatList, type NativeScrollEvent, type NativeSyntheticEvent, Pressable, StyleSheet, View } from 'react-native';
 
-import { activityColor, tint } from './activity-style';
+import { activityColor, lowContrastOutline, tint } from './activity-style';
 import { groupByDay } from './group-by-day';
 
 import { AppText, ThemeIcon } from '@/components/ui';
@@ -72,6 +72,7 @@ export function AgendaView({ from, to, activities, onPressActivity, isSharedActi
                 style={({ pressed }) => [
                   styles.fila,
                   { backgroundColor: tint(color, 0.16), borderLeftColor: color },
+                  lowContrastOutline(color, theme),
                   compartida ? { borderWidth: 1, borderStyle: 'dashed', borderColor: color } : null,
                   pressed ? styles.pressed : null,
                 ]}>

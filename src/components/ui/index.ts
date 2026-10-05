@@ -8,6 +8,7 @@ export { TextField, type TextFieldProps } from './text-field';
 export { ThemeIcon, type ThemeIconProps } from './icon';
 export { EmptyState, ErrorState, LoadingState, Skeleton } from './states';
 export { Fab } from './fab';
+export { ColorDot, ColorSwatch } from './color-swatch';
 export { ReorderableColumn, type DragControls, type ReorderableColumnProps } from './reorderable-column';
 export { Segmented, type SegmentedOption } from './segmented';
 export { IconButton } from './icon-button';

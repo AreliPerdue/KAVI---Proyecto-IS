@@ -34,7 +34,7 @@ const COLUMNAS = 2;
 
 /** Con qué nace una lista antes de que nadie la toque. */
 export const NOMBRE_POR_OMISION = 'Sin título';
-const COLOR_POR_OMISION = PEOPLE_COLORS[0]?.hex ?? '#176BFF';
+const COLOR_POR_OMISION = PEOPLE_COLORS[0]?.hex ?? '#89CFF0';
 
 const SIN_ANILLO: TextStyle =
   Platform.OS === 'web' ? ({ outlineStyle: 'none', outlineWidth: 0 } as unknown as TextStyle) : {};

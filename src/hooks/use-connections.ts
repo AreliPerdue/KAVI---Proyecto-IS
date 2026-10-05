@@ -1,7 +1,7 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
-import { assignPeopleColors, colorDeNobi, DEFAULT_SELF_COLOR } from '@/constants/people-colors';
+import { assignPeopleColors, colorDeNobi, currentColor, DEFAULT_SELF_COLOR } from '@/constants/people-colors';
 import { useDebouncedValue } from '@/hooks/use-debounced-value';
 import { invalidateSharedData } from '@/lib/query-invalidation';
 import { useMyProfile } from '@/hooks/use-profile';
@@ -48,7 +48,8 @@ export function usePeopleColors(): Map<string, string> {
   const miAvatar = perfil.data?.avatar_url;
   const data = contacts.data;
   return useMemo(() => {
-    const mio = elegido ?? colorDeNobi(miAvatar) ?? DEFAULT_SELF_COLOR;
+    // Lo elegido con una paleta anterior se traduce al color actual del mismo Nobi (T202).
+    const mio = currentColor(elegido) ?? colorDeNobi(miAvatar) ?? DEFAULT_SELF_COLOR;
     const accepted = (data ?? [])
       .filter((c) => c.kind === 'accepted')
       .map((c) => ({ userId: c.profile.id, color: c.color, avatarUrl: c.profile.avatar_url }));

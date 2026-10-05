@@ -9,12 +9,15 @@
 import {
   assignPeopleColors,
   colorDeNobi,
+  currentColor,
   DEFAULT_SELF_COLOR,
   nextAvailableColor,
   PEOPLE_COLORS,
+  PEOPLE_COLORS_DISPLAY,
 } from '@/constants/people-colors';
 import { NOBIS } from '@/constants/nobi';
 import { Colors } from '@/constants/theme';
+import { needsOutline } from '@/lib/color';
 
 /** Luminancia relativa (WCAG). */
 function luminancia(hex: string): number {
@@ -60,14 +63,36 @@ describe('la paleta', () => {
   });
 
   /**
-   * El color aqui lleva significado (kavi-design §5), y la apariencia se puede cambiar
-   * (NFR-18): un color que solo funcione en oscuro deja de verse al pasar a claro.
+   * Desde T202 los hex son los del Nobi, tal cual: los oscuros (negro, azul marino, rojo
+   * vino…) no llegan a 3:1 sobre la tinta de la app y por eso sus marcas llevan contorno
+   * (`needsOutline`). Lo que se comprueba es que el contorno aparezca justo en esos.
    */
-  it('todos contrastan al menos 3:1 sobre los dos fondos', () => {
-    const flojos = PEOPLE_COLORS.filter(
-      (c) => contraste(c.hex, Colors.dark.background) < 3 || contraste(c.hex, Colors.light.background) < 3,
-    ).map((c) => c.id);
-    expect(flojos).toEqual([]);
+  it('los que no contrastan 3:1 con el fondo oscuro son los que llevan contorno', () => {
+    for (const c of PEOPLE_COLORS) {
+      expect(needsOutline(c.hex, Colors.dark.background)).toBe(contraste(c.hex, Colors.dark.background) < 3);
+    }
+  });
+
+  it('los menus muestran los 21, una vez cada uno', () => {
+    expect(PEOPLE_COLORS_DISPLAY.map((c) => c.id).sort()).toEqual(PEOPLE_COLORS.map((c) => c.id).sort());
+  });
+
+  it('los menus de color y de Nobi van en el mismo orden', () => {
+    expect(PEOPLE_COLORS_DISPLAY.map((c) => c.id)).toEqual(NOBIS.map((n) => n.id));
+  });
+
+  it('un hex de una paleta anterior se traduce al del mismo Nobi', () => {
+    const azul = PEOPLE_COLORS.find((c) => c.id === 'blue')!.hex;
+    expect(currentColor('#176BFF')).toBe(azul);
+    expect(currentColor('#176bff')).toBe(azul);
+    expect(currentColor('#4C8DFF')).toBe(azul);
+    expect(currentColor('#123456')).toBe('#123456');
+    expect(currentColor(null)).toBeNull();
+  });
+
+  it('a mano, un hex viejo cuenta como el nuevo al repartir', () => {
+    const m = assignPeopleColors([{ userId: 'u2', color: '#176BFF' }]);
+    expect(m.get('u2')).toBe(PEOPLE_COLORS.find((c) => c.id === 'blue')!.hex);
   });
 
   /** Dos personas del mismo color, en la vista que existe para distinguirlas, no sirve. */

@@ -4,10 +4,11 @@ import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import { tint } from './activity-style';
 
-import { AppText } from '@/components/ui';
+import { AppText, ColorDot } from '@/components/ui';
 import { IconSize, IconStroke, Radius, Spacing } from '@/constants/theme';
 import { useContacts, useSelfColor } from '@/hooks/use-connections';
 import { useTheme } from '@/hooks/use-theme';
+import { needsOutline } from '@/lib/color';
 
 export type PeopleTabsProps = {
   /** Contactos superpuestos ahora mismo. Vacío = solo mi calendario. */
@@ -30,11 +31,11 @@ function PersonTab({ label, selected, color, onPress }: { label: string; selecte
         // El color de la persona va en el punto y el borde, no de relleno: así la
         // etiqueta conserva el contraste del token de texto en ambos estados.
         selected
-          ? { backgroundColor: tint(color, 0.22), borderColor: color }
+          ? { backgroundColor: tint(color, 0.22), borderColor: needsOutline(color, theme.background) ? theme.textTertiary : color }
           : { backgroundColor: theme.surfaceAlt, borderColor: 'transparent' },
         pressed ? styles.pressed : null,
       ]}>
-      <View style={[styles.dot, { backgroundColor: color, opacity: selected ? 1 : 0.55 }]} />
+      <ColorDot hex={color} style={selected ? null : styles.apagado} />
       <AppText variant="label" color={selected ? 'text' : 'textSecondary'}>
         {label}
       </AppText>
@@ -99,7 +100,7 @@ const styles = StyleSheet.create({
     borderCurve: 'continuous',
     borderWidth: 1.5,
   },
-  dot: { width: 10, height: 10, borderRadius: 5 },
+  apagado: { opacity: 0.55 },
   addTab: { gap: Spacing.xs, paddingLeft: Spacing.sm },
   pressed: { opacity: 0.75 },
 });

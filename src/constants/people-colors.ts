@@ -8,63 +8,99 @@ import { NOBIS } from '@/constants/nobi';
  * Es una capa distinta de la paleta de dimensiones (spec 05) y solo aplica en ese modo;
  * con "Tú" a solas vuelve el color coding de temas.
  *
- * Son **veintiuno y no ocho** porque con ocho, a partir del noveno contacto la paleta se
- * repetía y dos personas compartían color justo en la vista que existe para
- * distinguirlas. Van emparejados uno a uno con los colores de Nobi (`constants/nobi`),
- * para que el color que alguien eligió para su mascota sea el que lo representa en el
- * calendario de los demás.
+ * Son **veintiuno**, emparejados uno a uno con los Nobi (`constants/nobi`): el color que
+ * alguien eligió para su mascota es el que lo representa en el calendario de los demás.
  *
- * Un color nuevo se agrega **al final** aunque su matiz encaje a media lista. Este orden
- * es el del reparto automático, y `assignPeopleColors` lo deriva en cada render en vez de
- * guardarlo: meter uno en medio recorre el reparto y cambiaría de color a contactos que
- * ya llevaban el suyo. Al final no le mueve el color a nadie.
+ * Desde T202 los hex **son los del Nobi**, tal cual, porque el color es la personalidad de
+ * cada quien y los tonos ajustados para contraste dejaban "morado claro" y "lila" casi
+ * iguales y a varios lejos del Nobi que representan. Los más oscuros (negro, azul marino,
+ * rojo vino…) no llegan a 3:1 sobre la tinta de la app: en vez de aclararlos —que juntaba
+ * rojo con rojo vino y azul con azul marino— sus marcas llevan un contorno claro
+ * (`needsOutline` en `lib/color.ts`). Con el nombre siempre al lado, el color nunca es el
+ * único indicador.
  *
- * El **orden** no es decorativo: es el que se reparte a quien no ha elegido color, así
- * que va alternando matices en vez de agrupar los parecidos. Con los rosas juntos al
- * principio, los dos primeros contactos salían en dos rosas casi iguales.
- *
- * Los tonos **no** son los del PNG del Nobi: son ese mismo matiz llevado a la
- * luminosidad que cumple ≥ 3:1 sobre los dos fondos de la app (`#131313` y `#F2F2F2`),
- * porque el color aquí tiene significado (kavi-design §5) y el tema se puede cambiar.
- * Por eso "blanco" y "negro" son grises con matiz: ni el blanco puro se ve sobre papel
- * ni el negro puro sobre tinta. Hay una prueba que comprueba las dos cosas —contraste y
- * que ningún par se confunda— para que nadie los retoque a ojo.
+ * Dos órdenes distintos:
+ * - `PEOPLE_COLORS` es el del **reparto automático** a quien no ha elegido color. Va
+ *   alternando matices y pone primero los que mejor se ven; agregar uno nuevo va **al
+ *   final**, porque el reparto se deriva en cada render y meter uno en medio le cambiaría
+ *   el color a contactos que ya llevaban el suyo.
+ * - `PEOPLE_COLORS_DISPLAY` es el de los **menús**: por familias (rosas y rojos, naranja y
+ *   amarillo, verdes, azules, morados, neutros), de claro a oscuro dentro de cada una.
  */
 
 export type PersonColor = { id: string; label: string; hex: string };
 
 export const PEOPLE_COLORS: readonly PersonColor[] = [
-  { id: 'blue', label: 'Azul', hex: '#176BFF' },
-  { id: 'red', label: 'Rojo', hex: '#E3291F' },
-  { id: 'green', label: 'Verde', hex: '#1F8A4C' },
-  { id: 'purple', label: 'Morado', hex: '#8E3FBE' },
-  { id: 'orange', label: 'Naranja', hex: '#B95D16' },
-  { id: 'turquois', label: 'Turquesa', hex: '#12878C' },
-  { id: 'magenta', label: 'Magenta', hex: '#B02A78' },
-  { id: 'lime_green', label: 'Verde lima', hex: '#4F8C22' },
-  { id: 'indigo', label: 'Índigo', hex: '#6A5ACD' },
-  { id: 'deep_red', label: 'Rojo oscuro', hex: '#B03A44' },
-  { id: 'baby_blue', label: 'Azul cielo', hex: '#3E86C4' },
-  { id: 'olive_green', label: 'Verde oliva', hex: '#6B7A2E' },
-  { id: 'pink', label: 'Rosa', hex: '#E51764' },
-  { id: 'navy_blue', label: 'Azul marino', hex: '#4A6BBF' },
-  { id: 'yellow', label: 'Amarillo', hex: '#8F731C' },
-  { id: 'light_purple', label: 'Morado claro', hex: '#A96AE0' },
-  { id: 'gray', label: 'Gris', hex: '#8A8078' },
-  { id: 'lilac', label: 'Lila', hex: '#A473C7' },
-  { id: 'black', label: 'Negro', hex: '#5F7266' },
-  { id: 'white', label: 'Blanco', hex: '#78899F' },
-  // El coral del PNG es #F58466. Aqui va un punto mas oscuro porque el original da
-  // 2.24:1 sobre el fondo claro y la regla son 3:1; este queda a 9 de distancia
-  // perceptual del suyo, por debajo del 13 en que dos colores se confunden, asi
-  // que al ojo sigue siendo el mismo coral.
-  { id: 'coral', label: 'Coral', hex: '#DA6C50' },
+  { id: 'baby_blue', label: 'Azul cielo', hex: '#89CFF0' },
+  { id: 'orange', label: 'Naranja', hex: '#FE6E00' },
+  { id: 'lime_green', label: 'Verde lima', hex: '#AAFF00' },
+  { id: 'pink', label: 'Rosa', hex: '#FFC0F3' },
+  { id: 'turquois', label: 'Turquesa', hex: '#00CED1' },
+  { id: 'yellow', label: 'Amarillo', hex: '#EDE609' },
+  { id: 'lilac', label: 'Lila', hex: '#B47EDE' },
+  { id: 'coral', label: 'Coral', hex: '#F86061' },
+  { id: 'gray', label: 'Gris', hex: '#AAABB0' },
+  { id: 'olive_green', label: 'Verde oliva', hex: '#636B2F' },
+  { id: 'white', label: 'Blanco', hex: '#D3D3D3' },
+  { id: 'magenta', label: 'Magenta', hex: '#AA0664' },
+  { id: 'light_purple', label: 'Morado intermedio', hex: '#6F2DA8' },
+  { id: 'red', label: 'Rojo', hex: '#980002' },
+  { id: 'indigo', label: 'Índigo', hex: '#3A00E7' },
+  { id: 'blue', label: 'Azul', hex: '#0028B3' },
+  { id: 'deep_red', label: 'Rojo vino', hex: '#430000' },
+  { id: 'green', label: 'Verde bandera', hex: '#002D04' },
+  { id: 'navy_blue', label: 'Azul marino', hex: '#000435' },
+  { id: 'purple', label: 'Morado', hex: '#35063E' },
+  { id: 'black', label: 'Negro', hex: '#232323' },
 ] as const;
+
+/** El orden de los menús de color (el de los Nobi): por familias, de claro a oscuro. */
+export const COLOR_DISPLAY_ORDER: readonly string[] = [
+  'pink', 'magenta', 'coral', 'red', 'deep_red',
+  'orange', 'yellow',
+  'lime_green', 'olive_green', 'green',
+  'turquois', 'baby_blue', 'blue', 'navy_blue',
+  'indigo', 'lilac', 'light_purple', 'purple',
+  'white', 'gray', 'black',
+];
+
+export const PEOPLE_COLORS_DISPLAY: readonly PersonColor[] = COLOR_DISPLAY_ORDER.map(
+  (id) => PEOPLE_COLORS.find((c) => c.id === id) as PersonColor,
+);
+
+/**
+ * Hex de paletas anteriores → id del color actual. Lo guardado antes de T202 (colores de
+ * contacto, de lista, el propio) se traduce al leerlo; la migración
+ * `20261004130000_people_colors_t202.sql` hace lo mismo en la base.
+ */
+const ANTERIORES: Record<string, string> = {
+  // Paleta ajustada de 21 (23 sep – 4 oct 2026).
+  '#176BFF': 'blue', '#E3291F': 'red', '#1F8A4C': 'green', '#8E3FBE': 'purple', '#B95D16': 'orange',
+  '#12878C': 'turquois', '#B02A78': 'magenta', '#4F8C22': 'lime_green', '#6A5ACD': 'indigo', '#B03A44': 'deep_red',
+  '#3E86C4': 'baby_blue', '#6B7A2E': 'olive_green', '#E51764': 'pink', '#4A6BBF': 'navy_blue', '#8F731C': 'yellow',
+  '#A96AE0': 'light_purple', '#8A8078': 'gray', '#A473C7': 'lilac', '#5F7266': 'black', '#78899F': 'white',
+  '#DA6C50': 'coral',
+  // Primera paleta de 8 (hasta el 23 sep 2026).
+  '#4C8DFF': 'blue', '#B06BFF': 'lilac', '#46C46A': 'green', '#FF7B6B': 'coral', '#35C7D8': 'turquois',
+  '#E3C245': 'yellow', '#F26BD1': 'magenta', '#A8D45A': 'lime_green',
+};
 
 const POR_ID = new Map(PEOPLE_COLORS.map((c) => [c.id, c.hex]));
 
-/** Color por omisión de quien no ha elegido ninguno y no tiene Nobi. */
-export const DEFAULT_SELF_COLOR = POR_ID.get('blue') as string;
+/**
+ * Un hex guardado con una paleta anterior, traducido al color actual del mismo Nobi. Lo que
+ * no es de ninguna paleta (o ya es actual) se devuelve igual.
+ */
+export function currentColor(hex: string): string;
+export function currentColor(hex: string | null | undefined): string | null;
+export function currentColor(hex: string | null | undefined): string | null {
+  if (!hex) return null;
+  const id = ANTERIORES[hex.toUpperCase()];
+  return id ? (POR_ID.get(id) ?? hex) : hex;
+}
+
+/** Color por omisión de quien no ha elegido ninguno y no tiene Nobi: el primero del reparto. */
+export const DEFAULT_SELF_COLOR = POR_ID.get('baby_blue') as string;
 
 const FALLBACK = DEFAULT_SELF_COLOR;
 
@@ -98,8 +134,9 @@ export function assignPeopleColors(
 
   for (const contact of contacts) {
     if (!contact.color) continue;
-    resolved.set(contact.userId, contact.color);
-    taken.add(contact.color);
+    const color = currentColor(contact.color);
+    resolved.set(contact.userId, color);
+    taken.add(color);
   }
 
   for (const contact of contacts) {

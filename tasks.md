@@ -592,7 +592,7 @@ un clic de más para llegar a lo mismo.
   contrasta 3.01:1 sobre papel y 5.52:1 sobre tinta. Es lo que ya se hacía con "blanco" y
   "negro", que son grises con matiz por la misma razón. Dep: —
 
-- [ ] T202 Revisar los 21 colores de la paleta de personas con criterio de diseño, no solo
+- [x] T202 Revisar los 21 colores de la paleta de personas con criterio de diseño, no solo
   de cumplimiento. Hoy se eligieron para pasar contraste y distancia mínima, y el resultado
   es que varios se parecen demasiado entre sí y otros no representan el color que el Nobi
   tiene en mente —el color es la personalidad de cada quien, y "morado claro" y "lila" no se

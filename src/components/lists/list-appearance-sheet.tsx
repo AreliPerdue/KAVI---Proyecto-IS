@@ -1,12 +1,11 @@
-import { Check } from 'lucide-react-native';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import { tint } from '@/components/calendar/activity-style';
-import { AppText, Sheet, ThemeIcon } from '@/components/ui';
+import { AppText, ColorSwatch, Sheet, ThemeIcon } from '@/components/ui';
 import { THEME_ICON_NAMES } from '@/constants/icons';
 import { IconSize, Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import { LIST_COLORS } from '@/lib/schemas/list';
+import { LIST_COLOR_OPTIONS } from '@/lib/schemas/list';
 
 export type ListAppearanceSheetProps = {
   visible: boolean;
@@ -43,16 +42,8 @@ export function ListAppearanceSheet({
             Color
           </AppText>
           <View style={styles.rejilla}>
-            {LIST_COLORS.map((c) => (
-              <Pressable
-                key={c}
-                accessibilityRole="button"
-                accessibilityLabel={`Color ${c}`}
-                accessibilityState={{ selected: color === c }}
-                onPress={() => onChangeColor(c)}
-                style={({ pressed }) => [styles.punto, { backgroundColor: c }, pressed ? styles.pressed : null]}>
-                {color === c ? <Check size={IconSize.inline} strokeWidth={3} color="#FFFFFF" /> : null}
-              </Pressable>
+            {LIST_COLOR_OPTIONS.map((c) => (
+              <ColorSwatch key={c.id} hex={c.hex} label={`Color ${c.label.toLowerCase()}`} selected={color === c.hex} onPress={() => onChangeColor(c.hex)} />
             ))}
           </View>
         </View>
@@ -91,7 +82,6 @@ const styles = StyleSheet.create({
   cuerpo: { gap: Spacing.lg, paddingBottom: Spacing.md },
   seccion: { gap: Spacing.sm },
   rejilla: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm },
-  punto: { width: 36, height: 36, borderRadius: Radius.full, alignItems: 'center', justifyContent: 'center' },
   iconoCelda: {
     width: 40,
     height: 40,

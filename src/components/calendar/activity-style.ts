@@ -1,9 +1,20 @@
+import type { ViewStyle } from 'react-native';
+
 import type { ThemeColors } from '@/constants/theme';
+import { needsOutline } from '@/lib/color';
 import type { Activity } from '@/types/domain';
 
 /** Color visible de una actividad: override > tema (copiado) > neutro (RF-T4). */
 export function activityColor(activity: Pick<Activity, 'color'>, theme: ThemeColors): string {
   return activity.color ?? theme.neutralActivity;
+}
+
+/**
+ * Contorno para una actividad cuyo color casi no se distingue del fondo: el negro o el azul
+ * marino de un Nobi en el calendario superpuesto, o un tema con color muy oscuro (T202).
+ */
+export function lowContrastOutline(color: string, theme: ThemeColors): ViewStyle | null {
+  return needsOutline(color, theme.background) ? { borderWidth: 1, borderColor: theme.textTertiary } : null;
 }
 
 /** Relleno suave (14 %) para bloques sobre fondos claros u oscuros. */

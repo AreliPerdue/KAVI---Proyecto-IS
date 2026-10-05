@@ -3,7 +3,9 @@ import type { ImageSourcePropType } from 'react-native';
 import type { ColorScheme } from './theme';
 
 /**
- * Nobi, la mascota de KAVI, en sus veintiún colores.
+ * Nobi, la mascota de KAVI, en sus veintiún colores. El orden es el de los menús: por
+ * familias (rosas y rojos, naranja y amarillo, verdes, azules, morados, neutros) y de claro
+ * a oscuro dentro de cada una, igual que `COLOR_DISPLAY_ORDER` en `people-colors`.
  *
  * Se declaran uno a uno y no por plantilla porque `require` de Metro necesita una
  * ruta literal: se resuelve al empaquetar, no en tiempo de ejecución.
@@ -36,15 +38,15 @@ export const NOBIS: readonly NobiColor[] = [
     dark: require('../../assets/nobi/magenta.png'),
     light: require('../../assets/nobi/light/magenta.png'),
   } },
-  { id: 'red', label: 'Rojo', sources: {
-    dark: require('../../assets/nobi/red.png'),
-    light: require('../../assets/nobi/light/red.png'),
-  } },
   { id: 'coral', label: 'Coral', sources: {
     dark: require('../../assets/nobi/coral.png'),
     light: require('../../assets/nobi/light/coral.png'),
   } },
-  { id: 'deep_red', label: 'Rojo oscuro', sources: {
+  { id: 'red', label: 'Rojo', sources: {
+    dark: require('../../assets/nobi/red.png'),
+    light: require('../../assets/nobi/light/red.png'),
+  } },
+  { id: 'deep_red', label: 'Rojo vino', sources: {
     dark: require('../../assets/nobi/deep_red.png'),
     light: require('../../assets/nobi/light/deep_red.png'),
   } },
@@ -56,15 +58,15 @@ export const NOBIS: readonly NobiColor[] = [
     dark: require('../../assets/nobi/yellow.png'),
     light: require('../../assets/nobi/light/yellow.png'),
   } },
-  { id: 'olive_green', label: 'Verde oliva', sources: {
-    dark: require('../../assets/nobi/olive_green.png'),
-    light: require('../../assets/nobi/light/olive_green.png'),
-  } },
   { id: 'lime_green', label: 'Verde lima', sources: {
     dark: require('../../assets/nobi/lime_green.png'),
     light: require('../../assets/nobi/light/lime_green.png'),
   } },
-  { id: 'green', label: 'Verde', sources: {
+  { id: 'olive_green', label: 'Verde oliva', sources: {
+    dark: require('../../assets/nobi/olive_green.png'),
+    light: require('../../assets/nobi/light/olive_green.png'),
+  } },
+  { id: 'green', label: 'Verde bandera', sources: {
     dark: require('../../assets/nobi/green.png'),
     light: require('../../assets/nobi/light/green.png'),
   } },
@@ -88,17 +90,17 @@ export const NOBIS: readonly NobiColor[] = [
     dark: require('../../assets/nobi/indigo.png'),
     light: require('../../assets/nobi/light/indigo.png'),
   } },
-  { id: 'purple', label: 'Morado', sources: {
-    dark: require('../../assets/nobi/purple.png'),
-    light: require('../../assets/nobi/light/purple.png'),
-  } },
-  { id: 'light_purple', label: 'Morado claro', sources: {
-    dark: require('../../assets/nobi/light_purple.png'),
-    light: require('../../assets/nobi/light/light_purple.png'),
-  } },
   { id: 'lilac', label: 'Lila', sources: {
     dark: require('../../assets/nobi/lilac.png'),
     light: require('../../assets/nobi/light/lilac.png'),
+  } },
+  { id: 'light_purple', label: 'Morado intermedio', sources: {
+    dark: require('../../assets/nobi/light_purple.png'),
+    light: require('../../assets/nobi/light/light_purple.png'),
+  } },
+  { id: 'purple', label: 'Morado', sources: {
+    dark: require('../../assets/nobi/purple.png'),
+    light: require('../../assets/nobi/light/purple.png'),
   } },
   { id: 'white', label: 'Blanco', sources: {
     dark: require('../../assets/nobi/white.png'),

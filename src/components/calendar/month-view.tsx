@@ -1,7 +1,7 @@
 import { memo, useCallback, useMemo, useState } from 'react';
 import { type LayoutChangeEvent, PixelRatio, Pressable, StyleSheet, View } from 'react-native';
 
-import { activityColor, tint } from './activity-style';
+import { activityColor, lowContrastOutline, tint } from './activity-style';
 import { isListDerived } from './derived';
 import { groupByDay } from './group-by-day';
 import { isOverlayActivity } from './overlay';
@@ -115,7 +115,7 @@ const DayCell = memo(function DayCell({ date, inMonth, weekend, activities, them
         count > 0 ? (
           <View style={styles.denseRow}>
             {activities.slice(0, MAX_DENSE_DOTS).map((activity) => (
-              <View key={activity.id} style={[styles.denseDot, { backgroundColor: activityColor(activity, theme) }]} />
+              <View key={activity.id} style={[styles.denseDot, { backgroundColor: activityColor(activity, theme) }, lowContrastOutline(activityColor(activity, theme), theme)]} />
             ))}
           </View>
         ) : null
@@ -133,6 +133,7 @@ const DayCell = memo(function DayCell({ date, inMonth, weekend, activities, them
                 style={[
                   styles.chip,
                   { height: chipHeight, backgroundColor: tint(color, foreign ? 0.35 : 0.18), borderLeftColor: color },
+                  lowContrastOutline(color, theme),
                   foreign ? { borderStyle: 'dashed', borderWidth: 1, borderColor: color, borderLeftWidth: 2 } : null,
                 ]}>
                 <AppText variant="caption" numberOfLines={1} color={inMonth ? 'text' : 'textSecondary'}>
@@ -154,7 +155,7 @@ const DayCell = memo(function DayCell({ date, inMonth, weekend, activities, them
           {overflow > 0 ? (
             <View style={[styles.moreRow, { height: chipHeight }]}>
               {hidden.slice(0, MAX_MORE_DOTS).map((activity) => (
-                <View key={activity.id} style={[styles.moreDot, { backgroundColor: activityColor(activity, theme) }]} />
+                <View key={activity.id} style={[styles.moreDot, { backgroundColor: activityColor(activity, theme) }, lowContrastOutline(activityColor(activity, theme), theme)]} />
               ))}
               <AppText variant="caption" color="textSecondary">
                 +{overflow}

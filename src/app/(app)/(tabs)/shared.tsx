@@ -3,8 +3,8 @@ import { CalendarSearch, Check, Search, UserPlus, X } from 'lucide-react-native'
 import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
-import { AppText, Avatar, Banner, Button, EmptyState, ErrorState, IconButton, LoadingState, Screen, Sheet, TextField } from '@/components/ui';
-import { PEOPLE_COLORS } from '@/constants/people-colors';
+import { AppText, Avatar, Banner, Button, ColorDot, ColorSwatch, EmptyState, ErrorState, IconButton, LoadingState, Screen, Sheet, TextField } from '@/components/ui';
+import { currentColor, PEOPLE_COLORS, PEOPLE_COLORS_DISPLAY } from '@/constants/people-colors';
 import { IconSize, IconStroke, Radius, Spacing } from '@/constants/theme';
 import { useConnectionMutations, useContacts, usePeopleColors, useSelfColor, useUserSearch, SEARCH_MIN_LENGTH } from '@/hooks/use-connections';
 import { useShareMutations, useInvitations } from '@/hooks/use-shares';
@@ -30,7 +30,7 @@ function visibilityLabel(v: CalendarVisibility | null): string {
 /** Tab Compartido: invitaciones, solicitudes, contactos y acceso a disponibilidad (spec 06 UI). */
 /** Nombre del color en la paleta; si no está, se dice «personalizado» y no un hex. */
 function nombreDeColor(hex: string): string {
-  return PEOPLE_COLORS.find((c) => c.hex === hex)?.label ?? 'Personalizado';
+  return PEOPLE_COLORS.find((c) => c.hex === currentColor(hex))?.label ?? 'Personalizado';
 }
 
 export default function SharedScreen() {
@@ -54,7 +54,7 @@ export default function SharedScreen() {
   const setSelfColor = usePreferencesStore((st) => st.setSelfColor);
   const [eligiendoMiColor, setEligiendoMiColor] = useState(false);
   // El mío fuera: ofrecerlo dejaría a un contacto indistinguible de mí.
-  const coloresParaContactos = PEOPLE_COLORS.filter((c) => c.hex !== miColor);
+  const coloresParaContactos = PEOPLE_COLORS_DISPLAY.filter((c) => c.hex !== miColor);
   const profile = useMyProfile();
 
   const list = contacts.data ?? [];
@@ -189,7 +189,7 @@ export default function SharedScreen() {
           accessibilityLabel={`Tú. Tu color en el calendario: ${nombreDeColor(miColor)}`}
           onPress={() => setEligiendoMiColor(true)}
           style={({ pressed }) => [styles.row, { borderColor: theme.border }, pressed ? { backgroundColor: theme.surfaceAlt } : null]}>
-          <View style={[styles.personDot, { backgroundColor: miColor }]} />
+          <ColorDot hex={miColor} />
           {profile.data ? <Avatar profile={profile.data} /> : null}
           <View style={styles.cardText}>
             <AppText variant="bodyStrong">Tú</AppText>
@@ -212,7 +212,7 @@ export default function SharedScreen() {
             accessibilityLabel={`${c.profile.display_name ?? 'Contacto'}. Tu calendario: ${visibilityLabel(c.myCalendarVisibility)}`}
             onPress={() => setContactSheetFor(c.profile.id)}
             style={({ pressed }) => [styles.row, { borderColor: theme.border }, pressed ? { backgroundColor: theme.surfaceAlt } : null]}>
-            <View style={[styles.personDot, { backgroundColor: peopleColors.get(c.profile.id) ?? theme.border }]} />
+            <ColorDot hex={peopleColors.get(c.profile.id) ?? theme.border} />
             <Avatar profile={c.profile} />
             <View style={styles.cardText}>
               <AppText variant="bodyStrong">{c.profile.display_name ?? 'Sin nombre'}</AppText>
@@ -302,26 +302,20 @@ export default function SharedScreen() {
           Con el que verás tus actividades cuando superpongas el calendario de alguien más.
         </AppText>
         <View style={styles.chips}>
-          {PEOPLE_COLORS.map((c) => {
+          {PEOPLE_COLORS_DISPLAY.map((c) => {
             const selected = miColor === c.hex;
             return (
-              <Pressable
+              <ColorSwatch
                 key={c.id}
-                accessibilityRole="button"
-                accessibilityLabel={c.label}
-                accessibilityState={{ selected }}
+                hex={c.hex}
+                label={c.label}
+                selected={selected}
                 onPress={() => {
                   // Volver a tocar el elegido lo devuelve al color del Nobi.
                   setSelfColor(selected ? null : c.hex);
                   showSnackbar({ message: selected ? 'Tu color vuelve al de tu Nobi.' : `Tu color: ${c.label.toLowerCase()}.` });
                 }}
-                style={({ pressed }) => [
-                  styles.colorDot,
-                  { backgroundColor: c.hex, borderColor: selected ? theme.text : 'transparent' },
-                  pressed ? { opacity: 0.75 } : null,
-                ]}>
-                {selected ? <Check size={IconSize.inline} strokeWidth={3} color="#FFFFFF" /> : null}
-              </Pressable>
+              />
             );
           })}
         </View>
@@ -338,13 +332,13 @@ export default function SharedScreen() {
           {/* El mío se excluye: ofrecerlo permitiría no distinguirme de un contacto. */}
           {coloresParaContactos.map((c) => {
             const selected = (peopleColors.get(sheetContact?.profile.id ?? '') ?? null) === c.hex;
-            const manual = sheetContact?.color === c.hex;
+            const manual = currentColor(sheetContact?.color) === c.hex;
             return (
-              <Pressable
+              <ColorSwatch
                 key={c.id}
-                accessibilityRole="button"
-                accessibilityLabel={c.label}
-                accessibilityState={{ selected }}
+                hex={c.hex}
+                label={c.label}
+                selected={selected}
                 onPress={() => {
                   if (!sheetContact) return;
                   // Volver a tocar el color asignado lo devuelve a automático.
@@ -353,13 +347,7 @@ export default function SharedScreen() {
                     { onSuccess: () => showSnackbar({ message: manual ? 'Color automático.' : `Color: ${c.label.toLowerCase()}.` }) },
                   );
                 }}
-                style={({ pressed }) => [
-                  styles.colorDot,
-                  { backgroundColor: c.hex, borderColor: selected ? theme.text : 'transparent' },
-                  pressed ? { opacity: 0.75 } : null,
-                ]}>
-                {selected ? <Check size={IconSize.inline} strokeWidth={3} color="#FFFFFF" /> : null}
-              </Pressable>
+              />
             );
           })}
         </View>
@@ -427,8 +415,6 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: Spacing.md, minHeight: 60, paddingHorizontal: Spacing.md, paddingVertical: Spacing.sm, borderWidth: 1, borderRadius: Radius.md, borderCurve: 'continuous' },
   option: { flexDirection: 'row', alignItems: 'center', gap: Spacing.md, padding: Spacing.md, borderWidth: 1, borderRadius: Radius.md, borderCurve: 'continuous' },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm },
-  colorDot: { width: 40, height: 40, borderRadius: Radius.full, borderWidth: 2, alignItems: 'center', justifyContent: 'center' },
-  personDot: { width: 10, height: 10, borderRadius: 5 },
   sheetSection: { marginTop: Spacing.sm },
   sheetHint: { marginTop: Spacing.sm, textAlign: 'center' },
 });

@@ -441,3 +441,16 @@ producción. Falta convertir esos casos en pruebas del repo (demo y Supabase):
 - [ ] Borrar la madre: la heredera conserva `recurrence_exdates`.
 - [ ] Editar toda la serie (incluso cambiando la hora): los días excluidos siguen excluidos.
 - [ ] `missingOccurrences` y `withExdate` en `lib/recurrence.ts`.
+
+## Colores de los Nobi (T202)
+Migración de datos probada en PGlite (las dos paletas viejas, minúsculas, un color
+personalizado intacto, idempotente) y aplicada en producción. Visto en el demo: el menú
+"Tu color" muestra los 21 por familias y los oscuros con contorno; la pestaña "Tú" con azul
+marino se distingue. `people-colors.test.ts` ya se ajustó a la regla nueva (sin correrlo).
+Falta:
+- [ ] Correr `people-colors.test.ts` y `nobi.test.ts` con los cambios.
+- [ ] `ColorSwatch`: palomita oscura sobre rosa, amarillo, lima y blanco; contorno solo
+  cuando el color no llega a 3:1 contra la hoja.
+- [ ] `lowContrastOutline` en bloque, chip y punto del mes, y en la agenda.
+- [ ] `currentColor` en el color propio guardado en el dispositivo y en el formulario de
+  una lista vieja.
