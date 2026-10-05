@@ -132,7 +132,7 @@ export default function ExerciseDetailScreen() {
               </AppText>
               {analisis?.mejor && analisis.mejor.e1rm > 0 ? (
                 <AppText variant="caption" color="textTertiary" tabular>
-                  e1RM {enUnidad(analisis.mejor.e1rm)} {unit} · {fecha(analisis.mejor.fecha)}
+                  Máximo estimado: {enUnidad(analisis.mejor.e1rm)} {unit} · {fecha(analisis.mejor.fecha)}
                 </AppText>
               ) : null}
             </View>
@@ -151,7 +151,7 @@ export default function ExerciseDetailScreen() {
 
           {conE1rm.length > 0 ? (
             <ProgressChart
-              title="e1RM por sesión"
+              title="Peso máximo estimado por sesión"
               points={conE1rm.map((s) => ({ label: fecha(s.fecha), value: enUnidad(s.e1rm) }))}
               format={(v) => `${v} ${unit}`}
             />

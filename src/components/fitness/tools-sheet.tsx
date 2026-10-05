@@ -13,7 +13,7 @@ type Herramienta = 'discos' | 'calentamiento' | '1rm';
 const OPCIONES = [
   { value: 'discos' as const, label: 'Discos' },
   { value: 'calentamiento' as const, label: 'Calentar' },
-  { value: '1rm' as const, label: '1RM' },
+  { value: '1rm' as const, label: 'Máximo' },
 ];
 
 export type ToolsSheetProps = {

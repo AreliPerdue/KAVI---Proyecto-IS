@@ -618,30 +618,54 @@ function FitnessSettings() {
   const icono = (Icono: typeof Weight) => <Icono size={IconSize.inline} strokeWidth={IconStroke} color={theme.textSecondary} />;
 
   return (
-    <SettingsGroup title="Gimnasio" footer="Los pesos se guardan siempre en kg; cambiar la unidad solo cambia cómo se ven.">
+    <SettingsGroup title="Gimnasio">
       <SettingsRow
         icon={icono(Weight)}
-        label="Unidad"
-        right={<Segmented options={[{ value: 'kg', label: 'kg' }, { value: 'lb', label: 'lb' }]} value={weightUnit} onChange={(v) => setPref('weightUnit', v)} />}
-      />
-      <SettingsRow
-        icon={icono(Gauge)}
-        label="Esfuerzo"
-        hint="RIR: reps que te quedaban. RPE: esfuerzo del 1 al 10."
-        right={<Segmented options={[{ value: 'rir', label: 'RIR' }, { value: 'rpe', label: 'RPE' }]} value={effortScale} onChange={(v) => setPref('effortScale', v)} />}
-      />
-      <SettingsRow
-        icon={icono(Dumbbell)}
-        label="Fórmula de 1RM"
-        right={<Segmented options={[{ value: 'epley', label: 'Epley' }, { value: 'brzycki', label: 'Brzycki' }]} value={e1rmFormula} onChange={(v) => setPref('e1rmFormula', v)} />}
-      />
-      <SettingsRow
-        icon={icono(Timer)}
-        label="Descanso"
+        label="Unidad de peso"
+        hint="Cambiarla no altera lo que ya registraste: solo cambia cómo lo ves."
         below={
           <Segmented
             fullWidth
-            options={[{ value: '60', label: '1:00' }, { value: '90', label: '1:30' }, { value: '120', label: '2:00' }, { value: '180', label: '3:00' }]}
+            options={[{ value: 'kg', label: 'Kilos (kg)' }, { value: 'lb', label: 'Libras (lb)' }]}
+            value={weightUnit}
+            onChange={(v) => setPref('weightUnit', v)}
+          />
+        }
+      />
+      <SettingsRow
+        icon={icono(Gauge)}
+        label="Cómo anotas el esfuerzo de cada serie"
+        hint="Reps en reserva (RIR): cuántas repeticiones más te salían antes de no poder; 0 es al fallo. Escala del 1 al 10 (RPE): qué tan pesada se sintió; 10 es tu máximo. Anotarlo es opcional."
+        below={
+          <Segmented
+            fullWidth
+            options={[{ value: 'rir', label: 'Reps en reserva' }, { value: 'rpe', label: 'Escala del 1 al 10' }]}
+            value={effortScale}
+            onChange={(v) => setPref('effortScale', v)}
+          />
+        }
+      />
+      <SettingsRow
+        icon={icono(Dumbbell)}
+        label="Cálculo de tu peso máximo"
+        hint="Con el peso y las repeticiones de tus series, KAVI estima cuánto podrías levantar en una sola repetición (tu 1RM) para mostrarte cómo vas. Epley y Brzycki son dos fórmulas conocidas que dan casi lo mismo; si no sabes cuál, deja Epley."
+        below={
+          <Segmented
+            fullWidth
+            options={[{ value: 'epley', label: 'Epley (estándar)' }, { value: 'brzycki', label: 'Brzycki' }]}
+            value={e1rmFormula}
+            onChange={(v) => setPref('e1rmFormula', v)}
+          />
+        }
+      />
+      <SettingsRow
+        icon={icono(Timer)}
+        label="Descanso entre series"
+        hint="Al marcar una serie como hecha arranca un temporizador con este tiempo. Mientras corre puedes sumarle o quitarle 15 segundos."
+        below={
+          <Segmented
+            fullWidth
+            options={[{ value: '60', label: '1 min' }, { value: '90', label: '1:30' }, { value: '120', label: '2 min' }, { value: '180', label: '3 min' }]}
             value={String(restDefaultSec) as '60' | '90' | '120' | '180'}
             onChange={(v) => setPref('restDefaultSec', Number(v))}
           />
@@ -649,9 +673,11 @@ function FitnessSettings() {
       />
       <SettingsRow
         icon={icono(Dumbbell)}
-        label="Cuánto baja un drop"
-        right={
+        label="Peso que quitas en un drop set"
+        hint="En un drop set terminas la serie y sigues sin descanso con menos peso. Cada drop que agregas empieza con este porcentaje menos: de 50 kg con 20 % pasas a 40 kg."
+        below={
           <Segmented
+            fullWidth
             options={[{ value: '10', label: '10 %' }, { value: '20', label: '20 %' }, { value: '25', label: '25 %' }]}
             value={String(dropPercent) as '10' | '20' | '25'}
             onChange={(v) => setPref('dropPercent', Number(v))}
@@ -660,21 +686,22 @@ function FitnessSettings() {
       />
       <SettingsRow
         icon={icono(Volume2)}
-        label="Sonido de los timers"
-        hint="Un pitido en los últimos segundos del descanso y en cada cambio de intervalo. Suena sobre tu música."
-        right={<Toggle label="Sonido de los timers" value={timerSound} onValueChange={(v) => setPref('timerSound', v)} />}
+        label="Sonido de los temporizadores"
+        hint="Pita en los últimos 3 segundos del descanso y en cada cambio de un temporizador de intervalos (EMOM, Tabata). Suena encima de tu música, sin pausarla."
+        right={<Toggle label="Sonido de los temporizadores" value={timerSound} onValueChange={(v) => setPref('timerSound', v)} />}
       />
       <SettingsRow
         icon={icono(Smile)}
         label="Modo serio"
-        hint="Sin bromas ni celebraciones. Los PRs y logros se siguen viendo."
+        hint="Quita las bromas, frases y celebraciones. Tus récords personales (PR) y logros se siguen mostrando."
         right={<Toggle label="Modo serio" value={seriousMode} onValueChange={(v) => setPref('seriousMode', v)} />}
       />
       {seriousMode ? null : (
         <SettingsRow
           icon={icono(Crown)}
-          label="Cómo te hablo"
-          right={<Segmented options={TRATOS} value={trato} onChange={(v) => setPref('trato', v)} />}
+          label="Cómo te habla KAVI"
+          hint="En las frases y celebraciones: «¡PR, mi rey!» o «¡PR, mi reina!». Neutral no usa ninguno."
+          below={<Segmented fullWidth options={TRATOS} value={trato} onChange={(v) => setPref('trato', v)} />}
         />
       )}
     </SettingsGroup>

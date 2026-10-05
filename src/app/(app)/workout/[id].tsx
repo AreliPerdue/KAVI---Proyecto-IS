@@ -23,7 +23,7 @@ import { ModalHeader } from '@/components/modal-header';
 import { ActionRow, AppText, Banner, Button, Chip, DatePickerSheet, ErrorState, FieldButton, IconButton, LoadingState, Screen, Sheet, SwitchRow, TextField, TimePickerSheet } from '@/components/ui';
 import { SESSION_TAGS, SET_TAGS, tagLabel } from '@/constants/gym-notes';
 import { gymratLine } from '@/constants/gymrat';
-import { PROTOCOLS, type ProtocolKey } from '@/constants/intensifiers';
+import { PROTOCOLS, SET_TYPES, setTypeDescription, type ProtocolKey } from '@/constants/intensifiers';
 import { IconSize, IconStroke, Radius, Spacing } from '@/constants/theme';
 import { useActivitiesRange } from '@/hooks/use-activities-range';
 import { useEditHistory } from '@/hooks/use-edit-history';
@@ -58,21 +58,9 @@ import { useAuth, useConfirm, useSnackbar } from '@/providers';
 import type { ExerciseHistoryEntry, WorkoutDetail } from '@/services/workouts';
 import { useGymStore } from '@/store/gym-store';
 import { usePreferencesStore } from '@/store/preferences-store';
-import type { Exercise, SetType, WorkoutExercise, WorkoutExerciseDetail, WorkoutSet } from '@/types/domain';
+import type { Exercise, WorkoutExercise, WorkoutExerciseDetail, WorkoutSet } from '@/types/domain';
 
 const MAX_WIDTH = 640;
-
-const TIPOS: { value: SetType; label: string }[] = [
-  { value: 'warmup', label: 'Calentamiento' },
-  { value: 'feeder', label: 'Aproximación' },
-  { value: 'working', label: 'Efectiva' },
-  { value: 'top_set', label: 'Top set' },
-  { value: 'backoff', label: 'Back-off' },
-  { value: 'failure', label: 'Al fallo' },
-  { value: 'amrap', label: 'AMRAP' },
-  { value: 'technique', label: 'Técnica' },
-  { value: 'max_test', label: 'Test de máximo' },
-];
 
 /** Todo lo que el logger necesita saber de un ejercicio para pintarlo. */
 type Analisis = {
@@ -842,19 +830,24 @@ export default function WorkoutScreen() {
               Tipo de serie
             </AppText>
             <View style={styles.chips}>
-              {TIPOS.map((t) => (
+              {SET_TYPES.map((t) => (
                 <Chip
                   key={t.value}
                   compact
                   label={t.label}
                   selected={menuSerie.set.set_type === t.value}
                   onPress={() => {
-                    guardar({ ...menuSerie.set, set_type: t.value });
-                    setMenuSerie(null);
+                    // La hoja sigue abierta: así se lee qué significa cada tipo antes de cerrar.
+                    const nueva = { ...menuSerie.set, set_type: t.value };
+                    guardar(nueva);
+                    setMenuSerie({ ...menuSerie, set: nueva });
                   }}
                 />
               ))}
             </View>
+            <AppText variant="caption" color="textTertiary">
+              {setTypeDescription(menuSerie.set.set_type)}
+            </AppText>
             <ActionRow
               icon={<Sparkles size={IconSize.action} strokeWidth={IconStroke} color={theme.text} />}
               label="Intensificador…"
@@ -873,7 +866,7 @@ export default function WorkoutScreen() {
             />
             <ActionRow
               icon={<SlidersHorizontal size={IconSize.action} strokeWidth={IconStroke} color={theme.text} />}
-              label="Detalles: fallo, ROM, tempo, carga"
+              label="Detalles: fallo, rango, tempo, carga"
               onPress={() => {
                 setDetallesDe(menuSerie.set);
                 setMenuSerie(null);
@@ -1047,7 +1040,7 @@ export default function WorkoutScreen() {
             ) : null}
             <ActionRow
               icon={<Wrench size={IconSize.action} strokeWidth={IconStroke} color={theme.text} />}
-              label="Discos, calentamiento y 1RM"
+              label="Discos, calentamiento y peso máximo"
               onPress={() => {
                 setHerramientasDe(menuEjercicio);
                 setMenuEjercicio(null);

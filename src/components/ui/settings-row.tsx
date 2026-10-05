@@ -73,11 +73,13 @@ export function SettingsRow({ icon, label, hint, value, right, below, onPress, d
     <>
       <View style={[styles.iconTile, { backgroundColor: theme.surfaceAlt }]}>{icon}</View>
       <View style={styles.text}>
-        <AppText variant="bodyStrong" color={labelColor} numberOfLines={1}>
+        {/* Hasta dos líneas: con un control a la derecha, una sola cortaba títulos en 360 px. */}
+        <AppText variant="bodyStrong" color={labelColor} numberOfLines={2}>
           {label}
         </AppText>
         {hint ? (
-          <AppText variant="caption" color="textTertiary" numberOfLines={2}>
+          // La explicación se lee completa: cortarla a media frase dejaba ajustes sin entender.
+          <AppText variant="caption" color="textTertiary">
             {hint}
           </AppText>
         ) : null}

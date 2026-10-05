@@ -1,4 +1,22 @@
-import type { ExerciseGroupType } from '@/types/domain';
+import type { ExerciseGroupType, SetType } from '@/types/domain';
+
+/**
+ * Tipos de serie (RF-F43) con una línea que los explica: "Top set" o "Back-off" son
+ * términos de gimnasio que no todos conocen, y la explicación se muestra bajo los chips.
+ */
+export const SET_TYPES: { value: SetType; label: string; description: string }[] = [
+  { value: 'warmup', label: 'Calentamiento', description: 'Para entrar en calor. No cuenta para tu volumen ni para tus récords.' },
+  { value: 'feeder', label: 'Aproximación', description: 'Series ligeras para acercarte poco a poco al peso fuerte.' },
+  { value: 'working', label: 'Efectiva', description: 'Una serie normal de trabajo.' },
+  { value: 'top_set', label: 'Top set', description: 'La serie más pesada del ejercicio en el día.' },
+  { value: 'backoff', label: 'Back-off', description: 'Las que siguen al top set, con menos peso.' },
+  { value: 'failure', label: 'Al fallo', description: 'Hasta que no sale otra repetición.' },
+  { value: 'amrap', label: 'AMRAP', description: 'Tantas repeticiones como puedas con un peso fijo.' },
+  { value: 'technique', label: 'Técnica', description: 'Para practicar el movimiento, con poco esfuerzo.' },
+  { value: 'max_test', label: 'Test de máximo', description: 'Para probar cuánto levantas en una sola repetición.' },
+];
+
+export const setTypeDescription = (type: SetType) => SET_TYPES.find((t) => t.value === type)?.description ?? '';
 
 /**
  * Intensificadores, agrupaciones y protocolos (spec 07 v2, §6). Lo que la persona lee en

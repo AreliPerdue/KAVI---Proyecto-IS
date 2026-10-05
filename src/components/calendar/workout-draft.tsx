@@ -9,6 +9,7 @@ import { ExercisePicker } from '@/components/fitness/exercise-picker';
 import { NumpadSheet, type NumpadField } from '@/components/fitness/numpad-sheet';
 import { applyNumpadValue, nextNumpadTarget, numpadFieldFor } from '@/components/fitness/set-editing';
 import { ActionRow, AppText, Button, Chip, Sheet } from '@/components/ui';
+import { SET_TYPES, setTypeDescription } from '@/constants/intensifiers';
 import { IconSize, IconStroke, Radius, Spacing } from '@/constants/theme';
 import { exerciseHistoryQuery } from '@/hooks/use-exercise-history';
 import { useExercisePrefs, useExercises } from '@/hooks/use-exercises';
@@ -19,7 +20,7 @@ import { columnsFor, duplicateSet, newSet, nextSortOrder, removeSegment, sortOrd
 import { useAuth } from '@/providers';
 import type { ExerciseHistoryEntry } from '@/services/workouts';
 import { useGymStore } from '@/store/gym-store';
-import type { Exercise, SetType, WorkoutExerciseDetail, WorkoutSet } from '@/types/domain';
+import type { Exercise, WorkoutExerciseDetail, WorkoutSet } from '@/types/domain';
 
 /**
  * Ejercicio en borrador: tiene la misma forma que uno de la sesión, con ids generados aquí,
@@ -27,15 +28,6 @@ import type { Exercise, SetType, WorkoutExerciseDetail, WorkoutSet } from '@/typ
  * se guardan tal cual (RF-F9).
  */
 export type ExerciseDraft = WorkoutExerciseDetail;
-
-const TIPOS: { value: SetType; label: string }[] = [
-  { value: 'warmup', label: 'Calentamiento' },
-  { value: 'working', label: 'Efectiva' },
-  { value: 'top_set', label: 'Top set' },
-  { value: 'backoff', label: 'Back-off' },
-  { value: 'failure', label: 'Al fallo' },
-  { value: 'amrap', label: 'AMRAP' },
-];
 
 const VACIOS = { prs: new Map(), pendientes: new Set<string>() };
 
@@ -263,19 +255,24 @@ export function WorkoutDraft({ exercises, onChange, existingCount, onOpenExistin
               Tipo de serie
             </AppText>
             <View style={styles.chips}>
-              {TIPOS.map((t) => (
+              {SET_TYPES.filter((t) => ['warmup', 'working', 'top_set', 'backoff', 'failure', 'amrap'].includes(t.value)).map((t) => (
                 <Chip
                   key={t.value}
                   compact
                   label={t.label}
                   selected={menuSerie.set.set_type === t.value}
                   onPress={() => {
-                    guardarSerie({ ...menuSerie.set, set_type: t.value });
-                    setMenuSerie(null);
+                    // La hoja sigue abierta: así se lee qué significa cada tipo antes de cerrar.
+                    const nueva = { ...menuSerie.set, set_type: t.value };
+                    guardarSerie(nueva);
+                    setMenuSerie({ ...menuSerie, set: nueva });
                   }}
                 />
               ))}
             </View>
+            <AppText variant="caption" color="textTertiary">
+              {setTypeDescription(menuSerie.set.set_type)}
+            </AppText>
             <ActionRow
               icon={<Copy size={IconSize.action} strokeWidth={IconStroke} color={theme.text} />}
               label="Duplicar"

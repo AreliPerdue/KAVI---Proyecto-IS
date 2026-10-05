@@ -49,7 +49,7 @@ const NOMBRE_SEGMENTO: Record<string, string> = {
 const NOMBRE_PR: Record<PrKind, string> = {
   max_weight: 'peso',
   reps_at_weight: 'reps',
-  e1rm: 'e1RM',
+  e1rm: 'máx. estimado',
   set_volume: 'volumen',
 };
 
