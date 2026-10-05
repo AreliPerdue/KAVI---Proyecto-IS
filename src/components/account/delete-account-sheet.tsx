@@ -5,22 +5,9 @@ import { AppText, Banner, Button, Sheet, SwitchRow, TextField } from '@/componen
 import { Spacing } from '@/constants/theme';
 import { useDeleteAccount } from '@/hooks/use-auth-actions';
 import { useSnackbar } from '@/providers';
+import { useT } from '@/i18n';
 
 /** Lo mismo en la hoja y en la página pública `/eliminar-cuenta`. */
-export const SE_BORRA = [
-  'Tu perfil, tu nombre de usuario y tu Nobi.',
-  'Tu calendario: actividades, temas y recordatorios.',
-  'Tus listas y sus pendientes.',
-  'Tus entrenamientos, notas, récords y racha.',
-  'Tus contactos y lo que compartiste con ellos.',
-];
-
-export const LOS_DEMAS = [
-  'Dejan de ver lo que les compartiste.',
-  'Lo que otras personas te compartieron sigue siendo suyo.',
-  'Los pendientes que agregaste a listas de otras personas se borran; los que palomeaste ahí siguen hechos.',
-];
-
 /**
  * Eliminar cuenta (spec 03, RF-A12). Dice exactamente qué se borra y qué les pasa a los demás,
  * pide la contraseña y una confirmación explícita. La confirmación vive en la misma hoja, como un
@@ -28,14 +15,16 @@ export const LOS_DEMAS = [
  * No hay vuelta atrás: el borrado es inmediato.
  */
 export function DeleteAccountSheet({ visible, email, onClose }: { visible: boolean; email: string; onClose: () => void }) {
+  const tx = useT();
   return (
-    <Sheet visible={visible} onClose={onClose} title="Eliminar tu cuenta">
+    <Sheet visible={visible} onClose={onClose} title={tx.account.deletion.sheetTitle}>
       {visible ? <Contenido email={email} onClose={onClose} /> : null}
     </Sheet>
   );
 }
 
 function Contenido({ email, onClose }: { email: string; onClose: () => void }) {
+  const tx = useT();
   const showSnackbar = useSnackbar();
   const eliminar = useDeleteAccount();
   const [password, setPassword] = useState('');
@@ -47,7 +36,7 @@ function Contenido({ email, onClose }: { email: string; onClose: () => void }) {
       {
         onSuccess: () => {
           onClose();
-          showSnackbar({ message: 'Tu cuenta y tus datos se eliminaron.' });
+          showSnackbar({ message: tx.account.deletion.deleted });
         },
       },
     );
@@ -55,22 +44,22 @@ function Contenido({ email, onClose }: { email: string; onClose: () => void }) {
 
   return (
     <>
-      <AppText>Se borra todo, de inmediato. No se puede deshacer.</AppText>
-      <Lista titulo="Qué se borra" puntos={SE_BORRA} />
-      <Lista titulo="Qué pasa con los demás" puntos={LOS_DEMAS} />
+      <AppText>{tx.account.deletion.everythingGoes}</AppText>
+      <Lista titulo={tx.account.deletion.whatGoes} puntos={tx.account.deletion.deleted_items} />
+      <Lista titulo={tx.account.deletion.others} puntos={tx.account.deletion.others_items} />
       {eliminar.error ? <Banner tone="error" message={eliminar.error.message} /> : null}
       <TextField
-        label="Tu contraseña"
-        hint="Para confirmar que eres tú."
+        label={tx.account.deletion.yourPassword}
+        hint={tx.account.deletion.passwordHint}
         value={password}
         onChangeText={setPassword}
         secure
         autoComplete="current-password"
         textContentType="password"
       />
-      <SwitchRow label="Entiendo que se borra todo y no se puede deshacer" value={entiendo} onValueChange={setEntiendo} />
-      <Button title="Eliminar mi cuenta para siempre" variant="danger" disabled={!password || !entiendo} loading={eliminar.isPending} onPress={enviar} />
-      <Button title="Cancelar" variant="ghost" onPress={onClose} />
+      <SwitchRow label={tx.account.deletion.iUnderstand} value={entiendo} onValueChange={setEntiendo} />
+      <Button title={tx.account.deletion.deleteForever} variant="danger" disabled={!password || !entiendo} loading={eliminar.isPending} onPress={enviar} />
+      <Button title={tx.common.cancel} variant="ghost" onPress={onClose} />
     </>
   );
 }

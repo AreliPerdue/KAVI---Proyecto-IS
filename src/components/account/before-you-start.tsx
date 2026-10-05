@@ -11,14 +11,10 @@ import { useTheme } from '@/hooks/use-theme';
 import { edadEn, EDAD_MINIMA, type ConsentGate, type GuardianRequest } from '@/lib/consent';
 import { formatDate, toDayKey } from '@/lib/dates';
 import { useAuth } from '@/providers';
+import { useLanguage, useT } from '@/i18n';
 
 const CORREO = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-const PRIVACIDAD_EN_CORTO = [
-  'Tus datos son para darte el servicio de KAVI: no hay publicidad ni venta de datos.',
-  'Algunos datos del gimnasio, como tu peso corporal o una nota de dolor, pueden revelar información de salud. La ley los llama datos sensibles y necesitan tu permiso expreso.',
-  'Puedes eliminar tu cuenta y todos tus datos cuando quieras, desde Perfil.',
-];
 
 /**
  * "Antes de empezar" (spec 03, RF-A13): lo que ve una cuenta hasta que la app se abre. Fecha de
@@ -48,15 +44,16 @@ function Marco({ titulo, intro, children }: { titulo: string; intro: string; chi
 
 /** Salidas que siempre están: cerrar sesión y, si hace falta, eliminar la cuenta. */
 function Salidas({ eliminar = false }: { eliminar?: boolean }) {
+  const tx = useT();
   const { user } = useAuth();
   const signOut = useSignOut();
   const [borrar, setBorrar] = useState(false);
   return (
     <View style={styles.salidas}>
-      <Button title="Cerrar sesión" variant="ghost" loading={signOut.isPending} onPress={() => signOut.mutate()} />
+      <Button title={tx.account.signOut} variant="ghost" loading={signOut.isPending} onPress={() => signOut.mutate()} />
       {eliminar ? (
         <>
-          <Button title="Eliminar mi cuenta" variant="ghost" onPress={() => setBorrar(true)} />
+          <Button title={tx.account.deleteMyAccount} variant="ghost" onPress={() => setBorrar(true)} />
           <DeleteAccountSheet visible={borrar} email={user?.email ?? ''} onClose={() => setBorrar(false)} />
         </>
       ) : null}
@@ -65,6 +62,8 @@ function Salidas({ eliminar = false }: { eliminar?: boolean }) {
 }
 
 function Aceptar() {
+  const tx = useT();
+  const lang = useLanguage();
   const theme = useTheme();
   const router = useRouter();
   const aceptar = useAcceptPrivacy();
@@ -96,75 +95,78 @@ function Aceptar() {
   };
 
   return (
-    <Marco titulo="Antes de empezar" intro="Dos cosas, una sola vez: tu fecha de nacimiento y tu permiso para tratar tus datos.">
+    <Marco titulo={tx.account.beforeTitle} intro={tx.account.beforeIntro}>
       <View style={styles.pila}>
-        <AppText variant="heading">Tu fecha de nacimiento</AppText>
+        <AppText variant="heading">{tx.account.birthDate}</AppText>
         <AppText variant="label" color="textSecondary">
           Solo tú la ves. KAVI es para personas de 16 años o más; si tienes 16 o 17, le pediremos permiso a tu madre, padre o tutor.
         </AppText>
         <View style={styles.fila}>
           <View style={styles.celda}>
-            <TextField label="Día" value={dia} onChangeText={setDia} keyboardType="number-pad" placeholder="15" maxLength={2} />
+            <TextField label={tx.common.day} value={dia} onChangeText={setDia} keyboardType="number-pad" placeholder="15" maxLength={2} />
           </View>
           <View style={styles.celda}>
-            <TextField label="Mes" value={mes} onChangeText={setMes} keyboardType="number-pad" placeholder="9" maxLength={2} />
+            <TextField label={tx.common.month} value={mes} onChangeText={setMes} keyboardType="number-pad" placeholder="9" maxLength={2} />
           </View>
           <View style={styles.celdaAnio}>
-            <TextField label="Año" value={anio} onChangeText={setAnio} keyboardType="number-pad" placeholder="2006" maxLength={4} />
+            <TextField label={tx.common.year} value={anio} onChangeText={setAnio} keyboardType="number-pad" placeholder="2006" maxLength={4} />
           </View>
         </View>
         {fecha && !fechaInvalida ? (
-          <AppText variant="label">{formatDate(fecha)}</AppText>
+          <AppText variant="label">{formatDate(fecha, lang)}</AppText>
         ) : completa ? (
           <AppText variant="label" color="danger">
-            {fechaInvalida ? 'Esa fecha todavía no ha llegado.' : 'Esa fecha no existe. Revisa el día, el mes y el año.'}
+            {fechaInvalida ? tx.common.dateNotYet : tx.common.dateInvalid}
           </AppText>
         ) : null}
       </View>
 
       <View style={[styles.tarjeta, { backgroundColor: theme.surfaceAlt }]}>
-        <Lista titulo="Tu privacidad, en corto" puntos={PRIVACIDAD_EN_CORTO} />
-        <Button title="Leer el aviso de privacidad" variant="secondary" onPress={() => router.push('/privacidad')} />
+        <Lista titulo={tx.account.privacyShortTitle} puntos={tx.account.privacyShort} />
+        <Button title={tx.account.readPrivacy} variant="secondary" onPress={() => router.push('/privacidad')} />
       </View>
 
       <View>
-        <SwitchRow label="Leí y acepto el aviso de privacidad" value={aviso} onValueChange={setAviso} />
+        <SwitchRow label={tx.account.acceptPrivacy} value={aviso} onValueChange={setAviso} />
         <SwitchRow
-          label="Acepto que KAVI trate mis datos de bienestar"
-          hint="Peso corporal, energía y notas del gimnasio. Solo para mostrártelos y hacer tus cálculos."
+          label={tx.account.acceptWellbeing}
+          hint={tx.account.acceptWellbeingHint}
           value={sensibles}
           onValueChange={setSensibles}
         />
       </View>
 
       {aceptar.error ? <Banner tone="error" message={aceptar.error.message} /> : null}
-      <Button title="Continuar" disabled={!fecha || !aviso || !sensibles} loading={aceptar.isPending} onPress={continuar} />
+      <Button title={tx.account.continue} disabled={!fecha || !aviso || !sensibles} loading={aceptar.isPending} onPress={continuar} />
       <Salidas />
     </Marco>
   );
 }
 
 function ConfirmarMenor({ fecha, edad, onCorregir }: { fecha: Date; edad: number; onCorregir: () => void }) {
+  const tx = useT();
+  const lang = useLanguage();
   const eliminar = useDeleteUnderageAccount();
   return (
     <Marco
-      titulo="KAVI es para personas de 16 años o más"
-      intro={`Con la fecha que escribiste (${formatDate(fecha)}) tienes ${edad} ${edad === 1 ? 'año' : 'años'}. Si es correcta, tu cuenta se elimina ahora, con todo lo que tenga, y no se puede deshacer.`}
+      titulo={tx.account.under16Title}
+      intro={tx.account.under16Confirm(formatDate(fecha, lang), edad)}
     >
       {eliminar.error ? <Banner tone="error" message={eliminar.error.message} /> : null}
-      <Button title="Es correcta: eliminar mi cuenta" variant="danger" loading={eliminar.isPending} onPress={() => eliminar.mutate()} />
-      <Button title="Corregir la fecha" variant="secondary" disabled={eliminar.isPending} onPress={onCorregir} />
+      <Button title={tx.account.itsCorrectDelete} variant="danger" loading={eliminar.isPending} onPress={() => eliminar.mutate()} />
+      <Button title={tx.account.fixDate} variant="secondary" disabled={eliminar.isPending} onPress={onCorregir} />
     </Marco>
   );
 }
 
 /** La fecha guardada ya dice menos de 16 (p. ej. una cuenta que se quedó a medias). */
 function MenorDe16() {
+  const tx = useT();
   const eliminar = useDeleteUnderageAccount();
   return (
-    <Marco titulo="KAVI es para personas de 16 años o más" intro="Según tu fecha de nacimiento, todavía no puedes usar KAVI. Tu cuenta se elimina con todo lo que tenga.">
+    <Marco titulo={tx.account.under16Title} intro={tx.account.under16Stored}>
       {eliminar.error ? <Banner tone="error" message={eliminar.error.message} /> : null}
-      <Button title="Eliminar mi cuenta" variant="danger" loading={eliminar.isPending} onPress={() => eliminar.mutate()} />
+      <Button title={tx.account.deleteMyAccount} variant="danger" loading={eliminar.isPending} onPress={() => eliminar.mutate()} />
       <Salidas />
     </Marco>
   );
@@ -202,73 +204,68 @@ function PedirCorreo({
   onEnviado: () => void;
 }) {
   const [email, setEmail] = useState(inicial);
+  const tx = useT();
   const valido = CORREO.test(email.trim());
   return (
     <Marco
-      titulo="Falta el permiso de un adulto"
-      intro="Como tienes 16 o 17 años, la ley pide que tu madre, padre o tutor apruebe que uses KAVI. Le mandaremos un correo con un enlace para revisar el aviso de privacidad y decidir."
+      titulo={tx.account.guardianTitle}
+      intro={tx.account.guardianIntro}
     >
       <TextField
-        label="Correo de tu madre, padre o tutor"
+        label={tx.account.guardianEmail}
         value={email}
         onChangeText={setEmail}
         keyboardType="email-address"
         autoCapitalize="none"
         autoComplete="email"
-        placeholder="nombre@correo.com"
+        placeholder={tx.account.emailPlaceholder}
       />
       {enviar.error ? <Banner tone="error" message={enviar.error.message} /> : null}
-      <Button title="Enviar correo" disabled={!valido} loading={enviar.isPending} onPress={() => enviar.mutate(email.trim(), { onSuccess: onEnviado })} />
-      {onCancelar ? <Button title="Cancelar" variant="ghost" onPress={onCancelar} /> : null}
+      <Button title={tx.account.sendEmail} disabled={!valido} loading={enviar.isPending} onPress={() => enviar.mutate(email.trim(), { onSuccess: onEnviado })} />
+      {onCancelar ? <Button title={tx.account.cancel} variant="ghost" onPress={onCancelar} /> : null}
       <Salidas eliminar />
     </Marco>
   );
 }
 
 function Esperando({ request, enviar, onCambiar }: { request: GuardianRequest; enviar: Envio; onCambiar: () => void }) {
+  const tx = useT();
+  const lang = useLanguage();
   const theme = useTheme();
   const router = useRouter();
   const consent = useConsentGate();
-  const vence = formatDate(new Date(request.expiresAt));
+  const vence = formatDate(new Date(request.expiresAt), lang);
   const previewLink = enviar.data?.previewLink ?? null;
 
+  const w = tx.account.waiting;
   const textos = {
-    pending: {
-      titulo: 'Esperando la aprobación',
-      intro: `Le mandamos un correo a ${request.email} con un enlace. En cuanto lo apruebe, KAVI se abre aquí solo. Si no lo encuentra, que revise su carpeta de spam. El enlace vence el ${vence}.`,
-    },
-    rejected: {
-      titulo: 'No se aprobó',
-      intro: `${request.email} no aprobó que uses KAVI. Si crees que fue un error, habla con esa persona y vuelve a enviar el correo, o envíalo a otro adulto responsable.`,
-    },
-    expired: {
-      titulo: 'El enlace venció',
-      intro: `El enlace que le mandamos a ${request.email} ya no sirve. Envía uno nuevo.`,
-    },
-    approved: { titulo: 'Listo', intro: 'Ya se aprobó. Abriendo KAVI…' },
+    pending: { titulo: w.pending.title, intro: w.pending.intro(request.email, vence) },
+    rejected: { titulo: w.rejected.title, intro: w.rejected.intro(request.email) },
+    expired: { titulo: w.expired.title, intro: w.expired.intro(request.email) },
+    approved: { titulo: w.approved.title, intro: w.approved.intro },
   } as const;
   const { titulo, intro } = textos[request.status === 'replaced' ? 'pending' : request.status];
 
   return (
     <Marco titulo={titulo} intro={intro}>
-      {enviar.isSuccess ? <Banner tone="success" message={`Correo enviado a ${request.email}.`} /> : null}
+      {enviar.isSuccess ? <Banner tone="success" message={tx.account.emailSentTo(request.email)} /> : null}
       {enviar.error ? <Banner tone="error" message={enviar.error.message} /> : null}
       {previewLink ? (
         <View style={[styles.tarjeta, { backgroundColor: theme.surfaceAlt }]}>
           <AppText variant="label" color="textSecondary">
-            Modo demo: no se manda ningún correo. Abre el enlace como si fueras el adulto.
+            {tx.account.demoNoEmail}
           </AppText>
-          <Button title="Abrir el enlace del correo" variant="secondary" onPress={() => router.push(previewLink as never)} />
+          <Button title={tx.account.openEmailLink} variant="secondary" onPress={() => router.push(previewLink as never)} />
         </View>
       ) : null}
-      {request.status === 'pending' ? <Button title="Ya lo aprobó" loading={consent.isFetching} onPress={() => void consent.refetch()} /> : null}
+      {request.status === 'pending' ? <Button title={tx.account.alreadyApproved} loading={consent.isFetching} onPress={() => void consent.refetch()} /> : null}
       <Button
-        title="Volver a enviar"
+        title={tx.account.resend}
         variant={request.status === 'pending' ? 'secondary' : 'primary'}
         loading={enviar.isPending}
         onPress={() => enviar.mutate(request.email)}
       />
-      <Button title={request.status === 'rejected' ? 'Enviar a otro correo' : 'Cambiar el correo'} variant="ghost" onPress={onCambiar} />
+      <Button title={request.status === 'rejected' ? tx.account.sendToAnother : tx.account.changeEmail} variant="ghost" onPress={onCambiar} />
       <Salidas eliminar />
     </Marco>
   );

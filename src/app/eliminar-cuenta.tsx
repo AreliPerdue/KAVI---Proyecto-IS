@@ -2,12 +2,13 @@ import { useRouter } from 'expo-router';
 import { Mail } from 'lucide-react-native';
 import { Linking, StyleSheet, View } from 'react-native';
 
-import { LOS_DEMAS, Lista, SE_BORRA } from '@/components/account/delete-account-sheet';
+import { Lista } from '@/components/account/delete-account-sheet';
 import { AppText, Button, Screen, Wordmark } from '@/components/ui';
 import { IconSize, IconStroke, Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useModuleNav } from '@/hooks/use-modules';
 import { useAuth } from '@/providers';
+import { useT } from '@/i18n';
 
 const CORREO = 'perdue.areli28@gmail.com';
 
@@ -20,6 +21,7 @@ export default function EliminarCuentaScreen() {
   const theme = useTheme();
   const router = useRouter();
   const { user } = useAuth();
+  const tx = useT();
   const { href } = useModuleNav();
 
   return (
@@ -27,36 +29,35 @@ export default function EliminarCuentaScreen() {
       <View style={styles.pila}>
         <Wordmark size={28} />
         <AppText variant="title" accessibilityRole="header">
-          Eliminar tu cuenta de KAVI
+          {tx.account.deletion.pageTitle}
         </AppText>
-        <AppText color="textSecondary">Puedes eliminar tu cuenta y todos tus datos cuando quieras. Se borra todo de inmediato y no se puede deshacer.</AppText>
+        <AppText color="textSecondary">{tx.account.deletion.pageIntro}</AppText>
       </View>
 
       <View style={[styles.tarjeta, { backgroundColor: theme.surfaceAlt }]}>
-        <AppText variant="heading">Desde KAVI</AppText>
-        <AppText>1. Abre KAVI, en la app o en la web, e inicia sesión.</AppText>
-        <AppText>2. Ve a Perfil y, hasta abajo, toca «Eliminar cuenta».</AppText>
-        <AppText>3. Escribe tu contraseña y confirma.</AppText>
+        <AppText variant="heading">{tx.account.deletion.fromKavi}</AppText>
+        <AppText>{tx.account.deletion.step1}</AppText>
+        <AppText>{tx.account.deletion.step2}</AppText>
+        <AppText>{tx.account.deletion.step3}</AppText>
         <Button
-          title={user ? 'Ir a mi perfil' : 'Iniciar sesión'}
+          title={user ? tx.account.deletion.goToProfile : tx.account.deletion.signIn}
           onPress={() => router.replace(user ? href('profile') : '/(auth)/login')}
         />
       </View>
 
-      <Lista titulo="Qué se borra" puntos={SE_BORRA} />
-      <Lista titulo="Qué pasa con las personas con quienes compartías" puntos={LOS_DEMAS} />
+      <Lista titulo={tx.account.deletion.whatGoes} puntos={tx.account.deletion.deleted_items} />
+      <Lista titulo={tx.account.deletion.othersLong} puntos={tx.account.deletion.others_items} />
 
       <View style={[styles.tarjeta, { backgroundColor: theme.surfaceAlt }]}>
-        <AppText variant="heading">¿No puedes entrar?</AppText>
+        <AppText variant="heading">{tx.account.deletion.cantSignIn}</AppText>
         <AppText color="textSecondary">
-          Escríbenos desde el correo de tu cuenta a {CORREO} con tu nombre de usuario y la frase «Eliminar mi cuenta». La eliminamos y te
-          confirmamos por correo.
+          {tx.account.deletion.writeUs(CORREO)}
         </AppText>
         <Button
-          title="Escribir un correo"
+          title={tx.account.deletion.writeEmail}
           variant="secondary"
           icon={<Mail size={IconSize.inline} strokeWidth={IconStroke} color={theme.text} />}
-          onPress={() => void Linking.openURL(`mailto:${CORREO}?subject=${encodeURIComponent('Eliminar mi cuenta de KAVI')}`)}
+          onPress={() => void Linking.openURL(`mailto:${CORREO}?subject=${encodeURIComponent(tx.account.deletion.emailSubject)}`)}
         />
       </View>
     </Screen>

@@ -1,4 +1,5 @@
 import type { Dictionary } from '../types';
+import { account } from './account';
 import { auth } from './auth';
 import { calendar } from './calendar';
 import { colors } from './colors';
@@ -11,4 +12,4 @@ import { profile } from './profile';
 import { shared } from './shared';
 import { themes } from './themes';
 
-export const en: Dictionary = { auth, calendar, colors, common, dates, errors, fitness, nav, profile, shared, themes };
+export const en: Dictionary = { account, auth, calendar, colors, common, dates, errors, fitness, nav, profile, shared, themes };
