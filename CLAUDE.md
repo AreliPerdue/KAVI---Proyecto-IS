@@ -10,7 +10,7 @@ App multiplataforma (iOS, Android, web) de planificación personal. El **calenda
 - TypeScript en modo `strict`
 - **Supabase**: Auth, PostgreSQL, Row Level Security, Realtime
 - Expo Notifications para reminders (notificaciones locales programadas)
-- Idioma de la UI: **español**
+- Idioma de la UI: **español e inglés** (spec 12); el español manda
 
 ## Flujo SDD obligatorio
 1. Lee `specs/00-constitution.md` (principios) antes de cualquier cambio.
@@ -27,6 +27,7 @@ App multiplataforma (iOS, Android, web) de planificación personal. El **calenda
 - Acceso a datos solo a través de la capa `src/services/` — nunca llamadas a Supabase directamente desde componentes.
 - Componentes de UI en `src/components/`, pantallas (rutas Expo Router) en `src/app/` — en SDK 57 `src/app/` tiene precedencia sobre `app/` raíz; este repo usa `src/app/`.
 - Fechas: guardar siempre en UTC (`timestamptz`); mostrar en zona local con `date-fns`.
+- Textos de interfaz: siempre en `src/i18n/es` y `src/i18n/en` (spec 12, RF-I8), nunca sueltos en componentes. En componentes, `useT()` y pasar `useLanguage()` a las funciones de fecha de `lib/dates` (el React Compiler necesita ver el idioma como entrada).
 - Sin secretos en el repo: credenciales en `.env` (usar `EXPO_PUBLIC_SUPABASE_URL` y `EXPO_PUBLIC_SUPABASE_ANON_KEY`), `.env` en `.gitignore`.
 - Commits pequeños y frecuentes con prefijo de tarea: `[T042] Crear vista semanal`.
 - Al terminar una fase de `tasks.md`, ejecuta las pruebas de esa fase y valida en las 3 plataformas cuando aplique.

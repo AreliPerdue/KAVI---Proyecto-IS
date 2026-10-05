@@ -614,8 +614,13 @@ un clic de más para llegar a lo mismo.
   `kavi-design` §4. Dep: —
   **Spec 12 (aprobada el 5 oct 2026):** idioma del teléfono por omisión, inglés de EE. UU., aviso legal en
   inglés como referencia. Se hace en tres fases:
-  - [ ] T196a Base (`src/i18n/`, i18next, preferencia "Idioma" en Perfil, fechas con locale) y pantallas de
+  - [x] T196a Base (`src/i18n/`, preferencia "Idioma" en Perfil, fechas con locale) y pantallas de
     acceso, calendario, compartido, listas, perfil, navegación y "Antes de empezar". (RF-I1–I5, I7, I8)
+    **Hecho (5 oct 2026):** diccionarios propios tipados en vez de i18next (spec 12 §Técnico). Además de lo
+    planeado: ajustes del gimnasio y datos de salud de Perfil, panel de administración, `/eliminar-cuenta` y
+    los mensajes de error de los servicios. Los mensajes en español que manda la base (código 22023) y la
+    función de correo se traducen en el cliente. Quedan para T196b/c: Fitness, notificaciones, `/privacidad`,
+    `/consentimiento` y el correo al adulto.
   - [ ] T196b Fitness completo: logger, progreso, glosario, catálogo de ejercicios y músculos, humor del gym.
   - [ ] T196c Aviso de privacidad (referencia), páginas públicas, correo al adulto y textos de notificaciones.
     (RF-I6)

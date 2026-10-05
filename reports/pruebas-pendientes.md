@@ -616,3 +616,16 @@ funciona: si fallara diría "—"); Perfil → Datos de salud lo describe; Desco
 - [ ] Una sesión del reloj que se traslapa con una de KAVI aparece como la misma (RF-H6) con sus kcal.
 - [ ] Teléfono con Android 13 o anterior sin Health Connect → "Instala o actualiza Health Connect…".
 - [ ] Desconectar y reabrir la app sin reconectar: no lee nada aunque Android tarde en aplicar el retiro.
+
+## Idioma: español e inglés, fase 1 (T196a)
+Web en el demo: con el navegador en inglés, el inicio de sesión abre en inglés sin tocar nada; calendario
+("October 2026", "Today", "M T W…", horas en 12 h "7:30 AM"), Compartido, Perfil, Listas y detalle de lista en
+inglés; los datos de la persona se quedan como se escribieron. Desde Perfil, "English" cambia todo sin
+reiniciar. Suite completa: las mismas 64 pruebas que ya fallaban antes, ninguna nueva. Falta:
+- [ ] `formatRange`, `formatDayTitle`, `formatShortDate`, `formatDate` en inglés (incluye cruce de mes).
+- [ ] `timeFormatFor`: sin elegir → 12 h en inglés y 24 h en español; un "12h" guardado antes cuenta como elegido.
+- [ ] `themeName`: tema del sistema intacto → traducido; renombrado → como lo escribió la persona.
+- [ ] `traducirDeLaBase`: un mensaje 22023 conocido sale en el idioma activo; uno desconocido, tal cual.
+- [ ] Teléfono en inglés (Android/iOS): primera apertura en inglés; cambiar a Español en Perfil.
+- [ ] Cambiar de idioma con una hoja abierta y con la app en Fitness (que sigue en español hasta T196b).
+- [ ] Lector de pantalla en inglés: etiquetas de celdas del mes, bloques y botones.
