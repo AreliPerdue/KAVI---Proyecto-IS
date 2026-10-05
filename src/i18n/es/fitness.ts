@@ -482,4 +482,13 @@ export const fitness = {
       'Lo que podrías levantar en una sola repetición, calculado con esta serie. Es una estimación, no un peso que hayas levantado. Abajo, cuánto equivale cada porcentaje.',
     lowPrecision: 'Con más de 12 reps la estimación pierde precisión.',
   },
+  legacy: {
+    setsVsReps: (series: number, cuantas: number) => `Decía ${series} series pero ${cuantas} cantidades de reps; se usaron las reps.`,
+    setsAndText: (series: number, texto: string) => `Decía ${series} series y "${texto}".`,
+    repsUnreadable: (texto: string) => `No se pudieron leer las reps: "${texto}".`,
+    tooManySets: (n: number) => `${n} series parecen un error de captura; se dejaron como texto.`,
+    weightsVsSets: (pesos: number, series: number) => `Hay ${pesos} pesos para ${series} series.`,
+    weightUnreadable: (texto: string) => `No se pudo leer el peso: "${texto}".`,
+    durationWhole: (min: number, series: number) => `${min} min eran del ejercicio completo; no se repartieron entre ${series} series.`,
+  },
 };

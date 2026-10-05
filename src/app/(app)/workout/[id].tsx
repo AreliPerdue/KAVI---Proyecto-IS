@@ -242,7 +242,7 @@ export default function WorkoutScreen() {
       const catalog = e.exercise_id ? porId.get(e.exercise_id) ?? null : null;
       const tracking = catalog?.tracking_type ?? 'weight_reps';
       const h = historialDe.get(e.id) ?? { data: [], loaded: false };
-      const parse = hasLegacyText(e) ? parseLegacy(e) : null;
+      const parse = hasLegacyText(e) ? parseLegacy(e, lang) : null;
       const legacyNote =
         parse?.ambiguous && e.legacy_converted_at
           ? w.legacyOriginal([e.sets ? w.legacySets(e.sets) : null, e.reps, e.weight].filter(Boolean).join(' · '), parse.reasons[0] ?? '')
@@ -257,7 +257,7 @@ export default function WorkoutScreen() {
       });
     }
     return m;
-  }, [ejercicios, porId, historialDe, id, data?.bodyweight_kg, formula, w]);
+  }, [ejercicios, porId, historialDe, id, data?.bodyweight_kg, formula, w, lang]);
 
   // Un PR nuevo vibra (Android). Se compara contra el total anterior para no vibrar al abrir.
   const totalPRs = useMemo(() => [...analisis.values()].reduce((n, a) => n + a.prs.size, 0), [analisis]);

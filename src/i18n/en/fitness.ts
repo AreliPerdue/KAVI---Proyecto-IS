@@ -478,4 +478,13 @@ export const fitness: Dictionary['fitness'] = {
       'What you could lift for a single rep, calculated from this set. It’s an estimate, not a weight you lifted. Below, what each percentage comes to.',
     lowPrecision: 'Above 12 reps the estimate gets less precise.',
   },
+  legacy: {
+    setsVsReps: (series, cuantas) => `It said ${series} sets but ${cuantas} rep counts; the reps were used.`,
+    setsAndText: (series, texto) => `It said ${series} sets and “${texto}”.`,
+    repsUnreadable: (texto) => `Couldn’t read the reps: “${texto}”.`,
+    tooManySets: (n) => `${n} sets look like a typo; they were kept as text.`,
+    weightsVsSets: (pesos, series) => `There are ${pesos} weights for ${series} sets.`,
+    weightUnreadable: (texto) => `Couldn’t read the weight: “${texto}”.`,
+    durationWhole: (min, series) => `${min} min were for the whole exercise; they weren’t split across ${series} sets.`,
+  },
 };

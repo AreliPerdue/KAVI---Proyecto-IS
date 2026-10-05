@@ -1,3 +1,4 @@
+import { getLanguage, type Language, t } from '@/i18n';
 import type { SetType, WeightUnit, WorkoutExercise, WorkoutSet } from '@/types/domain';
 
 import { uuidFrom } from './ids';
@@ -107,7 +108,8 @@ export function hasLegacyText(e: LegacyInput): boolean {
   return e.sets !== null || !!normalizar(e.reps) || !!normalizar(e.weight) || e.duration_minutes !== null;
 }
 
-export function parseLegacy(e: LegacyInput): LegacyParse {
+export function parseLegacy(e: LegacyInput, lang: Language = getLanguage()): LegacyParse {
+  const r = t(lang).fitness.legacy;
   const reasons: string[] = [];
   const peso = leerPeso(e.weight);
   const reps = leerReps(e.reps);
@@ -122,13 +124,13 @@ export function parseLegacy(e: LegacyInput): LegacyParse {
       cuantas = reps.reps.length;
       repsDe = (i) => reps.reps[i];
       if (e.sets !== null && e.sets !== cuantas) {
-        reasons.push(`Decía ${e.sets} series pero ${cuantas} cantidades de reps; se usaron las reps.`);
+        reasons.push(r.setsVsReps(e.sets, cuantas));
       }
       break;
     case 'sets_x_reps':
       cuantas = reps.sets;
       repsDe = () => reps.reps;
-      if (e.sets !== null && e.sets !== reps.sets) reasons.push(`Decía ${e.sets} series y "${e.reps}".`);
+      if (e.sets !== null && e.sets !== reps.sets) reasons.push(r.setsAndText(e.sets, e.reps ?? ''));
       break;
     case 'single':
       cuantas = e.sets ?? 1;
@@ -144,12 +146,12 @@ export function parseLegacy(e: LegacyInput): LegacyParse {
       break;
     case 'ambiguous':
       cuantas = e.sets ?? 0;
-      reasons.push(`No se pudieron leer las reps: "${e.reps}".`);
+      reasons.push(r.repsUnreadable(e.reps ?? ''));
       break;
   }
 
   if (cuantas > MAX_LEGACY_SETS) {
-    reasons.push(`${cuantas} series parecen un error de captura; se dejaron como texto.`);
+    reasons.push(r.tooManySets(cuantas));
     cuantas = 0;
   }
 
@@ -162,9 +164,9 @@ export function parseLegacy(e: LegacyInput): LegacyParse {
   } else if (peso.kind === 'list') {
     unidad = peso.unit;
     if (peso.kg.length === cuantas) pesoDe = (i) => peso.kg[i];
-    else reasons.push(`Hay ${peso.kg.length} pesos para ${cuantas} series.`);
+    else reasons.push(r.weightsVsSets(peso.kg.length, cuantas));
   } else if (peso.kind === 'ambiguous') {
-    reasons.push(`No se pudo leer el peso: "${e.weight}".`);
+    reasons.push(r.weightUnreadable(e.weight ?? ''));
   }
 
   // 3. La duración de v1 era del ejercicio entero: solo se asigna si hay una sola serie.
@@ -174,7 +176,7 @@ export function parseLegacy(e: LegacyInput): LegacyParse {
       cuantas = Math.max(cuantas, 1);
       duracion = e.duration_minutes * 60;
     } else {
-      reasons.push(`${e.duration_minutes} min eran del ejercicio completo; no se repartieron entre ${cuantas} series.`);
+      reasons.push(r.durationWhole(e.duration_minutes, cuantas));
     }
   }
 
