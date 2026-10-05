@@ -745,9 +745,16 @@ Plan y decisiones en `docs/gym/AUDITORIA.md`. Cada fase cierra con typecheck, li
   historial. Dep: T256
 - [x] T259 "Datos de salud" en Perfil: estado y desconectar (RF-H8). Dep: T256
 - [ ] T260 Aviso de privacidad de KAVI, publicado y enlazado desde Perfil (S7). Lo revisa y aprueba Areli.
+  Borrador en `docs/legal/aviso-de-privacidad.md`, con los datos que faltan marcados [PENDIENTE].
 - [ ] T261 Adaptador de Health Connect en Android: dependencias, permisos en contexto, totales y sesiones;
   recompilar y probar en un teléfono. Dep: T257, T260
 - [ ] T262 Adaptador de HealthKit en iOS, cuando exista la cuenta de Apple Developer. Dep: T261
+- [ ] T263 **Eliminar cuenta** desde la app y con un enlace web (lo exigen Google Play y Apple para apps con
+  registro; también es la vía de cancelación del aviso de privacidad). Requiere actualizar la spec 03 y una
+  función de servidor que borre la cuenta y sus datos. Propuesta, por aprobar. Dep: T260
+- [ ] T264 **Consentimiento expreso** para datos de bienestar en el registro (y para la actividad del
+  teléfono al conectarla), con enlace al aviso de privacidad. Requiere actualizar las specs 03 y 11.
+  Propuesta, por aprobar. Dep: T260
 
 ### Bugs reportados
 - [x] T249 **Una ocurrencia borrada de una serie vuelve a aparecer al recargar.** Reporte (4
