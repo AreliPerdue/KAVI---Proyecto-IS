@@ -18,10 +18,12 @@ export type ActivityBlockProps = {
   titleOnly?: boolean;
   /** Estilo distintivo para actividades compartidas conmigo (RF-S5). */
   shared?: boolean;
+  /** En modo compacto, cuántas líneas de título caben según el alto del bloque. */
+  maxTitleLines?: number;
 };
 
 /** Bloque de actividad con color de dimensión/tema (RF-C2, RF-C3). */
-export const ActivityBlock = memo(function ActivityBlock({ activity, onPress, compact = false, titleOnly = false, shared = false }: ActivityBlockProps) {
+export const ActivityBlock = memo(function ActivityBlock({ activity, onPress, compact = false, titleOnly = false, shared = false, maxTitleLines = 2 }: ActivityBlockProps) {
   const theme = useTheme();
   const color = activityColor(activity, theme);
   const time = formatTimeRange(activity.start_at, activity.end_at, activity.all_day);
@@ -36,6 +38,7 @@ export const ActivityBlock = memo(function ActivityBlock({ activity, onPress, co
         { backgroundColor: tint(color, 0.16), borderLeftColor: color },
         lowContrastOutline(color, theme),
         shared ? { borderWidth: 1, borderStyle: 'dashed', borderColor: color } : null,
+        compact ? styles.compact : null,
         pressed ? styles.pressed : null,
       ]}>
       <View style={styles.row}>
@@ -47,7 +50,12 @@ export const ActivityBlock = memo(function ActivityBlock({ activity, onPress, co
           lo que escasea es el alto, y cada punto de tipografía son letras que se
           pierden. La jerarquía se sostiene con la hora un punto por debajo.
         */}
-        <AppText variant="caption" numberOfLines={compact ? 2 : 1} style={styles.title}>
+        {/*
+          Compacto (semana en el teléfono, columnas de ~43 px): `micro` y menos relleno, que
+          son unas dos letras más por renglón, y tantas líneas como quepan en el bloque
+          (T190b). Aun así una palabra larga se parte: no cabe de otra forma.
+        */}
+        <AppText variant={compact ? 'micro' : 'caption'} numberOfLines={compact ? maxTitleLines : 1} style={styles.title}>
           {activity.title}
         </AppText>
       </View>
@@ -71,6 +79,7 @@ const styles = StyleSheet.create({
     gap: 1,
     overflow: 'hidden',
   },
+  compact: { paddingHorizontal: 3, borderLeftWidth: 2 },
   row: { flexDirection: 'row', alignItems: 'center', gap: Spacing.xs },
   title: { flex: 1 },
   pressed: { opacity: 0.8 },

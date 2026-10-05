@@ -23,6 +23,18 @@ const HOURS = Array.from({ length: 24 }, (_, i) => i);
 /** Rejilla de media hora: 48 slots de 00:00 a 23:30 (RF-C3, RF-C6). */
 const SLOTS = Array.from({ length: SLOTS_PER_DAY }, (_, i) => i * SLOT_MINUTES);
 const GUTTER_WIDTH = 54;
+/** Interlineado de `micro`, la letra del título en bloques compactos, y su relleno vertical. */
+const COMPACT_LINE = 14;
+const COMPACT_PADDING = 6;
+
+/**
+ * Cuántas líneas de título caben en un bloque compacto de este alto (T190b). Antes eran dos
+ * fijas: un bloque de tres horas en la semana del teléfono decía "Estu / di…" con media
+ * columna vacía debajo.
+ */
+export function compactTitleLines(height: number): number {
+  return Math.max(1, Math.floor((height - COMPACT_PADDING) / COMPACT_LINE));
+}
 const NOW_TICK_MS = 30_000;
 /**
  * Alto mínimo de un bloque: una línea de `caption` (16) más el relleno vertical.
@@ -125,6 +137,7 @@ const DayColumn = memo(function DayColumn({
               activity={block.activity}
               onPress={onPressActivity}
               compact={compact}
+              maxTitleLines={compactTitleLines((block.visualEnd - block.start) * pxPerMinute - 2)}
               titleOnly={titleOnly}
               shared={isSharedActivity?.(block.activity)}
             />
@@ -202,8 +215,8 @@ export function Timeline({
       {hasAllDay ? (
         <View style={[styles.allDayRow, { borderBottomColor: theme.border }]}>
           <View style={{ width: GUTTER_WIDTH }}>
-            <AppText variant="caption" color="textTertiary">
-              día
+            <AppText variant="caption" color="textTertiary" numberOfLines={2}>
+              Todo el día
             </AppText>
           </View>
           {days.map((day, index) => (

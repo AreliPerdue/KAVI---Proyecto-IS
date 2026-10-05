@@ -249,11 +249,15 @@ un clic de más para llegar a lo mismo.
   para que ceda espacio al título y se lean más letras antes de los puntos suspensivos;
   es la única excepción al mínimo de 12 px y queda documentada en `kavi-design` §2.
   Verificado en web con las tres actividades por celda ya visibles. Dep: —
-- [ ] T190b Misma revisión de densidad en las vistas de día y semana. Ahí el alto lo manda
+- [x] T190b Misma revisión de densidad en las vistas de día y semana. Ahí el alto lo manda
   la duración, así que lo que queda por ajustar es la tipografía: hoy el título va en
   `label` (14) y la hora en `caption` (12) — la jerarquía ya es correcta, pero ambos se
   ven grandes frente a la referencia de Apple y Google. Pendiente de decidir con capturas
   a la vista. Dep: T190a
+  **Hecho (5 oct 2026, aprobado con capturas):** los bloques ya estaban en 12/11 px desde T198. Lo que faltaba
+  era la semana en el teléfono (columnas de ~43 px): título en `micro` y menos relleno, y tantas líneas como
+  quepan en el bloque (`compactTitleLines`) en vez de dos fijas — "Estu / di…" pasa a "Estudio · álgebra". La
+  fila de todo el día dice "Todo el día" en vez de "día". Escritorio, día y mes sin cambios.
 - [x] T191 Vista **Agenda**: lista cronológica agrupada por día, sin rejilla de horas, que
   **solo pinta los días con algo**. Ese es el punto: con pocas actividades la rejilla
   mensual se ve vacía y hay que recorrerla con la vista para hallar las tres cosas que sí

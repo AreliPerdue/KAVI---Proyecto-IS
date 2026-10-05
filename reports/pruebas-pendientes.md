@@ -598,3 +598,9 @@ menú trae Duplicar y Borrar serie. Falta:
 - [ ] Teléfono: sin cambios (deslizar y menú del número); en web no hay deslizar.
 - [ ] Entrenamiento en curso (no solo al editar uno terminado): mismos botones y la cola de series.
 - [ ] Teclado en web: los botones se alcanzan con Tab y tienen foco visible.
+
+## Bloques de la semana en el teléfono (T190b)
+Web en el demo a 390 px, antes y después lado a lado: los títulos se leen completos en bloques altos.
+Falta:
+- [ ] `compactTitleLines`: 1 línea mínima; un bloque de 2 h a 48 px/h → varias líneas.
+- [ ] Android/iOS nativos: la semana con texto grande del sistema no se encima.
