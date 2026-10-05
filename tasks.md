@@ -326,7 +326,7 @@ un clic de más para llegar a lo mismo.
   días para no decir nada. Solo en la vista diaria, que es donde cabe sin comerse la
   rejilla y donde el día concreto da sentido a "esto toca hoy". (RF-L11–RF-L13) Dep: T200
 
-- [ ] T204 Celdas del mes que solo muestran puntos. Cuando en una celda cabe **un** chip y
+- [x] T204 Celdas del mes que solo muestran puntos. Cuando en una celda cabe **un** chip y
   hay dos o más actividades, `visible = activities.slice(0, slots - 1)` se queda en cero y
   la celda pinta solo la fila de "+N": ninguna actividad legible. Se ve en ventanas bajas y
   en teléfono; en pantallas altas no aparece porque caben más chips.
@@ -335,6 +335,10 @@ un clic de más para llegar a lo mismo.
   garantizar **al menos un chip** siempre que quepa uno. Así la celda muestra lo que cabe y
   los puntos con el "+N" debajo, que es lo que se espera al mirar un mes lleno. (RF-C1)
   Dep: T190a
+  **Hecho (5 oct 2026):** `cellLayout` en `month-view.tsx`. La fila "+N" baja a 14 px (`micro`), lo
+  que deja sitio a un chip más; si ni así cabe, el "+N" sube a la fila del número (y la rejilla
+  alinea los números a la derecha para dejarle esquina). De paso, con menos de 10 px libres —un
+  teléfono acostado— ya no desaparecía todo: los puntos se pintan desde 6 px.
 
 - [x] T205 Vencidos y reprogramar, al estilo de Todoist. Los pendientes con fecha pasada y
   sin palomear se agrupan arriba de los de hoy, en el acento de aviso —que el token `today`

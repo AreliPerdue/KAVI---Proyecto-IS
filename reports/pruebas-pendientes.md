@@ -534,3 +534,13 @@ calendario. `/privacidad` y un enlace inválido se abren sin sesión. Falta:
   enlace abre `/consentimiento`, aprobar abre la app en ≤ 15 s; el enlace ya usado dice
   "Aprobaste…". Al final, eliminar la cuenta de prueba desde Perfil.
 - [ ] Cuentas existentes (la de Areli) ven "Antes de empezar" una vez al entrar.
+
+## Celdas del mes con desborde (T204)
+Visto en el demo: 360×560 (un chip por día y "+N" junto al número, alineado a la derecha),
+360×480 (antes vacío, ahora puntos), 1280×520 (chip con hora y "+N" en la esquina izquierda) y
+390×844 (igual que antes: dos chips y fila de puntos). Falta:
+- [ ] `cellLayout`: todo cabe → todos sin "+N"; desborde con sitio → chips + fila; sin sitio
+  para la fila → 1 chip + "header"; `slots` 0 → nada.
+- [ ] Nunca hay más chips que actividades menos una cuando hay "+N" (el "+N" nunca dice +0).
+- [ ] Texto grande del sistema (escala 1.5) en teléfono: el "+N" no se encima al número.
+- [ ] iOS y Android nativos en vertical y acostado.

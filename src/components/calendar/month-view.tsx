@@ -43,16 +43,26 @@ const MAX_FONT_SCALE = 1.5;
 const TIME_MIN_CELL_WIDTH = 72;
 const MAX_MORE_DOTS = 4;
 const MAX_DENSE_DOTS = 5;
-/** Altura mínima para la fila de puntos del modo compacto. */
+/** Alto de la fila de puntos del modo compacto; se encoge si el hueco es menor. */
 const DENSE_ROW_HEIGHT = 10;
+const DOT_SIZE = 6;
+/**
+ * Alto de la fila "+N" bajo los chips. Es más baja que un chip (lleva `micro`, no una
+ * píldora), y eso es lo que deja sitio para un chip más cuando el día se desborda.
+ */
+const BASE_MORE_ROW_HEIGHT = 14;
 
 type Metrics = {
-  /** Chips (o filas de contenido) que caben en la celda. 0 = modo compacto. */
+  /** Chips que caben en la celda sin desborde. 0 = modo compacto. */
   slots: number;
+  /** Alto disponible bajo el número del día. */
+  free: number;
   chipHeight: number;
+  moreRowHeight: number;
   dayNumberHeight: number;
   showTime: boolean;
   dense: boolean;
+  denseRowHeight: number;
   /** Calendar de macOS alinea el número a la derecha; Google Calendar lo centra. */
   alignEnd: boolean;
 };
@@ -67,15 +77,36 @@ type DayCellProps = {
   onPress: (date: Date) => void;
 };
 
+/**
+ * Cuántos chips pinta una celda y dónde va el resumen de lo que no cabe (T204).
+ *
+ * Antes, con desborde, el "+N" ocupaba un hueco de chip entero: con un solo hueco no
+ * quedaba ningún chip y la celda era una fila de puntos, sin una sola actividad legible.
+ * Ahora se calcula en dos pasos: si todo cabe, todo; si no, cuántos chips caben dejando
+ * debajo la fila "+N", que es más baja que un chip; y si ni así cabe uno, se pinta uno y
+ * el "+N" sube a la fila del número del día, en la esquina libre, para que el chip
+ * conserve todo su ancho. Siempre que quepa un chip, hay al menos uno.
+ */
+export function cellLayout(
+  count: number,
+  metrics: Pick<Metrics, 'slots' | 'free' | 'chipHeight' | 'moreRowHeight'>,
+): { chips: number; more: 'row' | 'header' | null } {
+  const { slots, free, chipHeight, moreRowHeight } = metrics;
+  if (slots === 0) return { chips: 0, more: null };
+  if (count <= slots) return { chips: count, more: null };
+  const conFila = Math.floor((free - moreRowHeight) / (chipHeight + CHIP_GAP));
+  return conFila >= 1 ? { chips: conFila, more: 'row' } : { chips: 1, more: 'header' };
+}
+
 const DayCell = memo(function DayCell({ date, inMonth, weekend, activities, theme, metrics, onPress }: DayCellProps) {
   const today = isToday(date);
   const count = activities.length;
-  const { slots, chipHeight, dayNumberHeight, showTime, dense, alignEnd } = metrics;
+  const { chipHeight, moreRowHeight, dayNumberHeight, showTime, dense, alignEnd } = metrics;
 
-  // Con más actividades que huecos, el último hueco lo ocupa el resumen "+N".
-  const overflow = !dense && count > slots ? count - (slots - 1) : 0;
-  const visible = dense ? [] : overflow > 0 ? activities.slice(0, slots - 1) : activities;
-  const hidden = overflow > 0 ? activities.slice(visible.length) : [];
+  const layout = dense ? { chips: 0, more: null } : cellLayout(count, metrics);
+  const visible = activities.slice(0, layout.chips);
+  const hidden = activities.slice(visible.length);
+  const overflow = layout.more ? hidden.length : 0;
   const label = `${formatDayTitle(date)}, ${count === 0 ? 'sin actividades' : `${count} ${count === 1 ? 'actividad' : 'actividades'}`}`;
 
   return (
@@ -109,11 +140,18 @@ const DayCell = memo(function DayCell({ date, inMonth, weekend, activities, them
             {date.getDate()}
           </AppText>
         </View>
+        {layout.more === 'header' ? (
+          <View pointerEvents="none" style={[styles.headerMore, alignEnd ? styles.headerMoreStart : styles.headerMoreEnd]}>
+            <AppText variant="micro" color="textSecondary" tabular>
+              +{overflow}
+            </AppText>
+          </View>
+        ) : null}
       </View>
 
       {dense ? (
         count > 0 ? (
-          <View style={styles.denseRow}>
+          <View style={[styles.denseRow, { height: metrics.denseRowHeight }]}>
             {activities.slice(0, MAX_DENSE_DOTS).map((activity) => (
               <View key={activity.id} style={[styles.denseDot, { backgroundColor: activityColor(activity, theme) }, lowContrastOutline(activityColor(activity, theme), theme)]} />
             ))}
@@ -152,12 +190,12 @@ const DayCell = memo(function DayCell({ date, inMonth, weekend, activities, them
               </View>
             );
           })}
-          {overflow > 0 ? (
-            <View style={[styles.moreRow, { height: chipHeight }]}>
+          {layout.more === 'row' ? (
+            <View style={[styles.moreRow, { height: moreRowHeight }]}>
               {hidden.slice(0, MAX_MORE_DOTS).map((activity) => (
                 <View key={activity.id} style={[styles.moreDot, { backgroundColor: activityColor(activity, theme) }, lowContrastOutline(activityColor(activity, theme), theme)]} />
               ))}
-              <AppText variant="caption" color="textSecondary">
+              <AppText variant="micro" color="textSecondary" tabular>
                 +{overflow}
               </AppText>
             </View>
@@ -211,13 +249,24 @@ export function MonthView({ anchor, activities, onSelectDay }: MonthViewProps) {
     // Reparte el sobrante entre los chips que caben: dejarlos en su alto mínimo
     // vaciaba la mitad inferior de cada celda.
     const grown = slots > 0 ? Math.floor((free - (slots - 1) * CHIP_GAP) / slots) : chipHeight;
+    const finalChipHeight = Math.max(chipHeight, Math.min(Math.round(MAX_CHIP_HEIGHT * fontScale), grown));
+    const moreRowHeight = Math.round(BASE_MORE_ROW_HEIGHT * fontScale);
+    // Con un solo chip y sin sitio para la fila "+N", el resumen sube junto al número
+    // (`cellLayout`). Centrado, el número no le deja esquina libre en una celda angosta;
+    // alineado a la derecha sí, y se alinea en toda la rejilla para que no baile.
+    const resumenArriba = cellLayout(slots + 1, { slots, free, chipHeight: finalChipHeight, moreRowHeight }).more === 'header';
     return {
       slots,
-      chipHeight: Math.max(chipHeight, Math.min(Math.round(MAX_CHIP_HEIGHT * fontScale), grown)),
+      free,
+      chipHeight: finalChipHeight,
+      moreRowHeight,
       dayNumberHeight,
       showTime: cellWidth >= TIME_MIN_CELL_WIDTH,
-      dense: slots === 0 && free >= DENSE_ROW_HEIGHT,
-      alignEnd: grid.width >= WIDE_GRID,
+      // Sin sitio para un chip, el día se resume en puntos aunque el hueco sea más bajo que
+      // la fila: en un teléfono acostado quedan ~8 px y antes no se pintaba nada.
+      dense: slots === 0 && free >= DOT_SIZE,
+      denseRowHeight: Math.min(DENSE_ROW_HEIGHT, Math.max(DOT_SIZE, free)),
+      alignEnd: grid.width >= WIDE_GRID || resumenArriba,
     };
   }, [grid.height, grid.width]);
 
@@ -288,8 +337,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     overflow: 'hidden',
   },
+  headerMore: { position: 'absolute', top: 0, bottom: 0, justifyContent: 'center' },
+  headerMoreStart: { left: 4 },
+  headerMoreEnd: { right: 3 },
   moreRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 3 },
   moreDot: { width: 6, height: 6, borderRadius: 3 },
-  denseRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 3, height: DENSE_ROW_HEIGHT },
-  denseDot: { width: 6, height: 6, borderRadius: 3 },
+  denseRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 3 },
+  denseDot: { width: DOT_SIZE, height: DOT_SIZE, borderRadius: DOT_SIZE / 2 },
 });
