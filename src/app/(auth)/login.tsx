@@ -10,12 +10,14 @@ import { Spacing } from "@/constants/theme";
 import { useSignIn } from "@/hooks/use-auth-actions";
 import { env } from "@/lib/env";
 import { loginSchema, type LoginValues } from "@/lib/schemas/auth";
+import { useT } from "@/i18n";
 
 const AUTH_MAX_WIDTH = 440;
 
 export default function LoginScreen() {
   const signIn = useSignIn();
   const passwordRef = useRef<TextInput>(null);
+  const tx = useT();
   const { control, handleSubmit } = useForm<LoginValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: { email: "", password: "" },
@@ -27,14 +29,14 @@ export default function LoginScreen() {
     <Screen scroll centered maxWidth={AUTH_MAX_WIDTH}>
       <AuthHeader
         slogan
-        title="Inicia sesión"
+        title={tx.auth.loginTitle}
       />
 
       <View style={styles.form}>
         {env.isDemoMode ? (
           <Banner
             tone="info"
-            message="Modo demo: entra con cualquier correo y una contraseña de 8 o más caracteres (o demo@kavi.app / demo1234)."
+            message={tx.auth.demoLoginHint}
           />
         ) : null}
         {signIn.error ? (
@@ -49,7 +51,7 @@ export default function LoginScreen() {
             fieldState: { error },
           }) => (
             <TextField
-              label="Correo"
+              label={tx.auth.email}
               value={value}
               onChangeText={onChange}
               onBlur={onBlur}
@@ -72,7 +74,7 @@ export default function LoginScreen() {
           }) => (
             <TextField
               ref={passwordRef}
-              label="Contraseña"
+              label={tx.auth.password}
               value={value}
               onChangeText={onChange}
               onBlur={onBlur}
@@ -86,17 +88,17 @@ export default function LoginScreen() {
           )}
         />
 
-        <Button title="Entrar" onPress={onSubmit} loading={signIn.isPending} />
+        <Button title={tx.auth.signIn} onPress={onSubmit} loading={signIn.isPending} />
 
         <Link href="/(auth)/forgot-password" asChild>
-          <Button title="Olvidé mi contraseña" variant="ghost" />
+          <Button title={tx.auth.forgotPassword} variant="ghost" />
         </Link>
       </View>
 
       <View style={styles.footer}>
-        <AppText color="textSecondary">¿Aún no tienes cuenta?</AppText>
+        <AppText color="textSecondary">{tx.auth.noAccount}</AppText>
         <Link href="/(auth)/register" asChild>
-          <Button title="Crear cuenta" variant="secondary" />
+          <Button title={tx.auth.createAccount} variant="secondary" />
         </Link>
       </View>
     </Screen>

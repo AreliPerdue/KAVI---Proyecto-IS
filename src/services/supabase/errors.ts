@@ -1,4 +1,5 @@
 import { AUTH_MESSAGES, AuthUiError, isOfflineError } from '@/lib/auth-errors';
+import { t } from '@/i18n';
 import { getSupabase } from '@/lib/supabase';
 
 /**
@@ -10,7 +11,7 @@ import { getSupabase } from '@/lib/supabase';
  * exactamente eso con el alta de listas.
  */
 export function toError(error: { message: string; code?: string; details?: string; hint?: string }): AuthUiError {
-  // eslint-disable-next-line no-console -- el original es lo único que permite diagnosticar
+   
   console.error('[supabase]', error.code ?? 'sin código', error.message, error.details ?? '', error.hint ?? '');
   if (isOfflineError(error)) return new AuthUiError(AUTH_MESSAGES.offline, error);
   /*
@@ -27,7 +28,7 @@ export function toError(error: { message: string; code?: string; details?: strin
    */
   if (error.code === '42501') {
     void cerrarSiNoHaySesion();
-    return new AuthUiError('No tienes permiso para hacer eso.', error);
+    return new AuthUiError(t().errors.noPermission, error);
   }
   // 22023 lo usan las funciones de la base que ya traen el mensaje en español para la persona
   // (consentimiento, RF-A13): se muestra tal cual.
@@ -35,7 +36,7 @@ export function toError(error: { message: string; code?: string; details?: strin
     return new AuthUiError(error.message, error);
   }
   if (error.code === '23505') {
-    return new AuthUiError('Eso ya existe.', error);
+    return new AuthUiError(t().errors.alreadyExists, error);
   }
   return new AuthUiError(AUTH_MESSAGES.generic, error);
 }

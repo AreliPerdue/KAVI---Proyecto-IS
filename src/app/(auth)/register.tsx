@@ -16,22 +16,24 @@ import { OTP_LENGTH, signUpSchema, type SignUpValues } from '@/lib/schemas/auth'
 import { availableUsername } from '@/lib/username';
 import { isUsernameAvailable } from '@/services/auth';
 import { useAuth } from '@/providers';
+import { useT } from '@/i18n';
 
 const AUTH_MAX_WIDTH = 440;
 
 /** Un paso = una pregunta. Los campos que valida cada uno antes de avanzar. */
 const STEPS = [
-  { fields: ['displayName'], title: '¿Cómo te llamas?', subtitle: 'Así te verán tus contactos en el calendario compartido.' },
-  { fields: ['email'], title: 'Tu correo', subtitle: 'Será tu identificador en KAVI. Te enviaremos un código para confirmarlo.' },
-  { fields: ['username'], title: 'Elige tu usuario', subtitle: 'Con esto te encuentran tus amigos. Puedes cambiarlo cuando quieras.' },
-  { fields: ['code'], title: 'Confirma tu correo', subtitle: null },
-  { fields: ['password', 'confirmPassword'], title: 'Crea tu contraseña', subtitle: 'Mínimo 8 caracteres.' },
-] as const satisfies readonly { fields: readonly (keyof SignUpValues)[]; title: string; subtitle: string | null }[];
+  { fields: ['displayName'], key: 'name' },
+  { fields: ['email'], key: 'email' },
+  { fields: ['username'], key: 'username' },
+  { fields: ['code'], key: 'code' },
+  { fields: ['password', 'confirmPassword'], key: 'password' },
+] as const satisfies readonly { fields: readonly (keyof SignUpValues)[]; key: string }[];
 
 function Progress({ step }: { step: number }) {
   const theme = useTheme();
+  const tx = useT();
   return (
-    <View style={styles.progress} accessible accessibilityLabel={`Paso ${step + 1} de ${STEPS.length}`}>
+    <View style={styles.progress} accessible accessibilityLabel={tx.auth.stepOf(step + 1, STEPS.length)}>
       {STEPS.map((_, index) => (
         <View
           key={index}
@@ -73,6 +75,8 @@ export default function RegisterScreen() {
   });
 
   const current = STEPS[step] as (typeof STEPS)[number];
+  const tx = useT();
+  const textoPaso = tx.auth.steps[current.key];
   const pending = start.isPending || verify.isPending || finish.isPending;
   const error = start.error ?? verify.error ?? finish.error;
 
@@ -151,25 +155,25 @@ export default function RegisterScreen() {
 
   return (
     <Screen scroll centered maxWidth={AUTH_MAX_WIDTH}>
-      {step === 0 ? <AuthHeader title="Crea tu cuenta" subtitle="Te lo preguntamos por partes, es rápido." /> : null}
+      {step === 0 ? <AuthHeader title={tx.auth.registerTitle} subtitle={tx.auth.registerSubtitle} /> : null}
 
       <View style={styles.form}>
         <Progress step={step} />
 
         <View style={styles.stepHeader}>
           {step > 0 ? (
-            <IconButton label="Paso anterior" onPress={back}>
+            <IconButton label={tx.auth.previousStep} onPress={back}>
               <ArrowLeft size={IconSize.action} strokeWidth={IconStroke} color={theme.text} />
             </IconButton>
           ) : null}
           <View style={styles.stepTitle}>
             <AppText variant="heading" accessibilityRole="header">
-              {current.title}
+              {textoPaso.title}
             </AppText>
-            {current.subtitle ? <AppText color="textSecondary">{current.subtitle}</AppText> : null}
+            {'subtitle' in textoPaso ? <AppText color="textSecondary">{textoPaso.subtitle}</AppText> : null}
             {step === 3 ? (
               <AppText color="textSecondary">
-                Escribe el código de {OTP_LENGTH} dígitos que enviamos a {getValues('email')}.
+                {tx.auth.codeSentTo(OTP_LENGTH, getValues('email'))}
               </AppText>
             ) : null}
           </View>
@@ -177,10 +181,10 @@ export default function RegisterScreen() {
 
         {error ? <Banner tone="error" message={error.message} /> : null}
         {step === 3 && env.isDemoMode ? (
-          <Banner tone="info" message={`Modo demo: no sale ningún correo, el código es ${DEMO_OTP}.`} />
+          <Banner tone="info" message={tx.auth.demoCode(DEMO_OTP)} />
         ) : null}
         {step === 3 && start.isSuccess && !verify.error ? (
-          <Banner tone="success" message="Código enviado." />
+          <Banner tone="success" message={tx.auth.codeSent} />
         ) : null}
 
         {step === 0 ? (
@@ -189,12 +193,12 @@ export default function RegisterScreen() {
             name="displayName"
             render={({ field: { onChange, onBlur, value }, fieldState: { error: fieldError } }) => (
               <TextField
-                label="Nombre"
+                label={tx.auth.name}
                 value={value}
                 onChangeText={onChange}
                 onBlur={onBlur}
                 error={fieldError?.message}
-                placeholder="Tu nombre y apellido"
+                placeholder={tx.auth.namePlaceholder}
                 autoComplete="name"
                 textContentType="name"
                 autoFocus
@@ -212,12 +216,12 @@ export default function RegisterScreen() {
             name="email"
             render={({ field: { onChange, onBlur, value }, fieldState: { error: fieldError } }) => (
               <TextField
-                label="Correo"
+                label={tx.auth.email}
                 value={value}
                 onChangeText={onChange}
                 onBlur={onBlur}
                 error={fieldError?.message}
-                hint="No podrás cambiarlo más adelante."
+                hint={tx.auth.emailFixedHint}
                 keyboardType="email-address"
                 autoCapitalize="none"
                 autoCorrect={false}
@@ -237,12 +241,12 @@ export default function RegisterScreen() {
             name="username"
             render={({ field: { onChange, onBlur, value }, fieldState: { error: fieldError } }) => (
               <TextField
-                label="Usuario"
+                label={tx.auth.username}
                 value={value}
                 onChangeText={(text) => onChange(text.replace(/^@+/, '').toLowerCase())}
                 onBlur={onBlur}
                 error={fieldError?.message}
-                hint="Solo letras minúsculas, números y guion bajo. Sí puedes cambiarlo después."
+                hint={tx.auth.usernameHint}
                 autoCapitalize="none"
                 autoCorrect={false}
                 autoFocus
@@ -260,7 +264,7 @@ export default function RegisterScreen() {
             name="code"
             render={({ field: { onChange, onBlur, value }, fieldState: { error: fieldError } }) => (
               <TextField
-                label="Código"
+                label={tx.auth.code}
                 value={value}
                 onChangeText={(text) => onChange(text.replace(/\D/g, '').slice(0, OTP_LENGTH))}
                 onBlur={onBlur}
@@ -285,7 +289,7 @@ export default function RegisterScreen() {
               name="password"
               render={({ field: { onChange, onBlur, value }, fieldState: { error: fieldError } }) => (
                 <TextField
-                  label="Contraseña"
+                  label={tx.auth.password}
                   value={value}
                   onChangeText={onChange}
                   onBlur={onBlur}
@@ -305,7 +309,7 @@ export default function RegisterScreen() {
               render={({ field: { onChange, onBlur, value, ref }, fieldState: { error: fieldError } }) => (
                 <TextField
                   ref={ref}
-                  label="Confirmar contraseña"
+                  label={tx.auth.confirmPassword}
                   value={value}
                   onChangeText={onChange}
                   onBlur={onBlur}
@@ -321,18 +325,18 @@ export default function RegisterScreen() {
           </>
         ) : null}
 
-        <Button title={step === STEPS.length - 1 ? 'Crear cuenta' : 'Continuar'} onPress={next} loading={pending} />
+        <Button title={step === STEPS.length - 1 ? tx.auth.createAccount : tx.auth.continue} onPress={next} loading={pending} />
 
         {step === 3 ? (
-          <Button title="Enviar otro código" variant="secondary" onPress={resend} disabled={pending} />
+          <Button title={tx.auth.resendCode} variant="secondary" onPress={resend} disabled={pending} />
         ) : null}
       </View>
 
       {step === 0 ? (
         <View style={styles.footer}>
-          <AppText color="textSecondary">¿Ya tienes cuenta?</AppText>
+          <AppText color="textSecondary">{tx.auth.haveAccount}</AppText>
           <Link href="/(auth)/login" asChild>
-            <Button title="Iniciar sesión" variant="secondary" />
+            <Button title={tx.auth.logIn} variant="secondary" />
           </Link>
         </View>
       ) : null}

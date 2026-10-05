@@ -1,16 +1,41 @@
-/** Traduce errores de Supabase Auth / red a mensajes de UI en español (RF-A3). */
+import { t } from '@/i18n';
+
+/**
+ * Mensajes de error de Supabase Auth y de red, en el idioma activo (RF-A3, spec 12). Son
+ * getters: el texto se toma al momento del error, así sale en el idioma que se está usando.
+ */
 export const AUTH_MESSAGES = {
-  invalidCredentials: 'Credenciales incorrectas. Revisa tu correo y contraseña.',
-  offline: 'Sin conexión. Revisa tu red e inténtalo de nuevo.',
-  emailTaken: 'Ese correo ya está registrado.',
-  usernameTaken: 'Ese username ya está en uso.',
-  emailNotConfirmed: 'Confirma tu correo antes de iniciar sesión.',
-  tooManyRequests: 'Demasiados intentos. Espera un momento e inténtalo de nuevo.',
-  invalidCode: 'El código no es correcto. Revísalo o pide uno nuevo.',
-  expiredCode: 'El código caducó. Pide uno nuevo.',
-  samePassword: 'La contraseña nueva debe ser distinta de la actual.',
-  generic: 'Algo salió mal. Inténtalo de nuevo.',
-} as const;
+  get invalidCredentials() {
+    return t().errors.invalidCredentials;
+  },
+  get offline() {
+    return t().errors.offline;
+  },
+  get emailTaken() {
+    return t().errors.emailTaken;
+  },
+  get usernameTaken() {
+    return t().errors.usernameTaken;
+  },
+  get emailNotConfirmed() {
+    return t().errors.emailNotConfirmed;
+  },
+  get tooManyRequests() {
+    return t().errors.tooManyRequests;
+  },
+  get invalidCode() {
+    return t().errors.invalidCode;
+  },
+  get expiredCode() {
+    return t().errors.expiredCode;
+  },
+  get samePassword() {
+    return t().errors.samePassword;
+  },
+  get generic() {
+    return t().errors.generic;
+  },
+};
 
 export function isOfflineError(error: unknown): boolean {
   const message = error instanceof Error ? error.message : String(error);

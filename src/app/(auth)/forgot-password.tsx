@@ -8,10 +8,12 @@ import { Banner, Button, Screen, TextField } from '@/components/ui';
 import { Spacing } from '@/constants/theme';
 import { useResetPassword } from '@/hooks/use-auth-actions';
 import { forgotPasswordSchema, type ForgotPasswordValues } from '@/lib/schemas/auth';
+import { useT } from '@/i18n';
 
 const AUTH_MAX_WIDTH = 440;
 
 export default function ForgotPasswordScreen() {
+  const tx = useT();
   const reset = useResetPassword();
   const { control, handleSubmit } = useForm<ForgotPasswordValues>({
     resolver: zodResolver(forgotPasswordSchema),
@@ -23,14 +25,14 @@ export default function ForgotPasswordScreen() {
   return (
     <Screen scroll centered maxWidth={AUTH_MAX_WIDTH}>
       <AuthHeader
-        title="Recupera tu contraseña"
-        subtitle="Te enviaremos un enlace a tu correo para crear una nueva."
+        title={tx.auth.forgotTitle}
+        subtitle={tx.auth.forgotSubtitle}
       />
 
       <View style={styles.form}>
         {reset.error ? <Banner tone="error" message={reset.error.message} /> : null}
         {reset.isSuccess ? (
-          <Banner tone="success" message="Listo. Si el correo existe, recibirás el enlace en unos minutos." />
+          <Banner tone="success" message={tx.auth.forgotSent} />
         ) : null}
 
         <Controller
@@ -38,7 +40,7 @@ export default function ForgotPasswordScreen() {
           name="email"
           render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
             <TextField
-              label="Correo"
+              label={tx.auth.email}
               value={value}
               onChangeText={onChange}
               onBlur={onBlur}
@@ -53,9 +55,9 @@ export default function ForgotPasswordScreen() {
           )}
         />
 
-        <Button title="Enviar enlace" onPress={onSubmit} loading={reset.isPending} />
+        <Button title={tx.auth.sendLink} onPress={onSubmit} loading={reset.isPending} />
         <Link href="/(auth)/login" asChild>
-          <Button title="Volver a iniciar sesión" variant="ghost" />
+          <Button title={tx.auth.backToLogin} variant="ghost" />
         </Link>
       </View>
     </Screen>

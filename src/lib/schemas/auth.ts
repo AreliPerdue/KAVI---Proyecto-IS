@@ -1,30 +1,35 @@
 import { z } from 'zod';
 
+import { type Dictionary, t } from '@/i18n';
+
+/** Mensaje de validación en el idioma activo al momento de validar (spec 12). */
+const m = (texto: (d: Dictionary) => string) => ({ error: () => texto(t()) });
+
 export const USERNAME_PATTERN = /^[a-z0-9_]+$/;
 
 const email = z
   .string()
   .trim()
-  .min(1, 'Escribe tu correo.')
-  .email('Escribe un correo válido.');
+  .min(1, m((d) => d.errors.emailRequired))
+  .email(m((d) => d.errors.emailInvalid));
 
 const password = z
   .string()
-  .min(1, 'Escribe tu contraseña.')
-  .min(8, 'La contraseña debe tener al menos 8 caracteres.');
+  .min(1, m((d) => d.errors.passwordRequired))
+  .min(8, m((d) => d.errors.passwordShort));
 
 export const username = z
   .string()
   .trim()
   .toLowerCase()
-  .min(3, 'El username debe tener al menos 3 caracteres.')
-  .max(30, 'El username debe tener máximo 30 caracteres.')
-  .regex(USERNAME_PATTERN, 'Solo letras minúsculas, números y guion bajo.');
+  .min(3, m((d) => d.errors.usernameShort))
+  .max(30, m((d) => d.errors.usernameLong))
+  .regex(USERNAME_PATTERN, m((d) => d.errors.usernamePattern));
 
 export const displayName = z
   .string()
   .trim()
-  .max(60, 'Máximo 60 caracteres.');
+  .max(60, m((d) => d.errors.max60));
 
 export const loginSchema = z.object({ email, password });
 export type LoginValues = z.infer<typeof loginSchema>;
@@ -34,10 +39,10 @@ export type RegisterValues = z.infer<typeof registerSchema>;
 
 export const OTP_LENGTH = 6;
 
-const confirmPassword = z.string().min(1, 'Repite la contraseña.');
+const confirmPassword = z.string().min(1, m((d) => d.errors.repeatPassword));
 const passwordsMatch = {
   check: (v: { password: string; confirmPassword: string }) => v.password === v.confirmPassword,
-  options: { message: 'Las contraseñas no coinciden.', path: ['confirmPassword'] },
+  options: { error: () => t().errors.passwordsDontMatch, path: ['confirmPassword'] },
 };
 
 /** Alta por pasos: nombre → correo → código → contraseña (RF-A8). */
@@ -46,14 +51,14 @@ export const signUpSchema = z
     displayName: z
       .string()
       .trim()
-      .min(2, 'Escribe tu nombre.')
-      .max(60, 'Máximo 60 caracteres.'),
+      .min(2, m((d) => d.errors.nameRequired))
+      .max(60, m((d) => d.errors.max60)),
     email,
     username,
     code: z
       .string()
       .trim()
-      .regex(new RegExp(`^\\d{${OTP_LENGTH}}$`), `El código son ${OTP_LENGTH} dígitos.`),
+      .regex(new RegExp(`^\\d{${OTP_LENGTH}}$`), m((d) => d.errors.codeDigits(OTP_LENGTH))),
     password,
     confirmPassword,
   })
@@ -63,7 +68,7 @@ export type SignUpValues = z.infer<typeof signUpSchema>;
 /** Cambio de contraseña desde Perfil: se comprueba la actual (RF-A9). */
 export const changePasswordSchema = z
   .object({
-    currentPassword: z.string().min(1, 'Escribe tu contraseña actual.'),
+    currentPassword: z.string().min(1, m((d) => d.errors.currentPasswordRequired)),
     password,
     confirmPassword,
   })
@@ -75,7 +80,7 @@ export type ForgotPasswordValues = z.infer<typeof forgotPasswordSchema>;
 
 /** El perfil solo edita el nombre visible: el username no se usa y el correo es fijo. */
 export const profileSchema = z.object({
-  displayName: z.string().trim().min(2, 'Escribe tu nombre.').max(60, 'Máximo 60 caracteres.'),
+  displayName: z.string().trim().min(2, m((d) => d.errors.nameRequired)).max(60, m((d) => d.errors.max60)),
   // Se escribe sin la arroba; la interfaz la muestra como prefijo fijo (RF-A9).
   username,
 });
