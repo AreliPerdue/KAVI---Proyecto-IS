@@ -54,3 +54,6 @@ coverage/
 # Se versiona el comprimido (.gz), que tiene el mismo contenido.
 reports/seguridad/*ZAP-Report*
 reports/seguridad/zap-manual-*.html
+
+# Vercel CLI (enlace local al proyecto)
+.vercel
