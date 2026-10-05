@@ -4,6 +4,7 @@ import { type NativeScrollEvent, type NativeSyntheticEvent, PixelRatio, Pressabl
 import { ActivityBlock } from './activity-block';
 import { layoutDay } from './layout-blocks';
 
+import { useLanguage, useT } from '@/i18n';
 import { AppText } from '@/components/ui';
 import { Radius, Spacing, type ThemeColors } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
@@ -15,7 +16,7 @@ import {
   SLOT_MINUTES,
   SLOTS_PER_DAY,
   toDayKey,
-  WEEKDAY_SHORT,
+  weekdayShort,
 } from '@/lib/dates';
 import type { Activity } from '@/types/domain';
 
@@ -93,6 +94,8 @@ const DayColumn = memo(function DayColumn({
   onPressActivity,
   isSharedActivity,
 }: ColumnProps) {
+  const lang = useLanguage();
+  const tx = useT();
   const pxPerMinute = hourHeight / 60;
   const slotHeight = hourHeight / 2;
   const minBlockHeight = Math.round(BASE_MIN_BLOCK_HEIGHT * Math.min(PixelRatio.getFontScale(), MAX_FONT_SCALE));
@@ -107,7 +110,7 @@ const DayColumn = memo(function DayColumn({
           <Pressable
             key={minutes}
             accessibilityRole="button"
-            accessibilityLabel={`Crear actividad a las ${formatMinutes(minutes)}`}
+            accessibilityLabel={tx.calendar.createAt(formatMinutes(minutes, lang))}
             onPress={() => onPressSlot(day, minutes)}
             style={({ pressed }) => [
               styles.slot,
@@ -165,6 +168,8 @@ export function Timeline({
   isSharedActivity,
   onScroll,
 }: TimelineProps) {
+  const lang = useLanguage(); // fechas en el idioma activo (spec 12, RF-I2)
+  const tx = useT();
   const theme = useTheme();
   const scrollRef = useRef<ScrollView>(null);
   const multiDay = days.length > 1;
@@ -199,7 +204,7 @@ export function Timeline({
             return (
               <View key={toDayKey(day)} style={styles.headerDay}>
                 <AppText variant="caption" color="textTertiary">
-                  {WEEKDAY_SHORT[index]}
+                  {weekdayShort(lang)[index]}
                 </AppText>
                 <View style={[styles.headerNumber, today ? { backgroundColor: theme.ink } : null]}>
                   <AppText variant="label" tabular color={today ? 'onInk' : 'text'}>
@@ -216,7 +221,7 @@ export function Timeline({
         <View style={[styles.allDayRow, { borderBottomColor: theme.border }]}>
           <View style={{ width: GUTTER_WIDTH }}>
             <AppText variant="caption" color="textTertiary" numberOfLines={2}>
-              Todo el día
+              {tx.calendar.allDayRow}
             </AppText>
           </View>
           {days.map((day, index) => (
@@ -241,7 +246,7 @@ export function Timeline({
           {HOURS.map((hour) => (
             <View key={hour} style={{ height: hourHeight }}>
               <AppText variant="caption" color="textTertiary" tabular style={styles.hourLabel}>
-                {formatHourLabel(hour)}
+                {formatHourLabel(hour, lang)}
               </AppText>
             </View>
           ))}
@@ -249,10 +254,10 @@ export function Timeline({
             <View
               pointerEvents="none"
               accessible
-              accessibilityLabel={`Hora actual, ${formatMinutes(nowMinutes)}`}
+              accessibilityLabel={tx.calendar.now(formatMinutes(nowMinutes, lang))}
               style={[styles.nowPill, { top: nowMinutes * pxPerMinute - 9, backgroundColor: theme.ink }]}>
               <AppText variant="caption" tabular color="onInk">
-                {formatMinutes(nowMinutes)}
+                {formatMinutes(nowMinutes, lang)}
               </AppText>
             </View>
           ) : null}

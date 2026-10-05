@@ -14,6 +14,7 @@ import { useSplashGate } from '@/hooks/use-splash-gate';
 import { ThemeSchemeProvider, useSchemeFromPreference } from '@/hooks/use-theme';
 import { queryClient } from '@/lib/query-client';
 import { AuthProvider, ConfirmProvider, SnackbarProvider, useAuth } from '@/providers';
+import { useLanguage } from '@/i18n';
 import { usePreferencesStore } from '@/store/preferences-store';
 
 SplashScreen.preventAutoHideAsync().catch(() => {
@@ -92,6 +93,22 @@ export function ErrorBoundary(props: ErrorBoundaryProps) {
 export default function RootLayout() {
   const appearance = usePreferencesStore((s) => s.appearance);
   const scheme = useSchemeFromPreference();
+  const language = useLanguage();
+
+  /*
+   * Las preferencias del dispositivo se leen desde aquí y no solo dentro del área con sesión:
+   * el idioma (spec 12) y la apariencia también aplican al inicio de sesión. `hydrate` no hace
+   * nada si ya se leyeron.
+   */
+  useEffect(() => {
+    void usePreferencesStore.getState().hydrate();
+  }, []);
+
+  /** En web, el idioma del documento: lectores de pantalla y traductores del navegador (RF-I7). */
+  useEffect(() => {
+    if (Platform.OS !== 'web') return;
+    document.documentElement.lang = language === 'en' ? 'en-US' : 'es-MX';
+  }, [language]);
 
   /**
    * Las piezas **nativas** —la barra de pestañas, el teclado, las hojas del sistema—

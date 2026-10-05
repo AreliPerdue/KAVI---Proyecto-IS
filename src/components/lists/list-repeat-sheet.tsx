@@ -4,7 +4,7 @@ import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { AppText, DatePickerSheet, FieldButton, Sheet, SwitchRow } from '@/components/ui';
 import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import { formatDate, formatHour, fromDayKey, toDayKey, WEEKDAY_LABELS, WEEKDAY_SHORT } from '@/lib/dates';
+import { formatDate, formatHour, fromDayKey, toDayKey, weekdayLabels, weekdayShort } from '@/lib/dates';
 import { HORA_CIERRE_VUELTA } from '@/lib/list-runs';
 import { parseRRule, type RecurrenceRule, toRRule } from '@/lib/recurrence';
 
@@ -158,14 +158,14 @@ export function ListRepeatSheet({ visible, onClose, rule, start, onChange }: Lis
             O elige los días
           </AppText>
           <View style={styles.dias}>
-            {WEEKDAY_LABELS.map((etiqueta, i) => {
+            {weekdayLabels().map((etiqueta, i) => {
               const activo = diasElegidos.includes(i);
               return (
                 <Pressable
                   key={i}
                   accessibilityRole="button"
                   accessibilityState={{ selected: activo }}
-                  accessibilityLabel={WEEKDAY_SHORT[i]}
+                  accessibilityLabel={weekdayShort()[i]}
                   onPress={() => alternarDia(i)}
                   style={({ pressed }) => [
                     styles.dia,

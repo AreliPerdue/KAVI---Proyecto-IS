@@ -3,6 +3,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 
 import { activityColor, lowContrastOutline, tint } from './activity-style';
 
+import { useLanguage, useT } from '@/i18n';
 import { AppText, ThemeIcon } from '@/components/ui';
 import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
@@ -24,14 +25,17 @@ export type ActivityBlockProps = {
 
 /** Bloque de actividad con color de dimensión/tema (RF-C2, RF-C3). */
 export const ActivityBlock = memo(function ActivityBlock({ activity, onPress, compact = false, titleOnly = false, shared = false, maxTitleLines = 2 }: ActivityBlockProps) {
+  // Las fechas y horas siguen el idioma activo (spec 12, RF-I2).
+  const lang = useLanguage();
+  const tx = useT();
   const theme = useTheme();
   const color = activityColor(activity, theme);
-  const time = formatTimeRange(activity.start_at, activity.end_at, activity.all_day);
+  const time = formatTimeRange(activity.start_at, activity.end_at, activity.all_day, lang);
 
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={shared ? `${activity.title}, ${time}, compartida por ${activity.owner_name ?? 'un contacto'}` : `${activity.title}, ${time}`}
+      accessibilityLabel={shared ? `${activity.title}, ${time}, ${tx.calendar.sharedBy(activity.owner_name ?? null)}` : `${activity.title}, ${time}`}
       onPress={() => onPress(activity)}
       style={({ pressed }) => [
         styles.block,

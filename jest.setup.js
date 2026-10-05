@@ -11,6 +11,12 @@
  */
 
 /**
+ * Las pruebas se escribieron con los textos en espanol: se fija el idioma para que no dependan
+ * del idioma de la computadora donde corren (spec 12).
+ */
+globalThis.__KAVI_SYSTEM_LANGUAGE__ = 'es';
+
+/**
  * Preparacion comun de las pruebas de UI.
  *
  * `react-native-safe-area-context` lee medidas del sistema operativo que en Jest

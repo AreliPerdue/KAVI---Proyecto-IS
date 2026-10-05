@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 
 import { type Accesos, accesosValidos, DEFAULT_ACCESOS } from '@/constants/modules';
+import { type Language, type LanguagePreference, resolveLanguage, setLanguage } from '@/i18n/language';
 import { type CalendarView, setTimeFormat, type TimeFormat } from '@/lib/dates';
 import { getJson, setJson } from '@/lib/storage';
 
@@ -16,6 +17,14 @@ export const DEFAULT_APPEARANCE: Appearance = 'dark';
 export const DEFAULT_TIME_FORMAT: TimeFormat = '24h';
 
 /**
+ * El reloj de quien nunca lo eligió sigue al idioma (spec 12, RF-I3): 24 h en español, 12 h en
+ * inglés de EE. UU., que es lo que cada quien espera ver.
+ */
+export function timeFormatFor(language: Language): TimeFormat {
+  return language === 'en' ? '12h' : DEFAULT_TIME_FORMAT;
+}
+
+/**
  * Vistas que aparecen en la pastilla del encabezado. Las demás viven en su menú y se
  * pueden fijar desde ahí (RF-C16). Arrancan las tres de siempre; tres días y agenda
  * quedan a un toque para quien las quiera a la mano.
@@ -27,6 +36,9 @@ export const DEFAULT_PINNED_VIEWS: CalendarView[] = ['day', 'week', 'month'];
 
 type Prefs = {
   timeFormat: TimeFormat;
+  /** `false` mientras la persona no haya tocado el ajuste: entonces el reloj sigue al idioma. */
+  timeFormatChosen: boolean;
+  language: LanguagePreference;
   lastWorkoutTitle: string | null;
   showWorkouts: boolean;
   showBirthdays: boolean;
@@ -41,6 +53,9 @@ type Prefs = {
 
 type PreferencesState = {
   timeFormat: TimeFormat;
+  timeFormatChosen: boolean;
+  /** Idioma de la interfaz (spec 12, RF-I1): el del sistema o uno fijo. */
+  language: LanguagePreference;
   /**
    * Nombre del último entrenamiento al que se le puso uno. Se propone al crear el
    * siguiente, porque quien entrena suele repetir rutina —"Pierna", "Empuje A"— y
@@ -76,6 +91,7 @@ type PreferencesState = {
   overlayRecientes: Record<string, string>;
   hydrated: boolean;
   setTimeFormat: (formato: TimeFormat) => void;
+  setLanguage: (idioma: LanguagePreference) => void;
   setLastWorkoutTitle: (titulo: string | null) => void;
   setShowWorkouts: (mostrar: boolean) => void;
   setShowBirthdays: (mostrar: boolean) => void;
@@ -109,6 +125,8 @@ const elegidoEnEstaSesion = new Set<keyof Prefs>();
  */
 export const usePreferencesStore = create<PreferencesState>((set, get) => ({
   timeFormat: DEFAULT_TIME_FORMAT,
+  timeFormatChosen: false,
+  language: 'system',
   lastWorkoutTitle: null,
   showWorkouts: true,
   showBirthdays: true,
@@ -122,9 +140,21 @@ export const usePreferencesStore = create<PreferencesState>((set, get) => ({
 
   setTimeFormat: (formato) => {
     elegidoEnEstaSesion.add('timeFormat');
+    elegidoEnEstaSesion.add('timeFormatChosen');
     setTimeFormat(formato);
-    set({ timeFormat: formato });
-    persistir({ ...get(), timeFormat: formato });
+    set({ timeFormat: formato, timeFormatChosen: true });
+    persistir({ ...get(), timeFormat: formato, timeFormatChosen: true });
+  },
+
+  setLanguage: (idioma) => {
+    elegidoEnEstaSesion.add('language');
+    const activo = resolveLanguage(idioma);
+    // El reloj de quien nunca lo eligió sigue al idioma (RF-I3).
+    const formato = get().timeFormatChosen ? get().timeFormat : timeFormatFor(activo);
+    setTimeFormat(formato);
+    setLanguage(activo);
+    set({ language: idioma, timeFormat: formato });
+    persistir({ ...get(), language: idioma, timeFormat: formato });
   },
 
   setLastWorkoutTitle: (titulo) => {
@@ -210,10 +240,19 @@ export const usePreferencesStore = create<PreferencesState>((set, get) => ({
     const guardado = <K extends keyof Prefs>(clave: K, valor: Prefs[K]): Prefs[K] =>
       elegidoEnEstaSesion.has(clave) ? (get()[clave] as Prefs[K]) : valor;
 
-    const formato = guardado('timeFormat', prefs?.timeFormat ?? DEFAULT_TIME_FORMAT);
+    const idioma = guardado('language', prefs?.language ?? 'system');
+    const activo = resolveLanguage(idioma);
+    // Quien guardó preferencias antes de la spec 12 no tiene `timeFormatChosen`. Un "12h" guardado
+    // solo pudo venir de la persona, así que cuenta como elegido; un "24h" era el valor por omisión
+    // y no prueba nada. Así nadie ve cambiar su reloj al actualizar.
+    const elegido = guardado('timeFormatChosen', prefs?.timeFormatChosen ?? prefs?.timeFormat === '12h');
+    const formato = elegido ? guardado('timeFormat', prefs?.timeFormat ?? DEFAULT_TIME_FORMAT) : timeFormatFor(activo);
     setTimeFormat(formato);
+    setLanguage(activo);
     set({
       timeFormat: formato,
+      timeFormatChosen: elegido,
+      language: idioma,
       lastWorkoutTitle: guardado('lastWorkoutTitle', prefs?.lastWorkoutTitle ?? null),
       // Ausentes = activadas: son el comportamiento por defecto y quien ya tenía
       // preferencias guardadas no las vio nunca apagadas.
@@ -235,10 +274,12 @@ export const usePreferencesStore = create<PreferencesState>((set, get) => ({
 
 /** Se guarda el conjunto entero: son dos claves y así no pueden desincronizarse. */
 function persistir(
-  estado: Pick<PreferencesState, 'timeFormat' | 'lastWorkoutTitle' | 'showWorkouts' | 'showBirthdays' | 'visto' | 'appearance' | 'selfColor' | 'pinnedViews' | 'accesos' | 'overlayRecientes'>,
+  estado: Pick<PreferencesState, 'timeFormat' | 'timeFormatChosen' | 'language' | 'lastWorkoutTitle' | 'showWorkouts' | 'showBirthdays' | 'visto' | 'appearance' | 'selfColor' | 'pinnedViews' | 'accesos' | 'overlayRecientes'>,
 ): void {
   void setJson(PREFS_KEY, {
     timeFormat: estado.timeFormat,
+    timeFormatChosen: estado.timeFormatChosen,
+    language: estado.language,
     lastWorkoutTitle: estado.lastWorkoutTitle,
     showWorkouts: estado.showWorkouts,
     showBirthdays: estado.showBirthdays,

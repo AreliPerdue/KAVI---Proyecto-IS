@@ -33,8 +33,8 @@ import {
   SLOTS_PER_DAY,
   toDayKey,
   toIso,
-  WEEKDAY_LABELS,
-  WEEKDAY_SHORT,
+  weekdayLabels,
+  weekdayShort,
   weekDays,
 } from '@/lib/dates';
 
@@ -49,10 +49,10 @@ describe('constantes', () => {
   });
 
   it('las etiquetas de dia empiezan en lunes', () => {
-    expect(WEEKDAY_LABELS[0]).toBe('L');
-    expect(WEEKDAY_SHORT[0]).toBe('lun');
-    expect(WEEKDAY_SHORT[6]).toBe('dom');
-    expect(WEEKDAY_LABELS).toHaveLength(7);
+    expect(weekdayLabels()[0]).toBe('L');
+    expect(weekdayShort()[0]).toBe('lun');
+    expect(weekdayShort()[6]).toBe('dom');
+    expect(weekdayLabels()).toHaveLength(7);
   });
 });
 

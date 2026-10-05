@@ -1,0 +1,20 @@
+/** Calendario (spec 04 y 12). */
+export const calendar = {
+  changeDate: (titulo: string) => `${titulo}. Cambiar de fecha`,
+  previous: 'Anterior',
+  next: 'Siguiente',
+  today: 'Hoy',
+  goToToday: 'Ir a hoy',
+  lists: 'Listas',
+  filters: 'Filtros',
+  filtersActive: (n: number) => `Filtros, ${n} ${n === 1 ? 'activo' : 'activos'}`,
+  goToDate: 'Ir a una fecha',
+  dayCell: (dia: string, n: number) => `${dia}, ${n === 0 ? 'sin actividades' : `${n} ${n === 1 ? 'actividad' : 'actividades'}`}`,
+  createAt: (hora: string) => `Crear actividad a las ${hora}`,
+  now: (hora: string) => `Hora actual, ${hora}`,
+  allDayRow: 'Todo el día',
+  sharedBy: (quien: string | null) => `compartida por ${quien ?? 'un contacto'}`,
+  datePickerTitle: 'Fecha',
+  previousMonth: 'Mes anterior',
+  nextMonth: 'Mes siguiente',
+};

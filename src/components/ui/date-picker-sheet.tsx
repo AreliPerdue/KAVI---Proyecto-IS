@@ -6,9 +6,10 @@ import { AppText } from './app-text';
 import { IconButton } from './icon-button';
 import { Sheet } from './sheet';
 
+import { useLanguage, useT } from '@/i18n';
 import { IconSize, IconStroke, Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import { formatDayTitle, formatMonthTitle, isSameDay, isSameMonth, isToday, monthGridDays, shiftAnchor, toDayKey, WEEKDAY_LABELS } from '@/lib/dates';
+import { formatDayTitle, formatMonthTitle, isSameDay, isSameMonth, isToday, monthGridDays, shiftAnchor, toDayKey, weekdayLabels } from '@/lib/dates';
 
 /** Selector de fecha propio (funciona igual en iOS, Android y web). */
 export function DatePickerSheet({
@@ -16,7 +17,7 @@ export function DatePickerSheet({
   value,
   onClose,
   onSelect,
-  title = 'Fecha',
+  title,
 }: {
   visible: boolean;
   value: Date;
@@ -24,23 +25,25 @@ export function DatePickerSheet({
   onSelect: (date: Date) => void;
   title?: string;
 }) {
+  const lang = useLanguage(); // fechas en el idioma activo (spec 12, RF-I2)
+  const tx = useT();
   const theme = useTheme();
   const [anchor, setAnchor] = useState(value);
   const days = monthGridDays(anchor);
 
   return (
-    <Sheet visible={visible} onClose={onClose} title={title}>
+    <Sheet visible={visible} onClose={onClose} title={title ?? tx.calendar.datePickerTitle}>
       <View style={styles.monthRow}>
-        <IconButton label="Mes anterior" onPress={() => setAnchor(shiftAnchor('month', anchor, -1))}>
+        <IconButton label={tx.calendar.previousMonth} onPress={() => setAnchor(shiftAnchor('month', anchor, -1))}>
           <ChevronLeft size={IconSize.action} strokeWidth={IconStroke} color={theme.text} />
         </IconButton>
-        <AppText variant="bodyStrong">{formatMonthTitle(anchor)}</AppText>
-        <IconButton label="Mes siguiente" onPress={() => setAnchor(shiftAnchor('month', anchor, 1))}>
+        <AppText variant="bodyStrong">{formatMonthTitle(anchor, lang)}</AppText>
+        <IconButton label={tx.calendar.nextMonth} onPress={() => setAnchor(shiftAnchor('month', anchor, 1))}>
           <ChevronRight size={IconSize.action} strokeWidth={IconStroke} color={theme.text} />
         </IconButton>
       </View>
       <View style={styles.weekHeader}>
-        {WEEKDAY_LABELS.map((label, i) => (
+        {weekdayLabels(lang).map((label, i) => (
           <AppText key={i} variant="caption" color="textTertiary" style={styles.cellText}>
             {label}
           </AppText>
@@ -54,7 +57,7 @@ export function DatePickerSheet({
             <Pressable
               key={toDayKey(day)}
               accessibilityRole="button"
-              accessibilityLabel={formatDayTitle(day)}
+              accessibilityLabel={formatDayTitle(day, lang)}
               accessibilityState={{ selected }}
               onPress={() => onSelect(day)}
               style={({ pressed }) => [styles.cell, pressed ? { backgroundColor: theme.surfaceAlt } : null]}>

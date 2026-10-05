@@ -6,10 +6,11 @@ import { isListDerived } from './derived';
 import { groupByDay } from './group-by-day';
 import { isOverlayActivity } from './overlay';
 
+import { useLanguage, useT } from '@/i18n';
 import { AppText, ThemeIcon } from '@/components/ui';
 import { Radius, Spacing, type ThemeColors } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import { formatDayTitle, formatTime, fromIso, isSameMonth, isToday, monthGridDays, toDayKey, WEEKDAY_LABELS } from '@/lib/dates';
+import { formatDayTitle, formatTime, fromIso, isSameMonth, isToday, monthGridDays, toDayKey, weekdayLabels } from '@/lib/dates';
 import type { Activity } from '@/types/domain';
 
 const WEEKS = 6;
@@ -99,6 +100,9 @@ export function cellLayout(
 }
 
 const DayCell = memo(function DayCell({ date, inMonth, weekend, activities, theme, metrics, onPress }: DayCellProps) {
+  // Las fechas y horas siguen el idioma activo (spec 12, RF-I2).
+  const lang = useLanguage();
+  const tx = useT();
   const today = isToday(date);
   const count = activities.length;
   const { chipHeight, moreRowHeight, dayNumberHeight, showTime, dense, alignEnd } = metrics;
@@ -107,7 +111,7 @@ const DayCell = memo(function DayCell({ date, inMonth, weekend, activities, them
   const visible = activities.slice(0, layout.chips);
   const hidden = activities.slice(visible.length);
   const overflow = layout.more ? hidden.length : 0;
-  const label = `${formatDayTitle(date)}, ${count === 0 ? 'sin actividades' : `${count} ${count === 1 ? 'actividad' : 'actividades'}`}`;
+  const label = tx.calendar.dayCell(formatDayTitle(date, lang), count);
 
   return (
     <Pressable
@@ -182,7 +186,7 @@ const DayCell = memo(function DayCell({ date, inMonth, weekend, activities, them
                     // cada píxel que suelta es una letra más de título que se alcanza
                     // a leer antes de los puntos suspensivos.
                     <AppText variant="micro" color="textSecondary" tabular>
-                      {formatTime(fromIso(activity.start_at))}{' '}
+                      {formatTime(fromIso(activity.start_at), lang)}{' '}
                     </AppText>
                   ) : null}
                   {activity.title}
@@ -223,6 +227,8 @@ export type MonthViewProps = {
  * cabe ni un chip, el día se resume en puntos de color.
  */
 export function MonthView({ anchor, activities, onSelectDay }: MonthViewProps) {
+  // Las fechas y horas siguen el idioma activo (spec 12, RF-I2).
+  const lang = useLanguage();
   const theme = useTheme();
   const byDay = useMemo(() => groupByDay(activities), [activities]);
   const handlePress = useCallback((date: Date) => onSelectDay(date), [onSelectDay]);
@@ -277,7 +283,7 @@ export function MonthView({ anchor, activities, onSelectDay }: MonthViewProps) {
   return (
     <View style={styles.container}>
       <View style={[styles.weekHeader, { borderBottomColor: theme.border }]}>
-        {WEEKDAY_LABELS.map((label, index) => (
+        {weekdayLabels(lang).map((label, index) => (
           <AppText
             key={index}
             variant="caption"

@@ -4,6 +4,7 @@ import { FlatList, type NativeScrollEvent, type NativeSyntheticEvent, Pressable,
 import { activityColor, lowContrastOutline, tint } from './activity-style';
 import { groupByDay } from './group-by-day';
 
+import { useLanguage } from '@/i18n';
 import { AppText, ThemeIcon } from '@/components/ui';
 import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
@@ -30,6 +31,7 @@ type Dia = { key: string; date: Date; activities: Activity[] };
  * cabe en una pantalla y se lee de corrido.
  */
 export function AgendaView({ from, to, activities, onPressActivity, isSharedActivity, onScroll }: AgendaViewProps) {
+  const lang = useLanguage(); // fechas en el idioma activo (spec 12, RF-I2)
   const theme = useTheme();
 
   const dias = useMemo<Dia[]>(() => {
@@ -50,7 +52,7 @@ export function AgendaView({ from, to, activities, onPressActivity, isSharedActi
       <View style={styles.dia}>
         <View style={styles.fecha}>
           <AppText variant="caption" color={hoy ? 'text' : 'textTertiary'} tabular>
-            {item.date.toLocaleDateString('es-MX', { weekday: 'short' }).slice(0, 3)}
+            {item.date.toLocaleDateString(lang === 'en' ? 'en-US' : 'es-MX', { weekday: 'short' }).slice(0, 3)}
           </AppText>
           <View style={[styles.numero, hoy ? { backgroundColor: theme.ink } : null]}>
             <AppText variant="bodyStrong" color={hoy ? 'onInk' : 'text'} tabular>
@@ -67,7 +69,7 @@ export function AgendaView({ from, to, activities, onPressActivity, isSharedActi
               <Pressable
                 key={a.id}
                 accessibilityRole="button"
-                accessibilityLabel={`${a.title}, ${formatTimeRange(a.start_at, a.end_at, a.all_day)}`}
+                accessibilityLabel={`${a.title}, ${formatTimeRange(a.start_at, a.end_at, a.all_day, lang)}`}
                 onPress={() => onPressActivity(a)}
                 style={({ pressed }) => [
                   styles.fila,
@@ -81,7 +83,7 @@ export function AgendaView({ from, to, activities, onPressActivity, isSharedActi
                   {a.title}
                 </AppText>
                 <AppText variant="micro" color="textSecondary" tabular>
-                  {formatTimeRange(a.start_at, a.end_at, a.all_day)}
+                  {formatTimeRange(a.start_at, a.end_at, a.all_day, lang)}
                 </AppText>
               </Pressable>
             );

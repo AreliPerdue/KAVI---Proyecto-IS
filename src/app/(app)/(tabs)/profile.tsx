@@ -8,6 +8,7 @@ import {
   CalendarSearch,
   ChartNoAxesColumn,
   Info,
+  Languages,
   KeyRound,
   LogOut,
   Clock,
@@ -72,6 +73,7 @@ import { changePasswordSchema, type ChangePasswordValues, profileSchema, type Pr
 import { useAuth, useConfirm, useSnackbar } from '@/providers';
 import { StackedModuleBack } from '@/components/navigation/stacked-module';
 import { useModuleNav } from '@/hooks/use-modules';
+import { useT } from '@/i18n';
 
 const PROFILE_MAX_WIDTH = 560;
 
@@ -123,6 +125,9 @@ export default function ProfileScreen() {
   const setTimeFormat = usePreferencesStore((s) => s.setTimeFormat);
   const appearance = usePreferencesStore((s) => s.appearance);
   const setAppearance = usePreferencesStore((s) => s.setAppearance);
+  const language = usePreferencesStore((s) => s.language);
+  const setLanguage = usePreferencesStore((s) => s.setLanguage);
+  const tx = useT();
   const showWorkouts = usePreferencesStore((s) => s.showWorkouts);
   const setShowWorkouts = usePreferencesStore((s) => s.setShowWorkouts);
   const showBirthdays = usePreferencesStore((s) => s.showBirthdays);
@@ -404,6 +409,23 @@ export default function ProfileScreen() {
               ]}
               value={appearance}
               onChange={setAppearance}
+            />
+          }
+        />
+        <SettingsRow
+          icon={<Languages size={IconSize.inline} strokeWidth={IconStroke} color={theme.textSecondary} />}
+          label={tx.profile.language}
+          hint={tx.profile.languageHint}
+          below={
+            <Segmented
+              fullWidth
+              options={[
+                { value: 'system', label: tx.profile.languageSystem },
+                { value: 'es', label: tx.profile.languageSpanish },
+                { value: 'en', label: tx.profile.languageEnglish },
+              ]}
+              value={language}
+              onChange={setLanguage}
             />
           }
         />

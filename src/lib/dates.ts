@@ -22,7 +22,9 @@ import {
   startOfMonth,
   startOfWeek,
 } from 'date-fns';
-import { es } from 'date-fns/locale';
+import { enUS, es } from 'date-fns/locale';
+
+import { getLanguage, type Language, t } from '@/i18n';
 
 /**
  * Las cinco vistas del calendario. `threeDays` y `agenda` salen de Google Calendar:
@@ -139,33 +141,48 @@ export function durationMinutes(startIso: string, endIso: string): number {
   return differenceInMinutes(fromIso(endIso), fromIso(startIso));
 }
 
-// ---------- Formatos es-MX ----------
+// ---------- Formatos por idioma (spec 12, RF-I3) ----------
 const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
-/** "Septiembre 2026" */
-export function formatMonthTitle(date: Date): string {
-  return capitalize(format(date, 'MMMM yyyy', { locale: es }));
+/*
+ * Todas las funciones de formato aceptan el idioma como último parámetro opcional. En componentes
+ * hay que pasarlo (`useLanguage()`): el React Compiler memoriza el JSX según sus entradas, y si el
+ * idioma no aparece como entrada, al cambiarlo seguiría mostrando lo viejo (RF-I2). Fuera de React
+ * se omite y se usa el idioma activo.
+ */
+
+/** El locale de `date-fns` del idioma activo (o del indicado). */
+export function dateLocale(lang: Language = getLanguage()) {
+  return lang === 'en' ? enUS : es;
+}
+
+const fmt = (date: Date, patron: string, lang: Language) => format(date, patron, { locale: dateLocale(lang) });
+
+/** "Septiembre 2026" / "September 2026" */
+export function formatMonthTitle(date: Date, lang: Language = getLanguage()): string {
+  return capitalize(fmt(date, 'MMMM yyyy', lang));
+}
+
+/** Un rango de días: "7 – 13 sep 2026" / "Sep 7 – 13, 2026"; si cruza de mes, con los dos meses. */
+function formatRange(first: Date, last: Date, lang: Language): string {
+  const mismoMes = isSameMonth(first, last);
+  const f = (d: Date, p: string) => fmt(d, p, lang);
+  if (lang === 'en') {
+    return mismoMes ? `${f(first, 'MMM d')} – ${f(last, 'd, yyyy')}` : `${f(first, 'MMM d')} – ${f(last, 'MMM d, yyyy')}`;
+  }
+  return mismoMes ? `${f(first, 'd')} – ${f(last, 'd MMM yyyy')}` : `${f(first, 'd MMM')} – ${f(last, 'd MMM yyyy')}`;
 }
 
 /** "7 – 13 sep 2026" */
-export function formatWeekTitle(anchor: Date): string {
+export function formatWeekTitle(anchor: Date, lang: Language = getLanguage()): string {
   const days = weekDays(anchor);
-  const first = days[0] as Date;
-  const last = days[6] as Date;
-  if (isSameMonth(first, last)) {
-    return `${format(first, 'd', { locale: es })} – ${format(last, 'd MMM yyyy', { locale: es })}`;
-  }
-  return `${format(first, 'd MMM', { locale: es })} – ${format(last, 'd MMM yyyy', { locale: es })}`;
+  return formatRange(days[0] as Date, days[6] as Date, lang);
 }
 
 /** "28 – 30 sep 2026" */
-export function formatThreeDaysTitle(anchor: Date): string {
+export function formatThreeDaysTitle(anchor: Date, lang: Language = getLanguage()): string {
   const first = startOfDay(anchor);
-  const last = addDays(first, THREE_DAYS - 1);
-  if (isSameMonth(first, last)) {
-    return `${format(first, 'd', { locale: es })} – ${format(last, 'd MMM yyyy', { locale: es })}`;
-  }
-  return `${format(first, 'd MMM', { locale: es })} – ${format(last, 'd MMM yyyy', { locale: es })}`;
+  return formatRange(first, addDays(first, THREE_DAYS - 1), lang);
 }
 
 /** Los días que abarca la vista de tres días, desde el ancla. */
@@ -173,24 +190,34 @@ export function threeDays(anchor: Date): Date[] {
   return Array.from({ length: THREE_DAYS }, (_, i) => addDays(startOfDay(anchor), i));
 }
 
-/** "Lunes 7 de septiembre" */
-export function formatDayTitle(date: Date): string {
-  return capitalize(format(date, "EEEE d 'de' MMMM", { locale: es }));
+/** "Lunes 7 de septiembre" / "Monday, September 7" */
+export function formatDayTitle(date: Date, lang: Language = getLanguage()): string {
+  return capitalize(fmt(date, lang === 'en' ? 'EEEE, MMMM d' : "EEEE d 'de' MMMM", lang));
 }
 
-/** "lun 7 sep" */
-export function formatShortDate(date: Date): string {
-  return format(date, 'EEE d MMM', { locale: es });
+/** "lun 7 sep" / "Mon, Sep 7" */
+export function formatShortDate(date: Date, lang: Language = getLanguage()): string {
+  return fmt(date, lang === 'en' ? 'EEE, MMM d' : 'EEE d MMM', lang);
 }
 
-/** "7 sep 2026" */
-export function formatDate(date: Date): string {
-  return format(date, 'd MMM yyyy', { locale: es });
+/** "7 sep 2026" / "Sep 7, 2026" */
+export function formatDate(date: Date, lang: Language = getLanguage()): string {
+  return fmt(date, lang === 'en' ? 'MMM d, yyyy' : 'd MMM yyyy', lang);
 }
 
-/** "28 de junio" — día y mes, para lo que se repite cada año. */
-export function formatDayAndMonth(date: Date): string {
-  return format(date, "d 'de' MMMM", { locale: es });
+/** "28 de junio" / "June 28" — día y mes, para lo que se repite cada año. */
+export function formatDayAndMonth(date: Date, lang: Language = getLanguage()): string {
+  return fmt(date, lang === 'en' ? 'MMMM d' : "d 'de' MMMM", lang);
+}
+
+/** "7 sep" / "Sep 7" — día y mes corto, para listas y gráficas. */
+export function formatDayMonthShort(date: Date, lang: Language = getLanguage()): string {
+  return fmt(date, lang === 'en' ? 'MMM d' : 'd MMM', lang);
+}
+
+/** "lun 7" / "Mon 7" — día de la semana y número, para barras de una semana. */
+export function formatWeekdayAndDay(date: Date, lang: Language = getLanguage()): string {
+  return fmt(date, 'EEE d', lang);
 }
 
 export type TimeFormat = '24h' | '12h';
@@ -220,20 +247,20 @@ function partesDelDia(minutes: number): { h: number; m: number } {
 
 /**
  * Minutos desde medianoche → "14:30", o "2:30 p.m." si la preferencia es de 12 h.
- * En es-MX el sufijo va en minúsculas y con puntos.
+ * En es-MX el sufijo va en minúsculas y con puntos; en inglés, "2:30 PM".
  */
-export function formatMinutes(minutes: number): string {
+export function formatMinutes(minutes: number, lang: Language = getLanguage()): string {
   const { h, m } = partesDelDia(minutes);
   const mm = m.toString().padStart(2, '0');
   if (formatoDeHora === '24h') return `${h.toString().padStart(2, '0')}:${mm}`;
   // Las 0 son las 12 a.m. y las 12 siguen siendo las 12 p.m.
   const h12 = h % 12 === 0 ? 12 : h % 12;
-  return `${h12}:${mm} ${h < 12 ? 'a.m.' : 'p.m.'}`;
+  return `${h12}:${mm} ${h < 12 ? t(lang).dates.am : t(lang).dates.pm}`;
 }
 
 /** "14:30" o "2:30 p.m." */
-export function formatTime(date: Date): string {
-  return formatMinutes(minutesSinceMidnight(date));
+export function formatTime(date: Date, lang: Language = getLanguage()): string {
+  return formatMinutes(minutesSinceMidnight(date), lang);
 }
 
 /**
@@ -241,36 +268,42 @@ export function formatTime(date: Date): string {
  * formato elegido: "14:30" o "2:30 p.m." Nunca se muestra el texto crudo, porque ignoraría
  * la preferencia de 12 h.
  */
-export function formatClock(hhmm: string): string {
+export function formatClock(hhmm: string, lang: Language = getLanguage()): string {
   const [h, m] = hhmm.split(':').map(Number);
-  return formatMinutes((h || 0) * 60 + (m || 0));
+  return formatMinutes((h || 0) * 60 + (m || 0), lang);
 }
 
 /** Una hora en punto del día ("las 15:00" / "las 3:00 p.m."), para textos de ayuda. */
-export function formatHour(hour: number): string {
-  return formatMinutes(hour * 60);
+export function formatHour(hour: number, lang: Language = getLanguage()): string {
+  return formatMinutes(hour * 60, lang);
 }
 
 /**
  * Etiqueta de hora para el timeline: "00:00", "14:00". En 12 h se omiten los
  * minutos —"2 p.m."— porque la columna es estrecha y el ":00" no aporta nada.
  */
-export function formatHourLabel(hour: number): string {
+export function formatHourLabel(hour: number, lang: Language = getLanguage()): string {
   const h = ((hour % 24) + 24) % 24;
-  if (formatoDeHora === '24h') return formatMinutes(h * 60);
+  if (formatoDeHora === '24h') return formatMinutes(h * 60, lang);
   const h12 = h % 12 === 0 ? 12 : h % 12;
-  return `${h12} ${h < 12 ? 'a.m.' : 'p.m.'}`;
+  return `${h12} ${h < 12 ? t(lang).dates.am : t(lang).dates.pm}`;
 }
 
 /** "14:30 – 15:30" o "Todo el día" */
-export function formatTimeRange(startIso: string, endIso: string, allDay: boolean): string {
-  if (allDay) return 'Todo el día';
-  return `${formatTime(fromIso(startIso))} – ${formatTime(fromIso(endIso))}`;
+export function formatTimeRange(startIso: string, endIso: string, allDay: boolean, lang: Language = getLanguage()): string {
+  if (allDay) return t(lang).dates.allDay;
+  return `${formatTime(fromIso(startIso), lang)} – ${formatTime(fromIso(endIso), lang)}`;
 }
 
-/** Etiquetas cortas de la semana (lunes primero). */
-export const WEEKDAY_LABELS = ['L', 'M', 'M', 'J', 'V', 'S', 'D'] as const;
-export const WEEKDAY_SHORT = ['lun', 'mar', 'mié', 'jue', 'vie', 'sáb', 'dom'] as const;
+/** Iniciales de la semana en el idioma activo (lunes primero): "L M M J…" / "M T W T…". */
+export function weekdayLabels(lang: Language = getLanguage()): readonly string[] {
+  return t(lang).dates.weekdayInitials;
+}
+
+/** Días de la semana cortos en el idioma activo: "lun mar…" / "Mon Tue…". */
+export function weekdayShort(lang: Language = getLanguage()): readonly string[] {
+  return t(lang).dates.weekdayShort;
+}
 
 /** Intersección de una actividad con un día concreto, en minutos del día [0, 1440]. */
 export function clampToDay(startIso: string, endIso: string, day: Date): { start: number; end: number } | null {

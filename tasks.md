@@ -612,6 +612,13 @@ un clic de más para llegar a lo mismo.
   incrustados en los componentes, así que esto es sobre todo el trabajo de extraerlos.
   Afecta también los formatos de fecha (`date-fns` locale) y la redacción es-MX que fija
   `kavi-design` §4. Dep: —
+  **Spec 12 (aprobada el 5 oct 2026):** idioma del teléfono por omisión, inglés de EE. UU., aviso legal en
+  inglés como referencia. Se hace en tres fases:
+  - [ ] T196a Base (`src/i18n/`, i18next, preferencia "Idioma" en Perfil, fechas con locale) y pantallas de
+    acceso, calendario, compartido, listas, perfil, navegación y "Antes de empezar". (RF-I1–I5, I7, I8)
+  - [ ] T196b Fitness completo: logger, progreso, glosario, catálogo de ejercicios y músculos, humor del gym.
+  - [ ] T196c Aviso de privacidad (referencia), páginas públicas, correo al adulto y textos de notificaciones.
+    (RF-I6)
 - [x] T197 Nobi coral, el vigesimoprimero. Imágenes en sus dos variantes reescaladas a
   512 px como el resto (llegaban a 1254, que son ~1.3 MB por archivo al bundle), entrada en
   `constants/nobi.ts` entre el rojo y el rojo oscuro —donde cae su matiz en la rueda— y su

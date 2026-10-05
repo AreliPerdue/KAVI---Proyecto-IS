@@ -9,7 +9,7 @@ import { IconSize, IconStroke, Radius, Spacing } from '@/constants/theme';
 import { useAvailability } from '@/hooks/use-availability';
 import { useContacts } from '@/hooks/use-connections';
 import { useTheme } from '@/hooks/use-theme';
-import { clampToDay, findFreeSlots, formatHourLabel, formatShortDate, formatTime, formatWeekTitle, fromIso, isToday, minutesSinceMidnight, rangeForView, shiftAnchor, toDayKey, WEEKDAY_SHORT, weekDays } from '@/lib/dates';
+import { clampToDay, findFreeSlots, formatHourLabel, formatShortDate, formatTime, formatWeekTitle, fromIso, isToday, minutesSinceMidnight, rangeForView, shiftAnchor, toDayKey, weekdayShort, weekDays } from '@/lib/dates';
 import { useAuth } from '@/providers';
 
 const MAX_WIDTH = 1100;
@@ -143,7 +143,7 @@ export default function AvailabilityScreen() {
                     <View key={toDayKey(day)} style={[styles.dayColumn, { borderLeftColor: theme.border }]}>
                       <View style={styles.dayHeader}>
                         <AppText variant="caption" color={isToday(day) ? 'today' : 'textSecondary'}>
-                          {WEEKDAY_SHORT[dayIndex]} {day.getDate()}
+                          {weekdayShort()[dayIndex]} {day.getDate()}
                         </AppText>
                       </View>
                       <View style={{ height: HOURS.length * HOUR_HEIGHT }}>

@@ -2,6 +2,7 @@ import { ChevronDown, ChevronLeft, ChevronRight, CircleCheck, SlidersHorizontal 
 import { useState } from 'react';
 import { Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
 
+import { type Language, useLanguage, useT } from '@/i18n';
 import { AppText, DatePickerSheet, IconButton } from '@/components/ui';
 import { IconSize, IconStroke, Radius, Spacing } from '@/constants/theme';
 import { useModuleNav } from '@/hooks/use-modules';
@@ -11,18 +12,18 @@ import { ViewSwitcher } from './view-switcher';
 import { type CalendarView, formatDayTitle, formatMonthTitle, formatThreeDaysTitle, formatWeekTitle } from '@/lib/dates';
 
 /** El título dice de qué periodo se está hablando, y eso cambia con la vista. */
-function tituloDe(view: CalendarView, anchor: Date): string {
+function tituloDe(view: CalendarView, anchor: Date, lang: Language): string {
   switch (view) {
     case 'month':
     // La agenda abarca el mes, así que se encabeza igual.
     case 'agenda':
-      return formatMonthTitle(anchor);
+      return formatMonthTitle(anchor, lang);
     case 'week':
-      return formatWeekTitle(anchor);
+      return formatWeekTitle(anchor, lang);
     case 'threeDays':
-      return formatThreeDaysTitle(anchor);
+      return formatThreeDaysTitle(anchor, lang);
     case 'day':
-      return formatDayTitle(anchor);
+      return formatDayTitle(anchor, lang);
   }
 }
 
@@ -50,13 +51,15 @@ export function CalendarHeader({
   onOpenFilters,
   activeFilterCount = 0,
 }: CalendarHeaderProps) {
+  const lang = useLanguage();
+  const tx = useT();
   const theme = useTheme();
   const { width } = useWindowDimensions();
   const wide = width >= 720;
   const compacto = !wide;
   const [monthPickerOpen, setMonthPickerOpen] = useState(false);
   const { abrir: abrirModulo } = useModuleNav();
-  const title = tituloDe(view, anchor);
+  const title = tituloDe(view, anchor, lang);
 
   /*
    * En angosto el encabezado se parte en dos filas: título arriba, controles abajo.
@@ -69,7 +72,7 @@ export function CalendarHeader({
     <>
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel={`${title}. Cambiar de fecha`}
+        accessibilityLabel={tx.calendar.changeDate(title)}
         onPress={() => setMonthPickerOpen(true)}
         style={({ pressed }) => [styles.titleButton, pressed ? styles.pressed : null]}>
         <AppText variant={wide ? 'title' : 'heading'} numberOfLines={1} style={styles.title}>
@@ -81,32 +84,32 @@ export function CalendarHeader({
       <View style={styles.actions}>
         {wide ? (
           <>
-            <IconButton label="Anterior" onPress={onPrev}>
+            <IconButton label={tx.calendar.previous} onPress={onPrev}>
               <ChevronLeft size={IconSize.action} strokeWidth={IconStroke} color={theme.text} />
             </IconButton>
-            <IconButton label="Siguiente" onPress={onNext}>
+            <IconButton label={tx.calendar.next} onPress={onNext}>
               <ChevronRight size={IconSize.action} strokeWidth={IconStroke} color={theme.text} />
             </IconButton>
           </>
         ) : null}
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel="Ir a hoy"
+          accessibilityLabel={tx.calendar.goToToday}
           onPress={onToday}
           style={({ pressed }) => [styles.todayButton, { borderColor: theme.border }, pressed ? styles.pressed : null]}>
-          <AppText variant="label">Hoy</AppText>
+          <AppText variant="label">{tx.calendar.today}</AppText>
         </Pressable>
         {/*
           Entrada a Lists desde el calendario (spec 10, §UI): el mismo patrón con el
           que Fitness se abre desde una actividad de gimnasio. Va antes del selector
           de vistas porque pertenece al contenido del día, no a cómo se dibuja.
         */}
-        <IconButton label="Listas" onPress={() => abrirModulo('lists')}>
+        <IconButton label={tx.calendar.lists} onPress={() => abrirModulo('lists')}>
           <CircleCheck size={IconSize.action} strokeWidth={IconStroke} color={theme.text} />
         </IconButton>
         <ViewSwitcher view={view} onChange={onChangeView} compact={!wide} />
         {onOpenFilters ? (
-          <IconButton label={activeFilterCount > 0 ? `Filtros, ${activeFilterCount} activos` : 'Filtros'} onPress={onOpenFilters}>
+          <IconButton label={activeFilterCount > 0 ? tx.calendar.filtersActive(activeFilterCount) : tx.calendar.filters} onPress={onOpenFilters}>
             <View>
               <SlidersHorizontal size={IconSize.action} strokeWidth={IconStroke} color={theme.text} />
               {activeFilterCount > 0 ? <View style={[styles.filterDot, { backgroundColor: theme.today }]} /> : null}
@@ -118,7 +121,7 @@ export function CalendarHeader({
       <DatePickerSheet
         visible={monthPickerOpen}
         value={anchor}
-        title="Ir a una fecha"
+        title={tx.calendar.goToDate}
         onClose={() => setMonthPickerOpen(false)}
         onSelect={(date) => {
           onChangeAnchor(date);
