@@ -1,6 +1,7 @@
 /**
  * Chips rápidos de las notas (spec 07 v2, RF-F49, RF-F51). Se guardan por clave en
- * `workouts.tags` y `workout_sets.tags`; la etiqueta es lo que se lee.
+ * `workouts.tags` y `workout_sets.tags`; la etiqueta en español es la de aquí, y se muestra
+ * en el idioma activo con `tagLabel` (`lib/gym/display-names`).
  */
 export const SESSION_TAGS: { value: string; label: string }[] = [
   { value: 'fasted', label: 'En ayunas' },
@@ -15,7 +16,3 @@ export const SET_TAGS: { value: string; label: string }[] = [
   { value: 'felt_easy', label: 'Se sintió fácil' },
   { value: 'pr_attempt', label: 'Intento de PR' },
 ];
-
-const ETIQUETAS = new Map([...SESSION_TAGS, ...SET_TAGS].map((t) => [t.value, t.label]));
-
-export const tagLabel = (value: string) => ETIQUETAS.get(value) ?? value;

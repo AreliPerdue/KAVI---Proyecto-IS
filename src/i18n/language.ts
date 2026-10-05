@@ -47,3 +47,13 @@ export function subscribeLanguage(f: () => void): () => void {
     oyentes.delete(f);
   };
 }
+
+/** Locale de `Intl` para números y fechas sueltas, según el idioma de la interfaz. */
+export function intlLocale(lang: Language = getLanguage()): string {
+  return lang === 'en' ? 'en-US' : 'es-MX';
+}
+
+/** Un número con separadores de miles en el idioma de la interfaz. */
+export function formatNumber(n: number, lang: Language = getLanguage(), options?: Intl.NumberFormatOptions): string {
+  return n.toLocaleString(intlLocale(lang), options);
+}

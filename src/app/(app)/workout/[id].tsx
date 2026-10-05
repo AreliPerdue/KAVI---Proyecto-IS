@@ -22,9 +22,9 @@ import { RestTimerBar } from '@/components/fitness/rest-timer-bar';
 import { ToolsSheet } from '@/components/fitness/tools-sheet';
 import { ModalHeader } from '@/components/modal-header';
 import { ActionRow, AppText, Banner, Button, Chip, DatePickerSheet, ErrorState, FieldButton, IconButton, LoadingState, Screen, Sheet, SwitchRow, TextField, TimePickerSheet } from '@/components/ui';
-import { SESSION_TAGS, SET_TAGS, tagLabel } from '@/constants/gym-notes';
+import { SESSION_TAGS, SET_TAGS } from '@/constants/gym-notes';
 import { gymratLine } from '@/constants/gymrat';
-import { PROTOCOLS, SET_TYPES, setTypeDescription, type ProtocolKey } from '@/constants/intensifiers';
+import { PROTOCOLS, SET_TYPES, type ProtocolKey } from '@/constants/intensifiers';
 import { IconSize, IconStroke, Radius, Spacing } from '@/constants/theme';
 import { useActivitiesRange } from '@/hooks/use-activities-range';
 import { useEditHistory } from '@/hooks/use-edit-history';
@@ -35,6 +35,7 @@ import { useTheme } from '@/hooks/use-theme';
 import { useWorkoutMutations, useWorkouts, workoutKeys } from '@/hooks/use-workouts';
 import { formatDate, formatShortDate, formatTime, fromIso, startOfDay, toIso } from '@/lib/dates';
 import { success, tap } from '@/lib/haptics';
+import { setTypeDescription, tagLabel } from '@/lib/gym/display-names';
 import { hasLegacyText, parseLegacy } from '@/lib/gym/legacy';
 import type { PrKind } from '@/lib/gym/records';
 import { previousSets, sessionPRs, sessionSummary } from '@/lib/gym/session';
@@ -573,7 +574,7 @@ export default function WorkoutScreen() {
   const marcarEditado = () => (enCurso ? {} : { edited_at: new Date().toISOString() });
   /** Duración de una sesión terminada: de que empezó a que se marcó terminada. */
   /** Energía, pump y etiquetas de la sesión en una línea, para el modo lectura (RF-F49). */
-  const sesionChips = [data.energy ? `Energía ${data.energy}/5` : null, data.pump ? `Pump ${data.pump}/5` : null, ...data.tags.map(tagLabel)].filter(Boolean).join(' · ');
+  const sesionChips = [data.energy ? `Energía ${data.energy}/5` : null, data.pump ? `Pump ${data.pump}/5` : null, ...data.tags.map((g) => tagLabel(g))].filter(Boolean).join(' · ');
   const duracionMin = data.ended_at ? Math.max(1, Math.round((fromIso(data.ended_at).getTime() - fromIso(data.performed_at).getTime()) / 60_000)) : null;
 
   return (

@@ -3,6 +3,8 @@ import type { ExerciseGroupType, SetType } from '@/types/domain';
 /**
  * Tipos de serie (RF-F43) con una línea que los explica: "Top set" o "Back-off" son
  * términos de gimnasio que no todos conocen, y la explicación se muestra bajo los chips.
+ * Aquí vive el español; el inglés está en `i18n/en/training` y se muestra con
+ * `lib/gym/display-names`.
  */
 export const SET_TYPES: { value: SetType; label: string; description: string }[] = [
   { value: 'warmup', label: 'Calentamiento', description: 'Para entrar en calor. No cuenta para tu volumen ni para tus récords.' },
@@ -15,8 +17,6 @@ export const SET_TYPES: { value: SetType; label: string; description: string }[]
   { value: 'technique', label: 'Técnica', description: 'Para practicar el movimiento, con poco esfuerzo.' },
   { value: 'max_test', label: 'Test de máximo', description: 'Para probar cuánto levantas en una sola repetición.' },
 ];
-
-export const setTypeDescription = (type: SetType) => SET_TYPES.find((t) => t.value === type)?.description ?? '';
 
 /**
  * Intensificadores, agrupaciones y protocolos (spec 07 v2, §6). Lo que la persona lee en
@@ -104,5 +104,3 @@ export const GEAR: { value: string; label: string }[] = [
   { value: 'elbow_sleeves', label: 'Coderas' },
   { value: 'lifting_shoes', label: 'Zapatos de halterofilia' },
 ];
-
-export const intensifierLabel = (key: string) => INTENSIFIERS.find((i) => i.key === key)?.label ?? key;

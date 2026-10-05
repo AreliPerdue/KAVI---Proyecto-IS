@@ -1,3 +1,4 @@
+import { getLanguage, type Language, t } from '@/i18n';
 import type { SegmentKind, SetSegment, SetType, TrackingType, WeightUnit, WorkoutSet } from '@/types/domain';
 
 import { uuidv4 } from './ids';
@@ -192,9 +193,10 @@ export function setType(set: WorkoutSet, type: SetType): WorkoutSet {
 }
 
 /** Lo que dice la columna "Anterior" y el resumen de una serie: "80 × 8 + 4p", "I 8 / D 7". */
-export function formatSegment(seg: SetSegment, unit: WeightUnit): string {
+export function formatSegment(seg: SetSegment, unit: WeightUnit, lang: Language = getLanguage()): string {
   const partes: string[] = [];
-  const reps = seg.reps !== null ? String(seg.reps) : seg.reps_left !== null || seg.reps_right !== null ? `I ${seg.reps_left ?? '–'} / D ${seg.reps_right ?? '–'}` : null;
+  const { left, right } = t(lang).training;
+  const reps = seg.reps !== null ? String(seg.reps) : seg.reps_left !== null || seg.reps_right !== null ? `${left} ${seg.reps_left ?? '–'} / ${right} ${seg.reps_right ?? '–'}` : null;
   if (seg.weight_kg !== null && reps !== null) partes.push(`${formatWeight(seg.weight_kg, unit).replace(` ${unit}`, '')} × ${reps}`);
   else if (seg.weight_kg !== null) partes.push(formatWeight(seg.weight_kg, unit));
   else if (reps !== null) partes.push(`${reps} reps`);
@@ -204,8 +206,8 @@ export function formatSegment(seg: SetSegment, unit: WeightUnit): string {
   return partes.join(' ');
 }
 
-export function formatSet(set: WorkoutSet, unit: WeightUnit): string {
-  return set.segments.map((g) => formatSegment(g, unit)).filter(Boolean).join(' → ');
+export function formatSet(set: WorkoutSet, unit: WeightUnit, lang: Language = getLanguage()): string {
+  return set.segments.map((g) => formatSegment(g, unit, lang)).filter(Boolean).join(' → ');
 }
 
 export function formatDuration(seconds: number): string {

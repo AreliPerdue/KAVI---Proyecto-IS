@@ -3,11 +3,12 @@ import { useMemo } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { ActionRow, AppText, Sheet } from '@/components/ui';
-import { EQUIPMENT } from '@/constants/exercise-catalog';
 import { IconSize, IconStroke, Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { equipmentName, exerciseName } from '@/lib/gym/display-names';
 import { suggestVariants } from '@/lib/gym/variants';
 import type { Exercise } from '@/types/domain';
+import { useLanguage, useT } from '@/i18n';
 
 export type VariantSheetProps = {
   visible: boolean;
@@ -28,16 +29,19 @@ export type VariantSheetProps = {
  */
 export function VariantSheet({ visible, base, catalog, currentId, onClose, onPick, onSearchAll }: VariantSheetProps) {
   const theme = useTheme();
+  const tx = useT();
+  const lang = useLanguage();
+  const v = tx.fitness.variant;
   const sugeridas = useMemo(() => (base ? suggestVariants(base, catalog) : []), [base, catalog]);
   const actual = currentId ? catalog.find((e) => e.id === currentId) ?? null : null;
   // Si la elegida no está entre las sugeridas (vino del catálogo completo), va primero.
   const lista = actual && !sugeridas.some((e) => e.id === actual.id) ? [actual, ...sugeridas] : sugeridas;
-  const equipo = (e: Exercise) => e.equipment.map((q) => (EQUIPMENT as Record<string, string>)[q] ?? q).join(', ');
+  const equipo = (e: Exercise) => e.equipment.map((q) => equipmentName(q, lang)).join(', ');
 
   return (
-    <Sheet visible={visible} onClose={onClose} title="Variante del drop">
+    <Sheet visible={visible} onClose={onClose} title={v.title}>
       <AppText variant="caption" color="textSecondary">
-        Mismo peso, otra variante: normalmente una más fácil para sacar más reps.
+        {v.intro}
       </AppText>
       {lista.map((e) => {
         const elegida = e.id === currentId;
@@ -46,7 +50,7 @@ export function VariantSheet({ visible, base, catalog, currentId, onClose, onPic
             key={e.id}
             accessibilityRole="button"
             accessibilityState={{ selected: elegida }}
-            accessibilityLabel={`${e.name_es}${elegida ? ', elegida' : ''}`}
+            accessibilityLabel={`${exerciseName(e, lang)}${elegida ? v.chosenSuffix : ''}`}
             onPress={() => {
               onPick(e.id);
               onClose();
@@ -56,7 +60,7 @@ export function VariantSheet({ visible, base, catalog, currentId, onClose, onPic
               { borderColor: elegida ? theme.ink : theme.border, backgroundColor: pressed || elegida ? theme.surfaceAlt : 'transparent' },
             ]}>
             <View style={styles.flex}>
-              <AppText variant="bodyStrong">{e.name_es}</AppText>
+              <AppText variant="bodyStrong">{exerciseName(e, lang)}</AppText>
               {equipo(e) ? (
                 <AppText variant="caption" color="textTertiary">
                   {equipo(e)}
@@ -67,16 +71,16 @@ export function VariantSheet({ visible, base, catalog, currentId, onClose, onPic
           </Pressable>
         );
       })}
-      {base && lista.length === 0 ? <AppText color="textSecondary">No hay variantes sugeridas para este ejercicio.</AppText> : null}
+      {base && lista.length === 0 ? <AppText color="textSecondary">{v.noneSuggested}</AppText> : null}
       <ActionRow
         icon={<Search size={IconSize.action} strokeWidth={IconStroke} color={theme.text} />}
-        label="Buscar en todo el catálogo"
+        label={v.searchAll}
         onPress={onSearchAll}
       />
       {currentId ? (
         <ActionRow
           icon={<X size={IconSize.action} strokeWidth={IconStroke} color={theme.text} />}
-          label="Sin variante"
+          label={v.none}
           onPress={() => {
             onPick(null);
             onClose();

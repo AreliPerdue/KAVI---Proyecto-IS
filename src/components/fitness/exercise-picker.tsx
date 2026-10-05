@@ -3,12 +3,13 @@ import { memo, useCallback, useMemo, useState } from 'react';
 import { FlatList, Platform, Pressable, ScrollView, StyleSheet, TextInput, type TextStyle, View } from 'react-native';
 
 import { AppText, Chip, IconButton, Sheet } from '@/components/ui';
-import { EQUIPMENT, MUSCLES, PATTERNS } from '@/constants/exercise-catalog';
 import { IconSize, IconStroke, Radius, Spacing } from '@/constants/theme';
 import { useExerciseMutations, useExercisePrefs, useExercises } from '@/hooks/use-exercises';
 import { useTheme } from '@/hooks/use-theme';
+import { equipmentName, exerciseName, muscleName } from '@/lib/gym/display-names';
 import { isExactExercise, searchExercises } from '@/lib/gym/search';
 import type { Exercise } from '@/types/domain';
+import { type Dictionary, type Language, useLanguage, useT } from '@/i18n';
 
 /** Alto fijo de la fila: deja que la lista calcule posiciones sin medir cada una. */
 const ALTO_FILA = 64;
@@ -18,20 +19,23 @@ const SIN_ANILLO: TextStyle =
 
 type Filtro = 'muscle' | 'equipment' | 'pattern' | 'mechanic';
 
-const MECANICAS = { compound: 'Compuesto', isolation: 'Aislamiento' } as const;
+const FILTROS: Filtro[] = ['muscle', 'equipment', 'pattern', 'mechanic'];
 
-/** Qué ofrece cada filtro, con su etiqueta en español (RF-F23). */
-const OPCIONES: Record<Filtro, { titulo: string; valores: Record<string, string> }> = {
-  muscle: { titulo: 'Músculo', valores: MUSCLES },
-  equipment: { titulo: 'Equipo', valores: EQUIPMENT },
-  pattern: { titulo: 'Patrón', valores: PATTERNS },
-  mechanic: { titulo: 'Tipo', valores: MECANICAS },
-};
+/** Qué ofrece cada filtro, con su etiqueta en el idioma de la interfaz (RF-F23). */
+function opciones(tx: Dictionary): Record<Filtro, { titulo: string; valores: Record<string, string> }> {
+  const { filters, mechanics } = tx.fitness.picker;
+  return {
+    muscle: { titulo: filters.muscle, valores: tx.catalog.muscles },
+    equipment: { titulo: filters.equipment, valores: tx.catalog.equipment },
+    pattern: { titulo: filters.pattern, valores: tx.catalog.patterns },
+    mechanic: { titulo: filters.mechanic, valores: mechanics },
+  };
+}
 
-const etiquetaMusculos = (e: Exercise) =>
-  e.primary_muscles.slice(0, 2).map((m) => (MUSCLES as Record<string, string>)[m] ?? m).join(', ');
-const etiquetaEquipo = (e: Exercise) =>
-  e.equipment.slice(0, 2).map((q) => (EQUIPMENT as Record<string, string>)[q] ?? q).join(', ');
+const etiquetaMusculos = (e: Exercise, lang: Language) =>
+  e.primary_muscles.slice(0, 2).map((m) => muscleName(m, lang)).join(', ');
+const etiquetaEquipo = (e: Exercise, lang: Language) =>
+  e.equipment.slice(0, 2).map((q) => equipmentName(q, lang)).join(', ');
 
 function cumple(e: Exercise, filtros: Partial<Record<Filtro, string>>): boolean {
   if (filtros.muscle && !e.primary_muscles.includes(filtros.muscle)) return false;
@@ -59,6 +63,8 @@ export type ExercisePickerProps = {
  */
 export function ExercisePicker({ visible, onClose, onPick }: ExercisePickerProps) {
   const theme = useTheme();
+  const tx = useT();
+  const OPCIONES = opciones(tx);
   const catalogo = useExercises();
   const prefs = useExercisePrefs();
   const { createCustom, toggleFavorite, markUsed, updateCustom } = useExerciseMutations();
@@ -129,28 +135,28 @@ export function ExercisePicker({ visible, onClose, onPick }: ExercisePickerProps
   );
 
   return (
-    <Sheet visible={visible} onClose={cerrar} title="Elegir ejercicio" scrollable={false} maxHeightRatio={0.9}>
+    <Sheet visible={visible} onClose={cerrar} title={tx.fitness.picker.title} scrollable={false} maxHeightRatio={0.9}>
       <View style={[styles.buscador, { borderColor: theme.border, backgroundColor: theme.surfaceAlt }]}>
         <Search size={IconSize.inline} strokeWidth={IconStroke} color={theme.textTertiary} />
         <TextInput
           value={busqueda}
           onChangeText={setBusqueda}
-          placeholder="Buscar: banca, RDL, jalón…"
+          placeholder={tx.fitness.picker.searchPlaceholder}
           placeholderTextColor={theme.textTertiary}
-          accessibilityLabel="Buscar ejercicio"
+          accessibilityLabel={tx.fitness.picker.searchA11y}
           autoCorrect={false}
           returnKeyType="search"
           style={[styles.buscadorInput, SIN_ANILLO, { color: theme.text }]}
         />
         {busqueda ? (
-          <IconButton label="Limpiar búsqueda" onPress={() => setBusqueda('')}>
+          <IconButton label={tx.fitness.picker.clearSearch} onPress={() => setBusqueda('')}>
             <X size={IconSize.inline} strokeWidth={IconStroke} color={theme.textTertiary} />
           </IconButton>
         ) : null}
       </View>
 
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filtrosScroll} contentContainerStyle={styles.filtros}>
-        {(Object.keys(OPCIONES) as Filtro[]).map((f) => {
+        {FILTROS.map((f) => {
           const valor = filtros[f];
           const etiqueta = valor ? OPCIONES[f].valores[valor] : OPCIONES[f].titulo;
           return (
@@ -204,16 +210,16 @@ export function ExercisePicker({ visible, onClose, onPick }: ExercisePickerProps
           !existeExacto ? (
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel={`Crear ejercicio ${q}`}
+              accessibilityLabel={tx.fitness.picker.createA11y(q)}
               onPress={crear}
               disabled={createCustom.isPending}
               style={({ pressed }) => [styles.crear, { borderColor: theme.border }, pressed ? { backgroundColor: theme.surfaceAlt } : null]}>
               <Plus size={IconSize.inline} strokeWidth={IconStroke} color={theme.text} />
               <AppText variant="bodyStrong" numberOfLines={1} style={styles.flex}>
-                Crear «{q}»
+                {tx.fitness.picker.create(q)}
               </AppText>
               <AppText variant="caption" color="textTertiary">
-                personalizado
+                {tx.fitness.picker.custom}
               </AppText>
             </Pressable>
           ) : null
@@ -221,11 +227,11 @@ export function ExercisePicker({ visible, onClose, onPick }: ExercisePickerProps
         ListEmptyComponent={
           catalogo.isPending ? (
             <AppText color="textSecondary" style={styles.vacio}>
-              Cargando el catálogo…
+              {tx.fitness.picker.loadingCatalog}
             </AppText>
           ) : q ? null : (
             <AppText color="textSecondary" style={styles.vacio}>
-              Nada con esos filtros.
+              {tx.fitness.picker.nothingWithFilters}
             </AppText>
           )
         }
@@ -251,24 +257,28 @@ type FilaProps = {
  */
 const Fila = memo(function Fila({ exercise, favorito, reciente, menuAbierto, onPick, onToggleFavorito, onToggleMenu, onArchivar }: FilaProps) {
   const theme = useTheme();
+  const tx = useT();
+  const lang = useLanguage();
+  const p = tx.fitness.picker;
+  const nombre = exerciseName(exercise, lang);
   const propio = exercise.created_by !== null;
-  const detalle = [etiquetaMusculos(exercise), etiquetaEquipo(exercise)].filter(Boolean).join(' · ');
+  const detalle = [etiquetaMusculos(exercise, lang), etiquetaEquipo(exercise, lang)].filter(Boolean).join(' · ');
 
   if (menuAbierto) {
     return (
       <View style={[styles.fila, styles.menu, { backgroundColor: theme.surfaceAlt }]}>
         <AppText variant="label" numberOfLines={1} style={styles.flex}>
-          {exercise.name_es}
+          {nombre}
         </AppText>
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel={`Archivar ${exercise.name_es}`}
+          accessibilityLabel={p.archiveA11y(nombre)}
           onPress={() => onArchivar(exercise)}
           style={({ pressed }) => [styles.accionMenu, pressed ? styles.pressed : null]}>
           <Archive size={IconSize.inline} strokeWidth={IconStroke} color={theme.text} />
-          <AppText variant="label">Archivar</AppText>
+          <AppText variant="label">{p.archive}</AppText>
         </Pressable>
-        <IconButton label="Cerrar opciones" onPress={() => onToggleMenu(exercise)}>
+        <IconButton label={p.closeOptions} onPress={() => onToggleMenu(exercise)}>
           <Check size={IconSize.inline} strokeWidth={IconStroke} color={theme.textSecondary} />
         </IconButton>
       </View>
@@ -279,25 +289,25 @@ const Fila = memo(function Fila({ exercise, favorito, reciente, menuAbierto, onP
     <View style={styles.fila}>
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel={`Elegir ${exercise.name_es}`}
+        accessibilityLabel={p.chooseA11y(nombre)}
         onPress={() => onPick(exercise)}
         style={({ pressed }) => [styles.tocable, pressed ? { backgroundColor: theme.surfaceAlt } : null]}>
         <View style={styles.flex}>
           <AppText variant="body" numberOfLines={1}>
-            {exercise.name_es}
+            {nombre}
           </AppText>
           <AppText variant="caption" color="textTertiary" numberOfLines={1}>
-            {[reciente ? 'Reciente' : null, propio ? 'Tuyo' : null, detalle || null].filter(Boolean).join(' · ')}
+            {[reciente ? p.recent : null, propio ? p.yours : null, detalle || null].filter(Boolean).join(' · ')}
           </AppText>
         </View>
       </Pressable>
       {propio ? (
-        <IconButton label={`Opciones de ${exercise.name_es}`} onPress={() => onToggleMenu(exercise)}>
+        <IconButton label={p.optionsFor(nombre)} onPress={() => onToggleMenu(exercise)}>
           <Ellipsis size={IconSize.inline} strokeWidth={IconStroke} color={theme.textTertiary} />
         </IconButton>
       ) : null}
       <IconButton
-        label={favorito ? `Quitar ${exercise.name_es} de favoritos` : `Marcar ${exercise.name_es} como favorito`}
+        label={favorito ? p.unfavorite(nombre) : p.favorite(nombre)}
         onPress={() => onToggleFavorito(exercise, !favorito)}>
         <Star
           size={IconSize.inline}

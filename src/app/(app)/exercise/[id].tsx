@@ -1,5 +1,3 @@
-import { format } from 'date-fns';
-import { es } from 'date-fns/locale';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Info, Pin } from 'lucide-react-native';
 import { useMemo, useState } from 'react';
@@ -10,17 +8,19 @@ import { NoteSheet } from '@/components/fitness/note-sheet';
 import { ProgressChart } from '@/components/fitness/progress-chart';
 import { ModalHeader } from '@/components/modal-header';
 import { AppText, EmptyState, ErrorState, LoadingState, Screen } from '@/components/ui';
-import { EQUIPMENT, MUSCLES } from '@/constants/exercise-catalog';
 import { IconSize, IconStroke, Radius, Spacing } from '@/constants/theme';
 import { useExerciseHistory } from '@/hooks/use-exercise-history';
 import { useExerciseMutations, useExercisePrefs, useExercises } from '@/hooks/use-exercises';
 import { useTheme } from '@/hooks/use-theme';
+import { formatDayMonthShort } from '@/lib/dates';
+import { equipmentName, exerciseName, muscleName } from '@/lib/gym/display-names';
 import { e1rm as estimar } from '@/lib/gym/e1rm';
 import { formatSet } from '@/lib/gym/sets';
 import { formatWeight, fromKg, round } from '@/lib/gym/units';
 import { segmentLoadKg, segmentReps, setVolume } from '@/lib/gym/volume';
 import { useGymStore } from '@/store/gym-store';
 import type { WorkoutSet } from '@/types/domain';
+import { formatNumber, useLanguage, useT } from '@/i18n';
 
 const MAX_WIDTH = 640;
 
@@ -33,6 +33,9 @@ type MejorSerie = { set: WorkoutSet; e1rm: number; fecha: string };
  */
 export default function ExerciseDetailScreen() {
   const theme = useTheme();
+  const tx = useT();
+  const lang = useLanguage();
+  const x = tx.fitness.exercise;
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const catalogo = useExercises();
@@ -74,12 +77,12 @@ export default function ExerciseDetailScreen() {
   }, [exercise, history.data, formula]);
 
   const enUnidad = (kg: number) => round(fromKg(kg, unit), unit === 'kg' ? 1 : 0);
-  const fecha = (iso: string) => format(new Date(iso), 'd MMM', { locale: es });
+  const fecha = (iso: string) => formatDayMonthShort(new Date(iso), lang);
 
   if (catalogo.isPending || (exercise && history.isPending)) {
     return (
       <Screen modal maxWidth={MAX_WIDTH}>
-        <ModalHeader back title="Ejercicio" />
+        <ModalHeader back title={x.title} />
         <LoadingState />
       </Screen>
     );
@@ -87,47 +90,48 @@ export default function ExerciseDetailScreen() {
   if (!exercise) {
     return (
       <Screen modal maxWidth={MAX_WIDTH}>
-        <ModalHeader back title="Ejercicio" />
-        <ErrorState message="Ese ejercicio no está en tu catálogo." onRetry={() => catalogo.refetch()} />
+        <ModalHeader back title={x.title} />
+        <ErrorState message={x.notInCatalog} onRetry={() => catalogo.refetch()} />
       </Screen>
     );
   }
 
-  const musculos = exercise.primary_muscles.map((m) => (MUSCLES as Record<string, string>)[m] ?? m).join(', ');
-  const equipo = exercise.equipment.map((q) => (EQUIPMENT as Record<string, string>)[q] ?? q).join(', ');
+  const nombre = exerciseName(exercise, lang);
+  const musculos = exercise.primary_muscles.map((m) => muscleName(m, lang)).join(', ');
+  const equipo = exercise.equipment.map((q) => equipmentName(q, lang)).join(', ');
   const sesiones = analisis?.sesiones ?? [];
   const conE1rm = sesiones.filter((s) => s.e1rm > 0);
 
   return (
     <Screen modal scroll maxWidth={MAX_WIDTH}>
-      <ModalHeader back title="Ejercicio" />
+      <ModalHeader back title={x.title} />
       <View style={styles.cabecera}>
-        <AppText variant="title">{exercise.name_es}</AppText>
+        <AppText variant="title">{nombre}</AppText>
         <AppText color="textSecondary">{[musculos, equipo].filter(Boolean).join(' · ')}</AppText>
       </View>
 
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel={notaFija ? `Nota fija: ${notaFija}. Toca para editarla` : 'Agregar nota fija'}
+        accessibilityLabel={notaFija ? x.pinnedNoteA11y(notaFija) : x.addPinnedNote}
         onPress={() => setEditandoNota(true)}
         style={({ pressed }) => [styles.nota, { backgroundColor: pressed ? theme.border : theme.surfaceAlt }]}>
         <Pin size={IconSize.inline} strokeWidth={IconStroke} color={theme.textSecondary} />
         <View style={styles.flex}>
           <AppText variant="caption" color="textSecondary">
-            Nota fija
+            {x.pinnedNote}
           </AppText>
-          <AppText color={notaFija ? 'text' : 'textTertiary'}>{notaFija ?? 'Ajustes de la máquina, agarre, lo que siempre olvidas…'}</AppText>
+          <AppText color={notaFija ? 'text' : 'textTertiary'}>{notaFija ?? x.pinnedNotePlaceholder}</AppText>
         </View>
       </Pressable>
 
       {sesiones.length === 0 ? (
-        <EmptyState title="Todavía sin series" description="Cuando registres este ejercicio, aquí verás tu mejor serie y cómo vas." />
+        <EmptyState title={x.noSetsTitle} description={x.noSetsDescription} />
       ) : (
         <>
           <View style={styles.cifras}>
             <View style={[styles.cifra, { backgroundColor: theme.surfaceAlt }]}>
               <AppText variant="caption" color="textSecondary">
-                Mejor serie
+                {x.bestSet}
               </AppText>
               <AppText variant="bodyStrong" tabular>
                 {analisis?.mejor ? formatSet(analisis.mejor.set, unit) : '—'}
@@ -135,12 +139,12 @@ export default function ExerciseDetailScreen() {
               {analisis?.mejor && analisis.mejor.e1rm > 0 ? (
                 <Pressable
                   accessibilityRole="button"
-                  accessibilityLabel={`Peso máximo estimado: aproximadamente ${enUnidad(analisis.mejor.e1rm)} ${unit}. Qué significa`}
+                  accessibilityLabel={x.estimateA11y(`${enUnidad(analisis.mejor.e1rm)} ${unit}`)}
                   onPress={() => setTermino('max_estimate')}
                   style={styles.estimado}>
                   {/* RF-F65: es un cálculo, así que lleva "≈" y "estimado". */}
                   <AppText variant="caption" color="textTertiary" tabular style={styles.flexTexto}>
-                    ≈ {enUnidad(analisis.mejor.e1rm)} {unit} máximo estimado · {fecha(analisis.mejor.fecha)}
+                    {x.estimateLine(`${enUnidad(analisis.mejor.e1rm)} ${unit}`, fecha(analisis.mejor.fecha))}
                   </AppText>
                   <Info size={14} strokeWidth={IconStroke} color={theme.textTertiary} />
                 </Pressable>
@@ -148,13 +152,13 @@ export default function ExerciseDetailScreen() {
             </View>
             <View style={[styles.cifra, { backgroundColor: theme.surfaceAlt }]}>
               <AppText variant="caption" color="textSecondary">
-                Peso más alto
+                {x.heaviest}
               </AppText>
               <AppText variant="bodyStrong" tabular>
                 {analisis && analisis.pesoMax > 0 ? formatWeight(analisis.pesoMax, unit) : '—'}
               </AppText>
               <AppText variant="caption" color="textTertiary">
-                {sesiones.length} {sesiones.length === 1 ? 'sesión' : 'sesiones'}
+                {x.sessionsCount(sesiones.length)}
               </AppText>
             </View>
           </View>
@@ -162,37 +166,37 @@ export default function ExerciseDetailScreen() {
           {conE1rm.length > 0 ? (
             <View>
               <ProgressChart
-                title="Peso máximo estimado por sesión"
+                title={x.estimateChart}
                 points={conE1rm.map((s) => ({ label: fecha(s.fecha), value: enUnidad(s.e1rm) }))}
                 format={(v) => `≈ ${v} ${unit}`}
               />
               <Pressable
                 accessibilityRole="button"
-                accessibilityLabel="Es una estimación. Qué significa el peso máximo estimado"
+                accessibilityLabel={x.estimateExplainA11y}
                 onPress={() => setTermino('max_estimate')}
                 style={styles.estimado}>
                 <Info size={14} strokeWidth={IconStroke} color={theme.textTertiary} />
                 <AppText variant="caption" color="textTertiary">
-                  Es una estimación, no un peso que hayas levantado · ¿qué significa?
+                  {x.estimateExplain}
                 </AppText>
               </Pressable>
             </View>
           ) : null}
           <ProgressChart
-            title="Volumen por sesión"
+            title={x.volumeChart}
             points={sesiones.map((s) => ({ label: fecha(s.fecha), value: enUnidad(s.volumen) }))}
-            format={(v) => `${Math.round(v).toLocaleString('es-MX')} ${unit}`}
+            format={(v) => `${formatNumber(Math.round(v), lang)} ${unit}`}
           />
 
           <View style={styles.lista}>
             <AppText variant="label" color="textSecondary">
-              Sesiones
+              {x.sessions}
             </AppText>
             {[...sesiones].reverse().map((s) => (
               <Pressable
                 key={s.workoutId}
                 accessibilityRole="button"
-                accessibilityLabel={`Abrir la sesión del ${fecha(s.fecha)}`}
+                accessibilityLabel={x.openSessionA11y(fecha(s.fecha))}
                 onPress={() => router.push({ pathname: '/(app)/workout/[id]', params: { id: s.workoutId, mode: 'view' } })}
                 style={({ pressed }) => [styles.sesion, { borderColor: theme.border }, pressed ? { backgroundColor: theme.surfaceAlt } : null]}>
                 <AppText variant="bodyStrong">{fecha(s.fecha)}</AppText>
@@ -209,9 +213,9 @@ export default function ExerciseDetailScreen() {
       <GlossarySheet termId={termino} onClose={() => setTermino(null)} />
       <NoteSheet
         visible={editandoNota}
-        title="Nota fija"
-        hint={`Se verá arriba de ${exercise.name_es} en cada sesión.`}
-        placeholder="Asiento en 4, respaldo en 2"
+        title={x.pinnedNote}
+        hint={x.pinnedNoteHint(nombre)}
+        placeholder={x.pinnedNoteExample}
         initialText={notaFija}
         onClose={() => setEditandoNota(false)}
         onSave={(texto) => saveStickyNote.mutate({ exerciseId: exercise.id, note: texto })}

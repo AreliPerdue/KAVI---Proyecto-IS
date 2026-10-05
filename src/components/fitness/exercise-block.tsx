@@ -5,15 +5,14 @@ import ReanimatedSwipeable, { type SwipeableMethods } from 'react-native-gesture
 import Animated, { ZoomIn } from 'react-native-reanimated';
 
 import { AppText, type DragControls, IconButton, ReorderableColumn } from '@/components/ui';
-import { MUSCLES } from '@/constants/exercise-catalog';
-import { tagLabel } from '@/constants/gym-notes';
-import { intensifierLabel } from '@/constants/intensifiers';
 import { IconSize, IconStroke, Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { intensifierLabel, muscleName, segmentName, tagLabel, workoutExerciseName } from '@/lib/gym/display-names';
 import type { PrKind } from '@/lib/gym/records';
 import { formatDuration, formatSegment, isImbalanced, segmentFieldValue, type SegmentField } from '@/lib/gym/sets';
 import type { EffortScale } from '@/store/gym-store';
-import type { Exercise, SetSegment, SetType, WeightUnit, WorkoutExerciseDetail, WorkoutSet } from '@/types/domain';
+import type { Exercise, SetSegment, WeightUnit, WorkoutExerciseDetail, WorkoutSet } from '@/types/domain';
+import { getLanguage, t, type Language, useLanguage, useT } from '@/i18n';
 
 /**
  * En web no se puede deslizar una serie (RF-F33), así que duplicar y borrar llevan botones
@@ -30,53 +29,19 @@ function useAccionesAnchas(): boolean {
 /** Lo que se edita con el teclado: un campo de un segmento, o el esfuerzo de la serie. */
 export type EditTarget = { setId: string; segmentIndex: number; field: SegmentField | 'effort' };
 
-const ETIQUETA_TIPO: Partial<Record<SetType, string>> = {
-  warmup: 'C',
-  feeder: 'A',
-  top_set: 'T',
-  backoff: 'B',
-  failure: 'F',
-  amrap: 'M',
-  technique: 'Té',
-  max_test: '1RM',
-};
-
-const NOMBRE_SEGMENTO: Record<string, string> = {
-  drop: 'drop',
-  rest_pause: 'pausa',
-  myo_activation: 'activación',
-  myo_mini: 'mini',
-  cluster: 'cluster',
-  forced: 'forzadas',
-  negative: 'negativa',
-  partials: 'parciales',
-  iso_hold: 'isométrico',
-  loaded_stretch: 'estiramiento',
-  twenty_ones_bottom: '21s abajo',
-  twenty_ones_top: '21s arriba',
-  twenty_ones_full: '21s completas',
-  bfr: 'BFR',
-};
-
-const NOMBRE_PR: Record<PrKind, string> = {
-  max_weight: 'peso',
-  reps_at_weight: 'reps',
-  e1rm: 'máx. estimado',
-  set_volume: 'volumen',
-};
-
-export function columnLabel(field: SegmentField, unit: WeightUnit): string {
+export function columnLabel(field: SegmentField, unit: WeightUnit, lang: Language = getLanguage()): string {
+  const tx = t(lang);
   switch (field) {
     case 'weight_kg':
       return unit;
     case 'reps':
-      return 'Reps';
+      return tx.fitness.block.reps;
     case 'reps_left':
-      return 'I';
+      return tx.training.left;
     case 'reps_right':
-      return 'D';
+      return tx.training.right;
     case 'duration_sec':
-      return 'Tiempo';
+      return tx.fitness.block.time;
     case 'distance_m':
       return 'm';
     default:
@@ -148,22 +113,26 @@ export const ExerciseBlock = memo(function ExerciseBlock(props: ExerciseBlockPro
   const { exercise, catalog, columns, previous, prs, pendientes, unit, effortScale, editable, legacyNote, groupLabel, protocolLabel, stickyNote } = props;
   const anchas = useAccionesAnchas();
   const theme = useTheme();
+  const tx = useT();
+  const lang = useLanguage();
+  const b = tx.fitness.block;
+  const nombre = workoutExerciseName(exercise.name, catalog, lang);
   const sets = exercise.workout_sets;
   // El calentamiento no cuenta: la "serie 1" es la primera efectiva.
   const etiquetas: string[] = [];
   let numero = 0;
   for (const s of sets) {
     if (s.set_type !== 'warmup') numero += 1;
-    etiquetas.push(ETIQUETA_TIPO[s.set_type] ?? String(numero));
+    etiquetas.push(tx.training.setTypeShort[s.set_type] ?? String(numero));
   }
 
-  const musculos = catalog?.primary_muscles.slice(0, 2).map((m) => (MUSCLES as Record<string, string>)[m] ?? m).join(', ');
+  const musculos = catalog?.primary_muscles.slice(0, 2).map((m) => muscleName(m, lang)).join(', ');
 
   return (
     <View style={[styles.bloque, { borderColor: theme.border, backgroundColor: theme.surface }]}>
       <View style={styles.encabezado}>
         {groupLabel ? (
-          <View style={[styles.grupo, { backgroundColor: theme.ink }]} accessibilityLabel={`Agrupación ${groupLabel}`}>
+          <View style={[styles.grupo, { backgroundColor: theme.ink }]} accessibilityLabel={b.group(groupLabel)}>
             <AppText variant="label" color="onInk">
               {groupLabel}
             </AppText>
@@ -171,12 +140,12 @@ export const ExerciseBlock = memo(function ExerciseBlock(props: ExerciseBlockPro
         ) : null}
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel={catalog ? `Ver el progreso de ${exercise.name}` : exercise.name}
+          accessibilityLabel={catalog ? b.seeProgress(nombre) : nombre}
           disabled={!catalog}
           onPress={() => props.onOpenDetail(exercise)}
           style={({ pressed }) => [styles.titulo, pressed ? styles.pressed : null]}>
           <AppText variant="bodyStrong" numberOfLines={2}>
-            {exercise.name || 'Ejercicio sin nombre'}
+            {nombre || b.unnamed}
           </AppText>
           {musculos || protocolLabel ? (
             <AppText variant="caption" color="textTertiary" numberOfLines={1}>
@@ -185,20 +154,20 @@ export const ExerciseBlock = memo(function ExerciseBlock(props: ExerciseBlockPro
           ) : null}
         </Pressable>
         {props.onOpenTimer ? (
-          <IconButton label={`Timer de ${protocolLabel ?? 'intervalos'}`} onPress={() => props.onOpenTimer?.(exercise)}>
+          <IconButton label={b.timerFor(protocolLabel)} onPress={() => props.onOpenTimer?.(exercise)}>
             <Timer size={IconSize.action} strokeWidth={IconStroke} color={theme.text} />
           </IconButton>
         ) : null}
         {catalog ? <ChevronRight size={IconSize.inline} strokeWidth={IconStroke} color={theme.textTertiary} /> : null}
         {editable ? (
-          <IconButton label={`Opciones de ${exercise.name}`} onPress={() => props.onExerciseMenu(exercise)}>
+          <IconButton label={b.optionsFor(nombre)} onPress={() => props.onExerciseMenu(exercise)}>
             <Ellipsis size={IconSize.action} strokeWidth={IconStroke} color={theme.textSecondary} />
           </IconButton>
         ) : null}
       </View>
 
       {stickyNote ? (
-        <View style={[styles.nota, { backgroundColor: theme.surfaceAlt }]} accessibilityLabel={`Nota fija: ${stickyNote}`}>
+        <View style={[styles.nota, { backgroundColor: theme.surfaceAlt }]} accessibilityLabel={b.pinnedNote(stickyNote)}>
           <Pin size={14} strokeWidth={IconStroke} color={theme.textSecondary} />
           <AppText variant="caption" color="textSecondary" style={styles.flex}>
             {stickyNote}
@@ -206,7 +175,7 @@ export const ExerciseBlock = memo(function ExerciseBlock(props: ExerciseBlockPro
         </View>
       ) : null}
       {exercise.notes ? (
-        <View style={styles.nota} accessibilityLabel={`Nota del ejercicio: ${exercise.notes}`}>
+        <View style={styles.nota} accessibilityLabel={b.exerciseNote(exercise.notes)}>
           <MessageSquareText size={14} strokeWidth={IconStroke} color={theme.textSecondary} />
           <AppText variant="caption" color="textSecondary" style={styles.flex}>
             {exercise.notes}
@@ -227,17 +196,17 @@ export const ExerciseBlock = memo(function ExerciseBlock(props: ExerciseBlockPro
             #
           </AppText>
           <AppText variant="micro" color="textTertiary" style={styles.colAnterior}>
-            Anterior
+            {b.previous}
           </AppText>
           {columns.map((c) => (
             <AppText key={c} variant="micro" color="textTertiary" style={c === 'weight_kg' || c === 'duration_sec' || c === 'distance_m' ? styles.colAncha : styles.colCorta}>
-              {columnLabel(c, unit)}
+              {columnLabel(c, unit, lang)}
             </AppText>
           ))}
           {props.onExplain ? (
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel={effortScale === 'rir' ? 'Qué es RIR' : 'Qué es RPE'}
+              accessibilityLabel={b.whatIs(effortScale === 'rir' ? 'RIR' : 'RPE')}
               hitSlop={8}
               onPress={() => props.onExplain?.(effortScale)}
               style={styles.colCorta}>
@@ -280,11 +249,11 @@ export const ExerciseBlock = memo(function ExerciseBlock(props: ExerciseBlockPro
       {editable ? (
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel={`Agregar serie a ${exercise.name}`}
+          accessibilityLabel={b.addSetTo(nombre)}
           onPress={() => props.onAddSet(exercise)}
           style={({ pressed }) => [styles.agregar, { borderColor: theme.border }, pressed ? { backgroundColor: theme.surfaceAlt } : null]}>
           <Plus size={IconSize.inline} strokeWidth={IconStroke} color={theme.text} />
-          <AppText variant="label">Serie</AppText>
+          <AppText variant="label">{b.set}</AppText>
         </Pressable>
       ) : null}
     </View>
@@ -302,6 +271,9 @@ type FilaProps = ExerciseBlockProps & {
 
 function FilaSerie(p: FilaProps) {
   const theme = useTheme();
+  const tx = useT();
+  const lang = useLanguage();
+  const b = tx.fitness.block;
   const swipe = useRef<SwipeableMethods>(null);
   const { set, exercise, columns, unit, effortScale, editable } = p;
   const anchas = useAccionesAnchas();
@@ -309,17 +281,17 @@ function FilaSerie(p: FilaProps) {
   const esfuerzo = effortScale === 'rir' ? set.rir : set.rpe;
   const main = set.segments[0];
   const textoAnterior = p.anterior?.segments[0]
-    ? formatSegment(p.anterior.segments[0], unit)
+    ? formatSegment(p.anterior.segments[0], unit, lang)
     : set.target?.reps_min
-      ? `obj. ${set.target.reps_min}${set.target.reps_max && set.target.reps_max !== set.target.reps_min ? `–${set.target.reps_max}` : ''}`
+      ? b.goal(`${set.target.reps_min}${set.target.reps_max && set.target.reps_max !== set.target.reps_min ? `–${set.target.reps_max}` : ''}`)
       : '–';
   /** Lo que la serie tiene de especial, en una línea: "Drop set · tempo 3-1-X-0 · fallo". */
   const detalle = [
-    ...set.intensifiers.map(intensifierLabel),
-    set.tempo ? `tempo ${set.tempo}` : null,
-    set.failure ? 'fallo' : null,
-    set.load_mods?.added_kg ? `+${set.load_mods.added_kg} kg lastre` : null,
-    set.spotter ? 'con spotter' : null,
+    ...set.intensifiers.map((k) => intensifierLabel(k, lang)),
+    set.tempo ? b.tempo(set.tempo) : null,
+    set.failure ? b.failure : null,
+    set.load_mods?.added_kg ? b.addedLoad(set.load_mods.added_kg) : null,
+    set.spotter ? b.spotted : null,
   ]
     .filter(Boolean)
     .join(' · ');
@@ -328,7 +300,7 @@ function FilaSerie(p: FilaProps) {
     <Pressable
       key={`${segmentIndex}-${field}`}
       accessibilityRole="button"
-      accessibilityLabel={`${columnLabel(field, unit)} de la serie ${p.etiqueta}: ${valorCelda(set, segmentIndex, field, unit)}`}
+      accessibilityLabel={b.cellA11y(columnLabel(field, unit, lang), p.etiqueta, valorCelda(set, segmentIndex, field, unit))}
       disabled={!editable}
       onPress={() => p.onEdit({ setId: set.id, segmentIndex, field })}
       style={({ pressed }) => [
@@ -350,8 +322,8 @@ function FilaSerie(p: FilaProps) {
         {p.drag.handle(
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel={`Opciones de la serie ${p.etiqueta}`}
-            accessibilityHint={editable ? 'Mantén presionado y arrastra para cambiarla de lugar.' : undefined}
+            accessibilityLabel={b.setOptions(p.etiqueta)}
+            accessibilityHint={editable ? b.dragHint : undefined}
             disabled={!editable}
             // Al soltar un arrastre no se abre el menú.
             onPress={() => (p.drag.justDragged() ? undefined : p.onSetMenu(exercise, set))}
@@ -364,7 +336,7 @@ function FilaSerie(p: FilaProps) {
 
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel={p.anterior ? `Copiar lo anterior: ${textoAnterior}` : 'Sin registro anterior'}
+          accessibilityLabel={p.anterior ? b.copyPrevious(textoAnterior) : b.noPrevious}
           disabled={!editable || !p.anterior}
           onPress={() => p.anterior && p.onCopyPrevious(set, p.anterior)}
           style={styles.colAnterior}>
@@ -377,7 +349,7 @@ function FilaSerie(p: FilaProps) {
 
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel={`${effortScale === 'rir' ? 'RIR' : 'RPE'} de la serie ${p.etiqueta}`}
+          accessibilityLabel={b.effortOf(effortScale === 'rir' ? 'RIR' : 'RPE', p.etiqueta)}
           disabled={!editable}
           onPress={() => p.onEdit({ setId: set.id, segmentIndex: 0, field: 'effort' })}
           style={({ pressed }) => [styles.colCorta, styles.celda, { backgroundColor: pressed ? theme.border : hecha ? 'transparent' : theme.surfaceAlt }]}>
@@ -389,7 +361,7 @@ function FilaSerie(p: FilaProps) {
         <Pressable
           accessibilityRole="checkbox"
           accessibilityState={{ checked: hecha }}
-          accessibilityLabel={hecha ? `Desmarcar la serie ${p.etiqueta}` : `Marcar hecha la serie ${p.etiqueta}`}
+          accessibilityLabel={hecha ? b.uncheck(p.etiqueta) : b.markDone(p.etiqueta)}
           disabled={!editable}
           hitSlop={6}
           onPress={() => p.onToggle(exercise, set)}
@@ -402,10 +374,10 @@ function FilaSerie(p: FilaProps) {
         {ACCIONES_VISIBLES && editable ? (
           anchas ? (
             <View style={styles.colAcciones}>
-              <IconButton label={`Duplicar la serie ${p.etiqueta}`} onPress={() => p.onDuplicate(exercise, set)}>
+              <IconButton label={b.duplicateSet(p.etiqueta)} onPress={() => p.onDuplicate(exercise, set)}>
                 <Copy size={IconSize.inline} strokeWidth={IconStroke} color={theme.textTertiary} />
               </IconButton>
-              <IconButton label={`Borrar la serie ${p.etiqueta}`} onPress={() => p.onDelete(exercise, set)}>
+              <IconButton label={b.deleteSet(p.etiqueta)} onPress={() => p.onDelete(exercise, set)}>
                 <Trash2 size={IconSize.inline} strokeWidth={IconStroke} color={theme.textTertiary} />
               </IconButton>
             </View>
@@ -413,7 +385,7 @@ function FilaSerie(p: FilaProps) {
             // "⋮" de 20 px de ancho con `hitSlop` hasta 44: a 390 px un botón de 44 empujaba fuera el número.
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel={`Más acciones de la serie ${p.etiqueta}: duplicar, borrar…`}
+              accessibilityLabel={b.moreActions(p.etiqueta)}
               hitSlop={{ top: 8, bottom: 8, left: 12, right: 12 }}
               onPress={() => p.onSetMenu(exercise, set)}
               style={({ pressed }) => [styles.colMas, pressed ? { opacity: 0.6 } : null]}>
@@ -430,13 +402,13 @@ function FilaSerie(p: FilaProps) {
             <TramoVariante {...p} seg={seg} indice={j + 1} />
           ) : (
             <AppText variant="caption" color="textSecondary" style={styles.colAnterior}>
-              ↳ {NOMBRE_SEGMENTO[seg.kind] ?? seg.kind}
+              ↳ {segmentName(seg.kind, lang)}
             </AppText>
           )}
           {columns.map((c) => celda(j + 1, c))}
           <View style={styles.colCorta} />
           {editable ? (
-            <IconButton label={`Quitar ${NOMBRE_SEGMENTO[seg.kind] ?? 'segmento'}`} onPress={() => p.onRemoveSegment(set, j + 1)}>
+            <IconButton label={b.remove(segmentName(seg.kind, lang))} onPress={() => p.onRemoveSegment(set, j + 1)}>
               <X size={IconSize.inline} strokeWidth={IconStroke} color={theme.textTertiary} />
             </IconButton>
           ) : (
@@ -449,10 +421,10 @@ function FilaSerie(p: FilaProps) {
       {(main?.partial_reps || main?.forced_reps || main?.cheat_reps || detalle || tieneNota || p.prsSerie || p.pendiente || (main && isImbalanced(main))) ? (
         <View style={styles.extras}>
           {tieneNota ? (
-            <View style={styles.notaSerie} accessibilityLabel={`Nota de la serie: ${[set.notes, ...set.tags.map(tagLabel)].filter(Boolean).join(', ')}`}>
+            <View style={styles.notaSerie} accessibilityLabel={b.setNote([set.notes, ...set.tags.map((g) => tagLabel(g, lang))].filter(Boolean).join(', '))}>
               <MessageSquareText size={12} strokeWidth={IconStroke} color={theme.textSecondary} />
               <AppText variant="micro" color="textSecondary">
-                {[...set.tags.map(tagLabel), set.notes].filter(Boolean).join(' · ')}
+                {[...set.tags.map((g) => tagLabel(g, lang)), set.notes].filter(Boolean).join(' · ')}
               </AppText>
             </View>
           ) : null}
@@ -463,34 +435,34 @@ function FilaSerie(p: FilaProps) {
           ) : null}
           {main?.forced_reps ? (
             <AppText variant="micro" color="textSecondary">
-              + {main.forced_reps} forzadas
+              {b.forced(main.forced_reps)}
             </AppText>
           ) : null}
           {main?.cheat_reps ? (
             <AppText variant="micro" color="textSecondary">
-              + {main.cheat_reps} con trampa
+              {b.cheat(main.cheat_reps)}
             </AppText>
           ) : null}
           {main?.partial_reps ? (
             <AppText variant="micro" color="textSecondary">
-              + {main.partial_reps} parciales
+              {b.partials(main.partial_reps)}
             </AppText>
           ) : null}
           {main && isImbalanced(main) ? (
             <AppText variant="micro" color="today">
-              Desbalance I/D
+              {b.imbalance}
             </AppText>
           ) : null}
           {p.prsSerie ? (
             <Animated.View entering={p.celebrate ? ZoomIn.springify().damping(12) : undefined} style={[styles.pr, { backgroundColor: theme.ink }]}>
               <AppText variant="micro" color="onInk">
-                PR {p.prsSerie.map((k) => NOMBRE_PR[k]).join(' · ')}
+                {b.pr(p.prsSerie.map((k) => tx.training.prKinds[k]).join(' · '))}
               </AppText>
             </Animated.View>
           ) : null}
           {p.pendiente ? (
             <AppText variant="micro" color="textTertiary">
-              Guardando…
+              {b.saving}
             </AppText>
           ) : null}
         </View>
@@ -517,13 +489,13 @@ function FilaSerie(p: FilaProps) {
       renderLeftActions={() => (
         <View style={[styles.accion, styles.accionIzq, { backgroundColor: theme.surfaceAlt }]}>
           <Copy size={IconSize.inline} strokeWidth={IconStroke} color={theme.text} />
-          <AppText variant="caption">Duplicar</AppText>
+          <AppText variant="caption">{b.duplicate}</AppText>
         </View>
       )}
       renderRightActions={() => (
         <View style={[styles.accion, styles.accionDer, { backgroundColor: theme.danger }]}>
           <AppText variant="caption" color="onInk">
-            Borrar
+            {b.delete}
           </AppText>
           <Trash2 size={IconSize.inline} strokeWidth={IconStroke} color={theme.onInk} />
         </View>
@@ -542,17 +514,18 @@ function FilaSerie(p: FilaProps) {
 /** El tramo de un drop mecánico: muestra la variante y, si se puede editar, la elige. */
 function TramoVariante(p: FilaProps & { seg: SetSegment; indice: number }) {
   const theme = useTheme();
-  const nombre = p.seg.variant_exercise_id ? p.exerciseName?.(p.seg.variant_exercise_id) ?? 'Variante' : null;
+  const b = useT().fitness.block;
+  const nombre = p.seg.variant_exercise_id ? p.exerciseName?.(p.seg.variant_exercise_id) ?? b.variant : null;
   const puedeElegir = p.editable && !!p.onPickVariant;
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={nombre ? `Variante del drop: ${nombre}. Cambiar` : 'Elegir la variante del drop'}
+      accessibilityLabel={nombre ? b.variantA11y(nombre) : b.pickVariantA11y}
       disabled={!puedeElegir}
       onPress={() => p.onPickVariant?.(p.set, p.indice)}
       style={({ pressed }) => [styles.colAnterior, styles.variante, pressed ? { backgroundColor: theme.surfaceAlt } : null]}>
       <AppText variant="caption" color={nombre ? 'text' : puedeElegir ? 'textSecondary' : 'textTertiary'} numberOfLines={2}>
-        ↳ {nombre ?? (puedeElegir ? 'Elegir variante' : 'variante')}
+        ↳ {nombre ?? (puedeElegir ? b.pickVariant : b.variantLower)}
       </AppText>
     </Pressable>
   );
