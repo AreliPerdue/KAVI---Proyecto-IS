@@ -1,4 +1,5 @@
 import { Platform, Share } from 'react-native';
+import { t } from '@/i18n';
 
 /**
  * Comparte un texto con la hoja del sistema. En web usa la del navegador si existe y, si
@@ -29,7 +30,7 @@ export async function shareText(text: string): Promise<'shared' | 'copied' | 'ca
 export async function shareImage(uri: string, fileName: string): Promise<'shared' | 'downloaded' | 'cancelled'> {
   if (Platform.OS !== 'web') {
     const Sharing = await import('expo-sharing');
-    if (!(await Sharing.isAvailableAsync())) throw new Error('Este dispositivo no puede compartir archivos.');
+    if (!(await Sharing.isAvailableAsync())) throw new Error(t().errors.cantShareFiles);
     await Sharing.shareAsync(uri, { mimeType: 'image/png', UTI: 'public.png', dialogTitle: 'Compartir resumen' });
     return 'shared';
   }

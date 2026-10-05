@@ -12,10 +12,10 @@ import type { ListDetail, ListPermission, ListSearchResults, ListShare, ListsApi
 import { fromDayKey } from '@/lib/dates';
 import { graciaVencida } from '@/lib/list-runs';
 import { occursOn, parseRRule } from '@/lib/recurrence';
-import type { ListRun, ListTag } from '@/types/domain';
+import type { KaviList, ListItem, ListRun, ListSection, ListTag } from '@/types/domain';
 import { delay, demoState, emitDataChange, nextId } from '@/services/demo/store';
 import { AuthUiError } from '@/lib/auth-errors';
-import type { KaviList, ListItem, ListSection } from '@/types/domain';
+import { t } from '@/i18n';
 
 type StoredList = Omit<KaviList, 'pending_count' | 'total_count' | 'tag_ids'>;
 
@@ -59,7 +59,7 @@ function copia<T>(fila: T): T {
  */
 function conPerfil(fila: Omit<ListShare, 'profile'>): ListShare {
   const cuenta = demoState.accounts.find((a) => a.profile.id === fila.shared_with_id);
-  if (!cuenta) throw new AuthUiError('Ese contacto ya no existe.');
+  if (!cuenta) throw new AuthUiError(t().errors.contactGone);
   return { ...fila, profile: cuenta.profile };
 }
 
@@ -81,13 +81,13 @@ function ordenar(a: StoredList, b: StoredList): number {
 
 function buscarLista(listId: string): StoredList {
   const lista = lists.find((l) => l.id === listId);
-  if (!lista) throw new Error('Esa lista ya no existe.');
+  if (!lista) throw new Error(t().errors.listGone);
   return lista;
 }
 
 function buscarItem(itemId: string): ListItem {
   const item = items.find((i) => i.id === itemId);
-  if (!item) throw new Error('Ese elemento ya no existe.');
+  if (!item) throw new Error(t().errors.itemGone);
   return item;
 }
 
@@ -288,7 +288,7 @@ export const demoLists: ListsApi = {
   async renameSection(sectionId, name) {
     await delay();
     const seccion = sections.find((s) => s.id === sectionId);
-    if (!seccion) throw new Error('Esa sección ya no existe.');
+    if (!seccion) throw new Error(t().errors.sectionGone);
     seccion.name = name.trim();
     emitDataChange();
     return seccion;
@@ -418,7 +418,7 @@ export const demoLists: ListsApi = {
     else shares.push({ id: nextId('lshare'), list_id: listId, shared_with_id: userId, permission });
     emitDataChange();
     const fila = shares.find((sh) => sh.list_id === listId && sh.shared_with_id === userId);
-    if (!fila) throw new AuthUiError('No se pudo compartir la lista.');
+    if (!fila) throw new AuthUiError(t().errors.listShareFailed);
     return conPerfil(fila);
   },
 
@@ -459,7 +459,7 @@ export const demoLists: ListsApi = {
   async renameTag(tagId, name) {
     await delay();
     const tag = tags.find((t) => t.id === tagId);
-    if (!tag) throw new AuthUiError('Esa etiqueta ya no existe.');
+    if (!tag) throw new AuthUiError(t().errors.tagGone);
     tag.name = name.trim();
     emitDataChange();
     return { ...tag, list_count: tagLinks.filter((l) => l.tag_id === tag.id).length };
@@ -540,7 +540,7 @@ export const demoLists: ListsApi = {
   async setRunItem(runId, itemId, userId, done) {
     await delay(0);
     const vuelta = runs.find((r) => r.id === runId);
-    if (!vuelta) throw new AuthUiError('Esa vuelta ya se cerró.');
+    if (!vuelta) throw new AuthUiError(t().errors.runClosed);
     const i = vuelta.items.findIndex((x) => x.item_id === itemId);
     if (done && i < 0) vuelta.items.push({ item_id: itemId, by: userId });
     if (!done && i >= 0) vuelta.items.splice(i, 1);

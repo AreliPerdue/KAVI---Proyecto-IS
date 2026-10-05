@@ -2,6 +2,7 @@ import { AUTH_MESSAGES, AuthUiError, isOfflineError } from '@/lib/auth-errors';
 import { getSupabase } from '@/lib/supabase';
 import type { ProfilesApi } from '@/services/contracts';
 import type { Profile } from '@/types/domain';
+import { t } from '@/i18n';
 
 /**
  * Columnas explícitas en lugar de `*`, para no arrastrar campos que la app no usa.
@@ -15,7 +16,7 @@ function toProfileError(error: { message: string; code?: string }): AuthUiError 
   // 23505 = índice único de username; 23514 = no cumple el formato.
   if (error.code === '23505') return new AuthUiError(AUTH_MESSAGES.usernameTaken, error);
   if (error.code === '23514') {
-    return new AuthUiError('Ese usuario no es válido: solo letras minúsculas, números y guion bajo.', error);
+    return new AuthUiError(t().errors.usernameInvalid, error);
   }
   return new AuthUiError(AUTH_MESSAGES.generic, error);
 }

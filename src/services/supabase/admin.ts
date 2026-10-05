@@ -3,6 +3,7 @@ import { getSupabase } from '@/lib/supabase';
 import type { AdminApi } from '@/services/contracts';
 import { toError } from '@/services/supabase/errors';
 import type { AdminAccount, AdminStats } from '@/types/domain';
+import { t } from '@/i18n';
 
 /**
  * Spec 09 · Las dos funciones comprueban el rol dentro de la base (RF-AD6). Aquí no se
@@ -14,7 +15,7 @@ export const supabaseAdmin: AdminApi = {
     const { data, error } = await getSupabase().rpc('admin_stats');
     if (error) throw toError(error);
     const row = (data as AdminStats[] | null)?.[0];
-    if (!row) throw new AuthUiError('No se pudieron leer las estadísticas.');
+    if (!row) throw new AuthUiError(t().errors.statsFailed);
     return row;
   },
 

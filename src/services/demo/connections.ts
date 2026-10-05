@@ -2,6 +2,7 @@ import { AUTH_MESSAGES, AuthUiError } from '@/lib/auth-errors';
 import type { ConnectionsApi } from '@/services/contracts';
 import { delay, demoState, emitDataChange, nextId } from '@/services/demo/store';
 import type { Contact, Profile } from '@/types/domain';
+import { t } from '@/i18n';
 
 export function profileOf(userId: string): Profile {
   const account = demoState.accounts.find((a) => a.user.id === userId);
@@ -84,7 +85,7 @@ export const demoConnections: ConnectionsApi = {
 
   async request(userId, addresseeId) {
     await delay();
-    if (userId === addresseeId) throw new AuthUiError('No puedes enviarte una solicitud a ti mismo.');
+    if (userId === addresseeId) throw new AuthUiError(t().errors.cantRequestSelf);
     const exists = demoState.connections.find(
       (c) => (c.requester_id === userId && c.addressee_id === addresseeId) || (c.requester_id === addresseeId && c.addressee_id === userId),
     );
@@ -96,7 +97,7 @@ export const demoConnections: ConnectionsApi = {
   async accept(userId, connectionId) {
     await delay();
     const connection = demoState.connections.find((c) => c.id === connectionId);
-    if (!connection || connection.addressee_id !== userId) throw new AuthUiError('Esa solicitud ya no está disponible.');
+    if (!connection || connection.addressee_id !== userId) throw new AuthUiError(t().errors.requestGone);
     connection.status = 'accepted';
     connection.responded_at = new Date().toISOString();
     emitDataChange();
@@ -114,7 +115,7 @@ export const demoConnections: ConnectionsApi = {
 
   async setContactColor(userId, contactUserId, color) {
     await delay();
-    if (!areConnected(userId, contactUserId)) throw new AuthUiError('Solo puedes asignar color a contactos aceptados.');
+    if (!areConnected(userId, contactUserId)) throw new AuthUiError(t().errors.colorOnlyAccepted);
     demoState.contactColors = demoState.contactColors.filter((c) => !(c.owner_id === userId && c.contact_id === contactUserId));
     // null = volver a automático: se recalcula al leer, no se guarda nada.
     if (color) demoState.contactColors.push({ owner_id: userId, contact_id: contactUserId, color });
@@ -123,7 +124,7 @@ export const demoConnections: ConnectionsApi = {
 
   async setCalendarVisibility(userId, contactUserId, visibility) {
     await delay();
-    if (visibility && !areConnected(userId, contactUserId)) throw new AuthUiError('Solo puedes compartir tu calendario con contactos aceptados.');
+    if (visibility && !areConnected(userId, contactUserId)) throw new AuthUiError(t().errors.calendarOnlyAccepted);
     demoState.calendarShares = demoState.calendarShares.filter((s) => !(s.owner_id === userId && s.shared_with_id === contactUserId));
     if (visibility) {
       demoState.calendarShares.push({ id: nextId('cs'), owner_id: userId, shared_with_id: contactUserId, visibility, created_at: new Date().toISOString() });

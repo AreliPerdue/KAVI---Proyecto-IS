@@ -271,7 +271,7 @@ export default function ListsScreen() {
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={`${item.name}, ${subtitulo(item, tx, lang)}`}
-        accessibilityHint="Mantén presionado para reordenar"
+        accessibilityHint={tx.calendar.reorderHint}
         // Soltar una tarjeta no debe abrirla: el toque llega igual porque el arrastre no
         // lo cancela, así que se ignora el que venga pegado a un arrastre.
         onPress={() => {

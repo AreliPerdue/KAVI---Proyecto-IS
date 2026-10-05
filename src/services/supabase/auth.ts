@@ -5,6 +5,7 @@ import { AUTH_MESSAGES, AuthUiError, toAuthMessage } from '@/lib/auth-errors';
 import { getSupabase } from '@/lib/supabase';
 import type { AuthApi } from '@/services/contracts';
 import type { AuthUser } from '@/types/domain';
+import { t } from '@/i18n';
 
 function toAuthUser(user: User | null | undefined): AuthUser | null {
   if (!user) return null;
@@ -96,7 +97,7 @@ export const supabaseAuth: AuthApi = {
     const { error: signInError } = await db.auth.signInWithPassword({ email: email.trim().toLowerCase(), password });
     if (signInError) throw new AuthUiError(AUTH_MESSAGES.invalidCredentials, signInError);
     const { error } = await db.rpc('delete_my_account');
-    if (error) throw new AuthUiError('No se pudo eliminar tu cuenta. Revisa tu conexión e inténtalo de nuevo.', error);
+    if (error) throw new AuthUiError(t().errors.myAccountDeleteFailed, error);
     // El usuario ya no existe en el servidor: solo queda olvidar la sesión en este dispositivo.
     await db.auth.signOut({ scope: 'local' });
   },

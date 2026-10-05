@@ -11,6 +11,7 @@ import type {
   Contact,
   Profile,
 } from '@/types/domain';
+import { t } from '@/i18n';
 
 export const supabaseConnections: ConnectionsApi = {
   /**
@@ -68,13 +69,13 @@ export const supabaseConnections: ConnectionsApi = {
   },
 
   async request(userId, addresseeId) {
-    if (userId === addresseeId) throw new AuthUiError('No puedes enviarte una solicitud a ti mismo.');
+    if (userId === addresseeId) throw new AuthUiError(t().errors.cantRequestSelf);
     const { error } = await getSupabase()
       .from('connections')
       .insert({ requester_id: userId, addressee_id: addresseeId });
     // El índice único del par cubre las dos direcciones (A→B y B→A).
     if (error?.code === '23505') {
-      throw new AuthUiError('Ya hay una solicitud o un contacto entre ustedes.', error);
+      throw new AuthUiError(t().errors.alreadyConnected, error);
     }
     if (error) throw toError(error);
   },
@@ -88,7 +89,7 @@ export const supabaseConnections: ConnectionsApi = {
       .eq('addressee_id', userId)
       .select('id');
     if (error) throw toError(error);
-    if (!data || data.length === 0) throw new AuthUiError('Esa solicitud ya no está disponible.');
+    if (!data || data.length === 0) throw new AuthUiError(t().errors.requestGone);
   },
 
   /**
@@ -189,7 +190,7 @@ export const supabaseShares: SharesApi = {
       .eq('shared_with_id', userId)
       .select('id');
     if (error) throw toError(error);
-    if (!data || data.length === 0) throw new AuthUiError('Esa invitación ya no está disponible.');
+    if (!data || data.length === 0) throw new AuthUiError(t().errors.invitationGone);
   },
 
   /** RF-S6 · Salirse o (dueño) revocar. La RLS ya permite ambos casos y nada más. */

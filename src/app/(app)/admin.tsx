@@ -8,20 +8,21 @@ import { useAdminAccounts, useAdminStats, useIsAdmin } from '@/hooks/use-admin';
 import { useTheme } from '@/hooks/use-theme';
 import { formatShortDate, fromIso } from '@/lib/dates';
 import type { AdminAccount, AdminStats } from '@/types/domain';
+import { useLanguage, useT } from '@/i18n';
 
 const MAX_WIDTH = 720;
 
-const CARDS: { key: keyof AdminStats; label: string }[] = [
-  { key: 'total_accounts', label: 'Cuentas registradas' },
-  { key: 'accounts_7d', label: 'Altas (7 días)' },
-  { key: 'accounts_30d', label: 'Altas (30 días)' },
-  { key: 'active_users_30d', label: 'Activas (30 días)' },
-  { key: 'total_activities', label: 'Actividades' },
-  { key: 'activities_30d', label: 'Actividades (30 días)' },
-  { key: 'accepted_connections', label: 'Contactos' },
-  { key: 'shared_calendars', label: 'Calendarios compartidos' },
-  { key: 'custom_themes', label: 'Temas propios' },
-  { key: 'total_workouts', label: 'Entrenamientos' },
+const CARDS: readonly (keyof AdminStats)[] = [
+  'total_accounts',
+  'accounts_7d',
+  'accounts_30d',
+  'active_users_30d',
+  'total_activities',
+  'activities_30d',
+  'accepted_connections',
+  'shared_calendars',
+  'custom_themes',
+  'total_workouts',
 ];
 
 function StatCard({ label, value }: { label: string; value: number }) {
@@ -40,11 +41,13 @@ function StatCard({ label, value }: { label: string; value: number }) {
 
 function AccountRow({ item }: { item: AdminAccount }) {
   const theme = useTheme();
+  const tx = useT();
+  const lang = useLanguage();
   return (
     <View style={[styles.row, { borderColor: theme.border }]}>
       <View style={styles.rowText}>
         <AppText variant="bodyStrong" numberOfLines={1}>
-          {item.display_name ?? 'Sin nombre'}
+          {item.display_name ?? tx.profile.noName}
           {item.role === 'adminkavi' ? ' · admin' : ''}
         </AppText>
         <AppText variant="caption" color="textSecondary" numberOfLines={1}>
@@ -53,10 +56,10 @@ function AccountRow({ item }: { item: AdminAccount }) {
       </View>
       <View style={styles.rowMeta}>
         <AppText variant="caption" color="textSecondary" tabular>
-          {item.activity_count} act.
+          {tx.profile.adminPanel.activitiesShort(item.activity_count)}
         </AppText>
         <AppText variant="caption" color="textTertiary" tabular>
-          {formatShortDate(fromIso(item.created_at))}
+          {formatShortDate(fromIso(item.created_at), lang)}
         </AppText>
       </View>
     </View>
@@ -69,6 +72,7 @@ function AccountRow({ item }: { item: AdminAccount }) {
  * desplazable, en vez de una lista anidada dentro de un ScrollView.
  */
 export default function AdminScreen() {
+  const tx = useT();
   const isAdmin = useIsAdmin();
   const stats = useAdminStats();
   const accounts = useAdminAccounts();
@@ -81,8 +85,8 @@ export default function AdminScreen() {
   if (!isAdmin) {
     return (
       <Screen modal maxWidth={MAX_WIDTH}>
-        <ModalHeader title="Administración" />
-        <EmptyState title="Esta sección no está disponible" description="Tu cuenta no administra KAVI." />
+        <ModalHeader title={tx.profile.adminPanel.title} />
+        <EmptyState title={tx.profile.adminPanel.unavailableTitle} description={tx.profile.adminPanel.unavailableDescription} />
       </Screen>
     );
   }
@@ -94,12 +98,12 @@ export default function AdminScreen() {
       {stats.data ? (
         <View style={styles.grid}>
           {CARDS.map((c) => (
-            <StatCard key={c.key} label={c.label} value={stats.data[c.key]} />
+            <StatCard key={c} label={tx.profile.adminPanel.cards[c] ?? c} value={stats.data[c]} />
           ))}
         </View>
       ) : null}
       <View style={styles.section}>
-        <AppText variant="heading">Cuentas</AppText>
+        <AppText variant="heading">{tx.profile.adminPanel.accounts}</AppText>
         <AppText variant="caption" color="textSecondary">
           Quién está registrado. No incluye el contenido de sus calendarios.
         </AppText>
@@ -113,7 +117,7 @@ export default function AdminScreen() {
 
   return (
     <Screen modal maxWidth={MAX_WIDTH}>
-      <ModalHeader title="Administración" />
+      <ModalHeader title={tx.profile.adminPanel.title} />
       <FlatList
         data={accounts.data ?? []}
         keyExtractor={(item) => item.id}
@@ -121,7 +125,7 @@ export default function AdminScreen() {
         ListHeaderComponent={header}
         ListEmptyComponent={
           accounts.isSuccess ? (
-            <EmptyState title="Todavía no hay cuentas" description="Cuando alguien se registre, aparecerá aquí." />
+            <EmptyState title={tx.profile.adminPanel.noAccountsTitle} description={tx.profile.adminPanel.noAccountsDescription} />
           ) : null
         }
         showsVerticalScrollIndicator={false}

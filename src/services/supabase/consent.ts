@@ -4,7 +4,8 @@ import { AUTH_MESSAGES, AuthUiError, isOfflineError } from '@/lib/auth-errors';
 import type { GuardianStatus } from '@/lib/consent';
 import { getSupabase } from '@/lib/supabase';
 import type { ConsentApi } from '@/services/contracts';
-import { toError, unwrap } from '@/services/supabase/errors';
+import { toError, traducirDeLaBase, unwrap } from '@/services/supabase/errors';
+import { t } from '@/i18n';
 
 /**
  * La función de Vercel que manda el correo (`api/guardian-consent.ts`). En la web publicada es
@@ -44,7 +45,7 @@ export const supabaseConsent: ConsentApi = {
   async accept(birthDate, privacyVersion) {
     const db = getSupabase();
     const { data } = await db.auth.getUser();
-    if (!data.user) throw new AuthUiError('Necesitas iniciar sesión.');
+    if (!data.user) throw new AuthUiError(t().errors.signInRequired);
     const { error } = await db.from('account_consents').upsert({
       user_id: data.user.id,
       birth_date: birthDate,
@@ -58,7 +59,7 @@ export const supabaseConsent: ConsentApi = {
   async requestGuardianApproval(guardianEmail) {
     const { data } = await getSupabase().auth.getSession();
     const jwt = data.session?.access_token;
-    if (!jwt) throw new AuthUiError('Necesitas iniciar sesión.');
+    if (!jwt) throw new AuthUiError(t().errors.signInRequired);
     let respuesta: Response;
     try {
       respuesta = await fetch(API_CORREO, {
@@ -67,11 +68,11 @@ export const supabaseConsent: ConsentApi = {
         body: JSON.stringify({ guardianEmail: guardianEmail.trim().toLowerCase() }),
       });
     } catch (e) {
-      throw new AuthUiError(isOfflineError(e) ? AUTH_MESSAGES.offline : 'No se pudo enviar el correo. Revisa tu conexión.', e);
+      throw new AuthUiError(isOfflineError(e) ? AUTH_MESSAGES.offline : t().errors.emailSendFailedConnection, e);
     }
     if (!respuesta.ok) {
       const cuerpo = (await respuesta.json().catch(() => null)) as { error?: string } | null;
-      throw new AuthUiError(cuerpo?.error ?? 'No se pudo enviar el correo. Inténtalo más tarde.');
+      throw new AuthUiError(cuerpo?.error ? traducirDeLaBase(cuerpo.error) : t().errors.emailSendFailedLater);
     }
     return { previewLink: null };
   },
@@ -91,7 +92,7 @@ export const supabaseConsent: ConsentApi = {
   async deleteUnderageAccount() {
     const db = getSupabase();
     const { error } = await db.rpc('delete_my_account');
-    if (error) throw new AuthUiError('No se pudo eliminar la cuenta. Revisa tu conexión e inténtalo de nuevo.', error);
+    if (error) throw new AuthUiError(t().errors.accountDeleteFailed, error);
     await db.auth.signOut({ scope: 'local' });
   },
 };

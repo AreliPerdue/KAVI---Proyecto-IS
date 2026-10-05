@@ -2,10 +2,11 @@ import { AuthUiError } from '@/lib/auth-errors';
 import type { ThemesApi } from '@/services/contracts';
 import { delay, demoState, nextId } from '@/services/demo/store';
 import type { Theme, ThemeInput } from '@/types/domain';
+import { t } from '@/i18n';
 
 function buscar(id: string): Theme {
   const theme = demoState.themes.find((t) => t.id === id);
-  if (!theme) throw new AuthUiError('Ese tema ya no existe.');
+  if (!theme) throw new AuthUiError(t().errors.themeGone);
   return theme;
 }
 
@@ -64,7 +65,7 @@ export const demoThemes: ThemesApi = {
   async remove(id) {
     await delay();
     const theme = buscar(id);
-    if (theme.is_system) throw new AuthUiError('Los temas del sistema no se pueden borrar.');
+    if (theme.is_system) throw new AuthUiError(t().errors.systemThemesUndeletable);
     demoState.themes = demoState.themes.filter((t) => t.id !== id);
     // FK on delete set null: conservan color/icono copiados (RF-T6).
     demoState.activities = demoState.activities.map((a) => (a.theme_id === id ? { ...a, theme_id: null } : a));

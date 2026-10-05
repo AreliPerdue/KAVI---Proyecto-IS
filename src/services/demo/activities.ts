@@ -16,10 +16,11 @@ import { removeRemindersForActivities, syncRecipients } from '@/services/demo/re
 import { detachWorkoutsFromActivities } from '@/services/demo/workouts';
 import { delay, demoState, emitDataChange, nextId } from '@/services/demo/store';
 import type { Activity } from '@/types/domain';
+import { t } from '@/i18n';
 
 function find(id: string): Activity {
   const found = demoState.activities.find((a) => a.id === id);
-  if (!found) throw new AuthUiError('Esta actividad ya no existe.');
+  if (!found) throw new AuthUiError(t().errors.activityGone);
   return found;
 }
 

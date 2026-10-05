@@ -3,6 +3,7 @@ import { AuthUiError } from '@/lib/auth-errors';
 import { edadEn, EDAD_MINIMA, MAYORIA_DE_EDAD, type GuardianStatus } from '@/lib/consent';
 import type { ConsentApi } from '@/services/contracts';
 import { DEMO_USER, delay, demoState, nextId, setCurrentUser } from '@/services/demo/store';
+import { t } from '@/i18n';
 
 type Aceptacion = { birthDate: string; privacyVersion: string };
 type Solicitud = {
@@ -22,7 +23,7 @@ const hoy = () => new Date().toISOString().slice(0, 10);
 
 function yo() {
   const user = demoState.currentUser;
-  if (!user) throw new AuthUiError('Necesitas iniciar sesión.');
+  if (!user) throw new AuthUiError(t().errors.signInRequired);
   return user;
 }
 
@@ -55,15 +56,15 @@ export const demoConsent: ConsentApi = {
     await delay();
     const user = yo();
     const email = guardianEmail.trim().toLowerCase();
-    if (email === user.email) throw new AuthUiError('Escribe el correo de tu madre, padre o tutor, no el tuyo.');
+    if (email === user.email) throw new AuthUiError(t().errors.guardianNotYours);
     const nacimiento = aceptaciones.get(user.id)?.birthDate;
     const edad = nacimiento ? edadEn(nacimiento, hoy()) : -1;
     if (edad < EDAD_MINIMA || edad >= MAYORIA_DE_EDAD) {
-      throw new AuthUiError('La aprobación de un adulto solo se pide para cuentas de 16 o 17 años.');
+      throw new AuthUiError(t().errors.guardianAgeOnly);
     }
     const unDia = Date.now() - 24 * 60 * 60 * 1000;
     if (solicitudes.filter((s) => s.minorId === user.id && s.createdAt > unDia).length >= 5) {
-      throw new AuthUiError('Ya enviaste varios correos hoy. Inténtalo mañana.');
+      throw new AuthUiError(t().errors.tooManyEmailsToday);
     }
     for (const s of solicitudes) if (s.minorId === user.id && s.status === 'pending') s.status = 'replaced';
     const token = nextId('consent');
@@ -93,9 +94,9 @@ export const demoConsent: ConsentApi = {
   async decideGuardianRequest(token, approve) {
     await delay();
     const s = solicitudes.find((x) => x.token === token);
-    if (!s) throw new AuthUiError('Este enlace no es válido.');
+    if (!s) throw new AuthUiError(t().errors.linkInvalid);
     if (s.status !== 'pending') return s.status;
-    if (estado(s) === 'expired') throw new AuthUiError('Este enlace venció. Pide que te envíen uno nuevo desde KAVI.');
+    if (estado(s) === 'expired') throw new AuthUiError(t().errors.linkExpired);
     s.status = approve ? 'approved' : 'rejected';
     return s.status;
   },

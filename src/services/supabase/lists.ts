@@ -6,6 +6,7 @@ import { fromDayKey } from '@/lib/dates';
 import { graciaVencida } from '@/lib/list-runs';
 import { occursOn, parseRRule } from '@/lib/recurrence';
 import type { KaviList, ListItem, ListRun, ListSection, ListTag } from '@/types/domain';
+import { t } from '@/i18n';
 
 /** Separación entre órdenes contiguos, para que siempre quepa algo en medio. */
 const STEP = 1024;
@@ -66,7 +67,7 @@ async function listasDe(userId: string, archivadas: boolean): Promise<KaviList[]
 async function getLista(listId: string): Promise<KaviList> {
   const { data, error } = await getSupabase().from('lists').select(SELECT_LISTA).eq('id', listId).maybeSingle();
   if (error) throw toError(error);
-  if (!data) throw new AuthUiError('Esa lista ya no existe.');
+  if (!data) throw new AuthUiError(t().errors.listGone);
   return toList(data as unknown as ListRow);
 }
 
@@ -99,7 +100,7 @@ async function dueñoActual(fallback: string): Promise<string> {
   const { data } = await getSupabase().auth.getUser();
   const sesion = data.user?.id;
   if (sesion && sesion !== fallback) {
-    // eslint-disable-next-line no-console -- divergencia que explica fallos de permiso
+     
     console.warn('[kavi] el id de la app y el de la sesión no coinciden:', fallback, '≠', sesion);
   }
   return sesion ?? fallback;

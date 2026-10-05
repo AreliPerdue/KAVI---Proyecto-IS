@@ -5,6 +5,7 @@ import { formatTime, fromIso } from '@/lib/dates';
 import type { RemindersApi } from '@/services/contracts';
 import { delay, demoState, emitDataChange, nextId } from '@/services/demo/store';
 import type { Reminder, UpcomingReminder } from '@/types/domain';
+import { t } from '@/i18n';
 
 function toReminder(r: (typeof demoState.reminders)[number], userId: string): Reminder {
   const recipient = demoState.recipients.find((x) => x.reminder_id === r.id && x.user_id === userId);
@@ -52,8 +53,8 @@ export const demoReminders: RemindersApi = {
   async setForActivity(activityId, userId, offsets) {
     await delay(120);
     const activity = demoState.activities.find((a) => a.id === activityId);
-    if (!activity) throw new AuthUiError('Esta actividad ya no existe.');
-    if (activity.owner_id !== userId) throw new AuthUiError('Solo quien creó la actividad puede cambiar sus recordatorios.');
+    if (!activity) throw new AuthUiError(t().errors.activityGone);
+    if (activity.owner_id !== userId) throw new AuthUiError(t().errors.onlyCreatorReminders);
     const wanted = new Set(offsets);
     const current = demoState.reminders.filter((r) => r.activity_id === activityId);
     const toDelete = current.filter((r) => !wanted.has(r.offset_minutes)).map((r) => r.id);

@@ -1,6 +1,7 @@
 import { fromDayKey, fromIso, setTimeOfDay, startOfDay, toIso } from '@/lib/dates';
 import type { Activity, Contact, KaviList, ListItem, Profile, Workout } from '@/types/domain';
 import type { RutinaDelDia } from '@/lib/list-runs';
+import { getLanguage, type Language, t } from '@/i18n';
 
 export const WORKOUT_PREFIX = 'workout-';
 export const BIRTHDAY_PREFIX = 'birthday-';
@@ -68,7 +69,7 @@ const base = (id: string, ownerId: string) => ({
  * hecho nuevo: así se pueden ocultar con un interruptor sin borrar nada, y los
  * entrenamientos registrados antes de existir esta función aparecen igual.
  */
-export function workoutsToActivities(workouts: readonly Workout[]): Activity[] {
+export function workoutsToActivities(workouts: readonly Workout[], lang: Language = getLanguage()): Activity[] {
   return workouts
     .filter((w) => w.activity_id === null)
     .map((w) => {
@@ -76,7 +77,7 @@ export function workoutsToActivities(workouts: readonly Workout[]): Activity[] {
       const minutos = w.duration_minutes ?? 60;
       return {
         ...base(`${WORKOUT_PREFIX}${w.id}`, w.owner_id),
-        title: w.title || 'Entrenamiento',
+        title: w.title || t(lang).calendar.workoutFallback,
         dimension: 'fisica' as const,
         color: null,
         icon: WORKOUT_ICON,
@@ -109,6 +110,7 @@ export function birthdaysToActivities(
   personas: readonly Cumpleañero[],
   from: Date,
   to: Date,
+  lang: Language = getLanguage(),
 ): Activity[] {
   const salida: Activity[] = [];
   const años = new Set([from.getFullYear(), to.getFullYear()]);
@@ -125,7 +127,7 @@ export function birthdaysToActivities(
 
       salida.push({
         ...base(`${BIRTHDAY_PREFIX}${persona.id}-${año}`, persona.id),
-        title: `Cumpleaños de ${nombreDe(persona)}`,
+        title: t(lang).calendar.birthdayOf(nombreDe(persona)),
         dimension: 'social' as const,
         color: null,
         icon: BIRTHDAY_ICON,

@@ -33,12 +33,24 @@ export function toError(error: { message: string; code?: string; details?: strin
   // 22023 lo usan las funciones de la base que ya traen el mensaje en español para la persona
   // (consentimiento, RF-A13): se muestra tal cual.
   if (error.code === '22023') {
-    return new AuthUiError(error.message, error);
+    return new AuthUiError(traducirDeLaBase(error.message), error);
   }
   if (error.code === '23505') {
     return new AuthUiError(t().errors.alreadyExists, error);
   }
   return new AuthUiError(AUTH_MESSAGES.generic, error);
+}
+
+/**
+ * La base y la función de correo escriben sus mensajes en español (spec 12). Si el texto está en el diccionario de
+ * errores, se devuelve en el idioma activo; si no, tal cual.
+ */
+export function traducirDeLaBase(mensaje: string): string {
+  const es = t('es').errors as Record<string, unknown>;
+  const clave = Object.keys(es).find((k) => es[k] === mensaje);
+  const activo = t().errors as Record<string, unknown>;
+  const traducido = clave ? activo[clave] : undefined;
+  return typeof traducido === 'string' ? traducido : mensaje;
 }
 
 /** Lanza si hubo error; si no, devuelve los datos ya tipados. */

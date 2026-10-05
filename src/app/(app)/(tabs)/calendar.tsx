@@ -41,12 +41,13 @@ import { useAuth, useSnackbar } from '@/providers';
 import { extendRecurrenceHorizon } from '@/services/activities';
 import { DEFAULT_VIEW, useCalendarStore } from '@/store/calendar-store';
 import type { Activity, ListItem } from '@/types/domain';
-import { useT } from '@/i18n';
+import { useLanguage, useT } from '@/i18n';
 
 /** Calendario: la estrella (P1). Vistas mes/semana/día, personas superpuestas, FAB (spec 04). */
 export default function CalendarScreen() {
   const theme = useTheme();
   const tx = useT();
+  const lang = useLanguage();
   const router = useRouter();
   const showSnackbar = useSnackbar();
   const view = useCalendarStore((s) => s.view);
@@ -246,16 +247,17 @@ export default function CalendarScreen() {
    */
   const derivadas = useMemo(() => {
     const extras: Activity[] = [];
-    if (showWorkouts && workouts.data) extras.push(...workoutsToActivities(workouts.data));
+    if (showWorkouts && workouts.data) extras.push(...workoutsToActivities(workouts.data, lang));
     if (sinRejilla) {
       extras.push(...listItemsToActivities(itemsDelRango.data ?? [], misListas.data ?? []));
       extras.push(...routinesToActivities(rutinas));
     }
     if (showBirthdays) {
-      extras.push(...birthdaysToActivities(cumpleañerosDe(profile.data ?? undefined, contacts.data ?? []), range.from, range.to));
+      extras.push(...birthdaysToActivities(cumpleañerosDe(profile.data ?? undefined, contacts.data ?? []), range.from, range.to, lang));
     }
     return extras;
   }, [
+    lang,
     showWorkouts,
     workouts.data,
     showBirthdays,

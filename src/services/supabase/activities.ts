@@ -15,6 +15,7 @@ import { getSupabase } from '@/lib/supabase';
 import type { ActivitiesApi } from '@/services/contracts';
 import { toError, unwrap } from '@/services/supabase/errors';
 import type { Activity } from '@/types/domain';
+import { t } from '@/i18n';
 
 /** El nombre del dueño solo hace falta cuando la actividad no es mía (RF-S5, RF-S13). */
 const SELECT = '*, owner:profiles!activities_owner_id_fkey(display_name,username)';
@@ -86,7 +87,7 @@ async function findRoot(activity: Activity): Promise<Activity> {
 async function fetchOne(id: string): Promise<Activity> {
   const { data, error } = await getSupabase().from('activities').select('*').eq('id', id).maybeSingle();
   if (error) throw toError(error);
-  if (!data) throw new AuthUiError('Esta actividad ya no existe.');
+  if (!data) throw new AuthUiError(t().errors.activityGone);
   return data as Activity;
 }
 
@@ -156,7 +157,7 @@ export const supabaseActivities: ActivitiesApi = {
   async getById(id) {
     const { data, error } = await getSupabase().from('activities').select(SELECT).eq('id', id).maybeSingle();
     if (error) throw toError(error);
-    if (!data) throw new AuthUiError('Esta actividad ya no existe.');
+    if (!data) throw new AuthUiError(t().errors.activityGone);
     const row = data as Row;
     return toActivity(row, row.owner_id);
   },
