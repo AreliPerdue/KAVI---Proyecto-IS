@@ -12,7 +12,7 @@ import { ListHistorySheet } from '@/components/lists/list-history-sheet';
 import { ListRepeatSheet } from '@/components/lists/list-repeat-sheet';
 import { ListShareSheet } from '@/components/lists/list-share-sheet';
 import { ListTagsSheet } from '@/components/lists/list-tags-sheet';
-import { NOMBRE_POR_OMISION } from '@/app/(app)/lists';
+import { esNombrePorOmision } from '@/app/(app)/lists';
 import { tint } from '@/components/calendar/activity-style';
 import { ModalHeader } from '@/components/modal-header';
 import {
@@ -38,6 +38,7 @@ import { formatClock, formatDayTitle, formatHour, formatShortDate, fromDayKey, t
 import { describeRecurrence, parseRRule } from '@/lib/recurrence';
 import { useConfirm, useSnackbar } from '@/providers';
 import type { ListItem, ListSection } from '@/types/domain';
+import { useLanguage, useT } from '@/i18n';
 
 /* El anillo de foco del navegador se encimaba sobre el propio del campo; el cambio de
  * color al enfocar sigue haciendo de indicador visible. */
@@ -64,6 +65,7 @@ function TituloEditable({
   onSave: (nombre: string) => void;
 }) {
   const theme = useTheme();
+  const tx = useT();
   const [texto, setTexto] = useState(value);
   // Si el nombre cambia por fuera (otra pantalla, otro dispositivo) se refleja aquí, pero
   // no mientras se escribe: eso pisaría lo que la persona está tecleando.
@@ -97,7 +99,7 @@ function TituloEditable({
       selectTextOnFocus={autoFocus}
       returnKeyType="done"
       maxLength={40}
-      accessibilityLabel="Nombre de la lista"
+      accessibilityLabel={tx.lists.listName}
       style={[styles.titulo, SIN_ANILLO, { color: theme.text }]}
     />
   );
@@ -122,6 +124,8 @@ function Renglon({
   onOpen: () => void;
 }) {
   const theme = useTheme();
+  const tx = useT();
+  const lang = useLanguage();
   // Vencido solo mientras siga pendiente: una vez hecho, su fecha ya no reclama nada.
   const vencido = !hecho && item.due_date !== null && item.due_date < toDayKey(new Date());
   /*
@@ -135,7 +139,7 @@ function Renglon({
       <Pressable
         accessibilityRole="checkbox"
         accessibilityState={{ checked: hecho }}
-        accessibilityLabel={hecho ? `Marcar ${item.title} como pendiente` : `Marcar ${item.title} como hecho`}
+        accessibilityLabel={hecho ? tx.lists.markPending(item.title) : tx.lists.markDone(item.title)}
         hitSlop={10}
         onPress={() => {
           if (!arrastreReciente()) onToggle(!hecho);
@@ -152,7 +156,7 @@ function Renglon({
 
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel={`Editar ${item.title}`}
+        accessibilityLabel={tx.lists.editItem(item.title)}
         // Ignora el toque que llega pegado a un arrastre: soltar una fila no debe abrirla.
         onPress={() => {
           if (!arrastreReciente()) onOpen();
@@ -170,8 +174,8 @@ function Renglon({
             <View style={styles.meta}>
               {item.due_date ? (
                 <AppText variant="micro" color={vencido ? 'today' : 'textTertiary'} tabular>
-                  {formatShortDate(fromDayKey(item.due_date))}
-                  {item.due_time ? ` · ${formatClock(item.due_time)}` : ''}
+                  {formatShortDate(fromDayKey(item.due_date), lang)}
+                  {item.due_time ? ` · ${formatClock(item.due_time, lang)}` : ''}
                 </AppText>
               ) : null}
               {item.note ? (
@@ -192,6 +196,8 @@ function Renglon({
 export default function ListDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const theme = useTheme();
+  const tx = useT();
+  const lang = useLanguage();
   const confirm = useConfirm();
   const showSnackbar = useSnackbar();
   const detalle = useList(id);
@@ -295,8 +301,8 @@ export default function ListDetailScreen() {
     salida.push({
       kind: 'composer',
       id: 'composer-null',
-      label: 'Agregar elemento',
-      placeholder: `Elemento ${sueltos.length + 1}`,
+      label: tx.lists.addItem,
+      placeholder: tx.lists.itemPlaceholder(sueltos.length + 1),
       sectionId: null,
     });
     for (const sec of datos?.sections ?? []) {
@@ -306,13 +312,13 @@ export default function ListDetailScreen() {
       salida.push({
         kind: 'composer',
         id: `composer-${sec.id}`,
-        label: `Agregar en ${sec.name}`,
-        placeholder: `Elemento ${suyos.length + 1}`,
+        label: tx.lists.addIn(sec.name),
+        placeholder: tx.lists.itemPlaceholder(suyos.length + 1),
         sectionId: sec.id,
       });
     }
     return salida;
-  }, [sueltos, porSeccion, datos?.sections]);
+  }, [sueltos, porSeccion, datos?.sections, tx]);
 
   /**
    * Resuelve dónde cayó un elemento: en qué sección y entre qué vecinos.
@@ -395,14 +401,14 @@ export default function ListDetailScreen() {
     const item = editando;
     setEditando(null);
     const ok = await confirm({
-      title: 'Eliminar elemento',
+      title: tx.lists.deleteItemTitle,
       // Palomear conserva; eliminar no. Conviene decir cuál es cuál antes de borrar.
-      message: 'Si ya lo hiciste, paloméalo: se guarda en completados. Eliminar no se puede deshacer.',
-      confirmLabel: 'Eliminar',
+      message: tx.lists.deleteItemMessage,
+      confirmLabel: tx.lists.delete,
       destructive: true,
     });
     if (!ok) return;
-    removeItem.mutate(item.id, { onSuccess: () => showSnackbar({ message: 'Elemento eliminado.' }) });
+    removeItem.mutate(item.id, { onSuccess: () => showSnackbar({ message: tx.lists.itemDeleted }) });
   };
 
   const crearSeccion = () => {
@@ -483,7 +489,7 @@ export default function ListDetailScreen() {
     const intacta =
       !tocada.current &&
       datos !== undefined &&
-      datos.list.name === NOMBRE_POR_OMISION &&
+      esNombrePorOmision(datos.list.name) &&
       datos.items.length === 0 &&
       datos.sections.length === 0;
     if (intacta && datos) removeList.mutate(datos.list.id);
@@ -540,12 +546,12 @@ export default function ListDetailScreen() {
           {esRutina ? (
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel="Ver cómo te ha ido con esta rutina"
+              accessibilityLabel={tx.lists.routineHistoryA11y}
               onPress={() => setHistorialAbierto(true)}
               style={({ pressed }) => [styles.filaRutina, pressed ? { backgroundColor: theme.surfaceAlt } : null]}>
               <Repeat size={14} strokeWidth={IconStroke} color={color} />
               <AppText variant="caption" color="textSecondary">
-                {describeRecurrence(parseRRule(datos.list.recurrence_rule))} · cómo te ha ido
+                {tx.lists.howItsGoing(describeRecurrence(parseRRule(datos.list.recurrence_rule), lang))}
               </AppText>
             </Pressable>
           ) : null}
@@ -559,7 +565,7 @@ export default function ListDetailScreen() {
             <View style={styles.filaFechaLista}>
               <Pressable
                 accessibilityRole="button"
-                accessibilityLabel="Cambiar para cuándo es la lista"
+                accessibilityLabel={tx.lists.changeDueDate}
                 onPress={() => setFechaListaAbierta(true)}
                 style={({ pressed }) => [styles.filaRutina, pressed ? { backgroundColor: theme.surfaceAlt } : null]}>
                 <CalendarDays
@@ -568,12 +574,12 @@ export default function ListDetailScreen() {
                   color={datos.list.due_date < hoyClave ? theme.today : theme.textSecondary}
                 />
                 <AppText variant="caption" color={datos.list.due_date < hoyClave ? 'today' : 'textSecondary'}>
-                  Para el {formatShortDate(fromDayKey(datos.list.due_date))}
+                  {tx.lists.dueOn(formatShortDate(fromDayKey(datos.list.due_date), lang))}
                 </AppText>
               </Pressable>
               <Pressable
                 accessibilityRole="button"
-                accessibilityLabel="Quitar la fecha de la lista"
+                accessibilityLabel={tx.lists.removeDueDate}
                 hitSlop={8}
                 onPress={() => ponerFechaLista(datos.list.id, null)}
                 style={({ pressed }) => [styles.quitarFecha, pressed ? { backgroundColor: theme.surfaceAlt } : null]}>
@@ -591,7 +597,7 @@ export default function ListDetailScreen() {
             <Pressable
               accessibilityRole="button"
               accessibilityState={{ selected: enVueltaDeAyer }}
-              accessibilityLabel={`Ver la vuelta del ${formatShortDate(fromDayKey(vueltaPendiente.run_date))}`}
+              accessibilityLabel={tx.lists.runA11y(formatShortDate(fromDayKey(vueltaPendiente.run_date), lang))}
               onPress={() => setEnVueltaDeAyer((v) => !v)}
               style={({ pressed }) => [
                 styles.avisoVuelta,
@@ -600,9 +606,12 @@ export default function ListDetailScreen() {
                 pressed ? styles.pressed : null,
               ]}>
               <AppText variant="caption" color="today">
-                {enVueltaDeAyer ? 'Estás en' : 'Sigue abierta'} la vuelta del{' '}
-                {formatShortDate(fromDayKey(vueltaPendiente.run_date))} ·{' '}
-                {vueltaPendiente.completed_item_ids.length} de {datos.items.length}
+                {tx.lists.runBanner(
+                  enVueltaDeAyer,
+                  formatShortDate(fromDayKey(vueltaPendiente.run_date), lang),
+                  vueltaPendiente.completed_item_ids.length,
+                  datos.items.length,
+                )}
               </AppText>
             </Pressable>
           ) : null}
@@ -614,8 +623,8 @@ export default function ListDetailScreen() {
             {datos.items.length === 0 && datos.sections.length === 0 ? (
               <EmptyState
                 icon={<ThemeIcon name={datos.list.icon} color={theme.textTertiary} size={32} />}
-                title="Esta lista está vacía"
-                description="Agrega lo primero que no quieras olvidar."
+                title={tx.lists.emptyListTitle}
+                description={tx.lists.emptyListDescription}
               />
             ) : null}
 
@@ -646,26 +655,26 @@ export default function ListDetailScreen() {
             {seccionNueva ? (
               <View style={styles.seccionNueva}>
                 <TextField
-                  label="Nombre de la sección"
+                  label={tx.lists.sectionName}
                   value={nombreSeccion}
                   onChangeText={setNombreSeccion}
                   onSubmitEditing={crearSeccion}
-                  placeholder="Ej. Frutas y verduras"
+                  placeholder={tx.lists.sectionPlaceholder}
                   maxLength={40}
                   autoFocus
                   returnKeyType="done"
                 />
-                <Button title="Crear sección" onPress={crearSeccion} loading={addSection.isPending} />
+                <Button title={tx.lists.createSection} onPress={crearSeccion} loading={addSection.isPending} />
               </View>
             ) : (
               <Pressable
                 accessibilityRole="button"
-                accessibilityLabel="Nueva sección"
+                accessibilityLabel={tx.lists.newSection}
                 onPress={() => setSeccionNueva(true)}
                 style={({ pressed }) => [styles.filaSeccion, pressed ? { backgroundColor: theme.surfaceAlt } : null]}>
                 <FolderPlus size={IconSize.inline} strokeWidth={IconStroke} color={theme.textTertiary} />
                 <AppText variant="label" color="textTertiary">
-                  Nueva sección
+                  {tx.lists.newSection}
                 </AppText>
               </Pressable>
             )}
@@ -675,14 +684,14 @@ export default function ListDetailScreen() {
                 <Pressable
                   accessibilityRole="button"
                   accessibilityState={{ expanded: verCompletados }}
-                  accessibilityLabel={`Completados, ${completados.length}`}
+                  accessibilityLabel={tx.lists.completedA11y(completados.length)}
                   onPress={() => setVerCompletados((v) => !v)}
                   style={({ pressed }) => [
                     styles.completadosBoton,
                     pressed ? { backgroundColor: theme.surfaceAlt } : null,
                   ]}>
                   <AppText variant="caption" color="textSecondary">
-                    {verCompletados ? 'Ocultar' : 'Ver'} completados ({completados.length})
+                    {tx.lists.toggleCompleted(verCompletados, completados.length)}
                   </AppText>
                 </Pressable>
                 {verCompletados
@@ -707,28 +716,28 @@ export default function ListDetailScreen() {
         <View style={[styles.barra, { borderColor: theme.border }]}>
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel="Color e icono de la lista"
+            accessibilityLabel={tx.lists.appearanceA11y}
             onPress={() => setAparienciaAbierta(true)}
             style={({ pressed }) => [styles.barraBoton, pressed ? { backgroundColor: theme.surfaceAlt } : null]}>
             <Palette size={IconSize.action} strokeWidth={IconStroke} color={theme.textSecondary} />
           </Pressable>
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel="Compartir la lista"
+            accessibilityLabel={tx.lists.shareA11y}
             onPress={() => setCompartirAbierto(true)}
             style={({ pressed }) => [styles.barraBoton, pressed ? { backgroundColor: theme.surfaceAlt } : null]}>
             <UserPlus size={IconSize.action} strokeWidth={IconStroke} color={theme.textSecondary} />
           </Pressable>
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel="Etiquetas de la lista"
+            accessibilityLabel={tx.lists.tagsA11y}
             onPress={() => setEtiquetasAbierto(true)}
             style={({ pressed }) => [styles.barraBoton, pressed ? { backgroundColor: theme.surfaceAlt } : null]}>
             <Tag size={IconSize.action} strokeWidth={IconStroke} color={theme.textSecondary} />
           </Pressable>
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel="Para cuándo es la lista"
+            accessibilityLabel={tx.lists.dueA11y}
             onPress={() => setFechaListaAbierta(true)}
             style={({ pressed }) => [styles.barraBoton, pressed ? { backgroundColor: theme.surfaceAlt } : null]}>
             <CalendarDays
@@ -739,7 +748,7 @@ export default function ListDetailScreen() {
           </Pressable>
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel="Cada cuándo se repite"
+            accessibilityLabel={tx.lists.repeatA11y}
             onPress={() => setRepetirAbierto(true)}
             style={({ pressed }) => [styles.barraBoton, pressed ? { backgroundColor: theme.surfaceAlt } : null]}>
             <Repeat size={IconSize.action} strokeWidth={IconStroke} color={esRutina ? color : theme.textSecondary} />
@@ -760,7 +769,7 @@ export default function ListDetailScreen() {
         <DatePickerSheet
           visible={fechaListaAbierta}
           value={datos.list.due_date ? fromDayKey(datos.list.due_date) : new Date()}
-          title="Para cuándo es la lista"
+          title={tx.lists.dueTitle}
           onClose={() => setFechaListaAbierta(false)}
           onSelect={(fecha) => {
             ponerFechaLista(datos.list.id, fecha);
@@ -815,7 +824,7 @@ export default function ListDetailScreen() {
           <DatePickerSheet
             visible={fechaAbierta}
             value={editando.due_date ? fromDayKey(editando.due_date) : new Date()}
-            title="Día del pendiente"
+            title={tx.lists.itemDay}
             onClose={() => setFechaAbierta(false)}
             onSelect={(fecha) => {
               ponerFecha(editando, fecha);
@@ -829,7 +838,7 @@ export default function ListDetailScreen() {
                 ? Number(editando.due_time.slice(0, 2)) * 60 + Number(editando.due_time.slice(3, 5))
                 : 9 * 60
             }
-            title="Hora del pendiente"
+            title={tx.lists.itemTime}
             onClose={() => setHoraAbierta(false)}
             onSelect={(minutos) => {
               ponerHora(editando, minutos);
@@ -847,29 +856,29 @@ export default function ListDetailScreen() {
       <Sheet
         visible={editando !== null && !fechaAbierta && !horaAbierta}
         onClose={() => setEditando(null)}
-        title="Elemento">
+        title={tx.lists.itemSheet}>
         {editando ? (
           <View style={styles.hoja}>
             <TextField
-              label="Título"
+              label={tx.lists.titleField}
               value={borrador.title}
               onChangeText={(t) => setBorrador((b) => ({ ...b, title: t }))}
               maxLength={200}
             />
             <TextField
-              label="Nota"
+              label={tx.lists.note}
               value={borrador.note}
               onChangeText={(t) => setBorrador((b) => ({ ...b, note: t }))}
-              placeholder="Opcional"
+              placeholder={tx.lists.optional}
               maxLength={500}
               multiline
             />
 
             <View style={styles.fechas}>
               <FieldButton
-                label="Día"
-                value={editando.due_date ? formatDayTitle(fromDayKey(editando.due_date)) : null}
-                placeholder="Sin fecha"
+                label={tx.lists.day}
+                value={editando.due_date ? formatDayTitle(fromDayKey(editando.due_date), lang) : null}
+                placeholder={tx.lists.noDate}
                 leading={<CalendarDays size={IconSize.inline} strokeWidth={IconStroke} color={theme.textSecondary} />}
                 onPress={() => setFechaAbierta(true)}
               />
@@ -881,14 +890,14 @@ export default function ListDetailScreen() {
               {editando.due_date ? (
                 <>
                   <FieldButton
-                    label="Hora"
-                    value={editando.due_time ? formatClock(editando.due_time) : null}
-                    placeholder="Sin hora"
+                    label={tx.lists.time}
+                    value={editando.due_time ? formatClock(editando.due_time, lang) : null}
+                    placeholder={tx.lists.noTime}
                     leading={<Clock size={IconSize.inline} strokeWidth={IconStroke} color={theme.textSecondary} />}
                     onPress={() => setHoraAbierta(true)}
                   />
                   <AppText variant="caption" color="textTertiary">
-                    La hora no lo mueve a la rejilla del calendario: sigue en tu día.
+                    {tx.lists.timeHint}
                   </AppText>
                 </>
               ) : null}
@@ -903,22 +912,22 @@ export default function ListDetailScreen() {
                   <View style={styles.etiquetaAviso}>
                     <Bell size={IconSize.inline} strokeWidth={IconStroke} color={theme.textSecondary} />
                     <AppText variant="label" color="textSecondary">
-                      Recordatorio
+                      {tx.lists.reminder}
                     </AppText>
                   </View>
                   <View style={styles.chips}>
-                    {chipSeccion(editando.reminder_offset_minutes === null, 'Sin aviso', () =>
+                    {chipSeccion(editando.reminder_offset_minutes === null, tx.lists.noReminder, () =>
                       ponerRecordatorio(editando, null),
                     )}
                     {LIST_REMINDER_PRESETS.map((preset) =>
-                      chipSeccion(editando.reminder_offset_minutes === preset.offset, describeListOffset(preset.offset), () =>
+                      chipSeccion(editando.reminder_offset_minutes === preset.offset, describeListOffset(preset.offset, lang), () =>
                         ponerRecordatorio(editando, preset.offset),
                       ),
                     )}
                   </View>
                   {editando.reminder_offset_minutes !== null && !editando.due_time ? (
                     <AppText variant="caption" color="textTertiary">
-                      Se cuenta desde las {formatHour(LIST_REMINDER_DEFAULT_HOUR)} del día, porque este pendiente no tiene hora.
+                      {tx.lists.reminderFromHour(formatHour(LIST_REMINDER_DEFAULT_HOUR, lang))}
                     </AppText>
                   ) : null}
                 </View>
@@ -927,7 +936,7 @@ export default function ListDetailScreen() {
               {editando.due_date ? (
                 <ActionRow
                   icon={<X size={IconSize.action} strokeWidth={IconStroke} color={theme.textSecondary} />}
-                  label="Quitar la fecha"
+                  label={tx.lists.removeDate}
                   color="textSecondary"
                   onPress={() => ponerFecha(editando, null)}
                 />
@@ -937,10 +946,10 @@ export default function ListDetailScreen() {
             {datos && datos.sections.length > 0 ? (
               <View style={styles.mover}>
                 <AppText variant="label" color="textSecondary">
-                  Sección
+                  {tx.lists.section}
                 </AppText>
                 <View style={styles.chips}>
-                  {chipSeccion(editando.section_id === null, 'Sin sección', () => mover(editando, null))}
+                  {chipSeccion(editando.section_id === null, tx.lists.noSection, () => mover(editando, null))}
                   {datos.sections.map((s) =>
                     chipSeccion(editando.section_id === s.id, s.name, () => mover(editando, s.id)),
                   )}
@@ -951,13 +960,13 @@ export default function ListDetailScreen() {
             <View style={styles.orden}>
               <ActionRow
                 icon={<ArrowUp size={IconSize.action} strokeWidth={IconStroke} color={theme.text} />}
-                label="Subir"
+                label={tx.lists.moveUp}
                 disabled={hermanosDe(editando).findIndex((h) => h.id === editando.id) <= 0}
                 onPress={() => desplazar(editando, -1)}
               />
               <ActionRow
                 icon={<ArrowDown size={IconSize.action} strokeWidth={IconStroke} color={theme.text} />}
-                label="Bajar"
+                label={tx.lists.moveDown}
                 disabled={(() => {
                   const h = hermanosDe(editando);
                   return h.findIndex((x) => x.id === editando.id) >= h.length - 1;
@@ -966,10 +975,10 @@ export default function ListDetailScreen() {
               />
             </View>
 
-            <Button title="Guardar" onPress={guardarEdicion} loading={updateItem.isPending} />
+            <Button title={tx.lists.save} onPress={guardarEdicion} loading={updateItem.isPending} />
             <ActionRow
               icon={<Trash2 size={IconSize.action} strokeWidth={IconStroke} color={theme.danger} />}
-              label="Eliminar elemento"
+              label={tx.lists.deleteItem}
               color="danger"
               onPress={eliminarItem}
             />

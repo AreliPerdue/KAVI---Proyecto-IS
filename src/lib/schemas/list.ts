@@ -2,6 +2,7 @@ import { z } from 'zod';
 
 import { THEME_ICON_NAMES } from '@/constants/icons';
 import { PEOPLE_COLORS_DISPLAY } from '@/constants/people-colors';
+import { t } from '@/i18n';
 
 /**
  * Los colores de una lista salen de la paleta de personas, la misma de los Nobis
@@ -13,8 +14,12 @@ export const LIST_COLORS = PEOPLE_COLORS_DISPLAY.map((c) => c.hex);
 export const LIST_COLOR_OPTIONS = PEOPLE_COLORS_DISPLAY;
 
 export const listFormSchema = z.object({
-  name: z.string().trim().min(1, 'Escribe un nombre.').max(40, 'Máximo 40 caracteres.'),
-  color: z.string().refine((v) => LIST_COLORS.includes(v), 'Elige un color de la paleta.'),
+  name: z
+    .string()
+    .trim()
+    .min(1, { error: () => t().lists.nameRequired })
+    .max(40, { error: () => t().lists.max40 }),
+  color: z.string().refine((v) => LIST_COLORS.includes(v), { error: () => t().lists.pickPaletteColor }),
   icon: z.enum(THEME_ICON_NAMES as [string, ...string[]]),
 });
 

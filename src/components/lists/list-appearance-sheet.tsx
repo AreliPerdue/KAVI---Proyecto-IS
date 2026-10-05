@@ -6,6 +6,7 @@ import { THEME_ICON_NAMES } from '@/constants/icons';
 import { IconSize, Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { LIST_COLOR_OPTIONS } from '@/lib/schemas/list';
+import { useT } from '@/i18n';
 
 export type ListAppearanceSheetProps = {
   visible: boolean;
@@ -33,9 +34,10 @@ export function ListAppearanceSheet({
   onChangeIcon,
 }: ListAppearanceSheetProps) {
   const theme = useTheme();
+  const tx = useT();
 
   return (
-    <Sheet visible={visible} onClose={onClose} title="Color e icono">
+    <Sheet visible={visible} onClose={onClose} title={tx.lists.appearanceTitle}>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.cuerpo}>
         <View style={styles.seccion}>
           <AppText variant="label" color="textSecondary">
@@ -43,7 +45,7 @@ export function ListAppearanceSheet({
           </AppText>
           <View style={styles.rejilla}>
             {LIST_COLOR_OPTIONS.map((c) => (
-              <ColorSwatch key={c.id} hex={c.hex} label={`Color ${c.label.toLowerCase()}`} selected={color === c.hex} onPress={() => onChangeColor(c.hex)} />
+              <ColorSwatch key={c.id} hex={c.hex} label={tx.lists.colorA11y((tx.colors[c.id] ?? c.label).toLowerCase())} selected={color === c.hex} onPress={() => onChangeColor(c.hex)} />
             ))}
           </View>
         </View>
@@ -57,7 +59,7 @@ export function ListAppearanceSheet({
               <Pressable
                 key={n}
                 accessibilityRole="button"
-                accessibilityLabel={`Icono ${n}`}
+                accessibilityLabel={tx.lists.iconA11y(n)}
                 accessibilityState={{ selected: icon === n }}
                 onPress={() => onChangeIcon(n)}
                 style={({ pressed }) => [

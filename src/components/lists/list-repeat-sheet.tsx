@@ -7,14 +7,15 @@ import { useTheme } from '@/hooks/use-theme';
 import { formatDate, formatHour, fromDayKey, toDayKey, weekdayLabels, weekdayShort } from '@/lib/dates';
 import { HORA_CIERRE_VUELTA } from '@/lib/list-runs';
 import { parseRRule, type RecurrenceRule, toRRule } from '@/lib/recurrence';
+import { useLanguage, useT } from '@/i18n';
 
-type Opcion = { id: string; label: string; regla: RecurrenceRule | null };
+type Opcion = { id: 'none' | 'daily' | 'weekdays' | 'monthly'; regla: RecurrenceRule | null };
 
 const OPCIONES: Opcion[] = [
-  { id: 'none', label: 'No se repite', regla: null },
-  { id: 'daily', label: 'Todos los días', regla: { freq: 'DAILY', byDay: [], until: null } },
-  { id: 'weekdays', label: 'De lunes a viernes', regla: { freq: 'WEEKLY', byDay: [0, 1, 2, 3, 4], until: null } },
-  { id: 'monthly', label: 'Una vez al mes', regla: { freq: 'MONTHLY', byDay: [], until: null } },
+  { id: 'none', regla: null },
+  { id: 'daily', regla: { freq: 'DAILY', byDay: [], until: null } },
+  { id: 'weekdays', regla: { freq: 'WEEKLY', byDay: [0, 1, 2, 3, 4], until: null } },
+  { id: 'monthly', regla: { freq: 'MONTHLY', byDay: [], until: null } },
 ];
 
 /** Qué días trae puesta una regla ya guardada; solo las semanales tienen. */
@@ -46,6 +47,8 @@ export type ListRepeatSheetProps = {
  */
 export function ListRepeatSheet({ visible, onClose, rule, start, onChange }: ListRepeatSheetProps) {
   const theme = useTheme();
+  const tx = useT();
+  const lang = useLanguage();
   const actual = rule ?? null;
   const reglaGuardada = parseRRule(actual);
   /*
@@ -120,11 +123,10 @@ export function ListRepeatSheet({ visible, onClose, rule, start, onChange }: Lis
       La hoja se esconde mientras hay un selector de fecha abierto: dos `Modal` de React
       Native apilados se pelean por el frente y el de abajo puede tapar al de arriba.
     */}
-    <Sheet visible={visible && eligiendo === null} onClose={onClose} title="¿Se repite?">
+    <Sheet visible={visible && eligiendo === null} onClose={onClose} title={tx.lists.repeatTitle}>
       <ScrollView contentContainerStyle={styles.cuerpo} showsVerticalScrollIndicator={false}>
         <AppText variant="caption" color="textTertiary">
-          Una lista que se repite se vuelve una rutina: cada vuelta queda registrada y los
-          elementos se despaloman para la siguiente.
+          {tx.lists.repeatIntro}
         </AppText>
 
         {OPCIONES.map((o) => {
@@ -134,7 +136,7 @@ export function ListRepeatSheet({ visible, onClose, rule, start, onChange }: Lis
               key={o.id}
               accessibilityRole="button"
               accessibilityState={{ selected: activa }}
-              accessibilityLabel={o.label}
+              accessibilityLabel={tx.lists.repeatOptions[o.id]}
               onPress={() => elegir(o)}
               style={({ pressed }) => [
                 styles.fila,
@@ -142,7 +144,7 @@ export function ListRepeatSheet({ visible, onClose, rule, start, onChange }: Lis
                 pressed ? styles.pressed : null,
               ]}>
               <AppText variant="body" color={activa ? 'text' : 'textSecondary'}>
-                {o.label}
+                {tx.lists.repeatOptions[o.id]}
               </AppText>
             </Pressable>
           );
@@ -155,17 +157,17 @@ export function ListRepeatSheet({ visible, onClose, rule, start, onChange }: Lis
         */}
         <View style={styles.seccionDias}>
           <AppText variant="label" color="textSecondary">
-            O elige los días
+            {tx.lists.orPickDays}
           </AppText>
           <View style={styles.dias}>
-            {weekdayLabels().map((etiqueta, i) => {
+            {weekdayLabels(lang).map((etiqueta, i) => {
               const activo = diasElegidos.includes(i);
               return (
                 <Pressable
                   key={i}
                   accessibilityRole="button"
                   accessibilityState={{ selected: activo }}
-                  accessibilityLabel={weekdayShort()[i]}
+                  accessibilityLabel={weekdayShort(lang)[i]}
                   onPress={() => alternarDia(i)}
                   style={({ pressed }) => [
                     styles.dia,
@@ -189,22 +191,21 @@ export function ListRepeatSheet({ visible, onClose, rule, start, onChange }: Lis
         */}
         {reglaGuardada ? (
           <View style={styles.seccionDias}>
-            <FieldButton label="Empieza" value={formatDate(fromDayKey(inicio))} onPress={() => setEligiendo('inicio')} />
+            <FieldButton label={tx.lists.starts} value={formatDate(fromDayKey(inicio), lang)} onPress={() => setEligiendo('inicio')} />
             <SwitchRow
-              label="Termina en una fecha"
-              hint={hasta ? undefined : 'Si no, se repite sin fin. Para algo del semestre, marca hasta cuándo dura.'}
+              label={tx.lists.endsOnDate}
+              hint={hasta ? undefined : tx.lists.endsHint}
               value={hasta !== null}
               onValueChange={(on) => guardar(reglaGuardada, inicio, on ? inicio : null)}
             />
             {hasta ? (
-              <FieldButton label="Hasta" value={formatDate(fromDayKey(hasta))} onPress={() => setEligiendo('fin')} />
+              <FieldButton label={tx.lists.until} value={formatDate(fromDayKey(hasta), lang)} onPress={() => setEligiendo('fin')} />
             ) : null}
           </View>
         ) : null}
 
         <AppText variant="caption" color="textTertiary">
-          Una vuelta sigue editable hasta las {formatHour(HORA_CIERRE_VUELTA)} del día siguiente, por si apuntas lo de
-          ayer en la mañana.
+          {tx.lists.runEditableUntil(formatHour(HORA_CIERRE_VUELTA, lang))}
         </AppText>
       </ScrollView>
     </Sheet>
@@ -213,7 +214,7 @@ export function ListRepeatSheet({ visible, onClose, rule, start, onChange }: Lis
       <DatePickerSheet
         visible
         value={fromDayKey(eligiendo === 'inicio' ? inicio : (hasta ?? inicio))}
-        title={eligiendo === 'inicio' ? 'Empieza el' : 'Se repite hasta'}
+        title={eligiendo === 'inicio' ? tx.lists.startsOn : tx.lists.repeatsUntil}
         onClose={() => setEligiendo(null)}
         onSelect={(fecha) => {
           const dia = toDayKey(fecha);

@@ -6,10 +6,11 @@ import { common } from './common';
 import { dates } from './dates';
 import { errors } from './errors';
 import { fitness } from './fitness';
+import { lists } from './lists';
 import { nav } from './nav';
 import { profile } from './profile';
 import { shared } from './shared';
 import { themes } from './themes';
 
 /** El español manda: su forma es el tipo de todos los diccionarios (spec 12, RF-I8). */
-export const es = { account, auth, calendar, colors, common, dates, errors, fitness, nav, profile, shared, themes };
+export const es = { account, auth, calendar, colors, common, dates, errors, fitness, lists, nav, profile, shared, themes };

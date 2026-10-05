@@ -27,13 +27,11 @@ import { useTheme } from '@/hooks/use-theme';
 import { formatShortDate, fromDayKey, toDayKey } from '@/lib/dates';
 import { useSnackbar } from '@/providers';
 import type { KaviList, ListItem } from '@/types/domain';
+import { useLanguage, useT } from '@/i18n';
 
 export type VistaHoy = 'hoy' | 'algun-dia';
 
-const VISTAS = [
-  { value: 'hoy' as const, label: 'Hoy' },
-  { value: 'algun-dia' as const, label: 'Algún día' },
-];
+const VISTAS: readonly VistaHoy[] = ['hoy', 'algun-dia'];
 
 /**
  * Hoy y Algún día (RF-L24, RF-L25).
@@ -45,6 +43,8 @@ const VISTAS = [
  */
 export default function TodayScreen() {
   const theme = useTheme();
+  const tx = useT();
+  const lang = useLanguage();
   const router = useRouter();
   const showSnackbar = useSnackbar();
   const { vista: vistaInicial } = useLocalSearchParams<{ vista?: string }>();
@@ -93,14 +93,14 @@ export default function TodayScreen() {
     if (ids.length === 0) return;
     reschedule.mutate(
       { ids, dueDate: hoy },
-      { onSuccess: () => showSnackbar({ message: `${ids.length} ${ids.length === 1 ? 'pendiente' : 'pendientes'} para hoy.` }) },
+      { onSuccess: () => showSnackbar({ message: tx.lists.movedToToday(ids.length) }) },
     );
   };
 
   const agendar = (item: ListItem, fecha: Date) => {
     updateItem.mutate(
       { id: item.id, patch: { due_date: toDayKey(fecha) } },
-      { onSuccess: () => showSnackbar({ message: `"${item.title}" para el ${formatShortDate(fecha)}.` }) },
+      { onSuccess: () => showSnackbar({ message: tx.lists.movedTo(item.title, formatShortDate(fecha, lang)) }) },
     );
     setAgendando(null);
   };
@@ -119,7 +119,7 @@ export default function TodayScreen() {
     const hecho = item.completed_at !== null;
     const detalle = [
       opciones.conLista === false ? null : lista?.name,
-      opciones.vencido && item.due_date ? formatShortDate(fromDayKey(item.due_date)) : null,
+      opciones.vencido && item.due_date ? formatShortDate(fromDayKey(item.due_date), lang) : null,
     ].filter(Boolean);
 
     return (
@@ -127,7 +127,7 @@ export default function TodayScreen() {
         <Pressable
           accessibilityRole="checkbox"
           accessibilityState={{ checked: hecho }}
-          accessibilityLabel={hecho ? `Marcar ${item.title} como pendiente` : `Marcar ${item.title} como hecho`}
+          accessibilityLabel={hecho ? tx.lists.markPending(item.title) : tx.lists.markDone(item.title)}
           hitSlop={8}
           onPress={() => toggleItem.mutate({ id: item.id, done: !hecho })}
           style={({ pressed }) => [styles.casillaToque, pressed ? styles.pressed : null]}>
@@ -142,7 +142,7 @@ export default function TodayScreen() {
 
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel={`Abrir ${item.title} en ${lista?.name ?? 'su lista'}`}
+          accessibilityLabel={tx.lists.openItemIn(item.title, lista?.name ?? null)}
           onPress={() => abrirLista(item.list_id)}
           style={({ pressed }) => [styles.cuerpo, pressed ? { backgroundColor: theme.surfaceAlt } : null]}>
           <AppText
@@ -163,7 +163,7 @@ export default function TodayScreen() {
         {vista === 'algun-dia' ? (
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel={`Ponerle día a ${item.title}`}
+            accessibilityLabel={tx.lists.setDayFor(item.title)}
             hitSlop={8}
             onPress={() => setAgendando(item)}
             style={({ pressed }) => [styles.accion, pressed ? { backgroundColor: theme.surfaceAlt } : null]}>
@@ -178,7 +178,7 @@ export default function TodayScreen() {
     <Pressable
       key={lista.id}
       accessibilityRole="button"
-      accessibilityLabel={`Abrir la lista ${lista.name}`}
+      accessibilityLabel={tx.lists.openList(lista.name)}
       onPress={() => abrirLista(lista.id)}
       style={({ pressed }) => [
         styles.filaLista,
@@ -190,7 +190,7 @@ export default function TodayScreen() {
         {lista.name}
       </AppText>
       <AppText variant="caption" color={lista.due_date !== null && lista.due_date < hoy ? 'today' : 'textTertiary'}>
-        {lista.pending_count > 0 ? `${lista.pending_count} sin hacer` : 'todo listo'}
+        {lista.pending_count > 0 ? tx.lists.notDone(lista.pending_count) : tx.lists.allDone}
       </AppText>
     </Pressable>
   );
@@ -221,9 +221,9 @@ export default function TodayScreen() {
 
   return (
     <Screen contentStyle={styles.content}>
-      <ModalHeader back title={vista === 'hoy' ? 'Hoy' : 'Algún día'} />
+      <ModalHeader back title={tx.lists.todayView[vista]} />
 
-      <Segmented options={VISTAS} value={vista} onChange={setVista} fullWidth />
+      <Segmented options={VISTAS.map((v) => ({ value: v, label: tx.lists.todayView[v] }))} value={vista} onChange={setVista} fullWidth />
 
       {consulta.isPending ? <LoadingState /> : null}
       {consulta.isError ? <ErrorState message={consulta.error.message} onRetry={() => consulta.refetch()} /> : null}
@@ -234,8 +234,8 @@ export default function TodayScreen() {
             vacioHoy ? (
               <EmptyState
                 icon={<CircleCheck size={32} strokeWidth={IconStroke} color={theme.textTertiary} />}
-                title="Nada para hoy"
-                description="Lo que tenga fecha de hoy, y lo que se te haya pasado, aparece aquí."
+                title={tx.lists.nothingTodayTitle}
+                description={tx.lists.nothingTodayDescription}
               />
             ) : (
               <>
@@ -247,8 +247,8 @@ export default function TodayScreen() {
                 {(atrasados.data ?? []).length > 0 ? (
                   <View style={styles.grupo}>
                     {encabezado(
-                      'Atrasado',
-                      { label: 'Pasar todo a hoy', onPress: reprogramarTodo },
+                      tx.lists.late,
+                      { label: tx.lists.moveAllToToday, onPress: reprogramarTodo },
                       true,
                     )}
                     {(atrasados.data ?? []).map((i) => fila(i, { vencido: true }))}
@@ -257,14 +257,14 @@ export default function TodayScreen() {
 
                 {(delDia.data ?? []).length > 0 ? (
                   <View style={styles.grupo}>
-                    {encabezado('Hoy')}
+                    {encabezado(tx.lists.today)}
                     {(delDia.data ?? []).map((i) => fila(i))}
                   </View>
                 ) : null}
 
                 {listasDeHoy.length > 0 ? (
                   <View style={styles.grupo}>
-                    {encabezado('Listas que vencen')}
+                    {encabezado(tx.lists.listsDue)}
                     {listasDeHoy.map(filaLista)}
                   </View>
                 ) : null}
@@ -273,15 +273,15 @@ export default function TodayScreen() {
           ) : grupos.length === 0 ? (
             <EmptyState
               icon={<Inbox size={32} strokeWidth={IconStroke} color={theme.textTertiary} />}
-              title="Nada sin fecha"
-              description="Aquí caen los pendientes a los que todavía no les pones día."
+              title={tx.lists.nothingUndatedTitle}
+              description={tx.lists.nothingUndatedDescription}
             />
           ) : (
             grupos.map(({ lista, items }) => (
               <View key={lista.id} style={styles.grupo}>
                 <Pressable
                   accessibilityRole="button"
-                  accessibilityLabel={`Abrir la lista ${lista.name}`}
+                  accessibilityLabel={tx.lists.openList(lista.name)}
                   onPress={() => abrirLista(lista.id)}
                   style={({ pressed }) => [styles.encabezadoLista, pressed ? styles.pressed : null]}>
                   <ThemeIcon name={lista.icon} color={lista.color} size={16} />
@@ -300,7 +300,7 @@ export default function TodayScreen() {
         <DatePickerSheet
           visible
           value={new Date()}
-          title="¿Qué día?"
+          title={tx.lists.whichDay}
           onClose={() => setAgendando(null)}
           onSelect={(fecha) => agendar(agendando, fecha)}
         />

@@ -6,6 +6,7 @@ import { useListHistory } from '@/hooks/use-lists';
 import { useTheme } from '@/hooks/use-theme';
 import { formatShortDate, fromDayKey } from '@/lib/dates';
 import { resumirVueltas } from '@/lib/list-runs';
+import { useLanguage, useT } from '@/i18n';
 
 export type ListHistorySheetProps = {
   visible: boolean;
@@ -26,18 +27,20 @@ export type ListHistorySheetProps = {
  */
 export function ListHistorySheet({ visible, onClose, listId, accent }: ListHistorySheetProps) {
   const theme = useTheme();
+  const tx = useT();
+  const lang = useLanguage();
   const historial = useListHistory(visible ? listId : undefined);
   const vueltas = historial.data ?? [];
   const resumen = resumirVueltas(vueltas);
 
   return (
-    <Sheet visible={visible} onClose={onClose} title="Cómo te ha ido">
+    <Sheet visible={visible} onClose={onClose} title={tx.lists.historyTitle}>
       {historial.isPending ? <LoadingState /> : null}
 
       {historial.isSuccess && vueltas.length === 0 ? (
         <EmptyState
-          title="Todavía no hay vueltas cerradas"
-          description="Cada vez que termine un día, esta rutina queda registrada aquí."
+          title={tx.lists.noRunsTitle}
+          description={tx.lists.noRunsDescription}
         />
       ) : null}
 
@@ -48,15 +51,13 @@ export function ListHistorySheet({ visible, onClose, listId, accent }: ListHisto
               {resumen.completas}
             </AppText>
             <AppText variant="body" color="textSecondary">
-              {resumen.completas === 1 ? 'vez la hiciste completa' : 'veces la hiciste completa'}
+              {tx.lists.timesComplete(resumen.completas)}
             </AppText>
           </View>
 
           <AppText variant="caption" color="textTertiary">
-            {resumen.registradas} {resumen.registradas === 1 ? 'vuelta registrada' : 'vueltas registradas'}
-            {resumen.promedioTotal > 0
-              ? ` · en promedio, ${resumen.promedioHechos} de ${resumen.promedioTotal} cosas por vuelta`
-              : ''}
+            {tx.lists.runsLogged(resumen.registradas)}
+            {resumen.promedioTotal > 0 ? tx.lists.averagePerRun(resumen.promedioHechos, resumen.promedioTotal) : ''}
           </AppText>
 
           <View style={styles.lista}>
@@ -65,7 +66,7 @@ export function ListHistorySheet({ visible, onClose, listId, accent }: ListHisto
               return (
                 <View key={v.id} style={styles.fila}>
                   <AppText variant="body" color="textSecondary" style={styles.fecha}>
-                    {formatShortDate(fromDayKey(v.run_date))}
+                    {formatShortDate(fromDayKey(v.run_date), lang)}
                   </AppText>
                   <AppText variant="bodyStrong" color={completa ? 'text' : 'textSecondary'} tabular>
                     {v.completed_count} de {v.total_count}

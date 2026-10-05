@@ -5,6 +5,9 @@
  * toda etiqueta tiene dueño y se puede renombrar o borrar sin pedirle permiso a nadie —al
  * revés que los temas, que sí son del sistema porque el producto define su dimensión y su
  * color; una etiqueta es solo una palabra que alguien eligió.
+ *
+ * La interfaz las toma del diccionario del idioma activo (`tx.lists.suggestedTags`, spec 12); esta
+ * lista queda como la versión en español de referencia.
  */
 export const SUGERENCIAS_ETIQUETA = [
   'Casa',

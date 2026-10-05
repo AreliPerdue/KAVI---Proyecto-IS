@@ -1,5 +1,4 @@
-import { format, isYesterday } from 'date-fns';
-import { es } from 'date-fns/locale';
+import { isYesterday } from 'date-fns';
 import { ChevronDown, ChevronRight, Check, Repeat } from 'lucide-react-native';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
@@ -7,17 +6,18 @@ import { tint } from '@/components/calendar/activity-style';
 import { AppText, ThemeIcon } from '@/components/ui';
 import { IconStroke, Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import { fromDayKey } from '@/lib/dates';
+import { fromDayKey, formatDayMonthShort } from '@/lib/dates';
 import type { RutinaDelDia } from '@/lib/list-runs';
 import type { KaviList, ListItem } from '@/types/domain';
+import { t, type Language, useLanguage, useT } from '@/i18n';
 
 /** Más allá de esto la franja deja de ser "una franja" y se come el día. */
 const MAX_ALTO = 132;
 
-/** "ayer" o "15 sep": lo reciente se nombra, lo lejano se fecha. */
-function fechaVencida(dayKey: string): string {
+/** "ayer" o "15 sep" / "yesterday" o "Sep 15": lo reciente se nombra, lo lejano se fecha. */
+function fechaVencida(dayKey: string, lang: Language): string {
   const fecha = fromDayKey(dayKey);
-  return isYesterday(fecha) ? 'ayer' : format(fecha, 'd MMM', { locale: es });
+  return isYesterday(fecha) ? t(lang).dates.yesterday : formatDayMonthShort(fecha, lang);
 }
 
 export type DayItemsListProps = {
@@ -65,6 +65,8 @@ export function DayItemsList({
   roomy = false,
 }: DayItemsListProps) {
   const theme = useTheme();
+  const tx = useT();
+  const lang = useLanguage();
   const porId = new Map(lists.map((l) => [l.id, l]));
   const alto = roomy ? styles.altoAmplio : null;
 
@@ -73,16 +75,16 @@ export function DayItemsList({
       {overdue.length > 0 ? (
         <View style={styles.vencidosCabecera}>
           <AppText variant="caption" color="today">
-            Vencidos
+            {tx.lists.overdue}
           </AppText>
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel={`Reprogramar ${overdue.length} ${overdue.length === 1 ? 'pendiente' : 'pendientes'} para hoy`}
+            accessibilityLabel={tx.lists.rescheduleA11y(overdue.length)}
             hitSlop={8}
             onPress={onReschedule}
             style={({ pressed }) => [styles.reprogramar, pressed ? styles.pressed : null]}>
             <AppText variant="caption" color="today">
-              Reprogramar para hoy
+              {tx.lists.rescheduleToday}
             </AppText>
           </Pressable>
         </View>
@@ -111,7 +113,7 @@ export function DayItemsList({
             </View>
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel={`Abrir la rutina ${r.list.name}: ${r.hechos} de ${r.total} hechos`}
+              accessibilityLabel={tx.lists.openRoutine(r.list.name, r.hechos, r.total)}
               onPress={() => onOpenList(r.list.id)}
               style={({ pressed }) => [
                 styles.toque,
@@ -157,7 +159,7 @@ export function DayItemsList({
         <Pressable
           accessibilityRole="checkbox"
           accessibilityState={{ checked: hecho }}
-          accessibilityLabel={hecho ? `Marcar ${item.title} como pendiente` : `Marcar ${item.title} como hecho`}
+          accessibilityLabel={hecho ? tx.lists.markPending(item.title) : tx.lists.markDone(item.title)}
           hitSlop={8}
           onPress={() => onToggleItem(item, !hecho)}
           style={({ pressed }) => [styles.casillaToque, alto, pressed ? styles.pressed : null]}>
@@ -172,7 +174,7 @@ export function DayItemsList({
 
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel={`Abrir ${lista?.name ?? 'la lista'}: ${item.title}`}
+          accessibilityLabel={tx.lists.openInList(lista?.name ?? null, item.title)}
           onPress={() => onOpenItem(item)}
           style={({ pressed }) => [
             styles.toque,
@@ -190,7 +192,7 @@ export function DayItemsList({
           </AppText>
           {vencido && item.due_date ? (
             <AppText variant="micro" color="today" tabular>
-              {fechaVencida(item.due_date)}
+              {fechaVencida(item.due_date, lang)}
             </AppText>
           ) : null}
           <ChevronRight size={14} strokeWidth={IconStroke} color={theme.textTertiary} />
@@ -218,6 +220,7 @@ export type DayItemsStripProps = DayItemsListProps & {
  */
 export function DayItemsStrip({ collapsed, onToggleCollapsed, ...lista }: DayItemsStripProps) {
   const theme = useTheme();
+  const tx = useT();
   if (cuentaDelDia(lista) === 0) return null;
 
   const pendientes =
@@ -230,7 +233,7 @@ export function DayItemsStrip({ collapsed, onToggleCollapsed, ...lista }: DayIte
       <Pressable
         accessibilityRole="button"
         accessibilityState={{ expanded: !collapsed }}
-        accessibilityLabel={`Listas, ${pendientes} ${pendientes === 1 ? 'pendiente' : 'pendientes'}`}
+        accessibilityLabel={tx.lists.stripA11y(pendientes)}
         onPress={onToggleCollapsed}
         style={({ pressed }) => [styles.cabecera, pressed ? { backgroundColor: theme.surfaceAlt } : null]}>
         {collapsed ? (
@@ -239,10 +242,10 @@ export function DayItemsStrip({ collapsed, onToggleCollapsed, ...lista }: DayIte
           <ChevronDown size={16} strokeWidth={IconStroke} color={theme.textTertiary} />
         )}
         <AppText variant="caption" color="textSecondary">
-          Listas
+          {tx.lists.title}
         </AppText>
         <AppText variant="caption" color="textTertiary">
-          {pendientes > 0 ? `${pendientes} sin hacer` : 'todo listo'}
+          {pendientes > 0 ? tx.lists.notDone(pendientes) : tx.lists.allDone}
         </AppText>
       </Pressable>
 

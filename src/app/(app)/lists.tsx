@@ -29,24 +29,32 @@ import { formatShortDate, fromDayKey, toDayKey } from '@/lib/dates';
 import { useConfirm, useSnackbar } from '@/providers';
 import type { ListSearchResults } from '@/services/lists';
 import type { KaviList, ListItem } from '@/types/domain';
+import { t, type Dictionary, type Language, useLanguage, useT } from '@/i18n';
 
 /** Dos columnas: es la rejilla de tarjetas de RF-L1, al estilo de Google Keep. */
 const COLUMNAS = 2;
 
-/** Con qué nace una lista antes de que nadie la toque. */
-export const NOMBRE_POR_OMISION = 'Sin título';
+/** Con qué nace una lista antes de que nadie la toque, en el idioma activo (spec 12). */
+export function nombrePorOmision(): string {
+  return t().lists.untitled;
+}
+
+/** Si una lista sigue con el nombre con que nació, en cualquiera de los dos idiomas. */
+export function esNombrePorOmision(nombre: string): boolean {
+  return nombre === t('es').lists.untitled || nombre === t('en').lists.untitled;
+}
 const COLOR_POR_OMISION = PEOPLE_COLORS[0]?.hex ?? '#86CBF3';
 
 const SIN_ANILLO: TextStyle =
   Platform.OS === 'web' ? ({ outlineStyle: 'none', outlineWidth: 0 } as unknown as TextStyle) : {};
 
-function subtitulo(lista: KaviList): string {
+function subtitulo(lista: KaviList, tx: Dictionary, lang: Language): string {
   // La fecha de la lista (RF-L23) se añade al final: una lista con fecha tiene que
   // reconocerse desde la rejilla, o la fecha solo sirve a quien ya la abrió.
-  const fecha = lista.due_date ? ` · ${formatShortDate(fromDayKey(lista.due_date))}` : '';
-  if (lista.total_count === 0) return `Sin elementos${fecha}`;
-  if (lista.pending_count === 0) return `Todo listo · ${lista.total_count}${fecha}`;
-  return `${lista.pending_count} ${lista.pending_count === 1 ? 'pendiente' : 'pendientes'} de ${lista.total_count}${fecha}`;
+  const fecha = lista.due_date ? ` · ${formatShortDate(fromDayKey(lista.due_date), lang)}` : '';
+  if (lista.total_count === 0) return `${tx.lists.subtitle.empty}${fecha}`;
+  if (lista.pending_count === 0) return `${tx.lists.subtitle.allDone(lista.total_count)}${fecha}`;
+  return `${tx.lists.subtitle.pending(lista.pending_count, lista.total_count)}${fecha}`;
 }
 
 /** Parte en filas de `COLUMNAS` para poder poner encabezados de ancho completo. */
@@ -66,6 +74,7 @@ function enFilas(listas: readonly KaviList[]): KaviList[][] {
  */
 function Resultados({ datos, abrir }: { datos: ListSearchResults | undefined; abrir: (id: string) => void }) {
   const theme = useTheme();
+  const tx = useT();
   const listas = datos?.lists ?? [];
   const elementos = datos?.items ?? [];
 
@@ -73,8 +82,8 @@ function Resultados({ datos, abrir }: { datos: ListSearchResults | undefined; ab
     return (
       <EmptyState
         icon={<Search size={32} strokeWidth={IconStroke} color={theme.textTertiary} />}
-        title="Sin coincidencias"
-        description="Prueba con otra palabra."
+        title={tx.lists.noMatchesTitle}
+        description={tx.lists.noMatchesDescription}
       />
     );
   }
@@ -104,7 +113,7 @@ function Resultados({ datos, abrir }: { datos: ListSearchResults | undefined; ab
       {listas.length > 0 ? (
         <>
           <AppText variant="caption" color="textTertiary">
-            Listas
+            {tx.lists.searchLists}
           </AppText>
           {listas.map((l) => fila(l.id, l.name, false, () => abrir(l.id)))}
         </>
@@ -113,7 +122,7 @@ function Resultados({ datos, abrir }: { datos: ListSearchResults | undefined; ab
       {elementos.length > 0 ? (
         <>
           <AppText variant="caption" color="textTertiary" style={listas.length > 0 ? styles.grupoTitulo : undefined}>
-            Elementos
+            {tx.lists.searchItems}
           </AppText>
           {elementos.map((i: ListItem) =>
             fila(i.id, i.title, i.completed_at !== null, () => abrir(i.list_id), i.note ?? undefined),
@@ -135,6 +144,8 @@ function Resultados({ datos, abrir }: { datos: ListSearchResults | undefined; ab
 export default function ListsScreen() {
   const enBarra = useContext(ModuleInBarContext);
   const theme = useTheme();
+  const tx = useT();
+  const lang = useLanguage();
   const router = useRouter();
   const confirm = useConfirm();
   const showSnackbar = useSnackbar();
@@ -203,12 +214,12 @@ export default function ListsScreen() {
    */
   const nuevaLista = () =>
     create.mutate(
-      { name: NOMBRE_POR_OMISION, icon: 'tag', color: COLOR_POR_OMISION },
+      { name: nombrePorOmision(), icon: 'tag', color: COLOR_POR_OMISION },
       {
         onSuccess: (lista) => router.push({ pathname: '/(app)/list/[id]', params: { id: lista.id, nueva: '1' } }),
         // Sin esto, un fallo al crear no se distinguía de un botón que no hace nada: la
         // pantalla se quedaba igual y sin decir por qué.
-        onError: (e) => showSnackbar({ message: e instanceof Error ? e.message : 'No se pudo crear la lista.' }),
+        onError: (e) => showSnackbar({ message: e instanceof Error ? e.message : tx.lists.createFailed }),
       },
     );
 
@@ -221,29 +232,29 @@ export default function ListsScreen() {
     cerrarMenu();
     update.mutate(
       { id: lista.id, patch: { is_archived: archivar } },
-      { onSuccess: () => showSnackbar({ message: archivar ? 'Lista archivada.' : 'Lista restaurada.' }) },
+      { onSuccess: () => showSnackbar({ message: archivar ? tx.lists.archived : tx.lists.restored }) },
     );
   };
 
   const duplicar = (lista: KaviList) => {
     cerrarMenu();
-    duplicate.mutate(lista.id, { onSuccess: () => showSnackbar({ message: 'Lista duplicada.' }) });
+    duplicate.mutate(lista.id, { onSuccess: () => showSnackbar({ message: tx.lists.duplicated }) });
   };
 
   const eliminar = async (lista: KaviList) => {
     cerrarMenu();
     const ok = await confirm({
-      title: 'Eliminar lista',
+      title: tx.lists.deleteTitle,
       // Se nombra lo que se pierde y se ofrece la salida intermedia: archivar conserva todo.
       message:
         lista.total_count > 0
-          ? `Se eliminarán también sus ${lista.total_count} elementos. Si solo quieres quitarla de aquí, archívala.`
-          : 'Esta acción no se puede deshacer.',
-      confirmLabel: 'Eliminar',
+          ? tx.lists.deleteWithItems(lista.total_count)
+          : tx.lists.cantUndo,
+      confirmLabel: tx.lists.delete,
       destructive: true,
     });
     if (!ok) return;
-    remove.mutate(lista.id, { onSuccess: () => showSnackbar({ message: 'Lista eliminada.' }) });
+    remove.mutate(lista.id, { onSuccess: () => showSnackbar({ message: tx.lists.deleted }) });
   };
 
   /*
@@ -259,7 +270,7 @@ export default function ListsScreen() {
     <View key={item.id} style={styles.celda}>
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel={`${item.name}, ${subtitulo(item)}`}
+        accessibilityLabel={`${item.name}, ${subtitulo(item, tx, lang)}`}
         accessibilityHint="Mantén presionado para reordenar"
         // Soltar una tarjeta no debe abrirla: el toque llega igual porque el arrastre no
         // lo cancela, así que se ignora el que venga pegado a un arrastre.
@@ -281,12 +292,12 @@ export default function ListsScreen() {
           {item.name}
         </AppText>
         <AppText variant="caption" color="textSecondary">
-          {subtitulo(item)}
+          {subtitulo(item, tx, lang)}
         </AppText>
       </Pressable>
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel={`Acciones de ${item.name}`}
+        accessibilityLabel={tx.lists.actionsFor(item.name)}
         hitSlop={10}
         onPress={() => setMenuDe(item)}
         style={({ pressed }) => [styles.masBoton, pressed ? styles.pressed : null]}>
@@ -334,18 +345,18 @@ export default function ListsScreen() {
         back
         // En la barra del teléfono (RF-N6) no hay a dónde volver, salvo desde Archivadas.
         leading={!enBarra || verArchivadas}
-        title={verArchivadas ? 'Archivadas' : 'Listas'}
+        title={verArchivadas ? tx.lists.archivedTitle : tx.lists.title}
         // Dentro de Archivadas, "atrás" vuelve a las listas activas antes de salir del
         // módulo: es el paso que la persona deshace, no la pantalla entera.
         onClose={verArchivadas ? () => setVerArchivadas(false) : undefined}
         right={
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel={verArchivadas ? 'Volver a mis listas' : 'Ver listas archivadas'}
+            accessibilityLabel={verArchivadas ? tx.lists.backToMine : tx.lists.seeArchived}
             onPress={() => setVerArchivadas((v) => !v)}
             style={({ pressed }) => [styles.enlace, pressed ? styles.pressed : null]}>
             <AppText variant="label" color="textSecondary">
-              {verArchivadas ? 'Mis listas' : 'Archivadas'}
+              {verArchivadas ? tx.lists.myLists : tx.lists.archivedTitle}
             </AppText>
           </Pressable>
         }
@@ -356,16 +367,16 @@ export default function ListsScreen() {
         <TextInput
           value={busqueda}
           onChangeText={setBusqueda}
-          placeholder="Buscar en tus listas"
+          placeholder={tx.lists.searchPlaceholder}
           placeholderTextColor={theme.textTertiary}
           returnKeyType="search"
-          accessibilityLabel="Buscar en tus listas"
+          accessibilityLabel={tx.lists.searchPlaceholder}
           style={[styles.buscadorInput, SIN_ANILLO, { color: theme.text }]}
         />
         {busqueda ? (
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel="Limpiar búsqueda"
+            accessibilityLabel={tx.lists.clearSearch}
             hitSlop={8}
             onPress={() => setBusqueda('')}
             style={({ pressed }) => [pressed ? styles.pressed : null]}>
@@ -385,7 +396,7 @@ export default function ListsScreen() {
           <Pressable
             accessibilityRole="button"
             accessibilityLabel={
-              pendientesHoy > 0 ? `Hoy, ${pendientesHoy} ${pendientesHoy === 1 ? 'pendiente' : 'pendientes'}` : 'Hoy'
+              pendientesHoy > 0 ? tx.lists.todayPending(pendientesHoy) : tx.lists.today
             }
             onPress={() => router.push({ pathname: '/(app)/today', params: { vista: 'hoy' } })}
             style={({ pressed }) => [
@@ -395,7 +406,7 @@ export default function ListsScreen() {
             ]}>
             <Sun size={IconSize.action} strokeWidth={IconStroke} color={atrasadosHoy > 0 ? theme.today : theme.text} />
             <AppText variant="bodyStrong" style={styles.accesoNombre}>
-              Hoy
+              {tx.lists.today}
             </AppText>
             {pendientesHoy > 0 ? (
               <AppText variant="label" color={atrasadosHoy > 0 ? 'today' : 'textSecondary'} tabular>
@@ -406,7 +417,7 @@ export default function ListsScreen() {
 
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel="Algún día: pendientes sin fecha"
+            accessibilityLabel={tx.lists.somedayA11y}
             onPress={() => router.push({ pathname: '/(app)/today', params: { vista: 'algun-dia' } })}
             style={({ pressed }) => [
               styles.acceso,
@@ -415,7 +426,7 @@ export default function ListsScreen() {
             ]}>
             <Inbox size={IconSize.action} strokeWidth={IconStroke} color={theme.text} />
             <AppText variant="bodyStrong" style={styles.accesoNombre}>
-              Algún día
+              {tx.lists.someday}
             </AppText>
           </Pressable>
         </View>
@@ -439,7 +450,7 @@ export default function ListsScreen() {
           <Pressable
             accessibilityRole="button"
             accessibilityState={{ selected: etiquetaActiva === null }}
-            accessibilityLabel="Todas las listas"
+            accessibilityLabel={tx.lists.allLists}
             onPress={() => setEtiquetaActiva(null)}
             style={({ pressed }) => [
               styles.etiqueta,
@@ -459,7 +470,7 @@ export default function ListsScreen() {
                 key={t.id}
                 accessibilityRole="button"
                 accessibilityState={{ selected: activa }}
-                accessibilityLabel={`${t.name}, ${t.list_count} ${t.list_count === 1 ? 'lista' : 'listas'}`}
+                accessibilityLabel={tx.lists.tagCount(t.name, t.list_count)}
                 onPress={() => setEtiquetaActiva(activa ? null : t.id)}
                 style={({ pressed }) => [
                   styles.etiqueta,
@@ -484,11 +495,11 @@ export default function ListsScreen() {
         consulta.data.length === 0 ? (
           <EmptyState
             icon={<CircleCheck size={32} strokeWidth={IconStroke} color={theme.textTertiary} />}
-            title={verArchivadas ? 'No tienes listas archivadas' : 'Todavía no tienes listas'}
+            title={verArchivadas ? tx.lists.noArchivedTitle : tx.lists.noListsTitle}
             description={
               verArchivadas
-                ? 'Lo que archives se guarda aquí con todo su contenido.'
-                : 'El súper, las películas pendientes, lo de la casa. Toca + para crear la primera.'
+                ? tx.lists.noArchivedDescription
+                : tx.lists.noListsDescription
             }
           />
         ) : (
@@ -501,17 +512,17 @@ export default function ListsScreen() {
               grupo('', archivadas.data ?? [])
             ) : (
               <>
-                {grupo('Fijadas', fijadas)}
-                {grupo(fijadas.length > 0 ? 'Mis listas' : '', propias)}
+                {grupo(tx.lists.pinned, fijadas)}
+                {grupo(fijadas.length > 0 ? tx.lists.myLists : '', propias)}
                 {/* Lo compartido contigo va aparte: no es tuyo y conviene que se note. */}
-                {grupo('Compartidas conmigo', compartidas.data ?? [], false)}
+                {grupo(tx.lists.sharedWithMe, compartidas.data ?? [], false)}
               </>
             )}
           </ScrollView>
         )
       ) : null}
 
-      {!verArchivadas ? <Fab label="Nueva lista" shrunk={shrunk} onPress={nuevaLista} /> : null}
+      {!verArchivadas ? <Fab label={tx.lists.newList} shrunk={shrunk} onPress={nuevaLista} /> : null}
 
       <Sheet visible={menuDe !== null} onClose={cerrarMenu} title={menuDe?.name ?? ''}>
         {menuDe ? (
@@ -519,7 +530,7 @@ export default function ListsScreen() {
             {menuDe.is_archived ? (
               <ActionRow
                 icon={<ArchiveRestore size={IconSize.action} strokeWidth={IconStroke} color={theme.text} />}
-                label="Restaurar"
+                label={tx.lists.restore}
                 onPress={() => archivar(menuDe, false)}
               />
             ) : (
@@ -532,18 +543,18 @@ export default function ListsScreen() {
                       <Pin size={IconSize.action} strokeWidth={IconStroke} color={theme.text} />
                     )
                   }
-                  label={menuDe.is_pinned ? 'Quitar de fijadas' : 'Fijar arriba'}
+                  label={menuDe.is_pinned ? tx.lists.unpin : tx.lists.pin}
                   onPress={() => alternarFijada(menuDe)}
                 />
                 <ActionRow
                   icon={<ArrowUp size={IconSize.action} strokeWidth={IconStroke} color={theme.text} />}
-                  label="Subir"
+                  label={tx.lists.moveUp}
                   disabled={grupoDe(menuDe).findIndex((l) => l.id === menuDe.id) <= 0}
                   onPress={() => desplazar(menuDe, -1)}
                 />
                 <ActionRow
                   icon={<ArrowDown size={IconSize.action} strokeWidth={IconStroke} color={theme.text} />}
-                  label="Bajar"
+                  label={tx.lists.moveDown}
                   disabled={(() => {
                     const g = grupoDe(menuDe);
                     return g.findIndex((l) => l.id === menuDe.id) >= g.length - 1;
@@ -552,19 +563,19 @@ export default function ListsScreen() {
                 />
                 <ActionRow
                   icon={<Copy size={IconSize.action} strokeWidth={IconStroke} color={theme.text} />}
-                  label="Duplicar"
+                  label={tx.lists.duplicate}
                   onPress={() => duplicar(menuDe)}
                 />
                 <ActionRow
                   icon={<Archive size={IconSize.action} strokeWidth={IconStroke} color={theme.text} />}
-                  label="Archivar"
+                  label={tx.lists.archive}
                   onPress={() => archivar(menuDe, true)}
                 />
               </>
             )}
             <ActionRow
               icon={<Trash2 size={IconSize.action} strokeWidth={IconStroke} color={theme.danger} />}
-              label="Eliminar"
+              label={tx.lists.delete}
               color="danger"
               onPress={() => eliminar(menuDe)}
             />

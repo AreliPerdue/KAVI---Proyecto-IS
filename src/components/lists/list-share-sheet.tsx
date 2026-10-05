@@ -9,11 +9,9 @@ import { useListMutations, useListShares } from '@/hooks/use-lists';
 import { useTheme } from '@/hooks/use-theme';
 import type { ListPermission } from '@/services/lists';
 import type { Contact } from '@/types/domain';
+import { useT } from '@/i18n';
 
-const OPCIONES: { value: ListPermission; label: string }[] = [
-  { value: 'view', label: 'Ver' },
-  { value: 'edit', label: 'Editar' },
-];
+const OPCIONES: readonly ListPermission[] = ['view', 'edit'];
 
 /** A partir de aquí la lista deja de recorrerse de un vistazo y aparece el buscador. */
 const CONTACTOS_PARA_BUSCAR = 6;
@@ -41,6 +39,7 @@ export type ListShareSheetProps = {
  */
 export function ListShareSheet({ visible, onClose, listId, listName }: ListShareSheetProps) {
   const theme = useTheme();
+  const tx = useT();
   const [busqueda, setBusqueda] = useState('');
   const contactos = useContacts();
   const compartida = useListShares(visible ? listId : undefined);
@@ -83,14 +82,14 @@ export function ListShareSheet({ visible, onClose, listId, listName }: ListShare
         </View>
 
         <View style={[styles.opciones, { backgroundColor: theme.surfaceAlt }]}>
-          {OPCIONES.map((o) => {
+          {OPCIONES.map((value) => ({ value, label: tx.lists.permissions[value] })).map((o) => {
             const activo = permiso === o.value;
             return (
               <Pressable
                 key={o.value}
                 accessibilityRole="button"
                 accessibilityState={{ selected: activo }}
-                accessibilityLabel={`${o.label}: ${c.profile.display_name ?? c.profile.username}`}
+                accessibilityLabel={tx.lists.permissionA11y(o.label, c.profile.display_name ?? c.profile.username)}
                 onPress={() => share.mutate({ listId, userId: c.profile.id, permission: o.value })}
                 style={({ pressed }) => [
                   styles.opcion,
@@ -109,7 +108,7 @@ export function ListShareSheet({ visible, onClose, listId, listName }: ListShare
         {permiso ? (
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel={`Quitar acceso a ${c.profile.display_name ?? c.profile.username}`}
+            accessibilityLabel={tx.lists.removeAccess(c.profile.display_name ?? c.profile.username)}
             hitSlop={8}
             onPress={() => unshare.mutate({ listId, userId: c.profile.id })}
             style={({ pressed }) => [styles.quitar, pressed ? styles.pressed : null]}>
@@ -123,13 +122,13 @@ export function ListShareSheet({ visible, onClose, listId, listName }: ListShare
   };
 
   return (
-    <Sheet visible={visible} onClose={onClose} title={`Compartir ${listName}`}>
+    <Sheet visible={visible} onClose={onClose} title={tx.lists.shareTitle(listName)}>
       {contactos.isPending || compartida.isPending ? <LoadingState /> : null}
 
       {contactos.isSuccess && aceptadosTotal === 0 ? (
         <EmptyState
-          title="Todavía no tienes contactos"
-          description="Agrega a alguien desde Compartido y podrás compartir tus listas."
+          title={tx.lists.noContactsTitle}
+          description={tx.lists.noContactsDescription}
         />
       ) : null}
 
@@ -137,7 +136,7 @@ export function ListShareSheet({ visible, onClose, listId, listName }: ListShare
         {conAcceso.length > 0 ? (
           <View style={styles.grupo}>
             <AppText variant="caption" color="textTertiary">
-              Compartiendo con
+              {tx.lists.sharingWith}
             </AppText>
             {conAcceso.map(fila)}
           </View>
@@ -149,15 +148,15 @@ export function ListShareSheet({ visible, onClose, listId, listName }: ListShare
             <TextInput
               value={busqueda}
               onChangeText={setBusqueda}
-              placeholder="Buscar un contacto"
+              placeholder={tx.lists.searchContact}
               placeholderTextColor={theme.textTertiary}
-              accessibilityLabel="Buscar un contacto"
+              accessibilityLabel={tx.lists.searchContact}
               style={[styles.buscadorInput, SIN_ANILLO, { color: theme.text }]}
             />
             {busqueda ? (
               <Pressable
                 accessibilityRole="button"
-                accessibilityLabel="Limpiar búsqueda"
+                accessibilityLabel={tx.lists.clearSearch}
                 hitSlop={8}
                 onPress={() => setBusqueda('')}>
                 <X size={IconSize.inline} strokeWidth={IconStroke} color={theme.textTertiary} />
@@ -169,7 +168,7 @@ export function ListShareSheet({ visible, onClose, listId, listName }: ListShare
         {resto.length > 0 ? (
           <View style={styles.grupo}>
             <AppText variant="caption" color="textTertiary">
-              {conAcceso.length > 0 ? 'Agregar a alguien más' : 'Tus contactos'}
+              {conAcceso.length > 0 ? tx.lists.addSomeoneElse : tx.lists.yourContacts}
             </AppText>
             {resto.map(fila)}
           </View>
@@ -177,7 +176,7 @@ export function ListShareSheet({ visible, onClose, listId, listName }: ListShare
 
         {aceptadosTotal > 0 && resto.length === 0 && busqueda ? (
           <AppText variant="caption" color="textTertiary">
-            Ningún contacto coincide.
+            {tx.lists.noContactMatch}
           </AppText>
         ) : null}
       </ScrollView>

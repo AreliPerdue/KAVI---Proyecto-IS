@@ -7,6 +7,7 @@ import { IconStroke, Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { formatShortDate, isToday } from '@/lib/dates';
 import type { KaviList } from '@/types/domain';
+import { useT } from '@/i18n';
 
 import { cuentaDelDia, DayItemsList, type DayItemsListProps } from './day-items-strip';
 
@@ -32,6 +33,7 @@ export type DayListsPanelProps = DayItemsListProps & {
  */
 export function DayListsPanel({ day, onOpenAll, ...lista }: DayListsPanelProps) {
   const theme = useTheme();
+  const tx = useT();
   const hayAlgo = cuentaDelDia(lista) > 0;
 
   return (
@@ -47,7 +49,7 @@ export function DayListsPanel({ day, onOpenAll, ...lista }: DayListsPanelProps) 
             </View>
           ) : (
             <AppText variant="caption" color="textTertiary" style={styles.vacio}>
-              Nada de tus listas para este día.
+              {tx.lists.nothingThisDay}
             </AppText>
           )}
         </View>
@@ -55,23 +57,23 @@ export function DayListsPanel({ day, onOpenAll, ...lista }: DayListsPanelProps) 
         <View style={styles.seccion}>
           <View style={styles.cabecera}>
             <AppText variant="label" color="textSecondary">
-              Tus listas
+              {tx.lists.yourLists}
             </AppText>
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel="Ver todas las listas"
+              accessibilityLabel={tx.lists.seeAllA11y}
               hitSlop={8}
               onPress={onOpenAll}
               style={({ pressed }) => [styles.enlace, pressed ? styles.pressed : null]}>
               <AppText variant="caption" color="textSecondary">
-                Ver todas
+                {tx.lists.seeAll}
               </AppText>
             </Pressable>
           </View>
 
           {lista.lists.length === 0 ? (
             <AppText variant="caption" color="textTertiary" style={styles.vacio}>
-              Todavía no tienes listas.
+              {tx.lists.noListsYet}
             </AppText>
           ) : (
             lista.lists.map((l) => <Acceso key={l.id} lista={l} onPress={() => lista.onOpenList(l.id)} />)
@@ -85,11 +87,12 @@ export function DayListsPanel({ day, onOpenAll, ...lista }: DayListsPanelProps) 
 /** Una lista en el acceso rápido: su icono, su nombre y cuánto le falta. */
 function Acceso({ lista, onPress }: { lista: KaviList; onPress: () => void }) {
   const theme = useTheme();
+  const tx = useT();
   const rutina = !!lista.recurrence_rule;
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={`Abrir ${lista.name}, ${lista.pending_count} sin hacer`}
+      accessibilityLabel={tx.lists.openListPending(lista.name, lista.pending_count)}
       onPress={onPress}
       style={({ pressed, hovered }: { pressed: boolean; hovered?: boolean }) => [
         styles.acceso,

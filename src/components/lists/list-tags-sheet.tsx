@@ -3,11 +3,12 @@ import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import { AppText, Button, LoadingState, Sheet, TextField } from '@/components/ui';
-import { MAX_ETIQUETA, SUGERENCIAS_ETIQUETA } from '@/constants/list-tags';
+import { MAX_ETIQUETA } from '@/constants/list-tags';
 import { IconSize, IconStroke, Radius, Spacing } from '@/constants/theme';
 import { useListMutations, useListTags, useTagsOfList } from '@/hooks/use-lists';
 import { useTheme } from '@/hooks/use-theme';
 import { useConfirm } from '@/providers';
+import { useT } from '@/i18n';
 
 export type ListTagsSheetProps = {
   visible: boolean;
@@ -27,6 +28,7 @@ export type ListTagsSheetProps = {
  */
 export function ListTagsSheet({ visible, onClose, listId }: ListTagsSheetProps) {
   const theme = useTheme();
+  const tx = useT();
   const confirm = useConfirm();
   const [nueva, setNueva] = useState('');
   const todas = useListTags();
@@ -38,8 +40,8 @@ export function ListTagsSheet({ visible, onClose, listId }: ListTagsSheetProps) 
   // Solo se sugiere lo que no existe ya: repetirlo sería ofrecer crear algo que ya está.
   const sugerencias = useMemo(() => {
     const nombres = new Set((todas.data ?? []).map((t) => t.name.toLowerCase()));
-    return SUGERENCIAS_ETIQUETA.filter((s) => !nombres.has(s.toLowerCase()));
-  }, [todas.data]);
+    return tx.lists.suggestedTags.filter((s) => !nombres.has(s.toLowerCase()));
+  }, [todas.data, tx]);
 
   const crearYPoner = (name: string) => {
     setNueva('');
@@ -50,24 +52,24 @@ export function ListTagsSheet({ visible, onClose, listId }: ListTagsSheetProps) 
 
   const borrar = async (id: string, name: string) => {
     const ok = await confirm({
-      title: `Eliminar "${name}"`,
+      title: tx.lists.deleteTagTitle(name),
       // Lo que se pierde es la forma de agrupar, no lo agrupado. Conviene decirlo.
-      message: 'Se quitará de todas tus listas. Ninguna lista se elimina.',
-      confirmLabel: 'Eliminar',
+      message: tx.lists.deleteTagMessage,
+      confirmLabel: tx.lists.delete,
       destructive: true,
     });
     if (ok) removeTag.mutate(id);
   };
 
   return (
-    <Sheet visible={visible} onClose={onClose} title="Etiquetas">
+    <Sheet visible={visible} onClose={onClose} title={tx.lists.tagsTitle}>
       {todas.isPending || puestas.isPending ? <LoadingState /> : null}
 
       <ScrollView contentContainerStyle={styles.cuerpo} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
         {(todas.data ?? []).length > 0 ? (
           <View style={styles.grupo}>
             <AppText variant="caption" color="textTertiary">
-              Tus etiquetas
+              {tx.lists.yourTags}
             </AppText>
             {(todas.data ?? []).map((t) => {
               const activa = puestasIds.has(t.id);
@@ -99,7 +101,7 @@ export function ListTagsSheet({ visible, onClose, listId }: ListTagsSheetProps) 
                   </Pressable>
                   <Pressable
                     accessibilityRole="button"
-                    accessibilityLabel={`Eliminar la etiqueta ${t.name}`}
+                    accessibilityLabel={tx.lists.deleteTagA11y(t.name)}
                     hitSlop={8}
                     onPress={() => borrar(t.id, t.name)}
                     style={({ pressed }) => [styles.borrar, pressed ? styles.pressed : null]}>
@@ -114,14 +116,14 @@ export function ListTagsSheet({ visible, onClose, listId }: ListTagsSheetProps) 
         {sugerencias.length > 0 ? (
           <View style={styles.grupo}>
             <AppText variant="caption" color="textTertiary">
-              Sugerencias
+              {tx.lists.suggestions}
             </AppText>
             <View style={styles.chips}>
               {sugerencias.map((s) => (
                 <Pressable
                   key={s}
                   accessibilityRole="button"
-                  accessibilityLabel={`Crear la etiqueta ${s}`}
+                  accessibilityLabel={tx.lists.createTagA11y(s)}
                   onPress={() => crearYPoner(s)}
                   style={({ pressed }) => [styles.chip, { borderColor: theme.border }, pressed ? styles.pressed : null]}>
                   <Plus size={IconSize.inline} strokeWidth={IconStroke} color={theme.textTertiary} />
@@ -136,16 +138,16 @@ export function ListTagsSheet({ visible, onClose, listId }: ListTagsSheetProps) 
 
         <View style={styles.grupo}>
           <TextField
-            label="Nueva etiqueta"
+            label={tx.lists.newTag}
             value={nueva}
             onChangeText={setNueva}
             onSubmitEditing={() => nueva.trim() && crearYPoner(nueva)}
-            placeholder="Ej. Universidad, Mascotas…"
+            placeholder={tx.lists.newTagPlaceholder}
             maxLength={MAX_ETIQUETA}
             returnKeyType="done"
           />
           <Button
-            title="Crear y poner"
+            title={tx.lists.createAndApply}
             variant="secondary"
             disabled={!nueva.trim()}
             loading={createTag.isPending}
