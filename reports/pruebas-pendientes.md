@@ -544,3 +544,9 @@ Visto en el demo: 360×560 (un chip por día y "+N" junto al número, alineado a
 - [ ] Nunca hay más chips que actividades menos una cuando hay "+N" (el "+N" nunca dice +0).
 - [ ] Texto grande del sistema (escala 1.5) en teléfono: el "+N" no se encima al número.
 - [ ] iOS y Android nativos en vertical y acostado.
+
+## Pruebas rotas que ya estaban así
+- [ ] `activity-form.test.tsx` › gimnasio (RF-F9): 3 casos fallan con "useAuth debe usarse dentro
+  de <AuthProvider>". Ya fallaban antes de T263 (comprobado sobre `58c6442`): la captura de
+  rutina del formulario usa `useAuth` y la prueba lo renderiza sin el proveedor. Arreglo: envolver
+  el render en `AuthProvider` (o simular `useAuth`). No es un fallo de la app.
