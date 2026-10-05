@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { t } from '@/i18n';
 
 const recurrenceSchema = z
   .object({
@@ -10,8 +11,12 @@ const recurrenceSchema = z
 
 export const activityFormSchema = z
   .object({
-    title: z.string().trim().min(1, 'Escribe un título.').max(120, 'Máximo 120 caracteres.'),
-    description: z.string().trim().max(2000, 'Máximo 2000 caracteres.'),
+    title: z
+      .string()
+      .trim()
+      .min(1, { error: () => t().calendar.titleRequired })
+      .max(120, { error: () => t().calendar.max120 }),
+    description: z.string().trim().max(2000, { error: () => t().calendar.max2000 }),
     /** 'yyyy-MM-dd' local */
     dayKey: z.string(),
     /** minutos desde medianoche */
@@ -28,11 +33,11 @@ export const activityFormSchema = z
     reminderOffsets: z.array(z.number().int().min(0)),
   })
   .refine((v) => v.visibility !== 'selected' || v.viewerIds.length > 0, {
-    message: 'Elige al menos una persona, o cambia a otra opción.',
+    error: () => t().calendar.pickSomeone,
     path: ['viewerIds'],
   })
   .refine((v) => v.allDay || v.endMinutes > v.startMinutes, {
-    message: 'La hora de fin debe ser posterior a la de inicio.',
+    error: () => t().calendar.endAfterStart,
     path: ['endMinutes'],
   });
 

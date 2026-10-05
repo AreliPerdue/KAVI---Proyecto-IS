@@ -1,17 +1,14 @@
 import { Check, Eye, EyeOff, Users } from 'lucide-react-native';
 import { Pressable, StyleSheet, View } from 'react-native';
 
-import { AppText, Avatar, Segmented, type SegmentedOption } from '@/components/ui';
+import { AppText, Avatar, Segmented } from '@/components/ui';
 import { IconSize, IconStroke, Radius, Spacing } from '@/constants/theme';
 import { useContacts } from '@/hooks/use-connections';
 import { useTheme } from '@/hooks/use-theme';
 import type { ActivityVisibility } from '@/types/domain';
+import { useT } from '@/i18n';
 
-const OPCIONES: readonly SegmentedOption<ActivityVisibility>[] = [
-  { value: 'default', label: 'Normal' },
-  { value: 'selected', label: 'Algunos' },
-  { value: 'private', label: 'Privada' },
-];
+const OPCIONES: readonly ActivityVisibility[] = ['default', 'selected', 'private'];
 
 /**
  * Quién ve el título de esta actividad (RF-C14).
@@ -40,6 +37,7 @@ export function VisibilityField({
 }) {
   const theme = useTheme();
   const contacts = useContacts();
+  const tx = useT();
   const aceptados = (contacts.data ?? []).filter((c) => c.kind === 'accepted');
   /** Quien no tenga «con detalles» verá el bloque ocupado elijas lo que elijas. */
   const conDetalles = aceptados.filter((c) => c.myCalendarVisibility === 'details');
@@ -49,12 +47,12 @@ export function VisibilityField({
 
   const explicacion =
     visibility === 'private'
-      ? 'Nadie ve de qué se trata: todos ven el hueco como ocupado.'
+      ? tx.calendar.visibility.privateHint
       : visibility === 'selected'
-        ? 'Solo quienes marques verán el título. Los demás, el hueco como ocupado.'
+        ? tx.calendar.visibility.selectedHint
         : conDetalles.length > 0
-          ? `Lo verán tus ${conDetalles.length} contactos con calendario «con detalles». Al resto les saldrá como ocupado.`
-          : 'Lo verá quien tenga tu calendario «con detalles». Ahora mismo, nadie.';
+          ? tx.calendar.visibility.defaultHintSome(conDetalles.length)
+          : tx.calendar.visibility.defaultHintNone;
 
   return (
     <View style={styles.container}>
@@ -65,11 +63,11 @@ export function VisibilityField({
           <Eye size={IconSize.inline} strokeWidth={IconStroke} color={theme.textSecondary} />
         )}
         <AppText variant="label" color="textSecondary">
-          Quién la ve
+          {tx.calendar.visibility.title}
         </AppText>
       </View>
 
-      <Segmented options={OPCIONES} value={visibility} onChange={onVisibilityChange} />
+      <Segmented options={OPCIONES.map((v) => ({ value: v, label: tx.calendar.visibility.options[v] }))} value={visibility} onChange={onVisibilityChange} />
 
       <AppText variant="caption" color="textTertiary">
         {explicacion}
@@ -78,7 +76,7 @@ export function VisibilityField({
       {visibility === 'selected' ? (
         aceptados.length === 0 ? (
           <AppText variant="caption" color="textTertiary">
-            Aún no tienes contactos a quien mostrársela.
+            {tx.calendar.visibility.noContacts}
           </AppText>
         ) : (
           <View style={styles.lista}>
@@ -126,7 +124,7 @@ export function VisibilityField({
         <View style={styles.pie}>
           <Users size={14} strokeWidth={IconStroke} color={theme.textTertiary} />
           <AppText variant="caption" color="textTertiary">
-            Para que alguien la tenga en su propio calendario, invítalo desde el detalle.
+            {tx.calendar.visibility.inviteHint}
           </AppText>
         </View>
       ) : null}

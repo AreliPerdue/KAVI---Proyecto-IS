@@ -8,9 +8,12 @@ import { IconSize, IconStroke, Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useUpcomingReminders } from '@/hooks/use-reminders';
 import { formatTime, fromIso } from '@/lib/dates';
+import { useLanguage, useT } from '@/i18n';
 
 /** Fallback web (NFR-10): reminders cuya hora ya pasó y cuya actividad aún no empieza. */
 export function DueRemindersBanner() {
+  const tx = useT();
+  const lang = useLanguage();
   const theme = useTheme();
   const router = useRouter();
   const upcoming = useUpcomingReminders();
@@ -36,15 +39,15 @@ export function DueRemindersBanner() {
           <Bell size={IconSize.inline} strokeWidth={IconStroke} color={theme.today} />
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel={`Abrir ${r.title}`}
+            accessibilityLabel={tx.calendar.openItem(r.title)}
             onPress={() => router.push({ pathname: '/(app)/activity/[id]', params: { id: r.activityId } })}
             style={styles.text}>
             <AppText variant="label">{r.title}</AppText>
             <AppText variant="caption" color="textSecondary">
-              Empieza a las {formatTime(fromIso(r.activityStartAt))}
+              {tx.calendar.startsAt(formatTime(fromIso(r.activityStartAt), lang))}
             </AppText>
           </Pressable>
-          <IconButton label="Descartar recordatorio" onPress={() => setDismissed((prev) => new Set(prev).add(r.reminderId))}>
+          <IconButton label={tx.calendar.dismissReminder} onPress={() => setDismissed((prev) => new Set(prev).add(r.reminderId))}>
             <X size={IconSize.inline} strokeWidth={IconStroke} color={theme.textSecondary} />
           </IconButton>
         </View>

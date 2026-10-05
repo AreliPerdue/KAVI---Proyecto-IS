@@ -1,4 +1,3 @@
-import type { ActivityShareStatus } from '@/types/domain';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Check, CircleAlert, X } from 'lucide-react-native';
 import { useMemo, useState } from 'react';
@@ -14,16 +13,10 @@ import { useActivityShares, useShareMutations } from '@/hooks/use-shares';
 import { useTheme } from '@/hooks/use-theme';
 import { formatTime, fromIso } from '@/lib/dates';
 import { useSnackbar } from '@/providers';
+import { useLanguage, useT } from '@/i18n';
 
 const MAX_WIDTH = 560;
 
-/** Cómo se lee cada respuesta en la lista de invitados (RF-S19). */
-const STATUS_LABEL: Record<ActivityShareStatus, string> = {
-  pending: 'Sin responder',
-  accepted: 'Va',
-  maybe: 'Tal vez',
-  declined: 'No va',
-};
 
 /** Choque de horario de un contacto con la actividad que se va a compartir (RF-S16). */
 type Conflict = { from: string; to: string; title: string | null };
@@ -31,6 +24,8 @@ type Conflict = { from: string; to: string; title: string | null };
 /** Compartir una actividad con contactos aceptados (RF-S4); ver y revocar shares. */
 export default function ShareActivityScreen() {
   const theme = useTheme();
+  const tx = useT();
+  const lang = useLanguage();
   const router = useRouter();
   const showSnackbar = useSnackbar();
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -73,9 +68,8 @@ export default function ShareActivityScreen() {
     const list = conflictsByUser.get(userId);
     if (!list || list.length === 0) return null;
     const first = list[0] as Conflict;
-    const when = `${formatTime(fromIso(first.from))}–${formatTime(fromIso(first.to))}`;
-    const extra = list.length > 1 ? ` y ${list.length - 1} más` : '';
-    return first.title ? `Ocupado ${when}: ${first.title}${extra}` : `Ocupado ${when}${extra}`;
+    const when = `${formatTime(fromIso(first.from), lang)}–${formatTime(fromIso(first.to), lang)}`;
+    return tx.calendar.share.busy(when, first.title ?? null, list.length - 1);
   };
 
   const selectedWithConflict = [...selected].filter((userId) => conflictsByUser.has(userId)).length;
@@ -90,7 +84,7 @@ export default function ShareActivityScreen() {
 
   return (
     <Screen modal scroll maxWidth={MAX_WIDTH}>
-      <ModalHeader title="Compartir actividad" />
+      <ModalHeader title={tx.calendar.share.title} />
       {share.error ? <Banner tone="error" message={share.error.message} /> : null}
       {contacts.isPending || shares.isPending ? <LoadingState /> : null}
       {/* El error de la mutacion ya se avisa arriba; sin esta rama, un fallo al
@@ -102,18 +96,18 @@ export default function ShareActivityScreen() {
       {(shares.data?.length ?? 0) > 0 ? (
         <View style={styles.section}>
           <AppText variant="label" color="textSecondary">
-            Compartida con
+            {tx.calendar.share.sharedWith}
           </AppText>
           {shares.data?.map((s) => (
             <View key={s.id} style={[styles.row, { borderColor: theme.border }]}>
               <Avatar profile={s.profile} />
               <View style={styles.text}>
-                <AppText variant="bodyStrong">{s.profile.display_name ?? 'Contacto'}</AppText>
+                <AppText variant="bodyStrong">{s.profile.display_name ?? tx.calendar.contactFallback}</AppText>
                 <AppText variant="caption" color={s.status === 'declined' ? 'danger' : 'textSecondary'}>
-                  {STATUS_LABEL[s.status]}
+                  {tx.calendar.share.status[s.status]}
                 </AppText>
               </View>
-              <IconButton label={`Dejar de compartir con ${s.profile.display_name ?? 'este contacto'}`} onPress={() => remove.mutate(s.id)}>
+              <IconButton label={tx.calendar.share.stopSharing(s.profile.display_name ?? null)} onPress={() => remove.mutate(s.id)}>
                 <X size={IconSize.inline} strokeWidth={IconStroke} color={theme.textSecondary} />
               </IconButton>
             </View>
@@ -123,12 +117,12 @@ export default function ShareActivityScreen() {
 
       <View style={styles.section}>
         <AppText variant="label" color="textSecondary">
-          Elegir contactos
+          {tx.calendar.share.pickContacts}
         </AppText>
         {contacts.isSuccess && candidates.length === 0 ? (
           <EmptyState
-            title={accepted.length === 0 ? 'Aún no tienes contactos' : 'Ya compartiste con todos tus contactos'}
-            description={accepted.length === 0 ? 'Agrega contactos desde la pestaña Compartido.' : undefined}
+            title={accepted.length === 0 ? tx.calendar.share.noContactsYet : tx.calendar.share.sharedWithAll}
+            description={accepted.length === 0 ? tx.calendar.share.addContactsHint : undefined}
           />
         ) : null}
         {candidates.map((c) => {
@@ -139,7 +133,7 @@ export default function ShareActivityScreen() {
               key={c.profile.id}
               accessibilityRole="checkbox"
               accessibilityState={{ checked: isSelected }}
-              accessibilityLabel={c.profile.display_name ?? 'Contacto'}
+              accessibilityLabel={c.profile.display_name ?? tx.calendar.contactFallback}
               onPress={() => toggle(c.profile.id)}
               style={({ pressed }) => [
                 styles.row,
@@ -148,7 +142,7 @@ export default function ShareActivityScreen() {
               ]}>
               <Avatar profile={c.profile} />
               <View style={styles.text}>
-                <AppText variant="bodyStrong">{c.profile.display_name ?? 'Contacto'}</AppText>
+                <AppText variant="bodyStrong">{c.profile.display_name ?? tx.calendar.contactFallback}</AppText>
                 {conflict ? (
                   <View style={styles.conflict}>
                     <CircleAlert size={14} strokeWidth={IconStroke} color={theme.today} />
@@ -158,11 +152,11 @@ export default function ShareActivityScreen() {
                   </View>
                 ) : !c.theirCalendarVisibility ? (
                   <AppText variant="caption" color="textTertiary">
-                    No comparte su disponibilidad contigo.
+                    {tx.calendar.share.noAvailability}
                   </AppText>
                 ) : (
                   <AppText variant="caption" color="textSecondary">
-                    Libre a esa hora.
+                    {tx.calendar.share.free}
                   </AppText>
                 )}
               </View>
@@ -179,14 +173,14 @@ export default function ShareActivityScreen() {
           tone="info"
           message={
             selectedWithConflict === 1
-              ? 'Una de las personas seleccionadas ya tiene algo a esa hora. Puedes invitarla igualmente.'
-              : `${selectedWithConflict} de las personas seleccionadas ya tienen algo a esa hora. Puedes invitarlas igualmente.`
+              ? tx.calendar.share.conflictOne
+              : tx.calendar.share.conflictMany(selectedWithConflict)
           }
         />
       ) : null}
 
       <Button
-        title={selected.size > 1 ? `Compartir con ${selected.size} contactos` : 'Compartir'}
+        title={selected.size > 1 ? tx.calendar.share.shareWithN(selected.size) : tx.calendar.share.share}
         disabled={selected.size === 0}
         loading={share.isPending}
         onPress={() =>
@@ -194,7 +188,7 @@ export default function ShareActivityScreen() {
             { activityId: id, contactUserIds: [...selected] },
             {
               onSuccess: () => {
-                showSnackbar({ message: 'Invitación enviada.' });
+                showSnackbar({ message: tx.calendar.share.invitationSent });
                 setSelected(new Set());
                 if (router.canGoBack()) router.back();
               },

@@ -1,21 +1,15 @@
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { AppText, Chip, DateInputSheet, FieldButton, Segmented, type SegmentedOption, SwitchRow } from '@/components/ui';
+import { AppText, Chip, DateInputSheet, FieldButton, Segmented, SwitchRow } from '@/components/ui';
 import { Spacing } from '@/constants/theme';
-import { formatDate, fromDayKey, toDayKey } from '@/lib/dates';
+import { formatDate, fromDayKey, toDayKey, weekdayLabels } from '@/lib/dates';
 import { type RecurrenceFreq, type RecurrenceRule } from '@/lib/recurrence';
+import { useLanguage, useT } from '@/i18n';
 
 type FreqOption = 'NONE' | RecurrenceFreq;
 
-const FREQ_OPTIONS: readonly SegmentedOption<FreqOption>[] = [
-  { value: 'NONE', label: 'No' },
-  { value: 'DAILY', label: 'Diaria' },
-  { value: 'WEEKLY', label: 'Semanal' },
-  { value: 'MONTHLY', label: 'Mensual' },
-];
-
-const DAY_LABELS = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
+const FRECUENCIAS: readonly FreqOption[] = ['NONE', 'DAILY', 'WEEKLY', 'MONTHLY'];
 
 /** Sección de recurrencia del formulario (RF-C8). */
 export function RecurrenceField({
@@ -30,6 +24,8 @@ export function RecurrenceField({
   disabled?: boolean;
 }) {
   const [pickingUntil, setPickingUntil] = useState(false);
+  const tx = useT();
+  const lang = useLanguage();
   const freq: FreqOption = value?.freq ?? 'NONE';
   const baseDay = fromDayKey(baseDayKey);
   const baseWeekday = (baseDay.getDay() + 6) % 7;
@@ -42,23 +38,23 @@ export function RecurrenceField({
   return (
     <View style={styles.container}>
       <AppText variant="label" color="textSecondary">
-        Repetir
+        {tx.calendar.repeat}
       </AppText>
       {disabled ? (
-        <AppText color="textTertiary">La repetición se edita desde la serie completa.</AppText>
+        <AppText color="textTertiary">{tx.calendar.repeatEditFromSeries}</AppText>
       ) : (
-        <Segmented options={FREQ_OPTIONS} value={freq} onChange={setFreq} />
+        <Segmented options={FRECUENCIAS.map((f) => ({ value: f, label: tx.calendar.repeatOptions[f] }))} value={freq} onChange={setFreq} />
       )}
 
       {value && !disabled ? (
         <AppText variant="caption" color="textTertiary">
-          Empieza el {formatDate(baseDay)}, la fecha de la actividad.
+          {tx.calendar.repeatStarts(formatDate(baseDay, lang))}
         </AppText>
       ) : null}
 
       {value?.freq === 'WEEKLY' && !disabled ? (
         <View style={styles.days}>
-          {DAY_LABELS.map((label, index) => {
+          {weekdayLabels(lang).map((label, index) => {
             const selected = value.byDay.includes(index);
             return (
               <Chip
@@ -79,18 +75,18 @@ export function RecurrenceField({
       {value && !disabled ? (
         <>
           <SwitchRow
-            label="Termina en una fecha"
-            hint={value.until ? undefined : 'Si no, se repite sin fin. Para un horario de clases, marca hasta cuándo dura el curso.'}
+            label={tx.calendar.repeatEndsOnDate}
+            hint={value.until ? undefined : tx.calendar.repeatEndsHint}
             value={value.until !== null}
             onValueChange={(on) => onChange({ ...value, until: on ? toDayKey(fromDayKey(baseDayKey)) : null })}
           />
           {value.until ? (
-            <FieldButton label="Hasta" value={formatDate(fromDayKey(value.until))} onPress={() => setPickingUntil(true)} />
+            <FieldButton label={tx.calendar.repeatUntil} value={formatDate(fromDayKey(value.until), lang)} onPress={() => setPickingUntil(true)} />
           ) : null}
           <DateInputSheet
             visible={pickingUntil}
             value={value.until ? fromDayKey(value.until) : null}
-            title="Repetir hasta"
+            title={tx.calendar.repeatUntilTitle}
             onClose={() => setPickingUntil(false)}
             onSelect={(date) => {
               // Terminar antes de empezar no significa nada: se empuja al día base.

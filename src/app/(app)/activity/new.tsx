@@ -13,6 +13,7 @@ import { useThemes } from '@/hooks/use-themes';
 import { useSnackbar } from '@/providers';
 import type { ExerciseDraft } from '@/components/calendar/workout-draft';
 import type { RecurrenceScope } from '@/services/activities';
+import { useT } from '@/i18n';
 
 const FORM_MAX_WIDTH = 640;
 
@@ -20,6 +21,7 @@ type Params = { id?: string; date?: string; start?: string; end?: string; title?
 
 /** Crear (sin id) o editar (con id) una actividad (RF-C5, RF-C6, RF-C8). */
 export default function ActivityFormScreen() {
+  const tx = useT();
   const router = useRouter();
   const showSnackbar = useSnackbar();
   const { id, date, start, end, title, scope = 'this', focus } = useLocalSearchParams<Params>();
@@ -82,7 +84,7 @@ export default function ActivityFormScreen() {
   }, [activity.data, date, start, end, title, scope, seriesRule, reminders.data]);
 
   const close = () => (router.canGoBack() ? router.back() : router.replace('/(app)/(tabs)/calendar'));
-  const headerTitle = editing ? (scope === 'series' ? 'Editar toda la serie' : 'Editar actividad') : 'Nueva actividad';
+  const headerTitle = editing ? (scope === 'series' ? tx.calendar.form.editSeries : tx.calendar.form.editActivity) : tx.calendar.form.newActivity;
 
   if (editing && (activity.isPending || reminders.isPending || (activity.data?.recurrence_parent_id && parent.isPending))) {
     return (
@@ -111,7 +113,7 @@ export default function ActivityFormScreen() {
         onRemindersLayout={enfocarRecordatorios}
         key={editing ? `${id}-${scope}` : 'new'}
         defaultValues={defaults}
-        submitLabel={editing ? 'Guardar cambios' : 'Crear actividad'}
+        submitLabel={editing ? tx.calendar.form.saveChanges : tx.calendar.form.createActivity}
         submitting={mutation.isPending || setForActivity.isPending}
         error={mutation.error?.message ?? null}
         recurrenceLocked={editing && isSeriesMember && scope === 'this'}
@@ -137,7 +139,7 @@ export default function ActivityFormScreen() {
                     { activityId: saved.id, offsets: values.reminderOffsets },
                     {
                       onSettled: () => {
-                        showSnackbar({ message: scope === 'series' ? 'Serie actualizada.' : 'Cambios guardados.' });
+                        showSnackbar({ message: scope === 'series' ? tx.calendar.form.seriesUpdated : tx.calendar.form.changesSaved });
                         close();
                       },
                     },
@@ -150,17 +152,17 @@ export default function ActivityFormScreen() {
                 if (values.isGym) {
                   await saveExercises(saved.id, saved.start_at, exercises).catch(() => {
                     // La actividad ya existe: no se pierde por un fallo al guardar la rutina.
-                    showSnackbar({ message: 'Actividad creada, pero no se pudo guardar el entrenamiento.' });
+                    showSnackbar({ message: tx.calendar.form.createdNoWorkout });
                   });
                 }
                 const finish = () => {
                   showSnackbar({
                     message:
                       values.visibility === 'private'
-                        ? 'Actividad privada creada.'
+                        ? tx.calendar.form.createdPrivate
                         : input.recurrence
-                          ? 'Actividad recurrente creada.'
-                          : 'Actividad creada.',
+                          ? tx.calendar.form.createdRecurring
+                          : tx.calendar.form.created,
                   });
                   close();
                 };

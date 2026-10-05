@@ -5,6 +5,7 @@
 import { addDays, addMonths, differenceInMinutes, getDay, isAfter, startOfDay } from 'date-fns';
 
 import { fromDayKey, fromIso, toDayKey, toIso } from '@/lib/dates';
+import { getLanguage, t, type Language } from '@/i18n';
 
 export type RecurrenceFreq = 'DAILY' | 'WEEKLY' | 'MONTHLY';
 
@@ -113,18 +114,23 @@ export function occursOn(rule: RecurrenceRule, startDay: string, day: Date): boo
   return d.getDate() === inicio.getDate();
 }
 
-export function describeRecurrence(rule: RecurrenceRule | null): string {
-  if (!rule) return 'No se repite';
-  const names = ['lun', 'mar', 'mié', 'jue', 'vie', 'sáb', 'dom'];
+/** "Cada semana: lun, mié" / "Every week: Mon, Wed" — en el idioma activo o el indicado (spec 12). */
+export function describeRecurrence(rule: RecurrenceRule | null, lang: Language = getLanguage()): string {
+  const r = t(lang).calendar.recurrence;
+  if (!rule) return r.none;
+  const names = t(lang).dates.weekdayShort;
   let text =
     rule.freq === 'DAILY'
-      ? 'Cada día'
+      ? r.daily
       : rule.freq === 'MONTHLY'
-        ? 'Cada mes'
+        ? r.monthly
         : rule.byDay.length > 0
-          ? `Cada semana: ${[...rule.byDay].sort((a, b) => a - b).map((d) => names[d]).join(', ')}`
-          : 'Cada semana';
-  if (rule.until) text += ` · hasta ${rule.until.split('-').reverse().join('/')}`;
+          ? r.weeklyOn([...rule.byDay].sort((a, b) => a - b).map((d) => names[d]).join(', '))
+          : r.weekly;
+  if (rule.until) {
+    const [y, m, d] = rule.until.split('-');
+    text += r.until(lang === 'en' ? `${m}/${d}/${y}` : `${d}/${m}/${y}`);
+  }
   return text;
 }
 

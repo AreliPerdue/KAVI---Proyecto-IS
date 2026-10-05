@@ -16,6 +16,7 @@ import { IconSize, IconStroke, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { formatDate, formatMinutes, fromDayKey, toDayKey } from '@/lib/dates';
 import { activityFormSchema, type ActivityFormValues } from '@/lib/schemas/activity';
+import { useLanguage, useT } from '@/i18n';
 
 export type ActivityFormProps = {
   defaultValues: ActivityFormValues;
@@ -49,6 +50,8 @@ export function ActivityForm({
   showSharing = false,
 }: ActivityFormProps) {
   const theme = useTheme();
+  const tx = useT();
+  const lang = useLanguage();
   const { control, handleSubmit, setValue } = useForm<ActivityFormValues>({
     resolver: zodResolver(activityFormSchema),
     defaultValues,
@@ -71,12 +74,12 @@ export function ActivityForm({
         name="title"
         render={({ field: { onChange, onBlur, value }, fieldState: { error: fieldError } }) => (
           <TextField
-            label="Título"
+            label={tx.calendar.form.title}
             value={value}
             onChangeText={onChange}
             onBlur={onBlur}
             error={fieldError?.message}
-            placeholder="¿Qué vas a hacer?"
+            placeholder={tx.calendar.form.titlePlaceholder}
             autoFocus={!defaultValues.title}
             maxLength={120}
             returnKeyType="done"
@@ -100,8 +103,8 @@ export function ActivityForm({
       />
 
       <FieldButton
-        label="Fecha"
-        value={formatDate(fromDayKey(dayKey))}
+        label={tx.calendar.form.date}
+        value={formatDate(fromDayKey(dayKey), lang)}
         onPress={() => setPicker('date')}
         leading={<CalendarDays size={IconSize.inline} strokeWidth={IconStroke} color={theme.textSecondary} />}
       />
@@ -109,14 +112,14 @@ export function ActivityForm({
       <Controller
         control={control}
         name="allDay"
-        render={({ field: { onChange, value } }) => <SwitchRow label="Todo el día" value={value} onValueChange={onChange} />}
+        render={({ field: { onChange, value } }) => <SwitchRow label={tx.calendar.form.allDay} value={value} onValueChange={onChange} />}
       />
 
       {!allDay ? (
         <View style={styles.timeRow}>
           <FieldButton
-            label="Inicio"
-            value={formatMinutes(startMinutes)}
+            label={tx.calendar.form.start}
+            value={formatMinutes(startMinutes, lang)}
             onPress={() => setPicker('start')}
             leading={<Clock size={IconSize.inline} strokeWidth={IconStroke} color={theme.textSecondary} />}
           />
@@ -124,7 +127,7 @@ export function ActivityForm({
             control={control}
             name="endMinutes"
             render={({ fieldState: { error: fieldError } }) => (
-              <FieldButton label="Fin" value={formatMinutes(endMinutes)} onPress={() => setPicker('end')} error={fieldError?.message} />
+              <FieldButton label={tx.calendar.form.end} value={formatMinutes(endMinutes, lang)} onPress={() => setPicker('end')} error={fieldError?.message} />
             )}
           />
         </View>
@@ -135,12 +138,12 @@ export function ActivityForm({
         name="description"
         render={({ field: { onChange, onBlur, value }, fieldState: { error: fieldError } }) => (
           <TextField
-            label="Descripción"
+            label={tx.calendar.form.description}
             value={value}
             onChangeText={onChange}
             onBlur={onBlur}
             error={fieldError?.message}
-            placeholder="Notas, lugar, enlaces…"
+            placeholder={tx.calendar.form.descriptionPlaceholder}
             multiline
             numberOfLines={3}
             style={styles.multiline}
@@ -198,8 +201,8 @@ export function ActivityForm({
         render={({ field: { onChange, value } }) => (
           <>
             <SwitchRow
-              label="Actividad de gimnasio"
-              hint="Anota tu rutina aquí mismo, sin salir del calendario."
+              label={tx.calendar.form.gymActivity}
+              hint={tx.calendar.form.gymActivityHint}
               value={value}
               onValueChange={onChange}
             />
@@ -229,7 +232,7 @@ export function ActivityForm({
       <TimePickerSheet
         visible={picker === 'start'}
         value={startMinutes}
-        title="Hora de inicio"
+        title={tx.calendar.form.startTime}
         onClose={() => setPicker(null)}
         onSelect={(minutes) => {
           const duration = Math.max(15, endMinutes - startMinutes);
@@ -241,7 +244,7 @@ export function ActivityForm({
       <TimePickerSheet
         visible={picker === 'end'}
         value={endMinutes}
-        title="Hora de fin"
+        title={tx.calendar.form.endTime}
         onClose={() => setPicker(null)}
         onSelect={(minutes) => {
           setValue('endMinutes', minutes, { shouldDirty: true, shouldValidate: true });

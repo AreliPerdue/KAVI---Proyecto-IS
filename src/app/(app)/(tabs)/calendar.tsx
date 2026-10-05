@@ -41,10 +41,12 @@ import { useAuth, useSnackbar } from '@/providers';
 import { extendRecurrenceHorizon } from '@/services/activities';
 import { DEFAULT_VIEW, useCalendarStore } from '@/store/calendar-store';
 import type { Activity, ListItem } from '@/types/domain';
+import { useT } from '@/i18n';
 
 /** Calendario: la estrella (P1). Vistas mes/semana/día, personas superpuestas, FAB (spec 04). */
 export default function CalendarScreen() {
   const theme = useTheme();
+  const tx = useT();
   const router = useRouter();
   const showSnackbar = useSnackbar();
   const view = useCalendarStore((s) => s.view);
@@ -122,9 +124,9 @@ export default function CalendarScreen() {
   const nameOf = useCallback(
     (id: string) => {
       const contact = sharing.find((c) => c.profile.id === id);
-      return contact?.profile.display_name ?? 'tu contacto';
+      return contact?.profile.display_name ?? tx.calendar.yourContact;
     },
-    [sharing],
+    [sharing, tx],
   );
   const colorOf = useCallback(
     (id: string) => peopleColors.get(id) ?? theme.neutralActivity,
@@ -149,11 +151,11 @@ export default function CalendarScreen() {
       return;
     }
     if (isDerivedActivity(activity)) {
-      showSnackbar({ message: `${activity.title} · no se edita desde aquí.` });
+      showSnackbar({ message: tx.calendar.notEditableHere(activity.title) });
       return;
     }
     if (isOverlayActivity(activity)) {
-      showSnackbar({ message: `${activity.title} · calendario de ${activity.owner_name ?? 'tu contacto'} (solo lectura).` });
+      showSnackbar({ message: tx.calendar.readOnlyCalendar(activity.title, activity.owner_name ?? null) });
       return;
     }
     router.push({ pathname: '/(app)/activity/[id]', params: { id: activity.id } });
@@ -313,8 +315,8 @@ export default function CalendarScreen() {
     body = showEmpty ? (
       <EmptyState
         icon={<CalendarDays size={32} strokeWidth={IconStroke} color={theme.textTertiary} />}
-        title="Nada agendado este mes"
-        description="Toca + para crear tu primera actividad."
+        title={tx.calendar.emptyMonthTitle}
+        description={tx.calendar.emptyMonthDescription}
       />
     ) : (
       <AgendaView

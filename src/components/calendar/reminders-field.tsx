@@ -6,14 +6,15 @@ import { AppText, Button, Chip, Segmented, Sheet, TextField } from '@/components
 import { describeOffset, REMINDER_PRESETS } from '@/constants/reminders';
 import { IconSize, IconStroke, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { useLanguage, useT } from '@/i18n';
 
 type Unidad = 'min' | 'h' | 'd' | 'sem';
 
-const UNIDADES: { value: Unidad; label: string; minutos: number }[] = [
-  { value: 'min', label: 'minutos', minutos: 1 },
-  { value: 'h', label: 'horas', minutos: 60 },
-  { value: 'd', label: 'días', minutos: 1440 },
-  { value: 'sem', label: 'semanas', minutos: 10080 },
+const UNIDADES: { value: Unidad; minutos: number }[] = [
+  { value: 'min', minutos: 1 },
+  { value: 'h', minutos: 60 },
+  { value: 'd', minutos: 1440 },
+  { value: 'sem', minutos: 10080 },
 ];
 
 /** Un mes de antelación; más allá el recordatorio deja de tener sentido práctico. */
@@ -35,6 +36,8 @@ export function offsetDesde(cantidad: string, unidad: Unidad): number | null {
  * muestran como un chip más para poder quitarlos igual que los demás.
  */
 export function RemindersField({ value, onChange }: { value: number[]; onChange: (offsets: number[]) => void }) {
+  const tx = useT();
+  const lang = useLanguage();
   const theme = useTheme();
   const [abierto, setAbierto] = useState(false);
   const [cantidad, setCantidad] = useState('');
@@ -61,35 +64,35 @@ export function RemindersField({ value, onChange }: { value: number[]; onChange:
       <View style={styles.header}>
         <Bell size={IconSize.inline} strokeWidth={IconStroke} color={theme.textSecondary} />
         <AppText variant="label" color="textSecondary">
-          Recordatorios
+          {tx.calendar.reminders}
         </AppText>
       </View>
       <View style={styles.chips}>
         {REMINDER_PRESETS.map((preset) => (
           <Chip
             key={preset.offset}
-            label={describeOffset(preset.offset)}
+            label={describeOffset(preset.offset, lang)}
             selected={value.includes(preset.offset)}
             onPress={() => alternar(preset.offset)}
           />
         ))}
         {propios.map((offset) => (
-          <Chip key={offset} label={describeOffset(offset)} selected onPress={() => alternar(offset)} />
+          <Chip key={offset} label={describeOffset(offset, lang)} selected onPress={() => alternar(offset)} />
         ))}
         <Chip
-          label="Personalizar"
+          label={tx.calendar.customize}
           selected={false}
           icon={<Plus size={14} strokeWidth={IconStroke} color={theme.textSecondary} />}
           onPress={() => setAbierto(true)}
         />
       </View>
 
-      <Sheet visible={abierto} onClose={() => setAbierto(false)} title="Antelación personalizada">
-        <AppText color="textSecondary">¿Con cuánta antelación quieres el aviso?</AppText>
+      <Sheet visible={abierto} onClose={() => setAbierto(false)} title={tx.calendar.customReminderTitle}>
+        <AppText color="textSecondary">{tx.calendar.customReminderQuestion}</AppText>
         <View style={styles.fila}>
           <View style={styles.cantidad}>
             <TextField
-              label="Cantidad"
+              label={tx.calendar.amount}
               value={cantidad}
               onChangeText={setCantidad}
               keyboardType="number-pad"
@@ -98,17 +101,17 @@ export function RemindersField({ value, onChange }: { value: number[]; onChange:
             />
           </View>
         </View>
-        <Segmented options={UNIDADES.map((u) => ({ value: u.value, label: u.label }))} value={unidad} onChange={setUnidad} />
+        <Segmented options={UNIDADES.map((u) => ({ value: u.value, label: tx.calendar.units[u.value] }))} value={unidad} onChange={setUnidad} />
         {propuesto !== null ? (
           <AppText variant="label" color={yaEstaba ? 'textTertiary' : 'text'}>
-            {yaEstaba ? `Ya tienes un recordatorio ${describeOffset(propuesto).toLowerCase()}.` : `Te avisaremos ${describeOffset(propuesto).toLowerCase()}.`}
+            {yaEstaba ? tx.calendar.alreadyHaveReminder(describeOffset(propuesto, lang).toLowerCase()) : tx.calendar.willRemind(describeOffset(propuesto, lang).toLowerCase())}
           </AppText>
         ) : cantidad.trim() ? (
           <AppText variant="label" color="danger">
-            Escribe un número mayor que cero, y como mucho un mes de antelación.
+            {tx.calendar.reminderRange}
           </AppText>
         ) : null}
-        <Button title="Agregar" onPress={confirmar} disabled={propuesto === null || yaEstaba} />
+        <Button title={tx.calendar.add} onPress={confirmar} disabled={propuesto === null || yaEstaba} />
       </Sheet>
     </View>
   );

@@ -17,6 +17,7 @@ import { formatDayTitle, formatTimeRange, fromIso } from '@/lib/dates';
 import { describeRecurrence, parseRRule } from '@/lib/recurrence';
 import { useAuth, useConfirm, useSnackbar } from '@/providers';
 import type { RecurrenceScope } from '@/services/activities';
+import { useLanguage, useT } from '@/i18n';
 
 const DETAIL_MAX_WIDTH = 560;
 
@@ -34,6 +35,8 @@ type PendingAction = 'edit' | 'delete';
 /** Hoja de detalle de actividad: editar y eliminar, con "solo esta / toda la serie" (RF-C7, RF-C8). */
 export default function ActivityDetailScreen() {
   const theme = useTheme();
+  const tx = useT();
+  const lang = useLanguage();
   const router = useRouter();
   const confirm = useConfirm();
   const showSnackbar = useSnackbar();
@@ -57,7 +60,7 @@ export default function ActivityDetailScreen() {
   if (activity.isPending) {
     return (
       <Screen modal maxWidth={DETAIL_MAX_WIDTH}>
-        <ModalHeader title="Actividad" />
+        <ModalHeader title={tx.calendar.detail.title} />
         <LoadingState />
       </Screen>
     );
@@ -65,7 +68,7 @@ export default function ActivityDetailScreen() {
   if (activity.isError) {
     return (
       <Screen modal maxWidth={DETAIL_MAX_WIDTH}>
-        <ModalHeader title="Actividad" />
+        <ModalHeader title={tx.calendar.detail.title} />
         <ErrorState message={activity.error.message} onRetry={() => activity.refetch()} />
       </Screen>
     );
@@ -87,9 +90,9 @@ export default function ActivityDetailScreen() {
 
   const doDelete = async (scope: RecurrenceScope) => {
     const ok = await confirm({
-      title: scope === 'series' ? 'Eliminar toda la serie' : 'Eliminar actividad',
-      message: scope === 'series' ? `Se eliminará "${data.title}" y sus próximas repeticiones.` : `Se eliminará "${data.title}".`,
-      confirmLabel: 'Eliminar',
+      title: scope === 'series' ? tx.calendar.detail.deleteSeries : tx.calendar.detail.deleteActivity,
+      message: scope === 'series' ? tx.calendar.detail.deleteSeriesMessage(data.title) : tx.calendar.detail.deleteMessage(data.title),
+      confirmLabel: tx.calendar.detail.delete,
       destructive: true,
     });
     if (!ok) return;
@@ -100,8 +103,8 @@ export default function ActivityDetailScreen() {
         onSuccess: () => {
           close();
           showSnackbar({
-            message: scope === 'series' ? 'Serie eliminada.' : 'Actividad eliminada.',
-            actionLabel: scope === 'series' ? undefined : 'Deshacer',
+            message: scope === 'series' ? tx.calendar.detail.seriesDeleted : tx.calendar.detail.deleted,
+            actionLabel: scope === 'series' ? undefined : tx.calendar.detail.undo,
             onAction:
               scope === 'series'
                 ? undefined
@@ -132,22 +135,22 @@ export default function ActivityDetailScreen() {
 
   return (
     <Screen modal scroll maxWidth={DETAIL_MAX_WIDTH}>
-      <ModalHeader title="Actividad" />
+      <ModalHeader title={tx.calendar.detail.title} />
       <View style={styles.hero}>
         <View style={[styles.iconBadge, { backgroundColor: color }]}>
           <ThemeIcon name={data.icon} color="#FFFFFF" size={IconSize.action} />
         </View>
         <View style={styles.heroText}>
           <AppText variant="title">{data.title}</AppText>
-          <AppText color="textSecondary">{formatDayTitle(fromIso(data.start_at))}</AppText>
+          <AppText color="textSecondary">{formatDayTitle(fromIso(data.start_at), lang)}</AppText>
           <AppText color="textSecondary" tabular>
-            {formatTimeRange(data.start_at, data.end_at, data.all_day)}
+            {formatTimeRange(data.start_at, data.end_at, data.all_day, lang)}
           </AppText>
           {!isOwner ? (
             <View style={styles.inline}>
               <Users size={14} strokeWidth={IconStroke} color={theme.textTertiary} />
               <AppText variant="caption" color="textTertiary">
-                Compartida por {data.owner_name ?? 'un contacto'} · solo lectura
+                {tx.calendar.detail.sharedBy(data.owner_name ?? null)}
               </AppText>
             </View>
           ) : null}
@@ -155,7 +158,7 @@ export default function ActivityDetailScreen() {
             <View style={styles.inline}>
               <Repeat size={14} strokeWidth={IconStroke} color={theme.textTertiary} />
               <AppText variant="caption" color="textTertiary">
-                {describeRecurrence(rule)}
+                {describeRecurrence(rule, lang)}
               </AppText>
             </View>
           ) : null}
@@ -176,22 +179,22 @@ export default function ActivityDetailScreen() {
             <BellOff size={IconSize.inline} strokeWidth={IconStroke} color={theme.textTertiary} />
           )}
           <AppText variant="label" color="textSecondary">
-            Recordatorios
+            {tx.calendar.detail.reminders}
           </AppText>
         </View>
         {reminders.data?.length ? (
           reminders.data.map((r) => (
             <SwitchRow
               key={r.id}
-              label={describeOffset(r.offset_minutes)}
-              hint={r.enabled ? undefined : 'Silenciado solo para ti'}
+              label={describeOffset(r.offset_minutes, lang)}
+              hint={r.enabled ? undefined : tx.calendar.detail.mutedForYou}
               value={r.enabled}
               onValueChange={(enabled) => setEnabled.mutate({ reminderId: r.id, enabled })}
             />
           ))
         ) : isOwner ? (
           <Button
-            title="Agregar recordatorios"
+            title={tx.calendar.detail.addReminders}
             variant="secondary"
             icon={<Bell size={IconSize.inline} strokeWidth={IconStroke} color={theme.text} />}
             onPress={() =>
@@ -203,7 +206,7 @@ export default function ActivityDetailScreen() {
           />
         ) : (
           <AppText variant="caption" color="textTertiary">
-            Esta actividad no tiene recordatorios.
+            {tx.calendar.detail.noReminders}
           </AppText>
         )}
       </View>
@@ -216,15 +219,15 @@ export default function ActivityDetailScreen() {
           <View style={styles.inline}>
             <Users size={IconSize.inline} strokeWidth={IconStroke} color={theme.textSecondary} />
             <AppText variant="label" color="textSecondary">
-              Invitados · {porRespuesta.accepted.length} de {invitados.length} confirmados
+              {tx.calendar.detail.guests(porRespuesta.accepted.length, invitados.length)}
             </AppText>
           </View>
           {(
             [
-              ['accepted', 'Van', 'success'],
-              ['maybe', 'Tal vez', 'text'],
-              ['declined', 'No van', 'textTertiary'],
-              ['pending', 'Sin responder', 'textTertiary'],
+              ['accepted', tx.calendar.detail.rsvp.accepted, 'success'],
+              ['maybe', tx.calendar.detail.rsvp.maybe, 'text'],
+              ['declined', tx.calendar.detail.rsvp.declined, 'textTertiary'],
+              ['pending', tx.calendar.detail.rsvp.pending, 'textTertiary'],
             ] as const
           ).map(([clave, etiqueta, color]) =>
             porRespuesta[clave].length > 0 ? (
@@ -233,7 +236,7 @@ export default function ActivityDetailScreen() {
                   {etiqueta}:
                 </AppText>
                 <AppText variant="caption" color="textSecondary" style={styles.invitados}>
-                  {porRespuesta[clave].map((s) => s.profile.display_name?.split(' ')[0] ?? 'Contacto').join(', ')}
+                  {porRespuesta[clave].map((s) => s.profile.display_name?.split(' ')[0] ?? tx.calendar.contactFallback).join(', ')}
                 </AppText>
               </View>
             ) : null,
@@ -243,7 +246,7 @@ export default function ActivityDetailScreen() {
 
       {isOwner && data.is_gym ? (
         <Button
-          title={workout.data ? 'Ver entrenamiento' : 'Registrar entrenamiento'}
+          title={workout.data ? tx.calendar.detail.viewWorkout : tx.calendar.detail.logWorkout}
           icon={<Dumbbell size={IconSize.inline} strokeWidth={IconStroke} color={theme.onInk} />}
           loading={workout.isPending || workoutMutations.create.isPending}
           onPress={() => {
@@ -265,17 +268,17 @@ export default function ActivityDetailScreen() {
           <>
             <ActionRow
               icon={<Pencil size={IconSize.inline} strokeWidth={IconStroke} color={theme.text} />}
-              label="Editar"
+              label={tx.calendar.detail.edit}
               onPress={() => (isSeries ? setPending('edit') : edit('this'))}
             />
             <ActionRow
               icon={<Share2 size={IconSize.inline} strokeWidth={IconStroke} color={theme.text} />}
-              label="Compartir"
+              label={tx.calendar.detail.share}
               onPress={() => router.push({ pathname: '/(app)/activity/share', params: { id: data.id } })}
             />
             <ActionRow
               icon={<Trash2 size={IconSize.inline} strokeWidth={IconStroke} color={theme.danger} />}
-              label="Eliminar"
+              label={tx.calendar.detail.delete}
               color="danger"
               onPress={() => (isSeries ? setPending('delete') : void doDelete('this'))}
               disabled={remove.isPending}
@@ -284,24 +287,24 @@ export default function ActivityDetailScreen() {
         ) : (
           <ActionRow
             icon={<LogOut size={IconSize.inline} strokeWidth={IconStroke} color={theme.danger} />}
-            label="Salir de esta actividad"
+            label={tx.calendar.detail.leave}
             color="danger"
             disabled={shareMutations.remove.isPending}
             onPress={async () => {
-              const ok = await confirm({ title: 'Salir de la actividad', message: 'Dejará de aparecer en tu calendario.', confirmLabel: 'Salir', destructive: true });
+              const ok = await confirm({ title: tx.calendar.detail.leaveTitle, message: tx.calendar.detail.leaveMessage, confirmLabel: tx.calendar.detail.leaveConfirm, destructive: true });
               if (!ok) return;
               const myShare = await findMyShare(data.id);
-              if (myShare) shareMutations.remove.mutate(myShare, { onSuccess: () => { showSnackbar({ message: 'Saliste de la actividad.' }); close(); } });
+              if (myShare) shareMutations.remove.mutate(myShare, { onSuccess: () => { showSnackbar({ message: tx.calendar.detail.left }); close(); } });
             }}
           />
         )}
       </View>
 
-      <Sheet visible={pending !== null} onClose={() => setPending(null)} title="¿Solo esta ocurrencia o toda la serie?">
+      <Sheet visible={pending !== null} onClose={() => setPending(null)} title={tx.calendar.detail.scopeQuestion}>
         <AppText color="textSecondary">Esta actividad se repite. Elige qué quieres {pending === 'delete' ? 'eliminar' : 'editar'}.</AppText>
         <View style={styles.scopeActions}>
-          <Button title="Solo esta ocurrencia" variant="secondary" onPress={() => pending && runWithScope(pending, 'this')} />
-          <Button title="Toda la serie" onPress={() => pending && runWithScope(pending, 'series')} />
+          <Button title={tx.calendar.detail.onlyThis} variant="secondary" onPress={() => pending && runWithScope(pending, 'this')} />
+          <Button title={tx.calendar.detail.wholeSeries} onPress={() => pending && runWithScope(pending, 'series')} />
         </View>
       </Sheet>
     </Screen>
