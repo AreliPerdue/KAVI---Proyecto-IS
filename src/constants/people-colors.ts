@@ -25,8 +25,8 @@ import { NOBIS } from '@/constants/nobi';
  *   alternando matices y pone primero los que mejor se ven; agregar uno nuevo va **al
  *   final**, porque el reparto se deriva en cada render y meter uno en medio le cambiaría
  *   el color a contactos que ya llevaban el suyo.
- * - `PEOPLE_COLORS_DISPLAY` es el de los **menús**: por familias (rosas y rojos, cálidos,
- *   tierra, verdes, azules, morados, neutros), de claro a oscuro dentro de cada una.
+ * - `PEOPLE_COLORS_DISPLAY` es el de los **menús**: en orden de arcoíris (rojo → naranja →
+ *   amarillo → verde → azul → morado → rosa) y después los tierra y los neutros.
  */
 
 export type PersonColor = { id: string; label: string; hex: string };
@@ -60,14 +60,17 @@ export const PEOPLE_COLORS: readonly PersonColor[] = [
   { id: 'silver', label: 'Plateado', hex: '#BCCDDE' },
 ] as const;
 
-/** El orden de los menús de color (el de los Nobi): por familias, de claro a oscuro. */
+/**
+ * El orden de los menús de color (el de los Nobi): el del arcoíris por matiz —rojos,
+ * naranjas, amarillos, verdes, azules, morados y rosas— y al final los tierra y los neutros,
+ * que no tienen lugar en el arcoíris.
+ */
 export const COLOR_DISPLAY_ORDER: readonly string[] = [
-  'pink', 'magenta', 'coral', 'red', 'deep_red',
-  'orange', 'gold', 'yellow',
+  'deep_red', 'red', 'coral', 'orange', 'gold', 'yellow',
+  'olive_green', 'lime_green', 'green',
+  'turquois', 'baby_blue', 'blue', 'navy_blue', 'indigo',
+  'lilac', 'light_purple', 'purple', 'magenta', 'pink',
   'beige', 'brown',
-  'lime_green', 'olive_green', 'green',
-  'turquois', 'baby_blue', 'blue', 'navy_blue',
-  'indigo', 'lilac', 'light_purple', 'purple',
   'white', 'silver', 'gray', 'black',
 ];
 
