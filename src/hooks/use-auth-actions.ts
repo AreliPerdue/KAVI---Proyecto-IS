@@ -1,4 +1,4 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { type QueryClient, useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { clearOutbox } from '@/lib/gym/outbox';
 import { syncNotifications } from '@/lib/notifications';
@@ -68,19 +68,22 @@ export function useSignOut() {
 }
 
 /**
- * Eliminar cuenta (RF-A12). Además del servidor, se limpia lo que este dispositivo guardaba de
- * la persona: la cola de series pendientes, el descanso en curso, los avisos programados y la
- * caché de datos. Las preferencias del aparato (formato de hora, tema) se quedan.
+ * Lo que este dispositivo guardaba de la persona: la cola de series pendientes, el descanso en
+ * curso, los avisos programados y la caché de datos. Las preferencias del aparato (formato de
+ * hora, tema) se quedan. Se usa al eliminar la cuenta (RF-A12, RF-A13).
  */
+export async function olvidarDatosDelDispositivo(queryClient: QueryClient): Promise<void> {
+  useGymStore.getState().stopRest();
+  useOutboxStore.getState().setEntries(() => []);
+  await Promise.allSettled([clearOutbox(), syncNotifications([])]);
+  queryClient.clear();
+}
+
+/** Eliminar cuenta (RF-A12). Además del servidor, se limpia lo que guardaba este dispositivo. */
 export function useDeleteAccount() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ email, password }: { email: string; password: string }) => deleteAccount(email, password),
-    onSuccess: async () => {
-      useGymStore.getState().stopRest();
-      useOutboxStore.getState().setEntries(() => []);
-      await Promise.allSettled([clearOutbox(), syncNotifications([])]);
-      queryClient.clear();
-    },
+    onSuccess: () => olvidarDatosDelDispositivo(queryClient),
   });
 }

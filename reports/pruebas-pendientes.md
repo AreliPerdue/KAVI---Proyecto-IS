@@ -508,3 +508,26 @@ correcta + "Entiendo…" → vuelve a login. Falta:
 - [ ] Hoja: el botón solo se activa con contraseña y el interruptor "Entiendo…".
 - [ ] En producción, con una cuenta de prueba creada para eso: eliminarla y comprobar que su
   correo ya no inicia sesión.
+
+## Edad y consentimiento (T264) y aviso publicado (T260)
+Migración `20261005110000_consents.sql` probada en PGlite (20 casos: RLS solo lo propio; sin el
+secreto no hay token; anon no puede crear; no el correo propio; adultos rechazados; el menor
+solo ve la huella y no puede aprobarse; un enlace reemplazado no aprueba; el adulto ve y
+aprueba; idempotente; enlace inválido y vencido; límite de 5 al día; cascada al eliminar la
+cuenta). Visto en el demo (360 px): cuenta nueva → "Antes de empezar"; 15 años → confirmar y
+"Corregir la fecha"; 17 años → correo propio rechazado ("no el tuyo"); correo del adulto →
+espera; "Abrir el enlace del correo" → `/consentimiento` → "Apruebo" → "Volver a KAVI" abre el
+calendario. `/privacidad` y un enlace inválido se abren sin sesión. Falta:
+- [ ] `edadEn`: cumpleaños hoy, ayer y mañana; 29 de febrero.
+- [ ] `consentGate`: sin fecha o con otra versión → aceptar; < 16 → menor; 16–17 sin aprobación
+  → adulto; 16–17 con alguna aprobación → listo; ≥ 18 → listo.
+- [ ] `useConsentGate`: sin red y con la versión recordada abre la app; sin red y sin recordar
+  muestra el error con "Reintentar"; con red siempre manda el servidor.
+- [ ] Menor de 16 → "Es correcta: eliminar mi cuenta" borra la cuenta y vuelve a login.
+- [ ] Rechazado y vencido muestran su texto; "Volver a enviar" y "Cambiar el correo".
+- [ ] Función de Vercel `api/guardian-consent`: sin sesión 401; correo inválido 400; mensajes
+  22023 de la base pasan tal cual; sin variables de entorno 503.
+- [ ] En producción, con una cuenta de prueba de 17 años creada para eso: llega el correo (revisar
+  spam), el enlace abre `/consentimiento`, aprobar abre la app; el enlace ya usado dice
+  "Aprobaste…"; eliminar después la cuenta de prueba.
+- [ ] Cuentas existentes (la de Areli) ven "Antes de empezar" una vez al entrar.

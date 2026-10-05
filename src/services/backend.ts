@@ -8,6 +8,7 @@ import type {
   AdminApi,
   AuthApi,
   AvailabilityApi,
+  ConsentApi,
   ConnectionsApi,
   ExercisesApi,
   ListsApi,
@@ -22,6 +23,7 @@ import { demoActivities } from '@/services/demo/activities';
 import { demoAdmin } from '@/services/demo/admin';
 import { demoAuth } from '@/services/demo/auth';
 import { demoAvailability } from '@/services/demo/availability';
+import { demoConsent } from '@/services/demo/consent';
 import { demoConnections } from '@/services/demo/connections';
 import { demoExercises } from '@/services/demo/exercises';
 import { demoLists } from '@/services/demo/lists';
@@ -34,6 +36,7 @@ import { demoWorkouts } from '@/services/demo/workouts';
 import { supabaseActivities } from '@/services/supabase/activities';
 import { supabaseAdmin } from '@/services/supabase/admin';
 import { supabaseAuth } from '@/services/supabase/auth';
+import { supabaseConsent } from '@/services/supabase/consent';
 import { supabaseExercises } from '@/services/supabase/exercises';
 import { supabaseLists } from '@/services/supabase/lists';
 import { supabaseProfiles } from '@/services/supabase/profiles';
@@ -55,3 +58,4 @@ export const workoutsApi: WorkoutsApi = env.isDemoMode ? demoWorkouts : supabase
 export const exercisesApi: ExercisesApi = env.isDemoMode ? demoExercises : supabaseExercises;
 export const adminApi: AdminApi = env.isDemoMode ? demoAdmin : supabaseAdmin;
 export const listsApi: ListsApi = env.isDemoMode ? demoLists : supabaseLists;
+export const consentApi: ConsentApi = env.isDemoMode ? demoConsent : supabaseConsent;

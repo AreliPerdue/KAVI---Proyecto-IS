@@ -29,6 +29,11 @@ export function toError(error: { message: string; code?: string; details?: strin
     void cerrarSiNoHaySesion();
     return new AuthUiError('No tienes permiso para hacer eso.', error);
   }
+  // 22023 lo usan las funciones de la base que ya traen el mensaje en español para la persona
+  // (consentimiento, RF-A13): se muestra tal cual.
+  if (error.code === '22023') {
+    return new AuthUiError(error.message, error);
+  }
   if (error.code === '23505') {
     return new AuthUiError('Eso ya existe.', error);
   }

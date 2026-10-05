@@ -1,4 +1,5 @@
 /** Contratos que implementan el backend Supabase y el backend demo (memoria). */
+import type { ConsentStatus, GuardianStatus } from '@/lib/consent';
 import type { RecurrenceRule } from '@/lib/recurrence';
 import type {
   Activity,
@@ -423,4 +424,23 @@ export interface ListSharesApi {
   unshare(listId: string, userId: string): Promise<void>;
   /** Listas que otras personas comparten conmigo, para el inicio (RF-L1). */
   sharedWithMe(userId: string): Promise<KaviList[]>;
+}
+
+/** Edad mínima y consentimiento (spec 03, RF-A13). */
+export interface ConsentApi {
+  /** Lo que la cuenta ya declaró y aceptó, y la última solicitud a su madre, padre o tutor. */
+  getStatus(): Promise<ConsentStatus>;
+  /** Guarda la fecha de nacimiento y la aceptación expresa del aviso en su versión vigente. */
+  accept(birthDate: string, privacyVersion: string): Promise<void>;
+  /**
+   * Manda el correo al adulto. El enlace lo genera el servidor y la app nunca lo ve; en demo,
+   * donde no hay correo, se devuelve para poder abrirlo (`previewLink`).
+   */
+  requestGuardianApproval(guardianEmail: string): Promise<{ previewLink: string | null }>;
+  /** Lo que ve el adulto al abrir el enlace, sin iniciar sesión; `null` si el enlace no existe. */
+  guardianRequestInfo(token: string): Promise<{ minorName: string; status: GuardianStatus; expiresAt: string } | null>;
+  /** El adulto aprueba o no. Repetir devuelve la decisión que ya se tomó. */
+  decideGuardianRequest(token: string, approve: boolean): Promise<GuardianStatus>;
+  /** Menores de 16: la cuenta se elimina con su sesión actual, sin pedir la contraseña otra vez. */
+  deleteUnderageAccount(): Promise<void>;
 }

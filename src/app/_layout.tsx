@@ -77,6 +77,9 @@ function RootNavigator() {
       </Stack.Protected>
       {/* Pública, con o sin sesión: el enlace para eliminar la cuenta que pide Google Play (RF-A12). */}
       <Stack.Screen name="eliminar-cuenta" />
+      {/* Públicas también: el aviso de privacidad (T260) y la página del adulto que aprueba a un menor (RF-A13). */}
+      <Stack.Screen name="privacidad" />
+      <Stack.Screen name="consentimiento" />
     </Stack>
   );
 }

@@ -32,6 +32,20 @@ Registro, inicio de sesión y sesión persistente con Supabase Auth (email + con
   `/eliminar-cuenta` (sin iniciar sesión) que explica cómo hacerlo y ofrece el correo de contacto, que es el
   enlace web que pide Google Play.
 
+- RF-A13. **Edad mínima y consentimiento** (T264, 5 oct 2026; aviso de privacidad y LFPDPPP 2025). Antes de usar
+  KAVI, toda cuenta pasa una vez por **"Antes de empezar"**: la nueva justo después de crearla, la existente al
+  entrar. Pide la **fecha de nacimiento** y la **aceptación expresa** del aviso de privacidad (publicado en
+  `/privacidad`) y del tratamiento de los datos de bienestar. Se guarda en `account_consents` (solo la ve su
+  dueño; es aparte del cumpleaños de RF-A10, que ven los contactos), con la versión del aviso aceptada.
+  - **Menos de 16 años:** KAVI no se puede usar; la cuenta recién creada se elimina ahí mismo (RF-A12).
+  - **16 o 17:** se pide el correo de su **madre, padre o tutor**. KAVI le envía un correo con un enlace a
+    `/consentimiento` donde **aprueba o no**. Hasta que apruebe, la app muestra una espera con opción de reenviar,
+    cambiar el correo, cerrar sesión o eliminar la cuenta. El enlace vence en 7 días y sirve una sola vez.
+  - **Quién genera el enlace:** solo el servidor. La base crea el token (`create_guardian_consent`) únicamente
+    para quien presenta el secreto del servidor de correo (Vercel, `/api/guardian-consent`, Gmail); la app nunca
+    lo ve, así que nadie puede aprobarse a sí mismo. El estado vive en `guardian_consents`, que la app solo lee.
+  - Si el aviso cambia de versión, se vuelve a pedir la aceptación.
+
 ## Fuera de alcance
 OAuth social, verificación en dos pasos.
 
@@ -51,6 +65,11 @@ OAuth social, verificación en dos pasos.
   y la cuenta sigue intacta.
 - Given que no tiene sesión, When abre `/eliminar-cuenta` en el navegador, Then ve cómo eliminar su cuenta y el
   correo de contacto.
+- Given una cuenta nueva con fecha de nacimiento de hace 15 años, When la confirma, Then ve que KAVI es para 16+ y
+  la cuenta se elimina.
+- Given una cuenta de 17 años, When escribe el correo de su madre, padre o tutor, Then ese adulto recibe un enlace y
+  la app espera; When el adulto aprueba, Then la app se abre; When no aprueba, Then la app sigue cerrada y lo dice.
+- Given una cuenta adulta sin aceptar el aviso, When entra, Then no ve el calendario hasta aceptarlo.
 
 ## UI mínima
 `/login`, `/register` (4 pasos), `/forgot-password`, `/(app)/profile`. Formularios simples, botón deshabilitado durante submit, estados de carga y error visibles (P9).

@@ -1,8 +1,11 @@
+import { BeforeYouStart } from '@/components/account/before-you-start';
 import { ErrorFallback } from '@/components/error-fallback';
+import { ErrorState, LoadingState, Screen } from '@/components/ui';
 import { type ErrorBoundaryProps, Stack } from 'expo-router';
 import { useEffect } from 'react';
 import { Platform } from 'react-native';
 
+import { useConsentGate } from '@/hooks/use-consent';
 import { useRealtimeInvalidation } from '@/hooks/use-realtime';
 import { useReminderSync } from '@/hooks/use-reminders';
 import { useSocialNotifications } from '@/hooks/use-social-notifications';
@@ -37,8 +40,42 @@ function Preferencias() {
   return null;
 }
 
-/** Stack nativo del área autenticada: tabs + rutas modales (actividad, entrenamiento…). */
+/**
+ * Stack nativo del área autenticada: tabs + rutas modales (actividad, entrenamiento…).
+ *
+ * Antes, "Antes de empezar" (RF-A13): mientras la cuenta no haya aceptado el aviso vigente
+ * —o, si tiene 16 o 17, mientras su madre, padre o tutor no apruebe— no se monta nada de la
+ * app, tampoco la sincronización de avisos.
+ */
 export default function AppLayout() {
+  const consent = useConsentGate();
+  if (consent.isPending) {
+    return (
+      <Screen>
+        <Preferencias />
+        <LoadingState />
+      </Screen>
+    );
+  }
+  if (consent.isError) {
+    return (
+      <Screen>
+        <ErrorState message={consent.error.message} onRetry={() => void consent.refetch()} />
+      </Screen>
+    );
+  }
+  if (consent.data.kind !== 'listo') {
+    return (
+      <>
+        <Preferencias />
+        <BeforeYouStart gate={consent.data} />
+      </>
+    );
+  }
+  return <App />;
+}
+
+function App() {
   const modal = Platform.OS === 'web' ? 'card' : 'modal';
   return (
     <>

@@ -25,6 +25,7 @@ import {
   Timer,
   Weight,
   Users,
+  ShieldCheck,
   UserX,
 } from 'lucide-react-native';
 import { type ReactNode, useEffect, useMemo, useState } from 'react';
@@ -454,6 +455,11 @@ export default function ProfileScreen() {
           icon={<Info size={IconSize.inline} strokeWidth={IconStroke} color={theme.textSecondary} />}
           label="Versión"
           value={env.isDemoMode ? `${version} · demo` : version}
+        />
+        <SettingsRow
+          icon={<ShieldCheck size={IconSize.inline} strokeWidth={IconStroke} color={theme.textSecondary} />}
+          label="Aviso de privacidad"
+          onPress={() => router.push('/privacidad')}
         />
       </SettingsGroup>
 

@@ -744,17 +744,17 @@ Plan y decisiones en `docs/gym/AUDITORIA.md`. Cada fase cierra con typecheck, li
 - [x] T258 Relación entre sesiones externas y de KAVI (RF-H6): función pura y su uso en Actividad y en el
   historial. Dep: T256
 - [x] T259 "Datos de salud" en Perfil: estado y desconectar (RF-H8). Dep: T256
-- [ ] T260 Aviso de privacidad de KAVI, publicado y enlazado desde Perfil (S7). Lo revisa y aprueba Areli.
+- [x] T260 Aviso de privacidad de KAVI, publicado y enlazado desde Perfil (S7). Lo revisa y aprueba Areli.
+  Publicado en `/privacidad` (versión `v1-2026-10-05`, texto en `src/constants/privacy.ts`) con T264.
   Borrador en `docs/legal/aviso-de-privacidad.md`, con los datos que faltan marcados [PENDIENTE].
 - [ ] T261 Adaptador de Health Connect en Android: dependencias, permisos en contexto, totales y sesiones;
   recompilar y probar en un teléfono. Dep: T257, T260
 - [ ] T262 Adaptador de HealthKit en iOS, cuando exista la cuenta de Apple Developer. Dep: T261
 - [x] T263 **Eliminar cuenta** desde la app y con un enlace web (RF-A12, aprobada el 5 oct 2026): migración
   `delete_my_account`, contrato en los dos backends, hoja en Perfil y página pública `/eliminar-cuenta`.
-- [ ] T264 **Consentimiento expreso** para datos de bienestar en el registro (y para la actividad del
-  teléfono al conectarla), con enlace al aviso de privacidad. Incluye la **edad mínima de 16** (decisión del
-  5 oct 2026): el registro pide la fecha de nacimiento, rechaza menores de 16 y, entre 16 y 17, pide el
-  consentimiento de madre, padre o tutor. Requiere actualizar las specs 03 y 11. Dep: T260
+- [x] T264 **Edad y consentimiento** (RF-A13, aprobada el 5 oct 2026): "Antes de empezar" con fecha de nacimiento
+  y aceptación expresa del aviso; menores de 16 no; de 16 a 17, aprobación de madre, padre o tutor **por correo**
+  (Vercel + Gmail; el token lo genera solo el servidor). Incluye publicar el aviso en `/privacidad` (T260).
 
 ### Bugs reportados
 - [x] T249 **Una ocurrencia borrada de una serie vuelve a aparecer al recargar.** Reporte (4
