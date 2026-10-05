@@ -735,6 +735,20 @@ Plan y decisiones en `docs/gym/AUDITORIA.md`. Cada fase cierra con typecheck, li
   y pantalla Glosario con búsqueda (RF-F64). Dep: T248
 - [x] T254 Marcar las estimaciones con "≈" y "estimado" en todo el módulo (RF-F65). Dep: T248
 
+### Fitness con datos de salud (spec 11)
+- [x] T255 Spec 11 y enmienda a la constitución (P5, P8). Dep: —
+- [x] T256 Contrato `HealthApi` con implementaciones web (no disponible), demo (datos de ejemplo) y la base
+  móvil "no disponible" mientras no haya adaptador (RF-H1, RF-H4). Dep: T255
+- [x] T257 Fitness con dos partes, Ejercicio y Actividad; Actividad con estados web, sin plataforma, sin
+  permisos y con datos; procedencia en cada valor (RF-H2 – RF-H5, RF-H7). Dep: T256
+- [x] T258 Relación entre sesiones externas y de KAVI (RF-H6): función pura y su uso en Actividad y en el
+  historial. Dep: T256
+- [x] T259 "Datos de salud" en Perfil: estado y desconectar (RF-H8). Dep: T256
+- [ ] T260 Aviso de privacidad de KAVI, publicado y enlazado desde Perfil (S7). Lo revisa y aprueba Areli.
+- [ ] T261 Adaptador de Health Connect en Android: dependencias, permisos en contexto, totales y sesiones;
+  recompilar y probar en un teléfono. Dep: T257, T260
+- [ ] T262 Adaptador de HealthKit en iOS, cuando exista la cuenta de Apple Developer. Dep: T261
+
 ### Bugs reportados
 - [x] T249 **Una ocurrencia borrada de una serie vuelve a aparecer al recargar.** Reporte (4
   oct 2026): actividad de lunes a viernes con fecha de fin; se borró solo un viernes y al

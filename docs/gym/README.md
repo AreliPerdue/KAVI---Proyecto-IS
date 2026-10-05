@@ -30,6 +30,7 @@ src/app/(app)/workout/[id].tsx     logger: en vivo, lectura y edición en una pa
 src/app/(app)/exercise/[id].tsx    detalle de un ejercicio: mejor serie, gráficas, nota fija
 src/app/(app)/progress.tsx         racha, calendario de entrenos, series por músculo, logros
 src/app/(app)/glossary.tsx         glosario de términos (RF-F64); fuente en src/constants/glossary.ts
+src/components/fitness/activity-view.tsx  Fitness → Actividad (spec 11); datos en src/services/health/
 src/app/(app)/(tabs)/fitness.tsx   historial, sesión en curso, racha, búsqueda de notas
 src/components/fitness/            bloques, hojas (teclado, notas, intensificadores…), resumen
 src/lib/gym/                       lógica pura: volumen, e1RM, PRs, series, racha, logros…

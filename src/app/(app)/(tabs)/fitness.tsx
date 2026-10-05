@@ -1,15 +1,19 @@
 import { useRouter } from 'expo-router';
 import { BookOpen, ChevronRight, Dumbbell, MessageSquareText, Play, Plus, Search, X } from 'lucide-react-native';
-import { useCallback, useState } from 'react';
-import { FlatList, Platform, Pressable, StyleSheet, TextInput, type TextStyle, View } from 'react-native';
+import { useCallback, useMemo, useState } from 'react';
+import { FlatList, Platform, Pressable, ScrollView, StyleSheet, TextInput, type TextStyle, View } from 'react-native';
 
+import { ActivityView } from '@/components/fitness/activity-view';
 import { StreakCard } from '@/components/fitness/streak-card';
-import { AppText, Button, EmptyState, ErrorState, IconButton, LoadingState, Screen } from '@/components/ui';
+import { AppText, Button, EmptyState, ErrorState, IconButton, LoadingState, Screen, Segmented } from '@/components/ui';
 import { IconSize, IconStroke, Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useLegacyConversion } from '@/hooks/use-exercise-history';
 import { useOutboxBootstrap } from '@/hooks/use-set-sync';
+import { useExternalSessions, useHealthAvailability, useHealthPermissions } from '@/hooks/use-health';
 import { useNoteSearch, useWorkoutMutations, useWorkouts } from '@/hooks/use-workouts';
+import { kaviSpan, matchSessions } from '@/lib/health/match';
+import { HEALTH_SOURCE_LABEL } from '@/services/health';
 import { formatShortDate, formatTime, fromIso } from '@/lib/dates';
 import type { NoteHit } from '@/services/workouts';
 import { usePreferencesStore } from '@/store/preferences-store';
@@ -33,6 +37,12 @@ export default function FitnessScreen() {
   const { create } = useWorkoutMutations();
   const lastWorkoutTitle = usePreferencesStore((s) => s.lastWorkoutTitle);
   const [busqueda, setBusqueda] = useState('');
+  const [parte, setParte] = useState<'ejercicio' | 'actividad'>('ejercicio');
+  // RF-H6: una sesión del reloj que coincide con una de KAVI le aporta sus calorías activas.
+  const salud = useHealthAvailability();
+  const permisosSalud = useHealthPermissions(salud.data?.status === 'available');
+  const externas = useExternalSessions(30, !!permisosSalud.data?.exercise_sessions);
+  const delReloj = useMemo(() => matchSessions((workouts.data ?? []).map(kaviSpan), externas.data ?? []).byKavi, [workouts.data, externas.data]);
   const notas = useNoteSearch(busqueda);
   const buscando = busqueda.trim().length >= 2;
   // Al entrar a Fitness se recupera lo que quedó sin enviar y se convierte lo de v1.
@@ -63,7 +73,9 @@ export default function FitnessScreen() {
     );
 
   const renderItem = useCallback(
-    ({ item }: { item: Workout }) => (
+    ({ item }: { item: Workout }) => {
+      const reloj = delReloj.get(item.id);
+      return (
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={`${nombreDe(item)}, ${formatShortDate(fromIso(item.performed_at))}, ${item.exercise_count ?? 0} ejercicios`}
@@ -85,11 +97,17 @@ export default function FitnessScreen() {
             {item.duration_minutes ? ` · ${item.duration_minutes} min` : ''}
             {item.edited_at ? ' · editado' : ''}
           </AppText>
+          {reloj?.activeKcal != null ? (
+            <AppText variant="caption" color="textTertiary" tabular>
+              {Math.round(reloj.activeKcal)} kcal activas · {reloj.app ?? HEALTH_SOURCE_LABEL[reloj.source]}
+            </AppText>
+          ) : null}
         </View>
         <ChevronRight size={IconSize.inline} strokeWidth={IconStroke} color={theme.textTertiary} />
       </Pressable>
-    ),
-    [theme, openWorkout],
+      );
+    },
+    [theme, openWorkout, delReloj],
   );
 
   const renderNota = useCallback(
@@ -121,104 +139,121 @@ export default function FitnessScreen() {
         <AppText variant="title" accessibilityRole="header">
           Fitness
         </AppText>
-        <Button
-          title="Entrenamiento libre"
-          variant="secondary"
-          icon={<Plus size={IconSize.inline} strokeWidth={IconStroke} color={theme.text} />}
-          loading={create.isPending}
-          onPress={startFree}
+        {/* Spec 11: Ejercicio es el Gym Tracker de siempre; Actividad, lo que mide el teléfono. */}
+        <Segmented
+          fullWidth
+          options={[{ value: 'ejercicio', label: 'Ejercicio' }, { value: 'actividad', label: 'Actividad' }]}
+          value={parte}
+          onChange={setParte}
         />
-        <AppText variant="caption" color="textTertiary">
-          Para registrar una sesión agendada, ábrela en el calendario y toca “Registrar entrenamiento”.
-        </AppText>
-        {/* RF-F64: entrenar no exige saber jerga; el glosario está a un toque. */}
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Glosario: qué significa cada término del gimnasio"
-          onPress={() => router.push('/(app)/glossary')}
-          style={({ pressed }) => [styles.glosario, pressed ? { opacity: 0.75 } : null]}>
-          <BookOpen size={IconSize.inline} strokeWidth={IconStroke} color={theme.textSecondary} />
-          <AppText variant="label" color="textSecondary">
-            ¿Qué es RIR, un drop set o una superserie? Ver el glosario
-          </AppText>
-        </Pressable>
-        {enCurso ? (
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={`Continuar la sesión en curso: ${nombreDe(enCurso)}`}
-            onPress={() => openWorkout(enCurso.id, 'edit')}
-            style={({ pressed }) => [styles.enCurso, { backgroundColor: theme.ink }, pressed ? { opacity: 0.85 } : null]}>
-            <Play size={IconSize.inline} strokeWidth={IconStroke} color={theme.onInk} fill={theme.onInk} />
-            <View style={styles.text}>
-              <AppText variant="bodyStrong" color="onInk">
-                Sesión en curso
-              </AppText>
-              <AppText variant="caption" color="onInk">
-                {nombreDe(enCurso)} · desde las {formatTime(fromIso(enCurso.performed_at))}
-              </AppText>
-            </View>
-            <ChevronRight size={IconSize.inline} strokeWidth={IconStroke} color={theme.onInk} />
-          </Pressable>
-        ) : null}
-        <StreakCard />
       </View>
-      <View style={[styles.buscador, { borderColor: theme.border, backgroundColor: theme.surfaceAlt }]}>
-        <Search size={IconSize.inline} strokeWidth={IconStroke} color={theme.textTertiary} />
-        <TextInput
-          value={busqueda}
-          onChangeText={setBusqueda}
-          placeholder="Buscar en tus notas"
-          placeholderTextColor={theme.textTertiary}
-          accessibilityLabel="Buscar en tus notas"
-          autoCorrect={false}
-          returnKeyType="search"
-          style={[styles.input, SIN_ANILLO, { color: theme.text }]}
-        />
-        {busqueda ? (
-          <IconButton label="Limpiar búsqueda" onPress={() => setBusqueda('')}>
-            <X size={IconSize.inline} strokeWidth={IconStroke} color={theme.textTertiary} />
-          </IconButton>
-        ) : null}
-      </View>
-      {buscando ? (
-        notas.isError ? (
-          <ErrorState message={notas.error.message} onRetry={() => notas.refetch()} />
-        ) : notas.data === undefined ? (
-          <LoadingState />
-        ) : (
-          <FlatList
-            data={notas.data}
-            keyExtractor={(n, i) => `${n.workout_id}:${n.where}:${i}`}
-            renderItem={renderNota}
-            contentContainerStyle={styles.list}
-            keyboardShouldPersistTaps="handled"
-            ListEmptyComponent={
-              <EmptyState
-                icon={<MessageSquareText size={32} strokeWidth={IconStroke} color={theme.textTertiary} />}
-                title="Ninguna nota dice eso"
-                description="Busca en las notas de tus sesiones, ejercicios y series."
-              />
-            }
-          />
-        )
-      ) : null}
-      {!buscando && workouts.isPending ? <LoadingState /> : null}
-      {!buscando && workouts.isError ? <ErrorState message={workouts.error.message} onRetry={() => workouts.refetch()} /> : null}
-      {!buscando && workouts.isSuccess ? (
-        <FlatList
-          data={workouts.data}
-          keyExtractor={(w) => w.id}
-          renderItem={renderItem}
-          contentContainerStyle={styles.list}
-          ListEmptyComponent={
-            <EmptyState
-              icon={<Dumbbell size={32} strokeWidth={IconStroke} color={theme.textTertiary} />}
-              title="Aún no registras entrenamientos"
-              description="Tu historial aparecerá aquí, ligado a tus actividades de gimnasio."
+      {parte === 'actividad' ? (
+        <ScrollView contentContainerStyle={styles.list} showsVerticalScrollIndicator={false}>
+          <ActivityView />
+        </ScrollView>
+      ) : (
+        <>
+          <View style={styles.header}>
+            <Button
+              title="Entrenamiento libre"
+              variant="secondary"
+              icon={<Plus size={IconSize.inline} strokeWidth={IconStroke} color={theme.text} />}
+              loading={create.isPending}
+              onPress={startFree}
             />
-          }
-        />
-      ) : null}
+            <AppText variant="caption" color="textTertiary">
+              Para registrar una sesión agendada, ábrela en el calendario y toca “Registrar entrenamiento”.
+            </AppText>
+            {/* RF-F64: entrenar no exige saber jerga; el glosario está a un toque. */}
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Glosario: qué significa cada término del gimnasio"
+              onPress={() => router.push('/(app)/glossary')}
+              style={({ pressed }) => [styles.glosario, pressed ? { opacity: 0.75 } : null]}>
+              <BookOpen size={IconSize.inline} strokeWidth={IconStroke} color={theme.textSecondary} />
+              <AppText variant="label" color="textSecondary">
+                ¿Qué es RIR, un drop set o una superserie? Ver el glosario
+              </AppText>
+            </Pressable>
+            {enCurso ? (
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={`Continuar la sesión en curso: ${nombreDe(enCurso)}`}
+                onPress={() => openWorkout(enCurso.id, 'edit')}
+                style={({ pressed }) => [styles.enCurso, { backgroundColor: theme.ink }, pressed ? { opacity: 0.85 } : null]}>
+                <Play size={IconSize.inline} strokeWidth={IconStroke} color={theme.onInk} fill={theme.onInk} />
+                <View style={styles.text}>
+                  <AppText variant="bodyStrong" color="onInk">
+                    Sesión en curso
+                  </AppText>
+                  <AppText variant="caption" color="onInk">
+                    {nombreDe(enCurso)} · desde las {formatTime(fromIso(enCurso.performed_at))}
+                  </AppText>
+                </View>
+                <ChevronRight size={IconSize.inline} strokeWidth={IconStroke} color={theme.onInk} />
+              </Pressable>
+            ) : null}
+            <StreakCard />
+          </View>
+          <View style={[styles.buscador, { borderColor: theme.border, backgroundColor: theme.surfaceAlt }]}>
+            <Search size={IconSize.inline} strokeWidth={IconStroke} color={theme.textTertiary} />
+            <TextInput
+              value={busqueda}
+              onChangeText={setBusqueda}
+              placeholder="Buscar en tus notas"
+              placeholderTextColor={theme.textTertiary}
+              accessibilityLabel="Buscar en tus notas"
+              autoCorrect={false}
+              returnKeyType="search"
+              style={[styles.input, SIN_ANILLO, { color: theme.text }]}
+            />
+            {busqueda ? (
+              <IconButton label="Limpiar búsqueda" onPress={() => setBusqueda('')}>
+                <X size={IconSize.inline} strokeWidth={IconStroke} color={theme.textTertiary} />
+              </IconButton>
+            ) : null}
+          </View>
+          {buscando ? (
+            notas.isError ? (
+              <ErrorState message={notas.error.message} onRetry={() => notas.refetch()} />
+            ) : notas.data === undefined ? (
+              <LoadingState />
+            ) : (
+              <FlatList
+                data={notas.data}
+                keyExtractor={(n, i) => `${n.workout_id}:${n.where}:${i}`}
+                renderItem={renderNota}
+                contentContainerStyle={styles.list}
+                keyboardShouldPersistTaps="handled"
+                ListEmptyComponent={
+                  <EmptyState
+                    icon={<MessageSquareText size={32} strokeWidth={IconStroke} color={theme.textTertiary} />}
+                    title="Ninguna nota dice eso"
+                    description="Busca en las notas de tus sesiones, ejercicios y series."
+                  />
+                }
+              />
+            )
+          ) : null}
+          {!buscando && workouts.isPending ? <LoadingState /> : null}
+          {!buscando && workouts.isError ? <ErrorState message={workouts.error.message} onRetry={() => workouts.refetch()} /> : null}
+          {!buscando && workouts.isSuccess ? (
+            <FlatList
+              data={workouts.data}
+              keyExtractor={(w) => w.id}
+              renderItem={renderItem}
+              contentContainerStyle={styles.list}
+              ListEmptyComponent={
+                <EmptyState
+                  icon={<Dumbbell size={32} strokeWidth={IconStroke} color={theme.textTertiary} />}
+                  title="Aún no registras entrenamientos"
+                  description="Tu historial aparecerá aquí, ligado a tus actividades de gimnasio."
+                />
+              }
+            />
+          ) : null}
+        </>
+      )}
     </Screen>
   );
 }

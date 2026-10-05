@@ -19,13 +19,14 @@ import {
   SunMoon,
   Gauge,
   Crown,
+  HeartPulse,
   Smile,
   Volume2,
   Timer,
   Weight,
   Users,
 } from 'lucide-react-native';
-import { useEffect, useMemo, useState } from 'react';
+import { type ReactNode, useEffect, useMemo, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { Pressable, StyleSheet, View } from 'react-native';
 
@@ -56,7 +57,9 @@ import { useMyProfile, useUpdateMyProfile } from '@/hooks/use-profile';
 import { useIsAdmin } from '@/hooks/use-admin';
 import { useResolvedScheme, useTheme } from '@/hooks/use-theme';
 import { useThemes } from '@/hooks/use-themes';
+import { anyPermission, useHealthAvailability, useHealthConnection, useHealthPermissions } from '@/hooks/use-health';
 import { useWorkouts } from '@/hooks/use-workouts';
+import { HEALTH_METRICS, HEALTH_SOURCE_LABEL } from '@/services/health';
 import { TRATOS } from '@/constants/gymrat';
 import { NOBIS, nobiIdDesde, nobiUrl } from '@/constants/nobi';
 import { formatDayAndMonth, fromDayKey, rangeForView, toDayKey } from '@/lib/dates';
@@ -696,6 +699,7 @@ function FitnessSettings() {
         hint="Quita las bromas, frases y celebraciones. Tus récords personales (PR) y logros se siguen mostrando."
         right={<Toggle label="Modo serio" value={seriousMode} onValueChange={(v) => setPref('seriousMode', v)} />}
       />
+      <DatosDeSalud icono={icono(HeartPulse)} />
       {seriousMode ? null : (
         <SettingsRow
           icon={icono(Crown)}
@@ -705,5 +709,55 @@ function FitnessSettings() {
         />
       )}
     </SettingsGroup>
+  );
+}
+
+/**
+ * Datos de salud (spec 11, RF-H8): qué está conectado y desconectar. Desconectar olvida lo
+ * leído; los permisos de la plataforma se quitan desde sus propios ajustes.
+ */
+function DatosDeSalud({ icono }: { icono: ReactNode }) {
+  const confirm = useConfirm();
+  const showSnackbar = useSnackbar();
+  const disponible = useHealthAvailability();
+  const estado = disponible.data;
+  const permisos = useHealthPermissions(estado?.status === 'available');
+  const { connect, disconnect } = useHealthConnection();
+
+  if (!estado) return null;
+  if (estado.status !== 'available') {
+    return <SettingsRow icon={icono} label="Datos de salud" hint={estado.message} />;
+  }
+  const conectado = anyPermission(permisos.data);
+  const que = HEALTH_METRICS.filter((m) => permisos.data?.[m.id]).map((m) => m.label.toLowerCase());
+  return (
+    <SettingsRow
+      icon={icono}
+      label="Datos de salud"
+      hint={
+        conectado
+          ? `Conectado a ${HEALTH_SOURCE_LABEL[estado.source]}: ${que.join(', ')}. Solo se leen en este dispositivo; KAVI no los sube a internet.`
+          : 'Pasos, distancia, calorías activas y entrenamientos de otras apps, para verlos en Fitness → Actividad. Solo se leen en este dispositivo.'
+      }
+      below={
+        conectado ? (
+          <Button
+            title="Desconectar"
+            variant="secondary"
+            loading={disconnect.isPending}
+            onPress={async () => {
+              const ok = await confirm({
+                title: 'Desconectar datos de salud',
+                message: 'KAVI deja de leerlos y olvida lo que tenía en este dispositivo. Tus entrenamientos de KAVI no cambian.',
+                confirmLabel: 'Desconectar',
+              });
+              if (ok) disconnect.mutate(undefined, { onSuccess: () => showSnackbar({ message: 'Datos de salud desconectados.' }) });
+            }}
+          />
+        ) : (
+          <Button title="Conectar" variant="secondary" loading={connect.isPending} onPress={() => connect.mutate(HEALTH_METRICS.map((m) => m.id))} />
+        )
+      }
+    />
   );
 }

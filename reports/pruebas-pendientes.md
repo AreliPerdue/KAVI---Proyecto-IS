@@ -481,3 +481,16 @@ su explicación. Falta:
 - [ ] Pantalla Glosario: búsqueda sin acentos (por término, otros nombres y texto); `?term=`
   abre desplegado; vacío con "Ningún término dice eso."
 - [ ] RF-F65: ningún valor calculado sin "≈"/"estimado" (detalle, gráfica, herramientas).
+
+## Fitness con datos de salud, base (T255 – T259)
+Probado a mano en el demo (360 px): Fitness → Actividad muestra "Conecta tu actividad" con qué
+se lee y la nota de privacidad; "Conectar" da totales de hoy con su fuente, pasos de 7 días y
+entrenamientos de otras apps (14 días); el del reloj que coincide con "Pierna" dice "Es tu
+sesión «Pierna» de KAVI" y en el historial la sesión muestra "214 kcal activas · Reloj";
+Perfil → Datos de salud → Desconectar vuelve al estado sin conectar. Falta:
+- [ ] `matchSessions`/`overlapRatio`/`kaviSpan`: traslape ≥ 50 % de la más corta; cada externa con
+  una sola sesión de KAVI (la de mayor traslape); sin hora de fin usa la duración o 1 h.
+- [ ] `platform.web.ts` → estado "web" con su mensaje; `platform.ts` → "unsupported".
+- [ ] Demo: permisos parciales (solo pasos) dejan las otras cifras en "Sin permiso", nunca en 0.
+- [ ] Desconectar borra totales y sesiones de la caché y vuelve a "Conecta tu actividad".
+- [ ] Web real (sin demo): Actividad muestra "Tu actividad vive en tu teléfono".

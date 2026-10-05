@@ -1,17 +1,11 @@
-# Propuesta · Fitness con datos de salud (HealthKit y Health Connect)
+# Spec 11 · Fitness: actividad desde la plataforma de salud
 
-> **Estado: APROBADA el 4 oct 2026** (S1–S7 como se recomendaron). La spec vigente es
-> `specs/11-fitness-salud.md`; la enmienda está en `specs/00-constitution.md` (P5, P8) y las tareas
-> en `tasks.md` (T255–T261). Este documento queda como el razonamiento de la decisión.
->
-> Base: "KAVI Fitness · Arquitectura, desarrollo conceptual y glosario práctico" (oct 2026). Lo que
-> ese documento pide y no requiere datos de salud ya está hecho (glosario RF-F64, estimaciones
-> marcadas RF-F65, todo el Gym Tracker). Esta propuesta cubre lo que falta: leer actividad del
-> teléfono o del reloj.
+> Aprobada el 4 oct 2026 (decisiones S1–S7 de `docs/fitness/propuesta-salud.md`, todas como se
+> recomendaron). Amplía la spec 07 (Fitness v2); no la reemplaza: el Gym Tracker queda igual.
 
 ## 1. Qué cambia para la persona
 
-Hoy Fitness es el Gym Tracker. Con esta propuesta, Fitness tendría dos partes:
+Fitness tiene dos partes:
 
 - **Actividad:** lo que el teléfono o el reloj ya miden: pasos, distancia y calorías activas del día,
   y los entrenamientos que otras apps registraron (una caminata del reloj, una clase de spinning).
@@ -20,21 +14,9 @@ Hoy Fitness es el Gym Tracker. Con esta propuesta, Fitness tendría dos partes:
 Cada número dice de dónde viene: "Health Connect", "Registrado en KAVI" o "Estimación de KAVI". Nada se
 presenta como medición si es un cálculo (RF-F65).
 
-**Recuperación** (sueño, frecuencia cardiaca, carga) queda fuera de esta versión: ver §7.
+**Recuperación** (sueño, frecuencia cardiaca, carga) queda fuera de esta versión: ver §6.
 
-## 2. Enmienda a la constitución
-
-Igual que con el upgrade del gym (decisión D1 de `docs/gym/AUDITORIA.md`), hace falta enmendar dos
-principios. Texto propuesto:
-
-- **P8 (alcance).** Agregar al alcance V2: *"Fitness amplio: lectura, con permiso explícito, de datos de
-  actividad desde la plataforma de salud del dispositivo (Health Connect en Android y HealthKit en iOS).
-  Solo lectura; sin escritura hacia esas plataformas ni métricas de recuperación en esta versión."*
-- **P5 (multiplataforma).** Agregar una excepción documentada, como la de las notificaciones: *"La
-  lectura de datos de salud existe solo en iOS y Android, porque la web no tiene acceso a ellos. En web,
-  Fitness muestra el Gym Tracker completo y un aviso de que la actividad del teléfono se ve en la app."*
-
-## 3. Requisitos funcionales propuestos
+## 2. Requisitos funcionales
 
 - **RF-H1. Fuente por plataforma.** Android: Health Connect (Android 8 o superior; viene integrado desde
   Android 14). iOS: HealthKit, cuando exista la cuenta de Apple Developer. Web: no hay fuente.
@@ -59,26 +41,16 @@ principios. Texto propuesto:
 - **RF-H8. Desconectar.** En Perfil → Gimnasio, "Datos de salud" muestra qué está conectado, lleva a los
   ajustes de la plataforma para quitar permisos y borra lo que KAVI tenga guardado en el dispositivo.
 
-## 4. Privacidad y almacenamiento (la decisión más importante)
+## 3. Privacidad y almacenamiento (decisión S4: solo en el dispositivo)
 
-En México los datos de salud son **datos personales sensibles**: tratarlos pide consentimiento expreso y
-un aviso de privacidad. Además, las dos tiendas exigen política de privacidad para estos permisos. KAVI
-todavía no tiene ninguna. Dos caminos:
+- **Nada de la plataforma de salud se guarda en Supabase.** KAVI lee al abrir Actividad y conserva solo la
+  caché de la sesión de la app; "Desconectar" la borra (RF-H8).
+- En México los datos de salud son datos personales sensibles: antes de pedir los permisos en producción
+  debe estar publicado el **aviso de privacidad** de KAVI (decisión S7), enlazado desde Perfil.
+- Pasar a guardar resúmenes diarios en el servidor (opción B de la propuesta) requiere otra decisión, con
+  su propio consentimiento expreso.
 
-| | A · Solo en el dispositivo (recomendado) | B · Resúmenes diarios en Supabase |
-|---|---|---|
-| Qué se guarda | Nada en el servidor. Se lee de la plataforma al abrir Actividad; se guarda una copia local por día para no releer | Pasos, distancia y kcal activas **por día**, con su fuente, en una tabla con RLS por dueño |
-| Se ve en web y en otros dispositivos | No | Sí |
-| Carga legal y de seguridad | Mínima: los datos no salen del teléfono | Alta: datos sensibles en nuestra base; consentimiento expreso, derechos de acceso y borrado, y más revisión de las tiendas |
-| Esfuerzo | Menor | Mayor (tabla, sincronización, borrado) |
-
-Recomiendo **A** para la primera versión. Si después hace falta verlo en web, se puede pasar a B con su
-propio aviso y consentimiento.
-
-En cualquiera de los dos, hace falta publicar antes un **aviso de privacidad** de KAVI, que también sirve
-para el resto de la app.
-
-## 5. Lo técnico
+## 4. Lo técnico
 
 - **Dependencias** (gratuitas, nativas, piden recompilar): `react-native-health-connect` con
   `expo-build-properties` (sube `minSdkVersion` a 26) para Android; `@kingstinct/react-native-healthkit`
@@ -92,7 +64,7 @@ para el resto de la app.
 - **Relación con sesiones (RF-H6):** función pura en `src/lib/` que recibe sesiones de KAVI y externas y
   devuelve los pares; así se prueba sin teléfono.
 
-## 6. Requisitos externos y tiempos
+## 5. Requisitos externos y tiempos
 
 - **Google Play:** declaración de acceso a Health Connect en Play Console. Tarda hasta 7 días en
   aprobarse, más 5–7 días hábiles hasta que el acceso se habilita. Pide la política de privacidad
@@ -102,14 +74,14 @@ para el resto de la app.
   iCloud).
 - **Recompilar** la app nativa, igual que en G8.
 
-## 7. Fuera de esta versión
+## 6. Fuera de esta versión
 
 Frecuencia cardiaca, sueño, recuperación y "carga de entrenamiento" (el documento base admite que no hay
 metodología definida) · calorías estimadas por MET para sesiones de pesas (falsa precisión en pesas) ·
 calorías por serie · escribir en HealthKit o Health Connect (por ejemplo, mandar las sesiones de KAVI) ·
 crear sesiones de KAVI a partir de datos externos · cualquier afirmación médica.
 
-## 8. Criterios de aceptación
+## 7. Criterios de aceptación
 
 - *Dado* que no di permisos, *cuando* abro Fitness → Actividad, *entonces* veo por qué está vacío y cómo
   conectarlo, y el Gym Tracker funciona igual.
@@ -122,26 +94,9 @@ crear sesiones de KAVI a partir de datos externos · cualquier afirmación médi
 - *Dado* que desconecto los datos de salud, *cuando* vuelvo a Actividad, *entonces* no queda nada guardado
   de la plataforma en el dispositivo.
 
-## 9. Decisiones para Areli
+## 8. Decisiones aprobadas
 
-| # | Decisión | Recomendación |
-|---|---|---|
-| S1 | Enmendar P8 y P5 como en §2 | Sí |
-| S2 | Plataforma primero | Android (Health Connect); iOS cuando exista la cuenta de Apple Developer |
-| S3 | Métricas de la primera versión | Pasos, distancia, kcal activas y sesiones de otras apps |
-| S4 | Dónde se guardan | A · solo en el dispositivo |
-| S5 | Sesiones externas que coinciden con una de KAVI | Se muestran como la misma; KAVI gana |
-| S6 | Escribir hacia HealthKit o Health Connect | No en esta versión |
-| S7 | Aviso de privacidad | Redactarlo y publicarlo antes de pedir la declaración en Play Console |
-
-## 10. Tareas propuestas (al aprobarse)
-
-1. Aviso de privacidad de KAVI publicado y enlazado desde Perfil.
-2. Spec 11 y enmienda a la constitución.
-3. Contrato `HealthApi`, implementación web y demo; pantalla Actividad con estados vacío, sin permisos y
-   con datos (se puede hacer y probar en web con el demo).
-4. Health Connect en Android: dependencias, permisos en contexto, lectura de totales y sesiones;
-   recompilar.
-5. Relación con sesiones de KAVI (RF-H6) y procedencia en cada valor.
-6. Declaración en Play Console (la hace Areli; aquí se prepara el texto de cada permiso).
-7. HealthKit en iOS, cuando exista la cuenta.
+S1 enmienda de P5 y P8 · S2 Android primero, iOS con la cuenta de Apple Developer · S3 pasos, distancia,
+kcal activas y sesiones de otras apps · S4 solo en el dispositivo · S5 la sesión de KAVI gana sobre la
+externa que coincide · S6 sin escritura hacia las plataformas · S7 aviso de privacidad antes de la
+declaración en Play Console.

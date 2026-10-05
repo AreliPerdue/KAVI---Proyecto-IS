@@ -17,7 +17,7 @@ Física, emocional, social, intelectual, espiritual, financiera y ocupacional. C
 - Un usuario solo ve de otros lo que le fue explícitamente compartido.
 
 ## P5. Multiplataforma real
-Toda funcionalidad de V1 debe operar en iOS, Android y web con experiencia equivalente. Se prefieren soluciones compatibles con las tres plataformas sobre soluciones óptimas en una sola. Excepción documentada: notificaciones push en web pueden degradarse a recordatorios in-app.
+Toda funcionalidad de V1 debe operar en iOS, Android y web con experiencia equivalente. Se prefieren soluciones compatibles con las tres plataformas sobre soluciones óptimas en una sola. Excepción documentada: notificaciones push en web pueden degradarse a recordatorios in-app. Excepción documentada (enmienda del 4 oct 2026, spec 11): la lectura de datos de salud existe solo en iOS y Android, porque la web no tiene acceso a ellos; en web, Fitness muestra el Gym Tracker completo y un aviso de que la actividad del teléfono se ve en la app.
 
 ## P6. Arquitectura modular alrededor de la actividad
 La **actividad** es la entidad central. Los módulos especializados (fitness en V1; lectura, nutrición, etc. en el futuro) se conectan a actividades, nunca al revés. Agregar un módulo futuro no debe requerir modificar el calendario.
@@ -27,6 +27,8 @@ Se construye por fases (tasks.md). Cada fase termina con un incremento funcional
 
 ## P8. Alcance V1 cerrado
 V1 = auth + calendario + temas/dimensiones + compartido con reminders compartidos + mini gym tracker + compatibilidad multiplataforma. Todo lo demás (KAVI Reader, nutrición, métricas avanzadas, chat, etc.) se documenta como futuro y **no se implementa**.
+
+**Enmienda (4 oct 2026, spec 11).** Se agrega al alcance V2: *Fitness amplio*, la lectura, con permiso explícito, de datos de actividad desde la plataforma de salud del dispositivo (Health Connect en Android y HealthKit en iOS). Solo lectura; sin escritura hacia esas plataformas ni métricas de recuperación en esta versión.
 
 ## P9. Rendimiento perceptible
 Vistas principales del calendario cargan y muestran actividades en ≤ 3 segundos en condiciones normales. Estados de carga y error visibles siempre.
