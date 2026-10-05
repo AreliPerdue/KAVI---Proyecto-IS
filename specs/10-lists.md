@@ -34,7 +34,7 @@ Por eso **los ítems nunca entran en la rejilla de horas**, ni siquiera cuando l
   icono** son un extra que se cambia después, desde una paleta en la barra inferior.
 
   *Motivo:* una lista se abre porque hay algo que apuntar **ya**. Elegir color e icono
-  entre veintiuno antes de poder escribir es justo el tiempo que tarda uno en olvidar qué
+  entre veinticinco antes de poder escribir es justo el tiempo que tarda uno en olvidar qué
   iba a anotar. El nombre se edita en el sitio, tocándolo, no en un campo etiquetado aparte.
 
   Una lista que nadie tocó —nombre por omisión, sin elementos ni secciones— se borra sola

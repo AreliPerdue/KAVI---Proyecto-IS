@@ -8,7 +8,7 @@ import { NOBIS } from '@/constants/nobi';
  * Es una capa distinta de la paleta de dimensiones (spec 05) y solo aplica en ese modo;
  * con "Tú" a solas vuelve el color coding de temas.
  *
- * Son **veintiuno**, emparejados uno a uno con los Nobi (`constants/nobi`): el color que
+ * Son **veinticinco**, emparejados uno a uno con los Nobi (`constants/nobi`): el color que
  * alguien eligió para su mascota es el que lo representa en el calendario de los demás.
  *
  * Los tonos parten del matiz de cada Nobi pero **no son los del PNG**: se ajustaron en
@@ -25,8 +25,8 @@ import { NOBIS } from '@/constants/nobi';
  *   alternando matices y pone primero los que mejor se ven; agregar uno nuevo va **al
  *   final**, porque el reparto se deriva en cada render y meter uno en medio le cambiaría
  *   el color a contactos que ya llevaban el suyo.
- * - `PEOPLE_COLORS_DISPLAY` es el de los **menús**: por familias (rosas y rojos, naranja y
- *   amarillo, verdes, azules, morados, neutros), de claro a oscuro dentro de cada una.
+ * - `PEOPLE_COLORS_DISPLAY` es el de los **menús**: por familias (rosas y rojos, cálidos,
+ *   tierra, verdes, azules, morados, neutros), de claro a oscuro dentro de cada una.
  */
 
 export type PersonColor = { id: string; label: string; hex: string };
@@ -53,16 +53,22 @@ export const PEOPLE_COLORS: readonly PersonColor[] = [
   { id: 'navy_blue', label: 'Azul marino', hex: '#496BBA' },
   { id: 'purple', label: 'Morado', hex: '#934FA8' },
   { id: 'black', label: 'Negro', hex: '#666B71' },
+  // Nobi del 4 oct 2026: al final, para no recorrer el reparto de quien ya tenía color.
+  { id: 'gold', label: 'Dorado', hex: '#E8AB3E' },
+  { id: 'beige', label: 'Beige', hex: '#E4C4A1' },
+  { id: 'brown', label: 'Café', hex: '#A75F34' },
+  { id: 'silver', label: 'Plateado', hex: '#BCCDDE' },
 ] as const;
 
 /** El orden de los menús de color (el de los Nobi): por familias, de claro a oscuro. */
 export const COLOR_DISPLAY_ORDER: readonly string[] = [
   'pink', 'magenta', 'coral', 'red', 'deep_red',
-  'orange', 'yellow',
+  'orange', 'gold', 'yellow',
+  'beige', 'brown',
   'lime_green', 'olive_green', 'green',
   'turquois', 'baby_blue', 'blue', 'navy_blue',
   'indigo', 'lilac', 'light_purple', 'purple',
-  'white', 'gray', 'black',
+  'white', 'silver', 'gray', 'black',
 ];
 
 export const PEOPLE_COLORS_DISPLAY: readonly PersonColor[] = COLOR_DISPLAY_ORDER.map(

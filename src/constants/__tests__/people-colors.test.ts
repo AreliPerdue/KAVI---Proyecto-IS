@@ -73,7 +73,7 @@ describe('la paleta', () => {
     }
   });
 
-  it('los menus muestran los 21, una vez cada uno', () => {
+  it('los menus muestran todos, una vez cada uno', () => {
     expect(PEOPLE_COLORS_DISPLAY.map((c) => c.id).sort()).toEqual(PEOPLE_COLORS.map((c) => c.id).sort());
   });
 
@@ -109,8 +109,8 @@ describe('la paleta', () => {
   });
 
   /** Mas de ocho: con ocho, del noveno contacto en adelante se repetian. */
-  it('hay veintiuno, uno por cada Nobi', () => {
-    expect(PEOPLE_COLORS.length).toBe(21);
+  it('hay veinticinco, uno por cada Nobi', () => {
+    expect(PEOPLE_COLORS.length).toBe(25);
   });
 });
 

@@ -3,8 +3,8 @@ import type { ImageSourcePropType } from 'react-native';
 import type { ColorScheme } from './theme';
 
 /**
- * Nobi, la mascota de KAVI, en sus veintiún colores. El orden es el de los menús: por
- * familias (rosas y rojos, naranja y amarillo, verdes, azules, morados, neutros) y de claro
+ * Nobi, la mascota de KAVI, en sus veinticinco colores. El orden es el de los menús: por
+ * familias (rosas y rojos, cálidos, tierra, verdes, azules, morados, neutros) y de claro
  * a oscuro dentro de cada una, igual que `COLOR_DISPLAY_ORDER` en `people-colors`.
  *
  * Se declaran uno a uno y no por plantilla porque `require` de Metro necesita una
@@ -54,9 +54,21 @@ export const NOBIS: readonly NobiColor[] = [
     dark: require('../../assets/nobi/orange.png'),
     light: require('../../assets/nobi/light/orange.png'),
   } },
+  { id: 'gold', label: 'Dorado', sources: {
+    dark: require('../../assets/nobi/gold.png'),
+    light: require('../../assets/nobi/light/gold.png'),
+  } },
   { id: 'yellow', label: 'Amarillo', sources: {
     dark: require('../../assets/nobi/yellow.png'),
     light: require('../../assets/nobi/light/yellow.png'),
+  } },
+  { id: 'beige', label: 'Beige', sources: {
+    dark: require('../../assets/nobi/beige.png'),
+    light: require('../../assets/nobi/light/beige.png'),
+  } },
+  { id: 'brown', label: 'Café', sources: {
+    dark: require('../../assets/nobi/brown.png'),
+    light: require('../../assets/nobi/light/brown.png'),
   } },
   { id: 'lime_green', label: 'Verde lima', sources: {
     dark: require('../../assets/nobi/lime_green.png'),
@@ -105,6 +117,10 @@ export const NOBIS: readonly NobiColor[] = [
   { id: 'white', label: 'Blanco', sources: {
     dark: require('../../assets/nobi/white.png'),
     light: require('../../assets/nobi/light/white.png'),
+  } },
+  { id: 'silver', label: 'Plateado', sources: {
+    dark: require('../../assets/nobi/silver.png'),
+    light: require('../../assets/nobi/light/silver.png'),
   } },
   { id: 'gray', label: 'Gris', sources: {
     dark: require('../../assets/nobi/gray.png'),

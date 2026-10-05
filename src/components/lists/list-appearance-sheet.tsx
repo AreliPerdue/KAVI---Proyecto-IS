@@ -20,7 +20,7 @@ export type ListAppearanceSheetProps = {
  * Color e icono de una lista, en una hoja aparte (RF-L2).
  *
  * Vivían en un formulario **antes** de poder escribir nada, y ese era el problema: una
- * lista se abre porque hay algo que apuntar ya, y elegir un color entre veintiuno mientras
+ * lista se abre porque hay algo que apuntar ya, y elegir un color entre veinticinco mientras
  * tanto es justo el tiempo que tarda uno en olvidar qué iba a anotar. Aquí la
  * personalización es un extra al que se entra cuando se quiere, no un peaje.
  */

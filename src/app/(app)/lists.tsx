@@ -196,7 +196,7 @@ export default function ListsScreen() {
    *
    * Se crea con valores por omisión y se entra directo a la lista, con el título enfocado
    * y preseleccionado. Una lista se abre porque hay algo que apuntar **ya**; elegir color e
-   * icono entre veintiuno antes de poder escribir es justo el tiempo que tarda uno en
+   * icono entre veinticinco antes de poder escribir es justo el tiempo que tarda uno en
    * olvidar qué iba a anotar. El color y el icono se cambian después, desde la paleta.
    */
   const nuevaLista = () =>
