@@ -1,7 +1,9 @@
 # Aviso de privacidad de KAVI — BORRADOR
 
-> **Estado: borrador para revisión de Areli (T260). No está publicado.** Los campos marcados con
-> **[PENDIENTE]** los tiene que llenar Areli; nada de esto se inventó. Se recomienda que lo revise una
+> **Estado: borrador para revisión de Areli (T260). No está publicado.** Datos del responsable dados por
+> Areli el 5 oct 2026; proveedor de correo verificado en la configuración de Supabase (SMTP de Gmail).
+> Quedan **[POR CONFIRMAR]** el código postal y la edad mínima, y **[PENDIENTE]** lo que depende de T263 y
+> T264. Copias de seguridad verificadas el 5 oct 2026: el proyecto no tiene respaldos programados ni PITR. Se recomienda que lo revise una
 > persona abogada antes de publicarlo: es un texto legal y aquí solo se describe con precisión lo que KAVI
 > hace hoy (revisado contra el código el 5 oct 2026).
 >
@@ -18,10 +20,11 @@ Personales en Posesión de los Particulares (2025).
 
 ## 1. Quién es responsable de tus datos
 
-[PENDIENTE: nombre completo de la persona física o razón social], con domicilio en [PENDIENTE: domicilio
-para oír y recibir notificaciones], es responsable del tratamiento de tus datos personales en KAVI.
+Areli Soraya Perdue Centeno, con domicilio para oír y recibir notificaciones en Avenida Del Pedregal 534,
+colonia Pedregal del Valle, C. P. [POR CONFIRMAR: 662800 tiene 6 dígitos], San Pedro Garza García, Nuevo
+León, México, es responsable del tratamiento de tus datos personales en KAVI.
 
-Para cualquier tema de privacidad escríbenos a **[PENDIENTE: correo de contacto de privacidad]**.
+Para cualquier tema de privacidad escríbenos a **perdue.areli28@gmail.com**.
 
 ## 2. Qué datos usamos
 
@@ -83,7 +86,7 @@ con nadie.
 
 - **Supabase:** base de datos y autenticación. Los datos se guardan en servidores en Estados Unidos.
 - **Vercel:** aloja la versión web de KAVI, en Estados Unidos.
-- **[PENDIENTE: proveedor de correo]:** envía los correos de verificación de tu cuenta.
+- **Google (Gmail):** envía los correos de verificación de tu cuenta.
 
 No transferimos tus datos a otras personas ni empresas fuera de estos casos, salvo cuando una autoridad
 competente lo requiera conforme a la ley.
@@ -96,13 +99,14 @@ Puedes **acceder** a tus datos, **rectificarlos**, **cancelarlos** u **oponerte*
 - Mucho lo puedes hacer directo en la app: editar tu perfil, borrar actividades, listas o entrenamientos,
   desconectar la actividad del teléfono (Perfil → Gimnasio → Datos de salud) y [PENDIENTE: eliminar tu
   cuenta, ver T263].
-- Para todo lo demás, escribe a **[PENDIENTE: correo de contacto de privacidad]** con tu nombre de usuario,
+- Para todo lo demás, escribe a **perdue.areli28@gmail.com** con tu nombre de usuario,
   qué derecho quieres ejercer y sobre qué datos. Te responderemos en los plazos que marca la ley.
 
 ## 6. Cuánto tiempo los guardamos
 
-Mientras tengas tu cuenta. Si eliminas tu cuenta, borramos tus datos [PENDIENTE: confirmar el plazo de las
-copias de seguridad del proveedor]. La actividad del teléfono nunca se guarda en nuestros servidores.
+Mientras tengas tu cuenta. Si eliminas tu cuenta, tus datos se borran de la base de datos de inmediato. Hoy
+KAVI no tiene copias de seguridad programadas; si algún día se activan, este aviso dirá cuánto tiempo se
+conservan. La actividad del teléfono nunca se guarda en nuestros servidores.
 
 ## 7. Cómo los protegemos
 
@@ -111,7 +115,8 @@ que hacen que cada persona solo pueda ver lo suyo y lo que otras personas le com
 
 ## 8. Menores de edad
 
-KAVI no está dirigida a menores de [PENDIENTE: edad mínima] años.
+KAVI no está dirigida a menores de [POR CONFIRMAR: 18, recomendado] años. Si eres menor de esa edad, no
+uses KAVI ni nos envíes datos personales.
 
 ## 9. Cambios a este aviso
 
