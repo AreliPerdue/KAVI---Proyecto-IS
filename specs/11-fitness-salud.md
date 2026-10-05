@@ -60,7 +60,12 @@ presenta como medición si es un cálculo (RF-F65).
   `exerciseSessions`) con tres implementaciones por extensión de Metro: `.android.ts` (Health Connect),
   `.ios.ts` (HealthKit; mientras no haya cuenta, "no disponible") y `.web.ts` (siempre "no disponible").
 - **Modo demo:** una implementación con datos de ejemplo, para poder ver y probar Actividad en web sin un
-  teléfono.
+  teléfono. Con `EXPO_PUBLIC_HEALTH_SOURCE=platform` el demo usa la plataforma real, para probar Health
+  Connect en un teléfono o emulador sin tocar la base real.
+- **Android (T261):** `platform.android.ts` con `react-native-health-connect` 4.x (trae su config plugin) y
+  `minSdkVersion` 26. Los totales del día usan `aggregateRecord`, que ya consolida teléfono y reloj (RF-H5).
+  "Desconectar" (RF-H8) retira los permisos con `revokeAllPermissions` y, como Android solo lo aplica al
+  reiniciar la app, KAVI recuerda en el dispositivo que se desconectó y no lee nada hasta volver a conectar.
 - **Relación con sesiones (RF-H6):** función pura en `src/lib/` que recibe sesiones de KAVI y externas y
   devuelve los pares; así se prueba sin teléfono.
 

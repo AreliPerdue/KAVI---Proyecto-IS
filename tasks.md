@@ -785,8 +785,15 @@ Plan y decisiones en `docs/gym/AUDITORIA.md`. Cada fase cierra con typecheck, li
 - [x] T260 Aviso de privacidad de KAVI, publicado y enlazado desde Perfil (S7). Lo revisa y aprueba Areli.
   Publicado en `/privacidad` (versión `v1-2026-10-05`, texto en `src/constants/privacy.ts`) con T264.
   Borrador en `docs/legal/aviso-de-privacidad.md`, con los datos que faltan marcados [PENDIENTE].
-- [ ] T261 Adaptador de Health Connect en Android: dependencias, permisos en contexto, totales y sesiones;
+- [x] T261 Adaptador de Health Connect en Android: dependencias, permisos en contexto, totales y sesiones;
   recompilar y probar en un teléfono. Dep: T257, T260
+  **Hecho (5 oct 2026):** `platform.android.ts`, plugin y permisos de lectura en `app.json`, `minSdk` 26.
+  Probado en el emulador (Android 16, demo + `EXPO_PUBLIC_HEALTH_SOURCE=platform`): diálogo nativo con los
+  cuatro permisos; permiso parcial (sin calorías) → pasos y distancia leídos, calorías "Sin permiso";
+  Perfil dice qué está conectado; Desconectar retira los permisos (el diálogo vuelve a "0 of 4") y Actividad
+  regresa a "Conecta tu actividad"; negar no rompe nada. **Falta:** ver números reales (el emulador no trae
+  datos y `cmd healthconnect` no deja registros legibles por otra app) y la **declaración de Health Connect
+  en Play Console** antes de publicar en Google Play (hasta 7 días + 5–7 hábiles, spec 11 §5).
 - [ ] T262 Adaptador de HealthKit en iOS, cuando exista la cuenta de Apple Developer. Dep: T261
 - [x] T263 **Eliminar cuenta** desde la app y con un enlace web (RF-A12, aprobada el 5 oct 2026): migración
   `delete_my_account`, contrato en los dos backends, hoja en Perfil y página pública `/eliminar-cuenta`.

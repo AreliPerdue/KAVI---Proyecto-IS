@@ -604,3 +604,15 @@ Web en el demo a 390 px, antes y después lado a lado: los títulos se leen comp
 Falta:
 - [ ] `compactTitleLines`: 1 línea mínima; un bloque de 2 h a 48 px/h → varias líneas.
 - [ ] Android/iOS nativos: la semana con texto grande del sistema no se encima.
+
+## Health Connect en Android (T261)
+Emulador Pixel 8 Pro (Android 16), demo con `EXPO_PUBLIC_HEALTH_SOURCE=platform`: Health Connect disponible;
+"Conectar" abre el diálogo nativo con pasos, distancia, calorías activas y ejercicio; permitir todo menos
+calorías → Actividad dice "Fuente: Health Connect", pasos 0, 0 km y calorías "Sin permiso" (la consulta
+funciona: si fallara diría "—"); Perfil → Datos de salud lo describe; Desconectar → el diálogo vuelve a "0 of
+4"; "Don't allow" regresa a "Conecta tu actividad". Falta:
+- [ ] **En un teléfono con datos reales** (Google Fit, Samsung Health o un reloj): pasos, km y kcal de hoy y
+  de 7 días coinciden con la app de origen; entrenamientos de otras apps con su nombre y app.
+- [ ] Una sesión del reloj que se traslapa con una de KAVI aparece como la misma (RF-H6) con sus kcal.
+- [ ] Teléfono con Android 13 o anterior sin Health Connect → "Instala o actualiza Health Connect…".
+- [ ] Desconectar y reabrir la app sin reconectar: no lee nada aunque Android tarde en aplicar el retiro.
