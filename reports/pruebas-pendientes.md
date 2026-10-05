@@ -580,3 +580,13 @@ sesión y volver a entrar. Falta:
 - [ ] Listas fuera de la barra → desde Más o desde ○✓ se abre apilada con "Atrás".
 - [ ] Web: ○✓ sigue abriendo `/lists` (no es pestaña en web, RF-N5).
 - [ ] `moduleHref('lists', …)`: en la barra → `acceso-N`; fuera o en web → `/(app)/lists`.
+
+## Barra de personas con muchos contactos (T203)
+Web en el demo (390 px) con el tope bajado a 1 a mano: "Tú · Ana · ··· · + Contactos"; la hoja lista
+a Ana y Pedro de la A a la Z; "PEDRO" encuentra a Pedro; "zz" → "Nadie se llama así."; superponer a
+Pedro desde la hoja lo sube a la barra. Falta:
+- [ ] `personasEnBarra`: recientes primero (más nuevo antes), luego A–Z; tope 20; un superpuesto
+  fuera del tope se agrega; `hayMas` solo si hay más que el tope.
+- [ ] `buscarPersonas`: sin acentos ni mayúsculas, con o sin "@", por nombre o usuario.
+- [ ] `marcarSuperpuesto`: guarda la fecha al superponer (no al quitar) y conserva solo 100.
+- [ ] Con 25+ contactos reales en Supabase: la barra muestra 20 y el orden sobrevive a cerrar la app.

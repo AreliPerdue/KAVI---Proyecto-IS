@@ -2,6 +2,7 @@ import { create } from 'zustand';
 
 import type { Dimension } from '@/constants/dimensions';
 import { type CalendarView, toDayKey } from '@/lib/dates';
+import { usePreferencesStore } from '@/store/preferences-store';
 
 /** Vista con la que abre el calendario mientras no se elija otra (RF-C1). */
 export const DEFAULT_VIEW: CalendarView = 'month';
@@ -63,12 +64,14 @@ export const useCalendarStore = create<CalendarState>((set, get) => ({
   goToday: () => set({ anchorKey: toDayKey(new Date()) }),
   setFilters: (filters) => set({ filters }),
   clearFilters: () => set({ filters: EMPTY_FILTERS }),
-  toggleOverlayUser: (id) =>
+  toggleOverlayUser: (id) => {
+    const quitando = get().overlayUserIds.includes(id);
+    // Superponer a alguien lo sube en la barra de personas (RF-S15b).
+    if (!quitando) usePreferencesStore.getState().marcarSuperpuesto(id);
     set((state) => ({
-      overlayUserIds: state.overlayUserIds.includes(id)
-        ? state.overlayUserIds.filter((x) => x !== id)
-        : [...state.overlayUserIds, id],
-    })),
+      overlayUserIds: quitando ? state.overlayUserIds.filter((x) => x !== id) : [...state.overlayUserIds, id],
+    }));
+  },
   clearOverlayUsers: () => set({ overlayUserIds: [] }),
 
   /** Ya no lee preferencias; queda para no pintar el calendario hasta estar listo. */

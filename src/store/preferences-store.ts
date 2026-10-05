@@ -20,6 +20,9 @@ export const DEFAULT_TIME_FORMAT: TimeFormat = '24h';
  * pueden fijar desde ahí (RF-C16). Arrancan las tres de siempre; tres días y agenda
  * quedan a un toque para quien las quiera a la mano.
  */
+/** Cuántas fechas de "superpuesto" se guardan; de sobra para una barra de 20. */
+const MAX_RECIENTES = 100;
+
 export const DEFAULT_PINNED_VIEWS: CalendarView[] = ['day', 'week', 'month'];
 
 type Prefs = {
@@ -33,6 +36,7 @@ type Prefs = {
   selfColor: string | null;
   pinnedViews: CalendarView[];
   accesos: Accesos;
+  overlayRecientes: Record<string, string>;
 };
 
 type PreferencesState = {
@@ -65,6 +69,11 @@ type PreferencesState = {
   pinnedViews: CalendarView[];
   /** Los dos módulos de la barra del teléfono, después del Calendario (RF-N1). */
   accesos: Accesos;
+  /**
+   * Última vez (ISO) que superpuse el calendario de cada contacto (RF-S15b). Ordena la barra
+   * de personas por recientes; vive en el dispositivo y no sale de él.
+   */
+  overlayRecientes: Record<string, string>;
   hydrated: boolean;
   setTimeFormat: (formato: TimeFormat) => void;
   setLastWorkoutTitle: (titulo: string | null) => void;
@@ -75,6 +84,7 @@ type PreferencesState = {
   setSelfColor: (hex: string | null) => void;
   togglePinnedView: (view: CalendarView) => void;
   setAccesos: (accesos: Accesos) => void;
+  marcarSuperpuesto: (userId: string) => void;
   hydrate: () => Promise<void>;
 };
 
@@ -107,6 +117,7 @@ export const usePreferencesStore = create<PreferencesState>((set, get) => ({
   pinnedViews: DEFAULT_PINNED_VIEWS,
   selfColor: null,
   accesos: DEFAULT_ACCESOS,
+  overlayRecientes: {},
   hydrated: false,
 
   setTimeFormat: (formato) => {
@@ -172,6 +183,18 @@ export const usePreferencesStore = create<PreferencesState>((set, get) => ({
     persistir({ ...get(), accesos });
   },
 
+  marcarSuperpuesto: (userId) => {
+    elegidoEnEstaSesion.add('overlayRecientes');
+    // Solo los más recientes: la barra muestra 20 y no hace falta guardar a todos para siempre.
+    const siguiente = Object.fromEntries(
+      Object.entries({ ...get().overlayRecientes, [userId]: new Date().toISOString() })
+        .sort(([, a], [, b]) => b.localeCompare(a))
+        .slice(0, MAX_RECIENTES),
+    );
+    set({ overlayRecientes: siguiente });
+    persistir({ ...get(), overlayRecientes: siguiente });
+  },
+
   marcarVisto: () => {
     if (get().visto) return;
     elegidoEnEstaSesion.add('visto');
@@ -201,6 +224,7 @@ export const usePreferencesStore = create<PreferencesState>((set, get) => ({
       appearance: guardado('appearance', prefs?.appearance ?? DEFAULT_APPEARANCE),
       selfColor: guardado('selfColor', prefs?.selfColor ?? null),
       accesos: guardado('accesos', accesosValidos(prefs?.accesos)),
+      overlayRecientes: guardado('overlayRecientes', prefs?.overlayRecientes ?? {}),
       hydrated: true,
     });
     // Lo elegido antes de hidratar se guardo con el resto de valores por omision;
@@ -211,7 +235,7 @@ export const usePreferencesStore = create<PreferencesState>((set, get) => ({
 
 /** Se guarda el conjunto entero: son dos claves y así no pueden desincronizarse. */
 function persistir(
-  estado: Pick<PreferencesState, 'timeFormat' | 'lastWorkoutTitle' | 'showWorkouts' | 'showBirthdays' | 'visto' | 'appearance' | 'selfColor' | 'pinnedViews' | 'accesos'>,
+  estado: Pick<PreferencesState, 'timeFormat' | 'lastWorkoutTitle' | 'showWorkouts' | 'showBirthdays' | 'visto' | 'appearance' | 'selfColor' | 'pinnedViews' | 'accesos' | 'overlayRecientes'>,
 ): void {
   void setJson(PREFS_KEY, {
     timeFormat: estado.timeFormat,
@@ -223,5 +247,6 @@ function persistir(
     appearance: estado.appearance,
     selfColor: estado.selfColor,
     accesos: estado.accesos,
+    overlayRecientes: estado.overlayRecientes,
   } satisfies Prefs);
 }

@@ -623,7 +623,7 @@ un clic de más para llegar a lo mismo.
   no una meta de diseño, y subirlo obligaría a repartir mejor los matices. Conviene hacerlo
   de una sola vez y contra los 21 PNG a la vista, no color por color. Dep: T197
 
-- [ ] T203 La barra de personas del calendario, pensada para muchos contactos. Hoy ya es un
+- [x] T203 La barra de personas del calendario, pensada para muchos contactos. Hoy ya es un
   carrusel horizontal, pero muestra **todos** los que comparten calendario: con veinte o más
   hay que deslizar a ciegas hasta dar con quien buscas. Pasa a mostrar los **frecuentes o
   recientes** (~20 como tope) y al final del carrusel un botón de tres puntos que abre la
@@ -632,6 +632,11 @@ un clic de más para llegar a lo mismo.
   ordenar por la última vez que superpusiste su calendario, que ya es un dato que la app
   tiene a la mano. El buscador puede reutilizar `search_profiles`, que ya resuelve correo y
   `@usuario` (RF-S1). (RF-S7, RF-S8, RF-S15) Dep: —
+  **Hecho (5 oct 2026, RF-S15b):** "frecuente" = la última vez que superpusiste a esa persona, guardada en el
+  dispositivo (`overlayRecientes` en `preferences-store`, tope de 100). La barra muestra 20 (`lib/people-bar.ts`):
+  recientes primero, los demás de la A a la Z, y quien está superpuesto siempre se ve. "···" abre la lista
+  completa con buscador **local** por nombre o @usuario sin acentos; no hace falta `search_profiles`, porque solo
+  se busca entre los contactos que ya comparten calendario. La hoja queda abierta para elegir a varios.
 
 - [x] T232 Fecha de la lista completa (RF-L23). Columna `lists.due_date` (`date`, flotante),
   botón de calendario en la barra de la lista y una línea bajo el título con la fecha, en el

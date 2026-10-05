@@ -1,14 +1,17 @@
-import { Plus } from 'lucide-react-native';
+import { Check, Ellipsis, Plus } from 'lucide-react-native';
+import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import { tint } from './activity-style';
 
-import { AppText, ColorDot } from '@/components/ui';
+import { AppText, ColorDot, Sheet, TextField } from '@/components/ui';
 import { IconSize, IconStroke, Radius, Spacing } from '@/constants/theme';
 import { useContacts, useSelfColor } from '@/hooks/use-connections';
 import { useModuleNav } from '@/hooks/use-modules';
 import { useTheme } from '@/hooks/use-theme';
 import { needsOutline } from '@/lib/color';
+import { buscarPersonas, personasEnBarra } from '@/lib/people-bar';
+import { usePreferencesStore } from '@/store/preferences-store';
 
 export type PeopleTabsProps = {
   /** Contactos superpuestos ahora mismo. Vacío = solo mi calendario. */
@@ -46,26 +49,59 @@ function PersonTab({ label, selected, color, onPress }: { label: string; selecte
 /**
  * Pestañas "Tú · contactos · + Contactos" para superponer calendarios (RF-S7, RF-S8, RF-S15).
  * Se pueden activar varios contactos a la vez; "Tú" vuelve a dejar solo mi calendario.
+ *
+ * Con muchos contactos (RF-S15b) la barra muestra los 20 más recientes y un "···" que abre la
+ * lista completa con buscador.
  */
 export function PeopleTabs({ overlayUserIds, colorOf, onToggle, onOnlyMe }: PeopleTabsProps) {
   const theme = useTheme();
   const { abrir: abrirModulo } = useModuleNav();
   const contacts = useContacts();
   const miColor = useSelfColor();
-  const sharing = (contacts.data ?? []).filter((c) => c.kind === 'accepted' && c.theirCalendarVisibility);
+  const recientes = usePreferencesStore((s) => s.overlayRecientes);
+  const [todas, setTodas] = useState(false);
+  const [consulta, setConsulta] = useState('');
+
+  const personas = useMemo(
+    () =>
+      (contacts.data ?? [])
+        .filter((c) => c.kind === 'accepted' && c.theirCalendarVisibility)
+        .map((c) => ({
+          id: c.profile.id,
+          nombre: c.profile.display_name ?? c.profile.username,
+          usuario: c.profile.username,
+          etiqueta: c.profile.display_name?.split(' ')[0] ?? 'Contacto',
+        })),
+    [contacts.data],
+  );
+  const { visibles, hayMas } = personasEnBarra(personas, recientes, overlayUserIds);
+  const encontradas = buscarPersonas(personas, consulta);
+  const cerrarTodas = () => {
+    setTodas(false);
+    setConsulta('');
+  };
 
   return (
     <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.row} accessibilityRole="tablist">
       <PersonTab label="Tú" selected color={miColor} onPress={onOnlyMe} />
-      {sharing.map((c) => (
+      {visibles.map((p) => (
         <PersonTab
-          key={c.profile.id}
-          label={c.profile.display_name?.split(' ')[0] ?? 'Contacto'}
-          selected={overlayUserIds.includes(c.profile.id)}
-          color={colorOf(c.profile.id)}
-          onPress={() => onToggle(c.profile.id)}
+          key={p.id}
+          label={p.etiqueta}
+          selected={overlayUserIds.includes(p.id)}
+          color={colorOf(p.id)}
+          onPress={() => onToggle(p.id)}
         />
       ))}
+      {hayMas ? (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Todas las personas"
+          onPress={() => setTodas(true)}
+          style={({ pressed }) => [styles.tab, styles.masTab, { backgroundColor: theme.surfaceAlt, borderColor: 'transparent' }, pressed ? styles.pressed : null]}>
+          <Ellipsis size={IconSize.inline} strokeWidth={IconStroke} color={theme.textSecondary} />
+        </Pressable>
+      ) : null}
       <Pressable
         accessibilityRole="button"
         accessibilityLabel="Agregar contactos"
@@ -77,6 +113,42 @@ export function PeopleTabs({ overlayUserIds, colorOf, onToggle, onOnlyMe }: Peop
         </AppText>
       </Pressable>
       <View style={{ width: Spacing.lg }} />
+
+      <Sheet visible={todas} onClose={cerrarTodas} title="Todas las personas">
+        <TextField
+          label="Buscar"
+          value={consulta}
+          onChangeText={setConsulta}
+          placeholder="Nombre o @usuario"
+          autoCapitalize="none"
+          autoCorrect={false}
+        />
+        {encontradas.length === 0 ? (
+          <AppText color="textSecondary">Nadie se llama así.</AppText>
+        ) : (
+          encontradas.map((p) => {
+            const elegida = overlayUserIds.includes(p.id);
+            return (
+              <Pressable
+                key={p.id}
+                accessibilityRole="checkbox"
+                accessibilityState={{ checked: elegida }}
+                accessibilityLabel={`${p.nombre}, @${p.usuario}`}
+                onPress={() => onToggle(p.id)}
+                style={({ pressed }) => [styles.persona, pressed ? { backgroundColor: theme.surfaceAlt } : null]}>
+                <ColorDot hex={colorOf(p.id)} style={elegida ? null : styles.apagado} />
+                <View style={styles.personaTexto}>
+                  <AppText numberOfLines={1}>{p.nombre}</AppText>
+                  <AppText variant="caption" color="textTertiary" numberOfLines={1}>
+                    @{p.usuario}
+                  </AppText>
+                </View>
+                {elegida ? <Check size={IconSize.inline} strokeWidth={IconStroke} color={theme.ink} /> : null}
+              </Pressable>
+            );
+          })
+        )}
+      </Sheet>
     </ScrollView>
   );
 }
@@ -102,5 +174,16 @@ const styles = StyleSheet.create({
   },
   apagado: { opacity: 0.55 },
   addTab: { gap: Spacing.xs, paddingLeft: Spacing.sm },
+  masTab: { paddingHorizontal: Spacing.md },
+  persona: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.md,
+    minHeight: 52,
+    paddingHorizontal: Spacing.sm,
+    borderRadius: Radius.md,
+    borderCurve: 'continuous',
+  },
+  personaTexto: { flex: 1 },
   pressed: { opacity: 0.75 },
 });
