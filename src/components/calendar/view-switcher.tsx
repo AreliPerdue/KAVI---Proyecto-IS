@@ -5,21 +5,12 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { AppText, Sheet } from '@/components/ui';
 import { IconSize, IconStroke, Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { useT } from '@/i18n';
 import type { CalendarView } from '@/lib/dates';
 import { usePreferencesStore } from '@/store/preferences-store';
 
 /** Orden canónico, de lo más corto a lo más largo. La agenda va al final por ser otra forma. */
-export const VIEW_OPTIONS: { value: CalendarView; label: string }[] = [
-  { value: 'day', label: 'Día' },
-  { value: 'threeDays', label: '3 días' },
-  { value: 'week', label: 'Semana' },
-  { value: 'month', label: 'Mes' },
-  { value: 'agenda', label: 'Agenda' },
-];
-
-export function labelDeVista(view: CalendarView): string {
-  return VIEW_OPTIONS.find((o) => o.value === view)?.label ?? 'Mes';
-}
+const VISTAS: readonly CalendarView[] = ['day', 'threeDays', 'week', 'month', 'agenda'];
 
 export type ViewSwitcherProps = {
   view: CalendarView;
@@ -38,6 +29,9 @@ export type ViewSwitcherProps = {
  */
 export function ViewSwitcher({ view, onChange, compact }: ViewSwitcherProps) {
   const theme = useTheme();
+  const tx = useT();
+  const VIEW_OPTIONS = VISTAS.map((value) => ({ value, label: tx.calendar.views[value] }));
+  const labelDeVista = (v: CalendarView) => tx.calendar.views[v];
   const [menuAbierto, setMenuAbierto] = useState(false);
   const pinnedViews = usePreferencesStore((s) => s.pinnedViews);
   const togglePinnedView = usePreferencesStore((s) => s.togglePinnedView);
@@ -50,7 +44,7 @@ export function ViewSwitcher({ view, onChange, compact }: ViewSwitcherProps) {
   };
 
   const menu = (
-    <Sheet visible={menuAbierto} onClose={() => setMenuAbierto(false)} title="Vista">
+    <Sheet visible={menuAbierto} onClose={() => setMenuAbierto(false)} title={tx.calendar.viewSheetTitle}>
       {VIEW_OPTIONS.map((option) => {
         const activa = option.value === view;
         const fijada = pinnedViews.includes(option.value);
@@ -82,9 +76,9 @@ export function ViewSwitcher({ view, onChange, compact }: ViewSwitcherProps) {
               accessibilityLabel={
                 fijada
                   ? puedeDesfijar
-                    ? `Quitar ${option.label} de la barra`
-                    : `${option.label} es la única vista fijada`
-                  : `Fijar ${option.label} en la barra`
+                    ? tx.calendar.unpinView(option.label)
+                    : tx.calendar.onlyPinnedView(option.label)
+                  : tx.calendar.pinView(option.label)
               }
               disabled={!puedeDesfijar}
               hitSlop={8}
@@ -111,7 +105,7 @@ export function ViewSwitcher({ view, onChange, compact }: ViewSwitcherProps) {
       <>
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel={`Vista: ${labelDeVista(view)}. Cambiar vista`}
+          accessibilityLabel={tx.calendar.changeView(labelDeVista(view))}
           onPress={() => setMenuAbierto(true)}
           style={({ pressed }) => [
             styles.contenedor,
@@ -152,7 +146,7 @@ export function ViewSwitcher({ view, onChange, compact }: ViewSwitcherProps) {
         })}
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel="Más vistas"
+          accessibilityLabel={tx.calendar.moreViews}
           onPress={() => setMenuAbierto(true)}
           style={({ pressed }) => [styles.segmento, styles.segmentoMas, pressed ? styles.pressed : null]}>
           <Ellipsis size={IconSize.inline} strokeWidth={IconStroke} color={theme.textSecondary} />

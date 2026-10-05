@@ -10,6 +10,7 @@ import { IconButton } from './icon-button';
 
 import { IconSize, IconStroke, MinTouchTarget, Radius, Shadow, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { useT } from '@/i18n';
 
 /** Compensa la caja del botón de icono para que el glifo caiga en el borde del panel. */
 const OPTICAL_INSET = (MinTouchTarget - IconSize.action) / 2;
@@ -51,6 +52,7 @@ function useKeyboardHeight(): number {
 
 /** Hoja inferior (móvil) / diálogo centrado (web ancho) con scrim y cierre accesible. */
 export function Sheet({ visible, onClose, title, children, maxHeightRatio = 0.85, scrollable = true }: SheetProps) {
+  const tx = useT();
   const theme = useTheme();
   const insets = useSafeAreaInsets();
   const { width, height } = useWindowDimensions();
@@ -84,7 +86,7 @@ export function Sheet({ visible, onClose, title, children, maxHeightRatio = 0.85
               <AppText variant="heading" accessibilityRole="header" style={styles.title}>
                 {title}
               </AppText>
-              <IconButton label="Cerrar" onPress={onClose}>
+              <IconButton label={tx.common.close} onPress={onClose}>
                 <X size={IconSize.action} strokeWidth={IconStroke} color={theme.textSecondary} />
               </IconButton>
             </View>

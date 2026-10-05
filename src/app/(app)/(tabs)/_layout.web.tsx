@@ -8,18 +8,20 @@ import { AppText, Wordmark } from '@/components/ui';
 import { IconSize, IconStroke, MaxContentWidth, Radius, Spacing } from '@/constants/theme';
 import { useSharedBadgeCount } from '@/hooks/use-shared-badge';
 import { useTheme } from '@/hooks/use-theme';
+import { useT } from '@/i18n';
 
 const TABS = [
-  { name: 'calendar', href: '/(app)/(tabs)/calendar', label: 'Calendario', Icon: CalendarDays },
-  { name: 'shared', href: '/(app)/(tabs)/shared', label: 'Compartido', Icon: Users },
-  { name: 'fitness', href: '/(app)/(tabs)/fitness', label: 'Fitness', Icon: Dumbbell },
-  { name: 'profile', href: '/(app)/(tabs)/profile', label: 'Perfil', Icon: UserRound },
+  { name: 'calendar', href: '/(app)/(tabs)/calendar', Icon: CalendarDays },
+  { name: 'shared', href: '/(app)/(tabs)/shared', Icon: Users },
+  { name: 'fitness', href: '/(app)/(tabs)/fitness', Icon: Dumbbell },
+  { name: 'profile', href: '/(app)/(tabs)/profile', Icon: UserRound },
 ] as const;
 
 type TabButtonProps = TabTriggerSlotProps & { label: string; Icon: typeof CalendarDays; badge?: number };
 
 function TabButton({ label, Icon, isFocused, badge = 0, ...props }: TabButtonProps) {
   const theme = useTheme();
+  const tx = useT();
   const { width } = useWindowDimensions();
   const showLabel = width >= 720;
   const color = isFocused ? theme.ink : theme.textSecondary;
@@ -27,7 +29,7 @@ function TabButton({ label, Icon, isFocused, badge = 0, ...props }: TabButtonPro
     <Pressable
       {...props}
       accessibilityRole="tab"
-      accessibilityLabel={badge > 0 ? `${label}, ${badge} pendientes` : label}
+      accessibilityLabel={badge > 0 ? `${label}, ${tx.common.pendingCount(badge)}` : label}
       accessibilityState={{ selected: !!isFocused }}
       style={({ pressed }) => [
         styles.tab,
@@ -84,14 +86,15 @@ function TopBar({ children, ...props }: TopBarProps) {
 
 /** Tabs web: barra superior con ancho máximo (NFR-9). */
 export default function TabsLayoutWeb() {
+  const tx = useT();
   const badge = useSharedBadgeCount();
   return (
     <Tabs>
       <TabList asChild>
         <TopBar>
-          {TABS.map(({ name, href, label, Icon }) => (
+          {TABS.map(({ name, href, Icon }) => (
             <TabTrigger key={name} name={name} href={href} asChild>
-              <TabButton label={label} Icon={Icon} badge={name === 'shared' ? badge : 0} />
+              <TabButton label={name === 'calendar' ? tx.nav.calendar : tx.nav.modules[name]} Icon={Icon} badge={name === 'shared' ? badge : 0} />
             </TabTrigger>
           ))}
         </TopBar>

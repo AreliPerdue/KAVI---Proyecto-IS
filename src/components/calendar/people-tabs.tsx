@@ -9,6 +9,7 @@ import { IconSize, IconStroke, Radius, Spacing } from '@/constants/theme';
 import { useContacts, useSelfColor } from '@/hooks/use-connections';
 import { useModuleNav } from '@/hooks/use-modules';
 import { useTheme } from '@/hooks/use-theme';
+import { useT } from '@/i18n';
 import { needsOutline } from '@/lib/color';
 import { buscarPersonas, personasEnBarra } from '@/lib/people-bar';
 import { usePreferencesStore } from '@/store/preferences-store';
@@ -59,6 +60,7 @@ export function PeopleTabs({ overlayUserIds, colorOf, onToggle, onOnlyMe }: Peop
   const contacts = useContacts();
   const miColor = useSelfColor();
   const recientes = usePreferencesStore((s) => s.overlayRecientes);
+  const tx = useT();
   const [todas, setTodas] = useState(false);
   const [consulta, setConsulta] = useState('');
 
@@ -70,9 +72,9 @@ export function PeopleTabs({ overlayUserIds, colorOf, onToggle, onOnlyMe }: Peop
           id: c.profile.id,
           nombre: c.profile.display_name ?? c.profile.username,
           usuario: c.profile.username,
-          etiqueta: c.profile.display_name?.split(' ')[0] ?? 'Contacto',
+          etiqueta: c.profile.display_name?.split(' ')[0] ?? tx.calendar.contactFallback,
         })),
-    [contacts.data],
+    [contacts.data, tx],
   );
   const { visibles, hayMas } = personasEnBarra(personas, recientes, overlayUserIds);
   const encontradas = buscarPersonas(personas, consulta);
@@ -83,7 +85,7 @@ export function PeopleTabs({ overlayUserIds, colorOf, onToggle, onOnlyMe }: Peop
 
   return (
     <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.row} accessibilityRole="tablist">
-      <PersonTab label="Tú" selected color={miColor} onPress={onOnlyMe} />
+      <PersonTab label={tx.calendar.me} selected color={miColor} onPress={onOnlyMe} />
       {visibles.map((p) => (
         <PersonTab
           key={p.id}
@@ -96,7 +98,7 @@ export function PeopleTabs({ overlayUserIds, colorOf, onToggle, onOnlyMe }: Peop
       {hayMas ? (
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel="Todas las personas"
+          accessibilityLabel={tx.calendar.allPeople}
           onPress={() => setTodas(true)}
           style={({ pressed }) => [styles.tab, styles.masTab, { backgroundColor: theme.surfaceAlt, borderColor: 'transparent' }, pressed ? styles.pressed : null]}>
           <Ellipsis size={IconSize.inline} strokeWidth={IconStroke} color={theme.textSecondary} />
@@ -104,27 +106,27 @@ export function PeopleTabs({ overlayUserIds, colorOf, onToggle, onOnlyMe }: Peop
       ) : null}
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel="Agregar contactos"
+        accessibilityLabel={tx.calendar.addContacts}
         onPress={() => abrirModulo('shared')}
         style={({ pressed }) => [styles.tab, styles.addTab, { backgroundColor: theme.surfaceAlt, borderColor: 'transparent' }, pressed ? styles.pressed : null]}>
         <Plus size={IconSize.inline} strokeWidth={IconStroke} color={theme.textSecondary} />
         <AppText variant="label" color="textSecondary">
-          Contactos
+          {tx.calendar.contacts}
         </AppText>
       </Pressable>
       <View style={{ width: Spacing.lg }} />
 
-      <Sheet visible={todas} onClose={cerrarTodas} title="Todas las personas">
+      <Sheet visible={todas} onClose={cerrarTodas} title={tx.calendar.allPeople}>
         <TextField
-          label="Buscar"
+          label={tx.common.search}
           value={consulta}
           onChangeText={setConsulta}
-          placeholder="Nombre o @usuario"
+          placeholder={tx.calendar.searchPeoplePlaceholder}
           autoCapitalize="none"
           autoCorrect={false}
         />
         {encontradas.length === 0 ? (
-          <AppText color="textSecondary">Nadie se llama así.</AppText>
+          <AppText color="textSecondary">{tx.calendar.nobodyNamed}</AppText>
         ) : (
           encontradas.map((p) => {
             const elegida = overlayUserIds.includes(p.id);

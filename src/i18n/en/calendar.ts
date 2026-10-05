@@ -1,5 +1,4 @@
 import type { Dictionary } from '../types';
-
 export const calendar: Dictionary['calendar'] = {
   changeDate: (titulo) => `${titulo}. Change date`,
   previous: 'Previous',
@@ -18,4 +17,18 @@ export const calendar: Dictionary['calendar'] = {
   datePickerTitle: 'Date',
   previousMonth: 'Previous month',
   nextMonth: 'Next month',
+  views: { day: 'Day', threeDays: '3 days', week: 'Week', month: 'Month', agenda: 'Agenda' },
+  viewSheetTitle: 'View',
+  unpinView: (v) => `Remove ${v} from the bar`,
+  onlyPinnedView: (v) => `${v} is the only pinned view`,
+  pinView: (v) => `Pin ${v} to the bar`,
+  changeView: (v) => `View: ${v}. Change view`,
+  moreViews: 'More views',
+  me: 'Me',
+  contactFallback: 'Contact',
+  allPeople: 'Everyone',
+  addContacts: 'Add contacts',
+  contacts: 'Contacts',
+  searchPeoplePlaceholder: 'Name or @username',
+  nobodyNamed: 'No one by that name.',
 };

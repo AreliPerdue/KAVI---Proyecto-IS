@@ -7,14 +7,16 @@ import { Button } from './button';
 
 import { IconSize, IconStroke, Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { useT } from '@/i18n';
 
-export function LoadingState({ label = 'Cargando…' }: { label?: string }) {
+export function LoadingState({ label }: { label?: string }) {
   const theme = useTheme();
+  const tx = useT();
   return (
     <View style={styles.center} accessibilityLiveRegion="polite">
       <ActivityIndicator color={theme.textSecondary} />
       <AppText variant="label" color="textSecondary">
-        {label}
+        {label ?? tx.common.loading}
       </AppText>
     </View>
   );
@@ -49,11 +51,12 @@ export function EmptyState({
 
 export function ErrorState({ message, onRetry }: { message: string; onRetry?: () => void }) {
   const theme = useTheme();
+  const tx = useT();
   return (
     <View style={styles.center} accessibilityRole="alert">
       <CircleAlert size={IconSize.action} strokeWidth={IconStroke} color={theme.danger} />
       <AppText style={styles.centerText}>{message}</AppText>
-      {onRetry ? <Button title="Reintentar" variant="secondary" onPress={onRetry} /> : null}
+      {onRetry ? <Button title={tx.common.retry} variant="secondary" onPress={onRetry} /> : null}
     </View>
   );
 }

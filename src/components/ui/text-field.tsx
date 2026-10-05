@@ -6,6 +6,7 @@ import { AppText } from './app-text';
 
 import { Fonts, IconSize, IconStroke, MinTouchTarget, Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { useT } from '@/i18n';
 
 export type TextFieldProps = TextInputProps & {
   label: string;
@@ -19,6 +20,7 @@ export const TextField = forwardRef<TextInput, TextFieldProps>(function TextFiel
   { label, error, hint, secure = false, style, onFocus, onBlur, editable = true, ...rest },
   ref,
 ) {
+  const tx = useT();
   const theme = useTheme();
   const [focused, setFocused] = useState(false);
   const [hidden, setHidden] = useState(secure);
@@ -57,7 +59,7 @@ export const TextField = forwardRef<TextInput, TextFieldProps>(function TextFiel
         {secure ? (
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel={hidden ? 'Mostrar contraseña' : 'Ocultar contraseña'}
+            accessibilityLabel={hidden ? tx.common.showPassword : tx.common.hidePassword}
             hitSlop={8}
             onPress={() => setHidden((v) => !v)}
             style={({ pressed }) => [styles.eye, pressed ? styles.pressed : null]}>

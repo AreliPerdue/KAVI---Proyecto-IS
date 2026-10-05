@@ -12,7 +12,7 @@ export type ModuleId = 'shared' | 'lists' | 'fitness' | 'profile';
 
 export type ModuleInfo = {
   id: ModuleId;
-  label: string;
+  /** El nombre visible sale del diccionario: `tx.nav.modules[id]` (spec 12). */
   Icon: LucideIcon;
   /** Iconos de la barra nativa: SF Symbol en iOS, Material en Android. */
   sf: { default: string; selected: string };
@@ -25,19 +25,17 @@ export type ModuleInfo = {
 };
 
 export const MODULES: readonly ModuleInfo[] = [
-  { id: 'shared', label: 'Compartido', Icon: Users, sf: { default: 'person.2', selected: 'person.2.fill' }, md: 'group' },
+  { id: 'shared', Icon: Users, sf: { default: 'person.2', selected: 'person.2.fill' }, md: 'group' },
   {
     id: 'lists',
-    label: 'Listas',
     Icon: CircleCheck,
     sf: { default: 'checkmark.circle', selected: 'checkmark.circle.fill' },
     md: 'task_alt',
     route: '/(app)/lists',
   },
-  { id: 'fitness', label: 'Fitness', Icon: Dumbbell, sf: { default: 'dumbbell', selected: 'dumbbell.fill' }, md: 'fitness_center' },
+  { id: 'fitness', Icon: Dumbbell, sf: { default: 'dumbbell', selected: 'dumbbell.fill' }, md: 'fitness_center' },
   {
     id: 'profile',
-    label: 'Perfil',
     Icon: UserRound,
     sf: { default: 'person.crop.circle', selected: 'person.crop.circle.fill' },
     md: 'person',

@@ -1,0 +1,26 @@
+import type { Dictionary } from '../types';
+
+export const common: Dictionary['common'] = {
+  cancel: 'Cancel',
+  confirm: 'Confirm',
+  close: 'Close',
+  back: 'Back',
+  save: 'Save',
+  done: 'Done',
+  retry: 'Try again',
+  loading: 'Loading…',
+  search: 'Search',
+  somethingWrong: 'Something went wrong.',
+  somethingWrongWith: (detalle) => `Something went wrong: ${detalle}`,
+  showPassword: 'Show password',
+  hidePassword: 'Hide password',
+  day: 'Day',
+  month: 'Month',
+  year: 'Year',
+  dateNotYet: 'That date hasn’t happened yet.',
+  dateInvalid: 'That date doesn’t exist. Check the day, month and year.',
+  hour: 'Hour',
+  minute: 'Minute',
+  time: 'Time',
+  pendingCount: (n) => `${n} pending`,
+};

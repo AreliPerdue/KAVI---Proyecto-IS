@@ -3,6 +3,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { AppText, Button, Sheet } from '@/components/ui';
 import { Spacing } from '@/constants/theme';
+import { useT } from '@/i18n';
 
 export type ConfirmOptions = {
   title: string;
@@ -18,6 +19,7 @@ const ConfirmContext = createContext<ConfirmFn | undefined>(undefined);
 
 /** Diálogo de confirmación con la misma apariencia en iOS, Android y web (NFR-12). */
 export function ConfirmProvider({ children }: { children: ReactNode }) {
+  const tx = useT();
   const [options, setOptions] = useState<ConfirmOptions | null>(null);
   const resolver = useRef<((value: boolean) => void) | null>(null);
 
@@ -42,9 +44,9 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
       <Sheet visible={options !== null} onClose={() => settle(false)} title={options?.title}>
         {options?.message ? <AppText color="textSecondary">{options.message}</AppText> : null}
         <View style={styles.actions}>
-          <Button title={options?.cancelLabel ?? 'Cancelar'} variant="secondary" onPress={() => settle(false)} />
+          <Button title={options?.cancelLabel ?? tx.common.cancel} variant="secondary" onPress={() => settle(false)} />
           <Button
-            title={options?.confirmLabel ?? 'Confirmar'}
+            title={options?.confirmLabel ?? tx.common.confirm}
             variant={options?.destructive ? 'danger' : 'primary'}
             onPress={() => settle(true)}
           />

@@ -8,6 +8,7 @@ import { TextField } from './text-field';
 
 import { Spacing } from '@/constants/theme';
 import { formatDate, toDayKey } from '@/lib/dates';
+import { useLanguage, useT } from '@/i18n';
 
 /** Interpreta día, mes y año sueltos. `null` si no forman una fecha real. */
 export function fechaDesde(dia: string, mes: string, anio: string): Date | null {
@@ -65,6 +66,8 @@ function Campos({
   maxDate?: Date;
   onSelect: (date: Date) => void;
 }) {
+  const tx = useT();
+  const lang = useLanguage();
   const [dia, setDia] = useState(value ? String(value.getDate()) : '');
   const [mes, setMes] = useState(value ? String(value.getMonth() + 1) : '');
   const [anio, setAnio] = useState(value ? String(value.getFullYear()) : '');
@@ -83,25 +86,25 @@ function Campos({
     <>
       <View style={styles.fila}>
         <View style={styles.celda}>
-          <TextField label="Día" value={dia} onChangeText={setDia} keyboardType="number-pad" placeholder="15" maxLength={2} autoFocus />
+          <TextField label={tx.common.day} value={dia} onChangeText={setDia} keyboardType="number-pad" placeholder="15" maxLength={2} autoFocus />
         </View>
         <View style={styles.celda}>
-          <TextField label="Mes" value={mes} onChangeText={setMes} keyboardType="number-pad" placeholder="9" maxLength={2} />
+          <TextField label={tx.common.month} value={mes} onChangeText={setMes} keyboardType="number-pad" placeholder="9" maxLength={2} />
         </View>
         <View style={styles.celdaAnio}>
-          <TextField label="Año" value={anio} onChangeText={setAnio} keyboardType="number-pad" placeholder="1998" maxLength={4} />
+          <TextField label={tx.common.year} value={anio} onChangeText={setAnio} keyboardType="number-pad" placeholder="1998" maxLength={4} />
         </View>
       </View>
 
       {listo ? (
-        <AppText variant="label">{formatDate(fecha)}</AppText>
+        <AppText variant="label">{formatDate(fecha, lang)}</AppText>
       ) : completo ? (
         <AppText variant="label" color="danger">
-          {fueraDeRango ? 'Esa fecha todavía no ha llegado.' : 'Esa fecha no existe. Revisa el día, el mes y el año.'}
+          {fueraDeRango ? tx.common.dateNotYet : tx.common.dateInvalid}
         </AppText>
       ) : null}
 
-      <Button title="Guardar" disabled={!listo} onPress={() => fecha && onSelect(fecha)} />
+      <Button title={tx.common.save} disabled={!listo} onPress={() => fecha && onSelect(fecha)} />
     </>
   );
 }

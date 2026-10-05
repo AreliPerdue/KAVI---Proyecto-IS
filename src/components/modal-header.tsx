@@ -6,6 +6,7 @@ import { StyleSheet, View } from 'react-native';
 import { AppText, IconButton } from '@/components/ui';
 import { IconSize, IconStroke, MinTouchTarget, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { useT } from '@/i18n';
 
 /**
  * El botón de icono mide 44/48 con el glifo centrado, así que su caja sobresale del
@@ -37,11 +38,12 @@ export function ModalHeader({
 }) {
   const theme = useTheme();
   const router = useRouter();
+  const tx = useT();
   const close = onClose ?? (() => (router.canGoBack() ? router.back() : router.replace('/(app)/(tabs)/calendar')));
   return (
     <View style={styles.row}>
       {leading ? (
-        <IconButton label={back ? 'Atrás' : 'Cerrar'} onPress={close}>
+        <IconButton label={back ? tx.common.back : tx.common.close} onPress={close}>
           {back ? (
             <ChevronLeft size={IconSize.action} strokeWidth={IconStroke} color={theme.text} />
           ) : (

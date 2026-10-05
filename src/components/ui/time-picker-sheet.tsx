@@ -10,6 +10,7 @@ import { useTheme } from '@/hooks/use-theme';
 import { Segmented } from './segmented';
 
 import { formatMinutes, getTimeFormat } from '@/lib/dates';
+import { useLanguage, useT } from '@/i18n';
 
 const ITEM_HEIGHT = 44;
 const VISIBLE = 5;
@@ -89,6 +90,8 @@ function Column<T extends number>({
 }
 
 function TimePickerBody({ value, onSelect }: { value: number; onSelect: (minutes: number) => void }) {
+  const tx = useT();
+  const lang = useLanguage();
   const [hour, setHour] = useState(() => Math.floor(value / 60) % 24);
   const [minute, setMinute] = useState(() => value % 60);
   const current = hour * 60 + minute;
@@ -99,28 +102,28 @@ function TimePickerBody({ value, onSelect }: { value: number; onSelect: (minutes
   return (
     <>
       <AppText variant="display" tabular style={styles.preview}>
-        {formatMinutes(current)}
+        {formatMinutes(current, lang)}
       </AppText>
       <View style={styles.columns}>
         {doce ? (
-          <Column data={HOURS_12} value={hour % 12 === 0 ? 12 : hour % 12} onChange={(h) => setHour((h % 12) + (pm ? 12 : 0))} label="Hora" format={String} />
+          <Column data={HOURS_12} value={hour % 12 === 0 ? 12 : hour % 12} onChange={(h) => setHour((h % 12) + (pm ? 12 : 0))} label={tx.common.hour} format={String} />
         ) : (
-          <Column data={HOURS} value={hour} onChange={setHour} label="Hora" />
+          <Column data={HOURS} value={hour} onChange={setHour} label={tx.common.hour} />
         )}
         <AppText variant="display" color="textTertiary" style={styles.colon}>
           :
         </AppText>
-        <Column data={MINUTES} value={minute} onChange={setMinute} label="Minuto" />
+        <Column data={MINUTES} value={minute} onChange={setMinute} label={tx.common.minute} />
       </View>
       {doce ? (
         <Segmented
           fullWidth
-          options={[{ value: 'am', label: 'a.m.' }, { value: 'pm', label: 'p.m.' }]}
+          options={[{ value: 'am', label: tx.dates.am }, { value: 'pm', label: tx.dates.pm }]}
           value={pm ? 'pm' : 'am'}
           onChange={(v) => setHour((hour % 12) + (v === 'pm' ? 12 : 0))}
         />
       ) : null}
-      <Button title="Listo" onPress={() => onSelect(current)} />
+      <Button title={tx.common.done} onPress={() => onSelect(current)} />
     </>
   );
 }
@@ -134,7 +137,7 @@ export function TimePickerSheet({
   value,
   onClose,
   onSelect,
-  title = 'Hora',
+  title,
 }: {
   visible: boolean;
   value: number;
@@ -142,8 +145,9 @@ export function TimePickerSheet({
   onSelect: (minutes: number) => void;
   title?: string;
 }) {
+  const tx = useT();
   return (
-    <Sheet visible={visible} onClose={onClose} title={title} maxHeightRatio={0.7}>
+    <Sheet visible={visible} onClose={onClose} title={title ?? tx.common.time} maxHeightRatio={0.7}>
       {/* Se remonta al abrir para partir siempre del valor actual. */}
       {visible ? <TimePickerBody key={value} value={value} onSelect={onSelect} /> : null}
     </Sheet>

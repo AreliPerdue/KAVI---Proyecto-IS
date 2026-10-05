@@ -8,9 +8,8 @@ import { IconSize, IconStroke, Radius, Spacing } from '@/constants/theme';
 import { useModuleNav } from '@/hooks/use-modules';
 import { useSharedBadgeCount } from '@/hooks/use-shared-badge';
 import { useTheme } from '@/hooks/use-theme';
+import { useT } from '@/i18n';
 import { usePreferencesStore } from '@/store/preferences-store';
-
-const LUGARES = ['Segundo lugar', 'Tercer lugar'] as const;
 
 /**
  * Más (spec 01, RF-N1, RF-N3): el cuarto lugar fijo de la barra del teléfono. Lista todos los
@@ -21,6 +20,8 @@ export default function MasScreen() {
   const { accesos, abrir } = useModuleNav();
   const setAccesos = usePreferencesStore((s) => s.setAccesos);
   const badge = useSharedBadgeCount();
+  const tx = useT();
+  const LUGARES = [tx.nav.secondPlace, tx.nav.thirdPlace] as const;
   /** Lugar de la barra cuyo módulo se está eligiendo, o `null` con la hoja cerrada. */
   const [eligiendo, setEligiendo] = useState<0 | 1 | null>(null);
 
@@ -30,21 +31,22 @@ export default function MasScreen() {
   return (
     <Screen scroll maxWidth={640}>
       <AppText variant="title" accessibilityRole="header">
-        Más
+        {tx.nav.more}
       </AppText>
 
-      <SettingsGroup title="Módulos">
-        {MODULES.map(({ id, label, Icon }) => {
+      <SettingsGroup title={tx.nav.modulesSection}>
+        {MODULES.map(({ id, Icon }) => {
+          const label = tx.nav.modules[id];
           const pendientes = id === 'shared' ? badge : 0;
           return (
             <SettingsRow
               key={id}
               icon={<Icon size={IconSize.inline} strokeWidth={IconStroke} color={theme.textSecondary} />}
               label={label}
-              hint={enBarra(id) ? 'En la barra' : undefined}
+              hint={enBarra(id) ? tx.nav.inBar : undefined}
               right={
                 pendientes > 0 ? (
-                  <View style={[styles.badge, { backgroundColor: theme.today }]} accessibilityLabel={`${pendientes} pendientes`}>
+                  <View style={[styles.badge, { backgroundColor: theme.today }]} accessibilityLabel={tx.common.pendingCount(pendientes)}>
                     <AppText variant="caption" color="onInk">
                       {pendientes}
                     </AppText>
@@ -58,8 +60,8 @@ export default function MasScreen() {
       </SettingsGroup>
 
       <SettingsGroup
-        title="Barra"
-        footer="El Calendario siempre va primero y Más siempre al final. Si eliges un módulo que ya está en el otro lugar, se intercambian."
+        title={tx.nav.barSection}
+        footer={tx.nav.barFooter}
       >
         {([0, 1] as const).map((lugar) => {
           const { Icon } = moduleInfo(accesos[lugar]);
@@ -68,7 +70,7 @@ export default function MasScreen() {
               key={lugar}
               icon={<Icon size={IconSize.inline} strokeWidth={IconStroke} color={theme.textSecondary} />}
               label={LUGARES[lugar]}
-              value={moduleInfo(accesos[lugar]).label}
+              value={tx.nav.modules[accesos[lugar]]}
               onPress={() => setEligiendo(lugar)}
             />
           );
@@ -81,7 +83,8 @@ export default function MasScreen() {
       */}
       <Sheet visible={eligiendo !== null} onClose={() => setEligiendo(null)} title={eligiendo === null ? '' : LUGARES[eligiendo]}>
         {eligiendo !== null
-          ? MODULES.map(({ id, label, Icon }) => {
+          ? MODULES.map(({ id, Icon }) => {
+              const label = tx.nav.modules[id];
               const elegido = accesos[eligiendo] === id;
               const otro = accesos[eligiendo === 0 ? 1 : 0] === id;
               return (
@@ -89,7 +92,7 @@ export default function MasScreen() {
                   key={id}
                   accessibilityRole="radio"
                   accessibilityState={{ selected: elegido }}
-                  accessibilityLabel={otro ? `${label}, está en el otro lugar; se intercambian` : label}
+                  accessibilityLabel={otro ? tx.nav.swapsA11y(label) : label}
                   onPress={() => {
                     elegir(eligiendo, id);
                     setEligiendo(null);
@@ -100,7 +103,7 @@ export default function MasScreen() {
                     <AppText>{label}</AppText>
                     {otro ? (
                       <AppText variant="caption" color="textTertiary">
-                        Está en el otro lugar: se intercambian
+                        {tx.nav.swaps}
                       </AppText>
                     ) : null}
                   </View>
