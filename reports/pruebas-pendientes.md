@@ -590,3 +590,11 @@ Pedro desde la hoja lo sube a la barra. Falta:
 - [ ] `buscarPersonas`: sin acentos ni mayúsculas, con o sin "@", por nombre o usuario.
 - [ ] `marcarSuperpuesto`: guarda la fecha al superponer (no al quitar) y conserva solo 100.
 - [ ] Con 25+ contactos reales en Supabase: la barra muestra 20 y el orden sobrevive a cerrar la app.
+
+## Duplicar y borrar series en web (T265)
+Web en el demo, "Pierna" → Editar. A 1280 px: 13 botones de borrar; borrar deja 12 y ofrece "Deshacer",
+que la regresa; duplicar deja 14. A 390 px: un "⋮" por serie, la fila cabe completa con el número y el
+menú trae Duplicar y Borrar serie. Falta:
+- [ ] Teléfono: sin cambios (deslizar y menú del número); en web no hay deslizar.
+- [ ] Entrenamiento en curso (no solo al editar uno terminado): mismos botones y la cola de series.
+- [ ] Teclado en web: los botones se alcanzan con Tab y tienen foco visible.

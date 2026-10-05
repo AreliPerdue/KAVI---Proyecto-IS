@@ -1,6 +1,6 @@
-import { Check, ChevronRight, Copy, Ellipsis, MessageSquareText, Pin, Plus, Timer, Trash2, X } from 'lucide-react-native';
+import { Check, ChevronRight, Copy, Ellipsis, EllipsisVertical, MessageSquareText, Pin, Plus, Timer, Trash2, X } from 'lucide-react-native';
 import { memo, useRef } from 'react';
-import { Platform, Pressable, StyleSheet, View } from 'react-native';
+import { Platform, Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
 import ReanimatedSwipeable, { type SwipeableMethods } from 'react-native-gesture-handler/ReanimatedSwipeable';
 import Animated, { ZoomIn } from 'react-native-reanimated';
 
@@ -14,6 +14,18 @@ import type { PrKind } from '@/lib/gym/records';
 import { formatDuration, formatSegment, isImbalanced, segmentFieldValue, type SegmentField } from '@/lib/gym/sets';
 import type { EffortScale } from '@/store/gym-store';
 import type { Exercise, SetSegment, SetType, WeightUnit, WorkoutExerciseDetail, WorkoutSet } from '@/types/domain';
+
+/**
+ * En web no se puede deslizar una serie (RF-F33), así que duplicar y borrar llevan botones
+ * visibles al final de cada fila. En una ventana angosta no caben los dos sin empujar fuera el
+ * número de la serie: ahí va un solo "···" que abre el menú de la serie, donde están las dos.
+ */
+const ACCIONES_VISIBLES = Platform.OS === 'web';
+const ANCHO_PARA_DOS_BOTONES = 600;
+
+function useAccionesAnchas(): boolean {
+  return useWindowDimensions().width >= ANCHO_PARA_DOS_BOTONES;
+}
 
 /** Lo que se edita con el teclado: un campo de un segmento, o el esfuerzo de la serie. */
 export type EditTarget = { setId: string; segmentIndex: number; field: SegmentField | 'effort' };
@@ -134,6 +146,7 @@ export type ExerciseBlockProps = {
  */
 export const ExerciseBlock = memo(function ExerciseBlock(props: ExerciseBlockProps) {
   const { exercise, catalog, columns, previous, prs, pendientes, unit, effortScale, editable, legacyNote, groupLabel, protocolLabel, stickyNote } = props;
+  const anchas = useAccionesAnchas();
   const theme = useTheme();
   const sets = exercise.workout_sets;
   // El calentamiento no cuenta: la "serie 1" es la primera efectiva.
@@ -239,6 +252,7 @@ export const ExerciseBlock = memo(function ExerciseBlock(props: ExerciseBlockPro
             </AppText>
           )}
           <View style={styles.colCheck} />
+          {ACCIONES_VISIBLES && editable ? <View style={anchas ? styles.colAcciones : styles.colMasEspacio} /> : null}
         </View>
       ) : null}
 
@@ -290,6 +304,7 @@ function FilaSerie(p: FilaProps) {
   const theme = useTheme();
   const swipe = useRef<SwipeableMethods>(null);
   const { set, exercise, columns, unit, effortScale, editable } = p;
+  const anchas = useAccionesAnchas();
   const hecha = set.completed_at !== null;
   const esfuerzo = effortScale === 'rir' ? set.rir : set.rpe;
   const main = set.segments[0];
@@ -383,6 +398,29 @@ function FilaSerie(p: FilaProps) {
             {hecha ? <Check size={16} strokeWidth={3} color={theme.onInk} /> : null}
           </View>
         </Pressable>
+
+        {ACCIONES_VISIBLES && editable ? (
+          anchas ? (
+            <View style={styles.colAcciones}>
+              <IconButton label={`Duplicar la serie ${p.etiqueta}`} onPress={() => p.onDuplicate(exercise, set)}>
+                <Copy size={IconSize.inline} strokeWidth={IconStroke} color={theme.textTertiary} />
+              </IconButton>
+              <IconButton label={`Borrar la serie ${p.etiqueta}`} onPress={() => p.onDelete(exercise, set)}>
+                <Trash2 size={IconSize.inline} strokeWidth={IconStroke} color={theme.textTertiary} />
+              </IconButton>
+            </View>
+          ) : (
+            // "⋮" de 20 px de ancho con `hitSlop` hasta 44: a 390 px un botón de 44 empujaba fuera el número.
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={`Más acciones de la serie ${p.etiqueta}: duplicar, borrar…`}
+              hitSlop={{ top: 8, bottom: 8, left: 12, right: 12 }}
+              onPress={() => p.onSetMenu(exercise, set)}
+              style={({ pressed }) => [styles.colMas, pressed ? { opacity: 0.6 } : null]}>
+              <EllipsisVertical size={IconSize.inline} strokeWidth={IconStroke} color={theme.textTertiary} />
+            </Pressable>
+          )
+        ) : null}
       </View>
 
       {set.segments.slice(1).map((seg, j) => (
@@ -404,6 +442,7 @@ function FilaSerie(p: FilaProps) {
           ) : (
             <View style={styles.colCheck} />
           )}
+          {ACCIONES_VISIBLES && editable ? <View style={anchas ? styles.colAcciones : styles.colMasEspacio} /> : null}
         </View>
       ))}
 
@@ -537,6 +576,9 @@ const styles = StyleSheet.create({
   colAncha: { width: 64, textAlign: 'center' },
   colCorta: { width: 46, textAlign: 'center' },
   colCheck: { width: 44, alignItems: 'center', justifyContent: 'center' },
+  colAcciones: { width: 88, flexDirection: 'row', alignItems: 'center' },
+  colMas: { width: 20, minHeight: 44, alignItems: 'center', justifyContent: 'center' },
+  colMasEspacio: { width: 20 },
   celda: { height: 44, alignItems: 'center', justifyContent: 'center', borderRadius: Radius.sm, borderCurve: 'continuous' },
   check: { width: 30, height: 30, borderRadius: 15, borderWidth: 2, alignItems: 'center', justifyContent: 'center' },
   extras: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: Spacing.sm, paddingLeft: 34, paddingBottom: 4 },

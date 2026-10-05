@@ -789,6 +789,11 @@ Plan y decisiones en `docs/gym/AUDITORIA.md`. Cada fase cierra con typecheck, li
 - [x] T264 **Edad y consentimiento** (RF-A13, aprobada el 5 oct 2026): "Antes de empezar" con fecha de nacimiento
   y aceptación expresa del aviso; menores de 16 no; de 16 a 17, aprobación de madre, padre o tutor **por correo**
   (Vercel + Gmail; el token lo genera solo el servidor). Incluye publicar el aviso en `/privacidad` (T260).
+- [x] T265 **Duplicar y borrar series en web con botones visibles** (RF-F33, pedido el 5 oct 2026). En web no se
+  puede deslizar una serie y las dos acciones solo estaban en el menú que abre el número, que no se descubre.
+  Web ancho (≥ 600 px): botones de copiar y borrar al final de cada serie. Web angosto: un "⋮" que abre el menú
+  de la serie (ahí están Duplicar y Borrar serie); dos botones de 44 px sacaban de la fila el número. Borrar
+  conserva "Deshacer". En el teléfono no cambia: deslizar y el menú del número.
 
 ### Bugs reportados
 - [x] T249 **Una ocurrencia borrada de una serie vuelve a aparecer al recargar.** Reporte (4

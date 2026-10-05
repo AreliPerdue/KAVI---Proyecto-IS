@@ -107,7 +107,7 @@ migración de la Fase G1; aquí las reglas.
 - RF-F31. **Al marcar ✓:** guarda (RF-F17), arranca el descanso, detecta un PR (RF-F56) y precarga la siguiente serie.
 - RF-F32. Sin salir de la fila: agregar, duplicar, `+ drop` y `+ mini-serie`.
 - RF-F33. Deslizar a la izquierda borra (con deshacer) y a la derecha duplica. En web, los mismos comandos
-  con botones visibles. Arrastrar reordena series y ejercicios.
+  con botones visibles al final de cada serie; en una ventana angosta, un "⋮" que abre el menú de la serie (T265). Arrastrar reordena series y ejercicios.
 - RF-F34. **Timer de descanso** guardado como hora de fin, no como cuenta regresiva: sobrevive a cambiar
   de pantalla y a bloquear el teléfono. Notificación local al terminar (en web, aviso dentro de la app, P5),
   ±15 s, y en superseries arranca al terminar la ronda. Pitidos en los últimos 3 s y al terminar, encima de
