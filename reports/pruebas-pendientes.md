@@ -494,3 +494,17 @@ Perfil → Datos de salud → Desconectar vuelve al estado sin conectar. Falta:
 - [ ] Demo: permisos parciales (solo pasos) dejan las otras cifras en "Sin permiso", nunca en 0.
 - [ ] Desconectar borra totales y sesiones de la caché y vuelve a "Conecta tu actividad".
 - [ ] Web real (sin demo): Actividad muestra "Tu actividad vive en tu teléfono".
+
+## Eliminar cuenta (T263)
+Migración probada en PGlite (10 casos: anon no puede, sin sesión falla con mensaje claro, no
+queda ninguna fila de la persona en las 18 tablas con datos de personas, lo de otra persona
+sigue, el pendiente ajeno que palomeó sigue hecho sin autora, lo que agregó a una lista ajena se
+borra) y aplicada en producción; con la llave anónima la función responde 42501. Visto en el
+demo (360 px): `/eliminar-cuenta` sin sesión; contraseña mala → "Credenciales incorrectas";
+correcta + "Entiendo…" → vuelve a login. Falta:
+- [ ] `deleteAccount` en los dos backends: contraseña mala no borra nada; en Supabase llama la
+  RPC y cierra la sesión local.
+- [ ] `useDeleteAccount`: limpia la cola de series, el descanso, los avisos y la caché.
+- [ ] Hoja: el botón solo se activa con contraseña y el interruptor "Entiendo…".
+- [ ] En producción, con una cuenta de prueba creada para eso: eliminarla y comprobar que su
+  correo ya no inicia sesión.

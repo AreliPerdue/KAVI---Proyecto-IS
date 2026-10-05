@@ -134,6 +134,21 @@ export const demoAuth: AuthApi = {
     setCurrentUser(null);
   },
 
+  /**
+   * RF-A12 en el demo: la cuenta deja de existir. Sus datos siguen en memoria pero nadie los
+   * alcanza, y recargar la página reinicia el demo de todos modos. Ojo al probar: el demo deja
+   * entrar con cualquier correo y crea la cuenta al vuelo, así que volver a entrar con el mismo
+   * correo da una cuenta **nueva y vacía**, no la eliminada.
+   */
+  async deleteAccount(email, password) {
+    await delay();
+    const normalized = email.trim().toLowerCase();
+    const account = demoState.accounts.find((a) => a.user.email === normalized);
+    if (!account || account.password !== password) throw new AuthUiError(AUTH_MESSAGES.invalidCredentials);
+    demoState.accounts = demoState.accounts.filter((a) => a !== account);
+    setCurrentUser(null);
+  },
+
   async resetPassword() {
     await delay();
   },

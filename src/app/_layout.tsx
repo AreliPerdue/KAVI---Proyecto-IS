@@ -75,6 +75,8 @@ function RootNavigator() {
       <Stack.Protected guard={!isSignedIn}>
         <Stack.Screen name="(auth)" />
       </Stack.Protected>
+      {/* Pública, con o sin sesión: el enlace para eliminar la cuenta que pide Google Play (RF-A12). */}
+      <Stack.Screen name="eliminar-cuenta" />
     </Stack>
   );
 }

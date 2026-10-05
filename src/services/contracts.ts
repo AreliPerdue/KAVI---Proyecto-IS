@@ -70,6 +70,11 @@ export interface AuthApi {
   getSession(): Promise<AuthUser | null>;
   onAuthStateChange(callback: (user: AuthUser | null) => void): () => void;
   isUsernameAvailable(username: string): Promise<boolean>;
+  /**
+   * Elimina la cuenta y todos sus datos, de inmediato y sin vuelta atrás (RF-A12). Comprueba antes
+   * la contraseña, igual que al cambiarla, y cierra la sesión al terminar.
+   */
+  deleteAccount(email: string, password: string): Promise<void>;
 }
 
 /** Nombre visible y username, ambos editables desde Perfil (RF-A9). */

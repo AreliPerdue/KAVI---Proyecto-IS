@@ -20,8 +20,20 @@ Registro, inicio de sesión y sesión persistente con Supabase Auth (email + con
 - RF-A8. **Alta por pasos**, una pregunta por pantalla con indicador de progreso y vuelta atrás: (1) nombre, (2) correo, (3) **usuario**, (4) **código de un solo uso de 6 dígitos** enviado a ese correo, con opción de reenviarlo, (5) contraseña y confirmación. Verificar el código ya abre sesión, así que hasta fijar la contraseña la app se mantiene en el alta y no entra al calendario. Si se abandona después de verificar, la sesión se cierra: la cuenta queda creada sin contraseña y se recupera con RF-A7. El **usuario** se pide en su propio paso, entre el correo y el código: llega propuesto —el primero libre derivado del correo— y se puede aceptar o cambiar. Va ahí y no antes porque solo con el correo ya escrito se puede derivar una propuesta, y antes del código porque la cuenta nace al verificarlo y es el trigger de la base quien escribe el username.
 - RF-A9. Desde Perfil, la tarjeta de identidad abre una hoja con **todo lo editable de la cuenta**: nombre, **username**, correo (visible pero bloqueado) y acceso a cambiar la contraseña. El username se puede cambiar **siempre y cuantas veces quiera**; se escribe sin arroba, se normaliza a minúsculas y se rechaza si ya lo tiene otra persona (índice único sobre `lower(username)`, así que `Pedro` y `pedro` son el mismo). La tarjeta muestra `@usuario` bajo el nombre, que es lo que se le pasa a alguien para que te encuentre. El cambio de contraseña pide la actual y la comprueba antes de aplicarlo.
 
+- RF-A12. **Eliminar cuenta** (T263, 5 oct 2026; lo exigen Google Play y Apple, y es la vía de cancelación del
+  aviso de privacidad). En Perfil, al final, "Eliminar cuenta" abre una hoja que dice exactamente qué se borra
+  (perfil, calendario, temas, recordatorios, listas, entrenamientos, contactos y lo compartido) y qué les pasa a
+  los demás (dejan de ver lo que les compartiste; lo que otras personas te compartieron sigue siendo suyo; los
+  pendientes que agregaste a listas ajenas se borran; los que palomeaste ahí siguen hechos, sin tu nombre). Pide
+  la contraseña actual y una confirmación explícita; no se puede deshacer. El borrado es **inmediato y total**:
+  una función de la base (`delete_my_account`, `security definer`, solo para `authenticated`) borra el usuario de
+  `auth.users` y todo cae en cascada. En el dispositivo se borran la cola de series pendientes y el descanso en
+  curso, se cancelan los avisos programados y se cierra la sesión. Hay además una página **pública**
+  `/eliminar-cuenta` (sin iniciar sesión) que explica cómo hacerlo y ofrece el correo de contacto, que es el
+  enlace web que pide Google Play.
+
 ## Fuera de alcance
-OAuth social, verificación en dos pasos, borrado de cuenta in-app.
+OAuth social, verificación en dos pasos.
 
 ## Criterios de aceptación
 - Given un email no registrado, When completa los 4 pasos del alta, Then queda autenticado, existe su profile y aterriza en el calendario.
@@ -33,6 +45,12 @@ OAuth social, verificación en dos pasos, borrado de cuenta in-app.
 - Given sesión iniciada, When cierra y reabre la app, Then sigue autenticado sin pantalla de login.
 - Given sesión cerrada, When navega a cualquier ruta de la app, Then es redirigido a login.
 - Given contraseña de 5 caracteres, When intenta registrarse, Then ve error de validación antes de llamar al backend.
+- Given sesión iniciada, When elimina su cuenta con su contraseña correcta, Then vuelve a login, su correo ya no
+  inicia sesión y no queda ninguna fila suya en la base; sus contactos dejan de ver lo que les compartía.
+- Given sesión iniciada, When escribe mal su contraseña al eliminar la cuenta, Then ve "Credenciales incorrectas"
+  y la cuenta sigue intacta.
+- Given que no tiene sesión, When abre `/eliminar-cuenta` en el navegador, Then ve cómo eliminar su cuenta y el
+  correo de contacto.
 
 ## UI mínima
 `/login`, `/register` (4 pasos), `/forgot-password`, `/(app)/profile`. Formularios simples, botón deshabilitado durante submit, estados de carga y error visibles (P9).

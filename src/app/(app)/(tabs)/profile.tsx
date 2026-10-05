@@ -25,11 +25,13 @@ import {
   Timer,
   Weight,
   Users,
+  UserX,
 } from 'lucide-react-native';
 import { type ReactNode, useEffect, useMemo, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { Pressable, StyleSheet, View } from 'react-native';
 
+import { DeleteAccountSheet } from '@/components/account/delete-account-sheet';
 import { useGymStore } from '@/store/gym-store';
 import { usePreferencesStore } from '@/store/preferences-store';
 
@@ -127,6 +129,7 @@ export default function ProfileScreen() {
   const confirm = useConfirm();
   const showSnackbar = useSnackbar();
   const { user } = useAuth();
+  const [eliminando, setEliminando] = useState(false);
   const profile = useMyProfile();
   const isAdmin = useIsAdmin();
   const update = useUpdateMyProfile();
@@ -464,6 +467,17 @@ export default function ProfileScreen() {
           onPress={confirmSignOut}
         />
       </SettingsGroup>
+
+      {/* RF-A12: aparte y al final, para que no se toque por error junto a "Cerrar sesión". */}
+      <SettingsGroup footer="Borra tu cuenta y todos tus datos de inmediato. No se puede deshacer.">
+        <SettingsRow
+          icon={<UserX size={IconSize.inline} strokeWidth={IconStroke} color={theme.danger} />}
+          label="Eliminar cuenta"
+          destructive
+          onPress={() => setEliminando(true)}
+        />
+      </SettingsGroup>
+      <DeleteAccountSheet visible={eliminando} email={user?.email ?? ''} onClose={() => setEliminando(false)} />
 
       <Sheet visible={editing} onClose={() => setEditing(false)} title="Editar perfil">
         {update.error ? <Banner tone="error" message={update.error.message} /> : null}

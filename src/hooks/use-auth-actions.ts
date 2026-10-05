@@ -1,8 +1,13 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
+import { clearOutbox } from '@/lib/gym/outbox';
+import { syncNotifications } from '@/lib/notifications';
 import type { LoginValues, RegisterValues } from '@/lib/schemas/auth';
+import { useGymStore } from '@/store/gym-store';
+import { useOutboxStore } from '@/store/outbox-store';
 import {
   changePassword,
+  deleteAccount,
   resetPassword,
   setPassword,
   signIn,
@@ -59,5 +64,23 @@ export function useSignOut() {
   return useMutation({
     mutationFn: signOut,
     onSuccess: () => queryClient.clear(),
+  });
+}
+
+/**
+ * Eliminar cuenta (RF-A12). Además del servidor, se limpia lo que este dispositivo guardaba de
+ * la persona: la cola de series pendientes, el descanso en curso, los avisos programados y la
+ * caché de datos. Las preferencias del aparato (formato de hora, tema) se quedan.
+ */
+export function useDeleteAccount() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ email, password }: { email: string; password: string }) => deleteAccount(email, password),
+    onSuccess: async () => {
+      useGymStore.getState().stopRest();
+      useOutboxStore.getState().setEntries(() => []);
+      await Promise.allSettled([clearOutbox(), syncNotifications([])]);
+      queryClient.clear();
+    },
   });
 }

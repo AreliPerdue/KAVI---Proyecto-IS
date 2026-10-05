@@ -90,6 +90,17 @@ export const supabaseAuth: AuthApi = {
     if (error) throw new AuthUiError(toAuthMessage(error), error);
   },
 
+  /** Eliminar cuenta (RF-A12): la función de la base borra el usuario y todo cae en cascada. */
+  async deleteAccount(email, password) {
+    const db = getSupabase();
+    const { error: signInError } = await db.auth.signInWithPassword({ email: email.trim().toLowerCase(), password });
+    if (signInError) throw new AuthUiError(AUTH_MESSAGES.invalidCredentials, signInError);
+    const { error } = await db.rpc('delete_my_account');
+    if (error) throw new AuthUiError('No se pudo eliminar tu cuenta. Revisa tu conexión e inténtalo de nuevo.', error);
+    // El usuario ya no existe en el servidor: solo queda olvidar la sesión en este dispositivo.
+    await db.auth.signOut({ scope: 'local' });
+  },
+
   /** Inicio de sesión (RF-A3). */
   async signIn(email, password) {
     const { data, error } = await getSupabase().auth.signInWithPassword({ email, password });

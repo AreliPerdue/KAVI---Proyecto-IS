@@ -749,12 +749,12 @@ Plan y decisiones en `docs/gym/AUDITORIA.md`. Cada fase cierra con typecheck, li
 - [ ] T261 Adaptador de Health Connect en Android: dependencias, permisos en contexto, totales y sesiones;
   recompilar y probar en un teléfono. Dep: T257, T260
 - [ ] T262 Adaptador de HealthKit en iOS, cuando exista la cuenta de Apple Developer. Dep: T261
-- [ ] T263 **Eliminar cuenta** desde la app y con un enlace web (lo exigen Google Play y Apple para apps con
-  registro; también es la vía de cancelación del aviso de privacidad). Requiere actualizar la spec 03 y una
-  función de servidor que borre la cuenta y sus datos. Propuesta, por aprobar. Dep: T260
+- [x] T263 **Eliminar cuenta** desde la app y con un enlace web (RF-A12, aprobada el 5 oct 2026): migración
+  `delete_my_account`, contrato en los dos backends, hoja en Perfil y página pública `/eliminar-cuenta`.
 - [ ] T264 **Consentimiento expreso** para datos de bienestar en el registro (y para la actividad del
-  teléfono al conectarla), con enlace al aviso de privacidad. Requiere actualizar las specs 03 y 11.
-  Propuesta, por aprobar. Dep: T260
+  teléfono al conectarla), con enlace al aviso de privacidad. Incluye la **edad mínima de 16** (decisión del
+  5 oct 2026): el registro pide la fecha de nacimiento, rechaza menores de 16 y, entre 16 y 17, pide el
+  consentimiento de madre, padre o tutor. Requiere actualizar las specs 03 y 11. Dep: T260
 
 ### Bugs reportados
 - [x] T249 **Una ocurrencia borrada de una serie vuelve a aparecer al recargar.** Reporte (4

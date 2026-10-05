@@ -1,4 +1,4 @@
-import { getJson, setJson } from '@/lib/storage';
+import { getJson, setJson, storage } from '@/lib/storage';
 import type { WorkoutExerciseDetail, WorkoutSet } from '@/types/domain';
 
 /** Lo mínimo de una sesión con series; así la cola no depende de la capa de servicios. */
@@ -31,6 +31,11 @@ function enCadena<T>(fn: () => Promise<T>): Promise<T> {
   const r = cadena.then(fn, fn);
   cadena = r.catch(() => undefined);
   return r;
+}
+
+/** Borra la cola de este dispositivo: al eliminar la cuenta no deben quedar series suyas (RF-A12). */
+export function clearOutbox(): Promise<void> {
+  return enCadena(() => storage.removeItem(KEY));
 }
 
 export function loadOutbox(): Promise<OutboxEntry[]> {

@@ -2,8 +2,8 @@
 
 > **Estado: borrador para revisión de Areli (T260). No está publicado.** Datos del responsable dados por
 > Areli el 5 oct 2026; proveedor de correo verificado en la configuración de Supabase (SMTP de Gmail).
-> Quedan **[POR CONFIRMAR]** el código postal y la edad mínima, y **[PENDIENTE]** lo que depende de T263 y
-> T264. Copias de seguridad verificadas el 5 oct 2026: el proyecto no tiene respaldos programados ni PITR. Se recomienda que lo revise una
+> Código postal (66280) y edad mínima (16, con consentimiento de madre, padre o tutor para 16 y 17)
+> confirmados por Areli el 5 oct 2026. Eliminar cuenta (T263) hecho el 5 oct 2026. Queda **[PENDIENTE]** lo que depende de T264 y la dirección web pública. Copias de seguridad verificadas el 5 oct 2026: el proyecto no tiene respaldos programados ni PITR. Se recomienda que lo revise una
 > persona abogada antes de publicarlo: es un texto legal y aquí solo se describe con precisión lo que KAVI
 > hace hoy (revisado contra el código el 5 oct 2026).
 >
@@ -21,7 +21,7 @@ Personales en Posesión de los Particulares (2025).
 ## 1. Quién es responsable de tus datos
 
 Areli Soraya Perdue Centeno, con domicilio para oír y recibir notificaciones en Avenida Del Pedregal 534,
-colonia Pedregal del Valle, C. P. [POR CONFIRMAR: 662800 tiene 6 dígitos], San Pedro Garza García, Nuevo
+colonia Pedregal del Valle, C. P. 66280, San Pedro Garza García, Nuevo
 León, México, es responsable del tratamiento de tus datos personales en KAVI.
 
 Para cualquier tema de privacidad escríbenos a **perdue.areli28@gmail.com**.
@@ -97,8 +97,9 @@ Puedes **acceder** a tus datos, **rectificarlos**, **cancelarlos** u **oponerte*
 (derechos ARCO), y **revocar tu consentimiento**.
 
 - Mucho lo puedes hacer directo en la app: editar tu perfil, borrar actividades, listas o entrenamientos,
-  desconectar la actividad del teléfono (Perfil → Gimnasio → Datos de salud) y [PENDIENTE: eliminar tu
-  cuenta, ver T263].
+  desconectar la actividad del teléfono (Perfil → Gimnasio → Datos de salud) y eliminar tu cuenta con todos
+  tus datos (Perfil → Eliminar cuenta). Si ya no tienes acceso a la app, en [PENDIENTE: dirección web]/eliminar-cuenta
+  explicamos cómo pedirlo.
 - Para todo lo demás, escribe a **perdue.areli28@gmail.com** con tu nombre de usuario,
   qué derecho quieres ejercer y sobre qué datos. Te responderemos en los plazos que marca la ley.
 
@@ -115,8 +116,12 @@ que hacen que cada persona solo pueda ver lo suyo y lo que otras personas le com
 
 ## 8. Menores de edad
 
-KAVI no está dirigida a menores de [POR CONFIRMAR: 18, recomendado] años. Si eres menor de esa edad, no
-uses KAVI ni nos envíes datos personales.
+KAVI está pensada para personas de **16 años o más**, como estudiantes de universidad. Si tienes 16 o 17
+años, la ley te considera menor de edad: para usar KAVI necesitas el **consentimiento de tu madre, padre o
+tutor**, que te pedimos al registrarte [PENDIENTE: mecanismo, ver T264]. Tu madre, padre o tutor puede
+ejercer tus derechos ARCO escribiendo al correo de contacto. Si tienes menos de 16 años, no uses KAVI ni nos
+envíes datos personales; si nos enteramos de que una cuenta pertenece a alguien menor de 16, la
+eliminaremos.
 
 ## 9. Cambios a este aviso
 

@@ -10,6 +10,7 @@ export const setPassword = authApi.setPassword;
 export const changePassword = authApi.changePassword;
 export const signIn = authApi.signIn;
 export const signOut = authApi.signOut;
+export const deleteAccount = authApi.deleteAccount;
 export const resetPassword = authApi.resetPassword;
 export const getSession = authApi.getSession;
 export const onAuthStateChange = authApi.onAuthStateChange;
