@@ -70,6 +70,8 @@ import { env } from '@/lib/env';
 import { notificationPermissionGranted } from '@/lib/notifications';
 import { changePasswordSchema, type ChangePasswordValues, profileSchema, type ProfileValues } from '@/lib/schemas/auth';
 import { useAuth, useConfirm, useSnackbar } from '@/providers';
+import { StackedModuleBack } from '@/components/navigation/stacked-module';
+import { useModuleNav } from '@/hooks/use-modules';
 
 const PROFILE_MAX_WIDTH = 560;
 
@@ -127,6 +129,7 @@ export default function ProfileScreen() {
   const setShowBirthdays = usePreferencesStore((s) => s.setShowBirthdays);
   const [pickingBirthday, setPickingBirthday] = useState(false);
   const router = useRouter();
+  const { abrir: abrirModulo } = useModuleNav();
   const confirm = useConfirm();
   const showSnackbar = useSnackbar();
   const { user } = useAuth();
@@ -248,6 +251,7 @@ export default function ProfileScreen() {
 
   return (
     <Screen scroll maxWidth={PROFILE_MAX_WIDTH} contentStyle={styles.content}>
+      <StackedModuleBack />
       <AppText variant="title" accessibilityRole="header">
         Perfil
       </AppText>
@@ -305,7 +309,7 @@ export default function ProfileScreen() {
           icon={<Users size={IconSize.inline} strokeWidth={IconStroke} color={theme.textSecondary} />}
           label="Amigos y compartido"
           value={String(acceptedContacts)}
-          onPress={() => router.push('/(app)/(tabs)/shared')}
+          onPress={() => abrirModulo('shared')}
         />
         <SettingsRow
           icon={<CalendarSearch size={IconSize.inline} strokeWidth={IconStroke} color={theme.textSecondary} />}

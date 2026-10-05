@@ -2,8 +2,10 @@ import { ErrorFallback } from "@/components/error-fallback";
 import { type ErrorBoundaryProps } from "expo-router";
 import { NativeTabs } from "expo-router/unstable-native-tabs";
 
+import { moduleInfo } from "@/constants/modules";
 import { useSharedBadgeCount } from "@/hooks/use-shared-badge";
 import { useTheme } from "@/hooks/use-theme";
+import { usePreferencesStore } from "@/store/preferences-store";
 
 /**
  * Sin esto, Expo Router elige por su cuenta qué pestaña abre y no siempre es la
@@ -16,10 +18,19 @@ export function ErrorBoundary(props: ErrorBoundaryProps) {
   return <ErrorFallback {...props} />;
 }
 
-/** Tabs nativos (iOS/Android). La versión web vive en _layout.web.tsx. */
+/**
+ * Tabs nativos (iOS/Android). La versión web vive en _layout.web.tsx.
+ *
+ * Cuatro lugares fijos (spec 01, RF-N1): Calendario, dos accesos y Más. Los accesos son
+ * rutas propias que pintan el módulo elegido, en vez de mostrar u ocultar las pestañas de
+ * cada módulo: en `NativeTabs` ocultar una pestaña en caliente reinicia el navegador y
+ * una pestaña oculta no se puede abrir. Cambiar de módulo solo cambia etiqueta, icono y
+ * contenido (RF-N4).
+ */
 export default function TabsLayout() {
   const theme = useTheme();
   const badge = useSharedBadgeCount();
+  const accesos = usePreferencesStore((s) => s.accesos);
 
   return (
     /*
@@ -47,33 +58,37 @@ export default function TabsLayout() {
           md="calendar_month"
         />
       </NativeTabs.Trigger>
-      <NativeTabs.Trigger name="shared">
-        <NativeTabs.Trigger.Label>Compartido</NativeTabs.Trigger.Label>
+      {accesos.map((id, lugar) => {
+        const modulo = moduleInfo(id);
+        return (
+          <NativeTabs.Trigger key={lugar} name={`acceso-${lugar + 1}`}>
+            <NativeTabs.Trigger.Label>{modulo.label}</NativeTabs.Trigger.Label>
+            <NativeTabs.Trigger.Icon sf={modulo.sf as never} md={modulo.md as never} />
+            {id === "shared" && badge > 0 ? (
+              <NativeTabs.Trigger.Badge>{String(badge)}</NativeTabs.Trigger.Badge>
+            ) : null}
+          </NativeTabs.Trigger>
+        );
+      })}
+      <NativeTabs.Trigger name="mas">
+        <NativeTabs.Trigger.Label>Más</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon
-          sf={{ default: "person.2", selected: "person.2.fill" }}
-          md="group"
+          sf={{ default: "square.grid.2x2", selected: "square.grid.2x2.fill" }}
+          md="apps"
         />
-        {badge > 0 ? (
+        {/* Si Compartido salió de la barra, sus pendientes se anuncian aquí (RF-N3). */}
+        {!accesos.includes("shared") && badge > 0 ? (
           <NativeTabs.Trigger.Badge>{String(badge)}</NativeTabs.Trigger.Badge>
         ) : null}
       </NativeTabs.Trigger>
-      <NativeTabs.Trigger name="fitness">
-        <NativeTabs.Trigger.Label>Fitness</NativeTabs.Trigger.Label>
-        <NativeTabs.Trigger.Icon
-          sf={{ default: "dumbbell", selected: "dumbbell.fill" }}
-          md="fitness_center"
-        />
-      </NativeTabs.Trigger>
-      <NativeTabs.Trigger name="profile">
-        <NativeTabs.Trigger.Label>Perfil</NativeTabs.Trigger.Label>
-        <NativeTabs.Trigger.Icon
-          sf={{
-            default: "person.crop.circle",
-            selected: "person.crop.circle.fill",
-          }}
-          md="person"
-        />
-      </NativeTabs.Trigger>
+      {/*
+        * Las pantallas de cada módulo siguen en `(tabs)/` porque la web las usa como
+        * pestañas. Aquí van siempre ocultas —nunca cambian, así que no reinician el
+        * navegador— y se pintan dentro de `acceso-1`/`acceso-2` o apiladas desde Más.
+        */}
+      <NativeTabs.Trigger name="shared" hidden />
+      <NativeTabs.Trigger name="fitness" hidden />
+      <NativeTabs.Trigger name="profile" hidden />
     </NativeTabs>
   );
 }

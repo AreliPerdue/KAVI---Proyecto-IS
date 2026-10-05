@@ -550,3 +550,23 @@ Visto en el demo: 360×560 (un chip por día y "+N" junto al número, alineado a
   de <AuthProvider>". Ya fallaban antes de T263 (comprobado sobre `58c6442`): la captura de
   rutina del formulario usa `useAuth` y la prueba lo renderiza sin el proveedor. Arreglo: envolver
   el render en `AuthProvider` (o simular `useAuth`). No es un fallo de la app.
+
+## Barra configurable y Más (T188, T189)
+Web en el demo (360 px): la barra superior sigue con los 4 módulos (RF-N5). Android en el emulador
+(demo): barra por omisión con el 2 en Compartido; Más; Perfil apilado y "Atrás"; tercer lugar →
+Perfil sin salir de Más; intercambio; Compartido fuera → el 2 pasa a Más; "+ Contactos" abre
+Compartido apilado; Fitness en la barra sin flecha. Falta:
+- [ ] `elegirAcceso`: poner en un lugar el módulo del otro los intercambia; nunca repite.
+- [ ] `accesosValidos`: guardado inválido (repetidos, módulo que no existe, largo ≠ 2) → omisión.
+- [ ] `moduleHref`: web → `(tabs)/<id>`; en la barra → `acceso-1/2`; fuera → `modulo/[id]`.
+- [ ] Teléfono: barra por omisión Calendario · Compartido · Fitness · Más; Perfil desde Más con
+  "Atrás"; cambiar el tercer lugar a Perfil cambia etiqueta, icono y pantalla sin reiniciar la
+  navegación ni sacarte de Más.
+- [ ] Teléfono: con Compartido fuera de la barra, el número de pendientes sale en Más y en su fila.
+- [ ] Primera vez que se abre la app: lleva a Perfil (apilado si no está en la barra) y "Atrás"
+  vuelve al calendario.
+- [ ] "Ver solicitudes" (Perfil) y "+ Contactos" (calendario) abren Compartido donde esté.
+- [ ] iOS (cuando haya build): iconos SF `square.grid.2x2` y los de cada módulo.
+- [ ] `profile.test.tsx`: los 23 casos fallan con "No QueryClient set" desde que Perfil tiene la fila
+  "Datos de salud" (T259, `useHealthAvailability`). Ya fallaban antes de T188 (comprobado). Arreglo:
+  simular `@/hooks/use-health` en la prueba o envolverla en `QueryClientProvider`.

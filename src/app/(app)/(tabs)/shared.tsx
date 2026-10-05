@@ -14,6 +14,7 @@ import { useConfirm, useSnackbar } from '@/providers';
 import type { CalendarVisibility, Contact } from '@/services/connections';
 import { usePreferencesStore } from '@/store/preferences-store';
 import { useMyProfile } from '@/hooks/use-profile';
+import { StackedModuleBack } from '@/components/navigation/stacked-module';
 
 const MAX_WIDTH = 720;
 
@@ -78,6 +79,7 @@ export default function SharedScreen() {
 
   return (
     <Screen scroll maxWidth={MAX_WIDTH}>
+      <StackedModuleBack />
       <View style={styles.titleRow}>
         <AppText variant="title" accessibilityRole="header" style={styles.title}>
           Compartido

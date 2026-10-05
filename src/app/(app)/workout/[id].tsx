@@ -57,6 +57,7 @@ import { applyIntensifier, protocolRestSec, protocolSets, protocolTimer, removeI
 import { formatWeight, fromKg, round, toKg } from '@/lib/gym/units';
 import { useAuth, useConfirm, useSnackbar } from '@/providers';
 import type { ExerciseHistoryEntry, WorkoutDetail } from '@/services/workouts';
+import { useModuleNav } from '@/hooks/use-modules';
 import { useGymStore } from '@/store/gym-store';
 import { usePreferencesStore } from '@/store/preferences-store';
 import type { Exercise, WorkoutExercise, WorkoutExerciseDetail, WorkoutSet } from '@/types/domain';
@@ -84,6 +85,7 @@ type Analisis = {
 export default function WorkoutScreen() {
   const theme = useTheme();
   const router = useRouter();
+  const { href: moduloHref } = useModuleNav();
   const confirm = useConfirm();
   const showSnackbar = useSnackbar();
   const { userId } = useAuth();
@@ -278,7 +280,7 @@ export default function WorkoutScreen() {
     }
   }, [editing, data, ejercicios, analisis, enviarSerie, unit]);
 
-  const close = () => (router.canGoBack() ? router.back() : router.replace('/(app)/(tabs)/fitness'));
+  const close = () => (router.canGoBack() ? router.back() : router.replace(moduloHref('fitness')));
 
   const ejercicioDe = useCallback((set: WorkoutSet) => ejercicios.find((e) => e.id === set.workout_exercise_id) ?? null, [ejercicios]);
 

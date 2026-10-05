@@ -1,4 +1,3 @@
-import { useRouter } from 'expo-router';
 import { Plus } from 'lucide-react-native';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
@@ -7,6 +6,7 @@ import { tint } from './activity-style';
 import { AppText, ColorDot } from '@/components/ui';
 import { IconSize, IconStroke, Radius, Spacing } from '@/constants/theme';
 import { useContacts, useSelfColor } from '@/hooks/use-connections';
+import { useModuleNav } from '@/hooks/use-modules';
 import { useTheme } from '@/hooks/use-theme';
 import { needsOutline } from '@/lib/color';
 
@@ -49,7 +49,7 @@ function PersonTab({ label, selected, color, onPress }: { label: string; selecte
  */
 export function PeopleTabs({ overlayUserIds, colorOf, onToggle, onOnlyMe }: PeopleTabsProps) {
   const theme = useTheme();
-  const router = useRouter();
+  const { abrir: abrirModulo } = useModuleNav();
   const contacts = useContacts();
   const miColor = useSelfColor();
   const sharing = (contacts.data ?? []).filter((c) => c.kind === 'accepted' && c.theirCalendarVisibility);
@@ -69,7 +69,7 @@ export function PeopleTabs({ overlayUserIds, colorOf, onToggle, onOnlyMe }: Peop
       <Pressable
         accessibilityRole="button"
         accessibilityLabel="Agregar contactos"
-        onPress={() => router.push('/(app)/(tabs)/shared')}
+        onPress={() => abrirModulo('shared')}
         style={({ pressed }) => [styles.tab, styles.addTab, { backgroundColor: theme.surfaceAlt, borderColor: 'transparent' }, pressed ? styles.pressed : null]}>
         <Plus size={IconSize.inline} strokeWidth={IconStroke} color={theme.textSecondary} />
         <AppText variant="label" color="textSecondary">

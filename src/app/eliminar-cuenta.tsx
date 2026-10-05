@@ -6,6 +6,7 @@ import { LOS_DEMAS, Lista, SE_BORRA } from '@/components/account/delete-account-
 import { AppText, Button, Screen, Wordmark } from '@/components/ui';
 import { IconSize, IconStroke, Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { useModuleNav } from '@/hooks/use-modules';
 import { useAuth } from '@/providers';
 
 const CORREO = 'perdue.areli28@gmail.com';
@@ -19,6 +20,7 @@ export default function EliminarCuentaScreen() {
   const theme = useTheme();
   const router = useRouter();
   const { user } = useAuth();
+  const { href } = useModuleNav();
 
   return (
     <Screen scroll maxWidth={640}>
@@ -37,7 +39,7 @@ export default function EliminarCuentaScreen() {
         <AppText>3. Escribe tu contraseña y confirma.</AppText>
         <Button
           title={user ? 'Ir a mi perfil' : 'Iniciar sesión'}
-          onPress={() => router.replace(user ? '/(app)/(tabs)/profile' : '/(auth)/login')}
+          onPress={() => router.replace(user ? href('profile') : '/(auth)/login')}
         />
       </View>
 

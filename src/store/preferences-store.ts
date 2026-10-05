@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 
+import { type Accesos, accesosValidos, DEFAULT_ACCESOS } from '@/constants/modules';
 import { type CalendarView, setTimeFormat, type TimeFormat } from '@/lib/dates';
 import { getJson, setJson } from '@/lib/storage';
 
@@ -31,6 +32,7 @@ type Prefs = {
   appearance: Appearance;
   selfColor: string | null;
   pinnedViews: CalendarView[];
+  accesos: Accesos;
 };
 
 type PreferencesState = {
@@ -61,6 +63,8 @@ type PreferencesState = {
   selfColor: string | null;
   /** Vistas visibles en la pastilla del encabezado del calendario (RF-C16). */
   pinnedViews: CalendarView[];
+  /** Los dos módulos de la barra del teléfono, después del Calendario (RF-N1). */
+  accesos: Accesos;
   hydrated: boolean;
   setTimeFormat: (formato: TimeFormat) => void;
   setLastWorkoutTitle: (titulo: string | null) => void;
@@ -70,6 +74,7 @@ type PreferencesState = {
   setAppearance: (valor: Appearance) => void;
   setSelfColor: (hex: string | null) => void;
   togglePinnedView: (view: CalendarView) => void;
+  setAccesos: (accesos: Accesos) => void;
   hydrate: () => Promise<void>;
 };
 
@@ -101,6 +106,7 @@ export const usePreferencesStore = create<PreferencesState>((set, get) => ({
   appearance: DEFAULT_APPEARANCE,
   pinnedViews: DEFAULT_PINNED_VIEWS,
   selfColor: null,
+  accesos: DEFAULT_ACCESOS,
   hydrated: false,
 
   setTimeFormat: (formato) => {
@@ -160,6 +166,12 @@ export const usePreferencesStore = create<PreferencesState>((set, get) => ({
     persistir({ ...get(), pinnedViews: siguiente });
   },
 
+  setAccesos: (accesos) => {
+    elegidoEnEstaSesion.add('accesos');
+    set({ accesos });
+    persistir({ ...get(), accesos });
+  },
+
   marcarVisto: () => {
     if (get().visto) return;
     elegidoEnEstaSesion.add('visto');
@@ -188,6 +200,7 @@ export const usePreferencesStore = create<PreferencesState>((set, get) => ({
       visto: guardado('visto', prefs?.visto ?? false),
       appearance: guardado('appearance', prefs?.appearance ?? DEFAULT_APPEARANCE),
       selfColor: guardado('selfColor', prefs?.selfColor ?? null),
+      accesos: guardado('accesos', accesosValidos(prefs?.accesos)),
       hydrated: true,
     });
     // Lo elegido antes de hidratar se guardo con el resto de valores por omision;
@@ -198,7 +211,7 @@ export const usePreferencesStore = create<PreferencesState>((set, get) => ({
 
 /** Se guarda el conjunto entero: son dos claves y así no pueden desincronizarse. */
 function persistir(
-  estado: Pick<PreferencesState, 'timeFormat' | 'lastWorkoutTitle' | 'showWorkouts' | 'showBirthdays' | 'visto' | 'appearance' | 'selfColor' | 'pinnedViews'>,
+  estado: Pick<PreferencesState, 'timeFormat' | 'lastWorkoutTitle' | 'showWorkouts' | 'showBirthdays' | 'visto' | 'appearance' | 'selfColor' | 'pinnedViews' | 'accesos'>,
 ): void {
   void setJson(PREFS_KEY, {
     timeFormat: estado.timeFormat,
@@ -209,5 +222,6 @@ function persistir(
     visto: estado.visto,
     appearance: estado.appearance,
     selfColor: estado.selfColor,
+    accesos: estado.accesos,
   } satisfies Prefs);
 }

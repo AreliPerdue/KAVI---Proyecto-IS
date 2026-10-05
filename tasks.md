@@ -201,7 +201,7 @@ decisiones son de producto. Se mantiene SDD: nada se implementa sin spec.
 Los cuatro accesos se quedan como están. El cambio se hace cuando haya módulos que
 poner en el dropdown —lectura, sueño, diario—; con solo Fitness dentro, el menú sería
 un clic de más para llegar a lo mismo.
-- [ ] T188 Barra de accesos configurable: **3 módulos a elección + el menú fijo en el cuarto
+- [x] T188 Barra de accesos configurable: **3 módulos a elección + el menú fijo en el cuarto
   lugar**. Todos los módulos siguen siendo rutas bajo `(tabs)/`; la preferencia decide cuál
   lleva botón, no cuál existe. El menú nunca es configurable, porque es la única vía de
   regreso si alguien quita Perfil de sus tres. La preferencia vive en `preferences-store`
@@ -209,7 +209,17 @@ un clic de más para llegar a lo mismo.
   Plan A con `NativeTabs`; si cambiar el conjunto en caliente rompe el estado de navegación,
   plan B es la barra propia con `expo-router/ui` que la web ya usa. Requiere sección nueva de
   navegación en `specs/01-product-overview.md`. Dep: —
-- [ ] T189 Menú emergente de módulos. El cuarto lugar lo ocupa un icono de **cuatro
+  **Decisiones del 5 oct 2026 (RF-N1–N6):** el Calendario queda fijo en el primer lugar, así que se eligen
+  **dos** módulos, y por omisión Perfil vive en Más. Se hace junto con T189. En `NativeTabs`, ocultar una
+  pestaña en caliente reinicia el navegador y una pestaña oculta no se puede abrir; por eso la barra nativa
+  tiene cuatro rutas fijas (`calendar`, `acceso-1`, `acceso-2`, `mas`) y los dos accesos pintan el módulo
+  elegido. Los módulos fuera de la barra se abren en `(app)/modulo/[id]`. Toda navegación a un módulo pasa
+  por `moduleHref`.
+  **Hecho (5 oct 2026, con T189):** probado en Android (emulador, demo): barra por omisión, Más, Perfil apilado
+  con "Atrás", cambiar e intercambiar lugares sin reiniciar la navegación, y el número de Compartido en Más
+  cuando sale de la barra. Más es una pestaña con su pantalla, no un menú emergente: `NativeTabs` no deja
+  interceptar el toque de una pestaña para abrir un menú encima. Falta verlo en iOS.
+- [x] T189 Menú emergente de módulos. El cuarto lugar lo ocupa un icono de **cuatro
   cuadrados** que despliega una lista con icono + texto por módulo: pesa · Fitness, libro ·
   Lectura, luna · Sueño, pluma · Diario, y los que vengan. Es también donde se eligen los
   tres accesos de la barra. El icono no cambia con la selección: es siempre "lo demás de

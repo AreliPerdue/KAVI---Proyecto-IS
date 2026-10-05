@@ -1,6 +1,7 @@
 import { Redirect } from 'expo-router';
 import { useEffect } from 'react';
 
+import { useModuleNav } from '@/hooks/use-modules';
 import { useAuth } from '@/providers';
 import { usePreferencesStore } from '@/store/preferences-store';
 
@@ -16,6 +17,7 @@ export default function IndexScreen() {
   const visto = usePreferencesStore((s) => s.visto);
   const hydrated = usePreferencesStore((s) => s.hydrated);
   const marcarVisto = usePreferencesStore((s) => s.marcarVisto);
+  const { href } = useModuleNav();
   const primeraVez = hydrated && !visto;
 
   useEffect(() => {
@@ -23,5 +25,5 @@ export default function IndexScreen() {
   }, [user, primeraVez, marcarVisto]);
 
   if (!user) return <Redirect href="/(auth)/login" />;
-  return <Redirect href={primeraVez ? '/(app)/(tabs)/profile' : '/(app)/(tabs)/calendar'} />;
+  return <Redirect href={primeraVez ? href('profile') : '/(app)/(tabs)/calendar'} />;
 }

@@ -128,11 +128,12 @@ describe('interaccion', () => {
     expect(onOnlyMe).toHaveBeenCalledTimes(1);
   });
 
-  it('el acceso a contactos lleva a la pantalla de compartidos', async () => {
+  it('el acceso a contactos lleva a Compartido, en el lugar de la barra donde este (RF-N3)', async () => {
     await montar();
 
     await fireEvent.press(screen.getByLabelText('Agregar contactos'));
 
-    expect(globalThis.mockRouter.push).toHaveBeenCalledWith('/(app)/(tabs)/shared');
+    // Por omision Compartido ocupa el segundo lugar de la barra del telefono.
+    expect(globalThis.mockRouter.navigate).toHaveBeenCalledWith('/(app)/(tabs)/acceso-1');
   });
 });

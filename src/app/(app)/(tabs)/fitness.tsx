@@ -18,6 +18,7 @@ import { formatShortDate, formatTime, fromIso } from '@/lib/dates';
 import type { NoteHit } from '@/services/workouts';
 import { usePreferencesStore } from '@/store/preferences-store';
 import type { Workout } from '@/types/domain';
+import { StackedModuleBack } from '@/components/navigation/stacked-module';
 
 const SIN_ANILLO: TextStyle =
   Platform.OS === 'web' ? ({ outlineStyle: 'none', outlineWidth: 0 } as unknown as TextStyle) : {};
@@ -135,6 +136,7 @@ export default function FitnessScreen() {
 
   return (
     <Screen contentStyle={styles.content}>
+      <StackedModuleBack />
       <View style={styles.header}>
         <AppText variant="title" accessibilityRole="header">
           Fitness
