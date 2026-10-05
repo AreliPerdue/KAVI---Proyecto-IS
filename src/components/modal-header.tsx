@@ -26,24 +26,31 @@ export function ModalHeader({
   right,
   onClose,
   back = false,
+  leading = true,
 }: {
   title: string;
   right?: ReactNode;
   onClose?: () => void;
   back?: boolean;
+  /** Sin botón de la izquierda: la pantalla vive en la barra y no hay a dónde volver. */
+  leading?: boolean;
 }) {
   const theme = useTheme();
   const router = useRouter();
   const close = onClose ?? (() => (router.canGoBack() ? router.back() : router.replace('/(app)/(tabs)/calendar')));
   return (
     <View style={styles.row}>
-      <IconButton label={back ? 'Atrás' : 'Cerrar'} onPress={close}>
-        {back ? (
-          <ChevronLeft size={IconSize.action} strokeWidth={IconStroke} color={theme.text} />
-        ) : (
-          <X size={IconSize.action} strokeWidth={IconStroke} color={theme.text} />
-        )}
-      </IconButton>
+      {leading ? (
+        <IconButton label={back ? 'Atrás' : 'Cerrar'} onPress={close}>
+          {back ? (
+            <ChevronLeft size={IconSize.action} strokeWidth={IconStroke} color={theme.text} />
+          ) : (
+            <X size={IconSize.action} strokeWidth={IconStroke} color={theme.text} />
+          )}
+        </IconButton>
+      ) : (
+        <View style={styles.right} />
+      )}
       <AppText variant="heading" accessibilityRole="header" style={styles.title} numberOfLines={1}>
         {title}
       </AppText>

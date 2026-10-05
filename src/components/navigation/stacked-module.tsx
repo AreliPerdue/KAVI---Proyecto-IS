@@ -8,6 +8,12 @@ import { ModalHeader } from '@/components/modal-header';
  */
 export const StackedModuleContext = createContext(false);
 
+/**
+ * El módulo se está pintando en un lugar de la barra del teléfono (`acceso-1`/`acceso-2`).
+ * Lo usan las pantallas que nacieron apiladas, como Listas, para no mostrar "Atrás" ahí.
+ */
+export const ModuleInBarContext = createContext(false);
+
 /** Va al principio de cada pantalla de módulo: en la barra no pinta nada; apilado, "Atrás". */
 export function StackedModuleBack() {
   const apilado = useContext(StackedModuleContext);

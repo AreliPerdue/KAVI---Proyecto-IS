@@ -1,10 +1,10 @@
-import { useRouter } from 'expo-router';
 import { ChevronDown, ChevronLeft, ChevronRight, CircleCheck, SlidersHorizontal } from 'lucide-react-native';
 import { useState } from 'react';
 import { Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
 
 import { AppText, DatePickerSheet, IconButton } from '@/components/ui';
 import { IconSize, IconStroke, Radius, Spacing } from '@/constants/theme';
+import { useModuleNav } from '@/hooks/use-modules';
 import { useTheme } from '@/hooks/use-theme';
 import { ViewSwitcher } from './view-switcher';
 
@@ -55,7 +55,7 @@ export function CalendarHeader({
   const wide = width >= 720;
   const compacto = !wide;
   const [monthPickerOpen, setMonthPickerOpen] = useState(false);
-  const router = useRouter();
+  const { abrir: abrirModulo } = useModuleNav();
   const title = tituloDe(view, anchor);
 
   /*
@@ -101,7 +101,7 @@ export function CalendarHeader({
           que Fitness se abre desde una actividad de gimnasio. Va antes del selector
           de vistas porque pertenece al contenido del día, no a cómo se dibuja.
         */}
-        <IconButton label="Listas" onPress={() => router.push('/(app)/lists')}>
+        <IconButton label="Listas" onPress={() => abrirModulo('lists')}>
           <CircleCheck size={IconSize.action} strokeWidth={IconStroke} color={theme.text} />
         </IconButton>
         <ViewSwitcher view={view} onChange={onChangeView} compact={!wide} />

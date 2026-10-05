@@ -224,9 +224,14 @@ un clic de más para llegar a lo mismo.
   Lectura, luna · Sueño, pluma · Diario, y los que vengan. Es también donde se eligen los
   tres accesos de la barra. El icono no cambia con la selección: es siempre "lo demás de
   KAVI", y esa constancia es lo que lo hace encontrable. Dep: T188
-- [ ] T189b Acceso a Listas desde el calendario: botón ○✓ a la izquierda del selector de
+- [x] T189b Acceso a Listas desde el calendario: botón ○✓ a la izquierda del selector de
   vistas, como el de tareas de Google Calendar. Abre la franja de pendientes sin salir del
   calendario, igual que Fitness se abre desde una actividad de gimnasio. Dep: T188, T194
+  **Hecho (5 oct 2026):** el botón ○✓ ya existía desde T198 y abre Listas, que es lo que pide la spec 10 §UI
+  (la spec manda sobre la frase "abre la franja" de esta tarea). Lo que faltaba, según esa misma spec, era
+  registrar Listas en el menú de módulos: ahora es un módulo de Más y candidato de la barra (RF-N6), en la
+  barra se pinta sin "Atrás" y el botón ○✓ la abre donde esté. En Más, los lugares de la barra se eligen
+  con una hoja de opciones: con cuatro módulos el control segmentado partía "Compartido" en dos líneas.
 
 ### Densidad y vistas del calendario
 - [x] T190a Píldoras del mes más delgadas. Se inflaban solas: el alto máximo era 28 px y

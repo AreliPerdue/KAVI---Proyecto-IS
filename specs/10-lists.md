@@ -269,7 +269,7 @@ pendiente sin fecha**.
 - *Dado* una lista compartida con permiso de "ver", *cuando* la abro, *entonces* no tengo cómo agregar ni palomear (fase 2).
 
 ## UI
-Rutas: `/(app)/lists` (inicio) y `/(app)/list/[id]` (detalle). Fuera del grupo de pestañas mientras la barra siga fija en cuatro accesos; cuando exista el menú de módulos, Lists se registra ahí. La franja del día vive dentro del calendario, no en una ruta propia.
+Rutas: `/(app)/lists` (inicio) y `/(app)/list/[id]` (detalle). Fuera del grupo de pestañas: en el teléfono Lists es uno de los módulos de Más y se puede elegir como acceso de la barra (spec 01, RF-N6; T189b); ahí se pinta sin "Atrás", y abierta desde Más o desde el botón ○✓, apilada con "Atrás". La franja del día vive dentro del calendario, no en una ruta propia.
 
 Acceso: botón **○✓** junto al selector de vistas del calendario, para abrir Lists sin salir de ahí — el mismo patrón con el que Fitness se abre desde una actividad de gimnasio.
 

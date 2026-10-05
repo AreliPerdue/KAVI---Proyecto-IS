@@ -9,6 +9,8 @@ export default function StackedModuleRoute() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const modulo = MODULES.find((m) => m.id === id);
   if (!modulo) return <Redirect href="/(app)/(tabs)/calendar" />;
+  // Los módulos con ruta propia (Listas) se abren en ella, no aquí.
+  if (modulo.route) return <Redirect href={modulo.route} />;
   return (
     <StackedModuleContext value>
       <ModuleScreen id={modulo.id as ModuleId} />

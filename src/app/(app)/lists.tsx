@@ -1,6 +1,6 @@
 import { useRouter } from 'expo-router';
 import { Archive, ArchiveRestore, ArrowDown, ArrowUp, CircleCheck, Copy, Ellipsis, Inbox, Pin, PinOff, Search, Sun, Trash2, X } from 'lucide-react-native';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useContext, useMemo, useState } from 'react';
 import { Platform, Pressable, ScrollView, StyleSheet, TextInput, type TextStyle, View } from 'react-native';
 
 
@@ -9,6 +9,7 @@ import { DraggableGrid } from '@/components/lists/draggable-grid';
 import { arrastreReciente } from '@/components/lists/drag-guard';
 import { PEOPLE_COLORS } from '@/constants/people-colors';
 import { ModalHeader } from '@/components/modal-header';
+import { ModuleInBarContext } from '@/components/navigation/stacked-module';
 import { ActionRow, AppText, EmptyState, ErrorState, Fab, LoadingState, Screen, Sheet, ThemeIcon } from '@/components/ui';
 import { Fonts, IconSize, IconStroke, Radius, Spacing, Typography } from '@/constants/theme';
 import {
@@ -132,6 +133,7 @@ function Resultados({ datos, abrir }: { datos: ListSearchResults | undefined; ab
  * no admite varias columnas.
  */
 export default function ListsScreen() {
+  const enBarra = useContext(ModuleInBarContext);
   const theme = useTheme();
   const router = useRouter();
   const confirm = useConfirm();
@@ -330,6 +332,8 @@ export default function ListsScreen() {
     <Screen contentStyle={styles.content}>
       <ModalHeader
         back
+        // En la barra del teléfono (RF-N6) no hay a dónde volver, salvo desde Archivadas.
+        leading={!enBarra || verArchivadas}
         title={verArchivadas ? 'Archivadas' : 'Listas'}
         // Dentro de Archivadas, "atrás" vuelve a las listas activas antes de salir del
         // módulo: es el paso que la persona deshace, no la pantalla entera.

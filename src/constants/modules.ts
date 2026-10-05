@@ -1,5 +1,5 @@
 import type { Href } from 'expo-router';
-import { Dumbbell, type LucideIcon, UserRound, Users } from 'lucide-react-native';
+import { CircleCheck, Dumbbell, type LucideIcon, UserRound, Users } from 'lucide-react-native';
 
 /**
  * Módulos de KAVI que pueden ir en la barra o en Más (spec 01, RF-N1–N6).
@@ -8,7 +8,7 @@ import { Dumbbell, type LucideIcon, UserRound, Users } from 'lucide-react-native
  * (Lectura, Sueño, Diario…) se agregan a esta lista y aparecen solos en Más y entre los
  * candidatos de la barra.
  */
-export type ModuleId = 'shared' | 'fitness' | 'profile';
+export type ModuleId = 'shared' | 'lists' | 'fitness' | 'profile';
 
 export type ModuleInfo = {
   id: ModuleId;
@@ -17,10 +17,23 @@ export type ModuleInfo = {
   /** Iconos de la barra nativa: SF Symbol en iOS, Material en Android. */
   sf: { default: string; selected: string };
   md: string;
+  /**
+   * Ruta propia fuera de las pestañas, para los módulos que nacieron así (Listas). Los que
+   * tienen pestaña en `(tabs)/` se abren apilados en `(app)/modulo/[id]`.
+   */
+  route?: Href;
 };
 
 export const MODULES: readonly ModuleInfo[] = [
   { id: 'shared', label: 'Compartido', Icon: Users, sf: { default: 'person.2', selected: 'person.2.fill' }, md: 'group' },
+  {
+    id: 'lists',
+    label: 'Listas',
+    Icon: CircleCheck,
+    sf: { default: 'checkmark.circle', selected: 'checkmark.circle.fill' },
+    md: 'task_alt',
+    route: '/(app)/lists',
+  },
   { id: 'fitness', label: 'Fitness', Icon: Dumbbell, sf: { default: 'dumbbell', selected: 'dumbbell.fill' }, md: 'fitness_center' },
   {
     id: 'profile',
@@ -68,14 +81,18 @@ export const ACCESO_ROUTES = ['/(app)/(tabs)/acceso-1', '/(app)/(tabs)/acceso-2'
 /**
  * A dónde lleva abrir un módulo (RF-N3, RF-N5).
  *
- * En web todos los módulos son pestañas. En el teléfono, el que está en la barra se abre en
- * su lugar (`acceso-1`/`acceso-2`) y el que no, como pantalla apilada. Ninguna navegación
+ * En el teléfono, el que está en la barra se abre en su lugar (`acceso-1`/`acceso-2`). Fuera
+ * de la barra —y siempre en web—, los que tienen ruta propia (Listas) van a ella; los demás,
+ * en web a su pestaña y en el teléfono apilados en `(app)/modulo/[id]`. Ninguna navegación
  * debe apuntar directo a `(tabs)/shared`, `(tabs)/fitness` ni `(tabs)/profile` en el teléfono:
  * ahí esas rutas están ocultas y `NativeTabs` no deja abrir una pestaña oculta.
  */
 export function moduleHref(id: ModuleId, accesos: Accesos, web: boolean): Href {
-  if (web) return `/(app)/(tabs)/${id}`;
-  const lugar = accesos.indexOf(id);
-  if (lugar >= 0) return ACCESO_ROUTES[lugar] as Href;
-  return { pathname: '/(app)/modulo/[id]', params: { id } };
+  const { route } = moduleInfo(id);
+  if (!web) {
+    const lugar = accesos.indexOf(id);
+    if (lugar >= 0) return ACCESO_ROUTES[lugar] as Href;
+  }
+  if (route) return route;
+  return web ? (`/(app)/(tabs)/${id}` as Href) : { pathname: '/(app)/modulo/[id]', params: { id } };
 }

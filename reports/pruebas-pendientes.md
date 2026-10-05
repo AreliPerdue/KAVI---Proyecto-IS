@@ -570,3 +570,13 @@ Compartido apilado; Fitness en la barra sin flecha. Falta:
 - [ ] `profile.test.tsx`: los 23 casos fallan con "No QueryClient set" desde que Perfil tiene la fila
   "Datos de salud" (T259, `useHealthAvailability`). Ya fallaban antes de T188 (comprobado). Arreglo:
   simular `@/hooks/use-health` en la prueba o envolverla en `QueryClientProvider`.
+
+## Listas como módulo (T189b)
+Android en el emulador (demo): Listas aparece en Más; la hoja de "Segundo lugar" marca el actual y
+avisa "se intercambian"; con Listas en la barra se pinta sin "Atrás"; el botón ○✓ del calendario
+cambia a esa pestaña; abrir "Súper" y regresar vuelve a la pestaña. La elección sobrevive a cerrar
+sesión y volver a entrar. Falta:
+- [ ] Listas en la barra → Archivadas muestra "Atrás" y vuelve a las listas activas.
+- [ ] Listas fuera de la barra → desde Más o desde ○✓ se abre apilada con "Atrás".
+- [ ] Web: ○✓ sigue abriendo `/lists` (no es pestaña en web, RF-N5).
+- [ ] `moduleHref('lists', …)`: en la barra → `acceso-N`; fuera o en web → `/(app)/lists`.
