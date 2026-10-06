@@ -657,3 +657,17 @@ negritas y los dos enlaces con `lang` correctos. Suite completa: las mismas 64 p
 - [ ] Teléfono en inglés: un recordatorio de actividad ("Starts at 7:30 PM", "Today", "Shared by…") y uno de
   pendiente de lista; cambiar el idioma y confirmar que los avisos ya programados cambian de idioma.
 - [ ] Solicitud de contacto e invitación recibidas con la app abierta en inglés.
+
+## Fitness: ajustes en Fitness y bento (T266, T267)
+Web en el demo a 390, 800 y 1280 px: el ⚙ abre "Ajustes de Fitness" con Registro, Humor y trato y Actividad;
+Perfil ya no los muestra. El mosaico sale en 2 columnas, en 4 y lado a lado con el historial; buscar notas no
+pierde el foco. Falta:
+- [ ] `weekSummary`: sesiones y volumen solo de lunes a domingo de esta semana; calentamiento fuera; grupos
+  ordenados de más a menos, con medias series del músculo secundario.
+- [ ] Bento con datos de esta semana (sesión con series hechas): "1 sesión", volumen y los tres músculos.
+- [ ] Sesión en curso: la tarjeta grande dice "Sesión en curso" y la retoma.
+- [ ] Racha en pausa: la tarjeta de decisión va arriba del mosaico y desaparece al decidir.
+- [ ] Teléfono (Android) con letra grande del sistema: las tarjetas crecen sin cortar texto.
+- [ ] Lector de pantalla: cada tarjeta dice su nombre y qué abre.
+- [ ] Cambiar kg/lb desde el ⚙ y ver el volumen del mosaico en la nueva unidad.
+

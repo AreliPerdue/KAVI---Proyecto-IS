@@ -28,18 +28,13 @@ export function gapLabel(weeks: readonly string[], lang: Language = getLanguage(
  * Racha de Hierro en Fitness (RF-F58). Si está en pausa, pregunta qué pasó y la persona
  * decide; si no, una fila con las semanas que lleva que abre Progreso.
  */
-export function StreakCard() {
-  const theme = useTheme();
+/** "¿Y la pierna?": entrena, pero lleva más de 7 días sin pierna (RF-F55). `null` en Modo serio o si no aplica. */
+export function useNoLegsLine(): string | null {
   const lang = useLanguage();
-  const s = useT().fitness.streak;
-  const router = useRouter();
   const progreso = useGymProgress();
-  const serio = useGymStore((s) => s.seriousMode);
-  const trato = useGymStore((s) => s.trato);
-  const streak = progreso.streak;
-
-  /** "¿Y la pierna?": entrena, pero lleva más de 7 días sin pierna (RF-F55). */
-  const sinPierna = useMemo(() => {
+  const serio = useGymStore((x) => x.seriousMode);
+  const trato = useGymStore((x) => x.trato);
+  return useMemo(() => {
     const log = progreso.sessions;
     if (serio || log.length === 0) return null;
     const hace = (dias: number) => progreso.now.getTime() - dias * 86_400_000;
@@ -49,6 +44,22 @@ export function StreakCard() {
     if (pierna && new Date(pierna.performed_at).getTime() >= hace(7)) return null;
     return gymratLineFor('no_legs', trato, serio, weekKey(progreso.now), lang);
   }, [progreso.sessions, progreso.catalog, progreso.now, serio, trato, lang]);
+}
+
+/** La racha en pausa: pregunta qué pasó y la persona decide (RF-F58). El bento la pone arriba, a todo lo ancho. */
+export function StreakPause() {
+  const streak = useGymProgress().streak;
+  if (!streak?.paused) return null;
+  return <Pausa key={streak.paused.weeks.join()} weeks={streak.paused.weeks} semanas={streak.weeks} />;
+}
+
+export function StreakCard() {
+  const theme = useTheme();
+  const s = useT().fitness.streak;
+  const router = useRouter();
+  const progreso = useGymProgress();
+  const streak = progreso.streak;
+  const sinPierna = useNoLegsLine();
 
   if (!streak) return null;
   if (streak.paused) return <Pausa key={streak.paused.weeks.join()} weeks={streak.paused.weeks} semanas={streak.weeks} />;

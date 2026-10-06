@@ -835,8 +835,11 @@ Plan y decisiones en `docs/gym/AUDITORIA.md`. Cada fase cierra con typecheck, li
   que cita el aviso de privacidad cambia (errata, sin subir versión). (RF-F67, RF-H8) Dep: —
   **Hecho (5 oct 2026):** pantalla `/(app)/fitness-settings` en tres grupos (Registro, Humor y trato, Actividad);
   `FitnessSettings` pasó de Perfil a `components/fitness/fitness-settings.tsx`.
-- [ ] T267 Bento en la pestaña Ejercicio: empezar, racha, esta semana, músculos de la semana, logros y
+- [x] T267 Bento en la pestaña Ejercicio: empezar, racha, esta semana, músculos de la semana, logros y
   glosario; historial debajo; 2 columnas en celular, 4 en ancho y lado a lado desde 1024 px. (RF-F66) Dep: T266
+  **Hecho (5 oct 2026):** `components/fitness/fitness-bento.tsx` y `lib/gym/week.ts` (sesiones, volumen y grupos de
+  la semana, calculados del historial). Historial y notas en una sola lista para que el buscador no pierda el
+  foco. La racha en pausa va arriba del mosaico a todo lo ancho.
 
 ### Bugs reportados
 - [x] T249 **Una ocurrencia borrada de una serie vuelve a aparecer al recargar.** Reporte (4
