@@ -27,8 +27,11 @@ tiene el teléfono en español; el inglés abre la app a quien no.
 - RF-I5. **Lo que trae KAVI sí:** temas del sistema y dimensiones, nombres de ejercicios del catálogo,
   músculos, glosario, mensajes de error y estados vacíos. Lo que la base guarda en español (temas del sistema,
   catálogo) se traduce al mostrarlo, por su identificador; la base no cambia.
-- RF-I6. **Lo que reciben otras personas va en el idioma de quien lo recibe** cuando KAVI lo sabe (correo al
-  adulto, fase 3). Si no lo sabe, en español.
+- RF-I6. **Lo que reciben otras personas va en el idioma de quien lo recibe** cuando KAVI lo sabe. Del adulto que
+  aprueba a un menor no lo sabe: su correo sale en el idioma de la app del menor (el del hogar, lo único que KAVI
+  conoce) y trae un botón para leerlo en el otro idioma, que abre `/consentimiento` en ese idioma con la misma
+  explicación y la decisión (decisión del 5 oct 2026). `/consentimiento` y `/privacidad` aceptan `?lang=es|en` y
+  tienen su propio botón para cambiar; sin `lang`, siguen al navegador. Si no hay ningún dato, en español.
 - RF-I7. **Accesibilidad:** las etiquetas para lector de pantalla se traducen igual que el texto visible.
 - RF-I8. **Sin textos sueltos:** todo texto de interfaz vive en los diccionarios de `src/i18n/`. Un texto nuevo
   se agrega en los dos idiomas en el mismo cambio.

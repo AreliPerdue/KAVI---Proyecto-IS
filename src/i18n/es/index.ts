@@ -11,10 +11,11 @@ import { glossary } from './glossary';
 import { lists } from './lists';
 import { nav } from './nav';
 import { notifications } from './notifications';
+import { privacy } from './privacy';
 import { profile } from './profile';
 import { shared } from './shared';
 import { themes } from './themes';
 import { training } from './training';
 
 /** El español manda: su forma es el tipo de todos los diccionarios (spec 12, RF-I8). */
-export const es = { account, auth, calendar, catalog, colors, common, dates, errors, fitness, glossary, lists, nav, notifications, profile, shared, themes, training };
+export const es = { account, auth, calendar, catalog, colors, common, dates, errors, fitness, glossary, lists, nav, notifications, privacy, profile, shared, themes, training };

@@ -5,7 +5,7 @@ import type { GuardianStatus } from '@/lib/consent';
 import { getSupabase } from '@/lib/supabase';
 import type { ConsentApi } from '@/services/contracts';
 import { toError, traducirDeLaBase, unwrap } from '@/services/supabase/errors';
-import { t } from '@/i18n';
+import { getLanguage, t } from '@/i18n';
 
 /**
  * La función de Vercel que manda el correo (`api/guardian-consent.ts`). En la web publicada es
@@ -65,7 +65,8 @@ export const supabaseConsent: ConsentApi = {
       respuesta = await fetch(API_CORREO, {
         method: 'POST',
         headers: { 'content-type': 'application/json', authorization: `Bearer ${jwt}` },
-        body: JSON.stringify({ guardianEmail: guardianEmail.trim().toLowerCase() }),
+        // El correo sale en el idioma de la app de quien lo pide (spec 12, RF-I6).
+        body: JSON.stringify({ guardianEmail: guardianEmail.trim().toLowerCase(), lang: getLanguage() }),
       });
     } catch (e) {
       throw new AuthUiError(isOfflineError(e) ? AUTH_MESSAGES.offline : t().errors.emailSendFailedConnection, e);

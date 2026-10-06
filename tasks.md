@@ -608,7 +608,7 @@ un clic de más para llegar a lo mismo.
   la clave pública, que estaba disponible desde el inicio. Dep: T219
 
 ### Pendientes sueltos
-- [ ] T196 Elegir idioma de la interfaz: **español o inglés**. Hoy los textos están
+- [x] T196 Elegir idioma de la interfaz: **español o inglés**. Hoy los textos están
   incrustados en los componentes, así que esto es sobre todo el trabajo de extraerlos.
   Afecta también los formatos de fecha (`date-fns` locale) y la redacción es-MX que fija
   `kavi-design` §4. Dep: —
@@ -628,8 +628,13 @@ un clic de más para llegar a lo mismo.
     traduce solo si sigue siendo el del catálogo: los de v1 o los cambiados se ven como se escribieron
     (RF-I4). El humor en inglés vive en `constants/gymrat.ts` con "king/queen". La disponibilidad de datos
     de salud pasó a ser una clave (`reason`) para que el texto cambie con el idioma.
-  - [ ] T196c Aviso de privacidad (referencia), páginas públicas, correo al adulto y textos de notificaciones.
+  - [x] T196c Aviso de privacidad (referencia), páginas públicas, correo al adulto y textos de notificaciones.
     (RF-I6)
+    **Hecho (5 oct 2026):** `/privacidad` en inglés con aviso de "traducción de referencia" y botón a la versión
+    en español; `/consentimiento` traducida. Las dos aceptan `?lang=es|en`. El correo al adulto sale en el idioma
+    de la app del menor y trae un botón para leerlo en el otro, que abre `/consentimiento` en ese idioma
+    (decisión del 5 oct 2026, RF-I6 actualizado en la spec 12). Notificaciones de recordatorios, pendientes de
+    listas, solicitudes e invitaciones en el idioma de la app; los avisos ya programados se rehacen al cambiarlo.
 - [x] T197 Nobi coral, el vigesimoprimero. Imágenes en sus dos variantes reescaladas a
   512 px como el resto (llegaban a 1254, que son ~1.3 MB por archivo al bundle), entrada en
   `constants/nobi.ts` entre el rojo y el rojo oscuro —donde cae su matiz en la rueda— y su

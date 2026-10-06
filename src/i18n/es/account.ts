@@ -88,4 +88,31 @@ export const account = {
     writeEmail: 'Escribir un correo',
     emailSubject: 'Eliminar mi cuenta de KAVI',
   },
+  /** Página del adulto que aprueba a un menor (`/consentimiento`, RF-A13). */
+  guardianPage: {
+    title: 'Permiso para usar KAVI',
+    otherLanguage: 'Read this page in English',
+    invalidLink: 'Este enlace no es válido. Ábrelo tal cual desde el correo.',
+    approved: (n: string) => `Aprobaste que ${n} use KAVI. Ya puede entrar. Gracias.`,
+    rejected: (n: string) => `No aprobaste que ${n} use KAVI. Su cuenta sigue cerrada.`,
+    replaced: (n: string) => `${n} pidió un enlace nuevo; este ya no sirve. Usa el del correo más reciente.`,
+    expired: (n: string) => `Este enlace venció. ${n} puede pedirte uno nuevo desde KAVI.`,
+    introAfterName:
+      ' se registró en KAVI y nos dijo que tiene 16 o 17 años y que tú eres su madre, padre o tutor. La ley mexicana pide tu consentimiento para que KAVI trate sus datos personales.',
+    whatToKnow: 'Lo que necesitas saber',
+    points: [
+      'KAVI es una app para organizar el calendario, las listas y los entrenamientos.',
+      'Guarda lo que la persona agenda y, si usa el registro de gimnasio, datos como su peso corporal o notas de dolor, que la ley considera sensibles.',
+      'No usa los datos para publicidad, no los vende y no tiene herramientas de rastreo.',
+      'Solo ve sus datos quien los registró y las personas con quienes decida compartir su calendario o sus listas.',
+      'La cuenta y todos sus datos se pueden eliminar en cualquier momento desde la app.',
+    ] as readonly string[],
+    readNotice: 'Leer el aviso de privacidad completo',
+    expires: (fecha: string, n: string) => `Este enlace vence el ${fecha}. Si no conoces a ${n}, elige «No apruebo».`,
+    approve: (n: string) => `Apruebo que ${n} use KAVI`,
+    reject: 'No apruebo',
+    questions: (correo: string) => `¿Dudas? Escríbenos a ${correo}. Puedes retirar tu consentimiento en cualquier momento escribiendo a ese correo.`,
+    backToKavi: 'Volver a KAVI',
+    someone: 'Alguien',
+  },
 };

@@ -3,7 +3,7 @@ import { AuthUiError } from '@/lib/auth-errors';
 import { edadEn, EDAD_MINIMA, MAYORIA_DE_EDAD, type GuardianStatus } from '@/lib/consent';
 import type { ConsentApi } from '@/services/contracts';
 import { DEMO_USER, delay, demoState, nextId, setCurrentUser } from '@/services/demo/store';
-import { t } from '@/i18n';
+import { getLanguage, t } from '@/i18n';
 
 type Aceptacion = { birthDate: string; privacyVersion: string };
 type Solicitud = {
@@ -76,7 +76,7 @@ export const demoConsent: ConsentApi = {
       createdAt: Date.now(),
       expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
     });
-    return { previewLink: `/consentimiento?token=${encodeURIComponent(token)}` };
+    return { previewLink: `/consentimiento?token=${encodeURIComponent(token)}&lang=${getLanguage()}` };
   },
 
   async guardianRequestInfo(token) {
@@ -85,7 +85,7 @@ export const demoConsent: ConsentApi = {
     if (!s) return null;
     const cuenta = demoState.accounts.find((a) => a.user.id === s.minorId);
     return {
-      minorName: cuenta?.profile.display_name ?? cuenta?.profile.username ?? 'Alguien',
+      minorName: cuenta?.profile.display_name ?? cuenta?.profile.username ?? t().account.guardianPage.someone,
       status: estado(s),
       expiresAt: s.expiresAt,
     };

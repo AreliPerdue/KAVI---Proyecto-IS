@@ -645,3 +645,15 @@ mano y se quedan en español, como manda RF-I4. Suite completa: las mismas 64 pr
 - [ ] Resumen al terminar y "Compartir" en inglés (texto e imagen).
 - [ ] Datos de salud en Android con el teléfono en inglés: textos de Actividad y "no disponible".
 - [ ] Glosario: buscar "superserie" y "superset" encuentra el mismo término en cada idioma.
+
+## Idioma: aviso, consentimiento, correo y notificaciones (T196c)
+Web en el demo: `/privacidad?lang=en` sale en inglés con el aviso de "traducción de referencia" y el botón cambia
+a español (y la dirección queda en `?lang=es`); `/consentimiento?lang=en` con un enlace inválido muestra el error
+en inglés. El correo se armó en los dos idiomas con una copia local de la función: asunto, texto, nombre en
+negritas y los dos enlaces con `lang` correctos. Suite completa: las mismas 64 pruebas que ya fallaban. Falta:
+- [ ] Correo real (Vercel ya publicado): pedir aprobación con la app en inglés y en español; revisar en Gmail
+  que el botón del otro idioma abre `/consentimiento` en ese idioma y que aprobar funciona desde los dos.
+- [ ] `/consentimiento` con una solicitud real pendiente, en los dos idiomas (fecha de vencimiento, botones).
+- [ ] Teléfono en inglés: un recordatorio de actividad ("Starts at 7:30 PM", "Today", "Shared by…") y uno de
+  pendiente de lista; cambiar el idioma y confirmar que los avisos ya programados cambian de idioma.
+- [ ] Solicitud de contacto e invitación recibidas con la app abierta en inglés.

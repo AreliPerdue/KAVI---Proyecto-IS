@@ -1,10 +1,11 @@
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Fragment } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { AppText, Button, Screen, Wordmark } from '@/components/ui';
-import { PRIVACY_INTRO, PRIVACY_SECTIONS, PRIVACY_UPDATED, type PrivacyBlock } from '@/constants/privacy';
+import { AppText, Banner, Button, Screen, Wordmark } from '@/components/ui';
+import type { PrivacyBlock } from '@/constants/privacy';
 import { Spacing } from '@/constants/theme';
+import { type Language, t, useLanguage } from '@/i18n';
 
 /** Un párrafo con `**negritas**`. */
 function Parrafo({ texto }: { texto: string }) {
@@ -43,22 +44,32 @@ function Bloque({ bloque }: { bloque: PrivacyBlock }) {
 /**
  * Aviso de privacidad (T260). Pública, con o sin sesión: es el enlace que piden las tiendas, el que
  * revisa el adulto que aprueba a un menor (RF-A13) y el que se acepta en "Antes de empezar".
+ *
+ * Sigue el idioma de la app, o el de `?lang=` (el enlace del correo al adulto lo trae). En inglés
+ * es una traducción de referencia y lo dice arriba; el botón cambia a la otra versión sin tocar el
+ * idioma de la app (spec 12).
  */
 export default function PrivacidadScreen() {
   const router = useRouter();
+  const delSistema = useLanguage();
+  const { lang: pedido } = useLocalSearchParams<{ lang?: string }>();
+  const lang: Language = pedido === 'es' || pedido === 'en' ? pedido : delSistema;
+  const p = t(lang).privacy;
   return (
     <Screen scroll maxWidth={720}>
       <View style={styles.pila}>
         <Wordmark size={28} />
         <AppText variant="title" accessibilityRole="header">
-          Aviso de privacidad
+          {p.title}
         </AppText>
         <AppText variant="label" color="textSecondary">
-          Última actualización: {PRIVACY_UPDATED}
+          {p.updated(p.updatedOn)}
         </AppText>
-        <Parrafo texto={PRIVACY_INTRO} />
+        {p.referenceNote ? <Banner tone="info" message={p.referenceNote} /> : null}
+        <Button title={p.otherLanguage} variant="ghost" onPress={() => router.setParams({ lang: lang === 'en' ? 'es' : 'en' })} />
+        <Parrafo texto={p.intro} />
       </View>
-      {PRIVACY_SECTIONS.map((seccion) => (
+      {p.sections.map((seccion) => (
         <View key={seccion.title} style={styles.pila}>
           <AppText variant="heading" accessibilityRole="header">
             {seccion.title}
@@ -68,7 +79,7 @@ export default function PrivacidadScreen() {
           ))}
         </View>
       ))}
-      <Button title="Volver" variant="secondary" onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))} />
+      <Button title={p.back} variant="secondary" onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))} />
     </Screen>
   );
 }
