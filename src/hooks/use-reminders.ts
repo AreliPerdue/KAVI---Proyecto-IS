@@ -10,6 +10,7 @@ import { type ScheduledReminder, syncNotifications } from '@/lib/notifications';
 import { useAuth } from '@/providers';
 import { listRemindersByActivity, listUpcomingReminders, setReminderEnabled, setRemindersForActivity } from '@/services/reminders';
 import type { KaviList, ListItem, Reminder, UpcomingReminder } from '@/types/domain';
+import { type Language, t, useLanguage } from '@/i18n';
 
 export const reminderKeys = {
   all: ['reminders'] as const,
@@ -48,8 +49,10 @@ export function useReminderMutations() {
 
 export function useUpcomingReminders() {
   const { userId } = useAuth();
+  // El texto del aviso se arma en el servicio: con el idioma en la clave, cambiarlo lo vuelve a pedir.
+  const lang = useLanguage();
   return useQuery<UpcomingReminder[]>({
-    queryKey: reminderKeys.upcoming(userId),
+    queryKey: [...reminderKeys.upcoming(userId), lang],
     queryFn: () => listUpcomingReminders(userId as string, REMINDER_HORIZON_DAYS),
     enabled: !!userId,
   });
@@ -67,7 +70,7 @@ export function useUpcomingReminders() {
  * avisara dos días antes, ese aviso hay que darlo — y para eso se ancla a una hora por
  * omisión, porque "dos días antes" de una fecha sin hora no tiene instante propio.
  */
-function avisosDeListas(items: readonly ListItem[], listas: readonly KaviList[]): ScheduledReminder[] {
+function avisosDeListas(items: readonly ListItem[], listas: readonly KaviList[], lang: Language): ScheduledReminder[] {
   const nombre = new Map(listas.map((l) => [l.id, l.name]));
   return items
     .filter((i) => i.completed_at === null && i.due_date !== null && i.reminder_offset_minutes !== null)
@@ -79,7 +82,7 @@ function avisosDeListas(items: readonly ListItem[], listas: readonly KaviList[])
       return {
         id: `list-item:${i.id}`,
         title: i.title,
-        body: nombre.get(i.list_id) ?? 'Pendiente',
+        body: nombre.get(i.list_id) ?? t(lang).notifications.listItemFallback,
         fireAt: avisa.toISOString(),
         data: { listId: i.list_id, listItemId: i.id },
       };
@@ -91,6 +94,7 @@ export function useReminderSync() {
   const queryClient = useQueryClient();
   const { userId } = useAuth();
   const lastSynced = useRef<string>('');
+  const lang = useLanguage();
 
   const hoy = toDayKey(new Date());
   const hasta = toDayKey(addDays(new Date(), REMINDER_HORIZON_DAYS));
@@ -109,8 +113,8 @@ export function useReminderSync() {
       fireAt: r.fireAt,
       data: { activityId: r.activityId },
     }));
-    return [...deActividades, ...avisosDeListas(itemsConFecha.data ?? [], listas.data ?? [])];
-  }, [upcoming.data, itemsConFecha.data, listas.data]);
+    return [...deActividades, ...avisosDeListas(itemsConFecha.data ?? [], listas.data ?? [], lang)];
+  }, [upcoming.data, itemsConFecha.data, listas.data, lang]);
 
   useEffect(() => {
     if (!upcoming.data) return;

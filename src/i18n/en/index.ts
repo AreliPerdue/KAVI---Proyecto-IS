@@ -11,9 +11,10 @@ import { fitness } from './fitness';
 import { glossary } from './glossary';
 import { lists } from './lists';
 import { nav } from './nav';
+import { notifications } from './notifications';
 import { profile } from './profile';
 import { shared } from './shared';
 import { themes } from './themes';
 import { training } from './training';
 
-export const en: Dictionary = { account, auth, calendar, catalog, colors, common, dates, errors, fitness, glossary, lists, nav, profile, shared, themes, training };
+export const en: Dictionary = { account, auth, calendar, catalog, colors, common, dates, errors, fitness, glossary, lists, nav, notifications, profile, shared, themes, training };

@@ -5,6 +5,7 @@ import { getSupabase } from '@/lib/supabase';
 import type { RemindersApi } from '@/services/contracts';
 import { toError, unwrap } from '@/services/supabase/errors';
 import type { Reminder, UpcomingReminder } from '@/types/domain';
+import { t } from '@/i18n';
 
 type ReminderRow = {
   id: string;
@@ -107,15 +108,13 @@ export const supabaseReminders: RemindersApi = {
     const upcoming: UpcomingReminder[] = rows.map(({ reminder }) => {
       const { activity } = reminder;
       const start = fromIso(activity.start_at);
-      const sharedBy =
-        activity.owner_id !== userId
-          ? ` · Compartida por ${activity.owner?.display_name ?? activity.owner?.username ?? 'un contacto'}`
-          : '';
+      const n = t().notifications;
+      const sharedBy = activity.owner_id !== userId ? n.sharedBy(activity.owner?.display_name ?? activity.owner?.username ?? n.aContact) : '';
       return {
         reminderId: reminder.id,
         activityId: activity.id,
         title: activity.title,
-        body: `${activity.all_day ? 'Hoy' : `Empieza a las ${formatTime(start)}`}${sharedBy}`,
+        body: `${activity.all_day ? n.today : n.startsAt(formatTime(start))}${sharedBy}`,
         fireAt: new Date(start.getTime() - reminder.offset_minutes * 60_000).toISOString(),
         activityStartAt: activity.start_at,
       };

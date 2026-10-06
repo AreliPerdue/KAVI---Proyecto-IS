@@ -92,12 +92,13 @@ export const demoReminders: RemindersApi = {
       if (start < now || start > limit) continue;
       const fireAt = new Date(start.getTime() - reminder.offset_minutes * 60_000);
       const owner = demoState.accounts.find((a) => a.user.id === activity.owner_id);
-      const sharedBy = activity.owner_id !== userId ? ` · Compartida por ${owner?.profile.display_name ?? owner?.profile.username ?? 'un contacto'}` : '';
+      const n = t().notifications;
+      const sharedBy = activity.owner_id !== userId ? n.sharedBy(owner?.profile.display_name ?? owner?.profile.username ?? n.aContact) : '';
       result.push({
         reminderId: reminder.id,
         activityId: activity.id,
         title: activity.title,
-        body: `${activity.all_day ? 'Hoy' : `Empieza a las ${formatTime(start)}`}${sharedBy}`,
+        body: `${activity.all_day ? n.today : n.startsAt(formatTime(start))}${sharedBy}`,
         fireAt: fireAt.toISOString(),
         activityStartAt: activity.start_at,
       });

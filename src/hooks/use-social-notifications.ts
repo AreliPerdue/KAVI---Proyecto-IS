@@ -4,6 +4,7 @@ import { useContacts } from '@/hooks/use-connections';
 import { useInvitations } from '@/hooks/use-shares';
 import { formatShortDate, formatTime, fromIso } from '@/lib/dates';
 import { presentNow } from '@/lib/notifications';
+import { t, useLanguage } from '@/i18n';
 
 /** Nombre de pila, que es como se nombra a las personas en toda la app. */
 function nombreDe(perfil: { display_name: string | null; username: string }): string {
@@ -26,6 +27,7 @@ function nombreDe(perfil: { display_name: string | null; username: string }): st
  * igualmente en la pantalla de Compartido, con su contador.
  */
 export function useSocialNotifications() {
+  const lang = useLanguage();
   const contacts = useContacts();
   const invitations = useInvitations();
 
@@ -49,14 +51,15 @@ export function useSocialNotifications() {
     const previas = solicitudesVistas.current;
     for (const contacto of entrantes) {
       if (previas.has(contacto.connection.id)) continue;
+      const n = t(lang).notifications;
       void presentNow(
-        'Nueva solicitud de contacto',
-        `${nombreDe(contacto.profile)} quiere conectar contigo.`,
+        n.contactRequestTitle,
+        n.contactRequestBody(nombreDe(contacto.profile)),
         { tipo: 'solicitud' },
       );
     }
     solicitudesVistas.current = ids;
-  }, [contacts.isSuccess, contacts.data]);
+  }, [contacts.isSuccess, contacts.data, lang]);
 
   useEffect(() => {
     if (!invitations.isSuccess) return;
@@ -72,14 +75,15 @@ export function useSocialNotifications() {
       if (previas.has(invitacion.share.id)) continue;
       const inicio = fromIso(invitacion.activity.start_at);
       const cuando = invitacion.activity.all_day
-        ? formatShortDate(inicio)
-        : `${formatShortDate(inicio)} · ${formatTime(inicio)}`;
+        ? formatShortDate(inicio, lang)
+        : `${formatShortDate(inicio, lang)} · ${formatTime(inicio, lang)}`;
+      const n = t(lang).notifications;
       void presentNow(
-        `${nombreDe(invitacion.owner)} te invitó a una actividad`,
-        `${invitacion.activity.title} — ${cuando}`,
+        n.invitedTitle(nombreDe(invitacion.owner)),
+        n.invitedBody(invitacion.activity.title, cuando),
         { tipo: 'invitacion', actividadId: invitacion.activity.id },
       );
     }
     invitacionesVistas.current = ids;
-  }, [invitations.isSuccess, invitations.data]);
+  }, [invitations.isSuccess, invitations.data, lang]);
 }
