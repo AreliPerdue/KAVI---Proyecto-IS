@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { BookOpen, ChevronRight, Dumbbell, MessageSquareText, Play, Plus, Search, X } from 'lucide-react-native';
+import { BookOpen, ChevronRight, Dumbbell, MessageSquareText, Play, Plus, Search, Settings, X } from 'lucide-react-native';
 import { useCallback, useMemo, useState } from 'react';
 import { FlatList, Platform, Pressable, ScrollView, StyleSheet, TextInput, type TextStyle, View } from 'react-native';
 
@@ -138,9 +138,15 @@ export default function FitnessScreen() {
     <Screen contentStyle={styles.content}>
       <StackedModuleBack />
       <View style={styles.header}>
-        <AppText variant="title" accessibilityRole="header">
-          {f.title}
-        </AppText>
+        <View style={styles.tituloPantalla}>
+          <AppText variant="title" accessibilityRole="header" style={styles.flexTexto}>
+            {f.title}
+          </AppText>
+          {/* RF-F67: los ajustes del gym viven aquí y no en Perfil. */}
+          <IconButton label={tx.fitness.settings.openA11y} onPress={() => router.push('/(app)/fitness-settings')}>
+            <Settings size={IconSize.action} strokeWidth={IconStroke} color={theme.text} />
+          </IconButton>
+        </View>
         {/* Spec 11: Ejercicio es el Gym Tracker de siempre; Actividad, lo que mide el teléfono. */}
         <Segmented
           fullWidth
@@ -269,6 +275,7 @@ const styles = StyleSheet.create({
   text: { flex: 1, gap: 2 },
   glosario: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm, minHeight: 44 },
   tituloFila: { flexDirection: 'row', alignItems: 'center', gap: Spacing.xs },
+  tituloPantalla: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: Spacing.sm },
   flexTexto: { flexShrink: 1 },
   buscador: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm, minHeight: 48, paddingLeft: Spacing.md, borderWidth: 1, borderRadius: Radius.md, borderCurve: 'continuous' },
   input: { flex: 1, fontSize: 16, paddingVertical: Spacing.sm },

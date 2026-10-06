@@ -1,6 +1,10 @@
 /** Fitness (spec 07 y 11). */
 export const fitness = {
   settings: {
+    screenTitle: 'Ajustes de Fitness',
+    logging: 'Registro',
+    humor: 'Humor y trato',
+    openA11y: 'Ajustes de Fitness',
     title: 'Gimnasio',
     weightUnit: 'Unidad de peso',
     weightUnitHint: 'Cambiarla no altera lo que ya registraste: solo cambia cómo lo ves.',

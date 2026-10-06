@@ -2,6 +2,10 @@ import type { Dictionary } from '../types';
 
 export const fitness: Dictionary['fitness'] = {
   settings: {
+    screenTitle: 'Fitness settings',
+    logging: 'Logging',
+    humor: 'Humor and voice',
+    openA11y: 'Fitness settings',
     title: 'Gym',
     weightUnit: 'Weight unit',
     weightUnitHint: 'Changing it doesn’t alter what you already logged: it only changes how you see it.',
