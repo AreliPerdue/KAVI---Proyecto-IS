@@ -1,0 +1,24 @@
+# Lo que no se sube al publicar desde la terminal (`vercel --prod`). Vercel solo necesita lo que usa
+# `npx expo export --platform web` y las funciones de `api/`; la lista corta además el envío, que con
+# las carpetas nativas pasaba el límite de 15,000 archivos.
+
+# Secretos: Vercel ya tiene las variables en Settings → Environment Variables (NFR-5).
+.env
+.env.*
+
+# Proyectos nativos generados por `expo run:*` (más de 10,000 archivos).
+android/
+ios/
+
+# Herramientas, documentación y pruebas: no forman parte del sitio.
+.claude/
+.expo/
+.github/
+.vscode/
+.zap/
+__mocks__/
+dist/
+docs/
+reports/
+specs/
+supabase/
