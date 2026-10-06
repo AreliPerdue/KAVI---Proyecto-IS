@@ -6,6 +6,7 @@ import { getSupabase } from '@/lib/supabase';
 import type { ExerciseHistoryEntry, LegacyExercise, NoteHit, WorkoutDetail, WorkoutsApi } from '@/services/contracts';
 import { toError, unwrap } from '@/services/supabase/errors';
 import type { ExerciseGroup, SetSegment, StreakEvent, Workout, WorkoutExercise, WorkoutExerciseDetail, WorkoutSet } from '@/types/domain';
+import { t } from '@/i18n';
 
 /**
  * Detalle completo: sesión → ejercicios → series → segmentos, más los grupos.
@@ -100,7 +101,7 @@ function toDetail(row: SesionRow): WorkoutDetail {
 async function fetchDetail(id: string): Promise<WorkoutDetail> {
   const { data, error } = await getSupabase().from('workouts').select(SELECT_DETALLE).eq('id', id).is('deleted_at', null).maybeSingle();
   if (error) throw toError(error);
-  if (!data) throw new AuthUiError('Ese entrenamiento ya no existe.');
+  if (!data) throw new AuthUiError(t().errors.workoutNotFound);
   return toDetail(data as unknown as SesionRow);
 }
 

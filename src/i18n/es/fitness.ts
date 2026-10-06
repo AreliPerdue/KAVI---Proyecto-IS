@@ -403,6 +403,7 @@ export const fitness = {
   sheets: {
     next: 'Siguiente',
     stop: 'Detener',
+    note: 'Nota',
     tags: 'Etiquetas',
     save: 'Guardar',
     stopCounting: 'Dejar de contar',
@@ -490,5 +491,14 @@ export const fitness = {
     weightsVsSets: (pesos: number, series: number) => `Hay ${pesos} pesos para ${series} series.`,
     weightUnreadable: (texto: string) => `No se pudo leer el peso: "${texto}".`,
     durationWhole: (min: number, series: number) => `${min} min eran del ejercicio completo; no se repartieron entre ${series} series.`,
+  },
+  draft: {
+    title: 'Entrenamiento',
+    existingEmpty: 'Esta actividad ya tiene un entrenamiento sin ejercicios.',
+    existingWith: (n: number) => `Esta actividad ya tiene un entrenamiento con ${n} ${n === 1 ? 'ejercicio' : 'ejercicios'}.`,
+    openExisting: 'Abrir entrenamiento',
+    intro: 'Planea tu rutina aquí y se guarda con la actividad. Las series que no marques quedan como plan; puedes dejarlo vacío y completarlo después.',
+    addExercise: 'Añadir ejercicio',
+    addAnother: 'Añadir otro ejercicio',
   },
 };

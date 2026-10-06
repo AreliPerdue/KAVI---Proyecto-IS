@@ -400,6 +400,7 @@ export const fitness: Dictionary['fitness'] = {
   sheets: {
     next: 'Next',
     stop: 'Stop',
+    note: 'Note',
     tags: 'Tags',
     save: 'Save',
     stopCounting: 'Stop counting',
@@ -486,5 +487,14 @@ export const fitness: Dictionary['fitness'] = {
     weightsVsSets: (pesos, series) => `There are ${pesos} weights for ${series} sets.`,
     weightUnreadable: (texto) => `Couldn’t read the weight: “${texto}”.`,
     durationWhole: (min, series) => `${min} min were for the whole exercise; they weren’t split across ${series} sets.`,
+  },
+  draft: {
+    title: 'Workout',
+    existingEmpty: 'This activity already has a workout with no exercises.',
+    existingWith: (n) => `This activity already has a workout with ${n} ${n === 1 ? 'exercise' : 'exercises'}.`,
+    openExisting: 'Open workout',
+    intro: 'Plan your routine here and it’s saved with the activity. Sets you don’t check off stay as a plan; you can leave it empty and fill it in later.',
+    addExercise: 'Add exercise',
+    addAnother: 'Add another exercise',
   },
 };

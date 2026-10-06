@@ -4,6 +4,7 @@ import { uuidv4 } from '@/lib/gym/ids';
 import type { ExercisesApi } from '@/services/contracts';
 import { delay } from '@/services/demo/store';
 import type { Exercise, ExercisePrefs } from '@/types/domain';
+import { t } from '@/i18n';
 
 /**
  * El catálogo del sistema sale del mismo archivo que la migración de Supabase, con los
@@ -40,7 +41,7 @@ export const demoExercises: ExercisesApi = {
   async createCustom(userId, input) {
     await delay(60);
     const nombre = input.name_es.trim();
-    if (!nombre) throw new AuthUiError('Escribe el nombre del ejercicio.');
+    if (!nombre) throw new AuthUiError(t().errors.exerciseNameRequired);
     const id = uuidv4();
     const nuevo: Exercise = {
       id,
@@ -66,7 +67,7 @@ export const demoExercises: ExercisesApi = {
   async updateCustom(id, patch) {
     await delay(60);
     const e = propios.find((x) => x.id === id);
-    if (!e) throw new AuthUiError('Ese ejercicio no es tuyo o ya no existe.');
+    if (!e) throw new AuthUiError(t().errors.exerciseNotYours);
     const { archived, name_es, ...resto } = patch;
     Object.assign(e, resto);
     if (name_es !== undefined && name_es.trim()) e.name_es = name_es.trim();

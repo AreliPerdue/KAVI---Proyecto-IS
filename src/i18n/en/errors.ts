@@ -61,4 +61,9 @@ export const errors: Dictionary['errors'] = {
   emailSendFailedLater: 'The email couldn’t be sent. Try again later.',
   emailSendUnavailable: 'Sending emails isn’t available right now. Try again later.',
   emailSendFailedAddress: 'The email couldn’t be sent. Check the address and try again.',
+  exerciseNameRequired: 'Type the exercise name.',
+  exerciseNotYours: 'That exercise isn’t yours or no longer exists.',
+  workoutNotFound: 'That workout no longer exists.',
+  activityHasWorkout: 'That activity already has a workout logged.',
+  exerciseNotFound: 'That exercise no longer exists.',
 };

@@ -7,6 +7,7 @@ import type { NoteHit, WorkoutDetail, WorkoutsApi } from '@/services/contracts';
 import { delay, demoState, emitDataChange, nextId } from '@/services/demo/store';
 import { uuidv4 } from '@/lib/gym/ids';
 import type { ExerciseGroup, SetSegment, StreakEvent, Workout, WorkoutExercise, WorkoutSet } from '@/types/domain';
+import { t } from '@/i18n';
 
 /** Lo que guarda el demo por sesión: lo mismo que la fila, más el borrado suave. */
 type StoredWorkout = Omit<Workout, 'activity_title' | 'exercise_count' | 'duration_minutes'> & { deleted_at: string | null };
@@ -87,7 +88,7 @@ function limpio<T extends { deleted_at: string | null }>(x: T): Omit<T, 'deleted
 
 function find(id: string): StoredWorkout {
   const found = workouts.find((w) => w.id === id && vivo(w));
-  if (!found) throw new AuthUiError('Ese entrenamiento ya no existe.');
+  if (!found) throw new AuthUiError(t().errors.workoutNotFound);
   return found;
 }
 
@@ -171,7 +172,7 @@ export const demoWorkouts: WorkoutsApi = {
   async create(userId, input) {
     await delay();
     if (input.activity_id && workouts.some((w) => w.activity_id === input.activity_id)) {
-      throw new AuthUiError('Esa actividad ya tiene un entrenamiento registrado.');
+      throw new AuthUiError(t().errors.activityHasWorkout);
     }
     const workout: StoredWorkout = {
       ...sesionNueva({
@@ -243,7 +244,7 @@ export const demoWorkouts: WorkoutsApi = {
   async updateExercise(id, patch) {
     await delay(60);
     const exercise = exercises.find((e) => e.id === id && vivo(e));
-    if (!exercise) throw new AuthUiError('Ese ejercicio ya no existe.');
+    if (!exercise) throw new AuthUiError(t().errors.exerciseNotFound);
     Object.assign(exercise, patch, patch.name !== undefined ? { name: patch.name.trim() } : {});
     return { ...limpio(exercise) };
   },

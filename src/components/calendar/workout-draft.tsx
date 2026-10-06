@@ -15,7 +15,7 @@ import { IconSize, IconStroke, Radius, Spacing } from '@/constants/theme';
 import { exerciseHistoryQuery } from '@/hooks/use-exercise-history';
 import { useExercisePrefs, useExercises } from '@/hooks/use-exercises';
 import { useTheme } from '@/hooks/use-theme';
-import { setTypeDescription } from '@/lib/gym/display-names';
+import { setTypeDescription, setTypeLabel, workoutExerciseName } from '@/lib/gym/display-names';
 import { uuidv4 } from '@/lib/gym/ids';
 import { previousSets } from '@/lib/gym/session';
 import { columnsFor, duplicateSet, newSet, nextSortOrder, removeSegment, sortOrderBetween } from '@/lib/gym/sets';
@@ -23,6 +23,7 @@ import { useAuth } from '@/providers';
 import type { ExerciseHistoryEntry } from '@/services/workouts';
 import { useGymStore } from '@/store/gym-store';
 import type { Exercise, WorkoutExerciseDetail, WorkoutSet } from '@/types/domain';
+import { useLanguage, useT } from '@/i18n';
 
 /**
  * Ejercicio en borrador: tiene la misma forma que uno de la sesión, con ids generados aquí,
@@ -49,6 +50,10 @@ export type WorkoutDraftProps = {
  */
 export function WorkoutDraft({ exercises, onChange, existingCount, onOpenExisting }: WorkoutDraftProps) {
   const theme = useTheme();
+  const tx = useT();
+  const lang = useLanguage();
+  const d = tx.fitness.draft;
+  const w = tx.fitness.workout;
   const router = useRouter();
   const { userId } = useAuth();
   const catalogo = useExercises();
@@ -62,6 +67,7 @@ export function WorkoutDraft({ exercises, onChange, existingCount, onOpenExistin
   const [termino, setTermino] = useState<string | null>(null);
 
   const porId = useMemo(() => new Map((catalogo.data ?? []).map((e) => [e.id, e])), [catalogo.data]);
+  const nombreDe = (e: { name: string; exercise_id?: string | null }) => workoutExerciseName(e.name, e.exercise_id ? porId.get(e.exercise_id) : null, lang);
   const notasFijas = useMemo(() => new Map((prefs.data ?? []).filter((p) => p.sticky_note).map((p) => [p.exercise_id, p.sticky_note as string])), [prefs.data]);
 
   // La vez pasada de cada ejercicio: llena la columna "Anterior" y la primera serie.
@@ -113,7 +119,7 @@ export function WorkoutDraft({ exercises, onChange, existingCount, onOpenExistin
     if (!teclado) return null;
     const ex = ejercicioDe(teclado.draft);
     const numero = (ex?.workout_sets.findIndex((s) => s.id === teclado.draft.id) ?? 0) + 1;
-    return numpadFieldFor(teclado.target, teclado.draft, `${ex?.name ?? 'Serie'} · serie ${numero}`, effortScale, unit);
+    return numpadFieldFor(teclado.target, teclado.draft, w.numpadTitle(ex ? nombreDe(ex) : w.setFallback, numero, null), effortScale, unit, lang);
   })();
 
   const elegir = (elegido: Exercise) => {
@@ -147,15 +153,13 @@ export function WorkoutDraft({ exercises, onChange, existingCount, onOpenExistin
         <View style={styles.header}>
           <Dumbbell size={IconSize.inline} strokeWidth={IconStroke} color={theme.textSecondary} />
           <AppText variant="label" color="textSecondary">
-            Entrenamiento
+            {d.title}
           </AppText>
         </View>
         <AppText variant="caption" color="textTertiary">
-          {existingCount === 0
-            ? 'Esta actividad ya tiene un entrenamiento sin ejercicios.'
-            : `Esta actividad ya tiene un entrenamiento con ${existingCount} ${existingCount === 1 ? 'ejercicio' : 'ejercicios'}.`}
+          {existingCount === 0 ? d.existingEmpty : d.existingWith(existingCount)}
         </AppText>
-        <Button title="Abrir entrenamiento" variant="secondary" onPress={onOpenExisting} />
+        <Button title={d.openExisting} variant="secondary" onPress={onOpenExisting} />
       </View>
     );
   }
@@ -165,11 +169,11 @@ export function WorkoutDraft({ exercises, onChange, existingCount, onOpenExistin
       <View style={styles.header}>
         <Dumbbell size={IconSize.inline} strokeWidth={IconStroke} color={theme.textSecondary} />
         <AppText variant="label" color="textSecondary">
-          Entrenamiento
+          {d.title}
         </AppText>
       </View>
       <AppText variant="caption" color="textTertiary">
-        Planea tu rutina aquí y se guarda con la actividad. Las series que no marques quedan como plan; puedes dejarlo vacío y completarlo después.
+        {d.intro}
       </AppText>
 
       {exercises.map((exercise, i) => {
@@ -227,7 +231,7 @@ export function WorkoutDraft({ exercises, onChange, existingCount, onOpenExistin
       })}
 
       <Button
-        title={exercises.length === 0 ? 'Añadir ejercicio' : 'Añadir otro ejercicio'}
+        title={exercises.length === 0 ? d.addExercise : d.addAnother}
         variant="secondary"
         icon={<Plus size={IconSize.inline} strokeWidth={IconStroke} color={theme.text} />}
         onPress={() => setSelector({ modo: 'agregar' })}
@@ -254,18 +258,18 @@ export function WorkoutDraft({ exercises, onChange, existingCount, onOpenExistin
         }}
       />
 
-      <Sheet visible={menuSerie !== null} onClose={() => setMenuSerie(null)} title="Serie">
+      <Sheet visible={menuSerie !== null} onClose={() => setMenuSerie(null)} title={w.setSheet}>
         {menuSerie ? (
           <>
             <AppText variant="label" color="textSecondary">
-              Tipo de serie
+              {w.setType}
             </AppText>
             <View style={styles.chips}>
               {SET_TYPES.filter((t) => ['warmup', 'working', 'top_set', 'backoff', 'failure', 'amrap'].includes(t.value)).map((t) => (
                 <Chip
                   key={t.value}
                   compact
-                  label={t.label}
+                  label={setTypeLabel(t.value, lang)}
                   selected={menuSerie.set.set_type === t.value}
                   onPress={() => {
                     // La hoja sigue abierta: así se lee qué significa cada tipo antes de cerrar.
@@ -277,11 +281,11 @@ export function WorkoutDraft({ exercises, onChange, existingCount, onOpenExistin
               ))}
             </View>
             <AppText variant="caption" color="textTertiary">
-              {setTypeDescription(menuSerie.set.set_type)}
+              {setTypeDescription(menuSerie.set.set_type, lang)}
             </AppText>
             <ActionRow
               icon={<Copy size={IconSize.action} strokeWidth={IconStroke} color={theme.text} />}
-              label="Duplicar"
+              label={w.duplicate}
               onPress={() => {
                 const sets = menuSerie.exercise.workout_sets;
                 const j = sets.findIndex((s) => s.id === menuSerie.set.id);
@@ -291,7 +295,7 @@ export function WorkoutDraft({ exercises, onChange, existingCount, onOpenExistin
             />
             <ActionRow
               icon={<Trash2 size={IconSize.action} strokeWidth={IconStroke} color={theme.danger} />}
-              label="Borrar serie"
+              label={w.deleteSet}
               color="danger"
               onPress={() => {
                 quitarSerie(menuSerie.set);
@@ -302,12 +306,12 @@ export function WorkoutDraft({ exercises, onChange, existingCount, onOpenExistin
         ) : null}
       </Sheet>
 
-      <Sheet visible={menuEjercicio !== null} onClose={() => setMenuEjercicio(null)} title={menuEjercicio?.name ?? 'Ejercicio'}>
+      <Sheet visible={menuEjercicio !== null} onClose={() => setMenuEjercicio(null)} title={menuEjercicio ? nombreDe(menuEjercicio) : w.exerciseFallback}>
         {menuEjercicio ? (
           <>
             <ActionRow
               icon={<Repeat2 size={IconSize.action} strokeWidth={IconStroke} color={theme.text} />}
-              label="Cambiar ejercicio"
+              label={w.changeExercise}
               onPress={() => {
                 setSelector({ modo: 'cambiar', id: menuEjercicio.id });
                 setMenuEjercicio(null);
@@ -315,7 +319,7 @@ export function WorkoutDraft({ exercises, onChange, existingCount, onOpenExistin
             />
             <ActionRow
               icon={<X size={IconSize.action} strokeWidth={IconStroke} color={theme.danger} />}
-              label="Quitar ejercicio"
+              label={w.removeExercise}
               color="danger"
               onPress={() => {
                 onChange(exercises.filter((e) => e.id !== menuEjercicio.id).map((e, j) => ({ ...e, position: j })));

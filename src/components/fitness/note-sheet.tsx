@@ -48,7 +48,7 @@ function Contenido({ hint, placeholder, initialText, tagOptions, initialTags, ma
           {hint}
         </AppText>
       ) : null}
-      <TextField label="Nota" value={texto} onChangeText={setTexto} placeholder={placeholder} multiline maxLength={maxLength} autoCapitalize="sentences" />
+      <TextField label={h.note} value={texto} onChangeText={setTexto} placeholder={placeholder} multiline maxLength={maxLength} autoCapitalize="sentences" />
       {tagOptions?.length ? (
         <View style={styles.grupo}>
           <AppText variant="label" color="textSecondary">

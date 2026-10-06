@@ -621,7 +621,13 @@ un clic de más para llegar a lo mismo.
     los mensajes de error de los servicios. Los mensajes en español que manda la base (código 22023) y la
     función de correo se traducen en el cliente. Quedan para T196b/c: Fitness, notificaciones, `/privacidad`,
     `/consentimiento` y el correo al adulto.
-  - [ ] T196b Fitness completo: logger, progreso, glosario, catálogo de ejercicios y músculos, humor del gym.
+  - [x] T196b Fitness completo: logger, progreso, glosario, catálogo de ejercicios y músculos, humor del gym.
+    **Hecho (5 oct 2026):** diccionarios `catalog` (músculos, equipo, patrones, grupos), `training` (tipos de
+    serie, intensificadores, agrupaciones, protocolos, equipo de apoyo, etiquetas) y `glossary` (46 términos);
+    nombres del catálogo con `name_en` (`lib/gym/display-names.ts`). El nombre que guarda una sesión se
+    traduce solo si sigue siendo el del catálogo: los de v1 o los cambiados se ven como se escribieron
+    (RF-I4). El humor en inglés vive en `constants/gymrat.ts` con "king/queen". La disponibilidad de datos
+    de salud pasó a ser una clave (`reason`) para que el texto cambie con el idioma.
   - [ ] T196c Aviso de privacidad (referencia), páginas públicas, correo al adulto y textos de notificaciones.
     (RF-I6)
 - [x] T197 Nobi coral, el vigesimoprimero. Imágenes en sus dos variantes reescaladas a

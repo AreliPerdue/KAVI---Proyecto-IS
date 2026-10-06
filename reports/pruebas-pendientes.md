@@ -629,3 +629,19 @@ reiniciar. Suite completa: las mismas 64 pruebas que ya fallaban antes, ninguna 
 - [ ] Teléfono en inglés (Android/iOS): primera apertura en inglés; cambiar a Español en Perfil.
 - [ ] Cambiar de idioma con una hoja abierta y con la app en Fitness (que sigue en español hasta T196b).
 - [ ] Lector de pantalla en inglés: etiquetas de celdas del mes, bloques y botones.
+
+## Idioma: Fitness en inglés (T196b)
+Web en el demo con el navegador en inglés: pestaña Fitness, Actividad, Progreso (calendario, series por músculo,
+logros), sesión en edición con su menú de serie, herramientas, protocolos, intensificadores, detalles y teclado,
+y el glosario, todo en inglés. Los nombres de la sesión demo ("Sentadilla", "Prensa") vienen de v1 escritos a
+mano y se quedan en español, como manda RF-I4. Suite completa: las mismas 64 pruebas que ya fallaban. Falta:
+- [ ] `exerciseName` / `workoutExerciseName`: catálogo con `name_en` → inglés; personalizado o nombre cambiado → tal cual.
+- [ ] `gymratLine` / `gymratLineFor` en inglés con trato rey, reina y neutral; Modo serio sigue sin frases.
+- [ ] `tonnageEquivalence` en inglés (singular y plural) y `streakReasonLabel` en inglés.
+- [ ] `computeAchievements` en inglés: títulos, descripciones y unidades; la realeza sigue el trato.
+- [ ] `parseLegacy` en inglés: cada uno de los siete motivos.
+- [ ] Buscar en el selector de ejercicios y en intensificadores escribiendo en inglés y en español.
+- [ ] Sesión en vivo en el teléfono en inglés: aviso de fin de descanso (título y "Next: …"), frases de PR y drop.
+- [ ] Resumen al terminar y "Compartir" en inglés (texto e imagen).
+- [ ] Datos de salud en Android con el teléfono en inglés: textos de Actividad y "no disponible".
+- [ ] Glosario: buscar "superserie" y "superset" encuentra el mismo término en cada idioma.

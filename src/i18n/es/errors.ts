@@ -60,4 +60,9 @@ export const errors = {
   emailSendFailedLater: 'No se pudo enviar el correo. Inténtalo más tarde.',
   emailSendUnavailable: 'El envío de correos no está disponible. Inténtalo más tarde.',
   emailSendFailedAddress: 'No se pudo enviar el correo. Revisa la dirección e inténtalo de nuevo.',
+  exerciseNameRequired: 'Escribe el nombre del ejercicio.',
+  exerciseNotYours: 'Ese ejercicio no es tuyo o ya no existe.',
+  workoutNotFound: 'Ese entrenamiento ya no existe.',
+  activityHasWorkout: 'Esa actividad ya tiene un entrenamiento registrado.',
+  exerciseNotFound: 'Ese ejercicio ya no existe.',
 };
