@@ -79,7 +79,7 @@ export const privacy: Dictionary['privacy'] = {
         'You can **access** your data, **correct** it, **cancel** it or **object** to its processing (ARCO rights), and **revoke your consent**.',
         {
           list: [
-            `You can do a lot of this directly in the app: edit your profile, delete activities, lists or workouts, disconnect phone activity (Profile → Gym → Health data) and delete your account with all your data (Profile → Delete account). If you no longer have access to the app, we explain how to request it at ${SITE_URL}/eliminar-cuenta.`,
+            `You can do a lot of this directly in the app: edit your profile, delete activities, lists or workouts, disconnect phone activity (Fitness → Settings → Health data) and delete your account with all your data (Profile → Delete account). If you no longer have access to the app, we explain how to request it at ${SITE_URL}/eliminar-cuenta.`,
             `For everything else, write to **${PRIVACY_CONTACT}** with your username, which right you want to exercise and over what data. We’ll answer within the time limits set by law.`,
           ],
         },

@@ -216,9 +216,31 @@ Regla: **la diversión nunca agrega pasos** al registro.
 - RF-F63. El nombre libre se liga al catálogo si la coincidencia es única; si no, se crea un ejercicio
   personalizado con ese nombre. Lo que no se pudo ligar se reporta en el detalle, no se descarta en silencio.
 
-## 10. Ajustes del módulo (Perfil → Fitness, por dispositivo)
+## 10. Ajustes del módulo (Fitness → ⚙ Ajustes, por dispositivo)
 Unidad (kg o lb) · esfuerzo en RPE o RIR · cálculo del peso máximo estimado (Epley o Brzycki) · "Modo serio" ·
-"Cómo te hablo" · % del drop por omisión (−20 %) · descanso por omisión · entrenamientos en el calendario (v1).
+"Cómo te hablo" · % del drop por omisión (−20 %) · descanso por omisión · sonido de los timers · datos de salud
+(spec 11).
+
+- RF-F67. **Los ajustes viven en Fitness, no en Perfil** (feedback del 5 oct 2026: saturaban Perfil). Un ⚙ en
+  el encabezado de Fitness abre "Ajustes de Fitness" con todo lo de arriba; Perfil ya no los muestra. Lo único
+  que se queda en Perfil es "Entrenamientos en el calendario", porque es un ajuste del calendario (RF-F10).
+
+## 10b. Pantalla de Fitness: bento
+
+- RF-F66. **La pestaña Ejercicio arranca con un mosaico (bento)** en vez de una columna de botones, con lo que
+  KAVI ya calcula del historial (nada se guarda aparte):
+  - **Empezar:** la tarjeta más grande. "Entrenamiento libre" o, si hay una sesión abierta, "Sesión en curso"
+    para retomarla.
+  - **Racha de Hierro:** semanas que lleva; abre Progreso. Si la racha está en pausa, la tarjeta que pregunta qué
+    pasó (RF-F58) va arriba del mosaico, a todo lo ancho, porque pide una decisión.
+  - **Esta semana:** sesiones y volumen de la semana (lunes a domingo).
+  - **Músculos de la semana:** los tres grupos con más series efectivas (RF-F60); abre Progreso.
+  - **Logros:** cuántos lleva de cuántos; abre Progreso.
+  - **Glosario:** abre el glosario (RF-F64).
+
+  Debajo siguen la búsqueda de notas y el historial (RF-F7). En celular el mosaico va en 2 columnas; en pantallas
+  anchas, en 4, y desde 1024 px el mosaico y el historial van lado a lado. Cada tarjeta se puede tocar y dice qué
+  abre a quien usa lector de pantalla.
 
 ## 11. Glosario y estimaciones
 
@@ -252,6 +274,10 @@ gimnasio.
 - *Dado* que busco "rdl" o "peso muerto rumano", *cuando* escribo, *entonces* aparece "Peso muerto rumano con barra".
 - *Dado* un ejercicio de v1 con reps "12/10/8" y peso "40kg + cadena", *cuando* se convierte, *entonces* hay tres series de 12, 10 y 8 reps y el texto "40kg + cadena" se sigue viendo tal cual.
 - *Dado* una semana sin entrenos, *cuando* abro Fitness, *entonces* mi racha está en pausa y no en cero, y puedo escribir por qué y elegir si sigue o se reinicia.
+- *Dado* que entrené dos veces esta semana, *cuando* abro Fitness en el celular, *entonces* veo el mosaico con
+  "2 sesiones" y su volumen, mi racha y mis músculos de la semana, y el historial debajo.
+- *Dado* que busco cambiar kg por lb, *cuando* abro Perfil, *entonces* ya no está ahí; *cuando* toco ⚙ en
+  Fitness, *entonces* está en "Ajustes de Fitness".
 - *Dado* "Modo serio" activo, *cuando* logro un PR, *entonces* veo el badge sin animación ni broma.
 - *Dado* una actividad de gym compartida con B, *cuando* B abre el detalle, *entonces* B no ve el entrenamiento de A.
 

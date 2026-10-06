@@ -829,6 +829,13 @@ Plan y decisiones en `docs/gym/AUDITORIA.md`. Cada fase cierra con typecheck, li
   de la serie (ahí están Duplicar y Borrar serie); dos botones de 44 px sacaban de la fila el número. Borrar
   conserva "Deshacer". En el teléfono no cambia: deslizar y el menú del número.
 
+### Feedback del 5 oct 2026 (spec 07, §10 y §10b)
+- [ ] T266 Ajustes de Fitness en Fitness: ⚙ en el encabezado abre "Ajustes de Fitness" (unidad, esfuerzo,
+  fórmula, descanso, drop, sonido, Modo serio, cómo te hablo y datos de salud) y se quitan de Perfil. La ruta
+  que cita el aviso de privacidad cambia (errata, sin subir versión). (RF-F67, RF-H8) Dep: —
+- [ ] T267 Bento en la pestaña Ejercicio: empezar, racha, esta semana, músculos de la semana, logros y
+  glosario; historial debajo; 2 columnas en celular, 4 en ancho y lado a lado desde 1024 px. (RF-F66) Dep: T266
+
 ### Bugs reportados
 - [x] T249 **Una ocurrencia borrada de una serie vuelve a aparecer al recargar.** Reporte (4
   oct 2026): actividad de lunes a viernes con fecha de fin; se borró solo un viernes y al

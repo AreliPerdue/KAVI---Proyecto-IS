@@ -1,4 +1,4 @@
-/** Fitness (spec 07 y 11). La fase 1 trae solo los ajustes de Perfil y los datos de salud; el resto llega con T196b. */
+/** Fitness (spec 07 y 11). */
 export const fitness = {
   settings: {
     title: 'Gimnasio',
@@ -189,7 +189,7 @@ export const fitness = {
     connectTitle: 'Conecta tu actividad',
     connectIntro: (fuente: string) =>
       `KAVI puede mostrar lo que tu teléfono o reloj ya miden (${fuente}), junto a tus entrenamientos. Tú eliges qué compartir:`,
-    privacy: 'Solo se leen en este dispositivo. KAVI no los sube a internet ni los comparte, y puedes desconectarlos cuando quieras desde Perfil.',
+    privacy: 'Solo se leen en este dispositivo. KAVI no los sube a internet ni los comparte, y puedes desconectarlos cuando quieras desde los ajustes de Fitness (⚙).',
     connect: 'Conectar',
     workoutFallback: 'Entrenamiento',
     today: 'Hoy',
@@ -200,7 +200,7 @@ export const fitness = {
     activeKcalLabel: 'Calorías activas (kcal)',
     noPermission: 'Sin permiso',
     otherApps: 'Entrenamientos de otras apps',
-    noSessionsPermission: 'Sin permiso para leerlos. Puedes darlo desde Perfil → Datos de salud.',
+    noSessionsPermission: 'Sin permiso para leerlos. Puedes darlo desde los ajustes de Fitness (⚙) → Datos de salud.',
     noneInDays: (n: number) => `Ninguno en los últimos ${n} días.`,
     kcalSuffix: (k: string) => ` · ${k} kcal activas`,
     isYours: (n: string) => `Es tu sesión «${n}» de KAVI: se cuenta una sola vez.`,
@@ -274,7 +274,7 @@ export const fitness = {
     achievementA11y: (titulo: string, progreso: string | null, desc: string) =>
       `${titulo}, ${progreso === null ? 'desbloqueado' : `bloqueado, ${progreso}`}. ${desc}`,
   },
-  /** Logros (RF-F57). La realeza sigue el trato elegido en Perfil. */
+  /** Logros (RF-F57). La realeza sigue el trato elegido en los ajustes de Fitness. */
   achievements: {
     royalty: { rey: 'Rey', reina: 'Reina', neutral: 'Realeza' } as Record<'rey' | 'reina' | 'neutral', string>,
     dropRoyalty: (realeza: string) => `${realeza} del Drop Set`,

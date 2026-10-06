@@ -38,7 +38,7 @@ presenta como medición si es un cálculo (RF-F65).
   sesiones propias a partir de datos externos en esta versión.
 - **RF-H7. Lo de otras apps se ve, no se edita.** Las sesiones externas aparecen en Actividad con su fuente
   y se pueden abrir para ver detalle, pero no se convierten en sesiones de KAVI.
-- **RF-H8. Desconectar.** En Perfil → Gimnasio, "Datos de salud" muestra qué está conectado, lleva a los
+- **RF-H8. Desconectar.** En Fitness → ⚙ Ajustes (RF-F67 de la spec 07), "Datos de salud" muestra qué está conectado, lleva a los
   ajustes de la plataforma para quitar permisos y borra lo que KAVI tenga guardado en el dispositivo.
 
 ## 3. Privacidad y almacenamiento (decisión S4: solo en el dispositivo)

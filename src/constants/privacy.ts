@@ -85,7 +85,7 @@ export const PRIVACY_SECTIONS: readonly PrivacySection[] = [
       'Puedes **acceder** a tus datos, **rectificarlos**, **cancelarlos** u **oponerte** a su tratamiento (derechos ARCO), y **revocar tu consentimiento**.',
       {
         list: [
-          `Mucho lo puedes hacer directo en la app: editar tu perfil, borrar actividades, listas o entrenamientos, desconectar la actividad del teléfono (Perfil → Gimnasio → Datos de salud) y eliminar tu cuenta con todos tus datos (Perfil → Eliminar cuenta). Si ya no tienes acceso a la app, en ${SITE_URL}/eliminar-cuenta explicamos cómo pedirlo.`,
+          `Mucho lo puedes hacer directo en la app: editar tu perfil, borrar actividades, listas o entrenamientos, desconectar la actividad del teléfono (Fitness → Ajustes → Datos de salud) y eliminar tu cuenta con todos tus datos (Perfil → Eliminar cuenta). Si ya no tienes acceso a la app, en ${SITE_URL}/eliminar-cuenta explicamos cómo pedirlo.`,
           `Para todo lo demás, escribe a **${PRIVACY_CONTACT}** con tu nombre de usuario, qué derecho quieres ejercer y sobre qué datos. Te responderemos en los plazos que marca la ley.`,
         ],
       },
