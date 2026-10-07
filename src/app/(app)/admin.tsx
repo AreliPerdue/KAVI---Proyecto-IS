@@ -93,7 +93,7 @@ export default function AdminScreen() {
 
   const header = (
     <View style={styles.header}>
-      {stats.isPending ? <LoadingState label="Cargando estadísticas…" /> : null}
+      {stats.isPending ? <LoadingState label={tx.profile.adminPanel.loadingStats} /> : null}
       {stats.isError ? <ErrorState message={stats.error.message} onRetry={() => stats.refetch()} /> : null}
       {stats.data ? (
         <View style={styles.grid}>
@@ -108,7 +108,7 @@ export default function AdminScreen() {
           Quién está registrado. No incluye el contenido de sus calendarios.
         </AppText>
       </View>
-      {accounts.isPending ? <LoadingState label="Cargando cuentas…" /> : null}
+      {accounts.isPending ? <LoadingState label={tx.profile.adminPanel.loadingAccounts} /> : null}
       {accounts.isError ? (
         <ErrorState message={accounts.error.message} onRetry={() => accounts.refetch()} />
       ) : null}

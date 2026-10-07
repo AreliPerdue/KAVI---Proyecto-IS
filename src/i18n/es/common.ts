@@ -1,5 +1,6 @@
 /** Textos compartidos por toda la interfaz (spec 12). */
 export const common = {
+  choose: 'Elegir',
   cancel: 'Cancelar',
   confirm: 'Confirmar',
   close: 'Cerrar',

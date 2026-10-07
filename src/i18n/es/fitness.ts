@@ -434,6 +434,8 @@ export const fitness = {
     freeNow: 'Entrenamiento libre (ahora)',
   },
   sheets: {
+    minusStep: (n: number) => `Restar ${n}`,
+    plusStep: (n: number) => `Sumar ${n}`,
     unusual: {
       warmupIntensifier: '¿Calentamiento con intensificador o al fallo? Revisa el tipo de serie.',
       slowAndDynamic: 'Superlento y esfuerzo dinámico van en sentidos opuestos.',

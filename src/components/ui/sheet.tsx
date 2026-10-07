@@ -64,7 +64,7 @@ export function Sheet({ visible, onClose, title, children, maxHeightRatio = 0.85
     <Modal visible={visible} transparent animationType={centered ? 'fade' : 'slide'} onRequestClose={onClose}>
       {/* En Android un Modal queda fuera de la raíz de gestos: sin esto, arrastrar no responde. */}
       <GestureHandlerRootView style={[styles.root, centered ? styles.rootCentered : null]}>
-        <Pressable accessibilityRole="button" accessibilityLabel="Cerrar" onPress={onClose} style={[StyleSheet.absoluteFill, { backgroundColor: theme.overlay }]} />
+        <Pressable accessibilityRole="button" accessibilityLabel={tx.common.close} onPress={onClose} style={[StyleSheet.absoluteFill, { backgroundColor: theme.overlay }]} />
         <View
           style={[
             styles.panel,

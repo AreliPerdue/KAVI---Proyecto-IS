@@ -299,9 +299,9 @@ descartar, lectura). Falta:
   sin sesiones borradas ni descartadas; ordenado por fecha de la sesión. → `services/demo/__tests__/workouts-v2.test.ts, services/supabase/__tests__/workouts-v2.test.ts`
 - [x] `gym-store`: el descanso se calcula desde `endsAt`; ±15 s reprograma el aviso; uno
   terminado mientras la app estaba cerrada no aparece al hidratar. → `store/__tests__/gym-store.test.ts`
-- [ ] `RestTimerBar`: al llegar a 0 avisa y se va solo a los 8 s.
-- [ ] `NumpadSheet`: la primera tecla reemplaza y las siguientes agregan (bug encontrado a
-  mano: 1-0-0 daba 0); modo contador; "Siguiente" peso → reps → esfuerzo.
+- [x] `RestTimerBar`: al llegar a 0 avisa y se va solo a los 8 s. → `components/fitness/__tests__/timers.test.tsx`
+- [x] `NumpadSheet`: la primera tecla reemplaza y las siguientes agregan (bug encontrado a
+  mano: 1-0-0 daba 0); modo contador; "Siguiente" peso → reps → esfuerzo. → `components/fitness/__tests__/numpad-sheet.test.tsx`
 - [ ] `ExerciseBlock`: columnas I/D en unilaterales y aviso de desbalance; etiqueta C/F/T…
   por tipo; el calentamiento no cuenta en la numeración.
 - [ ] Detalle del ejercicio: mejor serie, peso máximo, gráficas con 1 y con 2+ sesiones.
@@ -335,8 +335,8 @@ timer corriendo. Falta:
 - [x] `createGroup` / `removeGroup` en los dos backends: posiciones contiguas en el lugar del
   primero, `group_position` en orden, desagrupar conserva las series. → `services/demo/__tests__/workouts-v2.test.ts`
 - [ ] Descanso en grupos: solo al terminar el último del grupo y con `rest_after_round_sec`.
-- [ ] `IntervalTimerSheet`: fases trabajo/descanso, rondas, fin; calcula desde el inicio.
-- [ ] `SetDetailsSheet`: lb ↔ kg en lastre/asistencia/cadenas; vacío no guarda `load_mods`.
+- [x] `IntervalTimerSheet`: fases trabajo/descanso, rondas, fin; calcula desde el inicio. → `components/fitness/__tests__/timers.test.tsx`
+- [x] `SetDetailsSheet`: lb ↔ kg en lastre/asistencia/cadenas; vacío no guarda `load_mods`. → `components/fitness/__tests__/sheets.test.tsx`
 
 ## Fitness v2 · G6 notas (T246)
 Probado a mano en el demo: energía 4, pump 3 y dos etiquetas en una sesión en curso; nota fija
@@ -350,8 +350,8 @@ término sin coincidencias muestra el vacío. Falta:
   pisan.
 - [ ] `saveStickyNote`: optimista en las preferencias; vacío guarda `null`; solo para
   ejercicios del catálogo.
-- [ ] `NoteSheet`: guarda texto recortado (vacío → `null`) y etiquetas; cerrar sin guardar
-  descarta.
+- [x] `NoteSheet`: guarda texto recortado (vacío → `null`) y etiquetas; cerrar sin guardar
+  descarta. → `components/fitness/__tests__/sheets.test.tsx`
 - [x] `Chip` seleccionado sin color usa `onInk` (antes: blanco sobre tinta clara en oscuro). → `components/ui/__tests__/chip.test.tsx`
 
 ## Fitness v2 · G7 Modo Gymrat (T247)
@@ -381,9 +381,9 @@ imagen y, sin hoja de compartir del navegador, la descarga (`kavi-2026-10-21.png
 - [x] **Antes de correr Jest:** mocks de `expo-haptics`, `expo-audio`, `expo-sharing` y
   `react-native-view-shot` en `jest.setup.js`.
 - [x] `playSound`: crea un reproductor por sonido una sola vez; un error de audio no rompe. → `lib/__tests__/sounds-and-share.test.ts`
-- [ ] `RestTimerBar`: pita en 3, 2 y 1; al terminar suena y vibra solo si terminó hace menos
-  de 3 s (abrir la app con un descanso viejo no suena); sin sonido si `timerSound` es falso.
-- [ ] `IntervalTimerSheet`: pitido por fase y aviso distinto al final.
+- [x] `RestTimerBar`: pita en 3, 2 y 1; al terminar suena y vibra solo si terminó hace menos
+  de 3 s (abrir la app con un descanso viejo no suena); sin sonido si `timerSound` es falso. → `components/fitness/__tests__/timers.test.tsx`
+- [x] `IntervalTimerSheet`: pitido por fase y aviso distinto al final. → `components/fitness/__tests__/timers.test.tsx`
 - [x] `shareImage`: nativo con `expo-sharing`; web con `navigator.share` de archivos o
   descarga; `SessionSummarySheet` cae a texto si la captura falla. → `lib/__tests__/sounds-and-share.test.ts`
 - [x] `Chip`: `accessibilityLabel` opcional y área táctil de 44 con `hitSlop`. → `components/ui/__tests__/chip.test.tsx`

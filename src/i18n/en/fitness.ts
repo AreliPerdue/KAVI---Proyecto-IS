@@ -431,6 +431,8 @@ export const fitness: Dictionary['fitness'] = {
     freeNow: 'Free workout (now)',
   },
   sheets: {
+    minusStep: (n) => `Subtract ${n}`,
+    plusStep: (n) => `Add ${n}`,
     unusual: {
       warmupIntensifier: 'A warm-up with an intensifier or to failure? Check the set type.',
       slowAndDynamic: 'Super slow and dynamic effort pull in opposite directions.',

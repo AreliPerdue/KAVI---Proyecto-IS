@@ -1,6 +1,7 @@
 import type { Dictionary } from '../types';
 
 export const common: Dictionary['common'] = {
+  choose: 'Choose',
   cancel: 'Cancel',
   confirm: 'Confirm',
   close: 'Close',

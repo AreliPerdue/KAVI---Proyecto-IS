@@ -77,6 +77,8 @@ export const profile = {
   confirmNewPassword: 'Confirmar contraseña nueva',
   updatePassword: 'Actualizar contraseña',
   adminPanel: {
+    loadingStats: 'Cargando estadísticas…',
+    loadingAccounts: 'Cargando cuentas…',
     title: 'Administración',
     unavailableTitle: 'Esta sección no está disponible',
     unavailableDescription: 'Tu cuenta no administra KAVI.',

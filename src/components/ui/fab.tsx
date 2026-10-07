@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { IconSize, IconStroke, MinTouchTarget, Motion, Radius, Shadow, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { useT } from '@/i18n';
 
 const SIZE = 56;
 
@@ -21,7 +22,7 @@ const SHRUNK_SCALE = MinTouchTarget / SIZE;
 /** Botón flotante "+" siempre visible (RF-C5), sobre safe area y tab bar. */
 export function Fab({
   onPress,
-  label = 'Nueva actividad',
+  label,
   shrunk = false,
 }: {
   onPress: () => void;
@@ -30,6 +31,8 @@ export function Fab({
   shrunk?: boolean;
 }) {
   const theme = useTheme();
+  const tx = useT();
+  const etiqueta = label ?? tx.calendar.form.newActivity;
   const insets = useSafeAreaInsets();
   const bottom = Platform.OS === 'web' ? Spacing.xl : insets.bottom + Spacing.lg;
 
@@ -49,7 +52,7 @@ export function Fab({
     <Animated.View style={[styles.capa, { bottom }, animado]}>
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel={label}
+        accessibilityLabel={etiqueta}
         onPress={onPress}
         style={({ pressed }) => [
           styles.fab,

@@ -5,12 +5,13 @@ import { AppText } from './app-text';
 
 import { MinTouchTarget, Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { useT } from '@/i18n';
 
 /** Campo de formulario que abre un selector (fecha, hora, tema…). */
 export function FieldButton({
   label,
   value,
-  placeholder = 'Elegir',
+  placeholder,
   onPress,
   leading,
   error,
@@ -25,6 +26,8 @@ export function FieldButton({
   disabled?: boolean;
 }) {
   const theme = useTheme();
+  const tx = useT();
+  const vacio = placeholder ?? tx.common.choose;
   return (
     <View style={styles.container}>
       <AppText variant="label" color="textSecondary" numberOfLines={1}>
@@ -32,7 +35,7 @@ export function FieldButton({
       </AppText>
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel={`${label}: ${value ?? placeholder}`}
+        accessibilityLabel={`${label}: ${value ?? vacio}`}
         accessibilityState={{ disabled: !!disabled }}
         disabled={disabled}
         onPress={onPress}
@@ -44,7 +47,7 @@ export function FieldButton({
         ]}>
         {leading}
         <AppText color={value ? 'text' : 'textTertiary'} style={styles.value} numberOfLines={1}>
-          {value ?? placeholder}
+          {value ?? vacio}
         </AppText>
       </Pressable>
       {error ? (

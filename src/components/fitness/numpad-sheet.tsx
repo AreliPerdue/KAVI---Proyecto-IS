@@ -112,7 +112,7 @@ function Teclado({ field, onChange, onClose, onNext }: Omit<NumpadSheetProps, 'v
   return (
     <>
       <View style={[styles.pantalla, { backgroundColor: theme.surfaceAlt }]}>
-        <Pressable accessibilityRole="button" accessibilityLabel={`Restar ${field.step}`} onPress={() => sumar(-field.step)} style={styles.paso} hitSlop={8}>
+        <Pressable accessibilityRole="button" accessibilityLabel={h.minusStep(field.step)} onPress={() => sumar(-field.step)} style={styles.paso} hitSlop={8}>
           <Minus size={IconSize.action} strokeWidth={IconStroke} color={theme.text} />
         </Pressable>
         <View style={styles.valor} accessibilityLiveRegion="polite">
@@ -125,7 +125,7 @@ function Teclado({ field, onChange, onClose, onNext }: Omit<NumpadSheetProps, 'v
             </AppText>
           ) : null}
         </View>
-        <Pressable accessibilityRole="button" accessibilityLabel={`Sumar ${field.step}`} onPress={() => sumar(field.step)} style={styles.paso} hitSlop={8}>
+        <Pressable accessibilityRole="button" accessibilityLabel={h.plusStep(field.step)} onPress={() => sumar(field.step)} style={styles.paso} hitSlop={8}>
           <Plus size={IconSize.action} strokeWidth={IconStroke} color={theme.text} />
         </Pressable>
       </View>

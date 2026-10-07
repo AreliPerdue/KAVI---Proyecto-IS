@@ -78,6 +78,8 @@ export const profile: Dictionary['profile'] = {
   confirmNewPassword: 'Confirm new password',
   updatePassword: 'Update password',
   adminPanel: {
+    loadingStats: 'Loading stats…',
+    loadingAccounts: 'Loading accounts…',
     title: 'Admin',
     unavailableTitle: 'This section isn’t available',
     unavailableDescription: 'Your account doesn’t manage KAVI.',
