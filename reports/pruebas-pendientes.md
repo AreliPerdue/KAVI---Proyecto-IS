@@ -360,15 +360,15 @@ semana del 5 oct, "Viaje" + nota + "Mi racha sigue" → 2 semanas; trato "Reina"
 100 kg × 5 en banca → resumen con "Listo, mi reina…", equivalencia, músculos y logro Club 100 kg;
 Progreso con racha, semana justificada en el calendario, series por músculo y logros; otra
 sesión con 105 kg → badge de PR y "Nuevo récord. Así se gobierna, mi reina." Falta:
-- [ ] `computeStreak`: semana actual vacía no rompe; hueco sin decidir pausa y congela; "sigue"
+- [x] `computeStreak`: semana actual vacía no rompe; hueco sin decidir pausa y congela; "sigue"
   no suma ni rompe; "reiniciar" pone en cero; huecos antes de `STREAK_SINCE` reinician sin
-  preguntar; mejor racha. (Siete casos ya revisados a mano en Node.)
-- [ ] `computeAchievements` / `unlockedBy`: cada meta, warmups y series sin marcar no cuentan,
+  preguntar; mejor racha. (Siete casos ya revisados a mano en Node.) → `lib/gym/__tests__/progress.test.ts`
+- [x] `computeAchievements` / `unlockedBy`: cada meta, warmups y series sin marcar no cuentan,
   clubes solo con barra y reps ≥ 1, el nombre del drop sigue el trato, la racha no se atribuye
-  a una sesión.
-- [ ] `setsByGroup`: primario 1, secundario ½, sin doble conteo; `isLegDay` con 6 series.
-- [ ] `gymratLine`: nunca la misma frase dos veces seguidas; `null` en Modo serio; `{voc}` por
-  trato. `tonnageEquivalence`: rango 2–30, semilla estable, nada bajo 140 kg.
+  a una sesión. → `lib/gym/__tests__/progress.test.ts`
+- [x] `setsByGroup`: primario 1, secundario ½, sin doble conteo; `isLegDay` con 6 series. → `lib/gym/__tests__/progress.test.ts`
+- [x] `gymratLine`: nunca la misma frase dos veces seguidas; `null` en Modo serio; `{voc}` por
+  trato. `tonnageEquivalence`: rango 2–30, semilla estable, nada bajo 140 kg. → `constants/__tests__/gymrat.test.ts`
 - [ ] `trainingLog` y `saveStreakEvents` en los dos backends (solo `completed`, sin borradas;
   upsert por semana).
 - [ ] Modo serio: sin snackbars de humor, sin animación del badge, sin equivalencia ni frase
@@ -476,8 +476,8 @@ Probado a mano en el demo (360 px): enlace al glosario en Fitness; pantalla con 
 buscar "rir" despliega Reps en reserva; tocar "RIR" en el logger abre su explicación con
 "Ver todo el glosario"; el detalle del ejercicio muestra "≈ 101.3 kg máximo estimado" y abre
 su explicación. Falta:
-- [ ] `glossary.ts`: ids únicos; cada entrada con significado, ejemplo y "en pocas palabras";
-  todo `topic` existe en `GLOSSARY_TOPICS`.
+- [x] `glossary.ts`: ids únicos; cada entrada con significado, ejemplo y "en pocas palabras";
+  todo `topic` existe en `GLOSSARY_TOPICS`. → `i18n/__tests__/i18n.test.ts`
 - [ ] Pantalla Glosario: búsqueda sin acentos (por término, otros nombres y texto); `?term=`
   abre desplegado; vacío con "Ningún término dice eso."
 - [ ] RF-F65: ningún valor calculado sin "≈"/"estimado" (detalle, gráfica, herramientas).
@@ -488,8 +488,8 @@ se lee y la nota de privacidad; "Conectar" da totales de hoy con su fuente, paso
 entrenamientos de otras apps (14 días); el del reloj que coincide con "Pierna" dice "Es tu
 sesión «Pierna» de KAVI" y en el historial la sesión muestra "214 kcal activas · Reloj";
 Perfil → Datos de salud → Desconectar vuelve al estado sin conectar. Falta:
-- [ ] `matchSessions`/`overlapRatio`/`kaviSpan`: traslape ≥ 50 % de la más corta; cada externa con
-  una sola sesión de KAVI (la de mayor traslape); sin hora de fin usa la duración o 1 h.
+- [x] `matchSessions`/`overlapRatio`/`kaviSpan`: traslape ≥ 50 % de la más corta; cada externa con
+  una sola sesión de KAVI (la de mayor traslape); sin hora de fin usa la duración o 1 h. → `lib/health/__tests__/match.test.ts`
 - [ ] `platform.web.ts` → estado "web" con su mensaje; `platform.ts` → "unsupported".
 - [ ] Demo: permisos parciales (solo pasos) dejan las otras cifras en "Sin permiso", nunca en 0.
 - [ ] Desconectar borra totales y sesiones de la caché y vuelve a "Conecta tu actividad".
@@ -518,9 +518,9 @@ cuenta). Visto en el demo (360 px): cuenta nueva → "Antes de empezar"; 15 año
 "Corregir la fecha"; 17 años → correo propio rechazado ("no el tuyo"); correo del adulto →
 espera; "Abrir el enlace del correo" → `/consentimiento` → "Apruebo" → "Volver a KAVI" abre el
 calendario. `/privacidad` y un enlace inválido se abren sin sesión. Falta:
-- [ ] `edadEn`: cumpleaños hoy, ayer y mañana; 29 de febrero.
-- [ ] `consentGate`: sin fecha o con otra versión → aceptar; < 16 → menor; 16–17 sin aprobación
-  → adulto; 16–17 con alguna aprobación → listo; ≥ 18 → listo.
+- [x] `edadEn`: cumpleaños hoy, ayer y mañana; 29 de febrero. → `lib/__tests__/consent.test.ts`
+- [x] `consentGate`: sin fecha o con otra versión → aceptar; < 16 → menor; 16–17 sin aprobación
+  → adulto; 16–17 con alguna aprobación → listo; ≥ 18 → listo. → `lib/__tests__/consent.test.ts`
 - [ ] `useConsentGate`: sin red y con la versión recordada abre la app; sin red y sin recordar
   muestra el error con "Reintentar"; con red siempre manda el servidor.
 - [ ] Menor de 16 → "Es correcta: eliminar mi cuenta" borra la cuenta y vuelve a login.
@@ -539,9 +539,9 @@ calendario. `/privacidad` y un enlace inválido se abren sin sesión. Falta:
 Visto en el demo: 360×560 (un chip por día y "+N" junto al número, alineado a la derecha),
 360×480 (antes vacío, ahora puntos), 1280×520 (chip con hora y "+N" en la esquina izquierda) y
 390×844 (igual que antes: dos chips y fila de puntos). Falta:
-- [ ] `cellLayout`: todo cabe → todos sin "+N"; desborde con sitio → chips + fila; sin sitio
-  para la fila → 1 chip + "header"; `slots` 0 → nada.
-- [ ] Nunca hay más chips que actividades menos una cuando hay "+N" (el "+N" nunca dice +0).
+- [x] `cellLayout`: todo cabe → todos sin "+N"; desborde con sitio → chips + fila; sin sitio
+  para la fila → 1 chip + "header"; `slots` 0 → nada. → `components/calendar/__tests__/cell-math.test.ts`
+- [x] Nunca hay más chips que actividades menos una cuando hay "+N" (el "+N" nunca dice +0). → `components/calendar/__tests__/cell-math.test.ts`
 - [ ] Texto grande del sistema (escala 1.5) en teléfono: el "+N" no se encima al número.
 - [ ] iOS y Android nativos en vertical y acostado.
 
@@ -556,9 +556,9 @@ Web en el demo (360 px): la barra superior sigue con los 4 módulos (RF-N5). And
 (demo): barra por omisión con el 2 en Compartido; Más; Perfil apilado y "Atrás"; tercer lugar →
 Perfil sin salir de Más; intercambio; Compartido fuera → el 2 pasa a Más; "+ Contactos" abre
 Compartido apilado; Fitness en la barra sin flecha. Falta:
-- [ ] `elegirAcceso`: poner en un lugar el módulo del otro los intercambia; nunca repite.
-- [ ] `accesosValidos`: guardado inválido (repetidos, módulo que no existe, largo ≠ 2) → omisión.
-- [ ] `moduleHref`: web → `(tabs)/<id>`; en la barra → `acceso-1/2`; fuera → `modulo/[id]`.
+- [x] `elegirAcceso`: poner en un lugar el módulo del otro los intercambia; nunca repite. → `constants/__tests__/modules.test.ts`
+- [x] `accesosValidos`: guardado inválido (repetidos, módulo que no existe, largo ≠ 2) → omisión. → `constants/__tests__/modules.test.ts`
+- [x] `moduleHref`: web → `(tabs)/<id>`; en la barra → `acceso-1/2`; fuera → `modulo/[id]`. → `constants/__tests__/modules.test.ts`
 - [ ] Teléfono: barra por omisión Calendario · Compartido · Fitness · Más; Perfil desde Más con
   "Atrás"; cambiar el tercer lugar a Perfil cambia etiqueta, icono y pantalla sin reiniciar la
   navegación ni sacarte de Más.
@@ -579,16 +579,16 @@ sesión y volver a entrar. Falta:
 - [ ] Listas en la barra → Archivadas muestra "Atrás" y vuelve a las listas activas.
 - [ ] Listas fuera de la barra → desde Más o desde ○✓ se abre apilada con "Atrás".
 - [ ] Web: ○✓ sigue abriendo `/lists` (no es pestaña en web, RF-N5).
-- [ ] `moduleHref('lists', …)`: en la barra → `acceso-N`; fuera o en web → `/(app)/lists`.
+- [x] `moduleHref('lists', …)`: en la barra → `acceso-N`; fuera o en web → `/(app)/lists`. → `constants/__tests__/modules.test.ts`
 
 ## Barra de personas con muchos contactos (T203)
 Web en el demo (390 px) con el tope bajado a 1 a mano: "Tú · Ana · ··· · + Contactos"; la hoja lista
 a Ana y Pedro de la A a la Z; "PEDRO" encuentra a Pedro; "zz" → "Nadie se llama así."; superponer a
 Pedro desde la hoja lo sube a la barra. Falta:
-- [ ] `personasEnBarra`: recientes primero (más nuevo antes), luego A–Z; tope 20; un superpuesto
-  fuera del tope se agrega; `hayMas` solo si hay más que el tope.
-- [ ] `buscarPersonas`: sin acentos ni mayúsculas, con o sin "@", por nombre o usuario.
-- [ ] `marcarSuperpuesto`: guarda la fecha al superponer (no al quitar) y conserva solo 100.
+- [x] `personasEnBarra`: recientes primero (más nuevo antes), luego A–Z; tope 20; un superpuesto
+  fuera del tope se agrega; `hayMas` solo si hay más que el tope. → `lib/__tests__/people-bar.test.ts`
+- [x] `buscarPersonas`: sin acentos ni mayúsculas, con o sin "@", por nombre o usuario. → `lib/__tests__/people-bar.test.ts`
+- [x] `marcarSuperpuesto`: guarda la fecha al superponer (no al quitar) y conserva solo 100. → `lib/__tests__/people-bar.test.ts`
 - [ ] Con 25+ contactos reales en Supabase: la barra muestra 20 y el orden sobrevive a cerrar la app.
 
 ## Duplicar y borrar series en web (T265)
@@ -602,7 +602,7 @@ menú trae Duplicar y Borrar serie. Falta:
 ## Bloques de la semana en el teléfono (T190b)
 Web en el demo a 390 px, antes y después lado a lado: los títulos se leen completos en bloques altos.
 Falta:
-- [ ] `compactTitleLines`: 1 línea mínima; un bloque de 2 h a 48 px/h → varias líneas.
+- [x] `compactTitleLines`: 1 línea mínima; un bloque de 2 h a 48 px/h → varias líneas. → `components/calendar/__tests__/cell-math.test.ts`
 - [ ] Android/iOS nativos: la semana con texto grande del sistema no se encima.
 
 ## Health Connect en Android (T261)
@@ -622,10 +622,10 @@ Web en el demo: con el navegador en inglés, el inicio de sesión abre en inglé
 ("October 2026", "Today", "M T W…", horas en 12 h "7:30 AM"), Compartido, Perfil, Listas y detalle de lista en
 inglés; los datos de la persona se quedan como se escribieron. Desde Perfil, "English" cambia todo sin
 reiniciar. Suite completa: las mismas 64 pruebas que ya fallaban antes, ninguna nueva. Falta:
-- [ ] `formatRange`, `formatDayTitle`, `formatShortDate`, `formatDate` en inglés (incluye cruce de mes).
-- [ ] `timeFormatFor`: sin elegir → 12 h en inglés y 24 h en español; un "12h" guardado antes cuenta como elegido.
-- [ ] `themeName`: tema del sistema intacto → traducido; renombrado → como lo escribió la persona.
-- [ ] `traducirDeLaBase`: un mensaje 22023 conocido sale en el idioma activo; uno desconocido, tal cual.
+- [x] `formatRange`, `formatDayTitle`, `formatShortDate`, `formatDate` en inglés (incluye cruce de mes). → `i18n/__tests__/i18n.test.ts`
+- [x] `timeFormatFor`: sin elegir → 12 h en inglés y 24 h en español; un "12h" guardado antes cuenta como elegido. → `i18n/__tests__/i18n.test.ts`
+- [x] `themeName`: tema del sistema intacto → traducido; renombrado → como lo escribió la persona. → `i18n/__tests__/i18n.test.ts`
+- [x] `traducirDeLaBase`: un mensaje 22023 conocido sale en el idioma activo; uno desconocido, tal cual. → `i18n/__tests__/i18n.test.ts`
 - [ ] Teléfono en inglés (Android/iOS): primera apertura en inglés; cambiar a Español en Perfil.
 - [ ] Cambiar de idioma con una hoja abierta y con la app en Fitness (que sigue en español hasta T196b).
 - [ ] Lector de pantalla en inglés: etiquetas de celdas del mes, bloques y botones.
@@ -635,16 +635,16 @@ Web en el demo con el navegador en inglés: pestaña Fitness, Actividad, Progres
 logros), sesión en edición con su menú de serie, herramientas, protocolos, intensificadores, detalles y teclado,
 y el glosario, todo en inglés. Los nombres de la sesión demo ("Sentadilla", "Prensa") vienen de v1 escritos a
 mano y se quedan en español, como manda RF-I4. Suite completa: las mismas 64 pruebas que ya fallaban. Falta:
-- [ ] `exerciseName` / `workoutExerciseName`: catálogo con `name_en` → inglés; personalizado o nombre cambiado → tal cual.
-- [ ] `gymratLine` / `gymratLineFor` en inglés con trato rey, reina y neutral; Modo serio sigue sin frases.
-- [ ] `tonnageEquivalence` en inglés (singular y plural) y `streakReasonLabel` en inglés.
-- [ ] `computeAchievements` en inglés: títulos, descripciones y unidades; la realeza sigue el trato.
-- [ ] `parseLegacy` en inglés: cada uno de los siete motivos.
+- [x] `exerciseName` / `workoutExerciseName`: catálogo con `name_en` → inglés; personalizado o nombre cambiado → tal cual. → `i18n/__tests__/i18n.test.ts`
+- [x] `gymratLine` / `gymratLineFor` en inglés con trato rey, reina y neutral; Modo serio sigue sin frases. → `constants/__tests__/gymrat.test.ts`
+- [x] `tonnageEquivalence` en inglés (singular y plural) y `streakReasonLabel` en inglés. → `constants/__tests__/gymrat.test.ts`
+- [x] `computeAchievements` en inglés: títulos, descripciones y unidades; la realeza sigue el trato. → `lib/gym/__tests__/progress.test.ts`
+- [x] `parseLegacy` en inglés: cada uno de los siete motivos. → `lib/gym/__tests__/legacy.test.ts`
 - [ ] Buscar en el selector de ejercicios y en intensificadores escribiendo en inglés y en español.
 - [ ] Sesión en vivo en el teléfono en inglés: aviso de fin de descanso (título y "Next: …"), frases de PR y drop.
 - [ ] Resumen al terminar y "Compartir" en inglés (texto e imagen).
 - [ ] Datos de salud en Android con el teléfono en inglés: textos de Actividad y "no disponible".
-- [ ] Glosario: buscar "superserie" y "superset" encuentra el mismo término en cada idioma.
+- [x] Glosario: buscar "superserie" y "superset" encuentra el mismo término en cada idioma. → `i18n/__tests__/i18n.test.ts`
 
 ## Idioma: aviso, consentimiento, correo y notificaciones (T196c)
 Web en el demo: `/privacidad?lang=en` sale en inglés con el aviso de "traducción de referencia" y el botón cambia
@@ -662,8 +662,8 @@ negritas y los dos enlaces con `lang` correctos. Suite completa: las mismas 64 p
 Web en el demo a 390, 800 y 1280 px: el ⚙ abre "Ajustes de Fitness" con Registro, Humor y trato y Actividad;
 Perfil ya no los muestra. El mosaico sale en 2 columnas, en 4 y lado a lado con el historial; buscar notas no
 pierde el foco. Falta:
-- [ ] `weekSummary`: sesiones y volumen solo de lunes a domingo de esta semana; calentamiento fuera; grupos
-  ordenados de más a menos, con medias series del músculo secundario.
+- [x] `weekSummary`: sesiones y volumen solo de lunes a domingo de esta semana; calentamiento fuera; grupos
+  ordenados de más a menos, con medias series del músculo secundario. → `lib/gym/__tests__/progress.test.ts`
 - [x] Bento con datos de esta semana (sesión con series hechas): "1 sesión", volumen y los tres músculos. (`fitness.test.tsx`)
 - [x] Sesión en curso: la tarjeta grande dice "Sesión en curso" y la retoma. (`fitness.test.tsx`)
 - [ ] Racha en pausa: la tarjeta de decisión va arriba del mosaico y desaparece al decidir.

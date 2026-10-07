@@ -113,3 +113,24 @@ describe('legacySetsFor', () => {
     expect(b.map((s) => s.segments[0].id)).toEqual(a.map((s) => s.segments[0].id));
   });
 });
+
+/**
+ * Los motivos de "no se pudo convertir sin adivinar" se leen en la sesión: van en el idioma de la
+ * app (spec 12, T196b). Uno por cada regla.
+ */
+describe('motivos en los dos idiomas', () => {
+  const casos: { nombre: string; entrada: LegacyInput; es: RegExp; en: RegExp }[] = [
+    { nombre: 'series contra lista de reps', entrada: ej({ sets: 3, reps: '8/8/6/6' }), es: /Decía 3 series pero 4 cantidades de reps/, en: /It said 3 sets but 4 rep counts/ },
+    { nombre: 'series contra "NxM"', entrada: ej({ sets: 4, reps: '3x12' }), es: /Decía 4 series y "3x12"/, en: /It said 4 sets and “3x12”/ },
+    { nombre: 'reps ilegibles', entrada: ej({ sets: 2, reps: 'unas cuantas' }), es: /No se pudieron leer las reps: "unas cuantas"/, en: /Couldn’t read the reps: “unas cuantas”/ },
+    { nombre: 'demasiadas series', entrada: ej({ sets: MAX_LEGACY_SETS + 1, reps: '10' }), es: /parecen un error de captura/, en: /look like a typo/ },
+    { nombre: 'pesos contra series', entrada: ej({ sets: 3, reps: '10', weight: '40/50' }), es: /Hay 2 pesos para 3 series/, en: /There are 2 weights for 3 sets/ },
+    { nombre: 'peso ilegible', entrada: ej({ sets: 3, reps: '10', weight: 'pesado' }), es: /No se pudo leer el peso: "pesado"/, en: /Couldn’t read the weight: “pesado”/ },
+    { nombre: 'duración de todo el ejercicio', entrada: ej({ sets: 3, reps: '10', duration_minutes: 20 }), es: /20 min eran del ejercicio completo/, en: /20 min were for the whole exercise/ },
+  ];
+
+  it.each(casos)('$nombre', ({ entrada, es, en }) => {
+    expect(parseLegacy(entrada, 'es').reasons.join(' ')).toMatch(es);
+    expect(parseLegacy(entrada, 'en').reasons.join(' ')).toMatch(en);
+  });
+});
