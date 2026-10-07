@@ -34,8 +34,8 @@ que todavía no se automatiza.
   solo pendientes y remapea las secciones), `removeSection` (los ítems vuelven a la lista
   sin agrupar, no se borran) y `listByDateRange` (compara fechas `YYYY-MM-DD` como texto,
   que es correcto solo con cero a la izquierda). → `services/demo/__tests__/lists.test.ts`
-- [ ] Pantalla de inicio: que los grupos se pinten como bloques y que una fila impar no
-  estire la última tarjeta.
+- [x] Pantalla de inicio: que los grupos se pinten como bloques y que una fila impar no
+  estire la última tarjeta. → `app/(app)/__tests__/lists.test.tsx`
 - [ ] Detalle: que un ítem palomeado salga de su sección y baje a completados, y que
   despalomearlo lo devuelva a la sección de donde salió.
 - [x] `supabaseLists` falla a propósito hasta T195; conviene una prueba que fije que el
@@ -43,10 +43,10 @@ que todavía no se automatiza.
 
 ## Alta y gestión de listas (T199)
 
-- [ ] Que el botón de acciones **no** quede anidado dentro del Pressable de la tarjeta: es
-  HTML inválido en web y ya ocurrió una vez. Una prueba que lo fije vale más que recordarlo.
-- [ ] Crear una lista navega a su detalle, no al inicio.
-- [ ] Eliminar pide confirmación y el mensaje menciona cuántos elementos se pierden.
+- [x] Que el botón de acciones **no** quede anidado dentro del Pressable de la tarjeta: es
+  HTML inválido en web y ya ocurrió una vez. Una prueba que lo fije vale más que recordarlo. → `app/(app)/__tests__/lists.test.tsx`
+- [x] Crear una lista navega a su detalle, no al inicio. → `app/(app)/__tests__/lists.test.tsx`
+- [x] Eliminar pide confirmación y el mensaje menciona cuántos elementos se pierden. → `app/(app)/__tests__/lists.test.tsx`
 - [x] Archivar la saca del inicio y aparece en Archivadas; restaurar la devuelve. → `services/demo/__tests__/lists.test.ts`
 - [x] `listFormSchema` rechaza un color fuera de la paleta. → `lib/__tests__/list-schema.test.ts`
 - [x] `ModalHeader` con `back`: dice "Atrás" y usa flecha, no X. Y que dentro de Archivadas
@@ -85,17 +85,17 @@ que todavía no se automatiza.
 
 ## Franja de pendientes del día (T201)
 
-- [ ] Sin pendientes del día la franja **no se dibuja** (no una franja vacía que robe alto).
-- [ ] Un ítem con fecha y **con hora** sigue en la franja y no aparece en la rejilla. Es la
-  regla que define el módulo y la que se rompería al "mejorar" la integración.
-- [ ] Palomear desde la franja marca la misma fila que en su lista.
+- [x] Sin pendientes del día la franja **no se dibuja** (no una franja vacía que robe alto). → `app/(app)/(tabs)/__tests__/calendar-lists.test.tsx`
+- [x] Un ítem con fecha y **con hora** sigue en la franja y no aparece en la rejilla. Es la
+  regla que define el módulo y la que se rompería al "mejorar" la integración. → `app/(app)/(tabs)/__tests__/calendar-lists.test.tsx`
+- [x] Palomear desde la franja marca la misma fila que en su lista. → `app/(app)/(tabs)/__tests__/calendar-lists.test.tsx`
 - [x] `useListItemsByDate` con el día como `YYYY-MM-DD`, no como ISO. → `hooks/__tests__/use-lists.test.tsx`
 
 ## Vencidos y filtro de listas (T205, T206)
 
 - [x] `listOverdue` excluye lo ya palomeado y lo de listas archivadas, y ordena de más
   viejo a más reciente. → `services/demo/__tests__/lists.test.ts`
-- [ ] Los vencidos **no** se muestran al abrir un día que no es hoy.
+- [x] Los vencidos **no** se muestran al abrir un día que no es hoy. → `app/(app)/(tabs)/__tests__/calendar-lists.test.tsx`
 - [x] `rescheduleItems` mueve todos los indicados y no toca el resto. → `services/demo/__tests__/lists.test.ts`
 - [x] `hasActiveFilters` es verdadero con `onlyListItems` aunque no haya dimensión ni tema
   —si no, el punto del botón de filtros no se enciende y el filtro queda invisible. → `components/calendar/__tests__/views-and-filters.test.ts`
@@ -113,11 +113,11 @@ que todavía no se automatiza.
 
 ## Alta estilo Keep (T207)
 
-- [ ] "+" crea y navega sin pantalla intermedia, con el título enfocado.
+- [x] "+" crea y navega sin pantalla intermedia, con el título enfocado. → `app/(app)/__tests__/lists.test.tsx (el foco del título: detalle)`
 - [ ] Al salir, una lista intacta se borra; una con nombre cambiado **o** con un elemento,
   no. Es la regla que evita basura sin tragarse trabajo de nadie.
 - [ ] El título guarda al perder el foco y se repone si se deja vacío.
-- [ ] Cambiar color o icono desde la paleta se refleja en la tarjeta del inicio.
+- [x] Cambiar color o icono desde la paleta se refleja en la tarjeta del inicio. → `app/(app)/__tests__/lists.test.tsx`
 
 ## Fechas en elementos (T212)
 
@@ -198,7 +198,7 @@ que todavía no se automatiza.
 - [ ] (base de datos) RLS: B no ve las etiquetas de A ni sus vínculos, **aunque comparta la lista**. Es lo
   que sostiene que etiquetar sea de quien mira.
 - [x] `tag_ids` solo trae las etiquetas propias en una lista compartida. → `services/demo/__tests__/lists.test.ts`
-- [ ] Con una etiqueta activa, "Fijadas" solo muestra las fijadas de esa etiqueta.
+- [x] Con una etiqueta activa, "Fijadas" solo muestra las fijadas de esa etiqueta. → `app/(app)/__tests__/lists.test.tsx`
 
 ## Arrastrar tarjetas del inicio (T226, T227)
 
@@ -208,7 +208,7 @@ que todavía no se automatiza.
   si hubo movimiento real.
 - [x] `destinoDe` de la rejilla con filas de alturas distintas y con una última fila
   incompleta (soltar en el hueco vacío cae al final). → `lib/__tests__/drag.test.ts`
-- [ ] Las listas compartidas conmigo no se pueden arrastrar.
+- [x] Las listas compartidas conmigo no se pueden arrastrar. → `app/(app)/__tests__/lists.test.tsx`
 
 ## Arrastrar entre secciones (T228)
 
@@ -226,7 +226,7 @@ que todavía no se automatiza.
   lista. Es la carrera entre el guardado y la limpieza, y se veía como "el botón no sirve".
 - [ ] Crear y salir sin tocar nada sigue sin dejar una lista vacía.
 - [ ] Agregar solo un elemento (sin nombrar la lista) también la conserva.
-- [ ] Un fallo al crear muestra mensaje.
+- [x] Un fallo al crear muestra mensaje. → `app/(app)/__tests__/lists.test.tsx`
 
 ## Políticas de lectura e INSERT ... RETURNING (T231)
 
@@ -262,7 +262,7 @@ que todavía no se automatiza.
   tablas distintas. → `services/demo/__tests__/lists.test.ts`
 - [ ] La X bajo el título la quita (`due_date: null`) y la línea desaparece.
 - [ ] Con fecha pasada, la línea va en `theme.today`.
-- [ ] El subtítulo de la tarjeta la muestra al final, también cuando la lista está vacía.
+- [x] El subtítulo de la tarjeta la muestra al final, también cuando la lista está vacía. → `app/(app)/__tests__/lists.test.tsx`
 
 ## Días de la semana en la repetición (T232b)
 - [x] Tocar L, M y J deja `FREQ=WEEKLY;BYDAY=MO,WE,TH` y la hoja los muestra prendidos al
@@ -273,11 +273,11 @@ que todavía no se automatiza.
 - [x] `listUndated` deja fuera los elementos de listas que se repiten, los archivados y los
   ya palomeados, en **los dos** backends. Es la regla que más fácil se cae al tocar la
   consulta de Supabase, porque el filtro va sobre la tabla unida (`lists.recurrence_rule`). → `services/demo/__tests__/lists.test.ts`
-- [ ] "Pasar todo a hoy" mueve todos los vencidos y deja el grupo "Atrasado" vacío.
+- [x] "Pasar todo a hoy" mueve todos los vencidos y deja el grupo "Atrasado" vacío. → `app/(app)/__tests__/today.test.tsx`
 - [x] Ponerle día a un elemento desde Algún día lo saca de la bandeja y lo mete en Hoy si la
   fecha es hoy. → `services/demo/__tests__/lists.test.ts`
-- [ ] El número del acceso "Hoy" no cuenta lo ya palomeado.
-- [ ] Con todo agendado, Algún día muestra su estado vacío y no una lista de grupos vacíos.
+- [x] El número del acceso "Hoy" no cuenta lo ya palomeado. → `app/(app)/__tests__/lists.test.tsx`
+- [x] Con todo agendado, Algún día muestra su estado vacío y no una lista de grupos vacíos. → `app/(app)/__tests__/today.test.tsx`
 
 ## Rutinas en el calendario e inicio/fin (T235 – T237)
 - [x] `rutinasEnRango`: una regla de lunes a viernes da cinco días en una semana, ninguno
@@ -287,7 +287,7 @@ que todavía no se automatiza.
 - [x] `listRunsByDateRange` no abre ni cierra vueltas (comparar filas antes y después). → `services/demo/__tests__/lists.test.ts`
 - [x] Cambiar de "todos los días" a chips de días conserva el inicio y el fin. → `components/lists/__tests__/list-repeat-sheet.test.tsx`
 - [x] Un fin anterior al inicio se empuja al inicio. → `components/lists/__tests__/list-repeat-sheet.test.tsx`
-- [ ] En web ≥ 900 px y vista diaria aparece el panel y **no** la franja; a 899 px, al revés.
+- [x] En web ≥ 900 px y vista diaria aparece el panel y **no** la franja; a 899 px, al revés. → `app/(app)/(tabs)/__tests__/calendar-lists.test.tsx`
 - [ ] Tocar un chip de rutina o de pendiente en la agenda abre su lista.
 
 ## Fitness v2 · G3 logger en vivo (T243)
@@ -580,7 +580,7 @@ Android en el emulador (demo): Listas aparece en Más; la hoja de "Segundo lugar
 avisa "se intercambian"; con Listas en la barra se pinta sin "Atrás"; el botón ○✓ del calendario
 cambia a esa pestaña; abrir "Súper" y regresar vuelve a la pestaña. La elección sobrevive a cerrar
 sesión y volver a entrar. Falta:
-- [ ] Listas en la barra → Archivadas muestra "Atrás" y vuelve a las listas activas.
+- [x] Listas en la barra → Archivadas muestra "Atrás" y vuelve a las listas activas. → `app/(app)/__tests__/lists.test.tsx`
 - [ ] Listas fuera de la barra → desde Más o desde ○✓ se abre apilada con "Atrás".
 - [ ] (manual) Web: ○✓ sigue abriendo `/lists` (no es pestaña en web, RF-N5).
 - [x] `moduleHref('lists', …)`: en la barra → `acceso-N`; fuera o en web → `/(app)/lists`. → `constants/__tests__/modules.test.ts`
