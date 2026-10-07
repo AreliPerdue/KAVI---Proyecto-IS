@@ -153,12 +153,6 @@ const Pantalla = require('@/app/(app)/(tabs)/calendar').default as () => React.R
 /* eslint-disable-next-line @typescript-eslint/no-require-imports -- idem */
 const { useCalendarStore } = require('@/store/calendar-store') as typeof import('@/store/calendar-store');
 
-const actividad = (over = {}) => ({
-  id: 'a1', title: 'Junta', owner_id: 'u1', color: '#4CAF50',
-  start_at: new Date(2026, 8, 7, 9).toISOString(), end_at: new Date(2026, 8, 7, 10).toISOString(),
-  all_day: false, ...over,
-});
-
 beforeEach(() => {
   mockSnackbar.mockReset();
   mockExtend.mockClear();
