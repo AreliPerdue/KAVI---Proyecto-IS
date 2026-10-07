@@ -437,13 +437,13 @@ Reproducido antes de arreglar con un script suelto sobre el backend demo (serie 
 viernes de 3 semanas, luego `extendRecurrenceHorizon`): fallaban 3 de 6 casos y tras el
 arreglo pasan los 6. Migración probada en PGlite (columna, RLS, idempotente) y aplicada en
 producción. Falta convertir esos casos en pruebas del repo (demo y Supabase):
-- [ ] Borrar la última ocurrencia de una serie con fin: no reaparece al reabrir el
-  calendario (el caso del reporte).
-- [ ] Borrar una de en medio: no reaparece.
-- [ ] Mover la última a otro día (antes o después): su día original no se recrea.
-- [ ] Cambiar solo la hora de la última (más tarde o más temprano): no se duplica.
-- [ ] Borrar la madre: la heredera conserva `recurrence_exdates`.
-- [ ] Editar toda la serie (incluso cambiando la hora): los días excluidos siguen excluidos.
+- [x] Borrar la última ocurrencia de una serie con fin: no reaparece al reabrir el
+  calendario (el caso del reporte). → `src/services/demo/__tests__/activities.test.ts`
+- [x] Borrar una de en medio: no reaparece. → `src/services/demo/__tests__/activities.test.ts`
+- [x] Mover la última a otro día (antes o después): su día original no se recrea. → `src/services/demo/__tests__/activities.test.ts`
+- [x] Cambiar solo la hora de la última (más tarde o más temprano): no se duplica. → `src/services/demo/__tests__/activities.test.ts`
+- [x] Borrar la madre: la heredera conserva `recurrence_exdates`. → `src/services/demo/__tests__/activities.test.ts`
+- [x] Editar toda la serie (incluso cambiando la hora): los días excluidos siguen excluidos. → `src/services/demo/__tests__/activities.test.ts`
 - [x] `missingOccurrences` y `withExdate` en `lib/recurrence.ts`. → `lib/__tests__/list-runs.test.ts`
 
 ## Colores de los Nobi (T202)

@@ -341,3 +341,83 @@ describe('series completas (RF-C8)', () => {
     expect(state.activities).toHaveLength(antes);
   });
 });
+
+/**
+ * Una ocurrencia borrada o movida no reaparece (T249). Antes, `extendRecurrenceHorizon` —que
+ * corre cada vez que se abre el calendario— rematerializaba los días que faltaban.
+ */
+describe('días excluidos de una serie (T249)', () => {
+  const manana = new Date();
+  manana.setDate(manana.getDate() + 1);
+  manana.setHours(9, 0, 0, 0);
+  const diaria = () => ({
+    ...input({ title: 'Diaria', start_at: toIso(manana), end_at: toIso(addHours(manana, 1)) }),
+    recurrence: { freq: 'DAILY' as const, byDay: [], until: toIso(addDays(manana, 6)).slice(0, 10) },
+  });
+  const delaSerie = (state: Store['demoState'], titulo = 'Diaria') =>
+    state.activities.filter((a: Activity) => a.title === titulo).sort((a, b) => a.start_at.localeCompare(b.start_at));
+  const diaDe = (a: Activity) => new Date(a.start_at).toDateString();
+
+  it('borrar la última ocurrencia: no reaparece al reabrir el calendario', async () => {
+    const { activities, state } = freshApi();
+    await activities.create(USER, diaria());
+    const ultima = delaSerie(state).at(-1) as Activity;
+    await activities.remove(ultima.id, 'this');
+    await activities.extendRecurrenceHorizon(USER);
+    expect(delaSerie(state).map(diaDe)).not.toContain(diaDe(ultima));
+  });
+
+  it('borrar una de en medio: no reaparece', async () => {
+    const { activities, state } = freshApi();
+    await activities.create(USER, diaria());
+    const enMedio = delaSerie(state)[3] as Activity;
+    await activities.remove(enMedio.id, 'this');
+    await activities.extendRecurrenceHorizon(USER);
+    expect(delaSerie(state).map(diaDe)).not.toContain(diaDe(enMedio));
+  });
+
+  it('mover la última a otro día: su día original no se recrea', async () => {
+    const { activities, state } = freshApi();
+    await activities.create(USER, diaria());
+    const ultima = delaSerie(state).at(-1) as Activity;
+    const otroDia = addDays(new Date(ultima.start_at), 2);
+    await activities.update(ultima.id, { start_at: toIso(otroDia), end_at: toIso(addHours(otroDia, 1)) }, 'this');
+    await activities.extendRecurrenceHorizon(USER);
+    const dias = delaSerie(state).map(diaDe);
+    expect(dias.filter((x) => x === diaDe(ultima))).toHaveLength(0);
+  });
+
+  it('cambiar solo la hora de la última no la duplica', async () => {
+    const { activities, state } = freshApi();
+    await activities.create(USER, diaria());
+    const antes = delaSerie(state).length;
+    const ultima = delaSerie(state).at(-1) as Activity;
+    const masTarde = addHours(new Date(ultima.start_at), 5);
+    await activities.update(ultima.id, { start_at: toIso(masTarde), end_at: toIso(addHours(masTarde, 1)) }, 'this');
+    await activities.extendRecurrenceHorizon(USER);
+    expect(delaSerie(state)).toHaveLength(antes);
+  });
+
+  it('borrar la madre: la heredera conserva los días excluidos', async () => {
+    const { activities, state } = freshApi();
+    const madre = await activities.create(USER, diaria());
+    const ultima = delaSerie(state).at(-1) as Activity;
+    await activities.remove(ultima.id, 'this');
+    await activities.remove(madre.id, 'this');
+    await activities.extendRecurrenceHorizon(USER);
+    const heredera = state.activities.find((a: Activity) => a.title === 'Diaria' && a.recurrence_rule !== null && a.recurrence_parent_id === null);
+    expect(heredera?.recurrence_exdates ?? []).toHaveLength(1);
+    expect(delaSerie(state).map(diaDe)).not.toContain(diaDe(ultima));
+  });
+
+  it('editar toda la serie (aunque cambie la hora) mantiene excluidos los días borrados', async () => {
+    const { activities, state } = freshApi();
+    const madre = await activities.create(USER, diaria());
+    const enMedio = delaSerie(state)[2] as Activity;
+    await activities.remove(enMedio.id, 'this');
+    const otraHora = addHours(new Date(madre.start_at), 2);
+    await activities.update(madre.id, { title: 'Diaria', start_at: toIso(otraHora), end_at: toIso(addHours(otraHora, 1)) }, 'series');
+    await activities.extendRecurrenceHorizon(USER);
+    expect(delaSerie(state).map(diaDe)).not.toContain(diaDe(enMedio));
+  });
+});
