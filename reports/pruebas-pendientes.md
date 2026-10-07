@@ -26,16 +26,16 @@ juntarlo en una sesión dedicada a pruebas.
 
 ## Cascarón de Lists (T198)
 
-- [ ] `services/demo/lists.ts` no tiene pruebas. Lo que más las pide: `duplicate` (copia
+- [x] `services/demo/lists.ts` no tiene pruebas. Lo que más las pide: `duplicate` (copia
   solo pendientes y remapea las secciones), `removeSection` (los ítems vuelven a la lista
   sin agrupar, no se borran) y `listByDateRange` (compara fechas `YYYY-MM-DD` como texto,
-  que es correcto solo con cero a la izquierda).
+  que es correcto solo con cero a la izquierda). → `services/demo/__tests__/lists.test.ts`
 - [ ] Pantalla de inicio: que los grupos se pinten como bloques y que una fila impar no
   estire la última tarjeta.
 - [ ] Detalle: que un ítem palomeado salga de su sección y baje a completados, y que
   despalomearlo lo devuelva a la sección de donde salió.
-- [ ] `supabaseLists` falla a propósito hasta T195; conviene una prueba que fije que el
-  mensaje llega a la UI en vez de convertirse en una lista vacía.
+- [x] `supabaseLists` falla a propósito hasta T195; conviene una prueba que fije que el
+  mensaje llega a la UI en vez de convertirse en una lista vacía. → `services/supabase/__tests__/lists.test.ts`
 
 ## Alta y gestión de listas (T199)
 
@@ -43,7 +43,7 @@ juntarlo en una sesión dedicada a pruebas.
   HTML inválido en web y ya ocurrió una vez. Una prueba que lo fije vale más que recordarlo.
 - [ ] Crear una lista navega a su detalle, no al inicio.
 - [ ] Eliminar pide confirmación y el mensaje menciona cuántos elementos se pierden.
-- [ ] Archivar la saca del inicio y aparece en Archivadas; restaurar la devuelve.
+- [x] Archivar la saca del inicio y aparece en Archivadas; restaurar la devuelve. → `services/demo/__tests__/lists.test.ts`
 - [ ] `listFormSchema` rechaza un color fuera de la paleta.
 - [ ] `ModalHeader` con `back`: dice "Atrás" y usa flecha, no X. Y que dentro de Archivadas
   el botón vuelva a las listas activas en vez de salir del módulo.
@@ -74,7 +74,7 @@ juntarlo en una sesión dedicada a pruebas.
 - [ ] `ItemComposer`: al confirmar limpia el campo y **conserva el foco**; con el campo
   vacío se cierra en vez de agregar algo en blanco. Es el comportamiento del que depende
   capturar de corrido y el más fácil de romper sin darse cuenta.
-- [ ] Agregar dentro de una sección deja el ítem en esa sección, no al final de la lista.
+- [x] Agregar dentro de una sección deja el ítem en esa sección, no al final de la lista. → `services/demo/__tests__/lists.test.ts`
 - [ ] Mover un ítem entre secciones desde la hoja de edición.
 - [ ] Eliminar pide confirmación y el mensaje distingue palomear de eliminar.
 - [ ] El lápiz de cada renglón no queda anidado dentro del Pressable de la fila.
@@ -89,10 +89,10 @@ juntarlo en una sesión dedicada a pruebas.
 
 ## Vencidos y filtro de listas (T205, T206)
 
-- [ ] `listOverdue` excluye lo ya palomeado y lo de listas archivadas, y ordena de más
-  viejo a más reciente.
+- [x] `listOverdue` excluye lo ya palomeado y lo de listas archivadas, y ordena de más
+  viejo a más reciente. → `services/demo/__tests__/lists.test.ts`
 - [ ] Los vencidos **no** se muestran al abrir un día que no es hoy.
-- [ ] `rescheduleItems` mueve todos los indicados y no toca el resto.
+- [x] `rescheduleItems` mueve todos los indicados y no toca el resto. → `services/demo/__tests__/lists.test.ts`
 - [ ] `hasActiveFilters` es verdadero con `onlyListItems` aunque no haya dimensión ni tema
   —si no, el punto del botón de filtros no se enciende y el filtro queda invisible.
 - [ ] `applyFilters` ignora `onlyListItems`: recibe actividades y devuelve actividades.
@@ -102,9 +102,9 @@ juntarlo en una sesión dedicada a pruebas.
 - [ ] Ampliar `supabase/tests/rls.sql`: con dos usuarios, que B no vea ni toque las listas,
   secciones ni elementos de A. Es la garantía que sostiene todo el módulo.
 - [ ] Que `can_edit_list` no sea ejecutable por `anon`.
-- [ ] `listByDateRange` y `listOverdue` excluyen las listas archivadas por el join.
-- [ ] `duplicate` en Supabase remapea las secciones y copia solo los pendientes, igual que
-  el demo. Son dos implementaciones del mismo contrato y es donde más fácil divergen.
+- [x] `listByDateRange` y `listOverdue` excluyen las listas archivadas por el join. → `services/supabase/__tests__/lists.test.ts`
+- [x] `duplicate` en Supabase remapea las secciones y copia solo los pendientes, igual que
+  el demo. Son dos implementaciones del mismo contrato y es donde más fácil divergen. → `services/supabase/__tests__/lists.test.ts`
 - [ ] El check de `completed_at`/`completed_by`: palomear sin usuario debe fallar.
 
 ## Alta estilo Keep (T207)
@@ -117,7 +117,7 @@ juntarlo en una sesión dedicada a pruebas.
 
 ## Fechas en elementos (T212)
 
-- [ ] Quitar el día quita también la hora.
+- [x] Quitar el día quita también la hora. → `services/demo/__tests__/lists.test.ts`
 - [ ] Un elemento con fecha pasada **ya palomeado** no se pinta como vencido.
 - [ ] La fecha viaja como `YYYY-MM-DD` y no como instante, en las dos implementaciones.
 - [ ] Un elemento al que se le pone la fecha de hoy aparece en la franja del día.
@@ -132,11 +132,11 @@ juntarlo en una sesión dedicada a pruebas.
 
 ## Buscar y reordenar (T213, T214, T216)
 
-- [ ] **La más importante**: el backend demo no devuelve referencias vivas de su almacén.
-  Mutar lo devuelto no debe cambiar lo guardado. Es la prueba que habría atrapado T216.
+- [x] **La más importante**: el backend demo no devuelve referencias vivas de su almacén.
+  Mutar lo devuelto no debe cambiar lo guardado. Es la prueba que habría atrapado T216. → `services/demo/__tests__/lists.test.ts`
 - [ ] `search` con menos de dos letras no consulta.
-- [ ] `search` encuentra elementos ya palomeados.
-- [ ] En Supabase, buscar "50%" no trae de más: `%` y `_` van escapados.
+- [x] `search` encuentra elementos ya palomeados. → `services/demo/__tests__/lists.test.ts`
+- [x] En Supabase, buscar "50%" no trae de más: `%` y `_` van escapados. → `services/supabase/__tests__/lists.test.ts`
 - [ ] Subir/bajar solo permuta dentro del grupo y los extremos van deshabilitados.
 - [ ] El intercambio lee ambos `sort_order` antes de escribir.
 
@@ -156,10 +156,10 @@ juntarlo en una sesión dedicada a pruebas.
   tiene permiso de *ver* no pueda escribir, que quien no tiene acceso no vea nada, y que
   nadie salvo el dueño pueda borrar la lista.
 - [ ] Compartir solo funciona con contactos aceptados (`are_connected` en el `with check`).
-- [ ] Retirar el acceso no borra contenido.
-- [ ] **Ninguna implementación usa `this`.** Es la prueba que habría atrapado T221 y que
-  seguirá atrapándolo: la fachada desprende los métodos del objeto.
-- [ ] `sharedWithMe` no devuelve listas archivadas ni las propias.
+- [x] Retirar el acceso no borra contenido. → `services/demo/__tests__/lists.test.ts`
+- [x] **Ninguna implementación usa `this`.** Es la prueba que habría atrapado T221 y que
+  seguirá atrapándolo: la fachada desprende los métodos del objeto. → `services/demo/__tests__/lists.test.ts, services/supabase/__tests__/lists.test.ts`
+- [x] `sharedWithMe` no devuelve listas archivadas ni las propias. → `services/demo/__tests__/lists.test.ts`
 
 ## Tiempo real en listas (T222)
 
@@ -188,12 +188,12 @@ juntarlo en una sesión dedicada a pruebas.
 
 ## Etiquetas (T211)
 
-- [ ] `createTag` con un nombre que ya existe devuelve la existente y no duplica, sin
-  importar mayúsculas.
-- [ ] Borrar una etiqueta no borra ninguna lista.
+- [x] `createTag` con un nombre que ya existe devuelve la existente y no duplica, sin
+  importar mayúsculas. → `services/demo/__tests__/lists.test.ts`
+- [x] Borrar una etiqueta no borra ninguna lista. → `services/demo/__tests__/lists.test.ts`
 - [ ] RLS: B no ve las etiquetas de A ni sus vínculos, **aunque comparta la lista**. Es lo
   que sostiene que etiquetar sea de quien mira.
-- [ ] `tag_ids` solo trae las etiquetas propias en una lista compartida.
+- [x] `tag_ids` solo trae las etiquetas propias en una lista compartida. → `services/demo/__tests__/lists.test.ts`
 - [ ] Con una etiqueta activa, "Fijadas" solo muestra las fijadas de esa etiqueta.
 
 ## Arrastrar tarjetas del inicio (T226, T227)
@@ -234,10 +234,10 @@ juntarlo en una sesión dedicada a pruebas.
 
 ## Listas que se repiten (T208, T209)
 
-- [ ] `occursOn` con DAILY, WEEKLY con y sin `byDay`, MONTHLY en meses sin ese día, y
-  respetando `until`.
-- [ ] `graciaVencida`: una vuelta de ayer sigue viva antes de las 15:00 y caduca después.
-  Es la regla que decide si algo cuenta como hecho.
+- [x] `occursOn` con DAILY, WEEKLY con y sin `byDay`, MONTHLY en meses sin ese día, y
+  respetando `until`. → `lib/__tests__/list-runs.test.ts`
+- [x] `graciaVencida`: una vuelta de ayer sigue viva antes de las 15:00 y caduca después.
+  Es la regla que decide si algo cuenta como hecho. → `lib/__tests__/list-runs.test.ts`
 - [ ] `syncRuns` cierra lo caducado con los conteos correctos, abre la de hoy solo si la
   regla cae hoy, y no duplica la vuelta al llamarse dos veces.
 - [ ] Palomear en la vuelta de ayer suma a ayer y no a hoy.
@@ -246,16 +246,16 @@ juntarlo en una sesión dedicada a pruebas.
 
 ## Resúmenes de rutina (T210)
 
-- [ ] `resumirVueltas` cuenta como completa solo si `completed_count >= total_count` y
-  `total_count > 0`: una vuelta sin elementos no es un éxito.
+- [x] `resumirVueltas` cuenta como completa solo si `completed_count >= total_count` y
+  `total_count > 0`: una vuelta sin elementos no es un éxito. → `lib/__tests__/list-runs.test.ts`
 - [ ] Ignora las vueltas vacías para el promedio pero las cuenta como registradas.
-- [ ] **La que importa de verdad**: que el resumen no devuelva porcentaje de incumplimiento
-  ni racha. Es una decisión de producto que una prueba puede proteger de un "mejor así".
+- [x] **La que importa de verdad**: que el resumen no devuelva porcentaje de incumplimiento
+  ni racha. Es una decisión de producto que una prueba puede proteger de un "mejor así". → `lib/__tests__/list-runs.test.ts`
 
 ## Fecha de la lista completa (T232)
-- [ ] `lists.due_date` sobrevive a `update` en los dos backends (demo y Supabase) sin tocar
+- [x] `lists.due_date` sobrevive a `update` en los dos backends (demo y Supabase) sin tocar
   `due_date` de los elementos. Es la confusión obvia: dos columnas con el mismo nombre en
-  tablas distintas.
+  tablas distintas. → `services/demo/__tests__/lists.test.ts`
 - [ ] La X bajo el título la quita (`due_date: null`) y la línea desaparece.
 - [ ] Con fecha pasada, la línea va en `theme.today`.
 - [ ] El subtítulo de la tarjeta la muestra al final, también cuando la lista está vacía.
@@ -266,21 +266,21 @@ juntarlo en una sesión dedicada a pruebas.
 - [ ] Apagar el último día quita la repetición en vez de dejar una regla sin días.
 
 ## Hoy y Algún día (T233, T234)
-- [ ] `listUndated` deja fuera los elementos de listas que se repiten, los archivados y los
+- [x] `listUndated` deja fuera los elementos de listas que se repiten, los archivados y los
   ya palomeados, en **los dos** backends. Es la regla que más fácil se cae al tocar la
-  consulta de Supabase, porque el filtro va sobre la tabla unida (`lists.recurrence_rule`).
+  consulta de Supabase, porque el filtro va sobre la tabla unida (`lists.recurrence_rule`). → `services/demo/__tests__/lists.test.ts`
 - [ ] "Pasar todo a hoy" mueve todos los vencidos y deja el grupo "Atrasado" vacío.
-- [ ] Ponerle día a un elemento desde Algún día lo saca de la bandeja y lo mete en Hoy si la
-  fecha es hoy.
+- [x] Ponerle día a un elemento desde Algún día lo saca de la bandeja y lo mete en Hoy si la
+  fecha es hoy. → `services/demo/__tests__/lists.test.ts`
 - [ ] El número del acceso "Hoy" no cuenta lo ya palomeado.
 - [ ] Con todo agendado, Algún día muestra su estado vacío y no una lista de grupos vacíos.
 
 ## Rutinas en el calendario e inicio/fin (T235 – T237)
-- [ ] `rutinasEnRango`: una regla de lunes a viernes da cinco días en una semana, ninguno
-  antes de `recurrence_start` ni después del `UNTIL`; una lista archivada no da ninguno.
-- [ ] El avance sale de la vuelta cerrada si la hay (conteos congelados) y de la abierta si
-  no; sin vuelta es 0/total. Nunca pasa de total aunque se haya borrado algo palomeado.
-- [ ] `listRunsByDateRange` no abre ni cierra vueltas (comparar filas antes y después).
+- [x] `rutinasEnRango`: una regla de lunes a viernes da cinco días en una semana, ninguno
+  antes de `recurrence_start` ni después del `UNTIL`; una lista archivada no da ninguno. → `lib/__tests__/list-runs.test.ts`
+- [x] El avance sale de la vuelta cerrada si la hay (conteos congelados) y de la abierta si
+  no; sin vuelta es 0/total. Nunca pasa de total aunque se haya borrado algo palomeado. → `lib/__tests__/list-runs.test.ts`
+- [x] `listRunsByDateRange` no abre ni cierra vueltas (comparar filas antes y después). → `services/demo/__tests__/lists.test.ts`
 - [ ] Cambiar de "todos los días" a chips de días conserva el inicio y el fin.
 - [ ] Un fin anterior al inicio se empuja al inicio.
 - [ ] En web ≥ 900 px y vista diaria aparece el panel y **no** la franja; a 899 px, al revés.
@@ -440,7 +440,7 @@ producción. Falta convertir esos casos en pruebas del repo (demo y Supabase):
 - [ ] Cambiar solo la hora de la última (más tarde o más temprano): no se duplica.
 - [ ] Borrar la madre: la heredera conserva `recurrence_exdates`.
 - [ ] Editar toda la serie (incluso cambiando la hora): los días excluidos siguen excluidos.
-- [ ] `missingOccurrences` y `withExdate` en `lib/recurrence.ts`.
+- [x] `missingOccurrences` y `withExdate` en `lib/recurrence.ts`. → `lib/__tests__/list-runs.test.ts`
 
 ## Colores de los Nobi (T202)
 Migración de datos probada en PGlite (las dos paletas viejas, minúsculas, un color
