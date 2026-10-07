@@ -119,12 +119,22 @@ describe('usePeopleColors (RF-S15)', () => {
   });
 
   it('respeta el color elegido a mano', async () => {
+    mockListContacts.mockResolvedValue([contacto('u2', { color: '#A878DB' })]);
+    const { Wrapper } = crearWrapper();
+
+    const { result } = await renderHook(() => usePeopleColors(), { wrapper: Wrapper });
+
+    await waitFor(() => expect(result.current.get('u2')).toBe('#A878DB'));
+  });
+
+  it('un color de una paleta anterior se ve como el actual del mismo Nobi (T202)', async () => {
+    // #B06BFF era el lila de la primera paleta; hoy el lila es #C9AAEE.
     mockListContacts.mockResolvedValue([contacto('u2', { color: '#B06BFF' })]);
     const { Wrapper } = crearWrapper();
 
     const { result } = await renderHook(() => usePeopleColors(), { wrapper: Wrapper });
 
-    await waitFor(() => expect(result.current.get('u2')).toBe('#B06BFF'));
+    await waitFor(() => expect(result.current.get('u2')).toBe('#C9AAEE'));
   });
 });
 

@@ -392,6 +392,7 @@ export default function ProfileScreen() {
           below={
             <Segmented
               fullWidth
+              label={tx.profile.appearance}
               options={[
                 { value: 'system', label: tx.profile.appearanceOptions.system },
                 { value: 'light', label: tx.profile.appearanceOptions.light },
@@ -409,6 +410,7 @@ export default function ProfileScreen() {
           below={
             <Segmented
               fullWidth
+              label={tx.profile.language}
               options={[
                 { value: 'system', label: tx.profile.languageSystem },
                 { value: 'es', label: tx.profile.languageSpanish },

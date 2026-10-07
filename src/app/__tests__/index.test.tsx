@@ -8,6 +8,7 @@
  */
 import { render } from '@testing-library/react-native';
 
+import { DEFAULT_ACCESOS, moduleHref } from '@/constants/modules';
 import { usePreferencesStore } from '@/store/preferences-store';
 
 /** Prefijo `mock` obligatorio: Jest eleva las fabricas de `jest.mock` sobre los imports. */
@@ -16,7 +17,8 @@ let mockUsuario: { id: string } | null = null;
 
 jest.mock('expo-router', () => ({
   __esModule: true,
-  Redirect: (props: { href: string }) => {
+  useRouter: () => ({ navigate: jest.fn() }),
+  Redirect: (props: { href: unknown }) => {
     mockRedirect(props.href);
     return null;
   },
@@ -57,12 +59,15 @@ describe('con sesion', () => {
     expect(mockRedirect).toHaveBeenCalledWith('/(app)/(tabs)/calendar');
   });
 
-  /** Un calendario vacio no dice que hacer; Perfil tiene el Nobi y el cumpleanos. */
+  /**
+   * Un calendario vacio no dice que hacer; Perfil tiene el Nobi y el cumpleanos. Perfil
+   * vive en "Mas" por omision (RF-N2), asi que se abre donde le toca segun los accesos.
+   */
   it('la primera vez abre en Perfil', async () => {
-    usePreferencesStore.setState({ visto: false, hydrated: true });
+    usePreferencesStore.setState({ visto: false, hydrated: true, accesos: DEFAULT_ACCESOS });
     await render(<Pantalla />);
 
-    expect(mockRedirect).toHaveBeenCalledWith('/(app)/(tabs)/profile');
+    expect(mockRedirect).toHaveBeenCalledWith(moduleHref('profile', DEFAULT_ACCESOS, false));
   });
 
   it('y deja constancia de que ya se abrio', async () => {

@@ -6,6 +6,7 @@
  * bloquea cambiar la repeticion, y marcar la actividad como de gimnasio abre la
  * captura de ejercicios para registrarla al crearla.
  */
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 
 import { ActivityForm } from '@/components/calendar/activity-form';
@@ -17,11 +18,25 @@ jest.mock('@/hooks/use-themes', () => ({
 }));
 /** La captura de rutina consulta el autocompletado, que necesita sesion. */
 jest.mock('@/hooks/use-workouts', () => ({ useExerciseNames: () => ({ data: [] }) }));
+/**
+ * La captura de rutina (RF-F9) usa los bloques del logger: sesión, catálogo, notas fijas e
+ * historial. Aquí basta con que existan; el logger tiene sus propias pruebas.
+ */
+jest.mock('@/providers', () => ({ useAuth: () => ({ userId: 'u1' }) }));
+jest.mock('@/hooks/use-exercises', () => ({
+  useExercises: () => ({ data: [], index: new Map() }),
+  useExercisePrefs: () => ({ data: [] }),
+  useExerciseMutations: () => ({ createCustom: { mutate: jest.fn() }, toggleFavorite: { mutate: jest.fn() }, markUsed: { mutate: jest.fn() }, updateCustom: { mutate: jest.fn() } }),
+}));
+jest.mock('@/hooks/use-exercise-history', () => ({
+  exerciseHistoryQuery: (_u: string, ref: { name: string }) => ({ queryKey: ['historial', ref.name], queryFn: async () => [] }),
+}));
 
 const campo = (label: string) => screen.getByLabelText(label, { includeHiddenElements: true });
 
 const montar = (props: Partial<Parameters<typeof ActivityForm>[0]> = {}) =>
   render(
+    <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
     <ActivityForm
       defaultValues={defaultFormValues({ dayKey: '2026-09-07', startMinutes: 540, endMinutes: 600 })}
       submitLabel="Crear actividad"
@@ -29,7 +44,8 @@ const montar = (props: Partial<Parameters<typeof ActivityForm>[0]> = {}) =>
       error={null}
       onSubmit={jest.fn()}
       {...props}
-    />,
+    />
+    </QueryClientProvider>,
   );
 
 describe('campos basicos', () => {

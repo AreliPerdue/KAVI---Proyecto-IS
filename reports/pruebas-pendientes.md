@@ -378,7 +378,7 @@ sesión con 105 kg → badge de PR y "Nuevo récord. Así se gobierna, mi reina.
 Probado a mano en el demo (web): descanso con pitidos en 3-2-1 y al terminar (4 sonidos),
 chip "Energía 3 de 5" encontrado por su etiqueta accesible, "Compartir" del resumen genera la
 imagen y, sin hoja de compartir del navegador, la descarga (`kavi-2026-10-21.png`). Falta:
-- [ ] **Antes de correr Jest:** mocks de `expo-haptics`, `expo-audio`, `expo-sharing` y
+- [x] **Antes de correr Jest:** mocks de `expo-haptics`, `expo-audio`, `expo-sharing` y
   `react-native-view-shot` en `jest.setup.js`.
 - [ ] `playSound`: crea un reproductor por sonido una sola vez; un error de audio no rompe.
 - [ ] `RestTimerBar`: pita en 3, 2 y 1; al terminar suena y vibra solo si terminó hace menos
@@ -546,7 +546,7 @@ Visto en el demo: 360×560 (un chip por día y "+N" junto al número, alineado a
 - [ ] iOS y Android nativos en vertical y acostado.
 
 ## Pruebas rotas que ya estaban así
-- [ ] `activity-form.test.tsx` › gimnasio (RF-F9): 3 casos fallan con "useAuth debe usarse dentro
+- [x] `activity-form.test.tsx` › gimnasio (RF-F9): 3 casos fallan con "useAuth debe usarse dentro
   de <AuthProvider>". Ya fallaban antes de T263 (comprobado sobre `58c6442`): la captura de
   rutina del formulario usa `useAuth` y la prueba lo renderiza sin el proveedor. Arreglo: envolver
   el render en `AuthProvider` (o simular `useAuth`). No es un fallo de la app.
@@ -567,7 +567,7 @@ Compartido apilado; Fitness en la barra sin flecha. Falta:
   vuelve al calendario.
 - [ ] "Ver solicitudes" (Perfil) y "+ Contactos" (calendario) abren Compartido donde esté.
 - [ ] iOS (cuando haya build): iconos SF `square.grid.2x2` y los de cada módulo.
-- [ ] `profile.test.tsx`: los 23 casos fallan con "No QueryClient set" desde que Perfil tiene la fila
+- [x] `profile.test.tsx`: los 23 casos fallan con "No QueryClient set" desde que Perfil tiene la fila
   "Datos de salud" (T259, `useHealthAvailability`). Ya fallaban antes de T188 (comprobado). Arreglo:
   simular `@/hooks/use-health` en la prueba o envolverla en `QueryClientProvider`.
 
@@ -664,8 +664,8 @@ Perfil ya no los muestra. El mosaico sale en 2 columnas, en 4 y lado a lado con 
 pierde el foco. Falta:
 - [ ] `weekSummary`: sesiones y volumen solo de lunes a domingo de esta semana; calentamiento fuera; grupos
   ordenados de más a menos, con medias series del músculo secundario.
-- [ ] Bento con datos de esta semana (sesión con series hechas): "1 sesión", volumen y los tres músculos.
-- [ ] Sesión en curso: la tarjeta grande dice "Sesión en curso" y la retoma.
+- [x] Bento con datos de esta semana (sesión con series hechas): "1 sesión", volumen y los tres músculos. (`fitness.test.tsx`)
+- [x] Sesión en curso: la tarjeta grande dice "Sesión en curso" y la retoma. (`fitness.test.tsx`)
 - [ ] Racha en pausa: la tarjeta de decisión va arriba del mosaico y desaparece al decidir.
 - [ ] Teléfono (Android) con letra grande del sistema: las tarjetas crecen sin cortar texto.
 - [ ] Lector de pantalla: cada tarjeta dice su nombre y qué abre.

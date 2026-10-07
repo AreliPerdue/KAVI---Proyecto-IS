@@ -7,7 +7,7 @@
  * dispositivo. Si la última no se hiciera aquí, el formato de hora elegido se
  * vería bien en Perfil pero el calendario abriría siempre en 24 h.
  */
-import { render } from '@testing-library/react-native';
+import { render, screen } from '@testing-library/react-native';
 
 import AppLayout from '@/app/(app)/_layout';
 import { usePreferencesStore } from '@/store/preferences-store';
@@ -20,6 +20,20 @@ const mockSociales = jest.fn();
 jest.mock('@/hooks/use-reminders', () => ({ useReminderSync: () => mockReminderSync() }));
 jest.mock('@/hooks/use-realtime', () => ({ useRealtimeInvalidation: () => mockRealtime() }));
 jest.mock('@/hooks/use-social-notifications', () => ({ useSocialNotifications: () => mockSociales() }));
+
+/** "Antes de empezar" (RF-A13): por omisión la cuenta ya aceptó; cada prueba puede cambiarlo. */
+let mockGate: { isPending: boolean; isError: boolean; data?: { kind: string }; error?: Error; refetch: () => void } = {
+  isPending: false,
+  isError: false,
+  data: { kind: 'listo' },
+  refetch: jest.fn(),
+};
+jest.mock('@/hooks/use-consent', () => ({ useConsentGate: () => mockGate }));
+jest.mock('@/components/account/before-you-start', () => {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports -- dentro de la fabrica de jest.mock
+  const { Text } = require('react-native');
+  return { BeforeYouStart: ({ gate }: { gate: { kind: string } }) => <Text>{`antes-de-empezar:${gate.kind}`}</Text> };
+});
 
 jest.mock('expo-router', () => {
   // eslint-disable-next-line @typescript-eslint/no-require-imports -- dentro de la fabrica de jest.mock
@@ -40,6 +54,7 @@ beforeEach(() => {
   mockRealtime.mockClear();
   mockSociales.mockClear();
   usePreferencesStore.setState({ hydrate: mockHydrate });
+  mockGate = { isPending: false, isError: false, data: { kind: 'listo' }, refetch: jest.fn() };
 });
 
 describe('arranque del área autenticada', () => {
@@ -73,5 +88,42 @@ describe('arranque del área autenticada', () => {
   it('se monta sin romperse', async () => {
     const { toJSON } = await render(<AppLayout />);
     expect(toJSON()).toBeTruthy();
+  });
+});
+
+describe('"Antes de empezar" (RF-A13)', () => {
+  it('sin aceptar el aviso muestra la pantalla de aceptación y no monta la app', async () => {
+    mockGate = { isPending: false, isError: false, data: { kind: 'aceptar' }, refetch: jest.fn() };
+    await render(<AppLayout />);
+
+    expect(screen.getByText('antes-de-empezar:aceptar')).toBeTruthy();
+    // Sin consentimiento no se programan avisos ni se escucha a otras personas.
+    expect(mockReminderSync).not.toHaveBeenCalled();
+    expect(mockRealtime).not.toHaveBeenCalled();
+    expect(mockSociales).not.toHaveBeenCalled();
+  });
+
+  it('con 16 o 17 años espera al adulto sin montar la app', async () => {
+    mockGate = { isPending: false, isError: false, data: { kind: 'adulto-responsable' }, refetch: jest.fn() };
+    await render(<AppLayout />);
+
+    expect(screen.getByText('antes-de-empezar:adulto-responsable')).toBeTruthy();
+    expect(mockReminderSync).not.toHaveBeenCalled();
+  });
+
+  it('aun antes de aceptar, carga las preferencias (idioma, reloj)', async () => {
+    mockGate = { isPending: false, isError: false, data: { kind: 'aceptar' }, refetch: jest.fn() };
+    await render(<AppLayout />);
+
+    expect(mockHydrate).toHaveBeenCalledTimes(1);
+  });
+
+  it('si no se pudo saber, ofrece reintentar', async () => {
+    const refetch = jest.fn();
+    mockGate = { isPending: false, isError: true, error: new Error('Sin conexión'), refetch };
+    await render(<AppLayout />);
+
+    expect(screen.getByText('Sin conexión')).toBeTruthy();
+    expect(mockReminderSync).not.toHaveBeenCalled();
   });
 });

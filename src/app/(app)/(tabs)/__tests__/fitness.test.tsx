@@ -29,9 +29,31 @@ const consulta = (over: Partial<Consulta> = {}): Consulta => ({
 let mockWorkouts: Consulta = consulta();
 const mockCreate = { mutate: jest.fn(), isPending: false };
 
+let mockNotas: { data?: unknown[]; isError: boolean; error?: Error; refetch: jest.Mock } = { data: [], isError: false, refetch: jest.fn() };
 jest.mock('@/hooks/use-workouts', () => ({
   useWorkouts: () => mockWorkouts,
   useWorkoutMutations: () => ({ create: mockCreate }),
+  useNoteSearch: () => mockNotas,
+}));
+// Datos de salud: sin plataforma, como en web; Actividad tiene sus propias pruebas.
+jest.mock('@/hooks/use-health', () => ({
+  useHealthAvailability: () => ({ data: { status: 'web', source: null, reason: 'web' } }),
+  useHealthPermissions: () => ({ data: undefined }),
+  useExternalSessions: () => ({ data: [] }),
+}));
+/** Lo que el bento lee del historial (RF-F66). Cada prueba puede cambiarlo. */
+let mockProgreso: Record<string, unknown> = {};
+const progresoBase = () => ({
+  sessions: [],
+  catalog: new Map(),
+  now: new Date(2026, 9, 7, 12, 0),
+  streak: { weeks: 3, best: 5, trainedThisWeek: true, paused: null },
+  achievements: [{ unlocked: true }, { unlocked: false }, { unlocked: false }],
+  isPending: false,
+});
+jest.mock('@/hooks/use-gym-progress', () => ({
+  useGymProgress: () => mockProgreso,
+  useStreakDecision: () => ({ mutate: jest.fn(), isPending: false, error: null }),
 }));
 // La cola local y la conversión de v1 tienen sus propias pruebas; aquí solo se montan.
 const mockBootstrap = jest.fn();
@@ -41,6 +63,8 @@ jest.mock('@/hooks/use-exercise-history', () => ({ useLegacyConversion: () => mo
 
 beforeEach(() => {
   mockWorkouts = consulta();
+  mockNotas = { data: [], isError: false, refetch: jest.fn() };
+  mockProgreso = progresoBase();
   mockCreate.mutate.mockReset();
   mockCreate.isPending = false;
   globalThis.mockRouter.push.mockClear();
@@ -238,3 +262,99 @@ describe('sesión en curso (spec 07 v2, RF-F18)', () => {
     expect(mockConversion).toHaveBeenCalled();
   });
 });
+
+describe('bento (RF-F66)', () => {
+  it('muestra la racha, los logros y el glosario', async () => {
+    await render(<FitnessScreen />);
+    expect(screen.getByText('3 semanas')).toBeTruthy();
+    expect(screen.getByText('1 / 3')).toBeTruthy();
+    expect(screen.getByLabelText('Glosario')).toBeTruthy();
+  });
+
+  it('cuenta las sesiones de esta semana y sus músculos', async () => {
+    const lunes = new Date(2026, 9, 5, 18, 0).toISOString();
+    mockProgreso = {
+      ...progresoBase(),
+      catalog: new Map([['sentadilla', { id: 'sentadilla', tracking_type: 'weight_reps', primary_muscles: ['quads'], secondary_muscles: ['glutes_max'] }]]),
+      sessions: [
+        {
+          id: 'w1',
+          performed_at: lunes,
+          bodyweight_kg: null,
+          exercises: [
+            {
+              id: 'e1',
+              exercise_id: 'sentadilla',
+              workout_sets: [
+                { id: 's1', set_type: 'working', completed_at: lunes, segments: [{ kind: 'main', weight_kg: 100, reps: 5 }] },
+                { id: 's2', set_type: 'working', completed_at: lunes, segments: [{ kind: 'main', weight_kg: 100, reps: 5 }] },
+              ],
+            },
+          ],
+        },
+      ],
+    };
+    await render(<FitnessScreen />);
+
+    expect(screen.getByText('1 sesión')).toBeTruthy();
+    expect(screen.getByText('1000 kg de volumen')).toBeTruthy();
+    expect(screen.getByText('Cuádriceps · 2 series')).toBeTruthy();
+  });
+
+  it('sin entrenos esta semana lo dice', async () => {
+    await render(<FitnessScreen />);
+    expect(screen.getByText('0 sesiones')).toBeTruthy();
+    expect(screen.getByText('Aún nada esta semana.')).toBeTruthy();
+  });
+
+  it('las tarjetas de racha y logros abren Progreso', async () => {
+    await render(<FitnessScreen />);
+    await fireEvent.press(screen.getByLabelText('Logros'));
+    expect(globalThis.mockRouter.push).toHaveBeenCalledWith('/(app)/progress');
+  });
+
+  it('el glosario abre el glosario', async () => {
+    await render(<FitnessScreen />);
+    await fireEvent.press(screen.getByLabelText('Glosario'));
+    expect(globalThis.mockRouter.push).toHaveBeenCalledWith('/(app)/glossary');
+  });
+});
+
+describe('ajustes (RF-F67)', () => {
+  it('el ⚙ abre los ajustes de Fitness', async () => {
+    await render(<FitnessScreen />);
+    await fireEvent.press(screen.getByLabelText('Ajustes de Fitness'));
+    expect(globalThis.mockRouter.push).toHaveBeenCalledWith('/(app)/fitness-settings');
+  });
+});
+
+describe('buscar en las notas (RF-F53)', () => {
+  it('con dos letras o más, cambia el historial por las notas encontradas', async () => {
+    mockWorkouts = consulta({ data: [entreno({ title: 'Pierna' })] });
+    mockNotas = {
+      data: [{ workout_id: 'w1', where: 'set', text: 'Cinturón en las últimas dos', performed_at: new Date(2026, 8, 28).toISOString(), title: 'Pierna', exercise_name: 'Sentadilla' }],
+      isError: false,
+      refetch: jest.fn(),
+    };
+    await render(<FitnessScreen />);
+
+    await fireEvent.changeText(screen.getByLabelText('Buscar en tus notas'), 'cint');
+
+    expect(screen.getByText('Cinturón en las últimas dos')).toBeTruthy();
+    expect(screen.queryByText('Historial')).toBeNull();
+  });
+
+  it('el buscador sigue montado al pasar del historial a las notas (no pierde el foco)', async () => {
+    await render(<FitnessScreen />);
+    const antes = screen.getByLabelText('Buscar en tus notas');
+    await fireEvent.changeText(antes, 'ci');
+    expect(screen.getByLabelText('Buscar en tus notas')).toBe(antes);
+  });
+
+  it('si no encuentra nada lo dice', async () => {
+    await render(<FitnessScreen />);
+    await fireEvent.changeText(screen.getByLabelText('Buscar en tus notas'), 'xyz');
+    expect(screen.getByText('Ninguna nota dice eso')).toBeTruthy();
+  });
+});
+

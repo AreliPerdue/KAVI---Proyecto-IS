@@ -45,7 +45,12 @@ jest.mock('@/hooks/use-exercise-history', () => ({
   exerciseHistoryQuery: (_u: string, ref: { name: string }) => ({ queryKey: ['historial', ref.name], queryFn: async () => [] }),
   useLegacyConversion: () => undefined,
 }));
-jest.mock('@/hooks/use-exercises', () => ({ useExercises: () => ({ data: [mockBanca()], index: new Map() }) }));
+jest.mock('@/hooks/use-exercises', () => ({
+  useExercises: () => ({ data: [mockBanca()], index: new Map() }),
+  // Notas fijas (RF-F52): sin ninguna; tienen su propia prueba en el detalle del ejercicio.
+  useExercisePrefs: () => ({ data: [] }),
+  useExerciseMutations: () => ({ saveStickyNote: { mutate: jest.fn() } }),
+}));
 function mockBanca() {
   return BANCA;
 }

@@ -13,18 +13,25 @@ export function Segmented<T extends string>({
   value,
   onChange,
   fullWidth = false,
+  label,
 }: {
   options: readonly SegmentedOption<T>[];
   value: T;
   onChange: (value: T) => void;
   /** Ocupa todo el ancho disponible y reparte los segmentos por igual. */
   fullWidth?: boolean;
+  /**
+   * Nombre del grupo para el lector de pantalla (RF-I7). Hace falta cuando hay dos selectores con
+   * opciones iguales en la misma pantalla, como "Sistema" en Apariencia y en Idioma.
+   */
+  label?: string;
 }) {
   const theme = useTheme();
   return (
     <View
       style={[styles.container, { backgroundColor: theme.surfaceAlt }, fullWidth ? styles.containerFullWidth : null]}
-      accessibilityRole="tablist">
+      accessibilityRole="tablist"
+      accessibilityLabel={label}>
       {options.map((option) => {
         const selected = option.value === value;
         return (

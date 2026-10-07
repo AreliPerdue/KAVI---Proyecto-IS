@@ -140,9 +140,9 @@ describe('SettingsRow', () => {
     expect(screen.queryByText('Sí')).toBeNull();
   });
 
-  it('la etiqueta no envuelve', async () => {
+  it('la etiqueta llega hasta dos líneas: con un control a la derecha, una sola la cortaba en 360 px', async () => {
     await render(<SettingsRow icon={<Icono />} label="Una etiqueta larguísima" />);
-    expect(screen.getByText('Una etiqueta larguísima').props.numberOfLines).toBe(1);
+    expect(screen.getByText('Una etiqueta larguísima').props.numberOfLines).toBe(2);
   });
 });
 

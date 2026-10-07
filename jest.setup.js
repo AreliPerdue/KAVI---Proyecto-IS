@@ -78,6 +78,15 @@ jest.mock('react-native-reanimated', () => {
     C.displayName = `Animated(${Base.displayName ?? 'View'})`;
     return C;
   };
+  /** Un valor compartido de mentira: `.value` y `.get()`/`.set()` leen y escriben lo mismo. */
+  const valorCompartido = (inicial) => {
+    const v = { value: inicial };
+    v.get = () => v.value;
+    v.set = (x) => {
+      v.value = typeof x === 'function' ? x(v.value) : x;
+    };
+    return v;
+  };
   const Animated = {
     View: animado(View),
     Text: animado(Text),
@@ -89,9 +98,16 @@ jest.mock('react-native-reanimated', () => {
     __esModule: true,
     default: Animated,
     ...Animated,
-    useDerivedValue: (fn) => ({ value: fn() }),
+    useDerivedValue: (fn) => valorCompartido(fn()),
     useAnimatedStyle: (fn) => fn(),
-    useSharedValue: (inicial) => ({ value: inicial }),
+    useSharedValue: (inicial) => valorCompartido(inicial),
+    // Reanimated 4 también lee y escribe con .get()/.set(), que el React Compiler prefiere.
+    useAnimatedReaction: () => undefined,
+    useAnimatedRef: () => ({ current: null }),
+    measure: () => null,
+    scrollTo: () => undefined,
+    cancelAnimation: () => undefined,
+    Easing: { out: (f) => f, in: (f) => f, inOut: (f) => f, cubic: (t) => t, quad: (t) => t, linear: (t) => t, ease: (t) => t },
     withTiming: (destino) => destino,
     withSpring: (destino) => destino,
     /** Sin fotogramas: se devuelve el extremo al que corresponde el progreso. */
@@ -252,3 +268,28 @@ jest.mock('react-native-worklets', () => ({
   createWorkletRuntime: () => ({}),
   isWorkletFunction: () => false,
 }));
+
+/**
+ * Módulos nativos del gym (spec 07 v2): pitidos de los timers, vibración y compartir la
+ * tarjeta del resumen. En Jest no hay módulo nativo detrás; lo que se prueba es que la app
+ * los llame, no el sonido.
+ */
+jest.mock('expo-audio', () => ({
+  __esModule: true,
+  createAudioPlayer: jest.fn(() => ({ play: jest.fn(), seekTo: jest.fn(), remove: jest.fn(), volume: 1 })),
+  setAudioModeAsync: jest.fn(() => Promise.resolve()),
+}));
+jest.mock('expo-haptics', () => ({
+  __esModule: true,
+  impactAsync: jest.fn(() => Promise.resolve()),
+  notificationAsync: jest.fn(() => Promise.resolve()),
+  selectionAsync: jest.fn(() => Promise.resolve()),
+  ImpactFeedbackStyle: { Light: 'light', Medium: 'medium', Heavy: 'heavy' },
+  NotificationFeedbackType: { Success: 'success', Warning: 'warning', Error: 'error' },
+}));
+jest.mock('expo-sharing', () => ({
+  __esModule: true,
+  isAvailableAsync: jest.fn(() => Promise.resolve(false)),
+  shareAsync: jest.fn(() => Promise.resolve()),
+}));
+jest.mock('react-native-view-shot', () => ({ __esModule: true, captureRef: jest.fn(() => Promise.resolve('file://tarjeta.png')) }));

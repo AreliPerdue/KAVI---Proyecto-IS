@@ -6,7 +6,7 @@
  * segundo es cosmetico a proposito — el control real vive en la base (RF-AD6)—,
  * pero conviene que la pantalla no lo ofrezca a quien no puede usarlo.
  */
-import { fireEvent, render, screen, waitFor } from '@testing-library/react-native';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react-native';
 
 const mockConfirm = jest.fn();
 const mockSnackbar = jest.fn();
@@ -224,12 +224,27 @@ describe('apariencia (NFR-18)', () => {
 
   beforeEach(() => usePreferencesStore.setState({ appearance: 'dark' }));
 
+  /** Idioma también tiene "Sistema": las opciones se buscan dentro del grupo de Apariencia. */
+  /**
+   * El grupo no es "elemento accesible" por sí mismo (sus pestañas sí), y el renglón también se
+   * llama "Apariencia": se busca el que tiene rol de grupo de pestañas.
+   */
+  const grupo = (nombre: string) => screen.getAllByLabelText(nombre).find((e) => e.props.accessibilityRole === 'tablist');
+  const apariencia = () => within(grupo('Apariencia')!);
+
   it('ofrece seguir al sistema, claro y oscuro', async () => {
     await render(<Pantalla />);
 
     for (const opcion of ['Sistema', 'Claro', 'Oscuro']) {
-      expect(screen.getByRole('tab', { name: opcion })).toBeTruthy();
+      expect(apariencia().getByRole('tab', { name: opcion })).toBeTruthy();
     }
+  });
+
+  it('el lector de pantalla distingue los dos "Sistema" por su grupo (RF-I7)', async () => {
+    await render(<Pantalla />);
+
+    expect(grupo('Apariencia')).toBeTruthy();
+    expect(grupo('Idioma')).toBeTruthy();
   });
 
   it('marca como seleccionada la que esta activa', async () => {
@@ -251,7 +266,7 @@ describe('apariencia (NFR-18)', () => {
   it('y «Sistema» deja que mande el telefono', async () => {
     await render(<Pantalla />);
 
-    await fireEvent.press(screen.getByRole('tab', { name: 'Sistema' }));
+    await fireEvent.press(apariencia().getByRole('tab', { name: 'Sistema' }));
 
     expect(usePreferencesStore.getState().appearance).toBe('system');
   });
