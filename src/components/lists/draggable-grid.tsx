@@ -6,6 +6,7 @@ import Animated, { runOnJS, useAnimatedStyle, useSharedValue, withTiming } from 
 import { marcarArrastre } from './drag-guard';
 
 import { Motion, Spacing } from '@/constants/theme';
+import { destinoEnRejilla } from '@/lib/drag';
 
 const RETARDO_MS = 200;
 
@@ -38,33 +39,9 @@ export function DraggableGrid<T>({ items, columns, keyOf, renderItem, onReorder 
   const anchoCelda = ancho > 0 ? (ancho - Spacing.sm * (columns - 1)) / columns : 0;
 
   const destinoDe = useCallback(
-    (desde: number, dx: number, dy: number): number => {
-      if (anchoCelda === 0) return desde;
-      const filaActual = Math.floor(desde / columns);
-      const colActual = desde % columns;
-
-      const salto = Math.round(dx / (anchoCelda + Spacing.sm));
-      const col = Math.min(columns - 1, Math.max(0, colActual + salto));
-
-      let fila = filaActual;
-      let restante = dy;
-      while (restante > 0 && fila < filas.length - 1) {
-        const alto = (alturas.current[fila + 1] ?? 0) + Spacing.sm;
-        if (restante < alto / 2) break;
-        restante -= alto;
-        fila += 1;
-      }
-      while (restante < 0 && fila > 0) {
-        const alto = (alturas.current[fila - 1] ?? 0) + Spacing.sm;
-        if (-restante < alto / 2) break;
-        restante += alto;
-        fila -= 1;
-      }
-
-      // La última fila puede estar incompleta: soltar en su hueco vacío es soltar al final.
-      return Math.min(items.length - 1, fila * columns + col);
-    },
-    [anchoCelda, columns, filas.length, items.length],
+    (desde: number, dx: number, dy: number): number =>
+      destinoEnRejilla({ desde, dx, dy, columnas: columns, total: items.length, anchoCelda, separacion: Spacing.sm, alturasFila: alturas.current }),
+    [anchoCelda, columns, items.length],
   );
 
   return (

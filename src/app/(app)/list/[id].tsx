@@ -37,8 +37,9 @@ import { useTheme } from '@/hooks/use-theme';
 import { formatClock, formatDayTitle, formatHour, formatShortDate, fromDayKey, toDayKey } from '@/lib/dates';
 import { describeRecurrence, parseRRule } from '@/lib/recurrence';
 import { useConfirm, useSnackbar } from '@/providers';
-import type { ListItem, ListSection } from '@/types/domain';
+import type { ListItem } from '@/types/domain';
 import { useLanguage, useT } from '@/i18n';
+import { type EntradaDeLista, ubicarSoltado } from '@/lib/drag';
 
 /* El anillo de foco del navegador se encimaba sobre el propio del campo; el cambio de
  * color al enfocar sigue haciendo de indicador visible. */
@@ -330,39 +331,14 @@ export default function ListDetailScreen() {
   const soltarEn = (from: number, to: number) => {
     const origen = entradas[from];
     if (!origen || origen.kind !== 'item') return;
-    const sin = entradas.filter((_, i) => i !== from);
-    const destino = Math.min(sin.length, Math.max(0, to));
-
-    let sectionId: string | null = null;
-    for (let i = destino - 1; i >= 0; i--) {
-      const e = sin[i];
-      if (e?.kind === 'header') {
-        sectionId = e.id.replace('header-', '');
-        break;
-      }
-      // Un campo de captura marca el final de su grupo: por encima de él ya es otra cosa.
-      if (e?.kind === 'composer') {
-        sectionId = e.sectionId;
-        break;
-      }
-    }
-
-    const mismos = (e: (typeof sin)[number] | undefined) =>
-      e?.kind === 'item' && (e.item.section_id ?? null) === sectionId ? e.item : null;
-    let antes: ListItem | null = null;
-    for (let i = destino - 1; i >= 0 && !antes; i--) antes = mismos(sin[i]);
-    let despues: ListItem | null = null;
-    for (let i = destino; i < sin.length && !despues; i++) despues = mismos(sin[i]);
-
-    const orden =
-      antes && despues
-        ? (antes.sort_order + despues.sort_order) / 2
-        : antes
-          ? antes.sort_order + 1024
-          : despues
-            ? despues.sort_order / 2
-            : 1024;
-    placeItem.mutate({ id: origen.item.id, sortOrder: orden, sectionId });
+    const lugar = ubicarSoltado(
+      entradas.map((e): EntradaDeLista =>
+        e.kind === 'header' ? { kind: 'header', sectionId: e.id.replace('header-', '') } : e.kind === 'composer' ? { kind: 'composer', sectionId: e.sectionId } : { kind: 'item', item: e.item },
+      ),
+      from,
+      to,
+    );
+    if (lugar) placeItem.mutate({ id: origen.item.id, sortOrder: lugar.sortOrder, sectionId: lugar.sectionId });
   };
 
   const color = datos?.list.color ?? theme.ink;

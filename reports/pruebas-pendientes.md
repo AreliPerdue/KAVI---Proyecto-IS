@@ -63,8 +63,8 @@ juntarlo en una sesión dedicada a pruebas.
 
 ## FAB que encoge (T193c)
 
-- [ ] `useShrinkOnScroll`: encoge al bajar, vuelve al subir, y no reacciona dentro de la
-  zona superior ni a desplazamientos por debajo del umbral.
+- [x] `useShrinkOnScroll`: encoge al bajar, vuelve al subir, y no reacciona dentro de la
+  zona superior ni a desplazamientos por debajo del umbral. → `hooks/__tests__/use-shrink-on-scroll.test.tsx`
 - [ ] El FAB encogido **no** baja del mínimo táctil (44 iOS / 48 Android). Es la garantía
   que justifica la escala elegida y la que se rompería al retocar el tamaño a ojo.
 - [ ] Con movimiento reducido cambia de tamaño sin transición.
@@ -179,10 +179,10 @@ juntarlo en una sesión dedicada a pruebas.
 
 ## Arrastrar elementos (T225)
 
-- [ ] `destinoDe` con filas de **alturas distintas**: es toda la razón de medirlas y donde
-  un error se ve como "lo solté aquí y cayó allá".
-- [ ] Arrastrar menos de media fila no cambia nada.
-- [ ] El orden nuevo cae entre los vecinos del destino y no pisa a ninguno.
+- [x] `destinoDe` con filas de **alturas distintas**: es toda la razón de medirlas y donde
+  un error se ve como "lo solté aquí y cayó allá". → `lib/__tests__/drag.test.ts (encontró y corrigió un error: con una fila alta debajo había que arrastrar 3/4 de ella)`
+- [x] Arrastrar menos de media fila no cambia nada. → `lib/__tests__/drag.test.ts`
+- [x] El orden nuevo cae entre los vecinos del destino y no pisa a ninguno. → `lib/__tests__/drag.test.ts`
 - [ ] Tocar sin mantener sigue abriendo la edición, no arrastra.
 - [ ] Verificación manual en teléfono: el arrastre no pelea con el scroll de la pantalla.
 
@@ -198,23 +198,23 @@ juntarlo en una sesión dedicada a pruebas.
 
 ## Arrastrar tarjetas del inicio (T226, T227)
 
-- [ ] **La que más importa**: soltar tras arrastrar **no** dispara el toque. Ya falló una
-  vez sin que se notara, porque la prueba miraba el orden y no lo que se había abierto.
+- [x] **La que más importa**: soltar tras arrastrar **no** dispara el toque. Ya falló una
+  vez sin que se notara, porque la prueba miraba el orden y no lo que se había abierto. → `lib/__tests__/drag.test.ts`
 - [ ] Un toque largo **sin mover** sigue comportándose como toque: la guarda solo se activa
   si hubo movimiento real.
-- [ ] `destinoDe` de la rejilla con filas de alturas distintas y con una última fila
-  incompleta (soltar en el hueco vacío cae al final).
+- [x] `destinoDe` de la rejilla con filas de alturas distintas y con una última fila
+  incompleta (soltar en el hueco vacío cae al final). → `lib/__tests__/drag.test.ts`
 - [ ] Las listas compartidas conmigo no se pueden arrastrar.
 
 ## Arrastrar entre secciones (T228)
 
-- [ ] `soltarEn` resuelve la sección por el encabezado que queda **por encima**, incluida la
-  zona sin agrupar cuando no hay ninguno.
-- [ ] El orden nuevo se calcula entre vecinos **de la sección de destino**, no de la de
-  origen. Es el error silencioso más probable aquí.
-- [ ] Soltar justo debajo del campo de captura de una sección cae en esa sección, no en la
-  siguiente.
-- [ ] Encabezados y campos de captura no se pueden arrastrar pero sí cuentan para medir.
+- [x] `soltarEn` resuelve la sección por el encabezado que queda **por encima**, incluida la
+  zona sin agrupar cuando no hay ninguno. → `lib/__tests__/drag.test.ts`
+- [x] El orden nuevo se calcula entre vecinos **de la sección de destino**, no de la de
+  origen. Es el error silencioso más probable aquí. → `lib/__tests__/drag.test.ts`
+- [x] Soltar justo debajo del campo de captura de una sección cae en esa sección, no en la
+  siguiente. → `lib/__tests__/drag.test.ts`
+- [x] Encabezados y campos de captura no se pueden arrastrar pero sí cuentan para medir. → `lib/__tests__/drag.test.ts`
 
 ## Crear listas (T229)
 
@@ -302,8 +302,8 @@ descartar, lectura). Falta:
 - [x] `RestTimerBar`: al llegar a 0 avisa y se va solo a los 8 s. → `components/fitness/__tests__/timers.test.tsx`
 - [x] `NumpadSheet`: la primera tecla reemplaza y las siguientes agregan (bug encontrado a
   mano: 1-0-0 daba 0); modo contador; "Siguiente" peso → reps → esfuerzo. → `components/fitness/__tests__/numpad-sheet.test.tsx`
-- [ ] `ExerciseBlock`: columnas I/D en unilaterales y aviso de desbalance; etiqueta C/F/T…
-  por tipo; el calentamiento no cuenta en la numeración.
+- [x] `ExerciseBlock`: columnas I/D en unilaterales y aviso de desbalance; etiqueta C/F/T…
+  por tipo; el calentamiento no cuenta en la numeración. → `components/fitness/__tests__/exercise-block.test.tsx`
 - [ ] Detalle del ejercicio: mejor serie, peso máximo, gráficas con 1 y con 2+ sesiones.
 - [ ] Ajustes de gimnasio en Perfil.
 - [ ] Manual en nativo (Android): swipe izquierda/derecha, vibración, notificación de fin de
@@ -393,9 +393,9 @@ imagen y, sin hoja de compartir del navegador, la descarga (`kavi-2026-10-21.png
 Probado a mano en el demo (web): la serie 3 arrastrada hasta arriba queda primera
 (40 · 20 · 30), soltar no abre el menú y un toque corto sí; en "Reordenar ejercicios" el
 segundo pasa a primero y "Guardar orden" lo aplica en la sesión. Falta:
-- [ ] `ReorderableColumn`: destino según centros con filas de alto distinto; las demás se
+- [x] `ReorderableColumn`: destino según centros con filas de alto distinto; las demás se
   recorren el alto de la arrastrada; soltar en el mismo lugar no llama `onMove`; cancelar
-  restaura; `justDragged` evita abrir el menú al soltar.
+  restaura; `justDragged` evita abrir el menú al soltar. → `lib/__tests__/drag.test.ts`
 - [ ] `moverSerie`: `sort_order` entre los nuevos vecinos (arriba, en medio, al final) y se
   puede deshacer.
 - [ ] `reordenarEjercicios`: solo guarda las posiciones que cambiaron; el caché se reordena al
@@ -478,8 +478,8 @@ buscar "rir" despliega Reps en reserva; tocar "RIR" en el logger abre su explica
 su explicación. Falta:
 - [x] `glossary.ts`: ids únicos; cada entrada con significado, ejemplo y "en pocas palabras";
   todo `topic` existe en `GLOSSARY_TOPICS`. → `i18n/__tests__/i18n.test.ts`
-- [ ] Pantalla Glosario: búsqueda sin acentos (por término, otros nombres y texto); `?term=`
-  abre desplegado; vacío con "Ningún término dice eso."
+- [x] Pantalla Glosario: búsqueda sin acentos (por término, otros nombres y texto); `?term=`
+  abre desplegado; vacío con "Ningún término dice eso." → `app/(app)/__tests__/glossary.test.tsx`
 - [ ] RF-F65: ningún valor calculado sin "≈"/"estimado" (detalle, gráfica, herramientas).
 
 ## Fitness con datos de salud, base (T255 – T259)

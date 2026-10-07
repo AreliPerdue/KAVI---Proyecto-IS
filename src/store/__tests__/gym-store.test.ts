@@ -1,3 +1,5 @@
+import { useGymStore } from '@/store/gym-store';
+
 /**
  * Timer de descanso (spec 07 v2, RF-F34): se guarda como hora de fin, no como segundos, para que
  * siga corriendo aunque la app se duerma, y su aviso del sistema se reprograma con cada ajuste.
@@ -9,7 +11,6 @@ jest.mock('@/lib/notifications', () => ({
   cancelRestEnd: () => mockCancelar(),
 }));
 
-import { useGymStore } from '@/store/gym-store';
 
 beforeEach(() => {
   jest.useFakeTimers();

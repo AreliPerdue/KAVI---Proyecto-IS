@@ -3,7 +3,6 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 import { AppText, EmptyState, LoadingState, Sheet } from '@/components/ui';
 import { Radius, Spacing } from '@/constants/theme';
 import { useListHistory } from '@/hooks/use-lists';
-import { useTheme } from '@/hooks/use-theme';
 import { formatShortDate, fromDayKey } from '@/lib/dates';
 import { resumirVueltas } from '@/lib/list-runs';
 import { useLanguage, useT } from '@/i18n';
@@ -26,7 +25,6 @@ export type ListHistorySheetProps = {
  * una proporción la lee; la app no la convierte en calificación.
  */
 export function ListHistorySheet({ visible, onClose, listId, accent }: ListHistorySheetProps) {
-  const theme = useTheme();
   const tx = useT();
   const lang = useLanguage();
   const historial = useListHistory(visible ? listId : undefined);

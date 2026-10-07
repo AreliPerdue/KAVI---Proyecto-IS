@@ -4,6 +4,7 @@ import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, { runOnJS, type SharedValue, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
 import { tap } from '@/lib/haptics';
+import { destinoPorCentros } from '@/lib/drag';
 
 type Medida = { y: number; h: number };
 
@@ -144,16 +145,8 @@ function Fila({ index, ctx, children }: { index: number; ctx: Contexto; children
         .onUpdate((e) => {
           dy.set(e.translationY);
           const m = medidas.get();
-          const propia = m[index];
-          if (!propia) return;
-          // El destino es cuántas filas quedan con el centro arriba del centro de la arrastrada.
-          const centro = propia.y + propia.h / 2 + e.translationY;
-          let t = 0;
-          for (let i = 0; i < m.length; i++) {
-            const otra = m[i];
-            if (i !== index && otra && otra.y + otra.h / 2 < centro) t += 1;
-          }
-          destino.set(t);
+          if (!m[index]) return;
+          destino.set(destinoPorCentros(m, index, e.translationY));
         })
         .onEnd(() => {
           const m = medidas.get();

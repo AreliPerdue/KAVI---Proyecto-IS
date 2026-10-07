@@ -6,6 +6,7 @@ import Animated, { runOnJS, useAnimatedStyle, useSharedValue, withTiming } from 
 import { marcarArrastre } from './drag-guard';
 
 import { Motion } from '@/constants/theme';
+import { destinoEnFilas } from '@/lib/drag';
 
 /** Cuánto hay que mantener presionado antes de que la fila se despegue. */
 const RETARDO_MS = 200;
@@ -53,23 +54,7 @@ export function DraggableRows<T>({ items, keyOf, renderItem, draggable, onReorde
    * se salta a la siguiente cuando se pasa de su mitad: es el punto en que el hueco ya se
    * ve del otro lado y soltar ahí es lo que la persona espera.
    */
-  const destinoDe = useCallback((desde: number, dy: number): number => {
-    let i = desde;
-    let restante = dy;
-    while (restante > 0 && i < items.length - 1) {
-      const alto = alturas.current[i + 1] ?? 0;
-      if (restante < alto / 2) break;
-      restante -= alto;
-      i += 1;
-    }
-    while (restante < 0 && i > 0) {
-      const alto = alturas.current[i - 1] ?? 0;
-      if (-restante < alto / 2) break;
-      restante += alto;
-      i -= 1;
-    }
-    return i;
-  }, [items.length]);
+  const destinoDe = useCallback((desde: number, dy: number): number => destinoEnFilas(alturas.current, desde, dy, items.length), [items.length]);
 
   return (
     <View>

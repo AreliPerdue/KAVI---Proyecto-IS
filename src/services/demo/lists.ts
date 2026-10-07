@@ -8,7 +8,7 @@
  */
 import { addDays, format } from 'date-fns';
 
-import type { ListDetail, ListPermission, ListSearchResults, ListShare, ListsApi } from '@/services/contracts';
+import type { ListDetail, ListSearchResults, ListShare, ListsApi } from '@/services/contracts';
 import { fromDayKey } from '@/lib/dates';
 import { graciaVencida } from '@/lib/list-runs';
 import { occursOn, parseRRule } from '@/lib/recurrence';
