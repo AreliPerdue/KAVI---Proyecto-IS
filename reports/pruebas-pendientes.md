@@ -36,8 +36,8 @@ que todavía no se automatiza.
   que es correcto solo con cero a la izquierda). → `services/demo/__tests__/lists.test.ts`
 - [x] Pantalla de inicio: que los grupos se pinten como bloques y que una fila impar no
   estire la última tarjeta. → `app/(app)/__tests__/lists.test.tsx`
-- [ ] Detalle: que un ítem palomeado salga de su sección y baje a completados, y que
-  despalomearlo lo devuelva a la sección de donde salió.
+- [x] Detalle: que un ítem palomeado salga de su sección y baje a completados, y que
+  despalomearlo lo devuelva a la sección de donde salió. → `app/(app)/list/__tests__/detail.test.tsx`
 - [x] `supabaseLists` falla a propósito hasta T195; conviene una prueba que fije que el
   mensaje llega a la UI en vez de convertirse en una lista vacía. → `services/supabase/__tests__/lists.test.ts`
 
@@ -79,9 +79,9 @@ que todavía no se automatiza.
   vacío se cierra en vez de agregar algo en blanco. Es el comportamiento del que depende
   capturar de corrido y el más fácil de romper sin darse cuenta. → `components/lists/__tests__/item-composer.test.tsx`
 - [x] Agregar dentro de una sección deja el ítem en esa sección, no al final de la lista. → `services/demo/__tests__/lists.test.ts`
-- [ ] Mover un ítem entre secciones desde la hoja de edición.
-- [ ] Eliminar pide confirmación y el mensaje distingue palomear de eliminar.
-- [ ] El lápiz de cada renglón no queda anidado dentro del Pressable de la fila.
+- [x] Mover un ítem entre secciones desde la hoja de edición. → `app/(app)/list/__tests__/detail.test.tsx`
+- [x] Eliminar pide confirmación y el mensaje distingue palomear de eliminar. → `app/(app)/list/__tests__/detail.test.tsx`
+- [x] El lápiz de cada renglón no queda anidado dentro del Pressable de la fila. → `app/(app)/list/__tests__/detail.test.tsx`
 
 ## Franja de pendientes del día (T201)
 
@@ -114,15 +114,15 @@ que todavía no se automatiza.
 ## Alta estilo Keep (T207)
 
 - [x] "+" crea y navega sin pantalla intermedia, con el título enfocado. → `app/(app)/__tests__/lists.test.tsx (el foco del título: detalle)`
-- [ ] Al salir, una lista intacta se borra; una con nombre cambiado **o** con un elemento,
-  no. Es la regla que evita basura sin tragarse trabajo de nadie.
-- [ ] El título guarda al perder el foco y se repone si se deja vacío.
+- [x] Al salir, una lista intacta se borra; una con nombre cambiado **o** con un elemento,
+  no. Es la regla que evita basura sin tragarse trabajo de nadie. → `app/(app)/list/__tests__/detail.test.tsx`
+- [x] El título guarda al perder el foco y se repone si se deja vacío. → `app/(app)/list/__tests__/detail.test.tsx`
 - [x] Cambiar color o icono desde la paleta se refleja en la tarjeta del inicio. → `app/(app)/__tests__/lists.test.tsx`
 
 ## Fechas en elementos (T212)
 
 - [x] Quitar el día quita también la hora. → `services/demo/__tests__/lists.test.ts`
-- [ ] Un elemento con fecha pasada **ya palomeado** no se pinta como vencido.
+- [x] Un elemento con fecha pasada **ya palomeado** no se pinta como vencido. → `app/(app)/list/__tests__/detail.test.tsx`
 - [x] La fecha viaja como `YYYY-MM-DD` y no como instante, en las dos implementaciones. → `hooks/__tests__/use-lists.test.tsx, services/demo/__tests__/lists.test.ts`
 - [ ] Un elemento al que se le pone la fecha de hoy aparece en la franja del día.
 
@@ -141,8 +141,8 @@ que todavía no se automatiza.
 - [x] `search` con menos de dos letras no consulta. → `hooks/__tests__/use-lists.test.tsx`
 - [x] `search` encuentra elementos ya palomeados. → `services/demo/__tests__/lists.test.ts`
 - [x] En Supabase, buscar "50%" no trae de más: `%` y `_` van escapados. → `services/supabase/__tests__/lists.test.ts`
-- [ ] Subir/bajar solo permuta dentro del grupo y los extremos van deshabilitados.
-- [ ] El intercambio lee ambos `sort_order` antes de escribir.
+- [x] Subir/bajar solo permuta dentro del grupo y los extremos van deshabilitados. → `app/(app)/list/__tests__/detail.test.tsx`
+- [x] El intercambio lee ambos `sort_order` antes de escribir. → `hooks/__tests__/use-lists.test.tsx`
 
 ## Pendientes en el calendario y áreas táctiles (T217, T218)
 
@@ -152,7 +152,7 @@ que todavía no se automatiza.
 - [x] En mes, el chip de un pendiente no pinta hora aunque el elemento tenga `due_time`. → `components/calendar/__tests__/list-layers.test.ts`
 - [x] `isDerivedActivity` reconoce el prefijo de pendientes: no se pueden editar ni compartir
   como actividades. → `components/calendar/__tests__/views-and-filters.test.ts`
-- [ ] Tocar el texto de un elemento abre la edición y **no** lo palomea.
+- [x] Tocar el texto de un elemento abre la edición y **no** lo palomea. → `app/(app)/list/__tests__/detail.test.tsx`
 
 ## Compartir listas (T219-T221)
 
@@ -187,7 +187,7 @@ que todavía no se automatiza.
   un error se ve como "lo solté aquí y cayó allá". → `lib/__tests__/drag.test.ts (encontró y corrigió un error: con una fila alta debajo había que arrastrar 3/4 de ella)`
 - [x] Arrastrar menos de media fila no cambia nada. → `lib/__tests__/drag.test.ts`
 - [x] El orden nuevo cae entre los vecinos del destino y no pisa a ninguno. → `lib/__tests__/drag.test.ts`
-- [ ] Tocar sin mantener sigue abriendo la edición, no arrastra.
+- [x] Tocar sin mantener sigue abriendo la edición, no arrastra. → `components/lists/__tests__/drag-guard.test.tsx`
 - [ ] (manual) Verificación manual en teléfono: el arrastre no pelea con el scroll de la pantalla.
 
 ## Etiquetas (T211)
@@ -204,8 +204,8 @@ que todavía no se automatiza.
 
 - [x] **La que más importa**: soltar tras arrastrar **no** dispara el toque. Ya falló una
   vez sin que se notara, porque la prueba miraba el orden y no lo que se había abierto. → `lib/__tests__/drag.test.ts`
-- [ ] Un toque largo **sin mover** sigue comportándose como toque: la guarda solo se activa
-  si hubo movimiento real.
+- [x] Un toque largo **sin mover** sigue comportándose como toque: la guarda solo se activa
+  si hubo movimiento real. → `components/lists/__tests__/drag-guard.test.tsx`
 - [x] `destinoDe` de la rejilla con filas de alturas distintas y con una última fila
   incompleta (soltar en el hueco vacío cae al final). → `lib/__tests__/drag.test.ts`
 - [x] Las listas compartidas conmigo no se pueden arrastrar. → `app/(app)/__tests__/lists.test.tsx`
@@ -222,10 +222,10 @@ que todavía no se automatiza.
 
 ## Crear listas (T229)
 
-- [ ] **La que faltaba**: crear, escribir el nombre y salir **sin confirmar** conserva la
-  lista. Es la carrera entre el guardado y la limpieza, y se veía como "el botón no sirve".
-- [ ] Crear y salir sin tocar nada sigue sin dejar una lista vacía.
-- [ ] Agregar solo un elemento (sin nombrar la lista) también la conserva.
+- [x] **La que faltaba**: crear, escribir el nombre y salir **sin confirmar** conserva la
+  lista. Es la carrera entre el guardado y la limpieza, y se veía como "el botón no sirve". → `app/(app)/list/__tests__/detail.test.tsx`
+- [x] Crear y salir sin tocar nada sigue sin dejar una lista vacía. → `app/(app)/list/__tests__/detail.test.tsx`
+- [x] Agregar solo un elemento (sin nombrar la lista) también la conserva. → `app/(app)/list/__tests__/detail.test.tsx`
 - [x] Un fallo al crear muestra mensaje. → `app/(app)/__tests__/lists.test.tsx`
 
 ## Políticas de lectura e INSERT ... RETURNING (T231)
@@ -260,8 +260,8 @@ que todavía no se automatiza.
 - [x] `lists.due_date` sobrevive a `update` en los dos backends (demo y Supabase) sin tocar
   `due_date` de los elementos. Es la confusión obvia: dos columnas con el mismo nombre en
   tablas distintas. → `services/demo/__tests__/lists.test.ts`
-- [ ] La X bajo el título la quita (`due_date: null`) y la línea desaparece.
-- [ ] Con fecha pasada, la línea va en `theme.today`.
+- [x] La X bajo el título la quita (`due_date: null`) y la línea desaparece. → `app/(app)/list/__tests__/detail.test.tsx`
+- [x] Con fecha pasada, la línea va en `theme.today`. → `app/(app)/list/__tests__/detail.test.tsx`
 - [x] El subtítulo de la tarjeta la muestra al final, también cuando la lista está vacía. → `app/(app)/__tests__/lists.test.tsx`
 
 ## Días de la semana en la repetición (T232b)

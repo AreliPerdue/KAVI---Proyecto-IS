@@ -2,18 +2,21 @@
  * Hooks de Listas: la búsqueda espera dos letras (T213) y los pendientes por fecha viajan como
  * día `YYYY-MM-DD`, no como instante (T201, T212).
  */
-import { renderHook, waitFor } from '@testing-library/react-native';
+import { act, renderHook, waitFor } from '@testing-library/react-native';
 
 import { crearWrapper } from '@/hooks/__tests__/query-wrapper';
-import { useListItemsByDate, useListSearch } from '@/hooks/use-lists';
+import { useListItemsByDate, useListMutations, useListSearch } from '@/hooks/use-lists';
+import type { ListItem } from '@/types/domain';
 
 const mockBuscar = jest.fn();
 const mockPorFecha = jest.fn();
+const mockReordenar = jest.fn();
 jest.mock('@/providers', () => ({ useAuth: () => ({ userId: 'u1' }) }));
 jest.mock('@/services/lists', () => ({
   ...jest.requireActual('@/services/lists'),
   searchLists: (...a: unknown[]) => mockBuscar(...a),
   listItemsByDateRange: (...a: unknown[]) => mockPorFecha(...a),
+  reorderListItem: (...a: unknown[]) => mockReordenar(...a),
 }));
 
 beforeEach(() => {
@@ -46,5 +49,20 @@ describe('useListItemsByDate', () => {
     const { Wrapper } = crearWrapper();
     await renderHook(() => useListItemsByDate('2026-10-05', '2026-10-11', false), { wrapper: Wrapper });
     expect(mockPorFecha).not.toHaveBeenCalled();
+  });
+});
+
+describe('swapItems (RF-L7)', () => {
+  it('lee los dos órdenes antes de escribir: cada uno queda con el del otro', async () => {
+    mockReordenar.mockReset().mockResolvedValue(undefined);
+    const { Wrapper } = crearWrapper();
+    const { result } = await renderHook(() => useListMutations(), { wrapper: Wrapper });
+    const a = { id: 'a', sort_order: 1024, section_id: 's1' } as ListItem;
+    const b = { id: 'b', sort_order: 2048, section_id: 's1' } as ListItem;
+    // Simula al servidor: el primer guardado cambia el objeto que se pasó (como lo haría un
+    // caché ya actualizado). Si se leyera `a.sort_order` después, saldría el valor nuevo.
+    mockReordenar.mockImplementationOnce(async (_id: string, orden: number) => { a.sort_order = orden; });
+    await act(async () => { await result.current.swapItems.mutateAsync({ a, b }); });
+    expect(mockReordenar.mock.calls).toEqual([['a', 2048, 's1'], ['b', 1024, 's1']]);
   });
 });
