@@ -6,10 +6,10 @@ juntarlo en una sesión dedicada a pruebas.
 
 ## Densidad del calendario (T190a, T190b)
 
-- [ ] `month-view.test.tsx` — los chips cambiaron de alto (20→18 base, 28→20 tope) y de
-  separación (3→2). Revisar si alguna aserción daba por buenos los valores viejos.
-- [ ] `timeline.test.tsx` — `BASE_MIN_BLOCK_HEIGHT` bajó de 28 a 22 con la tipografía. Una
-  actividad corta ahora ocupa menos alto; comprobar que el título sigue sin cortarse.
+- [x] `month-view.test.tsx` — los chips cambiaron de alto (20→18 base, 28→20 tope) y de
+  separación (3→2). Revisar si alguna aserción daba por buenos los valores viejos. → `ya pasa con los altos nuevos (suite en verde)`
+- [x] `timeline.test.tsx` — `BASE_MIN_BLOCK_HEIGHT` bajó de 28 a 22 con la tipografía. Una
+  actividad corta ahora ocupa menos alto; comprobar que el título sigue sin cortarse. → `ya pasa (suite en verde)`
 - [ ] Prueba nueva: el número del día se alinea a la derecha en web y centrado en nativo.
   Hoy no hay ninguna que lo fije, así que un cambio de `alignItems` pasaría inadvertido.
 - [ ] Prueba nueva: que la variante `micro` (11 px) no se use fuera del calendario. Es la
@@ -44,9 +44,9 @@ juntarlo en una sesión dedicada a pruebas.
 - [ ] Crear una lista navega a su detalle, no al inicio.
 - [ ] Eliminar pide confirmación y el mensaje menciona cuántos elementos se pierden.
 - [x] Archivar la saca del inicio y aparece en Archivadas; restaurar la devuelve. → `services/demo/__tests__/lists.test.ts`
-- [ ] `listFormSchema` rechaza un color fuera de la paleta.
-- [ ] `ModalHeader` con `back`: dice "Atrás" y usa flecha, no X. Y que dentro de Archivadas
-  el botón vuelva a las listas activas en vez de salir del módulo.
+- [x] `listFormSchema` rechaza un color fuera de la paleta. → `lib/__tests__/list-schema.test.ts`
+- [x] `ModalHeader` con `back`: dice "Atrás" y usa flecha, no X. Y que dentro de Archivadas
+  el botón vuelva a las listas activas en vez de salir del módulo. → `components/__tests__/modal-header.test.tsx`
 
 ## Vistas nuevas y pastilla configurable (T191-T193)
 
@@ -65,8 +65,8 @@ juntarlo en una sesión dedicada a pruebas.
 
 - [x] `useShrinkOnScroll`: encoge al bajar, vuelve al subir, y no reacciona dentro de la
   zona superior ni a desplazamientos por debajo del umbral. → `hooks/__tests__/use-shrink-on-scroll.test.tsx`
-- [ ] El FAB encogido **no** baja del mínimo táctil (44 iOS / 48 Android). Es la garantía
-  que justifica la escala elegida y la que se rompería al retocar el tamaño a ojo.
+- [x] El FAB encogido **no** baja del mínimo táctil (44 iOS / 48 Android). Es la garantía
+  que justifica la escala elegida y la que se rompería al retocar el tamaño a ojo. → `components/ui/__tests__/fab.test.tsx`
 - [ ] Con movimiento reducido cambia de tamaño sin transición.
 
 ## Captura de ítems (T200)
@@ -85,7 +85,7 @@ juntarlo en una sesión dedicada a pruebas.
 - [ ] Un ítem con fecha y **con hora** sigue en la franja y no aparece en la rejilla. Es la
   regla que define el módulo y la que se rompería al "mejorar" la integración.
 - [ ] Palomear desde la franja marca la misma fila que en su lista.
-- [ ] `useListItemsByDate` con el día como `YYYY-MM-DD`, no como ISO.
+- [x] `useListItemsByDate` con el día como `YYYY-MM-DD`, no como ISO. → `hooks/__tests__/use-lists.test.tsx`
 
 ## Vencidos y filtro de listas (T205, T206)
 
@@ -119,7 +119,7 @@ juntarlo en una sesión dedicada a pruebas.
 
 - [x] Quitar el día quita también la hora. → `services/demo/__tests__/lists.test.ts`
 - [ ] Un elemento con fecha pasada **ya palomeado** no se pinta como vencido.
-- [ ] La fecha viaja como `YYYY-MM-DD` y no como instante, en las dos implementaciones.
+- [x] La fecha viaja como `YYYY-MM-DD` y no como instante, en las dos implementaciones. → `hooks/__tests__/use-lists.test.tsx, services/demo/__tests__/lists.test.ts`
 - [ ] Un elemento al que se le pone la fecha de hoy aparece en la franja del día.
 
 ## Recordatorios de elementos de lista (T215)
@@ -134,7 +134,7 @@ juntarlo en una sesión dedicada a pruebas.
 
 - [x] **La más importante**: el backend demo no devuelve referencias vivas de su almacén.
   Mutar lo devuelto no debe cambiar lo guardado. Es la prueba que habría atrapado T216. → `services/demo/__tests__/lists.test.ts`
-- [ ] `search` con menos de dos letras no consulta.
+- [x] `search` con menos de dos letras no consulta. → `hooks/__tests__/use-lists.test.tsx`
 - [x] `search` encuentra elementos ya palomeados. → `services/demo/__tests__/lists.test.ts`
 - [x] En Supabase, buscar "50%" no trae de más: `%` y `_` van escapados. → `services/supabase/__tests__/lists.test.ts`
 - [ ] Subir/bajar solo permuta dentro del grupo y los extremos van deshabilitados.
@@ -142,10 +142,10 @@ juntarlo en una sesión dedicada a pruebas.
 
 ## Pendientes en el calendario y áreas táctiles (T217, T218)
 
-- [ ] **La que más importa**: un pendiente con fecha **no** aparece en las vistas de horas
+- [x] **La que más importa**: un pendiente con fecha **no** aparece en las vistas de horas
   (día, 3 días, semana). Es la regla que define el módulo y la más fácil de romper al
-  "mejorar" la integración.
-- [ ] En mes, el chip de un pendiente no pinta hora aunque el elemento tenga `due_time`.
+  "mejorar" la integración. → `components/calendar/__tests__/list-layers.test.ts (y calendar.tsx solo los agrega en mes y agenda)`
+- [x] En mes, el chip de un pendiente no pinta hora aunque el elemento tenga `due_time`. → `components/calendar/__tests__/list-layers.test.ts`
 - [x] `isDerivedActivity` reconoce el prefijo de pendientes: no se pueden editar ni compartir
   como actividades. → `components/calendar/__tests__/views-and-filters.test.ts`
 - [ ] Tocar el texto de un elemento abre la edición y **no** lo palomea.
@@ -163,9 +163,9 @@ juntarlo en una sesión dedicada a pruebas.
 
 ## Tiempo real en listas (T222)
 
-- [ ] Que las cuatro tablas de listas estén en la lista vigilada y que `['lists']` esté en
+- [x] Que las cuatro tablas de listas estén en la lista vigilada y que `['lists']` esté en
   la invalidación: son dos listas que se editan a mano y es fácil agregar una tabla nueva a
-  una y olvidarla en la otra.
+  una y olvidarla en la otra. → `services/supabase/__tests__/shared.test.ts`
 - [ ] Verificación manual con dos sesiones: A palomea un elemento y B lo ve sin recargar.
 - [ ] Comprobar en el proyecto real que las tablas quedaron en `supabase_realtime`
   (`select * from pg_publication_tables where pubname = 'supabase_realtime'`).

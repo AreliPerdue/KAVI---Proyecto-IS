@@ -316,3 +316,18 @@ describe('getAvailability (RF-S8)', () => {
     await expect(supabaseAvailability.getAvailability('u1', ['u2'], 'a', 'b')).rejects.toThrow(/permiso/i);
   });
 });
+
+describe('tiempo real (RF-S14, RF-L16; T222)', () => {
+  it('un solo canal que vigila también las cuatro tablas de listas', () => {
+    const tablas: string[] = [];
+    const canal = { on: (_e: string, f: { table: string }) => (tablas.push(f.table), canal), subscribe: jest.fn() };
+    const cliente = mockSb.client as unknown as { channel: unknown; removeChannel: unknown };
+    cliente.channel = () => canal;
+    cliente.removeChannel = jest.fn();
+    const quitar = shared.supabaseRealtime.subscribe('u1', jest.fn());
+    expect(tablas).toEqual(expect.arrayContaining(['lists', 'list_sections', 'list_items', 'list_shares']));
+    expect(canal.subscribe).toHaveBeenCalled();
+    quitar();
+    expect(cliente.removeChannel).toHaveBeenCalledWith(canal);
+  });
+});

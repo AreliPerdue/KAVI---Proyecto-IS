@@ -8,7 +8,8 @@ import { IconSize, IconStroke, MinTouchTarget, Motion, Radius, Shadow, Spacing }
 import { useTheme } from '@/hooks/use-theme';
 import { useT } from '@/i18n';
 
-const SIZE = 56;
+export const FAB_SIZE = 56;
+const SIZE = FAB_SIZE;
 
 /**
  * Encogido mide exactamente el mínimo táctil, no menos.
@@ -17,7 +18,7 @@ const SIZE = 56;
  * agenda, el horario de las filas de abajo— sin bajar del objetivo de 44/48 px que fija
  * `kavi-design` §2. Un botón más chico se vería mejor y se tocaría peor.
  */
-const SHRUNK_SCALE = MinTouchTarget / SIZE;
+export const SHRUNK_SCALE = MinTouchTarget / SIZE;
 
 /** Botón flotante "+" siempre visible (RF-C5), sobre safe area y tab bar. */
 export function Fab({
