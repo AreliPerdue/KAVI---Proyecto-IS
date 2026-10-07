@@ -295,10 +295,10 @@ descartar, lectura). Falta:
   no se pierden.
 - [ ] `useLegacyConversion`: convierte, liga al catálogo solo coincidencias únicas, marca
   convertido; si falla a la mitad, la siguiente vez termina sin duplicar.
-- [ ] `exerciseHistory` en los dos backends: por `exercise_id` y, sin ligar, por nombre exacto;
-  sin sesiones borradas ni descartadas; ordenado por fecha de la sesión.
-- [ ] `gym-store`: el descanso se calcula desde `endsAt`; ±15 s reprograma el aviso; uno
-  terminado mientras la app estaba cerrada no aparece al hidratar.
+- [x] `exerciseHistory` en los dos backends: por `exercise_id` y, sin ligar, por nombre exacto;
+  sin sesiones borradas ni descartadas; ordenado por fecha de la sesión. → `services/demo/__tests__/workouts-v2.test.ts, services/supabase/__tests__/workouts-v2.test.ts`
+- [x] `gym-store`: el descanso se calcula desde `endsAt`; ±15 s reprograma el aviso; uno
+  terminado mientras la app estaba cerrada no aparece al hidratar. → `store/__tests__/gym-store.test.ts`
 - [ ] `RestTimerBar`: al llegar a 0 avisa y se va solo a los 8 s.
 - [ ] `NumpadSheet`: la primera tecla reemplaza y las siguientes agregan (bug encontrado a
   mano: 1-0-0 daba 0); modo contador; "Siguiente" peso → reps → esfuerzo.
@@ -314,12 +314,12 @@ Probado a mano en el demo (sesión "Pierna"): drop → separar → deshacer ×2 
 mover a otro ejercicio → duración y hora → "editado" en encabezado e historial. Falta:
 - [x] `splitSet` / `mergeSets`: ids nuevos, órdenes entre vecinos, intensificadores que se
   quitan o se agregan, la unida queda hecha si cualquiera lo estaba. → `lib/gym/__tests__/transforms.test.ts`
-- [ ] `useEditHistory`: `batch` agrupa en un paso; deshacer en orden inverso; una acción nueva
-  borra lo que se podía rehacer; tope de 50 pasos.
+- [x] `useEditHistory`: `batch` agrupa en un paso; deshacer en orden inverso; una acción nueva
+  borra lo que se podía rehacer; tope de 50 pasos. → `hooks/__tests__/use-edit-history.test.tsx`
 - [x] `applyOutbox` con una serie movida a otro ejercicio: sale de uno y aparece en el otro. → `lib/gym/__tests__/transforms.test.ts`
 - [ ] La sesión se marca editada una sola vez por visita y nunca en una sesión en curso.
-- [ ] Duración: `ended_at − performed_at` en los dos backends; suma por ejercicio solo sin
-  `ended_at`; el caché de `updateExercise` no la pisa.
+- [x] Duración: `ended_at − performed_at` en los dos backends; suma por ejercicio solo sin
+  `ended_at`; el caché de `updateExercise` no la pisa. → `services/demo/__tests__/workouts-v2.test.ts`
 - [ ] Cambiar la hora corre también `ended_at`.
 
 ## Fitness v2 · G5 intensificadores (T245)
@@ -332,8 +332,8 @@ timer corriendo. Falta:
 - [x] `protocolSets` para los 14 protocolos: número de series, objetivos, pesos redondeados,
   tipos (top set / back-off / fallo). → `lib/gym/__tests__/transforms.test.ts`
 - [x] `unusualCombination`: cada aviso y ningún falso positivo en una serie normal. → `lib/gym/__tests__/transforms.test.ts`
-- [ ] `createGroup` / `removeGroup` en los dos backends: posiciones contiguas en el lugar del
-  primero, `group_position` en orden, desagrupar conserva las series.
+- [x] `createGroup` / `removeGroup` en los dos backends: posiciones contiguas en el lugar del
+  primero, `group_position` en orden, desagrupar conserva las series. → `services/demo/__tests__/workouts-v2.test.ts`
 - [ ] Descanso en grupos: solo al terminar el último del grupo y con `rest_after_round_sec`.
 - [ ] `IntervalTimerSheet`: fases trabajo/descanso, rondas, fin; calcula desde el inicio.
 - [ ] `SetDetailsSheet`: lb ↔ kg en lastre/asistencia/cadenas; vacío no guarda `load_mods`.
@@ -343,9 +343,9 @@ Probado a mano en el demo: energía 4, pump 3 y dos etiquetas en una sesión en 
 y nota de hoy en un ejercicio; nota con etiquetas en una serie; las tres se ven en el logger y
 en modo lectura; buscar "rodilla" y "lenta" encuentra la nota correcta y abre la sesión; un
 término sin coincidencias muestra el vacío. Falta:
-- [ ] `searchNotes` en los dos backends: los tres niveles, mínimo dos letras, sin borrados ni
+- [x] `searchNotes` en los dos backends: los tres niveles, mínimo dos letras, sin borrados ni
   descartados (sesión, ejercicio o serie), orden de lo más reciente a lo más viejo, y que `%`
-  y `_` se busquen literales en Supabase.
+  y `_` se busquen literales en Supabase. → `services/demo/__tests__/workouts-v2.test.ts, services/supabase/__tests__/workouts-v2.test.ts`
 - [ ] `update` de la sesión escribe el parche en el caché al momento: dos chips seguidos no se
   pisan.
 - [ ] `saveStickyNote`: optimista en las preferencias; vacío guarda `null`; solo para
@@ -369,8 +369,8 @@ sesión con 105 kg → badge de PR y "Nuevo récord. Así se gobierna, mi reina.
 - [x] `setsByGroup`: primario 1, secundario ½, sin doble conteo; `isLegDay` con 6 series. → `lib/gym/__tests__/progress.test.ts`
 - [x] `gymratLine`: nunca la misma frase dos veces seguidas; `null` en Modo serio; `{voc}` por
   trato. `tonnageEquivalence`: rango 2–30, semilla estable, nada bajo 140 kg. → `constants/__tests__/gymrat.test.ts`
-- [ ] `trainingLog` y `saveStreakEvents` en los dos backends (solo `completed`, sin borradas;
-  upsert por semana).
+- [x] `trainingLog` y `saveStreakEvents` en los dos backends (solo `completed`, sin borradas;
+  upsert por semana). → `services/demo/__tests__/workouts-v2.test.ts, services/supabase/__tests__/workouts-v2.test.ts`
 - [ ] Modo serio: sin snackbars de humor, sin animación del badge, sin equivalencia ni frase
   en el resumen, sin "¿y la pierna?".
 
@@ -380,12 +380,12 @@ chip "Energía 3 de 5" encontrado por su etiqueta accesible, "Compartir" del res
 imagen y, sin hoja de compartir del navegador, la descarga (`kavi-2026-10-21.png`). Falta:
 - [x] **Antes de correr Jest:** mocks de `expo-haptics`, `expo-audio`, `expo-sharing` y
   `react-native-view-shot` en `jest.setup.js`.
-- [ ] `playSound`: crea un reproductor por sonido una sola vez; un error de audio no rompe.
+- [x] `playSound`: crea un reproductor por sonido una sola vez; un error de audio no rompe. → `lib/__tests__/sounds-and-share.test.ts`
 - [ ] `RestTimerBar`: pita en 3, 2 y 1; al terminar suena y vibra solo si terminó hace menos
   de 3 s (abrir la app con un descanso viejo no suena); sin sonido si `timerSound` es falso.
 - [ ] `IntervalTimerSheet`: pitido por fase y aviso distinto al final.
-- [ ] `shareImage`: nativo con `expo-sharing`; web con `navigator.share` de archivos o
-  descarga; `SessionSummarySheet` cae a texto si la captura falla.
+- [x] `shareImage`: nativo con `expo-sharing`; web con `navigator.share` de archivos o
+  descarga; `SessionSummarySheet` cae a texto si la captura falla. → `lib/__tests__/sounds-and-share.test.ts`
 - [ ] `Chip`: `accessibilityLabel` opcional y área táctil de 44 con `hitSlop`.
 - [ ] Prueba en dispositivo: háptico en iOS (no hay Xcode en esta máquina) y en Android.
 
@@ -490,8 +490,8 @@ sesión «Pierna» de KAVI" y en el historial la sesión muestra "214 kcal activ
 Perfil → Datos de salud → Desconectar vuelve al estado sin conectar. Falta:
 - [x] `matchSessions`/`overlapRatio`/`kaviSpan`: traslape ≥ 50 % de la más corta; cada externa con
   una sola sesión de KAVI (la de mayor traslape); sin hora de fin usa la duración o 1 h. → `lib/health/__tests__/match.test.ts`
-- [ ] `platform.web.ts` → estado "web" con su mensaje; `platform.ts` → "unsupported".
-- [ ] Demo: permisos parciales (solo pasos) dejan las otras cifras en "Sin permiso", nunca en 0.
+- [x] `platform.web.ts` → estado "web" con su mensaje; `platform.ts` → "unsupported". → `services/health/__tests__/health.test.ts`
+- [x] Demo: permisos parciales (solo pasos) dejan las otras cifras en "Sin permiso", nunca en 0. → `services/health/__tests__/health.test.ts`
 - [ ] Desconectar borra totales y sesiones de la caché y vuelve a "Conecta tu actividad".
 - [ ] Web real (sin demo): Actividad muestra "Tu actividad vive en tu teléfono".
 
@@ -502,8 +502,8 @@ sigue, el pendiente ajeno que palomeó sigue hecho sin autora, lo que agregó a 
 borra) y aplicada en producción; con la llave anónima la función responde 42501. Visto en el
 demo (360 px): `/eliminar-cuenta` sin sesión; contraseña mala → "Credenciales incorrectas";
 correcta + "Entiendo…" → vuelve a login. Falta:
-- [ ] `deleteAccount` en los dos backends: contraseña mala no borra nada; en Supabase llama la
-  RPC y cierra la sesión local.
+- [x] `deleteAccount` en los dos backends: contraseña mala no borra nada; en Supabase llama la
+  RPC y cierra la sesión local. → `services/{demo,supabase}/__tests__/auth.test.ts`
 - [ ] `useDeleteAccount`: limpia la cola de series, el descanso, los avisos y la caché.
 - [ ] Hoja: el botón solo se activa con contraseña y el interruptor "Entiendo…".
 - [ ] En producción, con una cuenta de prueba creada para eso: eliminarla y comprobar que su

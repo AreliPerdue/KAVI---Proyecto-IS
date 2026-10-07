@@ -257,6 +257,7 @@ export const fitness = {
     keep: 'Mi racha sigue',
   },
   summary: {
+    shareDialog: 'Compartir resumen',
     title: 'Sesión terminada',
     workoutFallback: 'Entrenamiento',
     volumeOf: (v: string) => `${v} de volumen`,

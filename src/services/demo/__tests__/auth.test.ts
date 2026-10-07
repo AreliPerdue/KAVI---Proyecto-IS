@@ -294,3 +294,27 @@ describe('sesion', () => {
     await expect(auth.resetPassword('demo@kavi.app')).resolves.toBeUndefined();
   });
 });
+
+describe('eliminar la cuenta (T263)', () => {
+  it('con la contraseña equivocada no borra nada', async () => {
+    jest.resetModules();
+    /* eslint-disable @typescript-eslint/no-require-imports -- recarga deliberada del estado demo */
+    const { demoAuth } = require('@/services/demo/auth') as typeof import('@/services/demo/auth');
+    const { demoState } = require('@/services/demo/store') as typeof import('@/services/demo/store');
+    /* eslint-enable @typescript-eslint/no-require-imports */
+    const antes = demoState.accounts.length;
+    await expect(demoAuth.deleteAccount('demo@kavi.app', 'mala')).rejects.toThrow();
+    expect(demoState.accounts).toHaveLength(antes);
+  });
+
+  it('con la contraseña correcta borra la cuenta y cierra la sesión', async () => {
+    jest.resetModules();
+    /* eslint-disable @typescript-eslint/no-require-imports -- recarga deliberada del estado demo */
+    const { demoAuth } = require('@/services/demo/auth') as typeof import('@/services/demo/auth');
+    const { demoState } = require('@/services/demo/store') as typeof import('@/services/demo/store');
+    /* eslint-enable @typescript-eslint/no-require-imports */
+    await demoAuth.deleteAccount(' DEMO@kavi.app ', 'demo1234');
+    expect(demoState.accounts.some((a) => a.user.email === 'demo@kavi.app')).toBe(false);
+    expect(demoState.currentUser).toBeNull();
+  });
+});

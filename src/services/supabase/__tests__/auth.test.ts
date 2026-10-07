@@ -263,3 +263,34 @@ describe('sesion', () => {
     expect(desuscribir).toHaveBeenCalledTimes(1);
   });
 });
+
+describe('eliminar la cuenta (T263)', () => {
+  beforeEach(() => {
+    mockAuth.signInWithPassword.mockReset();
+    mockAuth.signOut.mockReset();
+    mockRpc.mockReset();
+  });
+
+  it('con la contraseña equivocada no borra nada', async () => {
+    mockAuth.signInWithPassword.mockResolvedValue({ data: {}, error: new Error('Invalid login credentials') });
+    await expect(supabaseAuth.deleteAccount('areli@kavi.app', 'mala')).rejects.toThrow(AUTH_MESSAGES.invalidCredentials);
+    expect(mockRpc).not.toHaveBeenCalled();
+  });
+
+  it('confirma la contraseña, llama la función de la base y olvida la sesión local', async () => {
+    mockAuth.signInWithPassword.mockResolvedValue(ok({ user: USUARIO }));
+    mockRpc.mockResolvedValue({ error: null });
+    mockAuth.signOut.mockResolvedValue({ error: null });
+    await supabaseAuth.deleteAccount('  Areli@KAVI.app ', 'buena1234');
+    expect(mockAuth.signInWithPassword).toHaveBeenCalledWith({ email: 'areli@kavi.app', password: 'buena1234' });
+    expect(mockRpc).toHaveBeenCalledWith('delete_my_account');
+    expect(mockAuth.signOut).toHaveBeenCalledWith({ scope: 'local' });
+  });
+
+  it('si la base no pudo borrar, lo dice y no cierra la sesión', async () => {
+    mockAuth.signInWithPassword.mockResolvedValue(ok({ user: USUARIO }));
+    mockRpc.mockResolvedValue({ error: { message: 'x' } });
+    await expect(supabaseAuth.deleteAccount('areli@kavi.app', 'buena1234')).rejects.toThrow();
+    expect(mockAuth.signOut).not.toHaveBeenCalled();
+  });
+});

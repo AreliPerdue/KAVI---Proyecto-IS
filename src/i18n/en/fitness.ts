@@ -256,6 +256,7 @@ export const fitness: Dictionary['fitness'] = {
     keep: 'My streak continues',
   },
   summary: {
+    shareDialog: 'Share summary',
     title: 'Session done',
     workoutFallback: 'Workout',
     volumeOf: (v) => `${v} of volume`,
