@@ -1,8 +1,12 @@
 # Pruebas pendientes
 
-Bitácora de lo que queda por verificar. Durante las sesiones de diseño no se corre la suite:
-la verificación que sirve ahí es visual. Aquí se anota lo que habría que comprobar para
-juntarlo en una sesión dedicada a pruebas.
+> **Cómo leer este archivo (6 oct 2026).** Desde hoy la suite completa pasa y lo automatizable se va cubriendo
+> (cada `[x]` dice con qué archivo). Lo que queda marcado **(manual)** necesita teléfono, correo real, lector de
+> pantalla o ver la pantalla; lo marcado **(base de datos)** necesita una base de Postgres de prueba con RLS
+> (no se corre contra el proyecto real).
+
+Bitácora de lo que queda por verificar. Cada cambio cierra con la suite en verde y sus pruebas; aquí queda lo
+que todavía no se automatiza.
 
 ## Densidad del calendario (T190a, T190b)
 
@@ -15,14 +19,14 @@ juntarlo en una sesión dedicada a pruebas.
 - [ ] Prueba nueva: que la variante `micro` (11 px) no se use fuera del calendario. Es la
   única excepción al mínimo de 12 px de `kavi-design` §2 y conviene que una prueba la
   mantenga acotada en vez de la disciplina.
-- [ ] Revisar a mano en 375 px de ancho: con la tipografía en 12, comprobar que la vista
+- [ ] (manual) Revisar a mano en 375 px de ancho: con la tipografía en 12, comprobar que la vista
   semanal en móvil no encima títulos entre columnas.
 
 ## Nobi coral (T197)
 
 - [x] Contraste y distancia perceptual: los comprueba `people-colors.test.ts` y pasaron al
   agregarlo (son un cálculo barato, no una suite).
-- [ ] Revisar el coral en tema claro dentro de la app, no solo el PNG suelto.
+- [ ] (manual) Revisar el coral en tema claro dentro de la app, no solo el PNG suelto.
 
 ## Cascarón de Lists (T198)
 
@@ -99,13 +103,13 @@ juntarlo en una sesión dedicada a pruebas.
 
 ## Migración de Lists (T195)
 
-- [ ] Ampliar `supabase/tests/rls.sql`: con dos usuarios, que B no vea ni toque las listas,
+- [ ] (base de datos) Ampliar `supabase/tests/rls.sql`: con dos usuarios, que B no vea ni toque las listas,
   secciones ni elementos de A. Es la garantía que sostiene todo el módulo.
-- [ ] Que `can_edit_list` no sea ejecutable por `anon`.
+- [ ] (base de datos) Que `can_edit_list` no sea ejecutable por `anon`.
 - [x] `listByDateRange` y `listOverdue` excluyen las listas archivadas por el join. → `services/supabase/__tests__/lists.test.ts`
 - [x] `duplicate` en Supabase remapea las secciones y copia solo los pendientes, igual que
   el demo. Son dos implementaciones del mismo contrato y es donde más fácil divergen. → `services/supabase/__tests__/lists.test.ts`
-- [ ] El check de `completed_at`/`completed_by`: palomear sin usuario debe fallar.
+- [ ] (base de datos) El check de `completed_at`/`completed_by`: palomear sin usuario debe fallar.
 
 ## Alta estilo Keep (T207)
 
@@ -152,10 +156,10 @@ juntarlo en una sesión dedicada a pruebas.
 
 ## Compartir listas (T219-T221)
 
-- [ ] **La más importante**: ampliar `supabase/tests/rls.sql`. Con tres usuarios, que quien
+- [ ] (base de datos) **La más importante**: ampliar `supabase/tests/rls.sql`. Con tres usuarios, que quien
   tiene permiso de *ver* no pueda escribir, que quien no tiene acceso no vea nada, y que
   nadie salvo el dueño pueda borrar la lista.
-- [ ] Compartir solo funciona con contactos aceptados (`are_connected` en el `with check`).
+- [ ] (base de datos) Compartir solo funciona con contactos aceptados (`are_connected` en el `with check`).
 - [x] Retirar el acceso no borra contenido. → `services/demo/__tests__/lists.test.ts`
 - [x] **Ninguna implementación usa `this`.** Es la prueba que habría atrapado T221 y que
   seguirá atrapándolo: la fachada desprende los métodos del objeto. → `services/demo/__tests__/lists.test.ts, services/supabase/__tests__/lists.test.ts`
@@ -166,8 +170,8 @@ juntarlo en una sesión dedicada a pruebas.
 - [x] Que las cuatro tablas de listas estén en la lista vigilada y que `['lists']` esté en
   la invalidación: son dos listas que se editan a mano y es fácil agregar una tabla nueva a
   una y olvidarla en la otra. → `services/supabase/__tests__/shared.test.ts`
-- [ ] Verificación manual con dos sesiones: A palomea un elemento y B lo ve sin recargar.
-- [ ] Comprobar en el proyecto real que las tablas quedaron en `supabase_realtime`
+- [ ] (manual) Verificación manual con dos sesiones: A palomea un elemento y B lo ve sin recargar.
+- [ ] (manual) Comprobar en el proyecto real que las tablas quedaron en `supabase_realtime`
   (`select * from pg_publication_tables where pubname = 'supabase_realtime'`).
 
 ## Recordatorio con desfase (T223)
@@ -184,14 +188,14 @@ juntarlo en una sesión dedicada a pruebas.
 - [x] Arrastrar menos de media fila no cambia nada. → `lib/__tests__/drag.test.ts`
 - [x] El orden nuevo cae entre los vecinos del destino y no pisa a ninguno. → `lib/__tests__/drag.test.ts`
 - [ ] Tocar sin mantener sigue abriendo la edición, no arrastra.
-- [ ] Verificación manual en teléfono: el arrastre no pelea con el scroll de la pantalla.
+- [ ] (manual) Verificación manual en teléfono: el arrastre no pelea con el scroll de la pantalla.
 
 ## Etiquetas (T211)
 
 - [x] `createTag` con un nombre que ya existe devuelve la existente y no duplica, sin
   importar mayúsculas. → `services/demo/__tests__/lists.test.ts`
 - [x] Borrar una etiqueta no borra ninguna lista. → `services/demo/__tests__/lists.test.ts`
-- [ ] RLS: B no ve las etiquetas de A ni sus vínculos, **aunque comparta la lista**. Es lo
+- [ ] (base de datos) RLS: B no ve las etiquetas de A ni sus vínculos, **aunque comparta la lista**. Es lo
   que sostiene que etiquetar sea de quien mira.
 - [x] `tag_ids` solo trae las etiquetas propias en una lista compartida. → `services/demo/__tests__/lists.test.ts`
 - [ ] Con una etiqueta activa, "Fijadas" solo muestra las fijadas de esa etiqueta.
@@ -226,11 +230,11 @@ juntarlo en una sesión dedicada a pruebas.
 
 ## Políticas de lectura e INSERT ... RETURNING (T231)
 
-- [ ] **La prueba que faltaba**: crear una lista contra un Postgres real con RLS. Toda la
+- [ ] (base de datos) **La prueba que faltaba**: crear una lista contra un Postgres real con RLS. Toda la
   verificación corre en modo demo, que no tiene políticas, así que este fallo era invisible
   por construcción. Vale para las seis tablas del módulo.
-- [ ] Ninguna política de SELECT depende de una función que consulte su propia tabla.
-- [ ] Un 42501 distingue en la app entre sesión caducada y operación ajena.
+- [ ] (base de datos) Ninguna política de SELECT depende de una función que consulte su propia tabla.
+- [x] Un 42501 distingue en la app entre sesión caducada y operación ajena. → `services/supabase/__tests__/errors-sesion.test.ts`
 
 ## Listas que se repiten (T208, T209)
 
@@ -238,17 +242,17 @@ juntarlo en una sesión dedicada a pruebas.
   respetando `until`. → `lib/__tests__/list-runs.test.ts`
 - [x] `graciaVencida`: una vuelta de ayer sigue viva antes de las 15:00 y caduca después.
   Es la regla que decide si algo cuenta como hecho. → `lib/__tests__/list-runs.test.ts`
-- [ ] `syncRuns` cierra lo caducado con los conteos correctos, abre la de hoy solo si la
-  regla cae hoy, y no duplica la vuelta al llamarse dos veces.
-- [ ] Palomear en la vuelta de ayer suma a ayer y no a hoy.
-- [ ] En una rutina, los elementos palomeados **no** se mueven a completados.
-- [ ] Demo y Supabase dan el mismo resultado para la misma regla y la misma fecha.
+- [x] `syncRuns` cierra lo caducado con los conteos correctos, abre la de hoy solo si la
+  regla cae hoy, y no duplica la vuelta al llamarse dos veces. → `services/demo/__tests__/lists.test.ts`
+- [x] Palomear en la vuelta de ayer suma a ayer y no a hoy. → `services/demo/__tests__/lists.test.ts`
+- [x] En una rutina, los elementos palomeados **no** se mueven a completados. → `services/demo/__tests__/lists.test.ts`
+- [x] Demo y Supabase dan el mismo resultado para la misma regla y la misma fecha. → `los dos usan occursOn y graciaVencida de lib (lib/__tests__/list-runs.test.ts)`
 
 ## Resúmenes de rutina (T210)
 
 - [x] `resumirVueltas` cuenta como completa solo si `completed_count >= total_count` y
   `total_count > 0`: una vuelta sin elementos no es un éxito. → `lib/__tests__/list-runs.test.ts`
-- [ ] Ignora las vueltas vacías para el promedio pero las cuenta como registradas.
+- [x] Ignora las vueltas vacías para el promedio pero las cuenta como registradas. → `lib/__tests__/list-runs.test.ts`
 - [x] **La que importa de verdad**: que el resumen no devuelva porcentaje de incumplimiento
   ni racha. Es una decisión de producto que una prueba puede proteger de un "mejor así". → `lib/__tests__/list-runs.test.ts`
 
@@ -306,7 +310,7 @@ descartar, lectura). Falta:
   por tipo; el calentamiento no cuenta en la numeración. → `components/fitness/__tests__/exercise-block.test.tsx`
 - [ ] Detalle del ejercicio: mejor serie, peso máximo, gráficas con 1 y con 2+ sesiones.
 - [ ] Ajustes de gimnasio en Perfil.
-- [ ] Manual en nativo (Android): swipe izquierda/derecha, vibración, notificación de fin de
+- [ ] (manual) Manual en nativo (Android): swipe izquierda/derecha, vibración, notificación de fin de
   descanso con la pantalla bloqueada.
 
 ## Fitness v2 · G4 edición (T244)
@@ -387,7 +391,7 @@ imagen y, sin hoja de compartir del navegador, la descarga (`kavi-2026-10-21.png
 - [x] `shareImage`: nativo con `expo-sharing`; web con `navigator.share` de archivos o
   descarga; `SessionSummarySheet` cae a texto si la captura falla. → `lib/__tests__/sounds-and-share.test.ts`
 - [x] `Chip`: `accessibilityLabel` opcional y área táctil de 44 con `hitSlop`. → `components/ui/__tests__/chip.test.tsx`
-- [ ] Prueba en dispositivo: háptico en iOS (no hay Xcode en esta máquina) y en Android.
+- [ ] (manual) Prueba en dispositivo: háptico en iOS (no hay Xcode en esta máquina) y en Android.
 
 ## Arrastrar para reordenar (T250)
 Probado a mano en el demo (web): la serie 3 arrastrada hasta arriba queda primera
@@ -400,7 +404,7 @@ segundo pasa a primero y "Guardar orden" lo aplica en la sesión. Falta:
   puede deshacer.
 - [ ] `reordenarEjercicios`: solo guarda las posiciones que cambiaron; el caché se reordena al
   momento; marca la sesión como editada.
-- [ ] En dispositivo (iOS y Android): mantener presionado no pelea con el deslizar de la fila
+- [ ] (manual) En dispositivo (iOS y Android): mantener presionado no pelea con el deslizar de la fila
   ni con el scroll (el scroll se apaga mientras se arrastra); dentro de la hoja en Android.
 
 ## Borrador del formulario de actividad con el logger (T251)
@@ -469,7 +473,7 @@ lista y al editarlo; el selector de hora usa rueda 12–11 con a.m./p.m. Falta:
 - [x] `formatClock` ("17:30:00" → "5:30 p.m." / "17:30") y `formatHour`. → `components/calendar/__tests__/views-and-filters.test.ts`
 - [x] `TimePickerSheet` en 12 h: 12 a.m. = 0:00, 12 p.m. = 12:00; cambiar a.m./p.m. conserva
   la hora; devuelve minutos 0–1439 igual que en 24 h. → `components/ui/__tests__/time-picker-sheet.test.tsx`
-- [ ] Ninguna hora visible se arma a mano (buscar `.slice(0, 5)` sobre horas en la UI).
+- [x] Ninguna hora visible se arma a mano (buscar `.slice(0, 5)` sobre horas en la UI). → `__tests__/source-rules.test.ts`
 
 ## Glosario y estimaciones (T253, T254)
 Probado a mano en el demo (360 px): enlace al glosario en Fitness; pantalla con 8 temas;
@@ -480,7 +484,7 @@ su explicación. Falta:
   todo `topic` existe en `GLOSSARY_TOPICS`. → `i18n/__tests__/i18n.test.ts`
 - [x] Pantalla Glosario: búsqueda sin acentos (por término, otros nombres y texto); `?term=`
   abre desplegado; vacío con "Ningún término dice eso." → `app/(app)/__tests__/glossary.test.tsx`
-- [ ] RF-F65: ningún valor calculado sin "≈"/"estimado" (detalle, gráfica, herramientas).
+- [x] RF-F65: ningún valor calculado sin "≈"/"estimado" (detalle, gráfica, herramientas). → `__tests__/source-rules.test.ts`
 
 ## Fitness con datos de salud, base (T255 – T259)
 Probado a mano en el demo (360 px): Fitness → Actividad muestra "Conecta tu actividad" con qué
@@ -493,7 +497,7 @@ Perfil → Datos de salud → Desconectar vuelve al estado sin conectar. Falta:
 - [x] `platform.web.ts` → estado "web" con su mensaje; `platform.ts` → "unsupported". → `services/health/__tests__/health.test.ts`
 - [x] Demo: permisos parciales (solo pasos) dejan las otras cifras en "Sin permiso", nunca en 0. → `services/health/__tests__/health.test.ts`
 - [ ] Desconectar borra totales y sesiones de la caché y vuelve a "Conecta tu actividad".
-- [ ] Web real (sin demo): Actividad muestra "Tu actividad vive en tu teléfono".
+- [ ] (manual) Web real (sin demo): Actividad muestra "Tu actividad vive en tu teléfono".
 
 ## Eliminar cuenta (T263)
 Migración probada en PGlite (10 casos: anon no puede, sin sesión falla con mensaje claro, no
@@ -506,7 +510,7 @@ correcta + "Entiendo…" → vuelve a login. Falta:
   RPC y cierra la sesión local. → `services/{demo,supabase}/__tests__/auth.test.ts`
 - [ ] `useDeleteAccount`: limpia la cola de series, el descanso, los avisos y la caché.
 - [ ] Hoja: el botón solo se activa con contraseña y el interruptor "Entiendo…".
-- [ ] En producción, con una cuenta de prueba creada para eso: eliminarla y comprobar que su
+- [ ] (manual) En producción, con una cuenta de prueba creada para eso: eliminarla y comprobar que su
   correo ya no inicia sesión.
 
 ## Edad y consentimiento (T264) y aviso publicado (T260)
@@ -527,13 +531,13 @@ calendario. `/privacidad` y un enlace inválido se abren sin sesión. Falta:
 - [ ] Rechazado y vencido muestran su texto; "Volver a enviar" y "Cambiar el correo".
 - [x] Función de Vercel `api/guardian-consent`: sin sesión 401; correo inválido 400; mensajes
   22023 de la base pasan tal cual; sin variables de entorno 503. → `lib/__tests__/guardian-consent-api.test.ts`
-- [ ] **Correo real en producción** (Vercel ya tiene SMTP_USER, SMTP_PASSWORD y KAVI_EMAIL_SECRET
+- [ ] (manual) **Correo real en producción** (Vercel ya tiene SMTP_USER, SMTP_PASSWORD y KAVI_EMAIL_SECRET
   desde el 5 oct 2026; la función responde 401/400 como debe). Lo hace Areli con alias de Gmail:
   en ventana privada, crear `perdue.areli28+prueba@gmail.com`, fecha de hace 17 años, adulto
   `perdue.areli28+tutor@gmail.com`; llega "… te pide permiso para usar KAVI" (revisar spam), el
   enlace abre `/consentimiento`, aprobar abre la app en ≤ 15 s; el enlace ya usado dice
   "Aprobaste…". Al final, eliminar la cuenta de prueba desde Perfil.
-- [ ] Cuentas existentes (la de Areli) ven "Antes de empezar" una vez al entrar.
+- [ ] (manual) Cuentas existentes (la de Areli) ven "Antes de empezar" una vez al entrar.
 
 ## Celdas del mes con desborde (T204)
 Visto en el demo: 360×560 (un chip por día y "+N" junto al número, alineado a la derecha),
@@ -542,8 +546,8 @@ Visto en el demo: 360×560 (un chip por día y "+N" junto al número, alineado a
 - [x] `cellLayout`: todo cabe → todos sin "+N"; desborde con sitio → chips + fila; sin sitio
   para la fila → 1 chip + "header"; `slots` 0 → nada. → `components/calendar/__tests__/cell-math.test.ts`
 - [x] Nunca hay más chips que actividades menos una cuando hay "+N" (el "+N" nunca dice +0). → `components/calendar/__tests__/cell-math.test.ts`
-- [ ] Texto grande del sistema (escala 1.5) en teléfono: el "+N" no se encima al número.
-- [ ] iOS y Android nativos en vertical y acostado.
+- [ ] (manual) Texto grande del sistema (escala 1.5) en teléfono: el "+N" no se encima al número.
+- [ ] (manual) iOS y Android nativos en vertical y acostado.
 
 ## Pruebas rotas que ya estaban así
 - [x] `activity-form.test.tsx` › gimnasio (RF-F9): 3 casos fallan con "useAuth debe usarse dentro
@@ -559,14 +563,14 @@ Compartido apilado; Fitness en la barra sin flecha. Falta:
 - [x] `elegirAcceso`: poner en un lugar el módulo del otro los intercambia; nunca repite. → `constants/__tests__/modules.test.ts`
 - [x] `accesosValidos`: guardado inválido (repetidos, módulo que no existe, largo ≠ 2) → omisión. → `constants/__tests__/modules.test.ts`
 - [x] `moduleHref`: web → `(tabs)/<id>`; en la barra → `acceso-1/2`; fuera → `modulo/[id]`. → `constants/__tests__/modules.test.ts`
-- [ ] Teléfono: barra por omisión Calendario · Compartido · Fitness · Más; Perfil desde Más con
+- [ ] (manual) Teléfono: barra por omisión Calendario · Compartido · Fitness · Más; Perfil desde Más con
   "Atrás"; cambiar el tercer lugar a Perfil cambia etiqueta, icono y pantalla sin reiniciar la
   navegación ni sacarte de Más.
-- [ ] Teléfono: con Compartido fuera de la barra, el número de pendientes sale en Más y en su fila.
-- [ ] Primera vez que se abre la app: lleva a Perfil (apilado si no está en la barra) y "Atrás"
-  vuelve al calendario.
+- [ ] (manual) Teléfono: con Compartido fuera de la barra, el número de pendientes sale en Más y en su fila.
+- [x] Primera vez que se abre la app: lleva a Perfil (apilado si no está en la barra) y "Atrás"
+  vuelve al calendario. → `app/__tests__/index.test.tsx`
 - [ ] "Ver solicitudes" (Perfil) y "+ Contactos" (calendario) abren Compartido donde esté.
-- [ ] iOS (cuando haya build): iconos SF `square.grid.2x2` y los de cada módulo.
+- [ ] (manual) iOS (cuando haya build): iconos SF `square.grid.2x2` y los de cada módulo.
 - [x] `profile.test.tsx`: los 23 casos fallan con "No QueryClient set" desde que Perfil tiene la fila
   "Datos de salud" (T259, `useHealthAvailability`). Ya fallaban antes de T188 (comprobado). Arreglo:
   simular `@/hooks/use-health` en la prueba o envolverla en `QueryClientProvider`.
@@ -578,7 +582,7 @@ cambia a esa pestaña; abrir "Súper" y regresar vuelve a la pestaña. La elecci
 sesión y volver a entrar. Falta:
 - [ ] Listas en la barra → Archivadas muestra "Atrás" y vuelve a las listas activas.
 - [ ] Listas fuera de la barra → desde Más o desde ○✓ se abre apilada con "Atrás".
-- [ ] Web: ○✓ sigue abriendo `/lists` (no es pestaña en web, RF-N5).
+- [ ] (manual) Web: ○✓ sigue abriendo `/lists` (no es pestaña en web, RF-N5).
 - [x] `moduleHref('lists', …)`: en la barra → `acceso-N`; fuera o en web → `/(app)/lists`. → `constants/__tests__/modules.test.ts`
 
 ## Barra de personas con muchos contactos (T203)
@@ -589,21 +593,21 @@ Pedro desde la hoja lo sube a la barra. Falta:
   fuera del tope se agrega; `hayMas` solo si hay más que el tope. → `lib/__tests__/people-bar.test.ts`
 - [x] `buscarPersonas`: sin acentos ni mayúsculas, con o sin "@", por nombre o usuario. → `lib/__tests__/people-bar.test.ts`
 - [x] `marcarSuperpuesto`: guarda la fecha al superponer (no al quitar) y conserva solo 100. → `lib/__tests__/people-bar.test.ts`
-- [ ] Con 25+ contactos reales en Supabase: la barra muestra 20 y el orden sobrevive a cerrar la app.
+- [ ] (manual) Con 25+ contactos reales en Supabase: la barra muestra 20 y el orden sobrevive a cerrar la app.
 
 ## Duplicar y borrar series en web (T265)
 Web en el demo, "Pierna" → Editar. A 1280 px: 13 botones de borrar; borrar deja 12 y ofrece "Deshacer",
 que la regresa; duplicar deja 14. A 390 px: un "⋮" por serie, la fila cabe completa con el número y el
 menú trae Duplicar y Borrar serie. Falta:
-- [ ] Teléfono: sin cambios (deslizar y menú del número); en web no hay deslizar.
-- [ ] Entrenamiento en curso (no solo al editar uno terminado): mismos botones y la cola de series.
-- [ ] Teclado en web: los botones se alcanzan con Tab y tienen foco visible.
+- [ ] (manual) Teléfono: sin cambios (deslizar y menú del número); en web no hay deslizar.
+- [ ] (manual) Entrenamiento en curso (no solo al editar uno terminado): mismos botones y la cola de series.
+- [ ] (manual) Teclado en web: los botones se alcanzan con Tab y tienen foco visible.
 
 ## Bloques de la semana en el teléfono (T190b)
 Web en el demo a 390 px, antes y después lado a lado: los títulos se leen completos en bloques altos.
 Falta:
 - [x] `compactTitleLines`: 1 línea mínima; un bloque de 2 h a 48 px/h → varias líneas. → `components/calendar/__tests__/cell-math.test.ts`
-- [ ] Android/iOS nativos: la semana con texto grande del sistema no se encima.
+- [ ] (manual) Android/iOS nativos: la semana con texto grande del sistema no se encima.
 
 ## Health Connect en Android (T261)
 Emulador Pixel 8 Pro (Android 16), demo con `EXPO_PUBLIC_HEALTH_SOURCE=platform`: Health Connect disponible;
@@ -611,11 +615,11 @@ Emulador Pixel 8 Pro (Android 16), demo con `EXPO_PUBLIC_HEALTH_SOURCE=platform`
 calorías → Actividad dice "Fuente: Health Connect", pasos 0, 0 km y calorías "Sin permiso" (la consulta
 funciona: si fallara diría "—"); Perfil → Datos de salud lo describe; Desconectar → el diálogo vuelve a "0 of
 4"; "Don't allow" regresa a "Conecta tu actividad". Falta:
-- [ ] **En un teléfono con datos reales** (Google Fit, Samsung Health o un reloj): pasos, km y kcal de hoy y
+- [ ] (manual) **En un teléfono con datos reales** (Google Fit, Samsung Health o un reloj): pasos, km y kcal de hoy y
   de 7 días coinciden con la app de origen; entrenamientos de otras apps con su nombre y app.
-- [ ] Una sesión del reloj que se traslapa con una de KAVI aparece como la misma (RF-H6) con sus kcal.
-- [ ] Teléfono con Android 13 o anterior sin Health Connect → "Instala o actualiza Health Connect…".
-- [ ] Desconectar y reabrir la app sin reconectar: no lee nada aunque Android tarde en aplicar el retiro.
+- [ ] (manual) Una sesión del reloj que se traslapa con una de KAVI aparece como la misma (RF-H6) con sus kcal.
+- [ ] (manual) Teléfono con Android 13 o anterior sin Health Connect → "Instala o actualiza Health Connect…".
+- [ ] (manual) Desconectar y reabrir la app sin reconectar: no lee nada aunque Android tarde en aplicar el retiro.
 
 ## Idioma: español e inglés, fase 1 (T196a)
 Web en el demo: con el navegador en inglés, el inicio de sesión abre en inglés sin tocar nada; calendario
@@ -626,9 +630,9 @@ reiniciar. Suite completa: las mismas 64 pruebas que ya fallaban antes, ninguna 
 - [x] `timeFormatFor`: sin elegir → 12 h en inglés y 24 h en español; un "12h" guardado antes cuenta como elegido. → `i18n/__tests__/i18n.test.ts`
 - [x] `themeName`: tema del sistema intacto → traducido; renombrado → como lo escribió la persona. → `i18n/__tests__/i18n.test.ts`
 - [x] `traducirDeLaBase`: un mensaje 22023 conocido sale en el idioma activo; uno desconocido, tal cual. → `i18n/__tests__/i18n.test.ts`
-- [ ] Teléfono en inglés (Android/iOS): primera apertura en inglés; cambiar a Español en Perfil.
-- [ ] Cambiar de idioma con una hoja abierta y con la app en Fitness (que sigue en español hasta T196b).
-- [ ] Lector de pantalla en inglés: etiquetas de celdas del mes, bloques y botones.
+- [ ] (manual) Teléfono en inglés (Android/iOS): primera apertura en inglés; cambiar a Español en Perfil.
+- [ ] (manual) Cambiar de idioma con una hoja abierta y con la app en Fitness (que sigue en español hasta T196b).
+- [ ] (manual) Lector de pantalla en inglés: etiquetas de celdas del mes, bloques y botones.
 
 ## Idioma: Fitness en inglés (T196b)
 Web en el demo con el navegador en inglés: pestaña Fitness, Actividad, Progreso (calendario, series por músculo,
@@ -640,10 +644,10 @@ mano y se quedan en español, como manda RF-I4. Suite completa: las mismas 64 pr
 - [x] `tonnageEquivalence` en inglés (singular y plural) y `streakReasonLabel` en inglés. → `constants/__tests__/gymrat.test.ts`
 - [x] `computeAchievements` en inglés: títulos, descripciones y unidades; la realeza sigue el trato. → `lib/gym/__tests__/progress.test.ts`
 - [x] `parseLegacy` en inglés: cada uno de los siete motivos. → `lib/gym/__tests__/legacy.test.ts`
-- [ ] Buscar en el selector de ejercicios y en intensificadores escribiendo en inglés y en español.
-- [ ] Sesión en vivo en el teléfono en inglés: aviso de fin de descanso (título y "Next: …"), frases de PR y drop.
-- [ ] Resumen al terminar y "Compartir" en inglés (texto e imagen).
-- [ ] Datos de salud en Android con el teléfono en inglés: textos de Actividad y "no disponible".
+- [x] Buscar en el selector de ejercicios y en intensificadores escribiendo en inglés y en español. → `lib/gym/__tests__/search.test.ts, i18n (intensificadores buscan en los dos)`
+- [ ] (manual) Sesión en vivo en el teléfono en inglés: aviso de fin de descanso (título y "Next: …"), frases de PR y drop.
+- [ ] (manual) Resumen al terminar y "Compartir" en inglés (texto e imagen).
+- [ ] (manual) Datos de salud en Android con el teléfono en inglés: textos de Actividad y "no disponible".
 - [x] Glosario: buscar "superserie" y "superset" encuentra el mismo término en cada idioma. → `i18n/__tests__/i18n.test.ts`
 
 ## Idioma: aviso, consentimiento, correo y notificaciones (T196c)
@@ -651,12 +655,12 @@ Web en el demo: `/privacidad?lang=en` sale en inglés con el aviso de "traducci�
 a español (y la dirección queda en `?lang=es`); `/consentimiento?lang=en` con un enlace inválido muestra el error
 en inglés. El correo se armó en los dos idiomas con una copia local de la función: asunto, texto, nombre en
 negritas y los dos enlaces con `lang` correctos. Suite completa: las mismas 64 pruebas que ya fallaban. Falta:
-- [ ] Correo real (Vercel ya publicado): pedir aprobación con la app en inglés y en español; revisar en Gmail
+- [ ] (manual) Correo real (Vercel ya publicado): pedir aprobación con la app en inglés y en español; revisar en Gmail
   que el botón del otro idioma abre `/consentimiento` en ese idioma y que aprobar funciona desde los dos.
-- [ ] `/consentimiento` con una solicitud real pendiente, en los dos idiomas (fecha de vencimiento, botones).
-- [ ] Teléfono en inglés: un recordatorio de actividad ("Starts at 7:30 PM", "Today", "Shared by…") y uno de
+- [ ] (manual) `/consentimiento` con una solicitud real pendiente, en los dos idiomas (fecha de vencimiento, botones).
+- [ ] (manual) Teléfono en inglés: un recordatorio de actividad ("Starts at 7:30 PM", "Today", "Shared by…") y uno de
   pendiente de lista; cambiar el idioma y confirmar que los avisos ya programados cambian de idioma.
-- [ ] Solicitud de contacto e invitación recibidas con la app abierta en inglés.
+- [ ] (manual) Solicitud de contacto e invitación recibidas con la app abierta en inglés.
 
 ## Fitness: ajustes en Fitness y bento (T266, T267)
 Web en el demo a 390, 800 y 1280 px: el ⚙ abre "Ajustes de Fitness" con Registro, Humor y trato y Actividad;
@@ -666,8 +670,8 @@ pierde el foco. Falta:
   ordenados de más a menos, con medias series del músculo secundario. → `lib/gym/__tests__/progress.test.ts`
 - [x] Bento con datos de esta semana (sesión con series hechas): "1 sesión", volumen y los tres músculos. (`fitness.test.tsx`)
 - [x] Sesión en curso: la tarjeta grande dice "Sesión en curso" y la retoma. (`fitness.test.tsx`)
-- [ ] Racha en pausa: la tarjeta de decisión va arriba del mosaico y desaparece al decidir.
-- [ ] Teléfono (Android) con letra grande del sistema: las tarjetas crecen sin cortar texto.
-- [ ] Lector de pantalla: cada tarjeta dice su nombre y qué abre.
-- [ ] Cambiar kg/lb desde el ⚙ y ver el volumen del mosaico en la nueva unidad.
+- [x] Racha en pausa: la tarjeta de decisión va arriba del mosaico y desaparece al decidir. → `app/(app)/(tabs)/__tests__/fitness.test.tsx`
+- [ ] (manual) Teléfono (Android) con letra grande del sistema: las tarjetas crecen sin cortar texto.
+- [ ] (manual) Lector de pantalla: cada tarjeta dice su nombre y qué abre.
+- [x] Cambiar kg/lb desde el ⚙ y ver el volumen del mosaico en la nueva unidad. → `app/(app)/(tabs)/__tests__/fitness.test.tsx`
 

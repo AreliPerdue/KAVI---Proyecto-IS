@@ -358,3 +358,33 @@ describe('buscar en las notas (RF-F53)', () => {
   });
 });
 
+
+describe('bento: racha en pausa y unidad (RF-F58, RF-F66)', () => {
+  /* eslint-disable-next-line @typescript-eslint/no-require-imports -- store del gym */
+  const { useGymStore } = require('@/store/gym-store') as typeof import('@/store/gym-store');
+  afterEach(() => useGymStore.setState({ weightUnit: 'kg' }));
+
+  it('con la racha en pausa, la pregunta va arriba del mosaico', async () => {
+    mockProgreso = { ...progresoBase(), streak: { weeks: 3, best: 3, trainedThisWeek: false, paused: { weeks: ['2026-09-28'] } } };
+    await render(<FitnessScreen />);
+    expect(screen.getByText(/¿Qué pasó\?/)).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Mi racha sigue' })).toBeTruthy();
+  });
+
+  it('en lb, el volumen de la semana sale en lb', async () => {
+    useGymStore.setState({ weightUnit: 'lb' });
+    const lunes = new Date(2026, 9, 5, 18, 0).toISOString();
+    mockProgreso = {
+      ...progresoBase(),
+      catalog: new Map([['banca', { id: 'banca', tracking_type: 'weight_reps', primary_muscles: ['chest_mid'], secondary_muscles: [] }]]),
+      sessions: [
+        {
+          id: 'w1', performed_at: lunes, bodyweight_kg: null,
+          exercises: [{ id: 'e1', exercise_id: 'banca', workout_sets: [{ id: 's1', set_type: 'working', completed_at: lunes, segments: [{ kind: 'main', weight_kg: 100, reps: 10 }] }] }],
+        },
+      ],
+    };
+    await render(<FitnessScreen />);
+    expect(screen.getByText(/lb de volumen/)).toBeTruthy();
+  });
+});

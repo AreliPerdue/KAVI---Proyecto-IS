@@ -307,3 +307,45 @@ describe('rutinas: vueltas (T208 – T210)', () => {
     expect(antes.some((r) => r.run_date === HOY)).toBe(false);
   });
 });
+
+describe('rutinas: el paso de los días (T208, RF-L20)', () => {
+  afterEach(() => jest.useRealTimers());
+
+  it('al día siguiente después de las 15:00, la vuelta de ayer se cierra con sus conteos y se abre la de hoy', async () => {
+    jest.useFakeTimers({ advanceTimers: true });
+    jest.setSystemTime(new Date(2026, 9, 7, 10, 0));
+    const { api } = fresh();
+    const [ayer] = await api.syncRuns('list-rutina', '2026-10-07');
+    await api.setRunItem(ayer!.id, 'it-dientes', YO, true);
+    await api.setRunItem(ayer!.id, 'it-cama', YO, true);
+
+    jest.setSystemTime(new Date(2026, 9, 8, 16, 0));
+    const abiertas = await api.syncRuns('list-rutina', '2026-10-08');
+    expect(abiertas.map((r) => r.run_date)).toEqual(['2026-10-08']);
+    const cerrada = (await api.listRuns('list-rutina')).find((r) => r.run_date === '2026-10-07');
+    expect(cerrada).toMatchObject({ completed_count: 2, total_count: 3 });
+  });
+
+  it('antes de las 15:00, palomear en la vuelta de ayer suma a ayer y no a hoy', async () => {
+    jest.useFakeTimers({ advanceTimers: true });
+    jest.setSystemTime(new Date(2026, 9, 7, 10, 0));
+    const { api } = fresh();
+    const [ayer] = await api.syncRuns('list-rutina', '2026-10-07');
+
+    jest.setSystemTime(new Date(2026, 9, 8, 9, 0));
+    const abiertas = await api.syncRuns('list-rutina', '2026-10-08');
+    expect(abiertas.map((r) => r.run_date)).toEqual(['2026-10-08', '2026-10-07']);
+    await api.setRunItem(ayer!.id, 'it-dientes', YO, true);
+    const despues = await api.syncRuns('list-rutina', '2026-10-08');
+    expect(despues.find((r) => r.run_date === '2026-10-07')?.completed_item_ids).toEqual(['it-dientes']);
+    expect(despues.find((r) => r.run_date === '2026-10-08')?.completed_item_ids).toEqual([]);
+  });
+
+  it('en una rutina, palomear no mueve el elemento a completados: se registra en la vuelta', async () => {
+    const { api } = fresh();
+    const [hoy] = await api.syncRuns('list-rutina', HOY);
+    await api.setRunItem(hoy!.id, 'it-dientes', YO, true);
+    const dientes = (await api.getById('list-rutina')).items.find((i) => i.id === 'it-dientes');
+    expect(dientes?.completed_at).toBeNull();
+  });
+});

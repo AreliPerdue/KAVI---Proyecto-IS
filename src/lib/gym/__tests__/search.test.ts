@@ -118,3 +118,14 @@ describe('crear personalizado solo si no existe', () => {
     expect(isExactExercise('  ', indice)).toBe(true);
   });
 });
+
+describe('buscar en los dos idiomas (spec 12)', () => {
+  it('el nombre en español sigue funcionando igual', () => {
+    expect(primero('press de banca')?.toLowerCase()).toContain('banca');
+  });
+
+  it('el nombre en inglés también encuentra el ejercicio', () => {
+    const [encontrado] = searchExercises(catalogo, 'bench press', indice);
+    expect(encontrado?.name_en?.toLowerCase()).toContain('bench press');
+  });
+});
