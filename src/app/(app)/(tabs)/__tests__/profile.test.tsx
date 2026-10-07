@@ -271,3 +271,27 @@ describe('apariencia (NFR-18)', () => {
     expect(usePreferencesStore.getState().appearance).toBe('system');
   });
 });
+
+/**
+ * "Amigos y compartido" abre Compartido donde esté (RF-N3): su lugar en la barra si lo tiene,
+ * o apilado si se quitó de la barra. Antes era "Ver solicitudes".
+ */
+describe('abrir Compartido', () => {
+  /* eslint-disable-next-line @typescript-eslint/no-require-imports -- tras los mocks */
+  const { usePreferencesStore } = require('@/store/preferences-store') as typeof import('@/store/preferences-store');
+  afterEach(() => usePreferencesStore.setState({ accesos: ['shared', 'fitness'] }));
+
+  it('en la barra va a su lugar', async () => {
+    usePreferencesStore.setState({ accesos: ['shared', 'fitness'] });
+    await render(<Pantalla />);
+    await fireEvent.press(screen.getByRole('button', { name: /^Amigos y compartido/ }));
+    expect(globalThis.mockRouter.navigate).toHaveBeenLastCalledWith('/(app)/(tabs)/acceso-1');
+  });
+
+  it('fuera de la barra se abre apilado', async () => {
+    usePreferencesStore.setState({ accesos: ['fitness', 'lists'] });
+    await render(<Pantalla />);
+    await fireEvent.press(screen.getByRole('button', { name: /^Amigos y compartido/ }));
+    expect(globalThis.mockRouter.navigate).toHaveBeenLastCalledWith({ pathname: '/(app)/modulo/[id]', params: { id: 'shared' } });
+  });
+});

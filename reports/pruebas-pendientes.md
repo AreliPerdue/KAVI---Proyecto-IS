@@ -308,7 +308,7 @@ descartar, lectura). Falta:
   mano: 1-0-0 daba 0); modo contador; "Siguiente" peso → reps → esfuerzo. → `components/fitness/__tests__/numpad-sheet.test.tsx`
 - [x] `ExerciseBlock`: columnas I/D en unilaterales y aviso de desbalance; etiqueta C/F/T…
   por tipo; el calentamiento no cuenta en la numeración. → `components/fitness/__tests__/exercise-block.test.tsx`
-- [ ] Detalle del ejercicio: mejor serie, peso máximo, gráficas con 1 y con 2+ sesiones.
+- [x] Detalle del ejercicio: mejor serie, peso máximo, gráficas con 1 y con 2+ sesiones. → `app/(app)/exercise/__tests__/detail.test.tsx`
 - [x] Ajustes de gimnasio en Perfil. → `components/fitness/__tests__/fitness-settings.test.tsx (desde T266 viven en Fitness)`
 - [ ] (manual) Manual en nativo (Android): swipe izquierda/derecha, vibración, notificación de fin de
   descanso con la pantalla bloqueada.
@@ -412,10 +412,10 @@ Probado a mano en el demo: nueva actividad → "Actividad de gimnasio" → "Aña
 abre el catálogo; el bloque es el del logger; 100 kg con el teclado y "+ Serie" copia la
 anterior; "Crear actividad" guarda la sesión con el ejercicio ligado al catálogo y sus dos
 series. Falta:
-- [ ] **Reescribir `workout-draft.test.tsx`** (se quitó: probaba las tarjetas de texto de
+- [x] **Reescribir `workout-draft.test.tsx`** (se quitó: probaba las tarjetas de texto de
   v1). Casos: vacío invita a añadir; elegir del catálogo crea el ejercicio con su primera
   serie prellenada con la vez pasada; teclado, + Serie, duplicar, borrar, arrastrar;
-  cambiar y quitar ejercicio; con entrenamiento existente ofrece abrirlo.
+  cambiar y quitar ejercicio; con entrenamiento existente ofrece abrirlo. → `components/calendar/__tests__/workout-draft.test.tsx`
 - [x] `saveExercises` (activity/new): crea la sesión, cada ejercicio en orden con su
   `exercise_id` y sus series reasignadas al id creado; un fallo no pierde la actividad. → `app/(app)/activity/__tests__/new.test.tsx`
 - [x] `useGymProgress.sessions`: excluye sesiones futuras y las que tienen series pero
@@ -527,8 +527,8 @@ calendario. `/privacidad` y un enlace inválido se abren sin sesión. Falta:
   → adulto; 16–17 con alguna aprobación → listo; ≥ 18 → listo. → `lib/__tests__/consent.test.ts`
 - [x] `useConsentGate`: sin red y con la versión recordada abre la app; sin red y sin recordar
   muestra el error con "Reintentar"; con red siempre manda el servidor. → `hooks/__tests__/use-consent.test.tsx`
-- [ ] Menor de 16 → "Es correcta: eliminar mi cuenta" borra la cuenta y vuelve a login.
-- [ ] Rechazado y vencido muestran su texto; "Volver a enviar" y "Cambiar el correo".
+- [x] Menor de 16 → "Es correcta: eliminar mi cuenta" borra la cuenta y vuelve a login. → `components/account/__tests__/before-you-start.test.tsx, services/demo/__tests__/consent.test.ts`
+- [x] Rechazado y vencido muestran su texto; "Volver a enviar" y "Cambiar el correo". → `components/account/__tests__/before-you-start.test.tsx`
 - [x] Función de Vercel `api/guardian-consent`: sin sesión 401; correo inválido 400; mensajes
   22023 de la base pasan tal cual; sin variables de entorno 503. → `lib/__tests__/guardian-consent-api.test.ts`
 - [ ] (manual) **Correo real en producción** (Vercel ya tiene SMTP_USER, SMTP_PASSWORD y KAVI_EMAIL_SECRET
@@ -569,7 +569,7 @@ Compartido apilado; Fitness en la barra sin flecha. Falta:
 - [ ] (manual) Teléfono: con Compartido fuera de la barra, el número de pendientes sale en Más y en su fila.
 - [x] Primera vez que se abre la app: lleva a Perfil (apilado si no está en la barra) y "Atrás"
   vuelve al calendario. → `app/__tests__/index.test.tsx`
-- [ ] "Ver solicitudes" (Perfil) y "+ Contactos" (calendario) abren Compartido donde esté.
+- [x] "Ver solicitudes" (Perfil) y "+ Contactos" (calendario) abren Compartido donde esté. → `app/(app)/(tabs)/__tests__/profile.test.tsx (hoy es la fila "Amigos y compartido"), components/calendar/__tests__/people-tabs.test.tsx`
 - [ ] (manual) iOS (cuando haya build): iconos SF `square.grid.2x2` y los de cada módulo.
 - [x] `profile.test.tsx`: los 23 casos fallan con "No QueryClient set" desde que Perfil tiene la fila
   "Datos de salud" (T259, `useHealthAvailability`). Ya fallaban antes de T188 (comprobado). Arreglo:
@@ -581,7 +581,7 @@ avisa "se intercambian"; con Listas en la barra se pinta sin "Atrás"; el botón
 cambia a esa pestaña; abrir "Súper" y regresar vuelve a la pestaña. La elección sobrevive a cerrar
 sesión y volver a entrar. Falta:
 - [x] Listas en la barra → Archivadas muestra "Atrás" y vuelve a las listas activas. → `app/(app)/__tests__/lists.test.tsx`
-- [ ] Listas fuera de la barra → desde Más o desde ○✓ se abre apilada con "Atrás".
+- [x] Listas fuera de la barra → desde Más o desde ○✓ se abre apilada con "Atrás". → `app/(app)/__tests__/lists.test.tsx`
 - [ ] (manual) Web: ○✓ sigue abriendo `/lists` (no es pestaña en web, RF-N5).
 - [x] `moduleHref('lists', …)`: en la barra → `acceso-N`; fuera o en web → `/(app)/lists`. → `constants/__tests__/modules.test.ts`
 

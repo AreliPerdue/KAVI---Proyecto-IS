@@ -193,3 +193,18 @@ describe('Archivadas en la barra (RF-N6)', () => {
     expect(globalThis.mockRouter.back).not.toHaveBeenCalled();
   });
 });
+
+describe('Listas fuera de la barra (T189b)', () => {
+  it('se abre apilada con "Atrás", que regresa a donde se vino', async () => {
+    mockDatos.lists = [lista('l1', 'Casa')];
+    await render(<Pantalla />);
+    await fireEvent.press(screen.getByRole('button', { name: es.common.back }));
+    expect(globalThis.mockRouter.back.mock.calls.length + globalThis.mockRouter.replace.mock.calls.length).toBeGreaterThan(0);
+  });
+
+  it('desde Más o desde ○✓ lleva a la pantalla apilada de Listas', () => {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports -- tras los mocks
+    const { moduleHref } = require('@/constants/modules') as typeof import('@/constants/modules');
+    expect(moduleHref('lists', ['shared', 'fitness'], false)).toBe('/(app)/lists');
+  });
+});

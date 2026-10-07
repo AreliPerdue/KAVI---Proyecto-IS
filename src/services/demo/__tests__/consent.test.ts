@@ -71,3 +71,12 @@ describe('decidir', () => {
     await expect(api.decideGuardianRequest('inventado', true)).rejects.toThrow();
   });
 });
+
+describe('menor de 16 (RF-A13)', () => {
+  it('"Es correcta: eliminar mi cuenta" borra la cuenta y cierra la sesión (vuelve a login)', async () => {
+    const { api, store } = await fresh('2015-01-01');
+    await api.deleteUnderageAccount();
+    expect(store.demoState.currentUser).toBeNull();
+    expect(store.demoState.accounts.some((a) => a.user.id === 'u-joven')).toBe(false);
+  });
+});
