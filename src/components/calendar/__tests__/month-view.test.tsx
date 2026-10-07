@@ -6,7 +6,7 @@
  * tiene, quien usa lector de pantalla no puede orientarse (kavi-design §5).
  */
 import { fireEvent, render, screen } from '@testing-library/react-native';
-import { StyleSheet } from 'react-native';
+import { StyleSheet, type ViewStyle } from 'react-native';
 
 import { MonthView } from '@/components/calendar/month-view';
 import type { Activity } from '@/types/domain';
@@ -135,8 +135,8 @@ describe('número del día', () => {
     await render(<MonthView anchor={ANCLA} activities={[]} onSelectDay={jest.fn()} />);
     const celda = screen.getAllByRole('button')[0];
     await fireEvent(celda as never, 'layout', { nativeEvent: { layout: { width, height } } });
-    const fila = screen.getByLabelText(/lunes 7 de septiembre/i).children[0] as { props: { style: unknown } };
-    return StyleSheet.flatten(fila.props.style as never)?.alignItems;
+    const fila = screen.getByLabelText(/lunes 7 de septiembre/i).children[0] as unknown as { props: { style: ViewStyle } };
+    return StyleSheet.flatten(fila.props.style)?.alignItems;
   };
 
   it('a la derecha en una rejilla ancha', async () => {

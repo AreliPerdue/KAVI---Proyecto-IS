@@ -4,7 +4,7 @@
  * el icono de filtros dice cuantos hay activos, no solo que existe.
  */
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react-native';
-import { StyleSheet } from 'react-native';
+import { StyleSheet, type ViewStyle } from 'react-native';
 
 import { CalendarHeader } from '@/components/calendar/calendar-header';
 
@@ -139,7 +139,7 @@ describe('ancho de la ventana', () => {
   it('a 390 px: dos renglones, título completo arriba y sin flechas', async () => {
     conAncho(390);
     await montar();
-    const estilo = StyleSheet.flatten(contenedorDelTitulo().props.style as never);
+    const estilo = StyleSheet.flatten(contenedorDelTitulo().props.style as ViewStyle);
     expect(estilo?.flexDirection ?? 'column').toBe('column');
     expect(screen.getByText('Septiembre 2026')).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Anterior' })).toBeNull();
@@ -148,7 +148,7 @@ describe('ancho de la ventana', () => {
   it('a 1024 px: un solo renglón con flechas', async () => {
     conAncho(1024);
     await montar();
-    expect(StyleSheet.flatten(contenedorDelTitulo().props.style as never)?.flexDirection).toBe('row');
+    expect(StyleSheet.flatten(contenedorDelTitulo().props.style as ViewStyle)?.flexDirection).toBe('row');
     expect(screen.getByRole('button', { name: 'Anterior' })).toBeTruthy();
   });
 
