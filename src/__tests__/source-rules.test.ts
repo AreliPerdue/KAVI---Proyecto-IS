@@ -1,11 +1,20 @@
 /**
  * Reglas del código que no se ven en una pantalla sola: se revisan leyendo los archivos.
  */
-import { readdirSync, readFileSync, statSync } from 'fs';
-import { join } from 'path';
-
 import { en } from '@/i18n/en';
 import { es } from '@/i18n/es';
+
+// `fs` y `path` solo existen al correr en Jest (Node). El proyecto no trae los tipos de Node a
+// propósito (ver `constants/__tests__/exercise-seed.test.ts`), así que se declaran aquí.
+/* eslint-disable @typescript-eslint/no-require-imports */
+const { readdirSync, readFileSync, statSync } = require('fs') as {
+  readdirSync: (ruta: string) => string[];
+  readFileSync: (ruta: string, codificacion: 'utf8') => string;
+  statSync: (ruta: string) => { isDirectory: () => boolean };
+};
+const { join } = require('path') as { join: (...partes: string[]) => string };
+/* eslint-enable @typescript-eslint/no-require-imports */
+declare const __dirname: string;
 
 const SRC = join(__dirname, '..');
 

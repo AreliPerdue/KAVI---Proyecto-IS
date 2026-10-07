@@ -5,7 +5,7 @@
  * de nombres, no todo el historial. Cambiar unas repeticiones no cambia el
  * historial, pero si puede anadir un nombre nuevo al autocompletado (RF-F4).
  */
-import { renderHook, waitFor } from '@testing-library/react-native';
+import { act, renderHook, waitFor } from '@testing-library/react-native';
 
 import { crearWrapper } from '@/hooks/__tests__/query-wrapper';
 import {
@@ -184,5 +184,22 @@ describe('mutaciones', () => {
     const { result } = await montar();
 
     await expect(result.current.create.mutateAsync({ performed_at: 'x' })).rejects.toThrow(/ya tiene un entrenamiento/i);
+  });
+});
+
+describe('encabezado de la sesión al momento (RF-F49)', () => {
+  it('update escribe el parche en el caché antes de responder: dos chips seguidos no se pisan', async () => {
+    let contestar: () => void = () => undefined;
+    mockFns.update.mockReturnValue(new Promise<void>((r) => { contestar = r; })); // el servidor tarda
+    const { result, queryClient } = await montar();
+    queryClient.setQueryDefaults(workoutKeys.detail('w1'), { gcTime: Infinity });
+    queryClient.setQueryData(workoutKeys.detail('w1'), { id: 'w1', energy: null, pump: null, tags: [] });
+
+    await act(async () => {
+      result.current.update.mutate({ id: 'w1', patch: { energy: 4 } });
+      result.current.update.mutate({ id: 'w1', patch: { pump: 3 } });
+    });
+    expect(queryClient.getQueryData(workoutKeys.detail('w1'))).toEqual({ id: 'w1', energy: 4, pump: 3, tags: [] });
+    await act(async () => { contestar(); });
   });
 });

@@ -16,6 +16,9 @@ const mockSetForActivity = { mutate: jest.fn(), isPending: false };
 const mockSnackbar = jest.fn();
 const mockAddExercise = { mutateAsync: jest.fn() };
 const mockCrearWorkout = { mutateAsync: jest.fn() };
+const mockSaveSets = { mutateAsync: jest.fn() };
+/** Lo que manda el formulario doble; las pruebas de gym lo cambian. */
+let mockEnvio: [Record<string, unknown>, unknown[]] = [{ title: 'Junta', isGym: false, reminderOffsets: [10], themeId: null }, []];
 
 let mockActividad: Record<string, unknown> = { data: undefined, isPending: false, isError: false, error: null, refetch: jest.fn() };
 let mockRecordatorios: Record<string, unknown> = { data: [], isPending: false };
@@ -35,7 +38,7 @@ jest.mock('@/hooks/use-reminders', () => ({
 }));
 jest.mock('@/hooks/use-workouts', () => ({
   useWorkoutByActivity: () => mockWorkoutExistente,
-  useWorkoutMutations: () => ({ create: mockCrearWorkout, addExercise: mockAddExercise }),
+  useWorkoutMutations: () => ({ create: mockCrearWorkout, addExercise: mockAddExercise, saveSets: mockSaveSets }),
 }));
 jest.mock('@/providers', () => ({ useSnackbar: () => mockSnackbar }));
 
@@ -68,7 +71,7 @@ jest.mock('@/components/calendar/activity-form', () => ({
         accessibilityRole: 'button',
         accessibilityLabel: props.submitLabel,
         accessibilityState: { busy: !!props.submitting },
-        onPress: () => props.onSubmit({ title: 'Junta', isGym: false, reminderOffsets: [10], themeId: null }, []),
+        onPress: () => props.onSubmit(...mockEnvio),
       },
       React.createElement(Text, null, etiquetas),
     );
@@ -93,6 +96,8 @@ beforeEach(() => {
   mockSnackbar.mockReset();
   mockAddExercise.mutateAsync.mockReset();
   mockCrearWorkout.mutateAsync.mockReset();
+  mockSaveSets.mutateAsync.mockReset().mockResolvedValue(undefined);
+  mockEnvio = [{ title: 'Junta', isGym: false, reminderOffsets: [10], themeId: null }, []];
   mockActividad = { data: undefined, isPending: false, isError: false, error: null, refetch: jest.fn() };
   mockRecordatorios = { data: [], isPending: false };
   mockWorkoutExistente = { data: null };
@@ -246,5 +251,49 @@ describe('modo edicion', () => {
     await render(<Pantalla />);
 
     expect(screen.queryByText(/bloqueada/)).toBeNull();
+  });
+});
+
+describe('actividad de gimnasio con rutina (RF-F9)', () => {
+  const borrador = (id: string, exercise_id: string | null, series: string[]) => ({
+    name: id, exercise_id, notes: null, workout_sets: series.map((sid, i) => ({ id: sid, workout_exercise_id: 'borrador', sort_order: i + 1 })),
+  });
+  const conRutina = () => {
+    mockEnvio = [{ title: 'Pierna', isGym: true, reminderOffsets: [], themeId: null }, [borrador('Sentadilla', 'cat-sentadilla', ['s1', 's2']), borrador('Libre', null, [])]];
+    mockCreate.mutate.mockImplementation((_i, opts: { onSuccess: (a: unknown) => Promise<void> }) => opts.onSuccess({ id: 'a1', start_at: '2026-10-07T15:00:00.000Z' }));
+    mockCrearWorkout.mutateAsync.mockResolvedValue({ id: 'w1' });
+    mockAddExercise.mutateAsync.mockImplementation(async ({ input }: { input: { position: number } }) => ({ id: `we-${input.position}` }));
+  };
+
+  it('crea la sesión y cada ejercicio en orden, con su exercise_id y sus series reasignadas', async () => {
+    conRutina();
+    await render(<Pantalla />);
+    await fireEvent.press(screen.getByRole('button', { name: 'Crear actividad' }));
+    await waitFor(() => expect(mockAddExercise.mutateAsync).toHaveBeenCalledTimes(2));
+
+    expect(mockCrearWorkout.mutateAsync).toHaveBeenCalledWith({ activity_id: 'a1', performed_at: '2026-10-07T15:00:00.000Z' });
+    const entradas = mockAddExercise.mutateAsync.mock.calls.map(([v]) => v);
+    expect(entradas.map((e) => [e.workoutId, e.input.position, e.input.exercise_id])).toEqual([['w1', 0, 'cat-sentadilla'], ['w1', 1, null]]);
+    // Solo el que trae series las guarda, colgadas del ejercicio creado.
+    expect(mockSaveSets.mutateAsync).toHaveBeenCalledTimes(1);
+    expect(mockSaveSets.mutateAsync.mock.calls[0][0].map((x: { id: string; workout_exercise_id: string }) => [x.id, x.workout_exercise_id])).toEqual([['s1', 'we-0'], ['s2', 'we-0']]);
+  });
+
+  it('un fallo al guardar la rutina no pierde la actividad: avisa y cierra igual', async () => {
+    conRutina();
+    mockCrearWorkout.mutateAsync.mockRejectedValue(new Error('sin red'));
+    await render(<Pantalla />);
+    await fireEvent.press(screen.getByRole('button', { name: 'Crear actividad' }));
+    await waitFor(() => expect(mockSnackbar).toHaveBeenCalledWith({ message: 'Actividad creada, pero no se pudo guardar el entrenamiento.' }));
+    expect(globalThis.mockRouter.back.mock.calls.length + globalThis.mockRouter.replace.mock.calls.length).toBeGreaterThan(0);
+  });
+
+  it('sin ejercicios no crea sesión', async () => {
+    conRutina();
+    mockEnvio = [mockEnvio[0], []];
+    await render(<Pantalla />);
+    await fireEvent.press(screen.getByRole('button', { name: 'Crear actividad' }));
+    await waitFor(() => expect(mockCreate.mutate).toHaveBeenCalled());
+    expect(mockCrearWorkout.mutateAsync).not.toHaveBeenCalled();
   });
 });

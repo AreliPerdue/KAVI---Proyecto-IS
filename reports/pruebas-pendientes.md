@@ -297,8 +297,8 @@ descartar, lectura). Falta:
 - [x] `useSetActions` / `flushOutbox`: un envío que falla deja la serie pendiente y se
   reintenta a los 10 s; al volver la app al frente se reenvía; dos cambios durante un envío
   no se pierden. → `hooks/__tests__/use-set-sync.test.tsx`
-- [ ] `useLegacyConversion`: convierte, liga al catálogo solo coincidencias únicas, marca
-  convertido; si falla a la mitad, la siguiente vez termina sin duplicar.
+- [x] `useLegacyConversion`: convierte, liga al catálogo solo coincidencias únicas, marca
+  convertido; si falla a la mitad, la siguiente vez termina sin duplicar. → `hooks/__tests__/use-exercise-history.test.tsx`
 - [x] `exerciseHistory` en los dos backends: por `exercise_id` y, sin ligar, por nombre exacto;
   sin sesiones borradas ni descartadas; ordenado por fecha de la sesión. → `services/demo/__tests__/workouts-v2.test.ts, services/supabase/__tests__/workouts-v2.test.ts`
 - [x] `gym-store`: el descanso se calcula desde `endsAt`; ±15 s reprograma el aviso; uno
@@ -321,10 +321,10 @@ mover a otro ejercicio → duración y hora → "editado" en encabezado e histor
 - [x] `useEditHistory`: `batch` agrupa en un paso; deshacer en orden inverso; una acción nueva
   borra lo que se podía rehacer; tope de 50 pasos. → `hooks/__tests__/use-edit-history.test.tsx`
 - [x] `applyOutbox` con una serie movida a otro ejercicio: sale de uno y aparece en el otro. → `lib/gym/__tests__/transforms.test.ts`
-- [ ] La sesión se marca editada una sola vez por visita y nunca en una sesión en curso.
+- [x] La sesión se marca editada una sola vez por visita y nunca en una sesión en curso. → `app/(app)/workout/__tests__/logger-actions.test.tsx`
 - [x] Duración: `ended_at − performed_at` en los dos backends; suma por ejercicio solo sin
   `ended_at`; el caché de `updateExercise` no la pisa. → `services/demo/__tests__/workouts-v2.test.ts`
-- [ ] Cambiar la hora corre también `ended_at`.
+- [x] Cambiar la hora corre también `ended_at`. → `app/(app)/workout/__tests__/logger-actions.test.tsx`
 
 ## Fitness v2 · G5 intensificadores (T245)
 Probado a mano en el demo: 21s + tempo sobre una serie, fallo en Detalles, superserie A1/A2
@@ -338,7 +338,7 @@ timer corriendo. Falta:
 - [x] `unusualCombination`: cada aviso y ningún falso positivo en una serie normal. → `lib/gym/__tests__/transforms.test.ts`
 - [x] `createGroup` / `removeGroup` en los dos backends: posiciones contiguas en el lugar del
   primero, `group_position` en orden, desagrupar conserva las series. → `services/demo/__tests__/workouts-v2.test.ts`
-- [ ] Descanso en grupos: solo al terminar el último del grupo y con `rest_after_round_sec`.
+- [x] Descanso en grupos: solo al terminar el último del grupo y con `rest_after_round_sec`. → `app/(app)/workout/__tests__/logger-actions.test.tsx`
 - [x] `IntervalTimerSheet`: fases trabajo/descanso, rondas, fin; calcula desde el inicio. → `components/fitness/__tests__/timers.test.tsx`
 - [x] `SetDetailsSheet`: lb ↔ kg en lastre/asistencia/cadenas; vacío no guarda `load_mods`. → `components/fitness/__tests__/sheets.test.tsx`
 
@@ -350,10 +350,10 @@ término sin coincidencias muestra el vacío. Falta:
 - [x] `searchNotes` en los dos backends: los tres niveles, mínimo dos letras, sin borrados ni
   descartados (sesión, ejercicio o serie), orden de lo más reciente a lo más viejo, y que `%`
   y `_` se busquen literales en Supabase. → `services/demo/__tests__/workouts-v2.test.ts, services/supabase/__tests__/workouts-v2.test.ts`
-- [ ] `update` de la sesión escribe el parche en el caché al momento: dos chips seguidos no se
-  pisan.
-- [ ] `saveStickyNote`: optimista en las preferencias; vacío guarda `null`; solo para
-  ejercicios del catálogo.
+- [x] `update` de la sesión escribe el parche en el caché al momento: dos chips seguidos no se
+  pisan. → `hooks/__tests__/use-workouts.test.tsx`
+- [x] `saveStickyNote`: optimista en las preferencias; vacío guarda `null`; solo para
+  ejercicios del catálogo. → `hooks/__tests__/use-exercises.test.tsx`
 - [x] `NoteSheet`: guarda texto recortado (vacío → `null`) y etiquetas; cerrar sin guardar
   descarta. → `components/fitness/__tests__/sheets.test.tsx`
 - [x] `Chip` seleccionado sin color usa `onInk` (antes: blanco sobre tinta clara en oscuro). → `components/ui/__tests__/chip.test.tsx`
@@ -375,8 +375,8 @@ sesión con 105 kg → badge de PR y "Nuevo récord. Así se gobierna, mi reina.
   trato. `tonnageEquivalence`: rango 2–30, semilla estable, nada bajo 140 kg. → `constants/__tests__/gymrat.test.ts`
 - [x] `trainingLog` y `saveStreakEvents` en los dos backends (solo `completed`, sin borradas;
   upsert por semana). → `services/demo/__tests__/workouts-v2.test.ts, services/supabase/__tests__/workouts-v2.test.ts`
-- [ ] Modo serio: sin snackbars de humor, sin animación del badge, sin equivalencia ni frase
-  en el resumen, sin "¿y la pierna?".
+- [x] Modo serio: sin snackbars de humor, sin animación del badge, sin equivalencia ni frase
+  en el resumen, sin "¿y la pierna?". → `app/(app)/workout/__tests__/logger-actions.test.tsx, components/fitness/__tests__/serious-mode.test.tsx`
 
 ## Fitness v2 · G8 calidad y dependencias nativas (T248)
 Probado a mano en el demo (web): descanso con pitidos en 3-2-1 y al terminar (4 sonidos),
@@ -400,10 +400,10 @@ segundo pasa a primero y "Guardar orden" lo aplica en la sesión. Falta:
 - [x] `ReorderableColumn`: destino según centros con filas de alto distinto; las demás se
   recorren el alto de la arrastrada; soltar en el mismo lugar no llama `onMove`; cancelar
   restaura; `justDragged` evita abrir el menú al soltar. → `lib/__tests__/drag.test.ts`
-- [ ] `moverSerie`: `sort_order` entre los nuevos vecinos (arriba, en medio, al final) y se
-  puede deshacer.
-- [ ] `reordenarEjercicios`: solo guarda las posiciones que cambiaron; el caché se reordena al
-  momento; marca la sesión como editada.
+- [x] `moverSerie`: `sort_order` entre los nuevos vecinos (arriba, en medio, al final) y se
+  puede deshacer. → `app/(app)/workout/__tests__/logger-actions.test.tsx`
+- [x] `reordenarEjercicios`: solo guarda las posiciones que cambiaron; el caché se reordena al
+  momento; marca la sesión como editada. → `app/(app)/workout/__tests__/logger-actions.test.tsx`
 - [ ] (manual) En dispositivo (iOS y Android): mantener presionado no pelea con el deslizar de la fila
   ni con el scroll (el scroll se apaga mientras se arrastra); dentro de la hoja en Android.
 
@@ -416,8 +416,8 @@ series. Falta:
   v1). Casos: vacío invita a añadir; elegir del catálogo crea el ejercicio con su primera
   serie prellenada con la vez pasada; teclado, + Serie, duplicar, borrar, arrastrar;
   cambiar y quitar ejercicio; con entrenamiento existente ofrece abrirlo.
-- [ ] `saveExercises` (activity/new): crea la sesión, cada ejercicio en orden con su
-  `exercise_id` y sus series reasignadas al id creado; un fallo no pierde la actividad.
+- [x] `saveExercises` (activity/new): crea la sesión, cada ejercicio en orden con su
+  `exercise_id` y sus series reasignadas al id creado; un fallo no pierde la actividad. → `app/(app)/activity/__tests__/new.test.tsx`
 - [x] `useGymProgress.sessions`: excluye sesiones futuras y las que tienen series pero
   ninguna marcada; incluye las de v1 sin series. → `hooks/__tests__/use-gym-progress.test.tsx`
 - [ ] Logger tras extraer `set-editing.ts`: el teclado, "Siguiente" y el esfuerzo se
@@ -429,8 +429,8 @@ drop" con press plano y declinado con barra primero; elegir plano lo muestra en 
 tocar el tramo → "Buscar en todo el catálogo" → declinado lo reemplaza. Falta:
 - [x] `suggestVariants`: mismo grupo y mecánica; sin equipo ni patrón en común no entra; el
   mismo equipo gana; lo mejor de cada familia primero; excluye el propio y los archivados. → `lib/gym/__tests__/transforms.test.ts`
-- [ ] Logger: aplicar `mechanical_drop` abre la hoja en el último tramo `drop`; "Sin
-  variante" la quita; se puede deshacer.
+- [x] Logger: aplicar `mechanical_drop` abre la hoja en el último tramo `drop`; "Sin
+  variante" la quita; se puede deshacer. → `app/(app)/workout/__tests__/logger-actions.test.tsx`
 
 ## Ocurrencia borrada que reaparecía (T249)
 Reproducido antes de arreglar con un script suelto sobre el backend demo (serie lunes a
