@@ -294,9 +294,9 @@ que todavía no se automatiza.
 Ya cubierto con pruebas al escribirlo: `lib/gym/{sets,session,tools,outbox}` y la pantalla
 `workout/[id]` (registro, ✓, + Serie, teclado, + Drop, tipo, borrar con deshacer, terminar,
 descartar, lectura). Falta:
-- [ ] `useSetActions` / `flushOutbox`: un envío que falla deja la serie pendiente y se
+- [x] `useSetActions` / `flushOutbox`: un envío que falla deja la serie pendiente y se
   reintenta a los 10 s; al volver la app al frente se reenvía; dos cambios durante un envío
-  no se pierden.
+  no se pierden. → `hooks/__tests__/use-set-sync.test.tsx`
 - [ ] `useLegacyConversion`: convierte, liga al catálogo solo coincidencias únicas, marca
   convertido; si falla a la mitad, la siguiente vez termina sin duplicar.
 - [x] `exerciseHistory` en los dos backends: por `exercise_id` y, sin ligar, por nombre exacto;
@@ -418,8 +418,8 @@ series. Falta:
   cambiar y quitar ejercicio; con entrenamiento existente ofrece abrirlo.
 - [ ] `saveExercises` (activity/new): crea la sesión, cada ejercicio en orden con su
   `exercise_id` y sus series reasignadas al id creado; un fallo no pierde la actividad.
-- [ ] `useGymProgress.sessions`: excluye sesiones futuras y las que tienen series pero
-  ninguna marcada; incluye las de v1 sin series.
+- [x] `useGymProgress.sessions`: excluye sesiones futuras y las que tienen series pero
+  ninguna marcada; incluye las de v1 sin series. → `hooks/__tests__/use-gym-progress.test.tsx`
 - [ ] Logger tras extraer `set-editing.ts`: el teclado, "Siguiente" y el esfuerzo se
   comportan igual que antes.
 
@@ -508,8 +508,8 @@ demo (360 px): `/eliminar-cuenta` sin sesión; contraseña mala → "Credenciale
 correcta + "Entiendo…" → vuelve a login. Falta:
 - [x] `deleteAccount` en los dos backends: contraseña mala no borra nada; en Supabase llama la
   RPC y cierra la sesión local. → `services/{demo,supabase}/__tests__/auth.test.ts`
-- [ ] `useDeleteAccount`: limpia la cola de series, el descanso, los avisos y la caché.
-- [ ] Hoja: el botón solo se activa con contraseña y el interruptor "Entiendo…".
+- [x] `useDeleteAccount`: limpia la cola de series, el descanso, los avisos y la caché. → `hooks/__tests__/use-auth-actions.test.tsx`
+- [x] Hoja: el botón solo se activa con contraseña y el interruptor "Entiendo…". → `components/account/__tests__/delete-account-sheet.test.tsx`
 - [ ] (manual) En producción, con una cuenta de prueba creada para eso: eliminarla y comprobar que su
   correo ya no inicia sesión.
 
