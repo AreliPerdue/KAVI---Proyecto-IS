@@ -309,7 +309,7 @@ descartar, lectura). Falta:
 - [x] `ExerciseBlock`: columnas I/D en unilaterales y aviso de desbalance; etiqueta C/F/T…
   por tipo; el calentamiento no cuenta en la numeración. → `components/fitness/__tests__/exercise-block.test.tsx`
 - [ ] Detalle del ejercicio: mejor serie, peso máximo, gráficas con 1 y con 2+ sesiones.
-- [ ] Ajustes de gimnasio en Perfil.
+- [x] Ajustes de gimnasio en Perfil. → `components/fitness/__tests__/fitness-settings.test.tsx (desde T266 viven en Fitness)`
 - [ ] (manual) Manual en nativo (Android): swipe izquierda/derecha, vibración, notificación de fin de
   descanso con la pantalla bloqueada.
 
@@ -420,8 +420,8 @@ series. Falta:
   `exercise_id` y sus series reasignadas al id creado; un fallo no pierde la actividad. → `app/(app)/activity/__tests__/new.test.tsx`
 - [x] `useGymProgress.sessions`: excluye sesiones futuras y las que tienen series pero
   ninguna marcada; incluye las de v1 sin series. → `hooks/__tests__/use-gym-progress.test.tsx`
-- [ ] Logger tras extraer `set-editing.ts`: el teclado, "Siguiente" y el esfuerzo se
-  comportan igual que antes.
+- [x] Logger tras extraer `set-editing.ts`: el teclado, "Siguiente" y el esfuerzo se
+  comportan igual que antes. → `components/fitness/__tests__/set-editing.test.ts`
 
 ## Variante del drop mecánico (T252)
 Probado a mano en el demo: press inclinado con barra → "Drop mecánico" abre "Variante del
@@ -496,7 +496,7 @@ Perfil → Datos de salud → Desconectar vuelve al estado sin conectar. Falta:
   una sola sesión de KAVI (la de mayor traslape); sin hora de fin usa la duración o 1 h. → `lib/health/__tests__/match.test.ts`
 - [x] `platform.web.ts` → estado "web" con su mensaje; `platform.ts` → "unsupported". → `services/health/__tests__/health.test.ts`
 - [x] Demo: permisos parciales (solo pasos) dejan las otras cifras en "Sin permiso", nunca en 0. → `services/health/__tests__/health.test.ts`
-- [ ] Desconectar borra totales y sesiones de la caché y vuelve a "Conecta tu actividad".
+- [x] Desconectar borra totales y sesiones de la caché y vuelve a "Conecta tu actividad". → `hooks/__tests__/use-health.test.tsx, components/fitness/__tests__/fitness-settings.test.tsx`
 - [ ] (manual) Web real (sin demo): Actividad muestra "Tu actividad vive en tu teléfono".
 
 ## Eliminar cuenta (T263)
