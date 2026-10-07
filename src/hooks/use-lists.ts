@@ -1,4 +1,6 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { type QueryClient, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+
+import { uuidv4 } from '@/lib/gym/ids';
 
 import { useAuth } from '@/providers';
 import {
@@ -12,6 +14,7 @@ import {
   type ListInput,
   type ListItem,
   type ListItemInput,
+  type NewListItemInput,
   listArchivedLists,
   listItemsByDateRange,
   listLists,
@@ -230,6 +233,57 @@ export function useListHistory(listId: string | undefined, enabled = true) {
   });
 }
 
+/**
+ * Cambios optimistas a los elementos (T268, RF-L5).
+ *
+ * Antes cada toque esperaba al servidor y luego volvía a pedir **todas** las consultas de
+ * listas antes de pintar nada; en el teléfono, agregar "leche" tardaba lo que tardaran tres
+ * o cuatro viajes. Ahora el cambio se escribe primero en la caché —en el detalle y en
+ * cualquier otra consulta que traiga ese elemento: la franja, Hoy, la búsqueda— y la
+ * recarga va por detrás, cuando ya no queda ningún cambio en camino.
+ */
+const CLAVE_MUTACION = listKeys.all;
+
+const esElemento = (x: unknown): x is ListItem =>
+  !!x && typeof x === 'object' && 'list_id' in x && 'title' in x && 'completed_at' in x;
+
+/** Aplica `cambio` a cada arreglo de elementos que haya en la caché de listas. */
+function tocarElementos(qc: QueryClient, cambio: (items: ListItem[]) => ListItem[]) {
+  qc.setQueriesData({ queryKey: listKeys.all }, (data: unknown) => {
+    if (!data || typeof data !== 'object') return data;
+    if (Array.isArray(data)) return data.length > 0 && esElemento(data[0]) ? cambio(data as ListItem[]) : data;
+    // El detalle de una lista y los resultados de búsqueda traen sus elementos en `items`.
+    if ('items' in data && Array.isArray((data as { items: unknown }).items)) {
+      return { ...data, items: cambio((data as { items: ListItem[] }).items) };
+    }
+    return data;
+  });
+}
+
+const parchar = (qc: QueryClient, id: string, patch: Partial<ListItem>) =>
+  tocarElementos(qc, (items) => items.map((i) => (i.id === id ? { ...i, ...patch } : i)));
+
+/** Detiene las recargas en camino y guarda la caché para poder deshacer si el servidor falla. */
+async function prepararOptimista(qc: QueryClient) {
+  await qc.cancelQueries({ queryKey: listKeys.all });
+  return qc.getQueriesData({ queryKey: listKeys.all });
+}
+
+type Instantanea = Awaited<ReturnType<typeof prepararOptimista>>;
+
+function deshacer(qc: QueryClient, antes: Instantanea | undefined) {
+  for (const [clave, datos] of antes ?? []) qc.setQueryData(clave, datos);
+}
+
+/**
+ * Recarga lo de listas solo cuando termina el **último** cambio en camino: si se agregan tres
+ * elementos seguidos, recargar tras el primero traería una lista sin los otros dos y se verían
+ * desaparecer y volver.
+ */
+function recargarAlFinal(qc: QueryClient) {
+  if (qc.isMutating({ mutationKey: CLAVE_MUTACION }) <= 1) void qc.invalidateQueries({ queryKey: listKeys.all });
+}
+
 export function useListMutations() {
   const { userId } = useAuth();
   const qc = useQueryClient();
@@ -253,16 +307,51 @@ export function useListMutations() {
       mutationFn: ({ listId, name }: { listId: string; name: string }) => addSection(listId, name),
       onSuccess: invalidar,
     }),
-    addItem: useMutation({
-      mutationFn: ({ listId, input }: { listId: string; input: ListItemInput }) =>
-        addListItem(listId, userId as string, input),
-      onSuccess: invalidar,
-    }),
+    addItem: conIdYOrden(
+      qc,
+      useMutation({
+        mutationKey: CLAVE_MUTACION,
+        mutationFn: ({ listId, input }: { listId: string; input: NewListItemInput }) =>
+          addListItem(listId, userId as string, input),
+        onMutate: async ({ listId, input }) => {
+          const antes = await prepararOptimista(qc);
+          const t = new Date().toISOString();
+          const nuevo: ListItem = {
+            id: input.id as string, list_id: listId, section_id: input.section_id ?? null,
+            title: input.title.trim(), note: input.note ?? null, sort_order: input.sort_order as number,
+            completed_at: null, completed_by: null, created_by: userId as string,
+            due_date: input.due_date ?? null, due_time: input.due_time ?? null,
+            reminder_offset_minutes: input.reminder_offset_minutes ?? null, created_at: t, updated_at: t,
+          };
+          qc.setQueryData<ListDetail>(listKeys.detail(listId), (d) => (d ? { ...d, items: [...d.items, nuevo] } : d));
+          return { antes };
+        },
+        onError: (_e, _v, ctx) => deshacer(qc, ctx?.antes),
+        onSettled: () => recargarAlFinal(qc),
+      }),
+    ),
     updateItem: useMutation({
+      mutationKey: CLAVE_MUTACION,
       mutationFn: ({ id, patch }: { id: string; patch: Partial<ListItemInput> }) => updateListItem(id, patch),
-      onSuccess: invalidar,
+      onMutate: async ({ id, patch }) => {
+        const antes = await prepararOptimista(qc);
+        parchar(qc, id, patch.title !== undefined ? { ...patch, title: patch.title.trim() } : patch);
+        return { antes };
+      },
+      onError: (_e, _v, ctx) => deshacer(qc, ctx?.antes),
+      onSettled: () => recargarAlFinal(qc),
     }),
-    removeItem: useMutation({ mutationFn: (id: string) => removeListItem(id), onSuccess: invalidar }),
+    removeItem: useMutation({
+      mutationKey: CLAVE_MUTACION,
+      mutationFn: (id: string) => removeListItem(id),
+      onMutate: async (id) => {
+        const antes = await prepararOptimista(qc);
+        tocarElementos(qc, (items) => items.filter((i) => i.id !== id));
+        return { antes };
+      },
+      onError: (_e, _v, ctx) => deshacer(qc, ctx?.antes),
+      onSettled: () => recargarAlFinal(qc),
+    }),
     reschedule: useMutation({
       mutationFn: ({ ids, dueDate }: { ids: readonly string[]; dueDate: string }) =>
         rescheduleListItems(ids, dueDate),
@@ -284,7 +373,15 @@ export function useListMutations() {
         await reorderListItem(a.id, ordenB, a.section_id);
         await reorderListItem(b.id, ordenA, b.section_id);
       },
-      onSuccess: invalidar,
+      mutationKey: CLAVE_MUTACION,
+      onMutate: async ({ a, b }) => {
+        const antes = await prepararOptimista(qc);
+        parchar(qc, a.id, { sort_order: b.sort_order });
+        parchar(qc, b.id, { sort_order: a.sort_order });
+        return { antes };
+      },
+      onError: (_e, _v, ctx) => deshacer(qc, ctx?.antes),
+      onSettled: () => recargarAlFinal(qc),
     }),
     swapLists: useMutation({
       mutationFn: async ({ a, b }: { a: KaviList; b: KaviList }) => {
@@ -313,7 +410,15 @@ export function useListMutations() {
     placeItem: useMutation({
       mutationFn: ({ id, sortOrder, sectionId }: { id: string; sortOrder: number; sectionId: string | null }) =>
         reorderListItem(id, sortOrder, sectionId),
-      onSuccess: invalidar,
+      // Sin esto, la fila soltada regresaba a su lugar hasta que contestaba el servidor.
+      mutationKey: CLAVE_MUTACION,
+      onMutate: async ({ id, sortOrder, sectionId }) => {
+        const antes = await prepararOptimista(qc);
+        parchar(qc, id, { sort_order: sortOrder, section_id: sectionId });
+        return { antes };
+      },
+      onError: (_e, _v, ctx) => deshacer(qc, ctx?.antes),
+      onSettled: () => recargarAlFinal(qc),
     }),
 
     /**
@@ -378,13 +483,55 @@ export function useListMutations() {
       onSuccess: invalidar,
     }),
     toggleRunItem: useMutation({
+      mutationKey: CLAVE_MUTACION,
       mutationFn: ({ runId, itemId, done }: { runId: string; itemId: string; done: boolean }) =>
         setRunItem(runId, itemId, userId as string, done),
-      onSuccess: invalidar,
+      onMutate: async ({ runId, itemId, done }) => {
+        const antes = await prepararOptimista(qc);
+        qc.setQueriesData<ListRun[]>({ queryKey: ['lists', 'runs'] }, (vueltas) =>
+          vueltas?.map((r) => {
+            if (r.id !== runId) return r;
+            const sin = r.completed_item_ids.filter((x) => x !== itemId);
+            const ids = done ? [...sin, itemId] : sin;
+            return { ...r, completed_item_ids: ids, completed_count: ids.length };
+          }),
+        );
+        return { antes };
+      },
+      onError: (_e, _v, ctx) => deshacer(qc, ctx?.antes),
+      onSettled: () => recargarAlFinal(qc),
     }),
     toggleItem: useMutation({
+      mutationKey: CLAVE_MUTACION,
       mutationFn: ({ id, done }: { id: string; done: boolean }) => toggleListItem(id, userId as string, done),
-      onSuccess: invalidar,
+      onMutate: async ({ id, done }) => {
+        const antes = await prepararOptimista(qc);
+        parchar(qc, id, { completed_at: done ? new Date().toISOString() : null, completed_by: done ? (userId as string) : null });
+        return { antes };
+      },
+      onError: (_e, _v, ctx) => deshacer(qc, ctx?.antes),
+      onSettled: () => recargarAlFinal(qc),
     }),
+  };
+}
+
+/**
+ * Completa el elemento nuevo con su id y su orden **antes** de mandarlo (T268): son los mismos
+ * que se pintan al instante, así que la fila no cambia de identidad cuando contesta el
+ * servidor, y el servidor no tiene que consultar el siguiente orden.
+ */
+function conIdYOrden<R extends { mutate: (v: { listId: string; input: NewListItemInput }, o?: never) => void; mutateAsync: (v: { listId: string; input: NewListItemInput }, o?: never) => Promise<ListItem> }>(
+  qc: QueryClient,
+  mutacion: R,
+): R {
+  const completar = (v: { listId: string; input: NewListItemInput }) => {
+    const items = qc.getQueryData<ListDetail>(listKeys.detail(v.listId))?.items ?? [];
+    const ultimo = items.reduce((m, i) => Math.max(m, i.sort_order), 0);
+    return { listId: v.listId, input: { ...v.input, id: v.input.id ?? uuidv4(), sort_order: v.input.sort_order ?? ultimo + 1024 } };
+  };
+  return {
+    ...mutacion,
+    mutate: (v, o) => mutacion.mutate(completar(v), o),
+    mutateAsync: (v, o) => mutacion.mutateAsync(completar(v), o),
   };
 }

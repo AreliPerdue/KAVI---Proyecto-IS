@@ -30,9 +30,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">92.3% </span>
+                <span class="strong">95.23% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>12/13</span>
+                <span class='fraction'>20/21</span>
             </div>
         
             
@@ -123,7 +123,13 @@
 <a name='L58'></a><a href='#L58'>58</a>
 <a name='L59'></a><a href='#L59'>59</a>
 <a name='L60'></a><a href='#L60'>60</a>
-<a name='L61'></a><a href='#L61'>61</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L61'></a><a href='#L61'>61</a>
+<a name='L62'></a><a href='#L62'>62</a>
+<a name='L63'></a><a href='#L63'>63</a>
+<a name='L64'></a><a href='#L64'>64</a>
+<a name='L65'></a><a href='#L65'>65</a>
+<a name='L66'></a><a href='#L66'>66</a>
+<a name='L67'></a><a href='#L67'>67</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -148,18 +154,12 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">818x</span>
-<span class="cline-any cline-yes">818x</span>
-<span class="cline-any cline-yes">818x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">818x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2301x</span>
+<span class="cline-any cline-yes">2301x</span>
+<span class="cline-any cline-yes">2301x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -167,10 +167,22 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2301x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">32x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">52x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -199,6 +211,7 @@ export function Chip({
   color,
   icon,
   compact = false,
+  accessibilityLabel,
 }: {
   label: string;
   selected: boolean;
@@ -207,6 +220,8 @@ export function Chip({
   color?: string;
   icon?: ReactNode;
   compact?: boolean;
+  /** Si la etiqueta visible no se entiende sola ("3" en una escala), lo que se lee en voz alta. */
+  accessibilityLabel?: string;
 }) {
   const theme = useTheme();
   const accent = color ?? theme.ink;
@@ -214,8 +229,10 @@ export function Chip({
     &lt;Pressable
       accessibilityRole="button"
       accessibilityState={{ selected }}
-      accessibilityLabel={label}
+      accessibilityLabel={accessibilityLabel ?? label}
       onPress={onPress}
+      // El chip mide 32–36 de alto; el área táctil llega a 44 sin cambiar cómo se ve.
+      hitSlop={{ top: compact ? 6 : 4, bottom: compact ? 6 : 4 }}
       style={({ pressed }) =&gt; [
         styles.chip,
         compact ? styles.compact : null,
@@ -223,7 +240,8 @@ export function Chip({
         pressed ? <span class="branch-0 cbranch-no" title="branch not covered" >styles.pressed </span>: null,
       ]}&gt;
       {icon}
-      &lt;AppText variant="label" style={{ color: selected ? '#FFFFFF' : theme.text }}&gt;
+      {/* Sobre un color de dimensión el texto va en blanco; sobre tinta, en su contraste (que en oscuro es casi negro). */}
+      &lt;AppText variant="label" style={{ color: selected ? (color ? '#FFFFFF' : theme.onInk) : theme.text }}&gt;
         {label}
       &lt;/AppText&gt;
     &lt;/Pressable&gt;
@@ -250,7 +268,7 @@ const styles = StyleSheet.create({
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-09-23T16:54:46.714Z
+                at 2026-10-07T09:52:02.001Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

@@ -103,3 +103,42 @@ describe.each([
     expect(onOpen).toHaveBeenCalledTimes(1);
   });
 });
+
+/**
+ * Con `onHold` (detalle de una lista, T268): mantener presionado y soltar sin mover abre los
+ * detalles, y el toque que llega pegado no edita el texto. Mover sigue reordenando.
+ */
+describe('filas con onHold', () => {
+  const montarConHold = (onOpen: jest.Mock, onHold: jest.Mock, onReorder: jest.Mock) =>
+    render(<DraggableRows items={['a', 'b']} keyOf={(x) => x} onReorder={onReorder} onHold={onHold} renderItem={(x) => <Fila nombre={x} onOpen={onOpen} />} />);
+
+  it('soltar quieta llama onHold con su elemento y se traga el toque', async () => {
+    const onOpen = jest.fn();
+    const onHold = jest.fn();
+    const onReorder = jest.fn();
+    await montarConHold(onOpen, onHold, onReorder);
+    await medir();
+    mockFines[1]?.({ translationX: 0, translationY: 1 });
+    expect(onHold).toHaveBeenCalledWith('b');
+    expect(onReorder).not.toHaveBeenCalled();
+    await fireEvent.press(screen.getByRole('button', { name: 'b' }));
+    expect(onOpen).not.toHaveBeenCalled();
+  });
+
+  it('arrastrar reordena y no llama onHold', async () => {
+    const onHold = jest.fn();
+    const onReorder = jest.fn();
+    await montarConHold(jest.fn(), onHold, onReorder);
+    await medir();
+    mockFines[0]?.({ translationX: 0, translationY: 60 });
+    expect(onReorder).toHaveBeenCalledWith(0, 1);
+    expect(onHold).not.toHaveBeenCalled();
+  });
+
+  it('un toque normal (sin mantener) sigue llegando', async () => {
+    const onOpen = jest.fn();
+    await montarConHold(onOpen, jest.fn(), jest.fn());
+    await fireEvent.press(screen.getByRole('button', { name: 'a' }));
+    expect(onOpen).toHaveBeenCalled();
+  });
+});

@@ -1,0 +1,640 @@
+
+<!doctype html>
+<html lang="en">
+
+<head>
+    <title>Code coverage report for i18n/es/lists.ts</title>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="../../prettify.css" />
+    <link rel="stylesheet" href="../../base.css" />
+    <link rel="shortcut icon" type="image/x-icon" href="../../favicon.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style type='text/css'>
+        .coverage-summary .sorter {
+            background-image: url(../../sort-arrow-sprite.png);
+        }
+    </style>
+</head>
+    
+<body>
+<div class='wrapper'>
+    <div class='pad1'>
+        <h1><a href="../../index.html">All files</a> / <a href="index.html">i18n/es</a> lists.ts</h1>
+        <div class='clearfix'>
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">63.63% </span>
+                <span class="quiet">Statements</span>
+                <span class='fraction'>28/44</span>
+            </div>
+        
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">50% </span>
+                <span class="quiet">Branches</span>
+                <span class='fraction'>12/24</span>
+            </div>
+        
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">62.79% </span>
+                <span class="quiet">Functions</span>
+                <span class='fraction'>27/43</span>
+            </div>
+        
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">63.63% </span>
+                <span class="quiet">Lines</span>
+                <span class='fraction'>28/44</span>
+            </div>
+        
+            
+        </div>
+        <p class="quiet">
+            Press <em>n</em> or <em>j</em> to go to the next uncovered block, <em>b</em>, <em>p</em> or <em>k</em> for the previous block.
+        </p>
+        <template id="filterTemplate">
+            <div class="quiet">
+                Filter:
+                <input type="search" id="fileSearch">
+            </div>
+        </template>
+    </div>
+    <div class='status-line medium'></div>
+    <pre><table class="coverage">
+<tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
+<a name='L2'></a><a href='#L2'>2</a>
+<a name='L3'></a><a href='#L3'>3</a>
+<a name='L4'></a><a href='#L4'>4</a>
+<a name='L5'></a><a href='#L5'>5</a>
+<a name='L6'></a><a href='#L6'>6</a>
+<a name='L7'></a><a href='#L7'>7</a>
+<a name='L8'></a><a href='#L8'>8</a>
+<a name='L9'></a><a href='#L9'>9</a>
+<a name='L10'></a><a href='#L10'>10</a>
+<a name='L11'></a><a href='#L11'>11</a>
+<a name='L12'></a><a href='#L12'>12</a>
+<a name='L13'></a><a href='#L13'>13</a>
+<a name='L14'></a><a href='#L14'>14</a>
+<a name='L15'></a><a href='#L15'>15</a>
+<a name='L16'></a><a href='#L16'>16</a>
+<a name='L17'></a><a href='#L17'>17</a>
+<a name='L18'></a><a href='#L18'>18</a>
+<a name='L19'></a><a href='#L19'>19</a>
+<a name='L20'></a><a href='#L20'>20</a>
+<a name='L21'></a><a href='#L21'>21</a>
+<a name='L22'></a><a href='#L22'>22</a>
+<a name='L23'></a><a href='#L23'>23</a>
+<a name='L24'></a><a href='#L24'>24</a>
+<a name='L25'></a><a href='#L25'>25</a>
+<a name='L26'></a><a href='#L26'>26</a>
+<a name='L27'></a><a href='#L27'>27</a>
+<a name='L28'></a><a href='#L28'>28</a>
+<a name='L29'></a><a href='#L29'>29</a>
+<a name='L30'></a><a href='#L30'>30</a>
+<a name='L31'></a><a href='#L31'>31</a>
+<a name='L32'></a><a href='#L32'>32</a>
+<a name='L33'></a><a href='#L33'>33</a>
+<a name='L34'></a><a href='#L34'>34</a>
+<a name='L35'></a><a href='#L35'>35</a>
+<a name='L36'></a><a href='#L36'>36</a>
+<a name='L37'></a><a href='#L37'>37</a>
+<a name='L38'></a><a href='#L38'>38</a>
+<a name='L39'></a><a href='#L39'>39</a>
+<a name='L40'></a><a href='#L40'>40</a>
+<a name='L41'></a><a href='#L41'>41</a>
+<a name='L42'></a><a href='#L42'>42</a>
+<a name='L43'></a><a href='#L43'>43</a>
+<a name='L44'></a><a href='#L44'>44</a>
+<a name='L45'></a><a href='#L45'>45</a>
+<a name='L46'></a><a href='#L46'>46</a>
+<a name='L47'></a><a href='#L47'>47</a>
+<a name='L48'></a><a href='#L48'>48</a>
+<a name='L49'></a><a href='#L49'>49</a>
+<a name='L50'></a><a href='#L50'>50</a>
+<a name='L51'></a><a href='#L51'>51</a>
+<a name='L52'></a><a href='#L52'>52</a>
+<a name='L53'></a><a href='#L53'>53</a>
+<a name='L54'></a><a href='#L54'>54</a>
+<a name='L55'></a><a href='#L55'>55</a>
+<a name='L56'></a><a href='#L56'>56</a>
+<a name='L57'></a><a href='#L57'>57</a>
+<a name='L58'></a><a href='#L58'>58</a>
+<a name='L59'></a><a href='#L59'>59</a>
+<a name='L60'></a><a href='#L60'>60</a>
+<a name='L61'></a><a href='#L61'>61</a>
+<a name='L62'></a><a href='#L62'>62</a>
+<a name='L63'></a><a href='#L63'>63</a>
+<a name='L64'></a><a href='#L64'>64</a>
+<a name='L65'></a><a href='#L65'>65</a>
+<a name='L66'></a><a href='#L66'>66</a>
+<a name='L67'></a><a href='#L67'>67</a>
+<a name='L68'></a><a href='#L68'>68</a>
+<a name='L69'></a><a href='#L69'>69</a>
+<a name='L70'></a><a href='#L70'>70</a>
+<a name='L71'></a><a href='#L71'>71</a>
+<a name='L72'></a><a href='#L72'>72</a>
+<a name='L73'></a><a href='#L73'>73</a>
+<a name='L74'></a><a href='#L74'>74</a>
+<a name='L75'></a><a href='#L75'>75</a>
+<a name='L76'></a><a href='#L76'>76</a>
+<a name='L77'></a><a href='#L77'>77</a>
+<a name='L78'></a><a href='#L78'>78</a>
+<a name='L79'></a><a href='#L79'>79</a>
+<a name='L80'></a><a href='#L80'>80</a>
+<a name='L81'></a><a href='#L81'>81</a>
+<a name='L82'></a><a href='#L82'>82</a>
+<a name='L83'></a><a href='#L83'>83</a>
+<a name='L84'></a><a href='#L84'>84</a>
+<a name='L85'></a><a href='#L85'>85</a>
+<a name='L86'></a><a href='#L86'>86</a>
+<a name='L87'></a><a href='#L87'>87</a>
+<a name='L88'></a><a href='#L88'>88</a>
+<a name='L89'></a><a href='#L89'>89</a>
+<a name='L90'></a><a href='#L90'>90</a>
+<a name='L91'></a><a href='#L91'>91</a>
+<a name='L92'></a><a href='#L92'>92</a>
+<a name='L93'></a><a href='#L93'>93</a>
+<a name='L94'></a><a href='#L94'>94</a>
+<a name='L95'></a><a href='#L95'>95</a>
+<a name='L96'></a><a href='#L96'>96</a>
+<a name='L97'></a><a href='#L97'>97</a>
+<a name='L98'></a><a href='#L98'>98</a>
+<a name='L99'></a><a href='#L99'>99</a>
+<a name='L100'></a><a href='#L100'>100</a>
+<a name='L101'></a><a href='#L101'>101</a>
+<a name='L102'></a><a href='#L102'>102</a>
+<a name='L103'></a><a href='#L103'>103</a>
+<a name='L104'></a><a href='#L104'>104</a>
+<a name='L105'></a><a href='#L105'>105</a>
+<a name='L106'></a><a href='#L106'>106</a>
+<a name='L107'></a><a href='#L107'>107</a>
+<a name='L108'></a><a href='#L108'>108</a>
+<a name='L109'></a><a href='#L109'>109</a>
+<a name='L110'></a><a href='#L110'>110</a>
+<a name='L111'></a><a href='#L111'>111</a>
+<a name='L112'></a><a href='#L112'>112</a>
+<a name='L113'></a><a href='#L113'>113</a>
+<a name='L114'></a><a href='#L114'>114</a>
+<a name='L115'></a><a href='#L115'>115</a>
+<a name='L116'></a><a href='#L116'>116</a>
+<a name='L117'></a><a href='#L117'>117</a>
+<a name='L118'></a><a href='#L118'>118</a>
+<a name='L119'></a><a href='#L119'>119</a>
+<a name='L120'></a><a href='#L120'>120</a>
+<a name='L121'></a><a href='#L121'>121</a>
+<a name='L122'></a><a href='#L122'>122</a>
+<a name='L123'></a><a href='#L123'>123</a>
+<a name='L124'></a><a href='#L124'>124</a>
+<a name='L125'></a><a href='#L125'>125</a>
+<a name='L126'></a><a href='#L126'>126</a>
+<a name='L127'></a><a href='#L127'>127</a>
+<a name='L128'></a><a href='#L128'>128</a>
+<a name='L129'></a><a href='#L129'>129</a>
+<a name='L130'></a><a href='#L130'>130</a>
+<a name='L131'></a><a href='#L131'>131</a>
+<a name='L132'></a><a href='#L132'>132</a>
+<a name='L133'></a><a href='#L133'>133</a>
+<a name='L134'></a><a href='#L134'>134</a>
+<a name='L135'></a><a href='#L135'>135</a>
+<a name='L136'></a><a href='#L136'>136</a>
+<a name='L137'></a><a href='#L137'>137</a>
+<a name='L138'></a><a href='#L138'>138</a>
+<a name='L139'></a><a href='#L139'>139</a>
+<a name='L140'></a><a href='#L140'>140</a>
+<a name='L141'></a><a href='#L141'>141</a>
+<a name='L142'></a><a href='#L142'>142</a>
+<a name='L143'></a><a href='#L143'>143</a>
+<a name='L144'></a><a href='#L144'>144</a>
+<a name='L145'></a><a href='#L145'>145</a>
+<a name='L146'></a><a href='#L146'>146</a>
+<a name='L147'></a><a href='#L147'>147</a>
+<a name='L148'></a><a href='#L148'>148</a>
+<a name='L149'></a><a href='#L149'>149</a>
+<a name='L150'></a><a href='#L150'>150</a>
+<a name='L151'></a><a href='#L151'>151</a>
+<a name='L152'></a><a href='#L152'>152</a>
+<a name='L153'></a><a href='#L153'>153</a>
+<a name='L154'></a><a href='#L154'>154</a>
+<a name='L155'></a><a href='#L155'>155</a>
+<a name='L156'></a><a href='#L156'>156</a>
+<a name='L157'></a><a href='#L157'>157</a>
+<a name='L158'></a><a href='#L158'>158</a>
+<a name='L159'></a><a href='#L159'>159</a>
+<a name='L160'></a><a href='#L160'>160</a>
+<a name='L161'></a><a href='#L161'>161</a>
+<a name='L162'></a><a href='#L162'>162</a>
+<a name='L163'></a><a href='#L163'>163</a>
+<a name='L164'></a><a href='#L164'>164</a>
+<a name='L165'></a><a href='#L165'>165</a>
+<a name='L166'></a><a href='#L166'>166</a>
+<a name='L167'></a><a href='#L167'>167</a>
+<a name='L168'></a><a href='#L168'>168</a>
+<a name='L169'></a><a href='#L169'>169</a>
+<a name='L170'></a><a href='#L170'>170</a>
+<a name='L171'></a><a href='#L171'>171</a>
+<a name='L172'></a><a href='#L172'>172</a>
+<a name='L173'></a><a href='#L173'>173</a>
+<a name='L174'></a><a href='#L174'>174</a>
+<a name='L175'></a><a href='#L175'>175</a>
+<a name='L176'></a><a href='#L176'>176</a>
+<a name='L177'></a><a href='#L177'>177</a>
+<a name='L178'></a><a href='#L178'>178</a>
+<a name='L179'></a><a href='#L179'>179</a>
+<a name='L180'></a><a href='#L180'>180</a>
+<a name='L181'></a><a href='#L181'>181</a>
+<a name='L182'></a><a href='#L182'>182</a>
+<a name='L183'></a><a href='#L183'>183</a>
+<a name='L184'></a><a href='#L184'>184</a>
+<a name='L185'></a><a href='#L185'>185</a>
+<a name='L186'></a><a href='#L186'>186</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">448x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">9x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">30x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">48x</span>
+<span class="cline-any cline-yes">46x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">31x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">29x</span>
+<span class="cline-any cline-yes">6x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">10x</span>
+<span class="cline-any cline-yes">7x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">8x</span>
+<span class="cline-any cline-yes">6x</span>
+<span class="cline-any cline-yes">6x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">825x</span>
+<span class="cline-any cline-yes">1419x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">50x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">6x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">13x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">/** Listas: inicio, detalle, Hoy y la franja del día (spec 10). */
+export const lists = {
+  untitled: 'Sin título',
+  subtitle: {
+    empty: 'Sin elementos',
+    allDone: <span class="fstat-no" title="function not covered" >(t</span>otal: number) =&gt; <span class="cstat-no" title="statement not covered" >`Todo listo · ${total}`,</span>
+    pending: (n: number, total: number) =&gt; `${n} ${n === 1 ? 'pendiente' : 'pendientes'} de ${total}`,
+  },
+  noMatchesTitle: 'Sin coincidencias',
+  noMatchesDescription: 'Prueba con otra palabra.',
+  searchLists: 'Listas',
+  searchItems: 'Elementos',
+  createFailed: 'No se pudo crear la lista.',
+  archived: 'Lista archivada.',
+  restored: 'Lista restaurada.',
+  duplicated: 'Lista duplicada.',
+  deleteTitle: 'Eliminar lista',
+  deleteWithItems: (n: number) =&gt; `Se eliminarán también sus ${n} elementos. Si solo quieres quitarla de aquí, archívala.`,
+  cantUndo: 'Esta acción no se puede deshacer.',
+  delete: 'Eliminar',
+  deleted: 'Lista eliminada.',
+  actionsFor: (nombre: string) =&gt; `Acciones de ${nombre}`,
+  archivedTitle: 'Archivadas',
+  title: 'Listas',
+  backToMine: 'Volver a mis listas',
+  seeArchived: 'Ver listas archivadas',
+  myLists: 'Mis listas',
+  searchPlaceholder: 'Buscar en tus listas',
+  clearSearch: 'Limpiar búsqueda',
+  today: 'Hoy',
+  todayPending: (n: number) =&gt; `Hoy, ${n} ${n === 1 ? <span class="branch-0 cbranch-no" title="branch not covered" >'pendiente' </span>: 'pendientes'}`,
+  someday: 'Algún día',
+  somedayA11y: 'Algún día: pendientes sin fecha',
+  allLists: 'Todas las listas',
+  tagCount: (nombre: string, n: number) =&gt; `${nombre}, ${n} ${n === 1 ? <span class="branch-0 cbranch-no" title="branch not covered" >'lista' </span>: 'listas'}`,
+  noArchivedTitle: 'No tienes listas archivadas',
+  noListsTitle: 'Todavía no tienes listas',
+  noArchivedDescription: 'Lo que archives se guarda aquí con todo su contenido.',
+  noListsDescription: 'El súper, las películas pendientes, lo de la casa. Toca + para crear la primera.',
+  pinned: 'Fijadas',
+  sharedWithMe: 'Compartidas conmigo',
+  newList: 'Nueva lista',
+  restore: 'Restaurar',
+  unpin: 'Quitar de fijadas',
+  pin: 'Fijar arriba',
+  moveUp: 'Subir',
+  moveDown: 'Bajar',
+  duplicate: 'Duplicar',
+  archive: 'Archivar',
+  nameRequired: 'Escribe un nombre.',
+  max40: 'Máximo 40 caracteres.',
+  pickPaletteColor: 'Elige un color de la paleta.',
+  // Detalle de una lista
+  listName: 'Nombre de la lista',
+  markPending: (t: string) =&gt; `Marcar ${t} como pendiente`,
+  markDone: (t: string) =&gt; `Marcar ${t} como hecho`,
+  editItem: (t: string) =&gt; `Editar ${t}`,
+  itemHint: 'Toca para corregir el texto. Mantén presionado para el día, la nota y más.',
+  itemDetails: (t: string) =&gt; `Detalles de ${t}`,
+  addFailed: (t: string) =&gt; `No se pudo agregar "${t}". Revisa tu conexión e inténtalo otra vez.`,
+  saveFailed: 'No se pudo guardar el cambio. Revisa tu conexión.',
+  addItem: 'Agregar elemento',
+  itemPlaceholder: (n: number) =&gt; `Elemento ${n}`,
+  addIn: (seccion: string) =&gt; `Agregar en ${seccion}`,
+  deleteItemTitle: 'Eliminar elemento',
+  deleteItemMessage: 'Si ya lo hiciste, paloméalo: se guarda en completados. Eliminar no se puede deshacer.',
+  itemDeleted: 'Elemento eliminado.',
+  routineHistoryA11y: 'Ver cómo te ha ido con esta rutina',
+  howItsGoing: <span class="fstat-no" title="function not covered" >(r</span>egla: string) =&gt; <span class="cstat-no" title="statement not covered" >`${regla} · cómo te ha ido`,</span>
+  changeDueDate: 'Cambiar para cuándo es la lista',
+  dueOn: (fecha: string) =&gt; `Para el ${fecha}`,
+  removeDueDate: 'Quitar la fecha de la lista',
+  runA11y: <span class="fstat-no" title="function not covered" >(f</span>echa: string) =&gt; <span class="cstat-no" title="statement not covered" >`Ver la vuelta del ${fecha}`,</span>
+  runBanner: <span class="fstat-no" title="function not covered" >(d</span>eAyer: boolean, fecha: string, hechos: number, total: number) =&gt;
+<span class="cstat-no" title="statement not covered" >    `${deAyer ? 'Estás en' : 'Sigue abierta'} la vuelta del ${fecha} · ${hechos} de ${total}`,</span>
+  emptyListTitle: 'Esta lista está vacía',
+  emptyListDescription: 'Agrega lo primero que no quieras olvidar.',
+  sectionName: 'Nombre de la sección',
+  sectionPlaceholder: 'Ej. Frutas y verduras',
+  createSection: 'Crear sección',
+  newSection: 'Nueva sección',
+  completedA11y: (n: number) =&gt; `Completados, ${n}`,
+  toggleCompleted: (ver: boolean, n: number) =&gt; `${ver ? 'Ocultar' : 'Ver'} completados (${n})`,
+  appearanceA11y: 'Color e icono de la lista',
+  shareA11y: 'Compartir la lista',
+  tagsA11y: 'Etiquetas de la lista',
+  dueA11y: 'Para cuándo es la lista',
+  repeatA11y: 'Cada cuándo se repite',
+  dueTitle: 'Para cuándo es la lista',
+  itemDay: 'Día del pendiente',
+  itemTime: 'Hora del pendiente',
+  itemSheet: 'Elemento',
+  titleField: 'Título',
+  note: 'Nota',
+  optional: 'Opcional',
+  day: 'Día',
+  noDate: 'Sin fecha',
+  time: 'Hora',
+  noTime: 'Sin hora',
+  timeHint: 'La hora no lo mueve a la rejilla del calendario: sigue en tu día.',
+  reminder: 'Recordatorio',
+  reminderFromHour: <span class="fstat-no" title="function not covered" >(h</span>ora: string) =&gt; <span class="cstat-no" title="statement not covered" >`Se cuenta desde las ${hora} del día, porque este pendiente no tiene hora.`,</span>
+  noReminder: 'Sin aviso',
+  removeDate: 'Quitar la fecha',
+  section: 'Sección',
+  noSection: 'Sin sección',
+  save: 'Guardar',
+  deleteItem: 'Eliminar elemento',
+  // Franja del día y panel
+  overdue: 'Vencidos',
+  rescheduleA11y: (n: number) =&gt; `Reprogramar ${n} ${n === 1 ? <span class="branch-0 cbranch-no" title="branch not covered" >'pendiente' </span>: 'pendientes'} para hoy`,
+  rescheduleToday: 'Reprogramar para hoy',
+  openRoutine: <span class="fstat-no" title="function not covered" >(n</span>ombre: string, hechos: number, total: number) =&gt; <span class="cstat-no" title="statement not covered" >`Abrir la rutina ${nombre}: ${hechos} de ${total} hechos`,</span>
+  openInList: (lista: string | null, item: string) =&gt; `Abrir ${lista ?? <span class="branch-1 cbranch-no" title="branch not covered" >'la lista'}</span>: ${item}`,
+  stripA11y: (n: number) =&gt; `Listas, ${n} ${n === 1 ? 'pendiente' : 'pendientes'}`,
+  notDone: (n: number) =&gt; `${n} sin hacer`,
+  allDone: 'todo listo',
+  nothingThisDay: 'Nada de tus listas para este día.',
+  yourLists: 'Tus listas',
+  seeAllA11y: 'Ver todas las listas',
+  seeAll: 'Ver todas',
+  noListsYet: 'Todavía no tienes listas.',
+  openListPending: (nombre: string, n: number) =&gt; `Abrir ${nombre}, ${n} sin hacer`,
+  // Hojas
+  appearanceTitle: 'Color e icono',
+  colorLabel: 'Color',
+  iconLabel: 'Icono',
+  allTags: 'Todas',
+  colorA11y: (c: string) =&gt; `Color ${c}`,
+  iconA11y: (n: string) =&gt; `Icono ${n}`,
+  historyTitle: 'Cómo te ha ido',
+  noRunsTitle: 'Todavía no hay vueltas cerradas',
+  noRunsDescription: 'Cada vez que termine un día, esta rutina queda registrada aquí.',
+  timesComplete: <span class="fstat-no" title="function not covered" >(n</span>: number): string =&gt; (<span class="cstat-no" title="statement not covered" >n === 1 ? 'vez la hiciste completa' : 'veces la hiciste completa')</span>,
+  runsLogged: <span class="fstat-no" title="function not covered" >(n</span>: number) =&gt; <span class="cstat-no" title="statement not covered" >`${n} ${n === 1 ? 'vuelta registrada' : 'vueltas registradas'}`,</span>
+  averagePerRun: <span class="fstat-no" title="function not covered" >(h</span>echos: number, total: number) =&gt; <span class="cstat-no" title="statement not covered" >` · en promedio, ${hechos} de ${total} cosas por vuelta`,</span>
+  repeatTitle: '¿Se repite?',
+  repeatIntro: 'Una lista que se repite se vuelve una rutina: cada vuelta queda registrada y los elementos se despaloman para la siguiente.',
+  repeatOptions: { none: 'No se repite', daily: 'Todos los días', weekdays: 'De lunes a viernes', monthly: 'Una vez al mes' },
+  orPickDays: 'O elige los días',
+  starts: 'Empieza',
+  endsOnDate: 'Termina en una fecha',
+  endsHint: 'Si no, se repite sin fin. Para algo del semestre, marca hasta cuándo dura.',
+  until: 'Hasta',
+  runEditableUntil: (hora: string) =&gt; `Una vuelta sigue editable hasta las ${hora} del día siguiente, por si apuntas lo de ayer en la mañana.`,
+  startsOn: 'Empieza el',
+  repeatsUntil: 'Se repite hasta',
+  permissions: { view: 'Ver', edit: 'Editar' },
+  permissionA11y: <span class="fstat-no" title="function not covered" >(p</span>ermiso: string, quien: string) =&gt; <span class="cstat-no" title="statement not covered" >`${permiso}: ${quien}`,</span>
+  removeAccess: <span class="fstat-no" title="function not covered" >(q</span>uien: string) =&gt; <span class="cstat-no" title="statement not covered" >`Quitar acceso a ${quien}`,</span>
+  shareTitle: <span class="fstat-no" title="function not covered" >(l</span>ista: string) =&gt; <span class="cstat-no" title="statement not covered" >`Compartir ${lista}`,</span>
+  noContactsTitle: 'Todavía no tienes contactos',
+  noContactsDescription: 'Agrega a alguien desde Compartido y podrás compartir tus listas.',
+  sharingWith: 'Compartiendo con',
+  searchContact: 'Buscar un contacto',
+  addSomeoneElse: 'Agregar a alguien más',
+  yourContacts: 'Tus contactos',
+  noContactMatch: 'Ningún contacto coincide.',
+  deleteTagTitle: <span class="fstat-no" title="function not covered" >(n</span>ombre: string) =&gt; <span class="cstat-no" title="statement not covered" >`Eliminar "${nombre}"`,</span>
+  deleteTagMessage: 'Se quitará de todas tus listas. Ninguna lista se elimina.',
+  tagsTitle: 'Etiquetas',
+  yourTags: 'Tus etiquetas',
+  deleteTagA11y: <span class="fstat-no" title="function not covered" >(n</span>ombre: string) =&gt; <span class="cstat-no" title="statement not covered" >`Eliminar la etiqueta ${nombre}`,</span>
+  suggestions: 'Sugerencias',
+  createTagA11y: <span class="fstat-no" title="function not covered" >(n</span>ombre: string) =&gt; <span class="cstat-no" title="statement not covered" >`Crear la etiqueta ${nombre}`,</span>
+  newTag: 'Nueva etiqueta',
+  newTagPlaceholder: 'Ej. Universidad, Mascotas…',
+  createAndApply: 'Crear y poner',
+  suggestedTags: ['Casa', 'Escuela', 'Trabajo', 'Personal', 'Compras', 'Viaje', 'Salud', 'Ideas'],
+  // Hoy / Algún día
+  todayView: { hoy: 'Hoy', 'algun-dia': 'Algún día' },
+  movedToToday: (n: number) =&gt; `${n} ${n === 1 ? <span class="branch-0 cbranch-no" title="branch not covered" >'pendiente' </span>: 'pendientes'} para hoy.`,
+  movedTo: <span class="fstat-no" title="function not covered" >(t</span>itulo: string, fecha: string) =&gt; <span class="cstat-no" title="statement not covered" >`"${titulo}" para el ${fecha}.`,</span>
+  openItemIn: (item: string, lista: string | null) =&gt; `Abrir ${item} en ${lista ?? <span class="branch-1 cbranch-no" title="branch not covered" >'su lista'}</span>`,
+  setDayFor: (item: string) =&gt; `Ponerle día a ${item}`,
+  openList: (nombre: string) =&gt; `Abrir la lista ${nombre}`,
+  nothingTodayTitle: 'Nada para hoy',
+  nothingTodayDescription: 'Lo que tenga fecha de hoy, y lo que se te haya pasado, aparece aquí.',
+  late: 'Atrasado',
+  moveAllToToday: 'Pasar todo a hoy',
+  listsDue: 'Listas que vencen',
+  nothingUndatedTitle: 'Nada sin fecha',
+  nothingUndatedDescription: 'Aquí caen los pendientes a los que todavía no les pones día.',
+  whichDay: '¿Qué día?',
+};
+&nbsp;</pre></td></tr></table></pre>
+
+                <div class='push'></div><!-- for sticky footer -->
+            </div><!-- /wrapper -->
+            <div class='footer quiet pad2 space-top1 center small'>
+                Code coverage generated by
+                <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
+                at 2026-10-07T09:52:02.001Z
+            </div>
+        <script src="../../prettify.js"></script>
+        <script>
+            window.onload = function () {
+                prettyPrint();
+            };
+        </script>
+        <script src="../../sorter.js"></script>
+        <script src="../../block-navigation.js"></script>
+    </body>
+</html>
+    

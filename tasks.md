@@ -841,6 +841,18 @@ Plan y decisiones en `docs/gym/AUDITORIA.md`. Cada fase cierra con typecheck, li
   la semana, calculados del historial). Historial y notas en una sola lista para que el buscador no pierda el
   foco. La racha en pausa va arriba del mosaico a todo lo ancho.
 
+### Feedback del 7 oct 2026 (spec 10)
+- [x] T268 Listas fluidas: agregar, palomear, editar, borrar y reordenar se ven en el acto
+  (caché optimista; un solo viaje al servidor al agregar —id y orden del cliente, dueño de la
+  sesión local—). Tocar el texto lo edita en el sitio; mantener presionado sin mover abre los
+  detalles; mantener y arrastrar reordena. (RF-L5, RF-L7, RF-L13c) Dep: —
+  **Hecho (7 oct 2026):** `useListMutations` escribe en la caché antes del servidor (agregar, palomear, editar,
+  borrar, subir/bajar, soltar y la vuelta de una rutina), deshace si falla y recarga una sola vez al terminar el
+  último cambio. `addItem` manda id y orden del cliente; `dueñoActual` lee `getSession` (local) en vez de
+  `getUser` (red). Renglón editable en el sitio; `DraggableRows` con `onHold` (350 ms, háptico al despegar); en
+  web, botón ⋯ para los detalles. Probado en el demo (web a 390 px y Android en el emulador): agregar ~40 ms,
+  palomear ~100 ms; el foco se queda en el campo con la ✓ del teclado.
+
 ### Bugs reportados
 - [x] T249 **Una ocurrencia borrada de una serie vuelve a aparecer al recargar.** Reporte (4
   oct 2026): actividad de lunes a viernes con fecha de fin; se borró solo un viernes y al

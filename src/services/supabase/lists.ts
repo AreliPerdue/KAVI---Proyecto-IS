@@ -93,12 +93,14 @@ async function siguienteOrden(tabla: 'lists' | 'list_sections' | 'list_items', c
  * sesión renovada, una cuenta distinta antes, un estado restaurado a medias— el insert se
  * rechaza con "no tienes permiso" y desde fuera parece que el botón no hace nada.
  *
- * Preguntarle al cliente quién es antes de escribir cuesta una llamada local y vuelve la
- * operación correcta por construcción.
+ * Preguntarle al cliente quién es antes de escribir vuelve la operación correcta por
+ * construcción. Se lee la sesión **guardada** (`getSession`), no `getUser`: el segundo va al
+ * servidor y sumaba un viaje completo a cada elemento agregado (T268). El token de la sesión
+ * guardada es justo el que viaja en la petición, que es lo que compara la política.
  */
 async function dueñoActual(fallback: string): Promise<string> {
-  const { data } = await getSupabase().auth.getUser();
-  const sesion = data.user?.id;
+  const { data } = await getSupabase().auth.getSession();
+  const sesion = data.session?.user.id;
   if (sesion && sesion !== fallback) {
      
     console.warn('[kavi] el id de la app y el de la sesión no coinciden:', fallback, '≠', sesion);
@@ -248,6 +250,9 @@ export const supabaseLists: ListsApi = {
       await getSupabase()
         .from('list_items')
         .insert({
+          // El id y el orden los pone el cliente cuando los trae (T268); si no, la base y la
+          // consulta del siguiente orden, como antes.
+          ...(input.id ? { id: input.id } : {}),
           list_id: listId,
           section_id: input.section_id ?? null,
           title: input.title.trim(),
@@ -256,7 +261,7 @@ export const supabaseLists: ListsApi = {
           due_date: input.due_date ?? null,
           due_time: input.due_time ?? null,
           reminder_offset_minutes: input.reminder_offset_minutes ?? null,
-          sort_order: await siguienteOrden('list_items', 'list_id', listId),
+          sort_order: input.sort_order ?? (await siguienteOrden('list_items', 'list_id', listId)),
         })
         .select('*')
         .single(),

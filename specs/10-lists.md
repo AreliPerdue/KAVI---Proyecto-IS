@@ -65,7 +65,7 @@ Por eso **los ítems nunca entran en la rejilla de horas**, ni siquiera cuando l
   Borrar una etiqueta no borra ninguna lista: se pierde la forma de agrupar, no lo agrupado.
 
 ## Dentro de una lista (RF-L5 – RF-L10)
-- **RF-L5.** Agregar un ítem escribiendo su título y confirmando; el campo se queda listo para el siguiente, porque las listas se llenan de corrido.
+- **RF-L5.** Agregar un ítem escribiendo su título y confirmando; el campo se queda listo para el siguiente, porque las listas se llenan de corrido. El ítem aparece **en el acto**, sin esperar al servidor; si el guardado falla, se quita y se avisa (7 oct 2026, T268).
 - **RF-L6.** Palomear y despalomear. Lo completado sale de la lista activa y baja a **Completados**, que se puede desplegar. Nada se borra al palomear: es lo que permite recuperar un dedazo.
 - **RF-L7.** Editar y eliminar ítems; reordenarlos arrastrando.
 - **RF-L8.** **Secciones** dentro de una lista (Frutas · Lácteos · Despensa). Un ítem pertenece a una sección o a ninguna.
@@ -103,9 +103,16 @@ Por eso **los ítems nunca entran en la rejilla de horas**, ni siquiera cuando l
 
   *Por qué:* convierte el calendario en la entrada a todas las formas de organizar, en vez
   de en un sitio que solo sabe de citas.
-- **RF-L13c. Palomear es del círculo, no de la fila.** Tocar un elemento **abre su edición**.
-  Con renglones de 44 px pegados uno a otro, palomear en cualquier parte es un dedazo
-  esperando a pasar: se marca lo que no era y hay que ir a buscarlo a completados.
+- **RF-L13c. Palomear es del círculo, no de la fila.** Con renglones de 44 px pegados uno a
+  otro, palomear en cualquier parte es un dedazo esperando a pasar: se marca lo que no era y
+  hay que ir a buscarlo a completados.
+  - **Tocar el texto lo edita ahí mismo** (7 oct 2026, T268): para corregir un typo no se abre
+    ninguna hoja. Se guarda al confirmar o al salir del campo; si se deja vacío, vuelve el
+    título de antes.
+  - **Mantener presionado sin mover** abre los detalles (día, hora, aviso, nota, sección,
+    orden, eliminar). Mantener y **arrastrar** reordena y no abre nada.
+  - En la franja del día, Hoy y Algún día, tocar un elemento sigue abriendo su lista: ahí se
+    consulta, no se edita.
 
 - **RF-L18. Lo vencido no desaparece.** Los pendientes con fecha anterior a hoy y sin
   palomear se agrupan **arriba** de los de hoy, en el acento de aviso y con su fecha
@@ -260,6 +267,9 @@ pendiente sin fecha**.
 ## Criterios de aceptación
 - *Dado* que no tengo ninguna lista, *cuando* abro Lists, *entonces* veo un estado vacío que invita a crear la primera y un botón para hacerlo.
 - *Dado* una lista "Súper", *cuando* escribo "Leche" y confirmo, *entonces* el ítem aparece al final y el campo queda listo para el siguiente sin que yo lo toque.
+- *Dado* una conexión lenta, *cuando* agrego, palomeo o edito un ítem, *entonces* el cambio se ve en el acto; si el servidor lo rechaza, se deshace y se avisa.
+- *Dado* un ítem "Lehce", *cuando* toco su texto, *entonces* lo corrijo ahí mismo y se guarda al confirmar, sin abrir ninguna hoja.
+- *Dado* un ítem, *cuando* lo mantengo presionado sin moverlo y suelto, *entonces* se abren sus detalles; *cuando* lo mantengo y lo arrastro, *entonces* cambia de lugar y no se abre nada.
 - *Dado* un ítem palomeado, *cuando* despliego "Completados", *entonces* sigue ahí y puedo despalomearlo para devolverlo a la lista activa.
 - *Dado* una lista con secciones "Frutas" y "Lácteos", *cuando* agrego un ítem dentro de "Lácteos", *entonces* queda bajo esa sección y no al final de la lista.
 - *Dado* un ítem con fecha del sábado y **sin hora**, *cuando* abro el sábado en el calendario, *entonces* aparece en la franja de arriba y **no** aparece en ninguna hora de la rejilla.

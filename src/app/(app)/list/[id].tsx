@@ -1,5 +1,5 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { ArrowDown, ArrowUp, Bell, CalendarDays, Check, Clock, FolderPlus, Palette, Repeat, Tag, Trash2, UserPlus, X } from 'lucide-react-native';
+import { ArrowDown, ArrowUp, Bell, CalendarDays, Check, Clock, Ellipsis, FolderPlus, Palette, Repeat, Tag, Trash2, UserPlus, X } from 'lucide-react-native';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Platform, Pressable, ScrollView, StyleSheet, TextInput, type TextStyle, View } from 'react-native';
 
@@ -106,13 +106,23 @@ function TituloEditable({
   );
 }
 
-/** Un renglón palomeable. La casilla y el texto son el mismo objetivo táctil. */
+/**
+ * Un renglón palomeable (RF-L13c, T268).
+ *
+ * Tres gestos y cada uno hace una sola cosa: el **círculo** palomea; **tocar el texto** lo
+ * vuelve un campo para corregirlo ahí mismo —un typo no merece abrir una hoja—; y
+ * **mantener presionado** abre los detalles (lo hace la fila arrastrable, que es la que sabe
+ * si hubo movimiento). Con mouse no hay pulsación larga, así que en web los detalles tienen
+ * además su botón.
+ */
 function Renglon({
   item,
   color,
   hecho,
   onToggle,
-  onOpen,
+  onRename,
+  onOpenDetails,
+  holdToOpen = false,
 }: {
   item: ListItem;
   color: string;
@@ -122,19 +132,49 @@ function Renglon({
    */
   hecho: boolean;
   onToggle: (done: boolean) => void;
-  onOpen: () => void;
+  onRename: (title: string) => void;
+  onOpenDetails: () => void;
+  /** Fuera de la superficie arrastrable (completados) la pulsación larga la atiende el renglón. */
+  holdToOpen?: boolean;
 }) {
   const theme = useTheme();
   const tx = useT();
   const lang = useLanguage();
+  const [editandoTexto, setEditandoTexto] = useState(false);
+  const [texto, setTexto] = useState(item.title);
   // Vencido solo mientras siga pendiente: una vez hecho, su fecha ya no reclama nada.
   const vencido = !hecho && item.due_date !== null && item.due_date < toDayKey(new Date());
-  /*
-   * Palomear es cosa **del círculo**, no de la fila. Antes tocar en cualquier parte
-   * marcaba como hecho, y con renglones de 44 px pegados uno a otro eso es un dedazo
-   * esperando a pasar: se palomea algo que no era y hay que buscarlo en completados. El
-   * texto abre la edición, que es lo que uno espera al tocar un renglón.
-   */
+
+  const empezar = () => {
+    if (arrastreReciente()) return;
+    setTexto(item.title);
+    setEditandoTexto(true);
+  };
+  const guardar = () => {
+    setEditandoTexto(false);
+    const limpio = texto.trim();
+    // Vacío no borra: para eso está "Eliminar" en los detalles. Vuelve el título de antes.
+    if (limpio && limpio !== item.title) onRename(limpio);
+  };
+
+  const meta =
+    item.due_date || item.note ? (
+      <View style={styles.meta}>
+        {item.due_date ? (
+          <AppText variant="micro" color={vencido ? 'today' : 'textTertiary'} tabular>
+            {formatShortDate(fromDayKey(item.due_date), lang)}
+            {item.due_time ? ` · ${formatClock(item.due_time, lang)}` : ''}
+          </AppText>
+        ) : null}
+        {item.note ? (
+          <AppText variant="caption" color="textTertiary" numberOfLines={1} style={styles.nota}>
+            {item.due_date ? '· ' : ''}
+            {item.note}
+          </AppText>
+        ) : null}
+      </View>
+    ) : null;
+
   return (
     <View style={styles.renglonContenedor}>
       <Pressable
@@ -155,40 +195,60 @@ function Renglon({
         </View>
       </Pressable>
 
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel={tx.lists.editItem(item.title)}
-        // Ignora el toque que llega pegado a un arrastre: soltar una fila no debe abrirla.
-        onPress={() => {
-          if (!arrastreReciente()) onOpen();
-        }}
-        style={({ pressed }) => [styles.renglon, pressed ? { backgroundColor: theme.surfaceAlt } : null]}>
-        <View style={styles.texto}>
-          <AppText
-            variant="body"
-            color={hecho ? 'textTertiary' : 'text'}
-            numberOfLines={2}
-            style={hecho ? styles.tachado : null}>
-            {item.title}
-          </AppText>
-          {item.due_date || item.note ? (
-            <View style={styles.meta}>
-              {item.due_date ? (
-                <AppText variant="micro" color={vencido ? 'today' : 'textTertiary'} tabular>
-                  {formatShortDate(fromDayKey(item.due_date), lang)}
-                  {item.due_time ? ` · ${formatClock(item.due_time, lang)}` : ''}
-                </AppText>
-              ) : null}
-              {item.note ? (
-                <AppText variant="caption" color="textTertiary" numberOfLines={1} style={styles.nota}>
-                  {item.due_date ? '· ' : ''}
-                  {item.note}
-                </AppText>
-              ) : null}
-            </View>
-          ) : null}
+      {editandoTexto ? (
+        <View style={[styles.renglon, { backgroundColor: theme.surfaceAlt }]}>
+          <View style={styles.texto}>
+            <TextInput
+              value={texto}
+              onChangeText={setTexto}
+              onBlur={guardar}
+              onSubmitEditing={guardar}
+              autoFocus
+              returnKeyType="done"
+              maxLength={200}
+              accessibilityLabel={tx.lists.editItem(item.title)}
+              style={[styles.textoEditable, SIN_ANILLO, { color: theme.text }]}
+            />
+            {meta}
+          </View>
         </View>
-      </Pressable>
+      ) : (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={tx.lists.editItem(item.title)}
+          accessibilityHint={tx.lists.itemHint}
+          accessibilityActions={[{ name: 'longpress', label: tx.lists.itemDetails(item.title) }]}
+          onAccessibilityAction={(e) => {
+            if (e.nativeEvent.actionName === 'longpress') onOpenDetails();
+          }}
+          // Ignora el toque que llega pegado a un arrastre o a una pulsación larga.
+          onPress={empezar}
+          onLongPress={holdToOpen ? onOpenDetails : undefined}
+          delayLongPress={350}
+          style={({ pressed }) => [styles.renglon, pressed ? { backgroundColor: theme.surfaceAlt } : null]}>
+          <View style={styles.texto}>
+            <AppText
+              variant="body"
+              color={hecho ? 'textTertiary' : 'text'}
+              numberOfLines={2}
+              style={hecho ? styles.tachado : null}>
+              {item.title}
+            </AppText>
+            {meta}
+          </View>
+        </Pressable>
+      )}
+
+      {Platform.OS === 'web' ? (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={tx.lists.itemDetails(item.title)}
+          hitSlop={6}
+          onPress={onOpenDetails}
+          style={({ pressed }) => [styles.detallesBoton, pressed ? { backgroundColor: theme.surfaceAlt } : null]}>
+          <Ellipsis size={IconSize.inline} strokeWidth={IconStroke} color={theme.textTertiary} />
+        </Pressable>
+      ) : null}
     </View>
   );
 }
@@ -269,7 +329,10 @@ export default function ListDetailScreen() {
      * sitio, marcados. Una rutina se recorre entera cada vez, y ver desaparecer lo hecho
      * deja la pantalla vacía justo cuando uno quiere comprobar que no se saltó nada.
      */
-    const pendientes = esRutina ? items : items.filter((i) => i.completed_at === null);
+    // Por orden y no por como llegaron: un cambio optimista (arrastrar, subir) mueve el
+    // `sort_order` en la caché antes de que el servidor devuelva la lista ya ordenada.
+    const ordenados = [...items].sort((a, b) => a.sort_order - b.sort_order);
+    const pendientes = esRutina ? ordenados : ordenados.filter((i) => i.completed_at === null);
     const grupos = new Map<string, ListItem[]>();
     for (const s of datos?.sections ?? []) grupos.set(s.id, []);
     const libres: ListItem[] = [];
@@ -280,7 +343,7 @@ export default function ListDetailScreen() {
     return {
       sueltos: libres,
       porSeccion: grupos,
-      completados: esRutina ? [] : items.filter((i) => i.completed_at !== null),
+      completados: esRutina ? [] : ordenados.filter((i) => i.completed_at !== null),
     };
   }, [datos, esRutina]);
 
@@ -354,7 +417,17 @@ export default function ListDetailScreen() {
   const agregar = (sectionId: string | null) => (title: string) => {
     if (!id) return;
     tocada.current = true;
-    addItem.mutate({ listId: id, input: { title, section_id: sectionId } });
+    // Se pinta al instante (T268); si el servidor lo rechaza, se quita y se dice cuál fue.
+    addItem.mutate(
+      { listId: id, input: { title, section_id: sectionId } },
+      { onError: () => showSnackbar({ message: tx.lists.addFailed(title) }) },
+    );
+  };
+
+  /** Corregir el texto en el renglón mismo, sin abrir la hoja (RF-L13c). */
+  const renombrar = (item: ListItem) => (title: string) => {
+    tocada.current = true;
+    updateItem.mutate({ id: item.id, patch: { title } }, { onError: () => showSnackbar({ message: tx.lists.saveFailed }) });
   };
 
   const abrirEdicion = (item: ListItem) => {
@@ -609,6 +682,9 @@ export default function ListDetailScreen() {
               keyOf={(e) => e.id}
               draggable={(e) => e.kind === 'item'}
               onReorder={soltarEn}
+              onHold={(e) => {
+                if (e.kind === 'item') abrirEdicion(e.item);
+              }}
               renderItem={(e) =>
                 e.kind === 'item' ? (
                   <Renglon
@@ -616,7 +692,8 @@ export default function ListDetailScreen() {
                     color={color}
                     hecho={estaHecho(e.item)}
                     onToggle={alternar(e.item)}
-                    onOpen={() => abrirEdicion(e.item)}
+                    onRename={renombrar(e.item)}
+                    onOpenDetails={() => abrirEdicion(e.item)}
                   />
                 ) : e.kind === 'header' ? (
                   <AppText variant="caption" color="textTertiary" style={styles.encabezadoSeccion}>
@@ -678,7 +755,9 @@ export default function ListDetailScreen() {
                         color={color}
                         hecho={estaHecho(it)}
                         onToggle={alternar(it)}
-                        onOpen={() => abrirEdicion(it)}
+                        onRename={renombrar(it)}
+                        onOpenDetails={() => abrirEdicion(it)}
+                        holdToOpen
                       />
                     ))
                   : null}
@@ -1017,6 +1096,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   texto: { flex: 1, gap: 1 },
+  textoEditable: {
+    fontFamily: Fonts?.sans,
+    fontSize: Typography.body.fontSize,
+    lineHeight: Typography.body.lineHeight,
+    padding: 0,
+  },
+  detallesBoton: { width: 36, height: 44, alignItems: 'center', justifyContent: 'center', borderRadius: Radius.sm },
   meta: { flexDirection: 'row', alignItems: 'center', gap: Spacing.xs },
   nota: { flex: 1 },
   tachado: { textDecorationLine: 'line-through' },

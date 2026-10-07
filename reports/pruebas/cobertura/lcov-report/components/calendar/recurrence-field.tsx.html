@@ -23,9 +23,9 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">95.45% </span>
+                <span class="strong">95.83% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>21/22</span>
+                <span class='fraction'>23/24</span>
             </div>
         
             
@@ -37,16 +37,16 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">88.88% </span>
+                <span class="strong">90% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>8/9</span>
+                <span class='fraction'>9/10</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">95% </span>
+                <span class="strong">95.45% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>19/20</span>
+                <span class='fraction'>21/22</span>
             </div>
         
             
@@ -169,21 +169,11 @@
 <a name='L104'></a><a href='#L104'>104</a>
 <a name='L105'></a><a href='#L105'>105</a>
 <a name='L106'></a><a href='#L106'>106</a>
-<a name='L107'></a><a href='#L107'>107</a>
-<a name='L108'></a><a href='#L108'>108</a>
-<a name='L109'></a><a href='#L109'>109</a>
-<a name='L110'></a><a href='#L110'>110</a>
-<a name='L111'></a><a href='#L111'>111</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L107'></a><a href='#L107'>107</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -204,6 +194,8 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">66x</span>
+<span class="cline-any cline-yes">66x</span>
 <span class="cline-any cline-yes">66x</span>
 <span class="cline-any cline-yes">66x</span>
 <span class="cline-any cline-yes">66x</span>
@@ -222,7 +214,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">252x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -286,21 +278,15 @@
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 &nbsp;
-import { AppText, Chip, DateInputSheet, FieldButton, Segmented, type SegmentedOption, SwitchRow } from '@/components/ui';
+import { AppText, Chip, DateInputSheet, FieldButton, Segmented, SwitchRow } from '@/components/ui';
 import { Spacing } from '@/constants/theme';
-import { formatDate, fromDayKey, toDayKey } from '@/lib/dates';
+import { formatDate, fromDayKey, toDayKey, weekdayLabels } from '@/lib/dates';
 import { type RecurrenceFreq, type RecurrenceRule } from '@/lib/recurrence';
+import { useLanguage, useT } from '@/i18n';
 &nbsp;
 type FreqOption = 'NONE' | RecurrenceFreq;
 &nbsp;
-const FREQ_OPTIONS: readonly SegmentedOption&lt;FreqOption&gt;[] = [
-  { value: 'NONE', label: 'No' },
-  { value: 'DAILY', label: 'Diaria' },
-  { value: 'WEEKLY', label: 'Semanal' },
-  { value: 'MONTHLY', label: 'Mensual' },
-];
-&nbsp;
-const DAY_LABELS = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
+const FRECUENCIAS: readonly FreqOption[] = ['NONE', 'DAILY', 'WEEKLY', 'MONTHLY'];
 &nbsp;
 /** Sección de recurrencia del formulario (RF-C8). */
 export function RecurrenceField({
@@ -315,6 +301,8 @@ export function RecurrenceField({
   disabled?: boolean;
 }) {
   const [pickingUntil, setPickingUntil] = useState(false);
+  const tx = useT();
+  const lang = useLanguage();
   const freq: FreqOption = value?.freq ?? 'NONE';
   const baseDay = fromDayKey(baseDayKey);
   const baseWeekday = (baseDay.getDay() + 6) % 7;
@@ -327,23 +315,23 @@ export function RecurrenceField({
   return (
     &lt;View style={styles.container}&gt;
       &lt;AppText variant="label" color="textSecondary"&gt;
-        Repetir
+        {tx.calendar.repeat}
       &lt;/AppText&gt;
       {disabled ? (
-        &lt;AppText color="textTertiary"&gt;La repetición se edita desde la serie completa.&lt;/AppText&gt;
+        &lt;AppText color="textTertiary"&gt;{tx.calendar.repeatEditFromSeries}&lt;/AppText&gt;
       ) : (
-        &lt;Segmented options={FREQ_OPTIONS} value={freq} onChange={setFreq} /&gt;
+        &lt;Segmented options={FRECUENCIAS.map((f) =&gt; ({ value: f, label: tx.calendar.repeatOptions[f] }))} value={freq} onChange={setFreq} /&gt;
       )}
 &nbsp;
       {value &amp;&amp; !disabled ? (
         &lt;AppText variant="caption" color="textTertiary"&gt;
-          Empieza el {formatDate(baseDay)}, la fecha de la actividad.
+          {tx.calendar.repeatStarts(formatDate(baseDay, lang))}
         &lt;/AppText&gt;
       ) : null}
 &nbsp;
       {value?.freq === 'WEEKLY' &amp;&amp; !disabled ? (
         &lt;View style={styles.days}&gt;
-          {DAY_LABELS.map((label, index) =&gt; {
+          {weekdayLabels(lang).map((label, index) =&gt; {
             const selected = value.byDay.includes(index);
             return (
               &lt;Chip
@@ -364,18 +352,18 @@ export function RecurrenceField({
       {value &amp;&amp; !disabled ? (
         &lt;&gt;
           &lt;SwitchRow
-            label="Termina en una fecha"
-            hint={value.until ? undefined : 'Si no, se repite sin fin. Para un horario de clases, marca hasta cuándo dura el curso.'}
+            label={tx.calendar.repeatEndsOnDate}
+            hint={value.until ? undefined : tx.calendar.repeatEndsHint}
             value={value.until !== null}
             onValueChange={(on) =&gt; onChange({ ...value, until: on ? toDayKey(fromDayKey(baseDayKey)) : null })}
           /&gt;
           {value.until ? (
-            &lt;FieldButton label="Hasta" value={formatDate(fromDayKey(value.until))} onPress={() =&gt; setPickingUntil(true)} /&gt;
+            &lt;FieldButton label={tx.calendar.repeatUntil} value={formatDate(fromDayKey(value.until), lang)} onPress={() =&gt; setPickingUntil(true)} /&gt;
           ) : null}
           &lt;DateInputSheet
             visible={pickingUntil}
             value={value.until ? fromDayKey(value.until) : null}
-            title="Repetir hasta"
+            title={tx.calendar.repeatUntilTitle}
             onClose={<span class="fstat-no" title="function not covered" >()</span> =&gt; <span class="cstat-no" title="statement not covered" >setPickingUntil(false)}</span>
             onSelect={(date) =&gt; {
               // Terminar antes de empezar no significa nada: se empuja al día base.
@@ -400,7 +388,7 @@ const styles = StyleSheet.create({
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-09-23T16:54:46.714Z
+                at 2026-10-07T09:52:02.001Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

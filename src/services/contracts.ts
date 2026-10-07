@@ -8,6 +8,7 @@ import type {
   ListInput,
   ListItem,
   ListItemInput,
+  NewListItemInput,
   ListSection,
   ListRun,
   ListTag,
@@ -319,7 +320,7 @@ export interface ListsCoreApi {
   renameSection(sectionId: string, name: string): Promise<ListSection>;
   removeSection(sectionId: string): Promise<void>;
 
-  addItem(listId: string, userId: string, input: ListItemInput): Promise<ListItem>;
+  addItem(listId: string, userId: string, input: NewListItemInput): Promise<ListItem>;
   updateItem(itemId: string, patch: Partial<ListItemInput>): Promise<ListItem>;
   removeItem(itemId: string): Promise<void>;
   /** Palomear y despalomear. Nunca borra: es lo que permite deshacer un dedazo (RF-L6). */

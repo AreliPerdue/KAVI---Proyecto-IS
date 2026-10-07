@@ -25,7 +25,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>23/23</span>
+                <span class='fraction'>25/25</span>
             </div>
         
             
@@ -46,7 +46,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>19/19</span>
+                <span class='fraction'>21/21</span>
             </div>
         
             
@@ -176,7 +176,10 @@
 <a name='L111'></a><a href='#L111'>111</a>
 <a name='L112'></a><a href='#L112'>112</a>
 <a name='L113'></a><a href='#L113'>113</a>
-<a name='L114'></a><a href='#L114'>114</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L114'></a><a href='#L114'>114</a>
+<a name='L115'></a><a href='#L115'>115</a>
+<a name='L116'></a><a href='#L116'>116</a>
+<a name='L117'></a><a href='#L117'>117</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -189,16 +192,17 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">47x</span>
-<span class="cline-any cline-yes">47x</span>
-<span class="cline-any cline-yes">47x</span>
-<span class="cline-any cline-yes">47x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">62x</span>
+<span class="cline-any cline-yes">62x</span>
+<span class="cline-any cline-yes">62x</span>
+<span class="cline-any cline-yes">62x</span>
+<span class="cline-any cline-yes">32x</span>
+<span class="cline-any cline-yes">31x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">31x</span>
 <span class="cline-any cline-yes">23x</span>
-<span class="cline-any cline-yes">22x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">22x</span>
-<span class="cline-any cline-yes">14x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -223,7 +227,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">107x</span>
+<span class="cline-any cline-yes">118x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -243,6 +247,8 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">39x</span>
+<span class="cline-any cline-yes">39x</span>
 <span class="cline-any cline-yes">39x</span>
 <span class="cline-any cline-yes">39x</span>
 <span class="cline-any cline-yes">39x</span>
@@ -284,7 +290,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">31x</span>
+<span class="cline-any cline-yes">51x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -299,6 +305,7 @@ import { TextField } from './text-field';
 &nbsp;
 import { Spacing } from '@/constants/theme';
 import { formatDate, toDayKey } from '@/lib/dates';
+import { useLanguage, useT } from '@/i18n';
 &nbsp;
 /** Interpreta día, mes y año sueltos. `null` si no forman una fecha real. */
 export function fechaDesde(dia: string, mes: string, anio: string): Date | null {
@@ -356,6 +363,8 @@ function Campos({
   maxDate?: Date;
   onSelect: (date: Date) =&gt; void;
 }) {
+  const tx = useT();
+  const lang = useLanguage();
   const [dia, setDia] = useState(value ? String(value.getDate()) : '');
   const [mes, setMes] = useState(value ? String(value.getMonth() + 1) : '');
   const [anio, setAnio] = useState(value ? String(value.getFullYear()) : '');
@@ -374,25 +383,25 @@ function Campos({
     &lt;&gt;
       &lt;View style={styles.fila}&gt;
         &lt;View style={styles.celda}&gt;
-          &lt;TextField label="Día" value={dia} onChangeText={setDia} keyboardType="number-pad" placeholder="15" maxLength={2} autoFocus /&gt;
+          &lt;TextField label={tx.common.day} value={dia} onChangeText={setDia} keyboardType="number-pad" placeholder="15" maxLength={2} autoFocus /&gt;
         &lt;/View&gt;
         &lt;View style={styles.celda}&gt;
-          &lt;TextField label="Mes" value={mes} onChangeText={setMes} keyboardType="number-pad" placeholder="9" maxLength={2} /&gt;
+          &lt;TextField label={tx.common.month} value={mes} onChangeText={setMes} keyboardType="number-pad" placeholder="9" maxLength={2} /&gt;
         &lt;/View&gt;
         &lt;View style={styles.celdaAnio}&gt;
-          &lt;TextField label="Año" value={anio} onChangeText={setAnio} keyboardType="number-pad" placeholder="1998" maxLength={4} /&gt;
+          &lt;TextField label={tx.common.year} value={anio} onChangeText={setAnio} keyboardType="number-pad" placeholder="1998" maxLength={4} /&gt;
         &lt;/View&gt;
       &lt;/View&gt;
 &nbsp;
       {listo ? (
-        &lt;AppText variant="label"&gt;{formatDate(fecha)}&lt;/AppText&gt;
+        &lt;AppText variant="label"&gt;{formatDate(fecha, lang)}&lt;/AppText&gt;
       ) : completo ? (
         &lt;AppText variant="label" color="danger"&gt;
-          {fueraDeRango ? 'Esa fecha todavía no ha llegado.' : 'Esa fecha no existe. Revisa el día, el mes y el año.'}
+          {fueraDeRango ? tx.common.dateNotYet : tx.common.dateInvalid}
         &lt;/AppText&gt;
       ) : null}
 &nbsp;
-      &lt;Button title="Guardar" disabled={!listo} onPress={() =&gt; fecha &amp;&amp; onSelect(fecha)} /&gt;
+      &lt;Button title={tx.common.save} disabled={!listo} onPress={() =&gt; fecha &amp;&amp; onSelect(fecha)} /&gt;
     &lt;/&gt;
   );
 }
@@ -409,7 +418,7 @@ const styles = StyleSheet.create({
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-09-23T16:54:46.714Z
+                at 2026-10-07T09:52:02.001Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

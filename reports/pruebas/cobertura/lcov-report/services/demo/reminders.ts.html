@@ -23,9 +23,9 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">90.8% </span>
+                <span class="strong">90.9% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>79/87</span>
+                <span class='fraction'>80/88</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">98.3% </span>
+                <span class="strong">98.33% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>58/59</span>
+                <span class='fraction'>59/60</span>
             </div>
         
             
@@ -169,7 +169,10 @@
 <a name='L104'></a><a href='#L104'>104</a>
 <a name='L105'></a><a href='#L105'>105</a>
 <a name='L106'></a><a href='#L106'>106</a>
-<a name='L107'></a><a href='#L107'>107</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L107'></a><a href='#L107'>107</a>
+<a name='L108'></a><a href='#L108'>108</a>
+<a name='L109'></a><a href='#L109'>109</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -184,18 +187,18 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1010x</span>
-<span class="cline-any cline-yes">32x</span>
-<span class="cline-any cline-yes">32x</span>
-<span class="cline-any cline-yes">67x</span>
+<span class="cline-any cline-yes">1086x</span>
+<span class="cline-any cline-yes">34x</span>
+<span class="cline-any cline-yes">34x</span>
+<span class="cline-any cline-yes">71x</span>
 <span class="cline-any cline-yes">5x</span>
-<span class="cline-any cline-yes">32x</span>
+<span class="cline-any cline-yes">34x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">32x</span>
-<span class="cline-any cline-yes">32x</span>
+<span class="cline-any cline-yes">34x</span>
+<span class="cline-any cline-yes">34x</span>
 <span class="cline-any cline-yes">31x</span>
 <span class="cline-any cline-yes">34x</span>
 <span class="cline-any cline-yes">30x</span>
@@ -205,13 +208,13 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">6x</span>
-<span class="cline-any cline-yes">6x</span>
-<span class="cline-any cline-yes">6x</span>
-<span class="cline-any cline-yes">6x</span>
+<span class="cline-any cline-yes">11x</span>
+<span class="cline-any cline-yes">11x</span>
+<span class="cline-any cline-yes">11x</span>
+<span class="cline-any cline-yes">11x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">95x</span>
+<span class="cline-any cline-yes">104x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">28x</span>
 <span class="cline-any cline-yes">28x</span>
@@ -264,6 +267,7 @@
 <span class="cline-any cline-yes">7x</span>
 <span class="cline-any cline-yes">7x</span>
 <span class="cline-any cline-yes">7x</span>
+<span class="cline-any cline-yes">7x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -282,6 +286,7 @@ import { formatTime, fromIso } from '@/lib/dates';
 import type { RemindersApi } from '@/services/contracts';
 import { delay, demoState, emitDataChange, nextId } from '@/services/demo/store';
 import type { Reminder, UpcomingReminder } from '@/types/domain';
+import { t } from '@/i18n';
 &nbsp;
 function toReminder(r: (typeof demoState.reminders)[number], userId: string): Reminder {
   const recipient = demoState.recipients.find((x) =&gt; x.reminder_id === r.id &amp;&amp; x.user_id === userId);
@@ -329,8 +334,8 @@ export const demoReminders: RemindersApi = {
   async setForActivity(activityId, userId, offsets) {
     await delay(120);
     const activity = demoState.activities.find((a) =&gt; a.id === activityId);
-    if (!activity) throw new AuthUiError('Esta actividad ya no existe.');
-    if (activity.owner_id !== userId) throw new AuthUiError('Solo quien creó la actividad puede cambiar sus recordatorios.');
+    if (!activity) throw new AuthUiError(t().errors.activityGone);
+    if (activity.owner_id !== userId) throw new AuthUiError(t().errors.onlyCreatorReminders);
     const wanted = new Set(offsets);
     const current = demoState.reminders.filter((r) =&gt; r.activity_id === activityId);
     const toDelete = current.filter((r) =&gt; !wanted.has(r.offset_minutes)).map((r) =&gt; r.id);
@@ -368,12 +373,13 @@ export const demoReminders: RemindersApi = {
       if (start &lt; now || start &gt; limit) continue;
       const fireAt = new Date(start.getTime() - reminder.offset_minutes * 60_000);
       const owner = demoState.accounts.find((a) =&gt; a.user.id === activity.owner_id);
-      const sharedBy = activity.owner_id !== userId ? ` · Compartida por ${owner?.profile.display_name ?? <span class="branch-1 cbranch-no" title="branch not covered" >owner?.profile.username </span>?? <span class="branch-2 cbranch-no" title="branch not covered" >'un contacto'}</span>` : '';
+      const n = t().notifications;
+      const sharedBy = activity.owner_id !== userId ? n.sharedBy(owner?.profile.display_name ?? <span class="branch-1 cbranch-no" title="branch not covered" >owner?.profile.username </span>?? <span class="branch-2 cbranch-no" title="branch not covered" >n.aContact)</span> : '';
       result.push({
         reminderId: reminder.id,
         activityId: activity.id,
         title: activity.title,
-        body: `${activity.all_day ? 'Hoy' : `Empieza a las ${formatTime(start)}`}${sharedBy}`,
+        body: `${activity.all_day ? n.today : n.startsAt(formatTime(start))}${sharedBy}`,
         fireAt: fireAt.toISOString(),
         activityStartAt: activity.start_at,
       });
@@ -388,7 +394,7 @@ export const demoReminders: RemindersApi = {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-09-23T16:54:46.714Z
+                at 2026-10-07T09:52:02.001Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

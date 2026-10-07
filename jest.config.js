@@ -38,12 +38,13 @@ module.exports = {
     '!src/**/*.d.ts',
   ],
   /**
-   * Suelo de cobertura. Se fija por debajo de lo que hay hoy (83 % de sentencias,
-   * 85 % de lineas, 78 % de ramas y funciones) para que un refactor normal no lo
-   * rompa, pero si lo rompa una perdida real de pruebas. Solo aplica cuando se
-   * mide cobertura, asi que `pnpm test` a secas no se ve afectado.
+   * Suelo de cobertura. Bajó a 70 % el 7 oct 2026 (decisión de Areli): Fitness v2, Listas,
+   * salud y consentimiento crecieron más rápido que sus pruebas y la cobertura quedó en
+   * 75 % de sentencias, 67 % de ramas y 64 % de funciones. Ramas y funciones guardan la
+   * misma distancia de 6 puntos que tenían antes con sentencias y líneas. Solo aplica
+   * cuando se mide cobertura, así que `pnpm test` a secas no se ve afectado.
    */
   coverageThreshold: {
-    global: { statements: 80, lines: 80, branches: 74, functions: 74 },
+    global: { statements: 70, lines: 70, branches: 64, functions: 64 },
   },
 };

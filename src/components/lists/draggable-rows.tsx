@@ -7,9 +7,14 @@ import { marcarArrastre } from './drag-guard';
 
 import { Motion } from '@/constants/theme';
 import { destinoEnFilas } from '@/lib/drag';
+import { tap } from '@/lib/haptics';
 
-/** Cuánto hay que mantener presionado antes de que la fila se despegue. */
-const RETARDO_MS = 200;
+/**
+ * Cuánto hay que mantener presionado antes de que la fila se despegue. Con `onHold` es
+ * también lo que dura una pulsación larga: 350 ms se siente deliberado sin hacerse esperar,
+ * y deja lejos un toque normal, que ahora edita el texto (T268).
+ */
+const RETARDO_MS = 350;
 
 export type DraggableRowsProps<T> = {
   items: readonly T[];
@@ -22,6 +27,11 @@ export type DraggableRowsProps<T> = {
   draggable?: (item: T) => boolean;
   /** Se llama al soltar, con la posición de origen y la de destino. */
   onReorder: (from: number, to: number) => void;
+  /**
+   * Mantener presionado y soltar **sin mover** (T268, RF-L13c). Si se da, una pulsación larga
+   * quieta es una acción propia —abrir los detalles— y no un toque; mover sigue reordenando.
+   */
+  onHold?: (item: T) => void;
 };
 
 /**
@@ -39,7 +49,7 @@ export type DraggableRowsProps<T> = {
  * El arrastre empieza con una pulsación mantenida para que tocar siga abriendo la edición,
  * que es lo que uno hace el 99 % de las veces.
  */
-export function DraggableRows<T>({ items, keyOf, renderItem, draggable, onReorder }: DraggableRowsProps<T>) {
+export function DraggableRows<T>({ items, keyOf, renderItem, draggable, onReorder, onHold }: DraggableRowsProps<T>) {
   const alturas = useRef<number[]>([]);
   const [arrastrando, setArrastrando] = useState<number | null>(null);
 
@@ -76,6 +86,7 @@ export function DraggableRows<T>({ items, keyOf, renderItem, draggable, onReorde
             activo={arrastrando === i}
             onMedir={medir(i)}
             onEmpezar={() => setArrastrando(i)}
+            onHold={onHold ? () => onHold(item) : undefined}
             onSoltar={(dy) => {
               setArrastrando(null);
               const destino = destinoDe(i, dy);
@@ -96,6 +107,7 @@ function Fila({
   onMedir,
   onEmpezar,
   onSoltar,
+  onHold,
 }: {
   index: number;
   activo: boolean;
@@ -103,6 +115,7 @@ function Fila({
   onMedir: (e: LayoutChangeEvent) => void;
   onEmpezar: () => void;
   onSoltar: (dy: number) => void;
+  onHold?: () => void;
 }) {
   const y = useSharedValue(0);
   const levantada = useSharedValue(0);
@@ -113,16 +126,21 @@ function Fila({
     // pelea: activarlo solo tras la pulsación larga deja el scroll intacto.
     .onStart(() => {
       levantada.value = withTiming(1, { duration: Motion.fast });
+      // Un toque en la mano dice "ya la tienes": desde aquí, mover reordena y soltar quieta
+      // abre los detalles.
+      runOnJS(tap)();
       runOnJS(onEmpezar)();
     })
     .onUpdate((e) => {
       y.value = e.translationY;
     })
     .onEnd((e) => {
-      // Solo cuenta como arrastre si de verdad se movió: un toque largo sin mover debe
-      // seguir comportándose como un toque.
-      if (Math.abs(e.translationY) > 4) runOnJS(marcarArrastre)();
+      // Solo cuenta como arrastre si de verdad se movió. Quieta, sin `onHold`, sigue siendo
+      // un toque; con `onHold` es la pulsación larga, y el toque que llega pegado se ignora.
+      const movida = Math.abs(e.translationY) > 4;
+      if (movida || onHold) runOnJS(marcarArrastre)();
       runOnJS(onSoltar)(e.translationY);
+      if (!movida && onHold) runOnJS(onHold)();
       y.value = withTiming(0, { duration: Motion.fast });
       levantada.value = withTiming(0, { duration: Motion.fast });
     });

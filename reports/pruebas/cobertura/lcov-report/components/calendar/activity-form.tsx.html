@@ -23,9 +23,9 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">46.51% </span>
+                <span class="strong">48.88% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>20/43</span>
+                <span class='fraction'>22/45</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">48.71% </span>
+                <span class="strong">51.21% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>19/39</span>
+                <span class='fraction'>21/41</span>
             </div>
         
             
@@ -322,7 +322,10 @@
 <a name='L257'></a><a href='#L257'>257</a>
 <a name='L258'></a><a href='#L258'>258</a>
 <a name='L259'></a><a href='#L259'>259</a>
-<a name='L260'></a><a href='#L260'>260</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L260'></a><a href='#L260'>260</a>
+<a name='L261'></a><a href='#L261'>261</a>
+<a name='L262'></a><a href='#L262'>262</a>
+<a name='L263'></a><a href='#L263'>263</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -372,6 +375,9 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">38x</span>
+<span class="cline-any cline-yes">38x</span>
 <span class="cline-any cline-yes">38x</span>
 <span class="cline-any cline-yes">38x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -599,6 +605,7 @@ import { IconSize, IconStroke, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { formatDate, formatMinutes, fromDayKey, toDayKey } from '@/lib/dates';
 import { activityFormSchema, type ActivityFormValues } from '@/lib/schemas/activity';
+import { useLanguage, useT } from '@/i18n';
 &nbsp;
 export type ActivityFormProps = {
   defaultValues: ActivityFormValues;
@@ -632,6 +639,8 @@ export function ActivityForm({
   showSharing = false,
 }: ActivityFormProps) {
   const theme = useTheme();
+  const tx = useT();
+  const lang = useLanguage();
   const { control, handleSubmit, setValue } = useForm&lt;ActivityFormValues&gt;({
     resolver: zodResolver(activityFormSchema),
     defaultValues,
@@ -654,12 +663,12 @@ export function ActivityForm({
         name="title"
         render={({ field: { onChange, onBlur, value }, fieldState: { error: fieldError } }) =&gt; (
           &lt;TextField
-            label="Título"
+            label={tx.calendar.form.title}
             value={value}
             onChangeText={onChange}
             onBlur={onBlur}
             error={fieldError?.message}
-            placeholder="¿Qué vas a hacer?"
+            placeholder={tx.calendar.form.titlePlaceholder}
             autoFocus={!defaultValues.title}
             maxLength={120}
             returnKeyType="done"
@@ -683,8 +692,8 @@ export function ActivityForm({
       /&gt;
 &nbsp;
       &lt;FieldButton
-        label="Fecha"
-        value={formatDate(fromDayKey(dayKey))}
+        label={tx.calendar.form.date}
+        value={formatDate(fromDayKey(dayKey), lang)}
         onPress={<span class="fstat-no" title="function not covered" >()</span> =&gt; <span class="cstat-no" title="statement not covered" >setPicker('date')}</span>
         leading={&lt;CalendarDays size={IconSize.inline} strokeWidth={IconStroke} color={theme.textSecondary} /&gt;}
       /&gt;
@@ -692,14 +701,14 @@ export function ActivityForm({
       &lt;Controller
         control={control}
         name="allDay"
-        render={({ field: { onChange, value } }) =&gt; &lt;SwitchRow label="Todo el día" value={value} onValueChange={onChange} /&gt;}
+        render={({ field: { onChange, value } }) =&gt; &lt;SwitchRow label={tx.calendar.form.allDay} value={value} onValueChange={onChange} /&gt;}
       /&gt;
 &nbsp;
       {!allDay ? (
         &lt;View style={styles.timeRow}&gt;
           &lt;FieldButton
-            label="Inicio"
-            value={formatMinutes(startMinutes)}
+            label={tx.calendar.form.start}
+            value={formatMinutes(startMinutes, lang)}
             onPress={<span class="fstat-no" title="function not covered" >()</span> =&gt; <span class="cstat-no" title="statement not covered" >setPicker('start')}</span>
             leading={&lt;Clock size={IconSize.inline} strokeWidth={IconStroke} color={theme.textSecondary} /&gt;}
           /&gt;
@@ -707,7 +716,7 @@ export function ActivityForm({
             control={control}
             name="endMinutes"
             render={({ fieldState: { error: fieldError } }) =&gt; (
-              &lt;FieldButton label="Fin" value={formatMinutes(endMinutes)} onPress={<span class="fstat-no" title="function not covered" >()</span> =&gt; <span class="cstat-no" title="statement not covered" >setPicker('end')}</span> error={fieldError?.message} /&gt;
+              &lt;FieldButton label={tx.calendar.form.end} value={formatMinutes(endMinutes, lang)} onPress={<span class="fstat-no" title="function not covered" >()</span> =&gt; <span class="cstat-no" title="statement not covered" >setPicker('end')}</span> error={fieldError?.message} /&gt;
             )}
           /&gt;
         &lt;/View&gt;
@@ -718,12 +727,12 @@ export function ActivityForm({
         name="description"
         render={({ field: { onChange, onBlur, value }, fieldState: { error: fieldError } }) =&gt; (
           &lt;TextField
-            label="Descripción"
+            label={tx.calendar.form.description}
             value={value}
             onChangeText={onChange}
             onBlur={onBlur}
             error={fieldError?.message}
-            placeholder="Notas, lugar, enlaces…"
+            placeholder={tx.calendar.form.descriptionPlaceholder}
             multiline
             numberOfLines={3}
             style={styles.multiline}
@@ -781,8 +790,8 @@ export function ActivityForm({
         render={({ field: { onChange, value } }) =&gt; (
           &lt;&gt;
             &lt;SwitchRow
-              label="Actividad de gimnasio"
-              hint="Anota tu rutina aquí mismo, sin salir del calendario."
+              label={tx.calendar.form.gymActivity}
+              hint={tx.calendar.form.gymActivityHint}
               value={value}
               onValueChange={onChange}
             /&gt;
@@ -812,7 +821,7 @@ export function ActivityForm({
       &lt;TimePickerSheet
         visible={picker === 'start'}
         value={startMinutes}
-        title="Hora de inicio"
+        title={tx.calendar.form.startTime}
         onClose={<span class="fstat-no" title="function not covered" >()</span> =&gt; <span class="cstat-no" title="statement not covered" >setPicker(null)}</span>
         onSelect={<span class="fstat-no" title="function not covered" >(m</span>inutes) =&gt; {
           const duration = <span class="cstat-no" title="statement not covered" >Math.max(15, endMinutes - startMinutes);</span>
@@ -824,7 +833,7 @@ export function ActivityForm({
       &lt;TimePickerSheet
         visible={picker === 'end'}
         value={endMinutes}
-        title="Hora de fin"
+        title={tx.calendar.form.endTime}
         onClose={<span class="fstat-no" title="function not covered" >()</span> =&gt; <span class="cstat-no" title="statement not covered" >setPicker(null)}</span>
         onSelect={<span class="fstat-no" title="function not covered" >(m</span>inutes) =&gt; {
 <span class="cstat-no" title="statement not covered" >          setValue('endMinutes', minutes, { shouldDirty: true, shouldValidate: true });</span>
@@ -847,7 +856,7 @@ const styles = StyleSheet.create({
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-09-23T16:54:46.714Z
+                at 2026-10-07T09:52:02.001Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

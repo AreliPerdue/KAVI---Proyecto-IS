@@ -23,9 +23,9 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/11</span>
+                <span class='fraction'>23/23</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/11</span>
+                <span class='fraction'>23/23</span>
             </div>
         
             
@@ -61,7 +61,7 @@
             </div>
         </template>
     </div>
-    <div class='status-line low'></div>
+    <div class='status-line high'></div>
     <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
@@ -80,40 +80,76 @@
 <a name='L15'></a><a href='#L15'>15</a>
 <a name='L16'></a><a href='#L16'>16</a>
 <a name='L17'></a><a href='#L17'>17</a>
-<a name='L18'></a><a href='#L18'>18</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L18'></a><a href='#L18'>18</a>
+<a name='L19'></a><a href='#L19'>19</a>
+<a name='L20'></a><a href='#L20'>20</a>
+<a name='L21'></a><a href='#L21'>21</a>
+<a name='L22'></a><a href='#L22'>22</a>
+<a name='L23'></a><a href='#L23'>23</a>
+<a name='L24'></a><a href='#L24'>24</a>
+<a name='L25'></a><a href='#L25'>25</a>
+<a name='L26'></a><a href='#L26'>26</a>
+<a name='L27'></a><a href='#L27'>27</a>
+<a name='L28'></a><a href='#L28'>28</a>
+<a name='L29'></a><a href='#L29'>29</a>
+<a name='L30'></a><a href='#L30'>30</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">/** Mini gym tracker (spec 07). Fachada sobre el backend activo. */
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">/** Gym tracker (spec 07 v2). Fachada sobre el backend activo. */
 import { workoutsApi } from '@/services/backend';
 &nbsp;
-export type { WorkoutDetail } from '@/services/contracts';
-export type { Workout, WorkoutExercise, WorkoutExerciseInput, WorkoutInput } from '@/types/domain';
+export type { ExerciseHistoryEntry, ExerciseRef, LegacyExercise, NoteHit, WorkoutDetail } from '@/services/contracts';
+export type { SetSegment, Workout, WorkoutExercise, WorkoutExerciseDetail, WorkoutExerciseInput, WorkoutInput, WorkoutSet } from '@/types/domain';
 &nbsp;
-export const listWorkouts = <span class="cstat-no" title="statement not covered" >workoutsApi.list;</span>
-export const getWorkout = <span class="cstat-no" title="statement not covered" >workoutsApi.getById;</span>
-export const getWorkoutByActivity = <span class="cstat-no" title="statement not covered" >workoutsApi.getByActivity;</span>
-export const createWorkout = <span class="cstat-no" title="statement not covered" >workoutsApi.create;</span>
-export const updateWorkout = <span class="cstat-no" title="statement not covered" >workoutsApi.update;</span>
-export const removeWorkout = <span class="cstat-no" title="statement not covered" >workoutsApi.remove;</span>
-export const addExercise = <span class="cstat-no" title="statement not covered" >workoutsApi.addExercise;</span>
-export const updateExercise = <span class="cstat-no" title="statement not covered" >workoutsApi.updateExercise;</span>
-export const removeExercise = <span class="cstat-no" title="statement not covered" >workoutsApi.removeExercise;</span>
-export const listExerciseNames = <span class="cstat-no" title="statement not covered" >workoutsApi.exerciseNames;</span>
-export const duplicateWorkout = <span class="cstat-no" title="statement not covered" >workoutsApi.duplicate;</span>
+export const listWorkouts = workoutsApi.list;
+export const getWorkout = workoutsApi.getById;
+export const getWorkoutByActivity = workoutsApi.getByActivity;
+export const createWorkout = workoutsApi.create;
+export const updateWorkout = workoutsApi.update;
+export const removeWorkout = workoutsApi.remove;
+export const addExercise = workoutsApi.addExercise;
+export const updateExercise = workoutsApi.updateExercise;
+export const removeExercise = workoutsApi.removeExercise;
+export const restoreExercise = workoutsApi.restoreExercise;
+export const saveWorkoutSets = workoutsApi.saveSets;
+export const removeWorkoutSets = workoutsApi.removeSets;
+export const createExerciseGroup = workoutsApi.createGroup;
+export const removeExerciseGroup = workoutsApi.removeGroup;
+export const listLegacyExercises = workoutsApi.listLegacyExercises;
+export const markLegacyConverted = workoutsApi.markLegacyConverted;
+export const listExerciseNames = workoutsApi.exerciseNames;
+export const getExerciseHistory = workoutsApi.exerciseHistory;
+export const searchWorkoutNotes = workoutsApi.searchNotes;
+export const getTrainingLog = workoutsApi.trainingLog;
+export const listStreakEvents = workoutsApi.listStreakEvents;
+export const saveStreakEvents = workoutsApi.saveStreakEvents;
+export const duplicateWorkout = workoutsApi.duplicate;
 &nbsp;</pre></td></tr></table></pre>
 
                 <div class='push'></div><!-- for sticky footer -->
@@ -121,7 +157,7 @@ export const duplicateWorkout = <span class="cstat-no" title="statement not cove
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-09-23T16:54:46.714Z
+                at 2026-10-07T09:52:02.001Z
             </div>
         <script src="../prettify.js"></script>
         <script>

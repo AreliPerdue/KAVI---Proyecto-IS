@@ -537,3 +537,8 @@ export type ListItem = {
 export type ListInput = Pick<KaviList, 'name' | 'icon' | 'color'> & Partial<Pick<KaviList, 'view'>>;
 export type ListItemInput = Pick<ListItem, 'title'> &
   Partial<Pick<ListItem, 'note' | 'section_id' | 'due_date' | 'due_time' | 'reminder_offset_minutes'>>;
+/**
+ * Al agregar, el id y el orden pueden venir del cliente (T268): así el elemento se pinta en el
+ * acto con el mismo id que tendrá en la base, y guardarlo es un solo viaje al servidor.
+ */
+export type NewListItemInput = ListItemInput & Partial<Pick<ListItem, 'id' | 'sort_order'>>;

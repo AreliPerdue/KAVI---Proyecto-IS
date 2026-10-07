@@ -23,16 +23,16 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">95% </span>
+                <span class="strong">95.65% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>19/20</span>
+                <span class='fraction'>22/23</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">85% </span>
+                <span class="strong">81.81% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>17/20</span>
+                <span class='fraction'>18/22</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">95% </span>
+                <span class="strong">95.65% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>19/20</span>
+                <span class='fraction'>22/23</span>
             </div>
         
             
@@ -219,7 +219,12 @@
 <a name='L154'></a><a href='#L154'>154</a>
 <a name='L155'></a><a href='#L155'>155</a>
 <a name='L156'></a><a href='#L156'>156</a>
-<a name='L157'></a><a href='#L157'>157</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L157'></a><a href='#L157'>157</a>
+<a name='L158'></a><a href='#L158'>158</a>
+<a name='L159'></a><a href='#L159'>159</a>
+<a name='L160'></a><a href='#L160'>160</a>
+<a name='L161'></a><a href='#L161'>161</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -262,6 +267,8 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">6x</span>
 <span class="cline-any cline-yes">6x</span>
+<span class="cline-any cline-yes">6x</span>
+<span class="cline-any cline-yes">6x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -290,6 +297,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">10x</span>
 <span class="cline-any cline-yes">10x</span>
 <span class="cline-any cline-yes">10x</span>
 <span class="cline-any cline-yes">10x</span>
@@ -385,20 +393,21 @@ import { useAdminAccounts, useAdminStats, useIsAdmin } from '@/hooks/use-admin';
 import { useTheme } from '@/hooks/use-theme';
 import { formatShortDate, fromIso } from '@/lib/dates';
 import type { AdminAccount, AdminStats } from '@/types/domain';
+import { useLanguage, useT } from '@/i18n';
 &nbsp;
 const MAX_WIDTH = 720;
 &nbsp;
-const CARDS: { key: keyof AdminStats; label: string }[] = [
-  { key: 'total_accounts', label: 'Cuentas registradas' },
-  { key: 'accounts_7d', label: 'Altas (7 días)' },
-  { key: 'accounts_30d', label: 'Altas (30 días)' },
-  { key: 'active_users_30d', label: 'Activas (30 días)' },
-  { key: 'total_activities', label: 'Actividades' },
-  { key: 'activities_30d', label: 'Actividades (30 días)' },
-  { key: 'accepted_connections', label: 'Contactos' },
-  { key: 'shared_calendars', label: 'Calendarios compartidos' },
-  { key: 'custom_themes', label: 'Temas propios' },
-  { key: 'total_workouts', label: 'Entrenamientos' },
+const CARDS: readonly (keyof AdminStats)[] = [
+  'total_accounts',
+  'accounts_7d',
+  'accounts_30d',
+  'active_users_30d',
+  'total_activities',
+  'activities_30d',
+  'accepted_connections',
+  'shared_calendars',
+  'custom_themes',
+  'total_workouts',
 ];
 &nbsp;
 function StatCard({ label, value }: { label: string; value: number }) {
@@ -417,11 +426,13 @@ function StatCard({ label, value }: { label: string; value: number }) {
 &nbsp;
 function AccountRow({ item }: { item: AdminAccount }) {
   const theme = useTheme();
+  const tx = useT();
+  const lang = useLanguage();
   return (
     &lt;View style={[styles.row, { borderColor: theme.border }]}&gt;
       &lt;View style={styles.rowText}&gt;
         &lt;AppText variant="bodyStrong" numberOfLines={1}&gt;
-          {item.display_name ?? <span class="branch-1 cbranch-no" title="branch not covered" >'Sin nombre'}</span>
+          {item.display_name ?? <span class="branch-1 cbranch-no" title="branch not covered" >tx.profile.noName}</span>
           {item.role === 'adminkavi' ? <span class="branch-0 cbranch-no" title="branch not covered" >' · admin' </span>: ''}
         &lt;/AppText&gt;
         &lt;AppText variant="caption" color="textSecondary" numberOfLines={1}&gt;
@@ -430,10 +441,10 @@ function AccountRow({ item }: { item: AdminAccount }) {
       &lt;/View&gt;
       &lt;View style={styles.rowMeta}&gt;
         &lt;AppText variant="caption" color="textSecondary" tabular&gt;
-          {item.activity_count} act.
+          {tx.profile.adminPanel.activitiesShort(item.activity_count)}
         &lt;/AppText&gt;
         &lt;AppText variant="caption" color="textTertiary" tabular&gt;
-          {formatShortDate(fromIso(item.created_at))}
+          {formatShortDate(fromIso(item.created_at), lang)}
         &lt;/AppText&gt;
       &lt;/View&gt;
     &lt;/View&gt;
@@ -446,6 +457,7 @@ function AccountRow({ item }: { item: AdminAccount }) {
  * desplazable, en vez de una lista anidada dentro de un ScrollView.
  */
 export default function AdminScreen() {
+  const tx = useT();
   const isAdmin = useIsAdmin();
   const stats = useAdminStats();
   const accounts = useAdminAccounts();
@@ -458,30 +470,30 @@ export default function AdminScreen() {
   if (!isAdmin) {
     return (
       &lt;Screen modal maxWidth={MAX_WIDTH}&gt;
-        &lt;ModalHeader title="Administración" /&gt;
-        &lt;EmptyState title="Esta sección no está disponible" description="Tu cuenta no administra KAVI." /&gt;
+        &lt;ModalHeader title={tx.profile.adminPanel.title} /&gt;
+        &lt;EmptyState title={tx.profile.adminPanel.unavailableTitle} description={tx.profile.adminPanel.unavailableDescription} /&gt;
       &lt;/Screen&gt;
     );
   }
 &nbsp;
   const header = (
     &lt;View style={styles.header}&gt;
-      {stats.isPending ? &lt;LoadingState label="Cargando estadísticas…" /&gt; : null}
+      {stats.isPending ? &lt;LoadingState label={tx.profile.adminPanel.loadingStats} /&gt; : null}
       {stats.isError ? &lt;ErrorState message={stats.error.message} onRetry={() =&gt; stats.refetch()} /&gt; : null}
       {stats.data ? (
         &lt;View style={styles.grid}&gt;
           {CARDS.map((c) =&gt; (
-            &lt;StatCard key={c.key} label={c.label} value={stats.data[c.key]} /&gt;
+            &lt;StatCard key={c} label={tx.profile.adminPanel.cards[c] ?? <span class="branch-1 cbranch-no" title="branch not covered" >c}</span> value={stats.data[c]} /&gt;
           ))}
         &lt;/View&gt;
       ) : null}
       &lt;View style={styles.section}&gt;
-        &lt;AppText variant="heading"&gt;Cuentas&lt;/AppText&gt;
+        &lt;AppText variant="heading"&gt;{tx.profile.adminPanel.accounts}&lt;/AppText&gt;
         &lt;AppText variant="caption" color="textSecondary"&gt;
-          Quién está registrado. No incluye el contenido de sus calendarios.
+          {tx.profile.adminPanel.accountsHint}
         &lt;/AppText&gt;
       &lt;/View&gt;
-      {accounts.isPending ? &lt;LoadingState label="Cargando cuentas…" /&gt; : null}
+      {accounts.isPending ? &lt;LoadingState label={tx.profile.adminPanel.loadingAccounts} /&gt; : null}
       {accounts.isError ? (
 <span class="branch-0 cbranch-no" title="branch not covered" >        &lt;ErrorState message={accounts.error.message} onRetry={<span class="fstat-no" title="function not covered" >()</span> =&gt; <span class="cstat-no" title="statement not covered" >accounts.refetch()}</span> /&gt;</span>
       ) : null}
@@ -490,7 +502,7 @@ export default function AdminScreen() {
 &nbsp;
   return (
     &lt;Screen modal maxWidth={MAX_WIDTH}&gt;
-      &lt;ModalHeader title="Administración" /&gt;
+      &lt;ModalHeader title={tx.profile.adminPanel.title} /&gt;
       &lt;FlatList
         data={accounts.data ?? []}
         keyExtractor={(item) =&gt; item.id}
@@ -498,7 +510,7 @@ export default function AdminScreen() {
         ListHeaderComponent={header}
         ListEmptyComponent={
           accounts.isSuccess ? (
-            &lt;EmptyState title="Todavía no hay cuentas" description="Cuando alguien se registre, aparecerá aquí." /&gt;
+            &lt;EmptyState title={tx.profile.adminPanel.noAccountsTitle} description={tx.profile.adminPanel.noAccountsDescription} /&gt;
           ) : null
         }
         showsVerticalScrollIndicator={false}
@@ -538,7 +550,7 @@ const styles = StyleSheet.create({
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-09-23T16:54:46.714Z
+                at 2026-10-07T09:52:02.001Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

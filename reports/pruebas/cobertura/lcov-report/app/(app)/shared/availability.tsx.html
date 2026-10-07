@@ -23,9 +23,9 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">81.94% </span>
+                <span class="strong">82.43% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>59/72</span>
+                <span class='fraction'>61/74</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">82.45% </span>
+                <span class="strong">83.05% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>47/57</span>
+                <span class='fraction'>49/59</span>
             </div>
         
             
@@ -305,7 +305,11 @@
 <a name='L240'></a><a href='#L240'>240</a>
 <a name='L241'></a><a href='#L241'>241</a>
 <a name='L242'></a><a href='#L242'>242</a>
-<a name='L243'></a><a href='#L243'>243</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L243'></a><a href='#L243'>243</a>
+<a name='L244'></a><a href='#L244'>244</a>
+<a name='L245'></a><a href='#L245'>245</a>
+<a name='L246'></a><a href='#L246'>246</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -335,6 +339,8 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">30x</span>
+<span class="cline-any cline-yes">30x</span>
 <span class="cline-any cline-yes">30x</span>
 <span class="cline-any cline-yes">30x</span>
 <span class="cline-any cline-yes">30x</span>
@@ -558,8 +564,9 @@ import { IconSize, IconStroke, Radius, Spacing } from '@/constants/theme';
 import { useAvailability } from '@/hooks/use-availability';
 import { useContacts } from '@/hooks/use-connections';
 import { useTheme } from '@/hooks/use-theme';
-import { clampToDay, findFreeSlots, formatHourLabel, formatShortDate, formatTime, formatWeekTitle, fromIso, isToday, minutesSinceMidnight, rangeForView, shiftAnchor, toDayKey, WEEKDAY_SHORT, weekDays } from '@/lib/dates';
+import { clampToDay, findFreeSlots, formatHourLabel, formatShortDate, formatTime, formatWeekTitle, fromIso, isToday, minutesSinceMidnight, rangeForView, shiftAnchor, toDayKey, weekdayShort, weekDays } from '@/lib/dates';
 import { useAuth } from '@/providers';
+import { useLanguage, useT } from '@/i18n';
 &nbsp;
 const MAX_WIDTH = 1100;
 const HOUR_HEIGHT = 28;
@@ -578,6 +585,8 @@ const DURATIONS: readonly SegmentedOption&lt;'30' | '60' | '90' | '120'&gt;[] = 
 /** Disponibilidad de contactos + Encontrar horario (RF-S8, RF-S9). */
 export default function AvailabilityScreen() {
   const theme = useTheme();
+  const tx = useT();
+  const lang = useLanguage();
   const router = useRouter();
   const { userId } = useAuth();
   const { width } = useWindowDimensions();
@@ -606,13 +615,13 @@ export default function AvailabilityScreen() {
     const index = selected.indexOf(id);
     return palette[index % palette.length] ?? <span class="branch-1 cbranch-no" title="branch not covered" >theme.neutralActivity;</span>
   };
-  const nameFor = (id: string) =&gt; (id === userId ? 'Tú' : sharing.find((c) =&gt; c.profile.id === id)?.profile.display_name ?? <span class="branch-1 cbranch-no" title="branch not covered" >'Contacto')</span>;
+  const nameFor = (id: string) =&gt; (id === userId ? tx.shared.availability.me : sharing.find((c) =&gt; c.profile.id === id)?.profile.display_name ?? <span class="branch-1 cbranch-no" title="branch not covered" >tx.shared.contactFallback)</span>;
 &nbsp;
   const compact = width &lt; 720;
 &nbsp;
   return (
     &lt;Screen modal scroll maxWidth={MAX_WIDTH}&gt;
-      &lt;ModalHeader title="Disponibilidad" /&gt;
+      &lt;ModalHeader title={tx.shared.availability.title} /&gt;
 &nbsp;
       {contacts.isPending ? <span class="branch-0 cbranch-no" title="branch not covered" >&lt;LoadingState /&gt; </span>: null}
       {/* Sin esta rama un fallo al cargar contactos dejaba la pantalla en blanco,
@@ -621,14 +630,14 @@ export default function AvailabilityScreen() {
         &lt;ErrorState message={contacts.error.message} onRetry={() =&gt; contacts.refetch()} /&gt;
       ) : null}
       {contacts.isSuccess &amp;&amp; sharing.length === 0 ? (
-        &lt;EmptyState title="Nadie te comparte su calendario todavía" description="Pide a tus contactos que compartan su disponibilidad contigo desde su pestaña Compartido." /&gt;
+        &lt;EmptyState title={tx.shared.availability.nobodyTitle} description={tx.shared.availability.nobodyDescription} /&gt;
       ) : null}
 &nbsp;
       {sharing.length &gt; 0 ? (
         &lt;&gt;
           &lt;View style={styles.section}&gt;
             &lt;AppText variant="label" color="textSecondary"&gt;
-              Contactos
+              {tx.shared.availability.contacts}
             &lt;/AppText&gt;
             &lt;View style={styles.chips}&gt;
               {sharing.map((c) =&gt; {
@@ -636,7 +645,7 @@ export default function AvailabilityScreen() {
                 return (
                   &lt;Chip
                     key={c.profile.id}
-                    label={c.profile.display_name ?? <span class="branch-1 cbranch-no" title="branch not covered" >'Contacto'}</span>
+                    label={c.profile.display_name ?? <span class="branch-1 cbranch-no" title="branch not covered" >tx.shared.contactFallback}</span>
                     color={isSelected ? colorFor(c.profile.id) : undefined}
                     selected={isSelected}
                     icon={&lt;Avatar profile={c.profile} size={20} /&gt;}
@@ -648,19 +657,19 @@ export default function AvailabilityScreen() {
           &lt;/View&gt;
 &nbsp;
           &lt;View style={styles.weekRow}&gt;
-            &lt;IconButton label="Semana anterior" onPress={<span class="fstat-no" title="function not covered" >()</span> =&gt; <span class="cstat-no" title="statement not covered" >setAnchor(shiftAnchor('week', anchor, -1))}</span>&gt;
+            &lt;IconButton label={tx.shared.availability.previousWeek} onPress={<span class="fstat-no" title="function not covered" >()</span> =&gt; <span class="cstat-no" title="statement not covered" >setAnchor(shiftAnchor('week', anchor, -1))}</span>&gt;
               &lt;ChevronLeft size={IconSize.action} strokeWidth={IconStroke} color={theme.text} /&gt;
             &lt;/IconButton&gt;
-            &lt;AppText variant="bodyStrong"&gt;{formatWeekTitle(anchor)}&lt;/AppText&gt;
-            &lt;IconButton label="Semana siguiente" onPress={() =&gt; setAnchor(shiftAnchor('week', anchor, 1))}&gt;
+            &lt;AppText variant="bodyStrong"&gt;{formatWeekTitle(anchor, lang)}&lt;/AppText&gt;
+            &lt;IconButton label={tx.shared.availability.nextWeek} onPress={() =&gt; setAnchor(shiftAnchor('week', anchor, 1))}&gt;
               &lt;ChevronRight size={IconSize.action} strokeWidth={IconStroke} color={theme.text} /&gt;
             &lt;/IconButton&gt;
           &lt;/View&gt;
 &nbsp;
           {selected.length === 0 ? (
-            &lt;AppText color="textSecondary"&gt;Elige al menos un contacto para superponer su disponibilidad con la tuya.&lt;/AppText&gt;
+            &lt;AppText color="textSecondary"&gt;{tx.shared.availability.pickSomeone}&lt;/AppText&gt;
           ) : availability.isPending ? (
-            &lt;LoadingState label="Calculando disponibilidad…" /&gt;
+            &lt;LoadingState label={tx.shared.availability.calculating} /&gt;
           ) : availability.isError ? (
             &lt;ErrorState message={availability.error.message} onRetry={() =&gt; availability.refetch()} /&gt;
           ) : (
@@ -683,7 +692,7 @@ export default function AvailabilityScreen() {
                     {HOURS.map((h) =&gt; (
                       &lt;View key={h} style={{ height: HOUR_HEIGHT }}&gt;
                         &lt;AppText variant="caption" color="textTertiary" tabular&gt;
-                          {formatHourLabel(h)}
+                          {formatHourLabel(h, lang)}
                         &lt;/AppText&gt;
                       &lt;/View&gt;
                     ))}
@@ -692,7 +701,7 @@ export default function AvailabilityScreen() {
                     &lt;View key={toDayKey(day)} style={[styles.dayColumn, { borderLeftColor: theme.border }]}&gt;
                       &lt;View style={styles.dayHeader}&gt;
                         &lt;AppText variant="caption" color={isToday(day) ? 'today' : 'textSecondary'}&gt;
-                          {WEEKDAY_SHORT[dayIndex]} {day.getDate()}
+                          {weekdayShort(lang)[dayIndex]} {day.getDate()}
                         &lt;/AppText&gt;
                       &lt;/View&gt;
                       &lt;View style={{ height: HOURS.length * HOUR_HEIGHT }}&gt;
@@ -710,7 +719,7 @@ export default function AvailabilityScreen() {
 <span class="cstat-no" title="statement not covered" >                          return (</span>
                             &lt;View
                               key={`${block.user_id}-${i}`}
-                              accessibilityLabel={`${nameFor(block.user_id)} ocupado de ${formatTime(fromIso(block.start_at))} a ${formatTime(fromIso(block.end_at))}`}
+                              accessibilityLabel={tx.shared.availability.busyA11y(nameFor(block.user_id), formatTime(fromIso(block.start_at), lang), formatTime(fromIso(block.end_at), lang))}
                               style={[
                                 styles.block,
                                 { top, height: bottom - top, left: `${lane * laneWidth}%`, width: `${laneWidth}%`, backgroundColor: `${colorFor(block.user_id)}55` },
@@ -730,17 +739,17 @@ export default function AvailabilityScreen() {
               &lt;/ScrollView&gt;
 &nbsp;
               &lt;View style={styles.section}&gt;
-                &lt;AppText variant="heading"&gt;Encontrar horario&lt;/AppText&gt;
+                &lt;AppText variant="heading"&gt;{tx.shared.availability.findTime}&lt;/AppText&gt;
                 &lt;Segmented options={DURATIONS} value={duration} onChange={setDuration} /&gt;
                 {slots.length === 0 ? (
-<span class="branch-0 cbranch-no" title="branch not covered" >                  &lt;AppText color="textSecondary"&gt;No hay huecos libres de esa duración en lo que queda de la semana.&lt;/AppText&gt;</span>
+<span class="branch-0 cbranch-no" title="branch not covered" >                  &lt;AppText color="textSecondary"&gt;{tx.shared.availability.noSlots}&lt;/AppText&gt;</span>
                 ) : (
                   &lt;View style={styles.slots}&gt;
                     {slots.map((slot) =&gt; (
                       &lt;Pressable
                         key={slot.start.toISOString()}
                         accessibilityRole="button"
-                        accessibilityLabel={`Crear actividad el ${formatShortDate(slot.start)} de ${formatTime(slot.start)} a ${formatTime(slot.end)}`}
+                        accessibilityLabel={tx.shared.availability.createAtA11y(formatShortDate(slot.start, lang), formatTime(slot.start, lang), formatTime(slot.end, lang))}
                         onPress={<span class="fstat-no" title="function not covered" >()</span> =&gt;
 <span class="cstat-no" title="statement not covered" >                          router.push({</span>
                             pathname: '/(app)/activity/new',
@@ -752,16 +761,16 @@ export default function AvailabilityScreen() {
                           })
                         }
                         style={({ pressed }) =&gt; [styles.slot, { borderColor: theme.border, backgroundColor: theme.surface }, pressed ? <span class="branch-0 cbranch-no" title="branch not covered" >{ backgroundColor: theme.surfaceAlt } </span>: null]}&gt;
-                        &lt;AppText variant="label"&gt;{formatShortDate(slot.start)}&lt;/AppText&gt;
+                        &lt;AppText variant="label"&gt;{formatShortDate(slot.start, lang)}&lt;/AppText&gt;
                         &lt;AppText variant="caption" color="textSecondary" tabular&gt;
-                          {formatTime(slot.start)} – {formatTime(slot.end)}
+                          {formatTime(slot.start, lang)} – {formatTime(slot.end, lang)}
                         &lt;/AppText&gt;
                       &lt;/Pressable&gt;
                     ))}
                   &lt;/View&gt;
                 )}
                 &lt;AppText variant="caption" color="textTertiary"&gt;
-                  Toca un hueco para crear la actividad y compartirla después desde su detalle.
+                  {tx.shared.availability.tapSlotHint}
                 &lt;/AppText&gt;
               &lt;/View&gt;
             &lt;/&gt;
@@ -796,7 +805,7 @@ const styles = StyleSheet.create({
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-09-23T16:54:46.714Z
+                at 2026-10-07T09:52:02.001Z
             </div>
         <script src="../../../prettify.js"></script>
         <script>

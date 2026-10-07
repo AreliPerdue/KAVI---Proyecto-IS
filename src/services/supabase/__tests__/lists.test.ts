@@ -8,7 +8,7 @@ import { fakeSupabase } from '@/services/supabase/__tests__/fake-supabase';
 const mockSb = fakeSupabase();
 jest.mock('@/lib/supabase', () => ({ getSupabase: () => mockSb.client }));
 // El dueño de una fila nueva sale de la sesión viva (`dueñoActual`).
-(mockSb.client as unknown as { auth: unknown }).auth = { getUser: async () => ({ data: { user: { id: 'u1' } } }) };
+(mockSb.client as unknown as { auth: unknown }).auth = { getSession: async () => ({ data: { session: { user: { id: 'u1' } } } }) };
 
 /* eslint-disable-next-line @typescript-eslint/no-require-imports -- tras el mock */
 const { supabaseLists } = require('@/services/supabase/lists') as typeof import('@/services/supabase/lists');

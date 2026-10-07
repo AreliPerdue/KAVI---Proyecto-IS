@@ -49,17 +49,68 @@ beforeEach(() => {
   globalThis.setParametrosDeRuta({ id: 'l1' });
 });
 
+/** Los detalles se abren manteniendo presionado; aquí, por la acción accesible equivalente. */
+const abrirDetalles = (titulo: string) =>
+  fireEvent(screen.getByRole('button', { name: L.editItem(titulo) }), 'accessibilityAction', { nativeEvent: { actionName: 'longpress' } });
+
 const ver = async (d = detalle()) => {
   mockDetalle = { ...mockDetalle, data: d };
   return render(<Pantalla />);
 };
 
 describe('renglones', () => {
-  it('tocar el texto abre la edición y no palomea', async () => {
+  it('tocar el texto lo edita ahí mismo, sin abrir la hoja ni palomear', async () => {
+    await ver(detalle({ items: [item('i1', 'Lehce')] }));
+    await fireEvent.press(screen.getByRole('button', { name: L.editItem('Lehce') }));
+    expect(mockMut.toggleItem.mutate).not.toHaveBeenCalled();
+    expect(screen.queryByText(L.itemSheet)).toBeNull();
+    const campo = screen.getByDisplayValue('Lehce');
+    await fireEvent.changeText(campo, ' Leche ');
+    await fireEvent(campo, 'submitEditing');
+    expect(mockMut.updateItem.mutate).toHaveBeenCalledWith({ id: 'i1', patch: { title: 'Leche' } }, expect.anything());
+  });
+
+  it('dejar el texto vacío no lo borra: vuelve el título de antes', async () => {
     await ver(detalle({ items: [item('i1', 'Leche')] }));
     await fireEvent.press(screen.getByRole('button', { name: L.editItem('Leche') }));
-    expect(mockMut.toggleItem.mutate).not.toHaveBeenCalled();
+    await fireEvent.changeText(screen.getByDisplayValue('Leche'), '   ');
+    await fireEvent(screen.getByLabelText(L.editItem('Leche')), 'blur');
+    expect(mockMut.updateItem.mutate).not.toHaveBeenCalled();
+    expect(screen.getByText('Leche')).toBeTruthy();
+  });
+
+  it('sin cambios no guarda nada', async () => {
+    await ver(detalle({ items: [item('i1', 'Leche')] }));
+    await fireEvent.press(screen.getByRole('button', { name: L.editItem('Leche') }));
+    await fireEvent(screen.getByDisplayValue('Leche'), 'blur');
+    expect(mockMut.updateItem.mutate).not.toHaveBeenCalled();
+  });
+
+  it('mantener presionado abre los detalles', async () => {
+    await ver(detalle({ items: [item('i1', 'Leche')] }));
+    await abrirDetalles('Leche');
+    expect(screen.getByText(L.itemSheet)).toBeTruthy();
     expect(screen.getByDisplayValue('Leche')).toBeTruthy();
+  });
+
+  it('en completados, la pulsación larga también abre los detalles', async () => {
+    await ver(detalle({ items: [item('h', 'Pan', { completed_at: '2026-10-07T10:00:00Z' })] }));
+    await fireEvent.press(screen.getByRole('button', { name: L.completedA11y(1) }));
+    await fireEvent(screen.getByRole('button', { name: L.editItem('Pan') }), 'longPress');
+    expect(screen.getByText(L.itemSheet)).toBeTruthy();
+  });
+
+  it('si agregar falla, se avisa con el nombre del elemento', async () => {
+    jest.spyOn(globalThis, 'requestAnimationFrame').mockImplementation((cb) => { cb(0); return 0; });
+    jest.spyOn(TextInput.prototype, 'focus').mockImplementation(() => undefined);
+    mockMut.addItem.mutate.mockImplementation((_v, o: { onError: () => void }) => o.onError());
+    await ver();
+    await fireEvent.press(screen.getByRole('button', { name: L.addItem }));
+    const campo = screen.getByPlaceholderText(L.itemPlaceholder(1));
+    await fireEvent.changeText(campo, 'Pilas');
+    await fireEvent(campo, 'submitEditing');
+    expect(mockSnackbar).toHaveBeenCalledWith({ message: L.addFailed('Pilas') });
+    jest.restoreAllMocks();
   });
 
   it('el círculo palomea', async () => {
@@ -107,7 +158,7 @@ describe('hoja de edición', () => {
 
   it('mueve un elemento a otra sección', async () => {
     await ver(detalle({ sections: [seccion('s1', 'Frutas'), seccion('s2', 'Lácteos')], items: [item('i1', 'Leche', { section_id: 's1' })] }));
-    await fireEvent.press(screen.getByRole('button', { name: L.editItem('Leche') }));
+    await abrirDetalles('Leche');
     await fireEvent.press(screen.getByRole('button', { name: 'Lácteos' }));
     expect(mockMut.updateItem.mutate).toHaveBeenCalledWith({ id: 'i1', patch: { section_id: 's2' } }, expect.anything());
   });
@@ -117,7 +168,7 @@ describe('hoja de edición', () => {
       sections: [seccion('s1', 'Frutas')],
       items: [item('suelto', 'Pan'), item('a', 'Manzana', { section_id: 's1', sort_order: 1 }), item('b', 'Pera', { section_id: 's1', sort_order: 2 })],
     }));
-    await fireEvent.press(screen.getByRole('button', { name: L.editItem('Manzana') }));
+    await abrirDetalles('Manzana');
     const subir = screen.getByRole('button', { name: L.moveUp });
     // "Manzana" es la primera de Frutas aunque arriba haya un suelto: no puede subir.
     expect(subir.props.accessibilityState?.disabled).toBe(true);
@@ -127,7 +178,7 @@ describe('hoja de edición', () => {
 
   it('eliminar pide confirmación y el mensaje distingue palomear de eliminar', async () => {
     await ver(detalle({ items: [item('i1', 'Leche')] }));
-    await fireEvent.press(screen.getByRole('button', { name: L.editItem('Leche') }));
+    await abrirDetalles('Leche');
     await fireEvent.press(screen.getByRole('button', { name: L.deleteItem }));
     expect(mockConfirm).toHaveBeenCalledWith(expect.objectContaining({ title: L.deleteItemTitle, message: L.deleteItemMessage, destructive: true }));
     expect(L.deleteItemMessage).toMatch(/palom/i);
@@ -200,7 +251,7 @@ describe('título y salida (T207, T229)', () => {
     await fireEvent.changeText(campo, 'Pilas');
     await fireEvent(campo, 'submitEditing');
     await salir();
-    expect(mockMut.addItem.mutate).toHaveBeenCalledWith({ listId: 'l1', input: { title: 'Pilas', section_id: null } });
+    expect(mockMut.addItem.mutate).toHaveBeenCalledWith({ listId: 'l1', input: { title: 'Pilas', section_id: null } }, expect.anything());
     expect(mockMut.remove.mutate).not.toHaveBeenCalled();
     jest.restoreAllMocks();
   });

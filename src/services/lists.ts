@@ -2,7 +2,7 @@
 import { listsApi } from '@/services/backend';
 
 export type { ListDetail, ListPermission, ListSearchResults, ListShare } from '@/services/contracts';
-export type { KaviList, ListInput, ListItem, ListItemInput, ListRun, ListSection, ListTag, ListView } from '@/types/domain';
+export type { KaviList, ListInput, ListItem, ListItemInput, ListRun, NewListItemInput, ListSection, ListTag, ListView } from '@/types/domain';
 
 export const listLists = listsApi.list;
 export const listArchivedLists = listsApi.listArchived;

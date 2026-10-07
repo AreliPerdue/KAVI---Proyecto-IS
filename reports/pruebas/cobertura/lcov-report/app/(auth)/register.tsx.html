@@ -23,9 +23,9 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">88.23% </span>
+                <span class="strong">88.73% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>60/68</span>
+                <span class='fraction'>63/71</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">87.5% </span>
+                <span class="strong">88.05% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>56/64</span>
+                <span class='fraction'>59/67</span>
             </div>
         
             
@@ -414,7 +414,12 @@
 <a name='L349'></a><a href='#L349'>349</a>
 <a name='L350'></a><a href='#L350'>350</a>
 <a name='L351'></a><a href='#L351'>351</a>
-<a name='L352'></a><a href='#L352'>352</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L352'></a><a href='#L352'>352</a>
+<a name='L353'></a><a href='#L353'>353</a>
+<a name='L354'></a><a href='#L354'>354</a>
+<a name='L355'></a><a href='#L355'>355</a>
+<a name='L356'></a><a href='#L356'>356</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -445,6 +450,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">71x</span>
 <span class="cline-any cline-yes">71x</span>
 <span class="cline-any cline-yes">71x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -488,6 +494,8 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">71x</span>
+<span class="cline-any cline-yes">71x</span>
 <span class="cline-any cline-yes">71x</span>
 <span class="cline-any cline-yes">71x</span>
 <span class="cline-any cline-yes">71x</span>
@@ -783,22 +791,24 @@ import { OTP_LENGTH, signUpSchema, type SignUpValues } from '@/lib/schemas/auth'
 import { availableUsername } from '@/lib/username';
 import { isUsernameAvailable } from '@/services/auth';
 import { useAuth } from '@/providers';
+import { useT } from '@/i18n';
 &nbsp;
 const AUTH_MAX_WIDTH = 440;
 &nbsp;
 /** Un paso = una pregunta. Los campos que valida cada uno antes de avanzar. */
 const STEPS = [
-  { fields: ['displayName'], title: '¿Cómo te llamas?', subtitle: 'Así te verán tus contactos en el calendario compartido.' },
-  { fields: ['email'], title: 'Tu correo', subtitle: 'Será tu identificador en KAVI. Te enviaremos un código para confirmarlo.' },
-  { fields: ['username'], title: 'Elige tu usuario', subtitle: 'Con esto te encuentran tus amigos. Puedes cambiarlo cuando quieras.' },
-  { fields: ['code'], title: 'Confirma tu correo', subtitle: null },
-  { fields: ['password', 'confirmPassword'], title: 'Crea tu contraseña', subtitle: 'Mínimo 8 caracteres.' },
-] as const satisfies readonly { fields: readonly (keyof SignUpValues)[]; title: string; subtitle: string | null }[];
+  { fields: ['displayName'], key: 'name' },
+  { fields: ['email'], key: 'email' },
+  { fields: ['username'], key: 'username' },
+  { fields: ['code'], key: 'code' },
+  { fields: ['password', 'confirmPassword'], key: 'password' },
+] as const satisfies readonly { fields: readonly (keyof SignUpValues)[]; key: string }[];
 &nbsp;
 function Progress({ step }: { step: number }) {
   const theme = useTheme();
+  const tx = useT();
   return (
-    &lt;View style={styles.progress} accessible accessibilityLabel={`Paso ${step + 1} de ${STEPS.length}`}&gt;
+    &lt;View style={styles.progress} accessible accessibilityLabel={tx.auth.stepOf(step + 1, STEPS.length)}&gt;
       {STEPS.map((_, index) =&gt; (
         &lt;View
           key={index}
@@ -840,6 +850,8 @@ export default function RegisterScreen() {
   });
 &nbsp;
   const current = STEPS[step] as (typeof STEPS)[number];
+  const tx = useT();
+  const textoPaso = tx.auth.steps[current.key];
   const pending = start.isPending || verify.isPending || finish.isPending;
   const error = start.error ?? verify.error ?? finish.error;
 &nbsp;
@@ -918,25 +930,25 @@ export default function RegisterScreen() {
 &nbsp;
   return (
     &lt;Screen scroll centered maxWidth={AUTH_MAX_WIDTH}&gt;
-      {step === 0 ? &lt;AuthHeader title="Crea tu cuenta" subtitle="Te lo preguntamos por partes, es rápido." /&gt; : null}
+      {step === 0 ? &lt;AuthHeader title={tx.auth.registerTitle} subtitle={tx.auth.registerSubtitle} /&gt; : null}
 &nbsp;
       &lt;View style={styles.form}&gt;
         &lt;Progress step={step} /&gt;
 &nbsp;
         &lt;View style={styles.stepHeader}&gt;
           {step &gt; 0 ? (
-            &lt;IconButton label="Paso anterior" onPress={back}&gt;
+            &lt;IconButton label={tx.auth.previousStep} onPress={back}&gt;
               &lt;ArrowLeft size={IconSize.action} strokeWidth={IconStroke} color={theme.text} /&gt;
             &lt;/IconButton&gt;
           ) : null}
           &lt;View style={styles.stepTitle}&gt;
             &lt;AppText variant="heading" accessibilityRole="header"&gt;
-              {current.title}
+              {textoPaso.title}
             &lt;/AppText&gt;
-            {current.subtitle ? &lt;AppText color="textSecondary"&gt;{current.subtitle}&lt;/AppText&gt; : null}
+            {'subtitle' in textoPaso ? &lt;AppText color="textSecondary"&gt;{textoPaso.subtitle}&lt;/AppText&gt; : null}
             {step === 3 ? (
               &lt;AppText color="textSecondary"&gt;
-                Escribe el código de {OTP_LENGTH} dígitos que enviamos a {getValues('email')}.
+                {tx.auth.codeSentTo(OTP_LENGTH, getValues('email'))}
               &lt;/AppText&gt;
             ) : null}
           &lt;/View&gt;
@@ -944,10 +956,10 @@ export default function RegisterScreen() {
 &nbsp;
         {error ? &lt;Banner tone="error" message={error.message} /&gt; : null}
         {step === 3 &amp;&amp; env.isDemoMode ? (
-          &lt;Banner tone="info" message={`Modo demo: no sale ningún correo, el código es ${DEMO_OTP}.`} /&gt;
+          &lt;Banner tone="info" message={tx.auth.demoCode(DEMO_OTP)} /&gt;
         ) : null}
         {step === 3 &amp;&amp; start.isSuccess &amp;&amp; <span class="branch-2 cbranch-no" title="branch not covered" >!verify.error </span>? (
-<span class="branch-0 cbranch-no" title="branch not covered" >          &lt;Banner tone="success" message="Código enviado." /&gt;</span>
+<span class="branch-0 cbranch-no" title="branch not covered" >          &lt;Banner tone="success" message={tx.auth.codeSent} /&gt;</span>
         ) : null}
 &nbsp;
         {step === 0 ? (
@@ -956,12 +968,12 @@ export default function RegisterScreen() {
             name="displayName"
             render={({ field: { onChange, onBlur, value }, fieldState: { error: fieldError } }) =&gt; (
               &lt;TextField
-                label="Nombre"
+                label={tx.auth.name}
                 value={value}
                 onChangeText={onChange}
                 onBlur={onBlur}
                 error={fieldError?.message}
-                placeholder="Tu nombre y apellido"
+                placeholder={tx.auth.namePlaceholder}
                 autoComplete="name"
                 textContentType="name"
                 autoFocus
@@ -979,12 +991,12 @@ export default function RegisterScreen() {
             name="email"
             render={({ field: { onChange, onBlur, value }, fieldState: { error: fieldError } }) =&gt; (
               &lt;TextField
-                label="Correo"
+                label={tx.auth.email}
                 value={value}
                 onChangeText={onChange}
                 onBlur={onBlur}
                 error={fieldError?.message}
-                hint="No podrás cambiarlo más adelante."
+                hint={tx.auth.emailFixedHint}
                 keyboardType="email-address"
                 autoCapitalize="none"
                 autoCorrect={false}
@@ -1004,12 +1016,12 @@ export default function RegisterScreen() {
             name="username"
             render={({ field: { onChange, onBlur, value }, fieldState: { error: fieldError } }) =&gt; (
               &lt;TextField
-                label="Usuario"
+                label={tx.auth.username}
                 value={value}
                 onChangeText={(text) =&gt; onChange(text.replace(/^@+/, '').toLowerCase())}
                 onBlur={onBlur}
                 error={fieldError?.message}
-                hint="Solo letras minúsculas, números y guion bajo. Sí puedes cambiarlo después."
+                hint={tx.auth.usernameHint}
                 autoCapitalize="none"
                 autoCorrect={false}
                 autoFocus
@@ -1027,7 +1039,7 @@ export default function RegisterScreen() {
             name="code"
             render={({ field: { onChange, onBlur, value }, fieldState: { error: fieldError } }) =&gt; (
               &lt;TextField
-                label="Código"
+                label={tx.auth.code}
                 value={value}
                 onChangeText={(text) =&gt; onChange(text.replace(/\D/g, '').slice(0, OTP_LENGTH))}
                 onBlur={onBlur}
@@ -1052,7 +1064,7 @@ export default function RegisterScreen() {
               name="password"
               render={({ field: { onChange, onBlur, value }, fieldState: { error: fieldError } }) =&gt; (
                 &lt;TextField
-                  label="Contraseña"
+                  label={tx.auth.password}
                   value={value}
                   onChangeText={onChange}
                   onBlur={onBlur}
@@ -1072,7 +1084,7 @@ export default function RegisterScreen() {
               render={({ field: { onChange, onBlur, value, ref }, fieldState: { error: fieldError } }) =&gt; (
                 &lt;TextField
                   ref={ref}
-                  label="Confirmar contraseña"
+                  label={tx.auth.confirmPassword}
                   value={value}
                   onChangeText={onChange}
                   onBlur={onBlur}
@@ -1088,18 +1100,18 @@ export default function RegisterScreen() {
           &lt;/&gt;
         ) : null}
 &nbsp;
-        &lt;Button title={step === STEPS.length - 1 ? 'Crear cuenta' : 'Continuar'} onPress={next} loading={pending} /&gt;
+        &lt;Button title={step === STEPS.length - 1 ? tx.auth.createAccount : tx.auth.continue} onPress={next} loading={pending} /&gt;
 &nbsp;
         {step === 3 ? (
-          &lt;Button title="Enviar otro código" variant="secondary" onPress={resend} disabled={pending} /&gt;
+          &lt;Button title={tx.auth.resendCode} variant="secondary" onPress={resend} disabled={pending} /&gt;
         ) : null}
       &lt;/View&gt;
 &nbsp;
       {step === 0 ? (
         &lt;View style={styles.footer}&gt;
-          &lt;AppText color="textSecondary"&gt;¿Ya tienes cuenta?&lt;/AppText&gt;
+          &lt;AppText color="textSecondary"&gt;{tx.auth.haveAccount}&lt;/AppText&gt;
           &lt;Link href="/(auth)/login" asChild&gt;
-            &lt;Button title="Iniciar sesión" variant="secondary" /&gt;
+            &lt;Button title={tx.auth.logIn} variant="secondary" /&gt;
           &lt;/Link&gt;
         &lt;/View&gt;
       ) : null}
@@ -1123,7 +1135,7 @@ const styles = StyleSheet.create({
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-09-23T16:54:46.714Z
+                at 2026-10-07T09:52:02.001Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

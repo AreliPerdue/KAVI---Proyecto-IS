@@ -23,9 +23,9 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">92.85% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>11/11</span>
+                <span class='fraction'>13/14</span>
             </div>
         
             
@@ -37,16 +37,16 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">87.5% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>7/7</span>
+                <span class='fraction'>7/8</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">91.66% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>9/9</span>
+                <span class='fraction'>11/12</span>
             </div>
         
             
@@ -141,7 +141,20 @@
 <a name='L76'></a><a href='#L76'>76</a>
 <a name='L77'></a><a href='#L77'>77</a>
 <a name='L78'></a><a href='#L78'>78</a>
-<a name='L79'></a><a href='#L79'>79</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L79'></a><a href='#L79'>79</a>
+<a name='L80'></a><a href='#L80'>80</a>
+<a name='L81'></a><a href='#L81'>81</a>
+<a name='L82'></a><a href='#L82'>82</a>
+<a name='L83'></a><a href='#L83'>83</a>
+<a name='L84'></a><a href='#L84'>84</a>
+<a name='L85'></a><a href='#L85'>85</a>
+<a name='L86'></a><a href='#L86'>86</a>
+<a name='L87'></a><a href='#L87'>87</a>
+<a name='L88'></a><a href='#L88'>88</a>
+<a name='L89'></a><a href='#L89'>89</a>
+<a name='L90'></a><a href='#L90'>90</a>
+<a name='L91'></a><a href='#L91'>91</a>
+<a name='L92'></a><a href='#L92'>92</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -163,6 +176,10 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">15x</span>
+<span class="cline-any cline-yes">15x</span>
 <span class="cline-any cline-yes">15x</span>
 <span class="cline-any cline-yes">15x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -211,6 +228,15 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -221,13 +247,15 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import { StyleSheet, View } from 'react-native';
 &nbsp;
-import { AppText, Button, Chip, Sheet, ThemeIcon } from '@/components/ui';
+import { AppText, Button, Chip, Sheet, SwitchRow, ThemeIcon } from '@/components/ui';
 import { DIMENSIONS } from '@/constants/dimensions';
 import { Spacing } from '@/constants/theme';
 import { useThemes } from '@/hooks/use-themes';
 import { type CalendarFilters, hasActiveFilters } from '@/store/calendar-store';
+import { useLanguage, useT } from '@/i18n';
+import { dimensionName, themeName } from '@/lib/theme-name';
 &nbsp;
-/** Filtros por dimensión y tema, combinables, aplicados a las 3 vistas (RF-C11). */
+/** Filtros por dimensión y tema, combinables, aplicados a las 5 vistas (RF-C11, RF-C18). */
 export function FilterSheet({
   visible,
   filters,
@@ -242,19 +270,21 @@ export function FilterSheet({
   onClear: () =&gt; void;
 }) {
   const themes = useThemes();
+  const tx = useT();
+  const lang = useLanguage();
   const toggle = &lt;T,&gt;(list: T[], item: T) =&gt; (list.includes(item) ? list.filter((x) =&gt; x !== item) : [...list, item]);
 &nbsp;
   return (
-    &lt;Sheet visible={visible} onClose={onClose} title="Filtros"&gt;
+    &lt;Sheet visible={visible} onClose={onClose} title={tx.themes.filters.title}&gt;
       &lt;View style={styles.section}&gt;
         &lt;AppText variant="label" color="textSecondary"&gt;
-          Dimensión
+          {tx.themes.filters.dimension}
         &lt;/AppText&gt;
         &lt;View style={styles.chips}&gt;
           {DIMENSIONS.map((d) =&gt; (
             &lt;Chip
               key={d.key}
-              label={d.label}
+              label={dimensionName(d.key, lang)}
               color={d.color}
               selected={filters.dimensions.includes(d.key)}
               onPress={() =&gt; onChange({ ...filters, dimensions: toggle(filters.dimensions, d.key) })}
@@ -265,7 +295,7 @@ export function FilterSheet({
 &nbsp;
       &lt;View style={styles.section}&gt;
         &lt;AppText variant="label" color="textSecondary"&gt;
-          Tema
+          {tx.themes.picker.title}
         &lt;/AppText&gt;
         &lt;View style={styles.chips}&gt;
           {(themes.data ?? []).map((t) =&gt; {
@@ -273,7 +303,7 @@ export function FilterSheet({
             return (
               &lt;Chip
                 key={t.id}
-                label={t.name}
+                label={themeName(t, lang)}
                 color={t.color}
                 selected={selected}
                 icon={&lt;ThemeIcon name={t.icon} color={selected ? '#FFFFFF' : t.color} size={14} /&gt;}
@@ -284,9 +314,18 @@ export function FilterSheet({
         &lt;/View&gt;
       &lt;/View&gt;
 &nbsp;
+      &lt;View style={styles.section}&gt;
+        &lt;SwitchRow
+          label={tx.themes.filters.onlyLists}
+          hint={tx.themes.filters.onlyListsHint}
+          value={filters.onlyListItems}
+          onValueChange={<span class="fstat-no" title="function not covered" >(v</span>) =&gt; <span class="cstat-no" title="statement not covered" >onChange({ ...filters, onlyListItems: v })}</span>
+        /&gt;
+      &lt;/View&gt;
+&nbsp;
       &lt;View style={styles.actions}&gt;
-        {hasActiveFilters(filters) ? &lt;Button title="Limpiar filtros" variant="secondary" onPress={onClear} /&gt; : null}
-        &lt;Button title="Listo" onPress={onClose} /&gt;
+        {hasActiveFilters(filters) ? &lt;Button title={tx.themes.filters.clear} variant="secondary" onPress={onClear} /&gt; : null}
+        &lt;Button title={tx.common.done} onPress={onClose} /&gt;
       &lt;/View&gt;
     &lt;/Sheet&gt;
   );
@@ -304,7 +343,7 @@ const styles = StyleSheet.create({
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-09-23T16:54:46.714Z
+                at 2026-10-07T09:52:02.001Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

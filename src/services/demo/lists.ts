@@ -307,9 +307,9 @@ export const demoLists: ListsApi = {
     await delay();
     const t = ahora();
     const item: ListItem = {
-      id: nextId('item'), list_id: listId, section_id: input.section_id ?? null,
+      id: input.id ?? nextId('item'), list_id: listId, section_id: input.section_id ?? null,
       title: input.title.trim(), note: input.note ?? null,
-      sort_order: siguienteOrden(items.filter((i) => i.list_id === listId)),
+      sort_order: input.sort_order ?? siguienteOrden(items.filter((i) => i.list_id === listId)),
       completed_at: null, completed_by: null, created_by: userId,
       due_date: input.due_date ?? null, due_time: input.due_time ?? null,
       reminder_offset_minutes: input.reminder_offset_minutes ?? null,

@@ -25,28 +25,28 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/5</span>
+                <span class='fraction'>0/10</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>0/2</span>
+                <span class='fraction'>0/8</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>0/2</span>
+                <span class='fraction'>0/4</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/5</span>
+                <span class='fraction'>0/9</span>
             </div>
         
             
@@ -142,7 +142,27 @@
 <a name='L77'></a><a href='#L77'>77</a>
 <a name='L78'></a><a href='#L78'>78</a>
 <a name='L79'></a><a href='#L79'>79</a>
-<a name='L80'></a><a href='#L80'>80</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L80'></a><a href='#L80'>80</a>
+<a name='L81'></a><a href='#L81'>81</a>
+<a name='L82'></a><a href='#L82'>82</a>
+<a name='L83'></a><a href='#L83'>83</a>
+<a name='L84'></a><a href='#L84'>84</a>
+<a name='L85'></a><a href='#L85'>85</a>
+<a name='L86'></a><a href='#L86'>86</a>
+<a name='L87'></a><a href='#L87'>87</a>
+<a name='L88'></a><a href='#L88'>88</a>
+<a name='L89'></a><a href='#L89'>89</a>
+<a name='L90'></a><a href='#L90'>90</a>
+<a name='L91'></a><a href='#L91'>91</a>
+<a name='L92'></a><a href='#L92'>92</a>
+<a name='L93'></a><a href='#L93'>93</a>
+<a name='L94'></a><a href='#L94'>94</a>
+<a name='L95'></a><a href='#L95'>95</a>
+<a name='L96'></a><a href='#L96'>96</a>
+<a name='L97'></a><a href='#L97'>97</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -162,6 +182,16 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -190,6 +220,10 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -225,8 +259,11 @@
 import { type ErrorBoundaryProps } from "expo-router";
 import { NativeTabs } from "expo-router/unstable-native-tabs";
 &nbsp;
+import { moduleInfo } from "@/constants/modules";
 import { useSharedBadgeCount } from "@/hooks/use-shared-badge";
+import { useT } from "@/i18n";
 import { useTheme } from "@/hooks/use-theme";
+import { usePreferencesStore } from "@/store/preferences-store";
 &nbsp;
 /**
  * Sin esto, Expo Router elige por su cuenta qué pestaña abre y no siempre es la
@@ -239,10 +276,20 @@ export function <span class="fstat-no" title="function not covered" >ErrorBounda
 <span class="cstat-no" title="statement not covered" >  return &lt;ErrorFallback {...props} /&gt;;</span>
 }
 &nbsp;
-/** Tabs nativos (iOS/Android). La versión web vive en _layout.web.tsx. */
+/**
+ * Tabs nativos (iOS/Android). La versión web vive en _layout.web.tsx.
+ *
+ * Cuatro lugares fijos (spec 01, RF-N1): Calendario, dos accesos y Más. Los accesos son
+ * rutas propias que pintan el módulo elegido, en vez de mostrar u ocultar las pestañas de
+ * cada módulo: en `NativeTabs` ocultar una pestaña en caliente reinicia el navegador y
+ * una pestaña oculta no se puede abrir. Cambiar de módulo solo cambia etiqueta, icono y
+ * contenido (RF-N4).
+ */
 export default function <span class="fstat-no" title="function not covered" >TabsLayout(</span>) {
   const theme = <span class="cstat-no" title="statement not covered" >useTheme();</span>
   const badge = <span class="cstat-no" title="statement not covered" >useSharedBadgeCount();</span>
+  const accesos = <span class="cstat-no" title="statement not covered" >usePreferencesStore(<span class="fstat-no" title="function not covered" >(s</span>) =&gt; <span class="cstat-no" title="statement not covered" >s.accesos)</span>;</span>
+  const tx = <span class="cstat-no" title="statement not covered" >useT();</span>
 &nbsp;
 <span class="cstat-no" title="statement not covered" >  return (</span>
     /*
@@ -264,39 +311,43 @@ export default function <span class="fstat-no" title="function not covered" >Tab
       }}
     &gt;
       &lt;NativeTabs.Trigger name="calendar"&gt;
-        &lt;NativeTabs.Trigger.Label&gt;Calendario&lt;/NativeTabs.Trigger.Label&gt;
+        &lt;NativeTabs.Trigger.Label&gt;{tx.nav.calendar}&lt;/NativeTabs.Trigger.Label&gt;
         &lt;NativeTabs.Trigger.Icon
           sf={{ default: "calendar", selected: "calendar" }}
           md="calendar_month"
         /&gt;
       &lt;/NativeTabs.Trigger&gt;
-      &lt;NativeTabs.Trigger name="shared"&gt;
-        &lt;NativeTabs.Trigger.Label&gt;Compartido&lt;/NativeTabs.Trigger.Label&gt;
+      {accesos.map(<span class="fstat-no" title="function not covered" >(i</span>d, lugar) =&gt; {
+        const modulo = <span class="cstat-no" title="statement not covered" >moduleInfo(id);</span>
+<span class="cstat-no" title="statement not covered" >        return (</span>
+          &lt;NativeTabs.Trigger key={lugar} name={`acceso-${lugar + 1}`}&gt;
+            &lt;NativeTabs.Trigger.Label&gt;{tx.nav.modules[id]}&lt;/NativeTabs.Trigger.Label&gt;
+            &lt;NativeTabs.Trigger.Icon sf={modulo.sf as never} md={modulo.md as never} /&gt;
+            {id === "shared" &amp;&amp; badge &gt; 0 ? (
+              &lt;NativeTabs.Trigger.Badge&gt;{String(badge)}&lt;/NativeTabs.Trigger.Badge&gt;
+            ) : null}
+          &lt;/NativeTabs.Trigger&gt;
+        );
+      })}
+      &lt;NativeTabs.Trigger name="mas"&gt;
+        &lt;NativeTabs.Trigger.Label&gt;{tx.nav.more}&lt;/NativeTabs.Trigger.Label&gt;
         &lt;NativeTabs.Trigger.Icon
-          sf={{ default: "person.2", selected: "person.2.fill" }}
-          md="group"
+          sf={{ default: "square.grid.2x2", selected: "square.grid.2x2.fill" }}
+          md="apps"
         /&gt;
-        {badge &gt; 0 ? (
+        {/* Si Compartido salió de la barra, sus pendientes se anuncian aquí (RF-N3). */}
+        {!accesos.includes("shared") &amp;&amp; badge &gt; 0 ? (
           &lt;NativeTabs.Trigger.Badge&gt;{String(badge)}&lt;/NativeTabs.Trigger.Badge&gt;
         ) : null}
       &lt;/NativeTabs.Trigger&gt;
-      &lt;NativeTabs.Trigger name="fitness"&gt;
-        &lt;NativeTabs.Trigger.Label&gt;Fitness&lt;/NativeTabs.Trigger.Label&gt;
-        &lt;NativeTabs.Trigger.Icon
-          sf={{ default: "dumbbell", selected: "dumbbell.fill" }}
-          md="fitness_center"
-        /&gt;
-      &lt;/NativeTabs.Trigger&gt;
-      &lt;NativeTabs.Trigger name="profile"&gt;
-        &lt;NativeTabs.Trigger.Label&gt;Perfil&lt;/NativeTabs.Trigger.Label&gt;
-        &lt;NativeTabs.Trigger.Icon
-          sf={{
-            default: "person.crop.circle",
-            selected: "person.crop.circle.fill",
-          }}
-          md="person"
-        /&gt;
-      &lt;/NativeTabs.Trigger&gt;
+      {/*
+        * Las pantallas de cada módulo siguen en `(tabs)/` porque la web las usa como
+        * pestañas. Aquí van siempre ocultas —nunca cambian, así que no reinician el
+        * navegador— y se pintan dentro de `acceso-1`/`acceso-2` o apiladas desde Más.
+        */}
+      &lt;NativeTabs.Trigger name="shared" hidden /&gt;
+      &lt;NativeTabs.Trigger name="fitness" hidden /&gt;
+      &lt;NativeTabs.Trigger name="profile" hidden /&gt;
     &lt;/NativeTabs&gt;
   );
 }
@@ -307,7 +358,7 @@ export default function <span class="fstat-no" title="function not covered" >Tab
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-09-23T16:54:46.714Z
+                at 2026-10-07T09:52:02.001Z
             </div>
         <script src="../../../prettify.js"></script>
         <script>

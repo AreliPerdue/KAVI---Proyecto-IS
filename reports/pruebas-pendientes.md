@@ -675,3 +675,16 @@ pierde el foco. Falta:
 - [ ] (manual) Lector de pantalla: cada tarjeta dice su nombre y qué abre.
 - [x] Cambiar kg/lb desde el ⚙ y ver el volumen del mosaico en la nueva unidad. → `app/(app)/(tabs)/__tests__/fitness.test.tsx`
 
+
+## Listas fluidas y edición en el sitio (T268)
+Probado en el demo, web a 390 px y Android en el emulador (Pixel 8 Pro): agregar dos seguidos sin perder el foco
+(con la ✓ del teclado), corregir un typo tocando el texto, mantener presionado → detalles, mantener y arrastrar →
+reordena sin abrir nada, palomear → completados, despalomear → vuelve a su sección, borrar desde los detalles.
+Automatizado: `hooks/__tests__/use-lists.test.tsx` (optimista, deshacer, una sola recarga),
+`app/(app)/list/__tests__/detail.test.tsx` (edición en el sitio, detalles, aviso al fallar),
+`components/lists/__tests__/drag-guard.test.tsx` (`onHold`). Falta:
+- [ ] (manual) En un teléfono real con Supabase (no el demo): agregar varios seguidos con datos móviles; que no
+  parpadeen ni se dupliquen cuando contesta el servidor ni cuando llega el aviso de tiempo real.
+- [ ] (manual) En una lista compartida, que la otra persona vea el elemento con el mismo nombre y en su lugar.
+- [ ] (manual) iOS (cuando haya build): mantener presionado no abre la lupa de selección de texto ni pelea con el
+  scroll.

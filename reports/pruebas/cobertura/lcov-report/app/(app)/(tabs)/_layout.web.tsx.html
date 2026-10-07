@@ -25,14 +25,14 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/16</span>
+                <span class='fraction'>0/18</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>0/19</span>
+                <span class='fraction'>0/21</span>
             </div>
         
             
@@ -46,7 +46,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/16</span>
+                <span class='fraction'>0/18</span>
             </div>
         
             
@@ -196,12 +196,37 @@
 <a name='L131'></a><a href='#L131'>131</a>
 <a name='L132'></a><a href='#L132'>132</a>
 <a name='L133'></a><a href='#L133'>133</a>
-<a name='L134'></a><a href='#L134'>134</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L134'></a><a href='#L134'>134</a>
+<a name='L135'></a><a href='#L135'>135</a>
+<a name='L136'></a><a href='#L136'>136</a>
+<a name='L137'></a><a href='#L137'>137</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -217,26 +242,6 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -282,6 +287,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -339,18 +345,20 @@ import { AppText, Wordmark } from '@/components/ui';
 import { IconSize, IconStroke, MaxContentWidth, Radius, Spacing } from '@/constants/theme';
 import { useSharedBadgeCount } from '@/hooks/use-shared-badge';
 import { useTheme } from '@/hooks/use-theme';
+import { useT } from '@/i18n';
 &nbsp;
 const TABS = <span class="cstat-no" title="statement not covered" >[</span>
-  { name: 'calendar', href: '/(app)/(tabs)/calendar', label: 'Calendario', Icon: CalendarDays },
-  { name: 'shared', href: '/(app)/(tabs)/shared', label: 'Compartido', Icon: Users },
-  { name: 'fitness', href: '/(app)/(tabs)/fitness', label: 'Fitness', Icon: Dumbbell },
-  { name: 'profile', href: '/(app)/(tabs)/profile', label: 'Perfil', Icon: UserRound },
+  { name: 'calendar', href: '/(app)/(tabs)/calendar', Icon: CalendarDays },
+  { name: 'shared', href: '/(app)/(tabs)/shared', Icon: Users },
+  { name: 'fitness', href: '/(app)/(tabs)/fitness', Icon: Dumbbell },
+  { name: 'profile', href: '/(app)/(tabs)/profile', Icon: UserRound },
 ] as const;
 &nbsp;
 type TabButtonProps = TabTriggerSlotProps &amp; { label: string; Icon: typeof CalendarDays; badge?: number };
 &nbsp;
 function <span class="fstat-no" title="function not covered" >TabButton(</span>{ label, Icon, isFocused, badge = <span class="branch-0 cbranch-no" title="branch not covered" >0,</span> ...props }: TabButtonProps) {
   const theme = <span class="cstat-no" title="statement not covered" >useTheme();</span>
+  const tx = <span class="cstat-no" title="statement not covered" >useT();</span>
   const { width } = <span class="cstat-no" title="statement not covered" >useWindowDimensions();</span>
   const showLabel = <span class="cstat-no" title="statement not covered" >width &gt;= 720;</span>
   const color = <span class="cstat-no" title="statement not covered" >isFocused ? theme.ink : theme.textSecondary;</span>
@@ -358,7 +366,7 @@ function <span class="fstat-no" title="function not covered" >TabButton(</span>{
     &lt;Pressable
       {...props}
       accessibilityRole="tab"
-      accessibilityLabel={badge &gt; 0 ? `${label}, ${badge} pendientes` : label}
+      accessibilityLabel={badge &gt; 0 ? `${label}, ${tx.common.pendingCount(badge)}` : label}
       accessibilityState={{ selected: !!isFocused }}
       style={<span class="fstat-no" title="function not covered" >({</span> pressed }) =&gt; <span class="cstat-no" title="statement not covered" >[</span>
         styles.tab,
@@ -415,14 +423,15 @@ function <span class="fstat-no" title="function not covered" >TopBar(</span>{ ch
 &nbsp;
 /** Tabs web: barra superior con ancho máximo (NFR-9). */
 export default function <span class="fstat-no" title="function not covered" >TabsLayoutWeb(</span>) {
+  const tx = <span class="cstat-no" title="statement not covered" >useT();</span>
   const badge = <span class="cstat-no" title="statement not covered" >useSharedBadgeCount();</span>
 <span class="cstat-no" title="statement not covered" >  return (</span>
     &lt;Tabs&gt;
       &lt;TabList asChild&gt;
         &lt;TopBar&gt;
-          {TABS.map(<span class="fstat-no" title="function not covered" >({</span> name, href, label, Icon }) =&gt; (
+          {TABS.map(<span class="fstat-no" title="function not covered" >({</span> name, href, Icon }) =&gt; (
 <span class="cstat-no" title="statement not covered" >            &lt;TabTrigger key={name} name={name} href={href} asChild&gt;</span>
-              &lt;TabButton label={label} Icon={Icon} badge={name === 'shared' ? badge : 0} /&gt;
+              &lt;TabButton label={name === 'calendar' ? tx.nav.calendar : tx.nav.modules[name]} Icon={Icon} badge={name === 'shared' ? badge : 0} /&gt;
             &lt;/TabTrigger&gt;
           ))}
         &lt;/TopBar&gt;
@@ -469,7 +478,7 @@ const styles = <span class="cstat-no" title="statement not covered" >StyleSheet.
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-09-23T16:54:46.714Z
+                at 2026-10-07T09:52:02.001Z
             </div>
         <script src="../../../prettify.js"></script>
         <script>

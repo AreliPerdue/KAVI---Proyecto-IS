@@ -23,16 +23,16 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">76.92% </span>
+                <span class="strong">80% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>10/13</span>
+                <span class='fraction'>12/15</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">90.9% </span>
+                <span class="strong">91.66% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>10/11</span>
+                <span class='fraction'>11/12</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">76.92% </span>
+                <span class="strong">80% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>10/13</span>
+                <span class='fraction'>12/15</span>
             </div>
         
             
@@ -61,7 +61,7 @@
             </div>
         </template>
     </div>
-    <div class='status-line medium'></div>
+    <div class='status-line high'></div>
     <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
@@ -144,7 +144,10 @@
 <a name='L79'></a><a href='#L79'>79</a>
 <a name='L80'></a><a href='#L80'>80</a>
 <a name='L81'></a><a href='#L81'>81</a>
-<a name='L82'></a><a href='#L82'>82</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L82'></a><a href='#L82'>82</a>
+<a name='L83'></a><a href='#L83'>83</a>
+<a name='L84'></a><a href='#L84'>84</a>
+<a name='L85'></a><a href='#L85'>85</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -170,11 +173,14 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">85x</span>
-<span class="cline-any cline-yes">85x</span>
-<span class="cline-any cline-yes">85x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">85x</span>
+<span class="cline-any cline-yes">193x</span>
+<span class="cline-any cline-yes">193x</span>
+<span class="cline-any cline-yes">193x</span>
+<span class="cline-any cline-yes">193x</span>
+<span class="cline-any cline-yes">193x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">193x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -187,16 +193,16 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">595x</span>
+<span class="cline-any cline-yes">1351x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">3570x</span>
-<span class="cline-any cline-yes">3570x</span>
-<span class="cline-any cline-yes">3570x</span>
+<span class="cline-any cline-yes">8106x</span>
+<span class="cline-any cline-yes">8106x</span>
+<span class="cline-any cline-yes">8106x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -217,7 +223,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">31x</span>
+<span class="cline-any cline-yes">51x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -233,9 +239,10 @@ import { AppText } from './app-text';
 import { IconButton } from './icon-button';
 import { Sheet } from './sheet';
 &nbsp;
+import { useLanguage, useT } from '@/i18n';
 import { IconSize, IconStroke, Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import { formatDayTitle, formatMonthTitle, isSameDay, isSameMonth, isToday, monthGridDays, shiftAnchor, toDayKey, WEEKDAY_LABELS } from '@/lib/dates';
+import { formatDayTitle, formatMonthTitle, isSameDay, isSameMonth, isToday, monthGridDays, shiftAnchor, toDayKey, weekdayLabels } from '@/lib/dates';
 &nbsp;
 /** Selector de fecha propio (funciona igual en iOS, Android y web). */
 export function DatePickerSheet({
@@ -243,7 +250,7 @@ export function DatePickerSheet({
   value,
   onClose,
   onSelect,
-  title = 'Fecha',
+  title,
 }: {
   visible: boolean;
   value: Date;
@@ -251,23 +258,25 @@ export function DatePickerSheet({
   onSelect: (date: Date) =&gt; void;
   title?: string;
 }) {
+  const lang = useLanguage(); // fechas en el idioma activo (spec 12, RF-I2)
+  const tx = useT();
   const theme = useTheme();
   const [anchor, setAnchor] = useState(value);
   const days = monthGridDays(anchor);
 &nbsp;
   return (
-    &lt;Sheet visible={visible} onClose={onClose} title={title}&gt;
+    &lt;Sheet visible={visible} onClose={onClose} title={title ?? tx.calendar.datePickerTitle}&gt;
       &lt;View style={styles.monthRow}&gt;
-        &lt;IconButton label="Mes anterior" onPress={<span class="fstat-no" title="function not covered" >()</span> =&gt; <span class="cstat-no" title="statement not covered" >setAnchor(shiftAnchor('month', anchor, -1))}</span>&gt;
+        &lt;IconButton label={tx.calendar.previousMonth} onPress={<span class="fstat-no" title="function not covered" >()</span> =&gt; <span class="cstat-no" title="statement not covered" >setAnchor(shiftAnchor('month', anchor, -1))}</span>&gt;
           &lt;ChevronLeft size={IconSize.action} strokeWidth={IconStroke} color={theme.text} /&gt;
         &lt;/IconButton&gt;
-        &lt;AppText variant="bodyStrong"&gt;{formatMonthTitle(anchor)}&lt;/AppText&gt;
-        &lt;IconButton label="Mes siguiente" onPress={<span class="fstat-no" title="function not covered" >()</span> =&gt; <span class="cstat-no" title="statement not covered" >setAnchor(shiftAnchor('month', anchor, 1))}</span>&gt;
+        &lt;AppText variant="bodyStrong"&gt;{formatMonthTitle(anchor, lang)}&lt;/AppText&gt;
+        &lt;IconButton label={tx.calendar.nextMonth} onPress={<span class="fstat-no" title="function not covered" >()</span> =&gt; <span class="cstat-no" title="statement not covered" >setAnchor(shiftAnchor('month', anchor, 1))}</span>&gt;
           &lt;ChevronRight size={IconSize.action} strokeWidth={IconStroke} color={theme.text} /&gt;
         &lt;/IconButton&gt;
       &lt;/View&gt;
       &lt;View style={styles.weekHeader}&gt;
-        {WEEKDAY_LABELS.map((label, i) =&gt; (
+        {weekdayLabels(lang).map((label, i) =&gt; (
           &lt;AppText key={i} variant="caption" color="textTertiary" style={styles.cellText}&gt;
             {label}
           &lt;/AppText&gt;
@@ -281,7 +290,7 @@ export function DatePickerSheet({
             &lt;Pressable
               key={toDayKey(day)}
               accessibilityRole="button"
-              accessibilityLabel={formatDayTitle(day)}
+              accessibilityLabel={formatDayTitle(day, lang)}
               accessibilityState={{ selected }}
               onPress={<span class="fstat-no" title="function not covered" >()</span> =&gt; <span class="cstat-no" title="statement not covered" >onSelect(day)}</span>
               style={({ pressed }) =&gt; [styles.cell, pressed ? <span class="branch-0 cbranch-no" title="branch not covered" >{ backgroundColor: theme.surfaceAlt } </span>: null]}&gt;
@@ -313,7 +322,7 @@ const styles = StyleSheet.create({
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-09-23T16:54:46.714Z
+                at 2026-10-07T09:52:02.001Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

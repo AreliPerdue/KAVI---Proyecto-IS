@@ -25,7 +25,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/27</span>
+                <span class='fraction'>0/29</span>
             </div>
         
             
@@ -46,7 +46,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/23</span>
+                <span class='fraction'>0/25</span>
             </div>
         
             
@@ -186,7 +186,11 @@
 <a name='L121'></a><a href='#L121'>121</a>
 <a name='L122'></a><a href='#L122'>122</a>
 <a name='L123'></a><a href='#L123'>123</a>
-<a name='L124'></a><a href='#L124'>124</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L124'></a><a href='#L124'>124</a>
+<a name='L125'></a><a href='#L125'>125</a>
+<a name='L126'></a><a href='#L126'>126</a>
+<a name='L127'></a><a href='#L127'>127</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -203,6 +207,8 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -315,17 +321,20 @@ import { Pressable, StyleSheet, View } from 'react-native';
 &nbsp;
 import { ModalHeader } from '@/components/modal-header';
 import { AppText, Button, EmptyState, ErrorState, LoadingState, Screen, ThemeIcon } from '@/components/ui';
-import { DIMENSION_BY_KEY } from '@/constants/dimensions';
 import { IconSize, IconStroke, Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useThemeMutations, useThemes } from '@/hooks/use-themes';
 import { useConfirm, useSnackbar } from '@/providers';
 import type { Theme } from '@/types/domain';
+import { useLanguage, useT } from '@/i18n';
+import { dimensionName, themeName } from '@/lib/theme-name';
 &nbsp;
 const MAX_WIDTH = <span class="cstat-no" title="statement not covered" >640;</span>
 &nbsp;
 /** Mis temas: crear y editar los propios, y personalizar los del sistema (RF-T2, RF-T3). */
 export default function <span class="fstat-no" title="function not covered" >ThemesScreen(</span>) {
+  const tx = <span class="cstat-no" title="statement not covered" >useT();</span>
+  const lang = <span class="cstat-no" title="statement not covered" >useLanguage();</span>
   const theme = <span class="cstat-no" title="statement not covered" >useTheme();</span>
   const router = <span class="cstat-no" title="statement not covered" >useRouter();</span>
   const confirm = <span class="cstat-no" title="statement not covered" >useConfirm();</span>
@@ -338,16 +347,16 @@ export default function <span class="fstat-no" title="function not covered" >The
   const Row = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >({</span> item }: { item: Theme }) =&gt; (</span>
 <span class="cstat-no" title="statement not covered" >    &lt;Pressable</span>
       accessibilityRole="button"
-      accessibilityLabel={`${item.name}, ${DIMENSION_BY_KEY[item.dimension].label}`}
+      accessibilityLabel={`${themeName(item, lang)}, ${dimensionName(item.dimension, lang)}`}
       onPress={<span class="fstat-no" title="function not covered" >()</span> =&gt; <span class="cstat-no" title="statement not covered" >router.push({ pathname: '/(app)/theme/new', params: { id: item.id } })}</span>
       style={<span class="fstat-no" title="function not covered" >({</span> pressed }) =&gt; <span class="cstat-no" title="statement not covered" >[styles.row, { borderColor: theme.border }, pressed ? { backgroundColor: theme.surfaceAlt } : null]}</span>&gt;
       &lt;View style={[styles.swatch, { backgroundColor: item.color }]}&gt;
         &lt;ThemeIcon name={item.icon} color="#FFFFFF" size={IconSize.inline} /&gt;
       &lt;/View&gt;
       &lt;View style={styles.rowText}&gt;
-        &lt;AppText variant="bodyStrong"&gt;{item.name}&lt;/AppText&gt;
+        &lt;AppText variant="bodyStrong"&gt;{themeName(item, lang)}&lt;/AppText&gt;
         &lt;AppText variant="caption" color="textSecondary"&gt;
-          {DIMENSION_BY_KEY[item.dimension].label}
+          {dimensionName(item.dimension, lang)}
         &lt;/AppText&gt;
       &lt;/View&gt;
       &lt;ChevronRight size={IconSize.inline} strokeWidth={IconStroke} color={theme.textTertiary} /&gt;
@@ -360,32 +369,32 @@ export default function <span class="fstat-no" title="function not covered" >The
    */
   const onReset = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >as</span>ync () =&gt; {</span>
     const ok = <span class="cstat-no" title="statement not covered" >await confirm({</span>
-      title: 'Restablecer los temas del sistema',
-      message: 'Volverán a su nombre, color e icono originales. Tus temas propios no se tocan, y las actividades que ya creaste conservan su estilo.',
-      confirmLabel: 'Restablecer',
+      title: tx.themes.manage.resetTitle,
+      message: tx.themes.manage.resetMessage,
+      confirmLabel: tx.themes.manage.resetConfirm,
       destructive: true,
     });
 <span class="cstat-no" title="statement not covered" >    if (!ok) <span class="cstat-no" title="statement not covered" >return;</span></span>
-<span class="cstat-no" title="statement not covered" >    resetSystem.mutate(undefined, { onSuccess: <span class="fstat-no" title="function not covered" >()</span> =&gt; <span class="cstat-no" title="statement not covered" >showSnackbar({ message: 'Temas del sistema restablecidos.' }) </span>});</span>
+<span class="cstat-no" title="statement not covered" >    resetSystem.mutate(undefined, { onSuccess: <span class="fstat-no" title="function not covered" >()</span> =&gt; <span class="cstat-no" title="statement not covered" >showSnackbar({ message: tx.themes.manage.resetDone }) </span>});</span>
   };
 &nbsp;
 <span class="cstat-no" title="statement not covered" >  return (</span>
     &lt;Screen modal scroll maxWidth={MAX_WIDTH}&gt;
-      &lt;ModalHeader title="Mis temas" /&gt;
+      &lt;ModalHeader title={tx.themes.manage.title} /&gt;
       &lt;Button
-        title="Nuevo tema"
+        title={tx.themes.manage.newTheme}
         icon={&lt;Plus size={IconSize.inline} strokeWidth={IconStroke} color={theme.onInk} /&gt;}
         onPress={<span class="fstat-no" title="function not covered" >()</span> =&gt; <span class="cstat-no" title="statement not covered" >router.push('/(app)/theme/new')}</span>
       /&gt;
-      {themes.isPending ? &lt;LoadingState label="Cargando temas…" /&gt; : null}
+      {themes.isPending ? &lt;LoadingState label={tx.themes.manage.loading} /&gt; : null}
       {themes.isError ? &lt;ErrorState message={themes.error.message} onRetry={<span class="fstat-no" title="function not covered" >()</span> =&gt; <span class="cstat-no" title="statement not covered" >themes.refetch()}</span> /&gt; : null}
       {themes.isSuccess &amp;&amp; own.length === 0 ? (
-        &lt;EmptyState title="Aún no tienes temas propios" description="Crea uno con nombre, dimensión, color e icono para clasificar a tu manera." /&gt;
+        &lt;EmptyState title={tx.themes.manage.emptyTitle} description={tx.themes.manage.emptyDescription} /&gt;
       ) : null}
       {own.length &gt; 0 ? (
         &lt;View style={styles.section}&gt;
           &lt;AppText variant="label" color="textSecondary"&gt;
-            Propios
+            {tx.themes.manage.own}
           &lt;/AppText&gt;
           {own.map(<span class="fstat-no" title="function not covered" >(t</span>) =&gt; (
 <span class="cstat-no" title="statement not covered" >            &lt;Row key={t.id} item={t} /&gt;</span>
@@ -395,16 +404,16 @@ export default function <span class="fstat-no" title="function not covered" >The
       {system.length &gt; 0 ? (
         &lt;View style={styles.section}&gt;
           &lt;AppText variant="label" color="textSecondary"&gt;
-            Del sistema
+            {tx.themes.manage.system}
           &lt;/AppText&gt;
           &lt;AppText variant="caption" color="textTertiary"&gt;
-            Puedes cambiarles el nombre, el color y el icono. Los cambios son solo tuyos: nadie más los ve.
+            {tx.themes.manage.systemHint}
           &lt;/AppText&gt;
           {system.map(<span class="fstat-no" title="function not covered" >(t</span>) =&gt; (
 <span class="cstat-no" title="statement not covered" >            &lt;Row key={t.id} item={t} /&gt;</span>
           ))}
           &lt;Button
-            title="Restablecer temas del sistema"
+            title={tx.themes.manage.resetSystem}
             variant="secondary"
             icon={&lt;RotateCcw size={IconSize.inline} strokeWidth={IconStroke} color={theme.text} /&gt;}
             onPress={onReset}
@@ -439,7 +448,7 @@ const styles = <span class="cstat-no" title="statement not covered" >StyleSheet.
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-09-23T16:54:46.714Z
+                at 2026-10-07T09:52:02.001Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

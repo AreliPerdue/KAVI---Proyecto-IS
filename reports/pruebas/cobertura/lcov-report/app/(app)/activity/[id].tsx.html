@@ -23,9 +23,9 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">67.46% </span>
+                <span class="strong">68.23% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>56/83</span>
+                <span class='fraction'>58/85</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">71.62% </span>
+                <span class="strong">72.36% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>53/74</span>
+                <span class='fraction'>55/76</span>
             </div>
         
             
@@ -382,7 +382,12 @@
 <a name='L317'></a><a href='#L317'>317</a>
 <a name='L318'></a><a href='#L318'>318</a>
 <a name='L319'></a><a href='#L319'>319</a>
-<a name='L320'></a><a href='#L320'>320</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L320'></a><a href='#L320'>320</a>
+<a name='L321'></a><a href='#L321'>321</a>
+<a name='L322'></a><a href='#L322'>322</a>
+<a name='L323'></a><a href='#L323'>323</a>
+<a name='L324'></a><a href='#L324'>324</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -417,6 +422,8 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">29x</span>
+<span class="cline-any cline-yes">29x</span>
 <span class="cline-any cline-yes">29x</span>
 <span class="cline-any cline-yes">29x</span>
 <span class="cline-any cline-yes">29x</span>
@@ -637,6 +644,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -720,6 +728,7 @@ import { formatDayTitle, formatTimeRange, fromIso } from '@/lib/dates';
 import { describeRecurrence, parseRRule } from '@/lib/recurrence';
 import { useAuth, useConfirm, useSnackbar } from '@/providers';
 import type { RecurrenceScope } from '@/services/activities';
+import { useLanguage, useT } from '@/i18n';
 &nbsp;
 const DETAIL_MAX_WIDTH = 560;
 &nbsp;
@@ -737,6 +746,8 @@ type PendingAction = 'edit' | 'delete';
 /** Hoja de detalle de actividad: editar y eliminar, con "solo esta / toda la serie" (RF-C7, RF-C8). */
 export default function ActivityDetailScreen() {
   const theme = useTheme();
+  const tx = useT();
+  const lang = useLanguage();
   const router = useRouter();
   const confirm = useConfirm();
   const showSnackbar = useSnackbar();
@@ -760,7 +771,7 @@ export default function ActivityDetailScreen() {
   if (activity.isPending) {
     return (
       &lt;Screen modal maxWidth={DETAIL_MAX_WIDTH}&gt;
-        &lt;ModalHeader title="Actividad" /&gt;
+        &lt;ModalHeader title={tx.calendar.detail.title} /&gt;
         &lt;LoadingState /&gt;
       &lt;/Screen&gt;
     );
@@ -768,7 +779,7 @@ export default function ActivityDetailScreen() {
   if (activity.isError) {
     return (
       &lt;Screen modal maxWidth={DETAIL_MAX_WIDTH}&gt;
-        &lt;ModalHeader title="Actividad" /&gt;
+        &lt;ModalHeader title={tx.calendar.detail.title} /&gt;
         &lt;ErrorState message={activity.error.message} onRetry={() =&gt; activity.refetch()} /&gt;
       &lt;/Screen&gt;
     );
@@ -790,9 +801,9 @@ export default function ActivityDetailScreen() {
 &nbsp;
   const doDelete = async (scope: RecurrenceScope) =&gt; {
     const ok = await confirm({
-      title: scope === 'series' ? <span class="branch-0 cbranch-no" title="branch not covered" >'Eliminar toda la serie' </span>: 'Eliminar actividad',
-      message: scope === 'series' ? <span class="branch-0 cbranch-no" title="branch not covered" >`Se eliminará "${data.title}" y sus próximas repeticiones.` </span>: `Se eliminará "${data.title}".`,
-      confirmLabel: 'Eliminar',
+      title: scope === 'series' ? <span class="branch-0 cbranch-no" title="branch not covered" >tx.calendar.detail.deleteSeries </span>: tx.calendar.detail.deleteActivity,
+      message: scope === 'series' ? <span class="branch-0 cbranch-no" title="branch not covered" >tx.calendar.detail.deleteSeriesMessage(data.title) </span>: tx.calendar.detail.deleteMessage(data.title),
+      confirmLabel: tx.calendar.detail.delete,
       destructive: true,
     });
     if (!ok) return;
@@ -803,8 +814,8 @@ export default function ActivityDetailScreen() {
         onSuccess: <span class="fstat-no" title="function not covered" >()</span> =&gt; {
 <span class="cstat-no" title="statement not covered" >          close();</span>
 <span class="cstat-no" title="statement not covered" >          showSnackbar({</span>
-            message: scope === 'series' ? 'Serie eliminada.' : 'Actividad eliminada.',
-            actionLabel: scope === 'series' ? undefined : 'Deshacer',
+            message: scope === 'series' ? tx.calendar.detail.seriesDeleted : tx.calendar.detail.deleted,
+            actionLabel: scope === 'series' ? undefined : tx.calendar.detail.undo,
             onAction:
               scope === 'series'
                 ? undefined
@@ -835,22 +846,22 @@ export default function ActivityDetailScreen() {
 &nbsp;
   return (
     &lt;Screen modal scroll maxWidth={DETAIL_MAX_WIDTH}&gt;
-      &lt;ModalHeader title="Actividad" /&gt;
+      &lt;ModalHeader title={tx.calendar.detail.title} /&gt;
       &lt;View style={styles.hero}&gt;
         &lt;View style={[styles.iconBadge, { backgroundColor: color }]}&gt;
           &lt;ThemeIcon name={data.icon} color="#FFFFFF" size={IconSize.action} /&gt;
         &lt;/View&gt;
         &lt;View style={styles.heroText}&gt;
           &lt;AppText variant="title"&gt;{data.title}&lt;/AppText&gt;
-          &lt;AppText color="textSecondary"&gt;{formatDayTitle(fromIso(data.start_at))}&lt;/AppText&gt;
+          &lt;AppText color="textSecondary"&gt;{formatDayTitle(fromIso(data.start_at), lang)}&lt;/AppText&gt;
           &lt;AppText color="textSecondary" tabular&gt;
-            {formatTimeRange(data.start_at, data.end_at, data.all_day)}
+            {formatTimeRange(data.start_at, data.end_at, data.all_day, lang)}
           &lt;/AppText&gt;
           {!isOwner ? (
             &lt;View style={styles.inline}&gt;
               &lt;Users size={14} strokeWidth={IconStroke} color={theme.textTertiary} /&gt;
               &lt;AppText variant="caption" color="textTertiary"&gt;
-                Compartida por {data.owner_name ?? <span class="branch-1 cbranch-no" title="branch not covered" >'un contacto'}</span> · solo lectura
+                {tx.calendar.detail.sharedBy(data.owner_name ?? <span class="branch-1 cbranch-no" title="branch not covered" >null)</span>}
               &lt;/AppText&gt;
             &lt;/View&gt;
           ) : null}
@@ -858,7 +869,7 @@ export default function ActivityDetailScreen() {
             &lt;View style={styles.inline}&gt;
               &lt;Repeat size={14} strokeWidth={IconStroke} color={theme.textTertiary} /&gt;
               &lt;AppText variant="caption" color="textTertiary"&gt;
-                {describeRecurrence(rule)}
+                {describeRecurrence(rule, lang)}
               &lt;/AppText&gt;
             &lt;/View&gt;
           ) : null}
@@ -879,22 +890,22 @@ export default function ActivityDetailScreen() {
             &lt;BellOff size={IconSize.inline} strokeWidth={IconStroke} color={theme.textTertiary} /&gt;
           )}
           &lt;AppText variant="label" color="textSecondary"&gt;
-            Recordatorios
+            {tx.calendar.detail.reminders}
           &lt;/AppText&gt;
         &lt;/View&gt;
         {reminders.data?.length ? (
           reminders.data.map((r) =&gt; (
             &lt;SwitchRow
               key={r.id}
-              label={describeOffset(r.offset_minutes)}
-              hint={r.enabled ? undefined : <span class="branch-1 cbranch-no" title="branch not covered" >'Silenciado solo para ti'}</span>
+              label={describeOffset(r.offset_minutes, lang)}
+              hint={r.enabled ? undefined : <span class="branch-1 cbranch-no" title="branch not covered" >tx.calendar.detail.mutedForYou}</span>
               value={r.enabled}
               onValueChange={(enabled) =&gt; setEnabled.mutate({ reminderId: r.id, enabled })}
             /&gt;
           ))
         ) : isOwner ? (
           &lt;Button
-            title="Agregar recordatorios"
+            title={tx.calendar.detail.addReminders}
             variant="secondary"
             icon={&lt;Bell size={IconSize.inline} strokeWidth={IconStroke} color={theme.text} /&gt;}
             onPress={<span class="fstat-no" title="function not covered" >()</span> =&gt;
@@ -906,7 +917,7 @@ export default function ActivityDetailScreen() {
           /&gt;
         ) : (
           &lt;AppText variant="caption" color="textTertiary"&gt;
-            Esta actividad no tiene recordatorios.
+            {tx.calendar.detail.noReminders}
           &lt;/AppText&gt;
         )}
       &lt;/View&gt;
@@ -919,15 +930,15 @@ export default function ActivityDetailScreen() {
           &lt;View style={styles.inline}&gt;
             &lt;Users size={IconSize.inline} strokeWidth={IconStroke} color={theme.textSecondary} /&gt;
             &lt;AppText variant="label" color="textSecondary"&gt;
-              Invitados · {porRespuesta.accepted.length} de {invitados.length} confirmados
+              {tx.calendar.detail.guests(porRespuesta.accepted.length, invitados.length)}
             &lt;/AppText&gt;
           &lt;/View&gt;
           {(
             [
-              ['accepted', 'Van', 'success'],
-              ['maybe', 'Tal vez', 'text'],
-              ['declined', 'No van', 'textTertiary'],
-              ['pending', 'Sin responder', 'textTertiary'],
+              ['accepted', tx.calendar.detail.rsvp.accepted, 'success'],
+              ['maybe', tx.calendar.detail.rsvp.maybe, 'text'],
+              ['declined', tx.calendar.detail.rsvp.declined, 'textTertiary'],
+              ['pending', tx.calendar.detail.rsvp.pending, 'textTertiary'],
             ] as const
           ).map(([clave, etiqueta, color]) =&gt;
             porRespuesta[clave].length &gt; 0 ? (
@@ -936,7 +947,7 @@ export default function ActivityDetailScreen() {
                   {etiqueta}:
                 &lt;/AppText&gt;
                 &lt;AppText variant="caption" color="textSecondary" style={styles.invitados}&gt;
-                  {porRespuesta[clave].map((s) =&gt; s.profile.display_name?.split(' ')[0] ?? <span class="branch-1 cbranch-no" title="branch not covered" >'Contacto')</span>.join(', ')}
+                  {porRespuesta[clave].map((s) =&gt; s.profile.display_name?.split(' ')[0] ?? <span class="branch-1 cbranch-no" title="branch not covered" >tx.calendar.contactFallback)</span>.join(', ')}
                 &lt;/AppText&gt;
               &lt;/View&gt;
             ) : null,
@@ -946,7 +957,7 @@ export default function ActivityDetailScreen() {
 &nbsp;
       {isOwner &amp;&amp; data.is_gym ? (
         &lt;Button
-          title={workout.data ? <span class="branch-0 cbranch-no" title="branch not covered" >'Ver entrenamiento' </span>: 'Registrar entrenamiento'}
+          title={workout.data ? <span class="branch-0 cbranch-no" title="branch not covered" >tx.calendar.detail.viewWorkout </span>: tx.calendar.detail.logWorkout}
           icon={&lt;Dumbbell size={IconSize.inline} strokeWidth={IconStroke} color={theme.onInk} /&gt;}
           loading={workout.isPending || workoutMutations.create.isPending}
           onPress={<span class="fstat-no" title="function not covered" >()</span> =&gt; {
@@ -955,7 +966,8 @@ export default function ActivityDetailScreen() {
 <span class="cstat-no" title="statement not covered" >              return;</span>
             }
 <span class="cstat-no" title="statement not covered" >            workoutMutations.create.mutate(</span>
-              { activity_id: data.id, performed_at: data.start_at },
+              // Registrar desde la actividad abre la sesión en vivo (spec 07 v2, RF-F38).
+              { activity_id: data.id, performed_at: data.start_at, status: 'active' },
               { onSuccess: <span class="fstat-no" title="function not covered" >(c</span>reated) =&gt; <span class="cstat-no" title="statement not covered" >router.push({ pathname: '/(app)/workout/[id]', params: { id: created.id, mode: 'edit' } }) </span>},
             );
           }}
@@ -967,17 +979,17 @@ export default function ActivityDetailScreen() {
           &lt;&gt;
             &lt;ActionRow
               icon={&lt;Pencil size={IconSize.inline} strokeWidth={IconStroke} color={theme.text} /&gt;}
-              label="Editar"
+              label={tx.calendar.detail.edit}
               onPress={() =&gt; (isSeries ? setPending('edit') : edit('this'))}
             /&gt;
             &lt;ActionRow
               icon={&lt;Share2 size={IconSize.inline} strokeWidth={IconStroke} color={theme.text} /&gt;}
-              label="Compartir"
+              label={tx.calendar.detail.share}
               onPress={() =&gt; router.push({ pathname: '/(app)/activity/share', params: { id: data.id } })}
             /&gt;
             &lt;ActionRow
               icon={&lt;Trash2 size={IconSize.inline} strokeWidth={IconStroke} color={theme.danger} /&gt;}
-              label="Eliminar"
+              label={tx.calendar.detail.delete}
               color="danger"
               onPress={() =&gt; (isSeries ? setPending('delete') : void doDelete('this'))}
               disabled={remove.isPending}
@@ -986,24 +998,24 @@ export default function ActivityDetailScreen() {
         ) : (
           &lt;ActionRow
             icon={&lt;LogOut size={IconSize.inline} strokeWidth={IconStroke} color={theme.danger} /&gt;}
-            label="Salir de esta actividad"
+            label={tx.calendar.detail.leave}
             color="danger"
             disabled={shareMutations.remove.isPending}
             onPress={<span class="fstat-no" title="function not covered" >as</span>ync () =&gt; {
-              const ok = <span class="cstat-no" title="statement not covered" >await confirm({ title: 'Salir de la actividad', message: 'Dejará de aparecer en tu calendario.', confirmLabel: 'Salir', destructive: true });</span>
+              const ok = <span class="cstat-no" title="statement not covered" >await confirm({ title: tx.calendar.detail.leaveTitle, message: tx.calendar.detail.leaveMessage, confirmLabel: tx.calendar.detail.leaveConfirm, destructive: true });</span>
 <span class="cstat-no" title="statement not covered" >              if (!ok) <span class="cstat-no" title="statement not covered" >return;</span></span>
               const myShare = <span class="cstat-no" title="statement not covered" >await findMyShare(data.id);</span>
-<span class="cstat-no" title="statement not covered" >              if (myShare) <span class="cstat-no" title="statement not covered" >shareMutations.remove.mutate(myShare, { onSuccess: <span class="fstat-no" title="function not covered" >()</span> =&gt; { <span class="cstat-no" title="statement not covered" >showSnackbar({ message: 'Saliste de la actividad.' }); <span class="cstat-no" title="statement not covered" ></span>close(); </span>} });</span></span>
+<span class="cstat-no" title="statement not covered" >              if (myShare) <span class="cstat-no" title="statement not covered" >shareMutations.remove.mutate(myShare, { onSuccess: <span class="fstat-no" title="function not covered" >()</span> =&gt; { <span class="cstat-no" title="statement not covered" >showSnackbar({ message: tx.calendar.detail.left }); <span class="cstat-no" title="statement not covered" ></span>close(); </span>} });</span></span>
             }}
           /&gt;
         )}
       &lt;/View&gt;
 &nbsp;
-      &lt;Sheet visible={pending !== null} onClose={<span class="fstat-no" title="function not covered" >()</span> =&gt; <span class="cstat-no" title="statement not covered" >setPending(null)}</span> title="¿Solo esta ocurrencia o toda la serie?"&gt;
-        &lt;AppText color="textSecondary"&gt;Esta actividad se repite. Elige qué quieres {pending === 'delete' ? 'eliminar' : 'editar'}.&lt;/AppText&gt;
+      &lt;Sheet visible={pending !== null} onClose={<span class="fstat-no" title="function not covered" >()</span> =&gt; <span class="cstat-no" title="statement not covered" >setPending(null)}</span> title={tx.calendar.detail.scopeQuestion}&gt;
+        &lt;AppText color="textSecondary"&gt;{pending ? tx.calendar.detail.scopeExplain(pending) : null}&lt;/AppText&gt;
         &lt;View style={styles.scopeActions}&gt;
-          &lt;Button title="Solo esta ocurrencia" variant="secondary" onPress={() =&gt; pending &amp;&amp; runWithScope(pending, 'this')} /&gt;
-          &lt;Button title="Toda la serie" onPress={<span class="fstat-no" title="function not covered" >()</span> =&gt; <span class="cstat-no" title="statement not covered" >pending &amp;&amp; runWithScope(pending, 'series')}</span> /&gt;
+          &lt;Button title={tx.calendar.detail.onlyThis} variant="secondary" onPress={() =&gt; pending &amp;&amp; runWithScope(pending, 'this')} /&gt;
+          &lt;Button title={tx.calendar.detail.wholeSeries} onPress={<span class="fstat-no" title="function not covered" >()</span> =&gt; <span class="cstat-no" title="statement not covered" >pending &amp;&amp; runWithScope(pending, 'series')}</span> /&gt;
         &lt;/View&gt;
       &lt;/Sheet&gt;
     &lt;/Screen&gt;
@@ -1027,7 +1039,7 @@ const styles = StyleSheet.create({
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-09-23T16:54:46.714Z
+                at 2026-10-07T09:52:02.001Z
             </div>
         <script src="../../../prettify.js"></script>
         <script>

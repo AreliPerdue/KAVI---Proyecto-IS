@@ -23,9 +23,9 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">85.96% </span>
+                <span class="strong">86.44% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>49/57</span>
+                <span class='fraction'>51/59</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">93.47% </span>
+                <span class="strong">93.75% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>43/46</span>
+                <span class='fraction'>45/48</span>
             </div>
         
             
@@ -264,7 +264,14 @@
 <a name='L199'></a><a href='#L199'>199</a>
 <a name='L200'></a><a href='#L200'>200</a>
 <a name='L201'></a><a href='#L201'>201</a>
-<a name='L202'></a><a href='#L202'>202</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L202'></a><a href='#L202'>202</a>
+<a name='L203'></a><a href='#L203'>203</a>
+<a name='L204'></a><a href='#L204'>204</a>
+<a name='L205'></a><a href='#L205'>205</a>
+<a name='L206'></a><a href='#L206'>206</a>
+<a name='L207'></a><a href='#L207'>207</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -293,6 +300,8 @@
 <span class="cline-any cline-yes">34x</span>
 <span class="cline-any cline-yes">34x</span>
 <span class="cline-any cline-yes">34x</span>
+<span class="cline-any cline-yes">34x</span>
+<span class="cline-any cline-yes">34x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">34x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -307,6 +316,7 @@
 <span class="cline-any cline-yes">34x</span>
 <span class="cline-any cline-yes">15x</span>
 <span class="cline-any cline-yes">6x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -427,15 +437,15 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1344x</span>
-<span class="cline-any cline-yes">1344x</span>
+<span class="cline-any cline-yes">1376x</span>
+<span class="cline-any cline-yes">1376x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-yes">1344x</span>
+<span class="cline-any cline-yes">1376x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -481,11 +491,15 @@ import { useTheme } from '@/hooks/use-theme';
 import { useThemeMutations, useThemes } from '@/hooks/use-themes';
 import { themeFormSchema, type ThemeFormValues } from '@/lib/schemas/theme';
 import { useConfirm, useSnackbar } from '@/providers';
+import { useLanguage, useT } from '@/i18n';
+import { dimensionName, themeName } from '@/lib/theme-name';
 &nbsp;
 const MAX_WIDTH = 640;
 &nbsp;
 /** Crear/editar tema propio: nombre + dimensión + color (12) + icono (~40) (RF-T2). */
 export default function ThemeFormScreen() {
+  const tx = useT();
+  const lang = useLanguage();
   const theme = useTheme();
   const router = useRouter();
   const confirm = useConfirm();
@@ -508,7 +522,8 @@ export default function ThemeFormScreen() {
   useEffect(() =&gt; {
     if (editing) {
       reset({
-        name: editing.name,
+        // Un tema del sistema se edita desde su nombre en el idioma activo (spec 12).
+        name: themeName(editing),
         dimension: editing.dimension,
         color: (THEME_PALETTE as readonly string[]).includes(editing.color) ? (editing.color as ThemeFormValues['color']) : THEME_PALETTE[0],
         icon: editing.icon,
@@ -521,28 +536,28 @@ export default function ThemeFormScreen() {
 &nbsp;
   const onSubmit = handleSubmit((values) =&gt; {
     if (editing) {
-      update.mutate({ id: editing.id, patch: values }, { onSuccess: <span class="fstat-no" title="function not covered" >()</span> =&gt; { <span class="cstat-no" title="statement not covered" >showSnackbar({ message: 'Tema actualizado.' }); <span class="cstat-no" title="statement not covered" ></span>close(); </span>} });
+      update.mutate({ id: editing.id, patch: values }, { onSuccess: <span class="fstat-no" title="function not covered" >()</span> =&gt; { <span class="cstat-no" title="statement not covered" >showSnackbar({ message: tx.themes.editor.updated }); <span class="cstat-no" title="statement not covered" ></span>close(); </span>} });
     } else {
-      create.mutate(values, { onSuccess: () =&gt; { showSnackbar({ message: 'Tema creado.' }); close(); } });
+      create.mutate(values, { onSuccess: () =&gt; { showSnackbar({ message: tx.themes.editor.created }); close(); } });
     }
   });
 &nbsp;
   const onDelete = async () =&gt; {
     <span class="missing-if-branch" title="if path not taken" >I</span>if (!editing) <span class="cstat-no" title="statement not covered" >return;</span>
     const ok = await confirm({
-      title: 'Eliminar tema',
-      message: 'Las actividades que lo usan conservarán su color e icono y quedarán sin tema.',
-      confirmLabel: 'Eliminar',
+      title: tx.themes.editor.delete,
+      message: tx.themes.editor.deleteMessage,
+      confirmLabel: tx.themes.editor.deleteConfirm,
       destructive: true,
     });
     if (!ok) return;
-    remove.mutate(editing.id, { onSuccess: <span class="fstat-no" title="function not covered" >()</span> =&gt; { <span class="cstat-no" title="statement not covered" >showSnackbar({ message: 'Tema eliminado.' }); <span class="cstat-no" title="statement not covered" ></span>close(); </span>} });
+    remove.mutate(editing.id, { onSuccess: <span class="fstat-no" title="function not covered" >()</span> =&gt; { <span class="cstat-no" title="statement not covered" >showSnackbar({ message: tx.themes.editor.deleted }); <span class="cstat-no" title="statement not covered" ></span>close(); </span>} });
   };
 &nbsp;
   if (id &amp;&amp; themes.isPending) {
     return (
       &lt;Screen modal maxWidth={MAX_WIDTH}&gt;
-        &lt;ModalHeader title="Editar tema" /&gt;
+        &lt;ModalHeader title={tx.themes.editor.edit} /&gt;
         &lt;LoadingState /&gt;
       &lt;/Screen&gt;
     );
@@ -550,29 +565,29 @@ export default function ThemeFormScreen() {
   <span class="missing-if-branch" title="if path not taken" >I</span>if (id &amp;&amp; themes.isSuccess &amp;&amp; <span class="branch-2 cbranch-no" title="branch not covered" >!editing)</span> {
 <span class="cstat-no" title="statement not covered" >    return (</span>
       &lt;Screen modal maxWidth={MAX_WIDTH}&gt;
-        &lt;ModalHeader title="Editar tema" /&gt;
-        &lt;ErrorState message="Ese tema ya no existe." /&gt;
+        &lt;ModalHeader title={tx.themes.editor.edit} /&gt;
+        &lt;ErrorState message={tx.themes.editor.notFound} /&gt;
       &lt;/Screen&gt;
     );
   }
 &nbsp;
   return (
     &lt;Screen modal scroll maxWidth={MAX_WIDTH}&gt;
-      &lt;ModalHeader title={delSistema ? <span class="branch-0 cbranch-no" title="branch not covered" >'Personalizar tema' </span>: editing ? 'Editar tema' : 'Nuevo tema'} /&gt;
+      &lt;ModalHeader title={delSistema ? <span class="branch-0 cbranch-no" title="branch not covered" >tx.themes.editor.customize </span>: editing ? tx.themes.editor.edit : tx.themes.manage.newTheme} /&gt;
       {mutation.error ? &lt;Banner tone="error" message={mutation.error.message} /&gt; : null}
 &nbsp;
       &lt;View style={[styles.preview, { backgroundColor: `${color}22`, borderColor: color }]}&gt;
         &lt;View style={[styles.previewSwatch, { backgroundColor: color }]}&gt;
           &lt;ThemeIcon name={icon} color="#FFFFFF" size={IconSize.action} /&gt;
         &lt;/View&gt;
-        &lt;AppText variant="bodyStrong"&gt;{name.trim() || 'Nombre del tema'}&lt;/AppText&gt;
+        &lt;AppText variant="bodyStrong"&gt;{name.trim() || tx.themes.editor.namePlaceholderPreview}&lt;/AppText&gt;
       &lt;/View&gt;
 &nbsp;
       &lt;Controller
         control={control}
         name="name"
         render={({ field: { onChange, onBlur, value }, fieldState: { error } }) =&gt; (
-          &lt;TextField label="Nombre" value={value} onChangeText={onChange} onBlur={onBlur} error={error?.message} placeholder="Ej. Piano, Voluntariado…" maxLength={40} /&gt;
+          &lt;TextField label={tx.themes.editor.name} value={value} onChangeText={onChange} onBlur={onBlur} error={error?.message} placeholder={tx.themes.editor.namePlaceholder} maxLength={40} /&gt;
         )}
       /&gt;
 &nbsp;
@@ -582,11 +597,11 @@ export default function ThemeFormScreen() {
         render={({ field: { onChange, value } }) =&gt; (
           &lt;View style={styles.section}&gt;
             &lt;AppText variant="label" color="textSecondary"&gt;
-              Dimensión
+              {tx.themes.editor.dimension}
             &lt;/AppText&gt;
             &lt;View style={styles.chips}&gt;
               {DIMENSIONS.map((d) =&gt; (
-                &lt;Chip key={d.key} label={d.label} color={d.color} selected={value === d.key} onPress={() =&gt; onChange(d.key)} /&gt;
+                &lt;Chip key={d.key} label={dimensionName(d.key, lang)} color={d.color} selected={value === d.key} onPress={() =&gt; onChange(d.key)} /&gt;
               ))}
             &lt;/View&gt;
           &lt;/View&gt;
@@ -599,14 +614,14 @@ export default function ThemeFormScreen() {
         render={({ field: { onChange, value } }) =&gt; (
           &lt;View style={styles.section}&gt;
             &lt;AppText variant="label" color="textSecondary"&gt;
-              Color
+              {tx.themes.editor.colorSection}
             &lt;/AppText&gt;
             &lt;View style={styles.chips}&gt;
               {THEME_PALETTE.map((c) =&gt; (
                 &lt;Pressable
                   key={c}
                   accessibilityRole="button"
-                  accessibilityLabel={`Color ${c}`}
+                  accessibilityLabel={tx.themes.editor.color(c)}
                   accessibilityState={{ selected: value === c }}
                   onPress={<span class="fstat-no" title="function not covered" >()</span> =&gt; <span class="cstat-no" title="statement not covered" >onChange(c)}</span>
                   style={({ pressed }) =&gt; [styles.colorDot, { backgroundColor: c }, pressed ? <span class="branch-0 cbranch-no" title="branch not covered" >styles.pressed </span>: null]}&gt;
@@ -624,7 +639,7 @@ export default function ThemeFormScreen() {
         render={({ field: { onChange, value } }) =&gt; (
           &lt;View style={styles.section}&gt;
             &lt;AppText variant="label" color="textSecondary"&gt;
-              Icono
+              {tx.themes.editor.iconSection}
             &lt;/AppText&gt;
             &lt;View style={styles.chips}&gt;
               {THEME_ICON_NAMES.map((n) =&gt; {
@@ -633,7 +648,7 @@ export default function ThemeFormScreen() {
                   &lt;Pressable
                     key={n}
                     accessibilityRole="button"
-                    accessibilityLabel={`Icono ${n}`}
+                    accessibilityLabel={tx.themes.editor.icon(n)}
                     accessibilityState={{ selected }}
                     onPress={<span class="fstat-no" title="function not covered" >()</span> =&gt; <span class="cstat-no" title="statement not covered" >onChange(n)}</span>
                     style={({ pressed }) =&gt; [
@@ -650,9 +665,9 @@ export default function ThemeFormScreen() {
         )}
       /&gt;
 &nbsp;
-      &lt;Button title={editing ? 'Guardar cambios' : 'Crear tema'} onPress={onSubmit} loading={mutation.isPending} /&gt;
+      &lt;Button title={editing ? tx.themes.editor.saveChanges : tx.themes.editor.create} onPress={onSubmit} loading={mutation.isPending} /&gt;
       {/* Un tema del sistema se personaliza, no se borra: su fila la comparten todas las cuentas. */}
-      {editing &amp;&amp; !delSistema ? &lt;Button title="Eliminar tema" variant="danger" onPress={onDelete} loading={remove.isPending} /&gt; : null}
+      {editing &amp;&amp; !delSistema ? &lt;Button title={tx.themes.editor.delete} variant="danger" onPress={onDelete} loading={remove.isPending} /&gt; : null}
     &lt;/Screen&gt;
   );
 }
@@ -673,7 +688,7 @@ const styles = StyleSheet.create({
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-09-23T16:54:46.714Z
+                at 2026-10-07T09:52:02.001Z
             </div>
         <script src="../../../prettify.js"></script>
         <script>

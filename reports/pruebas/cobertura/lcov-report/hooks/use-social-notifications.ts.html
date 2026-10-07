@@ -23,9 +23,9 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">94.73% </span>
+                <span class="strong">95.12% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>36/38</span>
+                <span class='fraction'>39/41</span>
             </div>
         
             
@@ -46,7 +46,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>31/31</span>
+                <span class='fraction'>34/34</span>
             </div>
         
             
@@ -148,7 +148,12 @@
 <a name='L83'></a><a href='#L83'>83</a>
 <a name='L84'></a><a href='#L84'>84</a>
 <a name='L85'></a><a href='#L85'>85</a>
-<a name='L86'></a><a href='#L86'>86</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L86'></a><a href='#L86'>86</a>
+<a name='L87'></a><a href='#L87'>87</a>
+<a name='L88'></a><a href='#L88'>88</a>
+<a name='L89'></a><a href='#L89'>89</a>
+<a name='L90'></a><a href='#L90'>90</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -178,6 +183,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">32x</span>
 <span class="cline-any cline-yes">32x</span>
+<span class="cline-any cline-yes">32x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -198,6 +204,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">9x</span>
 <span class="cline-any cline-yes">9x</span>
+<span class="cline-any cline-yes">7x</span>
 <span class="cline-any cline-yes">7x</span>
 <span class="cline-any cline-yes">7x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -225,6 +232,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">6x</span>
+<span class="cline-any cline-yes">6x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -239,6 +247,7 @@ import { useContacts } from '@/hooks/use-connections';
 import { useInvitations } from '@/hooks/use-shares';
 import { formatShortDate, formatTime, fromIso } from '@/lib/dates';
 import { presentNow } from '@/lib/notifications';
+import { t, useLanguage } from '@/i18n';
 &nbsp;
 /** Nombre de pila, que es como se nombra a las personas en toda la app. */
 function nombreDe(perfil: { display_name: string | null; username: string }): string {
@@ -261,6 +270,7 @@ function nombreDe(perfil: { display_name: string | null; username: string }): st
  * igualmente en la pantalla de Compartido, con su contador.
  */
 export function useSocialNotifications() {
+  const lang = useLanguage();
   const contacts = useContacts();
   const invitations = useInvitations();
 &nbsp;
@@ -284,14 +294,15 @@ export function useSocialNotifications() {
     const previas = solicitudesVistas.current;
     for (const contacto of entrantes) {
       <span class="missing-if-branch" title="if path not taken" >I</span>if (previas.has(contacto.connection.id)) <span class="cstat-no" title="statement not covered" >continue;</span>
+      const n = t(lang).notifications;
       void presentNow(
-        'Nueva solicitud de contacto',
-        `${nombreDe(contacto.profile)} quiere conectar contigo.`,
+        n.contactRequestTitle,
+        n.contactRequestBody(nombreDe(contacto.profile)),
         { tipo: 'solicitud' },
       );
     }
     solicitudesVistas.current = ids;
-  }, [contacts.isSuccess, contacts.data]);
+  }, [contacts.isSuccess, contacts.data, lang]);
 &nbsp;
   useEffect(() =&gt; {
     if (!invitations.isSuccess) return;
@@ -307,16 +318,17 @@ export function useSocialNotifications() {
       <span class="missing-if-branch" title="if path not taken" >I</span>if (previas.has(invitacion.share.id)) <span class="cstat-no" title="statement not covered" >continue;</span>
       const inicio = fromIso(invitacion.activity.start_at);
       const cuando = invitacion.activity.all_day
-        ? formatShortDate(inicio)
-        : `${formatShortDate(inicio)} · ${formatTime(inicio)}`;
+        ? formatShortDate(inicio, lang)
+        : `${formatShortDate(inicio, lang)} · ${formatTime(inicio, lang)}`;
+      const n = t(lang).notifications;
       void presentNow(
-        `${nombreDe(invitacion.owner)} te invitó a una actividad`,
-        `${invitacion.activity.title} — ${cuando}`,
+        n.invitedTitle(nombreDe(invitacion.owner)),
+        n.invitedBody(invitacion.activity.title, cuando),
         { tipo: 'invitacion', actividadId: invitacion.activity.id },
       );
     }
     invitacionesVistas.current = ids;
-  }, [invitations.isSuccess, invitations.data]);
+  }, [invitations.isSuccess, invitations.data, lang]);
 }
 &nbsp;</pre></td></tr></table></pre>
 
@@ -325,7 +337,7 @@ export function useSocialNotifications() {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-09-23T16:54:46.714Z
+                at 2026-10-07T09:52:02.001Z
             </div>
         <script src="../prettify.js"></script>
         <script>

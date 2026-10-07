@@ -25,7 +25,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>25/25</span>
+                <span class='fraction'>27/27</span>
             </div>
         
             
@@ -46,7 +46,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>23/23</span>
+                <span class='fraction'>26/26</span>
             </div>
         
             
@@ -196,7 +196,16 @@
 <a name='L131'></a><a href='#L131'>131</a>
 <a name='L132'></a><a href='#L132'>132</a>
 <a name='L133'></a><a href='#L133'>133</a>
-<a name='L134'></a><a href='#L134'>134</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L134'></a><a href='#L134'>134</a>
+<a name='L135'></a><a href='#L135'>135</a>
+<a name='L136'></a><a href='#L136'>136</a>
+<a name='L137'></a><a href='#L137'>137</a>
+<a name='L138'></a><a href='#L138'>138</a>
+<a name='L139'></a><a href='#L139'>139</a>
+<a name='L140'></a><a href='#L140'>140</a>
+<a name='L141'></a><a href='#L141'>141</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -228,12 +237,17 @@
 <span class="cline-any cline-yes">63x</span>
 <span class="cline-any cline-yes">63x</span>
 <span class="cline-any cline-yes">63x</span>
+<span class="cline-any cline-yes">63x</span>
+<span class="cline-any cline-yes">63x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">63x</span>
 <span class="cline-any cline-yes">63x</span>
 <span class="cline-any cline-yes">63x</span>
 <span class="cline-any cline-yes">8x</span>
 <span class="cline-any cline-yes">56x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">24x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">56x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -339,6 +353,8 @@ import { IconSize, IconStroke, Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useThemes, useThemesByDimension } from '@/hooks/use-themes';
 import type { Theme } from '@/types/domain';
+import { useLanguage, useT } from '@/i18n';
+import { dimensionName, themeName } from '@/lib/theme-name';
 &nbsp;
 function normalize(text: string): string {
   return text.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
@@ -359,6 +375,8 @@ export function ThemePicker({
   const theme = useTheme();
   const router = useRouter();
   const themes = useThemes();
+  const tx = useT();
+  const lang = useLanguage();
   const [query, setQuery] = useState('');
   const groups = useThemesByDimension(themes.data);
 &nbsp;
@@ -366,13 +384,16 @@ export function ThemePicker({
     const q = normalize(query.trim());
     if (!q) return groups;
     return groups
-      .map((g) =&gt; ({ ...g, themes: g.themes.filter((t) =&gt; normalize(t.name).includes(q) || normalize(g.dimension.label).includes(q)) }))
+      .map((g) =&gt; ({
+        ...g,
+        themes: g.themes.filter((t) =&gt; normalize(themeName(t, lang)).includes(q) || normalize(dimensionName(g.dimension.key, lang)).includes(q)),
+      }))
       .filter((g) =&gt; g.themes.length &gt; 0);
-  }, [groups, query]);
+  }, [groups, query, lang]);
 &nbsp;
   return (
-    &lt;Sheet visible={visible} onClose={onClose} title="Tema"&gt;
-      &lt;TextField label="Buscar" value={query} onChangeText={setQuery} placeholder="Gimnasio, lectura, familia…" autoCorrect={false} /&gt;
+    &lt;Sheet visible={visible} onClose={onClose} title={tx.themes.picker.title}&gt;
+      &lt;TextField label={tx.common.search} value={query} onChangeText={setQuery} placeholder={tx.themes.picker.searchPlaceholder} autoCorrect={false} /&gt;
 &nbsp;
       &lt;Pressable
         accessibilityRole="button"
@@ -380,18 +401,18 @@ export function ThemePicker({
         onPress={() =&gt; onSelect(null)}
         style={({ pressed }) =&gt; [styles.row, pressed ? <span class="branch-0 cbranch-no" title="branch not covered" >{ backgroundColor: theme.surfaceAlt } </span>: null]}&gt;
         &lt;View style={[styles.swatch, { backgroundColor: theme.neutralActivity }]} /&gt;
-        &lt;AppText style={styles.rowLabel}&gt;Sin tema&lt;/AppText&gt;
+        &lt;AppText style={styles.rowLabel}&gt;{tx.themes.picker.none}&lt;/AppText&gt;
         {value === null ? &lt;Check size={IconSize.inline} strokeWidth={IconStroke} color={theme.ink} /&gt; : null}
       &lt;/Pressable&gt;
 &nbsp;
-      {themes.isPending ? &lt;LoadingState label="Cargando temas…" /&gt; : null}
+      {themes.isPending ? &lt;LoadingState label={tx.themes.manage.loading} /&gt; : null}
 &nbsp;
       {filtered.map(({ dimension, themes: list }) =&gt; (
         &lt;View key={dimension.key} style={styles.group}&gt;
           &lt;View style={styles.groupHeader}&gt;
             &lt;View style={[styles.dimensionDot, { backgroundColor: dimension.color }]} /&gt;
             &lt;AppText variant="label" color="textSecondary"&gt;
-              {dimension.label}
+              {dimensionName(dimension.key, lang)}
             &lt;/AppText&gt;
           &lt;/View&gt;
           &lt;View style={styles.grid}&gt;
@@ -401,7 +422,7 @@ export function ThemePicker({
                 &lt;Pressable
                   key={t.id}
                   accessibilityRole="button"
-                  accessibilityLabel={t.name}
+                  accessibilityLabel={themeName(t, lang)}
                   accessibilityState={{ selected }}
                   onPress={() =&gt; onSelect(t)}
                   style={({ pressed }) =&gt; [
@@ -411,7 +432,7 @@ export function ThemePicker({
                   ]}&gt;
                   &lt;ThemeIcon name={t.icon} color={t.color} size={IconSize.action} /&gt;
                   &lt;AppText variant="caption" numberOfLines={2} style={styles.tileLabel}&gt;
-                    {t.name}
+                    {themeName(t, lang)}
                   &lt;/AppText&gt;
                 &lt;/Pressable&gt;
               );
@@ -422,12 +443,12 @@ export function ThemePicker({
 &nbsp;
       {themes.isSuccess &amp;&amp; filtered.length === 0 ? (
         &lt;AppText color="textSecondary" style={styles.empty}&gt;
-          No hay temas con ese nombre.
+          {tx.themes.picker.noMatch}
         &lt;/AppText&gt;
       ) : null}
 &nbsp;
       &lt;Button
-        title="Gestionar mis temas"
+        title={tx.themes.picker.manage}
         variant="secondary"
         icon={&lt;Settings2 size={IconSize.inline} strokeWidth={IconStroke} color={theme.text} /&gt;}
         onPress={() =&gt; {
@@ -469,7 +490,7 @@ const styles = StyleSheet.create({
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-09-23T16:54:46.714Z
+                at 2026-10-07T09:52:02.001Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
