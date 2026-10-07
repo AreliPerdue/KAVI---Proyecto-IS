@@ -460,7 +460,7 @@ export default function ListsScreen() {
               pressed ? styles.pressed : null,
             ]}>
             <AppText variant="label" color={etiquetaActiva === null ? 'onInk' : 'textSecondary'}>
-              Todas
+              {tx.lists.allTags}
             </AppText>
           </Pressable>
           {(etiquetas.data ?? []).map((t) => {

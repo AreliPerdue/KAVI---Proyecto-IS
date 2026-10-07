@@ -42,6 +42,8 @@ export const shared = {
   emailOrUser: 'Correo o usuario',
   searchPlaceholder: '@usuario  ·  nombre@correo.com',
   searchHint: 'Escribe las primeras letras del usuario, o el correo completo.',
+  searchMinLetters: (n: number) => `Escribe al menos ${n} letras.`,
+  colorAutoHint: 'Asignado automáticamente. Toca un color para fijarlo.',
   searching: 'Buscando…',
   nobodyFound: 'Nadie con ese usuario o correo.',
   alreadyListed: 'Ya en tu lista',

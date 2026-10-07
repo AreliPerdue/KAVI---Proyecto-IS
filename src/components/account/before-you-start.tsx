@@ -99,7 +99,7 @@ function Aceptar() {
       <View style={styles.pila}>
         <AppText variant="heading">{tx.account.birthDate}</AppText>
         <AppText variant="label" color="textSecondary">
-          Solo tú la ves. KAVI es para personas de 16 años o más; si tienes 16 o 17, le pediremos permiso a tu madre, padre o tutor.
+          {tx.account.birthDateHint}
         </AppText>
         <View style={styles.fila}>
           <View style={styles.celda}>

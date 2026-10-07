@@ -301,7 +301,7 @@ export default function ActivityDetailScreen() {
       </View>
 
       <Sheet visible={pending !== null} onClose={() => setPending(null)} title={tx.calendar.detail.scopeQuestion}>
-        <AppText color="textSecondary">Esta actividad se repite. Elige qué quieres {pending === 'delete' ? 'eliminar' : 'editar'}.</AppText>
+        <AppText color="textSecondary">{pending ? tx.calendar.detail.scopeExplain(pending) : null}</AppText>
         <View style={styles.scopeActions}>
           <Button title={tx.calendar.detail.onlyThis} variant="secondary" onPress={() => pending && runWithScope(pending, 'this')} />
           <Button title={tx.calendar.detail.wholeSeries} onPress={() => pending && runWithScope(pending, 'series')} />

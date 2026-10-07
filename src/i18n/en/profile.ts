@@ -80,6 +80,7 @@ export const profile: Dictionary['profile'] = {
   adminPanel: {
     loadingStats: 'Loading stats…',
     loadingAccounts: 'Loading accounts…',
+    accountsHint: 'Who’s signed up. Doesn’t include what’s in their calendars.',
     title: 'Admin',
     unavailableTitle: 'This section isn’t available',
     unavailableDescription: 'Your account doesn’t manage KAVI.',

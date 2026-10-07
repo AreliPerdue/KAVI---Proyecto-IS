@@ -43,6 +43,8 @@ export const shared: Dictionary['shared'] = {
   emailOrUser: 'Email or username',
   searchPlaceholder: '@username  ·  name@email.com',
   searchHint: 'Type the first letters of the username, or the full email.',
+  searchMinLetters: (n) => `Type at least ${n} letters.`,
+  colorAutoHint: 'Assigned automatically. Tap a color to pin it.',
   searching: 'Searching…',
   nobodyFound: 'No one with that username or email.',
   alreadyListed: 'Already in your list',

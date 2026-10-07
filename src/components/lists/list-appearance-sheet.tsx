@@ -41,7 +41,7 @@ export function ListAppearanceSheet({
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.cuerpo}>
         <View style={styles.seccion}>
           <AppText variant="label" color="textSecondary">
-            Color
+            {tx.lists.colorLabel}
           </AppText>
           <View style={styles.rejilla}>
             {LIST_COLOR_OPTIONS.map((c) => (
@@ -52,7 +52,7 @@ export function ListAppearanceSheet({
 
         <View style={styles.seccion}>
           <AppText variant="label" color="textSecondary">
-            Icono
+            {tx.lists.iconLabel}
           </AppText>
           <View style={styles.rejilla}>
             {THEME_ICON_NAMES.map((n) => (

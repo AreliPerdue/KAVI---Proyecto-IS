@@ -7,7 +7,7 @@ import { IconStroke, Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { formatShortDate, isToday } from '@/lib/dates';
 import type { KaviList } from '@/types/domain';
-import { useT } from '@/i18n';
+import { useLanguage, useT } from '@/i18n';
 
 import { cuentaDelDia, DayItemsList, type DayItemsListProps } from './day-items-strip';
 
@@ -34,6 +34,7 @@ export type DayListsPanelProps = DayItemsListProps & {
 export function DayListsPanel({ day, onOpenAll, ...lista }: DayListsPanelProps) {
   const theme = useTheme();
   const tx = useT();
+  const lang = useLanguage();
   const hayAlgo = cuentaDelDia(lista) > 0;
 
   return (
@@ -41,7 +42,7 @@ export function DayListsPanel({ day, onOpenAll, ...lista }: DayListsPanelProps) 
       <ScrollView contentContainerStyle={styles.contenido} showsVerticalScrollIndicator={false}>
         <View style={styles.seccion}>
           <AppText variant="label" color="textSecondary" style={styles.titulo}>
-            {isToday(day) ? 'Hoy' : formatShortDate(day)}
+            {isToday(day) ? tx.lists.today : formatShortDate(day, lang)}
           </AppText>
           {hayAlgo ? (
             <View style={styles.renglones}>

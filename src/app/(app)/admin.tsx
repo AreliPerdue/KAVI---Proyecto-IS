@@ -105,7 +105,7 @@ export default function AdminScreen() {
       <View style={styles.section}>
         <AppText variant="heading">{tx.profile.adminPanel.accounts}</AppText>
         <AppText variant="caption" color="textSecondary">
-          Quién está registrado. No incluye el contenido de sus calendarios.
+          {tx.profile.adminPanel.accountsHint}
         </AppText>
       </View>
       {accounts.isPending ? <LoadingState label={tx.profile.adminPanel.loadingAccounts} /> : null}

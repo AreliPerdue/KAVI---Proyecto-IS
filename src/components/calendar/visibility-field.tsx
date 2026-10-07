@@ -102,7 +102,7 @@ export function VisibilityField({
                     </AppText>
                     {marcado && !verá ? (
                       <AppText variant="caption" color="textTertiary">
-                        Verá solo «ocupado»: no le compartes tu calendario con detalles.
+                        {tx.calendar.visibility.busyOnlyFor}
                       </AppText>
                     ) : null}
                   </View>

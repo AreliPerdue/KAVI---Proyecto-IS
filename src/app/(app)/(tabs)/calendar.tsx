@@ -354,7 +354,7 @@ export default function CalendarScreen() {
         )}
         {showEmpty ? (
           <AppText variant="caption" color="textSecondary" style={styles.dayEmptyHint}>
-            Sin actividades este día. Toca una hora para agendar.
+            {tx.calendar.emptyDayHint}
           </AppText>
         ) : null}
         <DayView day={anchor} activities={data} onPressSlot={createAt} onPressActivity={openActivity} isSharedActivity={isShared} onScroll={onScroll} />

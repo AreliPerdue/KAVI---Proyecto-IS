@@ -264,7 +264,7 @@ export default function SharedScreen() {
         />
         {!canSearch && query.trim().length > 0 ? (
           <AppText variant="caption" color="textTertiary">
-            Escribe al menos {SEARCH_MIN_LENGTH} letras.
+            {tx.shared.searchMinLetters(SEARCH_MIN_LENGTH)}
           </AppText>
         ) : null}
         {canSearch && search.isFetching ? <LoadingState label={tx.shared.searching} /> : null}
@@ -355,7 +355,7 @@ export default function SharedScreen() {
         </View>
         {sheetContact?.color ? null : (
           <AppText variant="caption" color="textTertiary">
-            Asignado automáticamente. Toca un color para fijarlo.
+            {tx.shared.colorAutoHint}
           </AppText>
         )}
 

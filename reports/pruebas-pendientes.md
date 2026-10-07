@@ -75,9 +75,9 @@ que todavía no se automatiza.
 
 ## Captura de ítems (T200)
 
-- [ ] `ItemComposer`: al confirmar limpia el campo y **conserva el foco**; con el campo
+- [x] `ItemComposer`: al confirmar limpia el campo y **conserva el foco**; con el campo
   vacío se cierra en vez de agregar algo en blanco. Es el comportamiento del que depende
-  capturar de corrido y el más fácil de romper sin darse cuenta.
+  capturar de corrido y el más fácil de romper sin darse cuenta. → `components/lists/__tests__/item-composer.test.tsx`
 - [x] Agregar dentro de una sección deja el ítem en esa sección, no al final de la lista. → `services/demo/__tests__/lists.test.ts`
 - [ ] Mover un ítem entre secciones desde la hoja de edición.
 - [ ] Eliminar pide confirmación y el mensaje distingue palomear de eliminar.
@@ -265,9 +265,9 @@ que todavía no se automatiza.
 - [ ] El subtítulo de la tarjeta la muestra al final, también cuando la lista está vacía.
 
 ## Días de la semana en la repetición (T232b)
-- [ ] Tocar L, M y J deja `FREQ=WEEKLY;BYDAY=MO,WE,TH` y la hoja los muestra prendidos al
-  reabrirse (se leen de la regla guardada, no de un estado aparte).
-- [ ] Apagar el último día quita la repetición en vez de dejar una regla sin días.
+- [x] Tocar L, M y J deja `FREQ=WEEKLY;BYDAY=MO,WE,TH` y la hoja los muestra prendidos al
+  reabrirse (se leen de la regla guardada, no de un estado aparte). → `components/lists/__tests__/list-repeat-sheet.test.tsx`
+- [x] Apagar el último día quita la repetición en vez de dejar una regla sin días. → `components/lists/__tests__/list-repeat-sheet.test.tsx`
 
 ## Hoy y Algún día (T233, T234)
 - [x] `listUndated` deja fuera los elementos de listas que se repiten, los archivados y los
@@ -285,8 +285,8 @@ que todavía no se automatiza.
 - [x] El avance sale de la vuelta cerrada si la hay (conteos congelados) y de la abierta si
   no; sin vuelta es 0/total. Nunca pasa de total aunque se haya borrado algo palomeado. → `lib/__tests__/list-runs.test.ts`
 - [x] `listRunsByDateRange` no abre ni cierra vueltas (comparar filas antes y después). → `services/demo/__tests__/lists.test.ts`
-- [ ] Cambiar de "todos los días" a chips de días conserva el inicio y el fin.
-- [ ] Un fin anterior al inicio se empuja al inicio.
+- [x] Cambiar de "todos los días" a chips de días conserva el inicio y el fin. → `components/lists/__tests__/list-repeat-sheet.test.tsx`
+- [x] Un fin anterior al inicio se empuja al inicio. → `components/lists/__tests__/list-repeat-sheet.test.tsx`
 - [ ] En web ≥ 900 px y vista diaria aparece el panel y **no** la franja; a 899 px, al revés.
 - [ ] Tocar un chip de rutina o de pendiente en la agenda abre su lista.
 

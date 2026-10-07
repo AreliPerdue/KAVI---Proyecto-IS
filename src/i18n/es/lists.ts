@@ -119,6 +119,9 @@ export const lists = {
   openListPending: (nombre: string, n: number) => `Abrir ${nombre}, ${n} sin hacer`,
   // Hojas
   appearanceTitle: 'Color e icono',
+  colorLabel: 'Color',
+  iconLabel: 'Icono',
+  allTags: 'Todas',
   colorA11y: (c: string) => `Color ${c}`,
   iconA11y: (n: string) => `Icono ${n}`,
   historyTitle: 'Cómo te ha ido',

@@ -79,6 +79,7 @@ export const profile = {
   adminPanel: {
     loadingStats: 'Cargando estadísticas…',
     loadingAccounts: 'Cargando cuentas…',
+    accountsHint: 'Quién está registrado. No incluye el contenido de sus calendarios.',
     title: 'Administración',
     unavailableTitle: 'Esta sección no está disponible',
     unavailableDescription: 'Tu cuenta no administra KAVI.',

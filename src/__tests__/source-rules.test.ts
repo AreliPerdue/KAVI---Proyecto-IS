@@ -45,3 +45,37 @@ describe('estimaciones (RF-F65)', () => {
     expect(en.fitness.sheets.estimatedMax('Epley')).toMatch(/[Ee]stimated/);
   });
 });
+
+/**
+ * Ningún texto de interfaz suelto en JSX (spec 12, RF-I8): todo sale de `src/i18n`. Se buscan
+ * los hijos de texto de una etiqueta —en su propia línea o en la misma— que, quitando las
+ * expresiones `{…}`, todavía tengan letras. La marca "KAVI" es la única excepción.
+ */
+describe('textos de interfaz (RF-I8)', () => {
+  const PERMITIDOS = new Set(['KAVI']);
+  const conLetras = (texto: string) => {
+    const sinExpresiones = texto.replace(/\{[^{}]*\}/g, '').trim();
+    return /\p{L}{2,}/u.test(sinExpresiones) && !PERMITIDOS.has(sinExpresiones) ? sinExpresiones : null;
+  };
+
+  it('ninguna pantalla ni componente escribe texto fuera del diccionario', () => {
+    const culpables: string[] = [];
+    const tsx = archivos(join(SRC, 'components'), (p) => p.endsWith('.tsx')).concat(archivos(join(SRC, 'app'), (p) => p.endsWith('.tsx')));
+    for (const ruta of tsx) {
+      const lineas = readFileSync(ruta, 'utf8').split('\n');
+      lineas.forEach((linea, i) => {
+        const s = linea.trim();
+        // Texto en su propia línea, entre una etiqueta que abre y otra que cierra.
+        const entreEtiquetas = i > 0 && /[^=]>$/.test(lineas[i - 1].trimEnd()) && (lineas[i + 1] ?? '').trim().startsWith('</') && !/^[{<}/*)]/.test(s);
+        const suelto = entreEtiquetas ? conLetras(s) : null;
+        if (suelto) culpables.push(`${ruta.slice(SRC.length)}:${i + 1} ${suelto}`);
+        // En la misma línea: >Texto</
+        for (const m of linea.matchAll(/>([^<>]*)<\//g)) {
+          const t = conLetras(m[1]);
+          if (t && !/=>/.test(m[1])) culpables.push(`${ruta.slice(SRC.length)}:${i + 1} ${t}`);
+        }
+      });
+    }
+    expect(culpables).toEqual([]);
+  });
+});
