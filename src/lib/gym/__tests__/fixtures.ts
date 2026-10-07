@@ -21,11 +21,12 @@ export function seg(over: Partial<SetSegment> = {}): SetSegment {
 /** Una serie hecha de `kg × reps`, con tramos extra si se pasan. */
 export function serie(kg: number | null, reps: number | null, over: Partial<WorkoutSet> = {}, extra: SetSegment[] = []): WorkoutSet {
   const i = sig();
+  const id = over.id ?? `set-${i}`;
   return {
-    id: `set-${i}`, workout_exercise_id: 'we', sort_order: i, set_type: 'working', intensifiers: [], target: null,
+    id, workout_exercise_id: 'we', sort_order: i, set_type: 'working', intensifiers: [], target: null,
     rpe: null, rir: null, failure: null, tempo: null, rom: null, side: null, load_mods: null, gear: [], spotter: false,
     rest_after_sec: null, completed_at: '2026-10-01T10:00:00.000Z', notes: null, tags: [], from_legacy: false,
-    segments: [seg({ weight_kg: kg, reps }), ...extra],
+    segments: [seg({ weight_kg: kg, reps, set_id: id }), ...extra.map((g) => ({ ...g, set_id: id }))],
     ...over,
   };
 }

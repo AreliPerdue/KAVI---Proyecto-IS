@@ -65,4 +65,6 @@ export const errors = {
   workoutNotFound: 'Ese entrenamiento ya no existe.',
   activityHasWorkout: 'Esa actividad ya tiene un entrenamiento registrado.',
   exerciseNotFound: 'Ese ejercicio ya no existe.',
+  alreadyContacts: 'Ya son contactos.',
+  requestPending: 'Ya hay una solicitud pendiente entre ustedes.',
 };

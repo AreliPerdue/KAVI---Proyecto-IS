@@ -1,4 +1,5 @@
 import type { ProtocolKey, IntensifierKey } from '@/constants/intensifiers';
+import { getLanguage, type Language, t } from '@/i18n';
 import type { SegmentKind, SetSegment, SetTarget, WeightUnit, WorkoutSet } from '@/types/domain';
 
 import { uuidv4 } from './ids';
@@ -145,11 +146,12 @@ export function removeIntensifier(set: WorkoutSet, key: string): WorkoutSet {
  * Combinaciones raras (RF-F48): se avisa, nunca se bloquea. Alguien puede hacer un
  * calentamiento al fallo; probablemente no quiso.
  */
-export function unusualCombination(set: WorkoutSet): string | null {
-  if (set.set_type === 'warmup' && (set.failure || set.intensifiers.length > 0)) return '¿Calentamiento con intensificador o al fallo? Revisa el tipo de serie.';
-  if (set.intensifiers.includes('super_slow') && set.intensifiers.includes('dynamic_effort')) return 'Superlento y esfuerzo dinámico van en sentidos opuestos.';
-  if (set.set_type === 'max_test' && set.intensifiers.length > 0) return 'Un test de máximo suele hacerse sin intensificadores.';
-  if (set.rir !== null && set.rir > 0 && set.failure) return 'Marcaste fallo y RIR mayor que 0.';
+export function unusualCombination(set: WorkoutSet, lang: Language = getLanguage()): string | null {
+  const u = t(lang).fitness.sheets.unusual;
+  if (set.set_type === 'warmup' && (set.failure || set.intensifiers.length > 0)) return u.warmupIntensifier;
+  if (set.intensifiers.includes('super_slow') && set.intensifiers.includes('dynamic_effort')) return u.slowAndDynamic;
+  if (set.set_type === 'max_test' && set.intensifiers.length > 0) return u.maxTestIntensifier;
+  if (set.rir !== null && set.rir > 0 && set.failure) return u.failureWithRir;
   return null;
 }
 

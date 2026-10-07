@@ -92,7 +92,7 @@ function Detalles({ set, unit, onClose, onSave }: Omit<SetDetailsSheetProps, 'vi
     onClose();
   };
 
-  const aviso = unusualCombination(borrador);
+  const aviso = unusualCombination(borrador, lang);
 
   const fila = <T,>(titulo: string, opciones: Opcion<T>[], valor: T, alElegir: (v: T) => void) => (
     <View style={styles.grupo}>

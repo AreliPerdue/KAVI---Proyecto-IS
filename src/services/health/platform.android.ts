@@ -61,32 +61,32 @@ function aPermisos(concedidos: readonly { accessType?: string; recordType?: stri
   };
 }
 
-/** Nombres en español de los tipos que más se registran; el resto cae en "Ejercicio". */
-const NOMBRE_TIPO: Partial<Record<number, string>> = {
-  [ExerciseType.WALKING]: 'Caminata',
-  [ExerciseType.RUNNING]: 'Carrera',
-  [ExerciseType.RUNNING_TREADMILL]: 'Caminadora',
-  [ExerciseType.BIKING]: 'Ciclismo',
-  [ExerciseType.BIKING_STATIONARY]: 'Bicicleta fija',
-  [ExerciseType.HIKING]: 'Senderismo',
-  [ExerciseType.SWIMMING_POOL]: 'Natación',
-  [ExerciseType.SWIMMING_OPEN_WATER]: 'Natación en aguas abiertas',
-  [ExerciseType.STRENGTH_TRAINING]: 'Entrenamiento de fuerza',
-  [ExerciseType.WEIGHTLIFTING]: 'Levantamiento de pesas',
-  [ExerciseType.HIGH_INTENSITY_INTERVAL_TRAINING]: 'HIIT',
-  [ExerciseType.YOGA]: 'Yoga',
-  [ExerciseType.PILATES]: 'Pilates',
-  [ExerciseType.ELLIPTICAL]: 'Elíptica',
-  [ExerciseType.ROWING_MACHINE]: 'Remo',
-  [ExerciseType.DANCING]: 'Baile',
-  [ExerciseType.SOCCER]: 'Futbol',
-  [ExerciseType.BASKETBALL]: 'Basquetbol',
-  [ExerciseType.TENNIS]: 'Tenis',
-  [ExerciseType.BOXING]: 'Box',
-  [ExerciseType.MARTIAL_ARTS]: 'Artes marciales',
-  [ExerciseType.STRETCHING]: 'Estiramiento',
-  [ExerciseType.CALISTHENICS]: 'Calistenia',
-  [ExerciseType.STAIR_CLIMBING]: 'Escaleras',
+/** Clave de los tipos que más se registran; el nombre lo pone la pantalla en el idioma activo. El resto es `other`. */
+const CLAVE_TIPO: Partial<Record<number, string>> = {
+  [ExerciseType.WALKING]: 'walking',
+  [ExerciseType.RUNNING]: 'running',
+  [ExerciseType.RUNNING_TREADMILL]: 'treadmill',
+  [ExerciseType.BIKING]: 'biking',
+  [ExerciseType.BIKING_STATIONARY]: 'stationary_bike',
+  [ExerciseType.HIKING]: 'hiking',
+  [ExerciseType.SWIMMING_POOL]: 'swimming',
+  [ExerciseType.SWIMMING_OPEN_WATER]: 'open_water',
+  [ExerciseType.STRENGTH_TRAINING]: 'strength',
+  [ExerciseType.WEIGHTLIFTING]: 'weightlifting',
+  [ExerciseType.HIGH_INTENSITY_INTERVAL_TRAINING]: 'hiit',
+  [ExerciseType.YOGA]: 'yoga',
+  [ExerciseType.PILATES]: 'pilates',
+  [ExerciseType.ELLIPTICAL]: 'elliptical',
+  [ExerciseType.ROWING_MACHINE]: 'rowing',
+  [ExerciseType.DANCING]: 'dancing',
+  [ExerciseType.SOCCER]: 'soccer',
+  [ExerciseType.BASKETBALL]: 'basketball',
+  [ExerciseType.TENNIS]: 'tennis',
+  [ExerciseType.BOXING]: 'boxing',
+  [ExerciseType.MARTIAL_ARTS]: 'martial_arts',
+  [ExerciseType.STRETCHING]: 'stretching',
+  [ExerciseType.CALISTHENICS]: 'calisthenics',
+  [ExerciseType.STAIR_CLIMBING]: 'stairs',
 };
 
 /** Las apps más comunes por su paquete; si no la conocemos, no inventamos un nombre. */
@@ -176,7 +176,8 @@ export const platformHealth: HealthApi = {
         const origen = r.metadata?.dataOrigin ?? '';
         return {
           id: r.metadata?.id ?? `${r.startTime}-${r.exerciseType}`,
-          title: r.title?.trim() || NOMBRE_TIPO[r.exerciseType] || 'Ejercicio',
+          title: r.title?.trim() || null,
+          kind: CLAVE_TIPO[r.exerciseType] ?? 'other',
           startAt: r.startTime,
           endAt: r.endTime,
           activeKcal: kcal || null,

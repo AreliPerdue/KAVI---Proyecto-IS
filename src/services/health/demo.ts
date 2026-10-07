@@ -33,9 +33,9 @@ function sesiones(): ExternalSession[] {
     return d.toISOString();
   };
   return [
-    { id: 'hc-fuerza', title: 'Entrenamiento de fuerza', startAt: a(0, 7, 28), endAt: a(0, 8, 30), activeKcal: 214, app: 'Reloj', source: 'demo' },
-    { id: 'hc-bici', title: 'Ciclismo', startAt: a(3, 18, 0), endAt: a(3, 18, 45), activeKcal: 320, app: 'Strava', source: 'demo' },
-    { id: 'hc-caminata', title: 'Caminata', startAt: ayerA(19, 0), endAt: ayerA(19, 40), activeKcal: 145, app: 'Reloj', source: 'demo' },
+    { id: 'hc-fuerza', title: null, kind: 'strength', startAt: a(0, 7, 28), endAt: a(0, 8, 30), activeKcal: 214, app: 'Reloj', source: 'demo' },
+    { id: 'hc-bici', title: null, kind: 'biking', startAt: a(3, 18, 0), endAt: a(3, 18, 45), activeKcal: 320, app: 'Strava', source: 'demo' },
+    { id: 'hc-caminata', title: null, kind: 'walking', startAt: ayerA(19, 0), endAt: ayerA(19, 40), activeKcal: 145, app: 'Reloj', source: 'demo' },
   ];
 }
 

@@ -89,7 +89,7 @@ export const demoConnections: ConnectionsApi = {
     const exists = demoState.connections.find(
       (c) => (c.requester_id === userId && c.addressee_id === addresseeId) || (c.requester_id === addresseeId && c.addressee_id === userId),
     );
-    if (exists) throw new AuthUiError(exists.status === 'accepted' ? 'Ya son contactos.' : 'Ya hay una solicitud pendiente entre ustedes.');
+    if (exists) throw new AuthUiError(exists.status === 'accepted' ? t().errors.alreadyContacts : t().errors.requestPending);
     demoState.connections.push({ id: nextId('con'), requester_id: userId, addressee_id: addresseeId, status: 'pending', created_at: new Date().toISOString(), responded_at: null });
     emitDataChange();
   },

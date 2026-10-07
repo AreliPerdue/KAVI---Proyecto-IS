@@ -66,4 +66,6 @@ export const errors: Dictionary['errors'] = {
   workoutNotFound: 'That workout no longer exists.',
   activityHasWorkout: 'That activity already has a workout logged.',
   exerciseNotFound: 'That exercise no longer exists.',
+  alreadyContacts: 'You’re already contacts.',
+  requestPending: 'There’s already a pending request between you.',
 };

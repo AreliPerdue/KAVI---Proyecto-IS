@@ -56,8 +56,13 @@ export type DailyTotals = {
 /** Una sesión de ejercicio registrada por otra app (RF-H7). */
 export type ExternalSession = {
   id: string;
-  /** "Caminata", "Ciclismo"… ya en español. */
-  title: string;
+  /** El título que le puso la persona en la otra app; `null` si no le puso ninguno. */
+  title: string | null;
+  /**
+   * Tipo de ejercicio como clave (`walking`, `strength`…); la pantalla pone el nombre en el
+   * idioma activo (`fitness.health.exerciseTypes`, spec 12). `other` si no se conoce.
+   */
+  kind: string;
   startAt: string;
   endAt: string;
   activeKcal: number | null;

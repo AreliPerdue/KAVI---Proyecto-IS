@@ -50,12 +50,12 @@ juntarlo en una sesión dedicada a pruebas.
 
 ## Vistas nuevas y pastilla configurable (T191-T193)
 
-- [ ] `rangeForView` y `shiftAnchor` con `threeDays` y `agenda`: son switches exhaustivos y
-  un caso nuevo sin rama rompería en silencio.
-- [ ] `togglePinnedView`: no deja la pastilla vacía, y conserva el orden canónico en vez del
-  orden en que se fijaron.
+- [x] `rangeForView` y `shiftAnchor` con `threeDays` y `agenda`: son switches exhaustivos y
+  un caso nuevo sin rama rompería en silencio. → `components/calendar/__tests__/views-and-filters.test.ts`
+- [x] `togglePinnedView`: no deja la pastilla vacía, y conserva el orden canónico en vez del
+  orden en que se fijaron. → `components/calendar/__tests__/views-and-filters.test.ts`
 - [ ] `AgendaView` omite los días sin actividades y agrupa bien las que cruzan medianoche.
-- [ ] `formatThreeDaysTitle` cuando el rango cruza de mes.
+- [x] `formatThreeDaysTitle` cuando el rango cruza de mes. → `i18n/__tests__/i18n.test.ts`
 - [ ] Que el alfiler del menú no quede anidado dentro del Pressable de su fila.
 - [ ] Encabezado del calendario en dos filas por debajo de 720 px, con el título completo.
   Es la clase de regresión que solo se ve en una captura, así que conviene una prueba que
@@ -93,9 +93,9 @@ juntarlo en una sesión dedicada a pruebas.
   viejo a más reciente. → `services/demo/__tests__/lists.test.ts`
 - [ ] Los vencidos **no** se muestran al abrir un día que no es hoy.
 - [x] `rescheduleItems` mueve todos los indicados y no toca el resto. → `services/demo/__tests__/lists.test.ts`
-- [ ] `hasActiveFilters` es verdadero con `onlyListItems` aunque no haya dimensión ni tema
-  —si no, el punto del botón de filtros no se enciende y el filtro queda invisible.
-- [ ] `applyFilters` ignora `onlyListItems`: recibe actividades y devuelve actividades.
+- [x] `hasActiveFilters` es verdadero con `onlyListItems` aunque no haya dimensión ni tema
+  —si no, el punto del botón de filtros no se enciende y el filtro queda invisible. → `components/calendar/__tests__/views-and-filters.test.ts`
+- [x] `applyFilters` ignora `onlyListItems`: recibe actividades y devuelve actividades. → `components/calendar/__tests__/views-and-filters.test.ts`
 
 ## Migración de Lists (T195)
 
@@ -124,11 +124,11 @@ juntarlo en una sesión dedicada a pruebas.
 
 ## Recordatorios de elementos de lista (T215)
 
-- [ ] `syncNotifications` recibe actividades **y** elementos juntos: la prueba clave es que
-  programar unos no cancele los otros, que es justo lo que pasaría llamándola por fuente.
-- [ ] Un elemento con fecha y **sin** hora no programa nada.
-- [ ] Un elemento ya palomeado no programa nada.
-- [ ] La hora se interpreta como local, no como UTC.
+- [x] `syncNotifications` recibe actividades **y** elementos juntos: la prueba clave es que
+  programar unos no cancele los otros, que es justo lo que pasaría llamándola por fuente. → `hooks/__tests__/use-reminders.test.tsx`
+- [x] Un elemento con fecha y **sin** hora no programa nada. → `hooks/__tests__/use-reminders.test.tsx (desde T223 se anclan a las 9:00 si tienen recordatorio)`
+- [x] Un elemento ya palomeado no programa nada. → `hooks/__tests__/use-reminders.test.tsx`
+- [x] La hora se interpreta como local, no como UTC. → `hooks/__tests__/use-reminders.test.tsx`
 
 ## Buscar y reordenar (T213, T214, T216)
 
@@ -146,8 +146,8 @@ juntarlo en una sesión dedicada a pruebas.
   (día, 3 días, semana). Es la regla que define el módulo y la más fácil de romper al
   "mejorar" la integración.
 - [ ] En mes, el chip de un pendiente no pinta hora aunque el elemento tenga `due_time`.
-- [ ] `isDerivedActivity` reconoce el prefijo de pendientes: no se pueden editar ni compartir
-  como actividades.
+- [x] `isDerivedActivity` reconoce el prefijo de pendientes: no se pueden editar ni compartir
+  como actividades. → `components/calendar/__tests__/views-and-filters.test.ts`
 - [ ] Tocar el texto de un elemento abre la edición y **no** lo palomea.
 
 ## Compartir listas (T219-T221)
@@ -172,10 +172,10 @@ juntarlo en una sesión dedicada a pruebas.
 
 ## Recordatorio con desfase (T223)
 
-- [ ] Un elemento **sin** recordatorio no programa nada, aunque tenga hora.
-- [ ] Con hora y "2 días antes", el aviso cae dos días antes **a esa hora**.
-- [ ] Sin hora y "2 días antes", el aviso cae dos días antes a las 9:00.
-- [ ] Quitar la fecha deja el recordatorio sin efecto (no hay de qué contar hacia atrás).
+- [x] Un elemento **sin** recordatorio no programa nada, aunque tenga hora. → `hooks/__tests__/use-reminders.test.tsx`
+- [x] Con hora y "2 días antes", el aviso cae dos días antes **a esa hora**. → `hooks/__tests__/use-reminders.test.tsx`
+- [x] Sin hora y "2 días antes", el aviso cae dos días antes a las 9:00. → `hooks/__tests__/use-reminders.test.tsx`
+- [x] Quitar la fecha deja el recordatorio sin efecto (no hay de qué contar hacia atrás). → `hooks/__tests__/use-reminders.test.tsx`
 
 ## Arrastrar elementos (T225)
 
@@ -312,11 +312,11 @@ descartar, lectura). Falta:
 ## Fitness v2 · G4 edición (T244)
 Probado a mano en el demo (sesión "Pierna"): drop → separar → deshacer ×2 → rehacer → unir →
 mover a otro ejercicio → duración y hora → "editado" en encabezado e historial. Falta:
-- [ ] `splitSet` / `mergeSets`: ids nuevos, órdenes entre vecinos, intensificadores que se
-  quitan o se agregan, la unida queda hecha si cualquiera lo estaba.
+- [x] `splitSet` / `mergeSets`: ids nuevos, órdenes entre vecinos, intensificadores que se
+  quitan o se agregan, la unida queda hecha si cualquiera lo estaba. → `lib/gym/__tests__/transforms.test.ts`
 - [ ] `useEditHistory`: `batch` agrupa en un paso; deshacer en orden inverso; una acción nueva
   borra lo que se podía rehacer; tope de 50 pasos.
-- [ ] `applyOutbox` con una serie movida a otro ejercicio: sale de uno y aparece en el otro.
+- [x] `applyOutbox` con una serie movida a otro ejercicio: sale de uno y aparece en el otro. → `lib/gym/__tests__/transforms.test.ts`
 - [ ] La sesión se marca editada una sola vez por visita y nunca en una sesión en curso.
 - [ ] Duración: `ended_at − performed_at` en los dos backends; suma por ejercicio solo sin
   `ended_at`; el caché de `updateExercise` no la pisa.
@@ -326,12 +326,12 @@ mover a otro ejercicio → duración y hora → "editado" en encabezado e histor
 Probado a mano en el demo: 21s + tempo sobre una serie, fallo en Detalles, superserie A1/A2
 (sin descanso tras A1, descanso de ronda tras A2), pirámide en otro ejercicio, EMOM con su
 timer corriendo. Falta:
-- [ ] `applyIntensifier` para cada una de las 24 claves (tramos, tipos, descansos, tempo) y
-  que aplicar dos veces no duplique la etiqueta.
-- [ ] `removeIntensifier` quita solo los tramos que trajo y devuelve el principal a `main`.
-- [ ] `protocolSets` para los 14 protocolos: número de series, objetivos, pesos redondeados,
-  tipos (top set / back-off / fallo).
-- [ ] `unusualCombination`: cada aviso y ningún falso positivo en una serie normal.
+- [x] `applyIntensifier` para cada una de las 24 claves (tramos, tipos, descansos, tempo) y
+  que aplicar dos veces no duplique la etiqueta. → `lib/gym/__tests__/transforms.test.ts`
+- [x] `removeIntensifier` quita solo los tramos que trajo y devuelve el principal a `main`. → `lib/gym/__tests__/transforms.test.ts`
+- [x] `protocolSets` para los 14 protocolos: número de series, objetivos, pesos redondeados,
+  tipos (top set / back-off / fallo). → `lib/gym/__tests__/transforms.test.ts`
+- [x] `unusualCombination`: cada aviso y ningún falso positivo en una serie normal. → `lib/gym/__tests__/transforms.test.ts`
 - [ ] `createGroup` / `removeGroup` en los dos backends: posiciones contiguas en el lugar del
   primero, `group_position` en orden, desagrupar conserva las series.
 - [ ] Descanso en grupos: solo al terminar el último del grupo y con `rest_after_round_sec`.
@@ -423,8 +423,8 @@ series. Falta:
 Probado a mano en el demo: press inclinado con barra → "Drop mecánico" abre "Variante del
 drop" con press plano y declinado con barra primero; elegir plano lo muestra en el tramo;
 tocar el tramo → "Buscar en todo el catálogo" → declinado lo reemplaza. Falta:
-- [ ] `suggestVariants`: mismo grupo y mecánica; sin equipo ni patrón en común no entra; el
-  mismo equipo gana; lo mejor de cada familia primero; excluye el propio y los archivados.
+- [x] `suggestVariants`: mismo grupo y mecánica; sin equipo ni patrón en común no entra; el
+  mismo equipo gana; lo mejor de cada familia primero; excluye el propio y los archivados. → `lib/gym/__tests__/transforms.test.ts`
 - [ ] Logger: aplicar `mechanical_drop` abre la hoja en el último tramo `drop`; "Sin
   variante" la quita; se puede deshacer.
 
@@ -466,7 +466,7 @@ Falta:
 ## Formato de 12 horas en toda la app
 Probado a mano en el demo (360 px, 12 h): el pendiente con hora muestra "5:30 p.m." en la
 lista y al editarlo; el selector de hora usa rueda 12–11 con a.m./p.m. Falta:
-- [ ] `formatClock` ("17:30:00" → "5:30 p.m." / "17:30") y `formatHour`.
+- [x] `formatClock` ("17:30:00" → "5:30 p.m." / "17:30") y `formatHour`. → `components/calendar/__tests__/views-and-filters.test.ts`
 - [ ] `TimePickerSheet` en 12 h: 12 a.m. = 0:00, 12 p.m. = 12:00; cambiar a.m./p.m. conserva
   la hora; devuelve minutos 0–1439 igual que en 24 h.
 - [ ] Ninguna hora visible se arma a mano (buscar `.slice(0, 5)` sobre horas en la UI).

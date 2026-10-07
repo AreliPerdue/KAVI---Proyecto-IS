@@ -33,6 +33,13 @@ jest.mock('@/services/reminders', () => ({
   listUpcomingReminders: (...a: unknown[]) => mockUpcoming(...a),
 }));
 jest.mock('@/lib/notifications', () => ({ syncNotifications: (...a: unknown[]) => mockSync(...a) }));
+/** Elementos de lista con fecha (T215, T223): por omisión ninguno; cada prueba pone los suyos. */
+let mockItems: unknown[] = [];
+let mockListas: unknown[] = [];
+jest.mock('@/hooks/use-lists', () => ({
+  useListItemsByDate: () => ({ data: mockItems }),
+  useLists: () => ({ data: mockListas }),
+}));
 
 
 const proximo = (over = {}) => ({
@@ -47,6 +54,8 @@ beforeEach(() => {
   mockList.mockResolvedValue([]);
   mockUpcoming.mockResolvedValue([]);
   mockSync.mockResolvedValue(0);
+  mockItems = [];
+  mockListas = [];
 });
 
 describe('claves', () => {
@@ -182,3 +191,68 @@ describe('useReminderSync (plan §3.4)', () => {
     expect(mockSync.mock.calls[0][0]).toEqual([]);
   });
 });
+
+describe('recordatorios de elementos de lista (T215, T223)', () => {
+  const elemento = (over = {}) => ({
+    id: 'i1', list_id: 'l1', title: 'Pagar la luz', completed_at: null, due_date: '2026-10-20', due_time: null,
+    reminder_offset_minutes: 0, ...over,
+  });
+  const programados = async () => {
+    const { Wrapper } = crearWrapper();
+    await renderHook(() => useReminderSync(), { wrapper: Wrapper });
+    await waitFor(() => expect(mockSync).toHaveBeenCalled());
+    return mockSync.mock.calls.at(-1)[0] as { id: string; title: string; body: string; fireAt: string }[];
+  };
+
+  beforeEach(() => {
+    mockListas = [{ id: 'l1', name: 'Casa' }];
+  });
+
+  it('actividades y elementos se programan juntos, en una sola llamada (la sincronización borra todo antes)', async () => {
+    mockUpcoming.mockResolvedValue([proximo()]);
+    mockItems = [elemento()];
+    const avisos = await programados();
+    expect(avisos.map((a) => a.id)).toEqual(['r1', 'list-item:i1']);
+  });
+
+  it('sin recordatorio puesto no programa nada, aunque tenga fecha y hora', async () => {
+    mockItems = [elemento({ reminder_offset_minutes: null, due_time: '17:30:00' })];
+    expect(await programados()).toEqual([]);
+  });
+
+  it('un elemento ya palomeado no programa nada', async () => {
+    mockItems = [elemento({ completed_at: '2026-10-19T10:00:00Z' })];
+    expect(await programados()).toEqual([]);
+  });
+
+  it('sin fecha no hay de qué contar hacia atrás', async () => {
+    mockItems = [elemento({ due_date: null })];
+    expect(await programados()).toEqual([]);
+  });
+
+  it('con hora y "2 días antes": dos días antes a esa hora, en hora local', async () => {
+    mockItems = [elemento({ due_time: '17:30:00', reminder_offset_minutes: 2 * 24 * 60 })];
+    const [aviso] = await programados();
+    expect(new Date(aviso!.fireAt)).toEqual(new Date(2026, 9, 18, 17, 30));
+  });
+
+  it('sin hora y "2 días antes": dos días antes a las 9:00', async () => {
+    mockItems = [elemento({ reminder_offset_minutes: 2 * 24 * 60 })];
+    const [aviso] = await programados();
+    expect(new Date(aviso!.fireAt)).toEqual(new Date(2026, 9, 18, 9, 0));
+  });
+
+  it('el aviso lleva el título del elemento y el nombre de su lista', async () => {
+    mockItems = [elemento()];
+    const [aviso] = await programados();
+    expect(aviso).toMatchObject({ title: 'Pagar la luz', body: 'Casa' });
+  });
+
+  it('si la lista no está a la mano, el cuerpo dice "Pendiente"', async () => {
+    mockListas = [];
+    mockItems = [elemento()];
+    const [aviso] = await programados();
+    expect(aviso?.body).toBe('Pendiente');
+  });
+});
+

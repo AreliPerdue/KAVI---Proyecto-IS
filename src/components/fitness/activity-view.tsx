@@ -144,11 +144,13 @@ function Conectado({ source, permisos }: { source: HealthSourceId; permisos: Non
             .sort((a, b) => b.startAt.localeCompare(a.startAt))
             .map((s) => {
               const suya = kaviDe.get(s.id);
+              // Lo que tituló la persona en la otra app se respeta (RF-I4); si no, el tipo en el idioma activo.
+              const titulo = s.title ?? tx.fitness.health.exerciseTypes[s.kind] ?? tx.fitness.health.exerciseTypes.other;
               const minutos = Math.round((fromIso(s.endAt).getTime() - fromIso(s.startAt).getTime()) / 60_000);
               const contenido = (
                 <>
                   <View style={styles.flex}>
-                    <AppText variant="bodyStrong">{s.title}</AppText>
+                    <AppText variant="bodyStrong">{titulo}</AppText>
                     <AppText variant="caption" color="textSecondary" tabular>
                       {formatShortDate(fromIso(s.startAt), lang)} · {formatTime(fromIso(s.startAt), lang)} · {minutos} min
                       {s.activeKcal != null ? a.kcalSuffix(entero(s.activeKcal, lang)) : ''}
@@ -172,7 +174,7 @@ function Conectado({ source, permisos }: { source: HealthSourceId; permisos: Non
                 <Pressable
                   key={s.id}
                   accessibilityRole="button"
-                  accessibilityLabel={a.isYoursA11y(s.title, suya.nombre)}
+                  accessibilityLabel={a.isYoursA11y(titulo, suya.nombre)}
                   onPress={() => router.push({ pathname: '/(app)/workout/[id]', params: { id: suya.id, mode: 'view' } })}
                   style={({ pressed }) => [styles.fila, { borderColor: theme.border, backgroundColor: pressed ? theme.surfaceAlt : theme.surface }]}>
                   {contenido}
