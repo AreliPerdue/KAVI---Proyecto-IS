@@ -98,6 +98,20 @@ describe('usePeopleColors (RF-S15)', () => {
     usePreferencesStore.setState({ selfColor: null });
   });
 
+  it('mi color guardado con una paleta anterior se ve como el actual del mismo Nobi (T202)', async () => {
+    mockListContacts.mockResolvedValue([]);
+    /* eslint-disable-next-line @typescript-eslint/no-require-imports -- store del dispositivo */
+    const { usePreferencesStore } = require('@/store/preferences-store') as typeof import('@/store/preferences-store');
+    // #B06BFF era el lila de la primera paleta; hoy el lila es #C9AAEE.
+    usePreferencesStore.setState({ selfColor: '#B06BFF' });
+    const { Wrapper } = crearWrapper();
+
+    const { result } = await renderHook(() => usePeopleColors(), { wrapper: Wrapper });
+
+    await waitFor(() => expect(result.current.get('u1')).toBe('#C9AAEE'));
+    usePreferencesStore.setState({ selfColor: null });
+  });
+
   it('asigna color a los contactos aceptados', async () => {
     mockListContacts.mockResolvedValue([contacto('u2'), contacto('u3')]);
     const { Wrapper } = crearWrapper();

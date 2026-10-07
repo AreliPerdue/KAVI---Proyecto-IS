@@ -118,3 +118,27 @@ describe('confirmar', () => {
     expect(onSelect).toHaveBeenCalledWith(7 * 60 + 5);
   });
 });
+
+/** Reloj de 12 h (formato de 12 horas en toda la app): la rueda va de 12 a 11 y a.m./p.m. aparte. */
+describe('en 12 horas', () => {
+  /* eslint-disable-next-line @typescript-eslint/no-require-imports -- el formato vive en el módulo */
+  const { setTimeFormat } = require('@/lib/dates') as typeof import('@/lib/dates');
+  beforeEach(() => setTimeFormat('12h'));
+  afterEach(() => setTimeFormat('24h'));
+
+  it('las 12 a.m. son las 0:00 y las 12 p.m. son las 12:00', async () => {
+    const onSelect = jest.fn();
+    await montar({ value: 0, onSelect });
+    expect(screen.getByText('12:00 a.m.')).toBeTruthy();
+    await fireEvent.press(screen.getByRole('tab', { name: 'p.m.' }));
+    await waitFor(() => expect(screen.getByText('12:00 p.m.')).toBeTruthy());
+  });
+
+  it('cambiar a.m./p.m. conserva la hora y el minuto', async () => {
+    await montar({ value: 9 * 60 + 30 });
+    await fireEvent.press(screen.getByRole('tab', { name: 'p.m.' }));
+    await waitFor(() => expect(screen.getByText('9:30 p.m.')).toBeTruthy());
+    await fireEvent.press(screen.getByRole('tab', { name: 'a.m.' }));
+    await waitFor(() => expect(screen.getByText('9:30 a.m.')).toBeTruthy());
+  });
+});

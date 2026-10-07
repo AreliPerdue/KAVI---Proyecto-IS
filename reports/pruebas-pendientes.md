@@ -352,7 +352,7 @@ término sin coincidencias muestra el vacío. Falta:
   ejercicios del catálogo.
 - [ ] `NoteSheet`: guarda texto recortado (vacío → `null`) y etiquetas; cerrar sin guardar
   descarta.
-- [ ] `Chip` seleccionado sin color usa `onInk` (antes: blanco sobre tinta clara en oscuro).
+- [x] `Chip` seleccionado sin color usa `onInk` (antes: blanco sobre tinta clara en oscuro). → `components/ui/__tests__/chip.test.tsx`
 
 ## Fitness v2 · G7 Modo Gymrat (T247)
 Probado a mano en el demo con el reloj del navegador en el 21 oct: tarjeta de pausa por la
@@ -386,7 +386,7 @@ imagen y, sin hoja de compartir del navegador, la descarga (`kavi-2026-10-21.png
 - [ ] `IntervalTimerSheet`: pitido por fase y aviso distinto al final.
 - [x] `shareImage`: nativo con `expo-sharing`; web con `navigator.share` de archivos o
   descarga; `SessionSummarySheet` cae a texto si la captura falla. → `lib/__tests__/sounds-and-share.test.ts`
-- [ ] `Chip`: `accessibilityLabel` opcional y área táctil de 44 con `hitSlop`.
+- [x] `Chip`: `accessibilityLabel` opcional y área táctil de 44 con `hitSlop`. → `components/ui/__tests__/chip.test.tsx`
 - [ ] Prueba en dispositivo: háptico en iOS (no hay Xcode en esta máquina) y en Android.
 
 ## Arrastrar para reordenar (T250)
@@ -448,27 +448,27 @@ personalizado intacto, idempotente) y aplicada en producción. Visto en el demo:
 "Tu color" muestra los 21 por familias y los oscuros con contorno; la pestaña "Tú" con azul
 marino se distingue. `people-colors.test.ts` ya se ajustó a la regla nueva (sin correrlo).
 Falta:
-- [ ] Correr `people-colors.test.ts` y `nobi.test.ts` con los cambios.
-- [ ] `ColorSwatch`: palomita oscura sobre rosa, amarillo, lima y blanco; contorno solo
-  cuando el color no llega a 3:1 contra la hoja.
-- [ ] `lowContrastOutline` en bloque, chip y punto del mes, y en la agenda.
-- [ ] `currentColor` en el color propio guardado en el dispositivo y en el formulario de
-  una lista vieja.
+- [x] Correr `people-colors.test.ts` y `nobi.test.ts` con los cambios. → `la suite completa pasa`
+- [x] `ColorSwatch`: palomita oscura sobre rosa, amarillo, lima y blanco; contorno solo
+  cuando el color no llega a 3:1 contra la hoja. → `components/ui/__tests__/color-swatch.test.tsx`
+- [x] `lowContrastOutline` en bloque, chip y punto del mes, y en la agenda. → `components/ui/__tests__/color-swatch.test.tsx`
+- [x] `currentColor` en el color propio guardado en el dispositivo y en el formulario de
+  una lista vieja. → `hooks/__tests__/use-connections.test.tsx`
 
 ## Paleta de personas v3 (vibrante sin chillar)
 Reajuste en OKLCH tras T202: los 21 pasan 3:1 sobre `#131313` y `#1A1A1A`, par más cercano
 a 16.5. Migración v3 probada en PGlite (las tres paletas anteriores, personalizado intacto,
 idempotente) y aplicada en producción. Visto en el demo: menú "Tu color" y pestaña "Tú".
 Falta:
-- [ ] `people-colors.test.ts`: que ningún color necesite contorno sobre el fondo y las hojas
-  del tema oscuro; que `currentColor` traduzca las tres paletas anteriores.
+- [x] `people-colors.test.ts`: que ningún color necesite contorno sobre el fondo y las hojas
+  del tema oscuro; que `currentColor` traduzca las tres paletas anteriores. → `constants/__tests__/people-colors.test.ts (ya lo cubría)`
 
 ## Formato de 12 horas en toda la app
 Probado a mano en el demo (360 px, 12 h): el pendiente con hora muestra "5:30 p.m." en la
 lista y al editarlo; el selector de hora usa rueda 12–11 con a.m./p.m. Falta:
 - [x] `formatClock` ("17:30:00" → "5:30 p.m." / "17:30") y `formatHour`. → `components/calendar/__tests__/views-and-filters.test.ts`
-- [ ] `TimePickerSheet` en 12 h: 12 a.m. = 0:00, 12 p.m. = 12:00; cambiar a.m./p.m. conserva
-  la hora; devuelve minutos 0–1439 igual que en 24 h.
+- [x] `TimePickerSheet` en 12 h: 12 a.m. = 0:00, 12 p.m. = 12:00; cambiar a.m./p.m. conserva
+  la hora; devuelve minutos 0–1439 igual que en 24 h. → `components/ui/__tests__/time-picker-sheet.test.tsx`
 - [ ] Ninguna hora visible se arma a mano (buscar `.slice(0, 5)` sobre horas en la UI).
 
 ## Glosario y estimaciones (T253, T254)
@@ -521,12 +521,12 @@ calendario. `/privacidad` y un enlace inválido se abren sin sesión. Falta:
 - [x] `edadEn`: cumpleaños hoy, ayer y mañana; 29 de febrero. → `lib/__tests__/consent.test.ts`
 - [x] `consentGate`: sin fecha o con otra versión → aceptar; < 16 → menor; 16–17 sin aprobación
   → adulto; 16–17 con alguna aprobación → listo; ≥ 18 → listo. → `lib/__tests__/consent.test.ts`
-- [ ] `useConsentGate`: sin red y con la versión recordada abre la app; sin red y sin recordar
-  muestra el error con "Reintentar"; con red siempre manda el servidor.
+- [x] `useConsentGate`: sin red y con la versión recordada abre la app; sin red y sin recordar
+  muestra el error con "Reintentar"; con red siempre manda el servidor. → `hooks/__tests__/use-consent.test.tsx`
 - [ ] Menor de 16 → "Es correcta: eliminar mi cuenta" borra la cuenta y vuelve a login.
 - [ ] Rechazado y vencido muestran su texto; "Volver a enviar" y "Cambiar el correo".
-- [ ] Función de Vercel `api/guardian-consent`: sin sesión 401; correo inválido 400; mensajes
-  22023 de la base pasan tal cual; sin variables de entorno 503.
+- [x] Función de Vercel `api/guardian-consent`: sin sesión 401; correo inválido 400; mensajes
+  22023 de la base pasan tal cual; sin variables de entorno 503. → `lib/__tests__/guardian-consent-api.test.ts`
 - [ ] **Correo real en producción** (Vercel ya tiene SMTP_USER, SMTP_PASSWORD y KAVI_EMAIL_SECRET
   desde el 5 oct 2026; la función responde 401/400 como debe). Lo hace Areli con alias de Gmail:
   en ventana privada, crear `perdue.areli28+prueba@gmail.com`, fecha de hace 17 años, adulto
