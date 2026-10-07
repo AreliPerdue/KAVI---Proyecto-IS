@@ -39,14 +39,17 @@ jest.mock('@/services/activities', () => ({ extendRecurrenceHorizon: () => mockE
 // pendientes ni rutinas, la franja y el panel no se dibujan.
 const mockToggle = jest.fn();
 const mockReschedule = jest.fn();
-let mockListasDatos: { lists: unknown[]; delDia: unknown[]; vencidos: unknown[] } = { lists: [], delDia: [], vencidos: [] };
+let mockListasDatos: { lists: unknown[]; delDia: unknown[]; vencidos: unknown[]; rango?: unknown[] } = { lists: [], delDia: [], vencidos: [] };
 /** Con qué `enabled` se pidieron los vencidos: la pantalla solo los quiere si el día es hoy. */
 const mockPidioVencidos = jest.fn();
 let mockDims = { width: 390, height: 800, scale: 2, fontScale: 1 };
 jest.mock('react-native/Libraries/Utilities/useWindowDimensions', () => ({ __esModule: true, default: () => mockDims }));
 jest.mock('@/hooks/use-lists', () => ({
   useLists: () => ({ data: mockListasDatos.lists, isSuccess: true }),
-  useListItemsByDate: (desde: string, hasta: string, enabled = true) => ({ data: enabled && desde === hasta ? mockListasDatos.delDia : [], isSuccess: true }),
+  useListItemsByDate: (desde: string, hasta: string, enabled = true) => ({
+    data: !enabled ? [] : desde === hasta ? mockListasDatos.delDia : (mockListasDatos.rango ?? []),
+    isSuccess: true,
+  }),
   useOverdueListItems: (_hoy: string, enabled: boolean) => {
     mockPidioVencidos(enabled);
     return { data: enabled ? mockListasDatos.vencidos : undefined, isSuccess: true };
@@ -258,5 +261,23 @@ describe('panel lateral en web (RF-L27)', () => {
     await render(<Pantalla />);
     expect(screen.queryByText('Tus listas')).toBeNull();
     expect(franja()).toBeTruthy();
+  });
+});
+
+describe('agenda (RF-L12, RF-L26)', () => {
+  it('tocar el chip de un pendiente abre su lista', async () => {
+    useCalendarStore.setState({ view: 'agenda', anchorKey: hoy() });
+    mockListasDatos.rango = [item()];
+    await render(<Pantalla />);
+    await fireEvent.press(screen.getByRole('button', { name: /^Arreglar la puerta, / }));
+    expect(globalThis.mockRouter.push).toHaveBeenCalledWith({ pathname: '/(app)/list/[id]', params: { id: 'l1' } });
+  });
+
+  it('tocar el chip de una rutina abre su lista', async () => {
+    useCalendarStore.setState({ view: 'agenda', anchorKey: hoy() });
+    mockListasDatos.lists = [{ ...LISTA, id: 'r1', name: 'Dientes', owner_id: 'u1', recurrence_rule: 'FREQ=DAILY', recurrence_start: '2026-01-01', is_archived: false }];
+    await render(<Pantalla />);
+    await fireEvent.press(screen.getAllByRole('button', { name: /^Dientes, / })[0]!);
+    expect(globalThis.mockRouter.push).toHaveBeenCalledWith({ pathname: '/(app)/list/[id]', params: { id: 'r1' } });
   });
 });

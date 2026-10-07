@@ -5,7 +5,7 @@
 import { act, renderHook, waitFor } from '@testing-library/react-native';
 
 import { crearWrapper } from '@/hooks/__tests__/query-wrapper';
-import { useListItemsByDate, useListMutations, useListSearch } from '@/hooks/use-lists';
+import { listKeys, useListItemsByDate, useListMutations, useListSearch } from '@/hooks/use-lists';
 import type { ListItem } from '@/types/domain';
 
 const mockBuscar = jest.fn();
@@ -17,6 +17,7 @@ jest.mock('@/services/lists', () => ({
   searchLists: (...a: unknown[]) => mockBuscar(...a),
   listItemsByDateRange: (...a: unknown[]) => mockPorFecha(...a),
   reorderListItem: (...a: unknown[]) => mockReordenar(...a),
+  updateListItem: () => Promise.resolve(undefined),
 }));
 
 beforeEach(() => {
@@ -64,5 +65,17 @@ describe('swapItems (RF-L7)', () => {
     mockReordenar.mockImplementationOnce(async (_id: string, orden: number) => { a.sort_order = orden; });
     await act(async () => { await result.current.swapItems.mutateAsync({ a, b }); });
     expect(mockReordenar.mock.calls).toEqual([['a', 2048, 's1'], ['b', 1024, 's1']]);
+  });
+});
+
+describe('updateItem', () => {
+  it('invalida los pendientes por fecha: la franja del día se vuelve a pedir', async () => {
+    const { Wrapper, queryClient } = crearWrapper();
+    const invalidar = jest.spyOn(queryClient, 'invalidateQueries');
+    const { result } = await renderHook(() => useListMutations(), { wrapper: Wrapper });
+    await act(async () => { await result.current.updateItem.mutateAsync({ id: 'i1', patch: { due_date: '2026-10-07' } }); });
+    const clave = invalidar.mock.calls[0]?.[0]?.queryKey as readonly unknown[];
+    // `['lists']` es prefijo de `listKeys.byDate(...)`.
+    expect(listKeys.byDate('u1', '2026-10-07', '2026-10-07').slice(0, clave.length)).toEqual(clave);
   });
 });

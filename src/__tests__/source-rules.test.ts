@@ -79,3 +79,32 @@ describe('textos de interfaz (RF-I8)', () => {
     expect(culpables).toEqual([]);
   });
 });
+
+/**
+ * La variante `micro` (11 px) es la única excepción al mínimo de 12 px de `kavi-design` §2 y
+ * nació para la rejilla del calendario. Hoy también la usan las tablas densas del gym, el
+ * progreso y las fechas de los renglones de Listas; esta prueba fija ese conjunto para que no
+ * siga creciendo sin decidirlo: un archivo nuevo con `micro` la hace fallar.
+ */
+describe('variante micro (kavi-design §2)', () => {
+  const PERMITIDOS = [
+    '/components/calendar/month-view.tsx',
+    '/components/calendar/agenda-view.tsx',
+    '/components/calendar/activity-block.tsx',
+    '/components/lists/day-items-strip.tsx',
+    // Fuera del calendario, pendientes de decidir (ver reports/pruebas-pendientes.md):
+    '/app/(app)/progress.tsx',
+    '/app/(app)/list/[id].tsx',
+    '/components/fitness/progress-chart.tsx',
+    '/components/fitness/exercise-block.tsx',
+    '/components/fitness/activity-view.tsx',
+  ];
+
+  it('solo la usan los archivos permitidos', () => {
+    const usan = archivos(join(SRC, 'components'), (p) => p.endsWith('.tsx'))
+      .concat(archivos(join(SRC, 'app'), (p) => p.endsWith('.tsx')))
+      .filter((p) => /variant=\{?["'][^"']*\bmicro\b|'micro'/.test(readFileSync(p, 'utf8')))
+      .map((p) => p.slice(SRC.length));
+    expect(usan.filter((p) => !PERMITIDOS.includes(p))).toEqual([]);
+  });
+});

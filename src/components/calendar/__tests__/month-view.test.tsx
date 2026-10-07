@@ -6,6 +6,7 @@
  * tiene, quien usa lector de pantalla no puede orientarse (kavi-design §5).
  */
 import { fireEvent, render, screen } from '@testing-library/react-native';
+import { StyleSheet } from 'react-native';
 
 import { MonthView } from '@/components/calendar/month-view';
 import type { Activity } from '@/types/domain';
@@ -120,5 +121,29 @@ describe('actividades de varios dias', () => {
     await medir();
 
     expect(screen.getByLabelText(/lunes 7 de septiembre, sin actividades/i)).toBeTruthy();
+  });
+});
+
+/**
+ * El número del día (T190b): a la derecha en una rejilla ancha —web de escritorio, tableta—
+ * y centrado en una angosta. Se decide por el ancho medido y no por la plataforma: un
+ * navegador angosto se comporta como un teléfono. Sin esta prueba, un cambio de
+ * `alignItems` pasaría inadvertido.
+ */
+describe('número del día', () => {
+  const alineacion = async (width: number, height: number) => {
+    await render(<MonthView anchor={ANCLA} activities={[]} onSelectDay={jest.fn()} />);
+    const celda = screen.getAllByRole('button')[0];
+    await fireEvent(celda as never, 'layout', { nativeEvent: { layout: { width, height } } });
+    const fila = screen.getByLabelText(/lunes 7 de septiembre/i).children[0] as { props: { style: unknown } };
+    return StyleSheet.flatten(fila.props.style as never)?.alignItems;
+  };
+
+  it('a la derecha en una rejilla ancha', async () => {
+    expect(await alineacion(1024, 700)).toBe('flex-end');
+  });
+
+  it('centrado en una angosta con sitio para varios chips', async () => {
+    expect(await alineacion(390, 600)).toBe('center');
   });
 });

@@ -349,3 +349,13 @@ describe('rutinas: el paso de los días (T208, RF-L20)', () => {
     expect(dientes?.completed_at).toBeNull();
   });
 });
+
+describe('ponerle fecha de hoy a un elemento (T212)', () => {
+  it('aparece en los pendientes del día', async () => {
+    const { api } = fresh();
+    const item = await api.addItem('list-super', YO, { title: 'Pilas', section_id: null });
+    expect((await api.listByDateRange(YO, HOY, HOY)).map((i) => i.id)).not.toContain(item.id);
+    await api.updateItem(item.id, { due_date: HOY });
+    expect((await api.listByDateRange(YO, HOY, HOY)).map((i) => i.id)).toContain(item.id);
+  });
+});

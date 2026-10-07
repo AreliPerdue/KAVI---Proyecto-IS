@@ -3,9 +3,17 @@
  * cambio de vista y los filtros, y cada control se anuncia con su estado actual:
  * el icono de filtros dice cuantos hay activos, no solo que existe.
  */
-import { fireEvent, render, screen, waitFor } from '@testing-library/react-native';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react-native';
+import { StyleSheet } from 'react-native';
 
 import { CalendarHeader } from '@/components/calendar/calendar-header';
+
+/** El ancho de la ventana; 750 es el que trae Jest y el que suponen las demás pruebas. */
+let mockAncho = 750;
+jest.mock('react-native/Libraries/Utilities/useWindowDimensions', () => ({
+  __esModule: true,
+  default: () => ({ width: mockAncho, height: 800, scale: 2, fontScale: 1 }),
+}));
 
 const ANCLA = new Date(2026, 8, 7);
 
@@ -112,5 +120,46 @@ describe('filtros', () => {
     await fireEvent.press(screen.getByLabelText('Filtros'));
 
     expect(onOpenFilters).toHaveBeenCalledTimes(1);
+  });
+});
+
+/**
+ * Angosto (< 720 px, T193b): el encabezado se parte en dos renglones —título arriba,
+ * controles abajo— para que el mes no se corte en "Septie…". Es la regresión que solo se
+ * ve en una captura, así que se fija la estructura: a 390 px el título no comparte renglón.
+ */
+describe('ancho de la ventana', () => {
+  const conAncho = (width: number) => {
+    mockAncho = width;
+  };
+  afterEach(() => conAncho(750));
+
+  const contenedorDelTitulo = () => screen.getByRole('button', { name: /Cambiar de fecha$/ }).parent as unknown as { props: { style: unknown } };
+
+  it('a 390 px: dos renglones, título completo arriba y sin flechas', async () => {
+    conAncho(390);
+    await montar();
+    const estilo = StyleSheet.flatten(contenedorDelTitulo().props.style as never);
+    expect(estilo?.flexDirection ?? 'column').toBe('column');
+    expect(screen.getByText('Septiembre 2026')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Anterior' })).toBeNull();
+  });
+
+  it('a 1024 px: un solo renglón con flechas', async () => {
+    conAncho(1024);
+    await montar();
+    expect(StyleSheet.flatten(contenedorDelTitulo().props.style as never)?.flexDirection).toBe('row');
+    expect(screen.getByRole('button', { name: 'Anterior' })).toBeTruthy();
+  });
+
+  it('el alfiler de cada vista no va anidado dentro de su fila del menú', async () => {
+    conAncho(390);
+    await montar();
+    await fireEvent.press(screen.getByRole('button', { name: /Cambiar vista$/ }));
+    for (const vista of ['Día', 'Semana', 'Mes']) {
+      const fila = screen.getByRole('button', { name: vista });
+      expect(within(fila).queryByRole('button', { name: /Fijar|Quitar|única/i })).toBeNull();
+    }
+    expect(screen.getAllByRole('button', { name: /^(Fijar|Quitar) / }).length).toBeGreaterThan(0);
   });
 });

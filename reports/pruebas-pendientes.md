@@ -14,11 +14,11 @@ que todavía no se automatiza.
   separación (3→2). Revisar si alguna aserción daba por buenos los valores viejos. → `ya pasa con los altos nuevos (suite en verde)`
 - [x] `timeline.test.tsx` — `BASE_MIN_BLOCK_HEIGHT` bajó de 28 a 22 con la tipografía. Una
   actividad corta ahora ocupa menos alto; comprobar que el título sigue sin cortarse. → `ya pasa (suite en verde)`
-- [ ] Prueba nueva: el número del día se alinea a la derecha en web y centrado en nativo.
-  Hoy no hay ninguna que lo fije, así que un cambio de `alignItems` pasaría inadvertido.
-- [ ] Prueba nueva: que la variante `micro` (11 px) no se use fuera del calendario. Es la
+- [x] Prueba nueva: el número del día se alinea a la derecha en web y centrado en nativo.
+  Hoy no hay ninguna que lo fije, así que un cambio de `alignItems` pasaría inadvertido. → `components/calendar/__tests__/month-view.test.tsx (se decide por el ancho medido de la rejilla, no por la plataforma: ≥ 700 px a la derecha)`
+- [x] Prueba nueva: que la variante `micro` (11 px) no se use fuera del calendario. Es la
   única excepción al mínimo de 12 px de `kavi-design` §2 y conviene que una prueba la
-  mantenga acotada en vez de la disciplina.
+  mantenga acotada en vez de la disciplina. → `__tests__/source-rules.test.ts (fija los archivos que hoy la usan; ya hay 6 fuera del calendario, ver nota)`
 - [ ] (manual) Revisar a mano en 375 px de ancho: con la tipografía en 12, comprobar que la vista
   semanal en móvil no encima títulos entre columnas.
 
@@ -58,12 +58,12 @@ que todavía no se automatiza.
   un caso nuevo sin rama rompería en silencio. → `components/calendar/__tests__/views-and-filters.test.ts`
 - [x] `togglePinnedView`: no deja la pastilla vacía, y conserva el orden canónico en vez del
   orden en que se fijaron. → `components/calendar/__tests__/views-and-filters.test.ts`
-- [ ] `AgendaView` omite los días sin actividades y agrupa bien las que cruzan medianoche.
+- [x] `AgendaView` omite los días sin actividades y agrupa bien las que cruzan medianoche. → `components/calendar/__tests__/agenda-view.test.tsx`
 - [x] `formatThreeDaysTitle` cuando el rango cruza de mes. → `i18n/__tests__/i18n.test.ts`
-- [ ] Que el alfiler del menú no quede anidado dentro del Pressable de su fila.
-- [ ] Encabezado del calendario en dos filas por debajo de 720 px, con el título completo.
+- [x] Que el alfiler del menú no quede anidado dentro del Pressable de su fila. → `components/calendar/__tests__/calendar-header.test.tsx`
+- [x] Encabezado del calendario en dos filas por debajo de 720 px, con el título completo.
   Es la clase de regresión que solo se ve en una captura, así que conviene una prueba que
-  fije que el título no se trunca a 390 px.
+  fije que el título no se trunca a 390 px. → `components/calendar/__tests__/calendar-header.test.tsx`
 
 ## FAB que encoge (T193c)
 
@@ -71,7 +71,7 @@ que todavía no se automatiza.
   zona superior ni a desplazamientos por debajo del umbral. → `hooks/__tests__/use-shrink-on-scroll.test.tsx`
 - [x] El FAB encogido **no** baja del mínimo táctil (44 iOS / 48 Android). Es la garantía
   que justifica la escala elegida y la que se rompería al retocar el tamaño a ojo. → `components/ui/__tests__/fab.test.tsx`
-- [ ] Con movimiento reducido cambia de tamaño sin transición.
+- [x] Con movimiento reducido cambia de tamaño sin transición. → `components/ui/__tests__/fab.test.tsx`
 
 ## Captura de ítems (T200)
 
@@ -113,7 +113,7 @@ que todavía no se automatiza.
 
 ## Alta estilo Keep (T207)
 
-- [x] "+" crea y navega sin pantalla intermedia, con el título enfocado. → `app/(app)/__tests__/lists.test.tsx (el foco del título: detalle)`
+- [x] "+" crea y navega sin pantalla intermedia, con el título enfocado. → `app/(app)/__tests__/lists.test.tsx, app/(app)/list/__tests__/detail.test.tsx`
 - [x] Al salir, una lista intacta se borra; una con nombre cambiado **o** con un elemento,
   no. Es la regla que evita basura sin tragarse trabajo de nadie. → `app/(app)/list/__tests__/detail.test.tsx`
 - [x] El título guarda al perder el foco y se repone si se deja vacío. → `app/(app)/list/__tests__/detail.test.tsx`
@@ -124,7 +124,7 @@ que todavía no se automatiza.
 - [x] Quitar el día quita también la hora. → `services/demo/__tests__/lists.test.ts`
 - [x] Un elemento con fecha pasada **ya palomeado** no se pinta como vencido. → `app/(app)/list/__tests__/detail.test.tsx`
 - [x] La fecha viaja como `YYYY-MM-DD` y no como instante, en las dos implementaciones. → `hooks/__tests__/use-lists.test.tsx, services/demo/__tests__/lists.test.ts`
-- [ ] Un elemento al que se le pone la fecha de hoy aparece en la franja del día.
+- [x] Un elemento al que se le pone la fecha de hoy aparece en la franja del día. → `services/demo/__tests__/lists.test.ts, hooks/__tests__/use-lists.test.tsx`
 
 ## Recordatorios de elementos de lista (T215)
 
@@ -288,7 +288,7 @@ que todavía no se automatiza.
 - [x] Cambiar de "todos los días" a chips de días conserva el inicio y el fin. → `components/lists/__tests__/list-repeat-sheet.test.tsx`
 - [x] Un fin anterior al inicio se empuja al inicio. → `components/lists/__tests__/list-repeat-sheet.test.tsx`
 - [x] En web ≥ 900 px y vista diaria aparece el panel y **no** la franja; a 899 px, al revés. → `app/(app)/(tabs)/__tests__/calendar-lists.test.tsx`
-- [ ] Tocar un chip de rutina o de pendiente en la agenda abre su lista.
+- [x] Tocar un chip de rutina o de pendiente en la agenda abre su lista. → `app/(app)/(tabs)/__tests__/calendar-lists.test.tsx`
 
 ## Fitness v2 · G3 logger en vivo (T243)
 Ya cubierto con pruebas al escribirlo: `lib/gym/{sets,session,tools,outbox}` y la pantalla
