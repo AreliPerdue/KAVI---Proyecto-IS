@@ -131,9 +131,10 @@ function Renglon({
    * palomeado es estado de **la vuelta**, no del elemento (RF-L20).
    */
   hecho: boolean;
-  onToggle: (done: boolean) => void;
-  onRename: (title: string) => void;
-  onOpenDetails: () => void;
+  /** Reciben el elemento para poder ser las mismas funciones en todos los renglones (T271). */
+  onToggle: (item: ListItem, done: boolean) => void;
+  onRename: (item: ListItem, title: string) => void;
+  onOpenDetails: (item: ListItem) => void;
   /** Fuera de la superficie arrastrable (completados) la pulsación larga la atiende el renglón. */
   holdToOpen?: boolean;
 }) {
@@ -154,7 +155,7 @@ function Renglon({
     setEditandoTexto(false);
     const limpio = texto.trim();
     // Vacío no borra: para eso está "Eliminar" en los detalles. Vuelve el título de antes.
-    if (limpio && limpio !== item.title) onRename(limpio);
+    if (limpio && limpio !== item.title) onRename(item, limpio);
   };
 
   const meta =
@@ -183,7 +184,7 @@ function Renglon({
         accessibilityLabel={hecho ? tx.lists.markPending(item.title) : tx.lists.markDone(item.title)}
         hitSlop={10}
         onPress={() => {
-          if (!arrastreReciente()) onToggle(!hecho);
+          if (!arrastreReciente()) onToggle(item, !hecho);
         }}
         style={({ pressed }) => [styles.casillaToque, pressed ? styles.pressed : null]}>
         <View
@@ -219,11 +220,11 @@ function Renglon({
           accessibilityHint={tx.lists.itemHint}
           accessibilityActions={[{ name: 'longpress', label: tx.lists.itemDetails(item.title) }]}
           onAccessibilityAction={(e) => {
-            if (e.nativeEvent.actionName === 'longpress') onOpenDetails();
+            if (e.nativeEvent.actionName === 'longpress') onOpenDetails(item);
           }}
           // Ignora el toque que llega pegado a un arrastre o a una pulsación larga.
           onPress={empezar}
-          onLongPress={holdToOpen ? onOpenDetails : undefined}
+          onLongPress={holdToOpen ? () => onOpenDetails(item) : undefined}
           delayLongPress={350}
           style={({ pressed }) => [styles.renglon, pressed ? { backgroundColor: theme.surfaceAlt } : null]}>
           <View style={styles.texto}>
@@ -244,7 +245,7 @@ function Renglon({
           accessibilityRole="button"
           accessibilityLabel={tx.lists.itemDetails(item.title)}
           hitSlop={6}
-          onPress={onOpenDetails}
+          onPress={() => onOpenDetails(item)}
           style={({ pressed }) => [styles.detallesBoton, pressed ? { backgroundColor: theme.surfaceAlt } : null]}>
           <Ellipsis size={IconSize.inline} strokeWidth={IconStroke} color={theme.textTertiary} />
         </Pressable>
@@ -408,7 +409,7 @@ export default function ListDetailScreen() {
   const estaHecho = (item: ListItem): boolean =>
     esRutina ? (vueltaActiva?.completed_item_ids ?? []).includes(item.id) : item.completed_at !== null;
 
-  const alternar = (item: ListItem) => (done: boolean) => {
+  const alternar = (item: ListItem, done: boolean) => {
     if (!esRutina) return toggleItem.mutate({ id: item.id, done });
     if (!vueltaActiva) return;
     toggleRunItem.mutate({ runId: vueltaActiva.id, itemId: item.id, done });
@@ -425,7 +426,7 @@ export default function ListDetailScreen() {
   };
 
   /** Corregir el texto en el renglón mismo, sin abrir la hoja (RF-L13c). */
-  const renombrar = (item: ListItem) => (title: string) => {
+  const renombrar = (item: ListItem, title: string) => {
     tocada.current = true;
     updateItem.mutate({ id: item.id, patch: { title } }, { onError: () => showSnackbar({ message: tx.lists.saveFailed }) });
   };
@@ -691,9 +692,9 @@ export default function ListDetailScreen() {
                     item={e.item}
                     color={color}
                     hecho={estaHecho(e.item)}
-                    onToggle={alternar(e.item)}
-                    onRename={renombrar(e.item)}
-                    onOpenDetails={() => abrirEdicion(e.item)}
+                    onToggle={alternar}
+                    onRename={renombrar}
+                    onOpenDetails={abrirEdicion}
                   />
                 ) : e.kind === 'header' ? (
                   <AppText variant="caption" color="textTertiary" style={styles.encabezadoSeccion}>
@@ -754,9 +755,9 @@ export default function ListDetailScreen() {
                         item={it}
                         color={color}
                         hecho={estaHecho(it)}
-                        onToggle={alternar(it)}
-                        onRename={renombrar(it)}
-                        onOpenDetails={() => abrirEdicion(it)}
+                        onToggle={alternar}
+                        onRename={renombrar}
+                        onOpenDetails={abrirEdicion}
                         holdToOpen
                       />
                     ))

@@ -10,8 +10,9 @@ export function activityColor(activity: Pick<Activity, 'color'>, theme: ThemeCol
 }
 
 /**
- * Contorno para una actividad cuyo color casi no se distingue del fondo: el negro o el azul
- * marino de un Nobi en el calendario superpuesto, o un tema con color muy oscuro (T202).
+ * Contorno para una marca **sin texto** cuyo color casi no se distingue del fondo: los puntos
+ * del mes cuando no cabe un chip. Las pastillas y bloques con título ya no lo llevan (T269):
+ * el título se lee igual y el marco claro se veía como un borde blanco ajeno al diseño.
  */
 export function lowContrastOutline(color: string, theme: ThemeColors): ViewStyle | null {
   return needsOutline(color, theme.background) ? { borderWidth: 1, borderColor: theme.textTertiary } : null;

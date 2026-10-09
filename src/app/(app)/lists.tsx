@@ -1,16 +1,18 @@
 import { useRouter } from 'expo-router';
-import { Archive, ArchiveRestore, ArrowDown, ArrowUp, CircleCheck, Copy, Ellipsis, Inbox, Pin, PinOff, Search, Sun, Trash2, X } from 'lucide-react-native';
-import { useCallback, useContext, useMemo, useState } from 'react';
-import { Platform, Pressable, ScrollView, StyleSheet, TextInput, type TextStyle, View } from 'react-native';
+import { Archive, ArchiveRestore, ArrowDown, ArrowUp, Check, CircleCheck, Copy, Ellipsis, Inbox, ListChecks, Palette, Pin, PinOff, Search, Sun, Tag, Trash2, X } from 'lucide-react-native';
+import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { BackHandler, Platform, Pressable, ScrollView, StyleSheet, TextInput, type TextStyle, View } from 'react-native';
 
 
 import { tint } from '@/components/calendar/activity-style';
+import { BulkTagsSheet } from '@/components/lists/bulk-tags-sheet';
 import { DraggableGrid } from '@/components/lists/draggable-grid';
+import { ListAppearanceSheet } from '@/components/lists/list-appearance-sheet';
 import { arrastreReciente } from '@/components/lists/drag-guard';
 import { PEOPLE_COLORS } from '@/constants/people-colors';
 import { ModalHeader } from '@/components/modal-header';
 import { ModuleInBarContext } from '@/components/navigation/stacked-module';
-import { ActionRow, AppText, EmptyState, ErrorState, Fab, LoadingState, Screen, Sheet, ThemeIcon } from '@/components/ui';
+import { ActionRow, AppText, EmptyState, ErrorState, Fab, IconButton, LoadingState, Screen, Sheet, ThemeIcon } from '@/components/ui';
 import { Fonts, IconSize, IconStroke, Radius, Spacing, Typography } from '@/constants/theme';
 import {
   useArchivedLists,
@@ -171,7 +173,37 @@ export default function ListsScreen() {
   const compartidas = useListsSharedWithMe();
   const etiquetas = useListTags();
   const [etiquetaActiva, setEtiquetaActiva] = useState<string | null>(null);
-  const { update, remove, duplicate, create, swapLists, moveList } = useListMutations();
+  const { update, remove, duplicate, create, swapLists, moveList, updateMany, removeMany } = useListMutations();
+
+  /*
+   * Selección múltiple, como en Google Keep (RF-L28, T270). Mantener presionada una tarjeta
+   * sin moverla la selecciona; mientras haya alguna, tocar agrega o quita en vez de abrir, y
+   * arriba sale la barra con lo que se puede hacer con todas. Solo mis listas activas: las
+   * compartidas conmigo no son mías para borrarlas ni archivarlas.
+   */
+  const [seleccion, setSeleccion] = useState<ReadonlySet<string>>(() => new Set());
+  const seleccionando = seleccion.size > 0;
+  const [etiquetandoVarias, setEtiquetandoVarias] = useState(false);
+  const [coloreandoVarias, setColoreandoVarias] = useState(false);
+  const salirDeSeleccion = () => setSeleccion(new Set());
+  const alternarSeleccion = (id: string) =>
+    setSeleccion((previa) => {
+      const nueva = new Set(previa);
+      if (nueva.has(id)) nueva.delete(id);
+      else nueva.add(id);
+      return nueva;
+    });
+  const seleccionadas = useMemo(() => (lists.data ?? []).filter((l) => seleccion.has(l.id)), [lists.data, seleccion]);
+
+  // "Atrás" de Android sale de la selección en vez de salir de Listas.
+  useEffect(() => {
+    if (!seleccionando) return;
+    const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+      setSeleccion(new Set());
+      return true;
+    });
+    return () => sub.remove();
+  }, [seleccionando]);
   const { shrunk, onScroll } = useShrinkOnScroll();
 
   const consulta = verArchivadas ? archivadas : lists;
@@ -257,6 +289,42 @@ export default function ListsScreen() {
     remove.mutate(lista.id, { onSuccess: () => showSnackbar({ message: tx.lists.deleted }) });
   };
 
+  const sel = tx.lists.selection;
+  const conAviso = (mensaje: string) => ({
+    onSuccess: () => showSnackbar({ message: mensaje }),
+    onError: () => showSnackbar({ message: sel.failed }),
+  });
+  const todasFijadas = seleccionadas.length > 0 && seleccionadas.every((l) => l.is_pinned);
+
+  const fijarVarias = () => {
+    const ids = [...seleccion];
+    updateMany.mutate({ ids, patch: { is_pinned: !todasFijadas } }, conAviso(todasFijadas ? sel.unpinned(ids.length) : sel.pinned(ids.length)));
+    salirDeSeleccion();
+  };
+
+  const archivarVarias = () => {
+    const ids = [...seleccion];
+    updateMany.mutate({ ids, patch: { is_archived: true } }, conAviso(sel.archived(ids.length)));
+    salirDeSeleccion();
+  };
+
+  const eliminarVarias = async () => {
+    const ids = [...seleccion];
+    const elementos = seleccionadas.reduce((total, l) => total + l.total_count, 0);
+    const ok = await confirm({
+      title: sel.deleteTitle(ids.length),
+      message: elementos > 0 ? sel.deleteWithItems(elementos) : tx.lists.cantUndo,
+      confirmLabel: tx.lists.delete,
+      destructive: true,
+    });
+    if (!ok) return;
+    removeMany.mutate(ids, conAviso(sel.deleted(ids.length)));
+    salirDeSeleccion();
+  };
+
+  const colorearVarias = (patch: { color?: string; icon?: string }) =>
+    updateMany.mutate({ ids: [...seleccion], patch }, { onError: () => showSnackbar({ message: sel.failed }) });
+
   /*
    * El botón de acciones va **fuera** de la tarjeta y encima de ella, no anidado.
    *
@@ -266,22 +334,30 @@ export default function ListsScreen() {
    * `<button>`, que es HTML inválido, rompe la hidratación y deja el botón interno fuera
    * del recorrido con teclado. Como hermanos posicionados, se ve igual y ambos funcionan.
    */
-  const tarjeta = (item: KaviList) => (
+  const tarjeta = (item: KaviList, seleccionable = false) => {
+    const elegida = seleccion.has(item.id);
+    return (
     <View key={item.id} style={styles.celda}>
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel={`${item.name}, ${subtitulo(item, tx, lang)}`}
-        accessibilityHint={tx.calendar.reorderHint}
+        accessibilityLabel={`${item.name}, ${subtitulo(item, tx, lang)}${seleccionando && seleccionable ? `, ${elegida ? sel.selected : sel.notSelected}` : ''}`}
+        accessibilityHint={seleccionando ? undefined : tx.calendar.reorderHint}
+        accessibilityState={seleccionando && seleccionable ? { selected: elegida } : undefined}
         // Soltar una tarjeta no debe abrirla: el toque llega igual porque el arrastre no
         // lo cancela, así que se ignora el que venga pegado a un arrastre.
         onPress={() => {
           if (arrastreReciente()) return;
+          if (seleccionando) {
+            if (seleccionable) alternarSeleccion(item.id);
+            return;
+          }
           if (verArchivadas) setMenuDe(item);
           else abrir(item.id);
         }}
         style={({ pressed }) => [
           styles.tarjeta,
           { backgroundColor: tint(item.color, 0.16), borderColor: item.color },
+          elegida ? [styles.tarjetaElegida, { borderColor: theme.ink }] : null,
           pressed ? styles.pressed : null,
         ]}>
         <View style={styles.tarjetaCabeza}>
@@ -295,16 +371,31 @@ export default function ListsScreen() {
           {subtitulo(item, tx, lang)}
         </AppText>
       </Pressable>
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel={tx.lists.actionsFor(item.name)}
-        hitSlop={10}
-        onPress={() => setMenuDe(item)}
-        style={({ pressed }) => [styles.masBoton, pressed ? styles.pressed : null]}>
-        <Ellipsis size={16} strokeWidth={IconStroke} color={theme.textSecondary} />
-      </Pressable>
+      {seleccionando ? (
+        // Mientras se selecciona, la esquina dice si está elegida; el menú no aplica.
+        seleccionable ? (
+          <View
+            pointerEvents="none"
+            style={[
+              styles.palomita,
+              elegida ? { backgroundColor: theme.ink, borderColor: theme.ink } : { borderColor: theme.textTertiary, backgroundColor: theme.background },
+            ]}>
+            {elegida ? <Check size={14} strokeWidth={3} color={theme.onInk} /> : null}
+          </View>
+        ) : null
+      ) : (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={tx.lists.actionsFor(item.name)}
+          hitSlop={10}
+          onPress={() => setMenuDe(item)}
+          style={({ pressed }) => [styles.masBoton, pressed ? styles.pressed : null]}>
+          <Ellipsis size={16} strokeWidth={IconStroke} color={theme.textSecondary} />
+        </Pressable>
+      )}
     </View>
-  );
+    );
+  };
 
   /**
    * `ordenable` distingue mis grupos de "Compartidas conmigo": el orden vive en la lista y
@@ -326,12 +417,14 @@ export default function ListsScreen() {
             columns={COLUMNAS}
             keyOf={(l) => l.id}
             onReorder={(from, to) => moveList.mutate({ grupo: listas, from, to })}
-            renderItem={tarjeta}
+            // Mantener presionada sin mover selecciona (RF-L28); en Archivadas no hay selección.
+            onHold={verArchivadas ? undefined : (l) => alternarSeleccion(l.id)}
+            renderItem={(l) => tarjeta(l, !verArchivadas)}
           />
         ) : (
           enFilas(listas).map((fila) => (
             <View key={fila[0]!.id} style={styles.fila}>
-              {fila.map(tarjeta)}
+              {fila.map((l) => tarjeta(l))}
               {fila.length < COLUMNAS ? <View style={styles.hueco} /> : null}
             </View>
           ))
@@ -341,27 +434,58 @@ export default function ListsScreen() {
 
   return (
     <Screen contentStyle={styles.content}>
-      <ModalHeader
-        back
-        // En la barra del teléfono (RF-N6) no hay a dónde volver, salvo desde Archivadas.
-        leading={!enBarra || verArchivadas}
-        title={verArchivadas ? tx.lists.archivedTitle : tx.lists.title}
-        // Dentro de Archivadas, "atrás" vuelve a las listas activas antes de salir del
-        // módulo: es el paso que la persona deshace, no la pantalla entera.
-        onClose={verArchivadas ? () => setVerArchivadas(false) : undefined}
-        right={
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={verArchivadas ? tx.lists.backToMine : tx.lists.seeArchived}
-            onPress={() => setVerArchivadas((v) => !v)}
-            style={({ pressed }) => [styles.enlace, pressed ? styles.pressed : null]}>
-            <AppText variant="label" color="textSecondary">
-              {verArchivadas ? tx.lists.myLists : tx.lists.archivedTitle}
-            </AppText>
-          </Pressable>
-        }
-      />
+      {seleccionando ? (
+        <View style={styles.barraSeleccion}>
+          <IconButton label={sel.cancel} onPress={salirDeSeleccion}>
+            <X size={IconSize.action} strokeWidth={IconStroke} color={theme.text} />
+          </IconButton>
+          <AppText variant="heading" tabular accessibilityLabel={sel.count(seleccion.size)} style={styles.cuenta}>
+            {seleccion.size}
+          </AppText>
+          <IconButton label={todasFijadas ? sel.unpin : sel.pin} onPress={fijarVarias}>
+            {todasFijadas ? (
+              <PinOff size={IconSize.action} strokeWidth={IconStroke} color={theme.text} />
+            ) : (
+              <Pin size={IconSize.action} strokeWidth={IconStroke} color={theme.text} />
+            )}
+          </IconButton>
+          <IconButton label={sel.tag} onPress={() => setEtiquetandoVarias(true)}>
+            <Tag size={IconSize.action} strokeWidth={IconStroke} color={theme.text} />
+          </IconButton>
+          <IconButton label={sel.color} onPress={() => setColoreandoVarias(true)}>
+            <Palette size={IconSize.action} strokeWidth={IconStroke} color={theme.text} />
+          </IconButton>
+          <IconButton label={sel.archive} onPress={archivarVarias}>
+            <Archive size={IconSize.action} strokeWidth={IconStroke} color={theme.text} />
+          </IconButton>
+          <IconButton label={sel.delete} onPress={eliminarVarias}>
+            <Trash2 size={IconSize.action} strokeWidth={IconStroke} color={theme.danger} />
+          </IconButton>
+        </View>
+      ) : (
+        <ModalHeader
+          back
+          // En la barra del teléfono (RF-N6) no hay a dónde volver, salvo desde Archivadas.
+          leading={!enBarra || verArchivadas}
+          title={verArchivadas ? tx.lists.archivedTitle : tx.lists.title}
+          // Dentro de Archivadas, "atrás" vuelve a las listas activas antes de salir del
+          // módulo: es el paso que la persona deshace, no la pantalla entera.
+          onClose={verArchivadas ? () => setVerArchivadas(false) : undefined}
+          right={
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={verArchivadas ? tx.lists.backToMine : tx.lists.seeArchived}
+              onPress={() => setVerArchivadas((v) => !v)}
+              style={({ pressed }) => [styles.enlace, pressed ? styles.pressed : null]}>
+              <AppText variant="label" color="textSecondary">
+                {verArchivadas ? tx.lists.myLists : tx.lists.archivedTitle}
+              </AppText>
+            </Pressable>
+          }
+        />
+      )}
 
+      {seleccionando ? null : (
       <View style={[styles.buscador, { borderColor: theme.border, backgroundColor: theme.surface }]}>
         <Search size={IconSize.inline} strokeWidth={IconStroke} color={theme.textTertiary} />
         <TextInput
@@ -384,14 +508,15 @@ export default function ListsScreen() {
           </Pressable>
         ) : null}
       </View>
+      )}
 
       {/*
         Hoy y Algún día (RF-L24, RF-L25): las dos preguntas que cruzan todas las listas.
         Van arriba del todo porque son por donde se entra cuando uno no viene a una lista
         en concreto, sino a ver qué hacer. Desaparecen al buscar y en Archivadas, donde
-        preguntar "¿qué me toca?" no tiene sentido.
+        preguntar "¿qué me toca?" no tiene sentido; tampoco mientras se selecciona.
       */}
-      {!buscando && !verArchivadas ? (
+      {!buscando && !verArchivadas && !seleccionando ? (
         <View style={styles.accesos}>
           <Pressable
             accessibilityRole="button"
@@ -436,7 +561,7 @@ export default function ListsScreen() {
         Fila de etiquetas: es la forma de ver juntas las listas de un mismo tema (RF-L22).
         No aparece si no hay ninguna, para no ocupar alto prometiendo algo vacío.
       */}
-      {!buscando && !verArchivadas && (etiquetas.data ?? []).length > 0 ? (
+      {!buscando && !verArchivadas && !seleccionando && (etiquetas.data ?? []).length > 0 ? (
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -522,7 +647,7 @@ export default function ListsScreen() {
         )
       ) : null}
 
-      {!verArchivadas ? <Fab label={tx.lists.newList} shrunk={shrunk} onPress={nuevaLista} /> : null}
+      {!verArchivadas && !seleccionando ? <Fab label={tx.lists.newList} shrunk={shrunk} onPress={nuevaLista} /> : null}
 
       <Sheet visible={menuDe !== null} onClose={cerrarMenu} title={menuDe?.name ?? ''}>
         {menuDe ? (
@@ -535,6 +660,17 @@ export default function ListsScreen() {
               />
             ) : (
               <>
+                {(lists.data ?? []).some((l) => l.id === menuDe.id) ? (
+                  <ActionRow
+                    icon={<ListChecks size={IconSize.action} strokeWidth={IconStroke} color={theme.text} />}
+                    label={sel.start}
+                    onPress={() => {
+                      const id = menuDe.id;
+                      cerrarMenu();
+                      setSeleccion(new Set([id]));
+                    }}
+                  />
+                ) : null}
                 <ActionRow
                   icon={
                     menuDe.is_pinned ? (
@@ -582,6 +718,24 @@ export default function ListsScreen() {
           </>
         ) : null}
       </Sheet>
+
+      <BulkTagsSheet
+        visible={etiquetandoVarias}
+        lists={seleccionadas}
+        onClose={() => setEtiquetandoVarias(false)}
+        onDone={salirDeSeleccion}
+      />
+      <ListAppearanceSheet
+        visible={coloreandoVarias}
+        onClose={() => {
+          setColoreandoVarias(false);
+          salirDeSeleccion();
+        }}
+        color={seleccionadas[0]?.color ?? COLOR_POR_OMISION}
+        icon={seleccionadas[0]?.icon ?? 'tag'}
+        onChangeColor={(color) => colorearVarias({ color })}
+        onChangeIcon={(icon) => colorearVarias({ icon })}
+      />
     </Screen>
   );
 }
@@ -656,5 +810,20 @@ const styles = StyleSheet.create({
   celda: { flex: 1 },
   tarjetaCabeza: { flexDirection: 'row', alignItems: 'center', gap: Spacing.xs, paddingRight: Spacing.lg },
   masBoton: { position: 'absolute', top: Spacing.sm, right: Spacing.sm, padding: 2, borderRadius: Radius.full },
+  /* La tarjeta elegida se marca con borde de tinta más grueso y su palomita (RF-L28). */
+  tarjetaElegida: { borderWidth: 2 },
+  palomita: {
+    position: 'absolute',
+    top: Spacing.sm,
+    right: Spacing.sm,
+    width: 22,
+    height: 22,
+    borderRadius: Radius.full,
+    borderWidth: 1.5,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  barraSeleccion: { flexDirection: 'row', alignItems: 'center', minHeight: 48 },
+  cuenta: { flex: 1, marginLeft: Spacing.xs },
   pressed: { opacity: 0.8 },
 });

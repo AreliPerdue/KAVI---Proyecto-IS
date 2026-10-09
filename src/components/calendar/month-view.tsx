@@ -175,7 +175,6 @@ const DayCell = memo(function DayCell({ date, inMonth, weekend, activities, them
                 style={[
                   styles.chip,
                   { height: chipHeight, backgroundColor: tint(color, foreign ? 0.35 : 0.18), borderLeftColor: color },
-                  lowContrastOutline(color, theme),
                   foreign ? { borderStyle: 'dashed', borderWidth: 1, borderColor: color, borderLeftWidth: 2 } : null,
                 ]}>
                 <AppText variant="caption" numberOfLines={1} color={inMonth ? 'text' : 'textSecondary'}>

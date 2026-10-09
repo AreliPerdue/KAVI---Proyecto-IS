@@ -1,6 +1,7 @@
 import { type QueryClient, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { uuidv4 } from '@/lib/gym/ids';
+import { anotarCambioLocalDeListas } from '@/lib/query-invalidation';
 
 import { useAuth } from '@/providers';
 import {
@@ -67,12 +68,22 @@ export const listKeys = {
   history: (listId: string) => ['lists', 'history', listId] as const,
 };
 
-export function useLists() {
+/**
+ * Sin las cuentas que cambian con cada palomita (T271). Para quien solo pinta el color, el
+ * icono y el nombre —el calendario—: así, agregar o palomear en una lista no lo repinta
+ * entero en segundo plano, porque el resultado queda idéntico y React Query conserva la
+ * misma referencia.
+ */
+const sinCuentas = (listas: KaviList[]): KaviList[] =>
+  listas.map((l) => ({ ...l, pending_count: 0, total_count: 0, updated_at: '', tag_ids: [] }));
+
+export function useLists(opciones: { soloParaPintar?: boolean } = {}) {
   const { userId } = useAuth();
   return useQuery<KaviList[]>({
     queryKey: listKeys.list(userId),
     queryFn: () => listLists(userId as string),
     enabled: !!userId,
+    select: opciones.soloParaPintar ? sinCuentas : undefined,
   });
 }
 
@@ -281,6 +292,7 @@ function deshacer(qc: QueryClient, antes: Instantanea | undefined) {
  * desaparecer y volver.
  */
 function recargarAlFinal(qc: QueryClient) {
+  anotarCambioLocalDeListas();
   if (qc.isMutating({ mutationKey: CLAVE_MUTACION }) <= 1) void qc.invalidateQueries({ queryKey: listKeys.all });
 }
 
@@ -494,6 +506,58 @@ export function useListMutations() {
             const sin = r.completed_item_ids.filter((x) => x !== itemId);
             const ids = done ? [...sin, itemId] : sin;
             return { ...r, completed_item_ids: ids, completed_count: ids.length };
+          }),
+        );
+        return { antes };
+      },
+      onError: (_e, _v, ctx) => deshacer(qc, ctx?.antes),
+      onSettled: () => recargarAlFinal(qc),
+    }),
+    /**
+     * Acciones para varias listas a la vez desde la selección del inicio (RF-L28, T270): se
+     * ven al instante en el inicio y, si alguna falla, se deshace todo.
+     */
+    updateMany: useMutation({
+      mutationKey: CLAVE_MUTACION,
+      mutationFn: ({ ids, patch }: { ids: readonly string[]; patch: Parameters<typeof updateList>[1] }) =>
+        Promise.all(ids.map((id) => updateList(id, patch))),
+      onMutate: async ({ ids, patch }) => {
+        const antes = await prepararOptimista(qc);
+        const sel = new Set(ids);
+        qc.setQueryData<KaviList[]>(listKeys.list(userId), (listas) =>
+          // Archivar las saca del inicio; lo demás solo las cambia.
+          patch.is_archived ? listas?.filter((l) => !sel.has(l.id)) : listas?.map((l) => (sel.has(l.id) ? { ...l, ...patch } : l)),
+        );
+        return { antes };
+      },
+      onError: (_e, _v, ctx) => deshacer(qc, ctx?.antes),
+      onSettled: () => recargarAlFinal(qc),
+    }),
+    removeMany: useMutation({
+      mutationKey: CLAVE_MUTACION,
+      mutationFn: (ids: readonly string[]) => Promise.all(ids.map((id) => removeList(id))),
+      onMutate: async (ids) => {
+        const antes = await prepararOptimista(qc);
+        const sel = new Set(ids);
+        qc.setQueryData<KaviList[]>(listKeys.list(userId), (listas) => listas?.filter((l) => !sel.has(l.id)));
+        return { antes };
+      },
+      onError: (_e, _v, ctx) => deshacer(qc, ctx?.antes),
+      onSettled: () => recargarAlFinal(qc),
+    }),
+    /** Pone o quita una etiqueta —el "folder"— a varias listas (RF-L22). */
+    setTagMany: useMutation({
+      mutationKey: CLAVE_MUTACION,
+      mutationFn: ({ ids, tagId, puesta }: { ids: readonly string[]; tagId: string; puesta: boolean }) =>
+        Promise.all(ids.map((listId) => setListTag(listId, tagId, puesta))),
+      onMutate: async ({ ids, tagId, puesta }) => {
+        const antes = await prepararOptimista(qc);
+        const sel = new Set(ids);
+        qc.setQueryData<KaviList[]>(listKeys.list(userId), (listas) =>
+          listas?.map((l) => {
+            if (!sel.has(l.id)) return l;
+            const sin = l.tag_ids.filter((t) => t !== tagId);
+            return { ...l, tag_ids: puesta ? [...sin, tagId] : sin };
           }),
         );
         return { antes };

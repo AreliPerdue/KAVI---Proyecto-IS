@@ -688,3 +688,11 @@ Automatizado: `hooks/__tests__/use-lists.test.tsx` (optimista, deshacer, una sol
 - [ ] (manual) En una lista compartida, que la otra persona vea el elemento con el mismo nombre y en su lugar.
 - [ ] (manual) iOS (cuando haya build): mantener presionado no abre la lupa de selección de texto ni pelea con el
   scroll.
+
+## Feedback del 9 oct 2026 (T269 – T271)
+Automatizado: selección múltiple en `app/(app)/__tests__/lists.test.tsx` y `hooks/__tests__/use-lists.test.tsx`;
+arrastre con gestos estables en `components/lists/__tests__/drag-guard.test.tsx`. Visto en el demo (web, 390 px).
+- [ ] (manual) En el teléfono: mantener presionada una tarjeta de Listas la selecciona (vibra), tocar otras las agrega,
+  "Atrás" de Android sale de la selección; arrastrar sigue reordenando.
+- [ ] (manual) En el teléfono con Supabase: agregar varios elementos seguidos se siente inmediato y cambiar de pestaña
+  no se traba. Comparar en un APK (modo producción), no solo en Expo Go.

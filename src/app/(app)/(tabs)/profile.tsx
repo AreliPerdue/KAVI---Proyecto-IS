@@ -384,6 +384,24 @@ export default function ProfileScreen() {
       />
 
       <SettingsGroup title={tx.profile.presentation} footer={tx.profile.presentationFooter}>
+        <SettingsRow
+          icon={<Languages size={IconSize.inline} strokeWidth={IconStroke} color={theme.textSecondary} />}
+          label={tx.profile.language}
+          hint={tx.profile.languageHint}
+          below={
+            <Segmented
+              fullWidth
+              label={tx.profile.language}
+              options={[
+                { value: 'system', label: tx.profile.languageSystem },
+                { value: 'es', label: tx.profile.languageSpanish },
+                { value: 'en', label: tx.profile.languageEnglish },
+              ]}
+              value={language}
+              onChange={setLanguage}
+            />
+          }
+        />
         {/* Debajo y no a la derecha: tres opciones no caben junto a la etiqueta en 375 px. */}
         <SettingsRow
           icon={<SunMoon size={IconSize.inline} strokeWidth={IconStroke} color={theme.textSecondary} />}
@@ -400,24 +418,6 @@ export default function ProfileScreen() {
               ]}
               value={appearance}
               onChange={setAppearance}
-            />
-          }
-        />
-        <SettingsRow
-          icon={<Languages size={IconSize.inline} strokeWidth={IconStroke} color={theme.textSecondary} />}
-          label={tx.profile.language}
-          hint={tx.profile.languageHint}
-          below={
-            <Segmented
-              fullWidth
-              label={tx.profile.language}
-              options={[
-                { value: 'system', label: tx.profile.languageSystem },
-                { value: 'es', label: tx.profile.languageSpanish },
-                { value: 'en', label: tx.profile.languageEnglish },
-              ]}
-              value={language}
-              onChange={setLanguage}
             />
           }
         />

@@ -251,7 +251,7 @@ export const supabaseRealtime: RealtimeApi = {
   subscribe(userId, onChange) {
     const channel = getSupabase().channel(`kavi:${userId}`);
     for (const table of WATCHED) {
-      channel.on('postgres_changes', { event: '*', schema: 'public', table }, () => onChange());
+      channel.on('postgres_changes', { event: '*', schema: 'public', table }, () => onChange(table));
     }
     channel.subscribe();
     return () => {

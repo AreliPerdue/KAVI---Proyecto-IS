@@ -84,7 +84,7 @@ Colores de dimensión (spec 05, fijos): física `#4CAF50`, emocional `#E91E63`, 
 
 ## 5. Accesibilidad mínima (CRÍTICO)
 - Contraste ≥ 4.5:1 texto normal en ambos temas; ≥ 3:1 iconos con significado y bordes de controles.
-- Colores de persona/Nobi (T202): van tal cual, aunque sean oscuros. Si un color no llega a 3:1 contra su fondo, la marca (punto, muestra, bloque) lleva contorno `textTertiary` de 1 px (`needsOutline` en `lib/color.ts`, `ColorSwatch`/`ColorDot`, `lowContrastOutline`); no se aclara el color. Sobre una muestra, la palomita va clara u oscura según el color.
+- Colores de persona/Nobi (T202): van tal cual, aunque sean oscuros. Si un color no llega a 3:1 contra su fondo, la marca **sin texto** (punto, muestra) lleva contorno `textTertiary` de 1 px; las pastillas y bloques con título no (T269) (`needsOutline` en `lib/color.ts`, `ColorSwatch`/`ColorDot`, `lowContrastOutline`); no se aclara el color. Sobre una muestra, la palomita va clara u oscura según el color.
 - `accessibilityRole` y `accessibilityLabel` en todo control interactivo; iconos decorativos junto a texto ocultos (`accessible={false}` / `aria-hidden`).
 - Orden de foco = orden visual. Foco visible en web. Estado seleccionado/expandido anunciado (`accessibilityState`).
 - El color nunca es el único indicador (los bloques de dimensión llevan icono o texto).

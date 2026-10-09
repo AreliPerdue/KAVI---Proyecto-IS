@@ -170,8 +170,11 @@ export interface AvailabilityApi {
 }
 
 export interface RealtimeApi {
-  /** Avisa cuando cambian datos que me afectan; devuelve la función para desuscribirse (RF-S14). */
-  subscribe(userId: string, onChange: () => void): () => void;
+  /**
+   * Avisa cuando cambian datos que me afectan; devuelve la función para desuscribirse (RF-S14).
+   * Dice qué tabla cambió cuando lo sabe, para recargar solo lo que depende de ella (T271).
+   */
+  subscribe(userId: string, onChange: (table?: string) => void): () => void;
 }
 
 /** Una sesión con sus ejercicios, cada uno con sus series y segmentos (spec 07 v2). */

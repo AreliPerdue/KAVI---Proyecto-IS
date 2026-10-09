@@ -853,6 +853,15 @@ Plan y decisiones en `docs/gym/AUDITORIA.md`. Cada fase cierra con typecheck, li
   web, botón ⋯ para los detalles. Probado en el demo (web a 390 px y Android en el emulador): agregar ~40 ms,
   palomear ~100 ms; el foco se queda en el campo con la ✓ del teclado.
 
+### Feedback del 9 oct 2026 (spec 06, 10 y 12)
+- [x] T269 Pastillas del calendario sin el marco claro de "poco contraste": se queda solo en puntos y muestras
+  sin texto. (RF-S15) Dep: —
+- [x] T270 Selección múltiple en el inicio de Listas: mantener presionada una tarjeta la selecciona; tocar
+  agrega o quita; barra con fijar, etiquetar, color, archivar y eliminar para todas. (RF-L28) Dep: —
+- [x] T271 Fluidez: que una pestaña en segundo plano no se repinte sin necesidad mientras se usa otra (el
+  calendario se repintaba entero al agregar en una lista) y agregar elementos sin trabas en el teléfono.
+  (NFR-1, RF-L5) Dep: T268
+
 ### Bugs reportados
 - [x] T249 **Una ocurrencia borrada de una serie vuelve a aparecer al recargar.** Reporte (4
   oct 2026): actividad de lunes a viernes con fecha de fin; se borró solo un viernes y al

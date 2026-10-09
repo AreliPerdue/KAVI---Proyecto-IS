@@ -1,7 +1,7 @@
 import { memo } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
-import { activityColor, lowContrastOutline, tint } from './activity-style';
+import { activityColor, tint } from './activity-style';
 
 import { useLanguage, useT } from '@/i18n';
 import { AppText, ThemeIcon } from '@/components/ui';
@@ -40,7 +40,6 @@ export const ActivityBlock = memo(function ActivityBlock({ activity, onPress, co
       style={({ pressed }) => [
         styles.block,
         { backgroundColor: tint(color, 0.16), borderLeftColor: color },
-        lowContrastOutline(color, theme),
         shared ? { borderWidth: 1, borderStyle: 'dashed', borderColor: color } : null,
         compact ? styles.compact : null,
         pressed ? styles.pressed : null,

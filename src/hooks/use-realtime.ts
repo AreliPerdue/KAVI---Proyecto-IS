@@ -1,7 +1,7 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useEffect } from 'react';
 
-import { invalidateSharedData } from '@/lib/query-invalidation';
+import { invalidateForTables } from '@/lib/query-invalidation';
 import { useAuth } from '@/providers';
 import { subscribeToChanges } from '@/services/realtime';
 
@@ -13,12 +13,16 @@ export function useRealtimeInvalidation() {
   useEffect(() => {
     if (!userId) return;
     let timer: ReturnType<typeof setTimeout> | null = null;
-    const unsubscribe = subscribeToChanges(userId, () => {
-      // Agrupa ráfagas de cambios en una sola invalidación.
+    let tablas = new Set<string | undefined>();
+    const unsubscribe = subscribeToChanges(userId, (table) => {
+      // Agrupa ráfagas de cambios en una sola invalidación, con lo que tocó cada tabla.
+      tablas.add(table);
       if (timer) clearTimeout(timer);
       timer = setTimeout(() => {
-        invalidateSharedData(queryClient);
-      }, 50);
+        const juntas = tablas;
+        tablas = new Set();
+        invalidateForTables(queryClient, juntas);
+      }, 150);
     });
     return () => {
       if (timer) clearTimeout(timer);

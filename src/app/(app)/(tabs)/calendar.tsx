@@ -208,7 +208,7 @@ export default function CalendarScreen() {
    * día que estás leyendo.
    */
   const vencidos = useOverdueListItems(hoyKey, diaKey === hoyKey);
-  const misListas = useLists();
+  const misListas = useLists({ soloParaPintar: true });
   const { toggleItem: toggleListItem, reschedule } = useListMutations();
   const [franjaPlegada, setFranjaPlegada] = useState(false);
 

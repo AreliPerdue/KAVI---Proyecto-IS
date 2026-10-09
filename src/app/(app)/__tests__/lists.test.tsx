@@ -5,7 +5,7 @@
  * el botón de acciones no va dentro de la tarjeta, la etiqueta activa filtra también las
  * fijadas, lo compartido conmigo no se reordena, y el número de Hoy cuenta solo lo que falta.
  */
-import { fireEvent, render, screen, within } from '@testing-library/react-native';
+import { act, fireEvent, render, screen, within } from '@testing-library/react-native';
 import type { ReactNode } from 'react';
 
 import { ModuleInBarContext } from '@/components/navigation/stacked-module';
@@ -18,10 +18,14 @@ const mockSnackbar = jest.fn();
 const mockMut = {
   create: { mutate: jest.fn() }, update: { mutate: jest.fn() }, remove: { mutate: jest.fn() },
   duplicate: { mutate: jest.fn() }, swapLists: { mutate: jest.fn() }, moveList: { mutate: jest.fn() },
+  updateMany: { mutate: jest.fn() }, removeMany: { mutate: jest.fn() }, setTagMany: { mutate: jest.fn() },
+  createTag: { mutate: jest.fn(), isPending: false },
 };
 let mockDatos: { lists: unknown[]; archivadas: unknown[]; compartidas: unknown[]; tags: unknown[]; deHoy: unknown[]; atrasados: unknown[] };
 /** Qué listas recibió cada rejilla reordenable. */
 const mockRejillas: string[][] = [];
+/** El `onHold` de la última rejilla de mis listas: mantener presionada sin mover (RF-L28). */
+const mockMantener: { fn?: (l: unknown) => void } = {};
 
 const ok = (data: unknown) => ({ data, isPending: false, isError: false, isSuccess: true, error: null, refetch: jest.fn() });
 jest.mock('@/hooks/use-lists', () => ({
@@ -39,8 +43,9 @@ jest.mock('@/components/lists/draggable-grid', () => {
   /* eslint-disable-next-line @typescript-eslint/no-require-imports -- fábrica elevada */
   const React = require('react');
   return {
-    DraggableGrid: (p: { items: { id: string }[]; renderItem: (i: unknown) => ReactNode }) => {
+    DraggableGrid: (p: { items: { id: string }[]; renderItem: (i: unknown) => ReactNode; onHold?: (l: unknown) => void }) => {
       mockRejillas.push(p.items.map((i) => i.id));
+      mockMantener.fn = p.onHold;
       return React.createElement(React.Fragment, null, ...p.items.map((i) => p.renderItem(i)));
     },
   };
@@ -206,5 +211,106 @@ describe('Listas fuera de la barra (T189b)', () => {
     // eslint-disable-next-line @typescript-eslint/no-require-imports -- tras los mocks
     const { moduleHref } = require('@/constants/modules') as typeof import('@/constants/modules');
     expect(moduleHref('lists', ['shared', 'fitness'], false)).toBe('/(app)/lists');
+  });
+});
+
+describe('selección múltiple (RF-L28)', () => {
+  const S = L.selection;
+  const mantener = async (l: unknown) => act(async () => { mockMantener.fn?.(l); });
+  const casa = lista('l1', 'Casa', { total_count: 3, tag_ids: ['t1'] });
+  const super_ = lista('l2', 'Súper', { total_count: 5 });
+  const viaje = lista('l3', 'Viaje', { is_pinned: true });
+
+  beforeEach(() => {
+    mockDatos.lists = [viaje, casa, super_];
+    mockDatos.tags = [{ id: 't1', name: 'Hogar', list_count: 1 }];
+    mockDatos.compartidas = [lista('c1', 'De Ana')];
+  });
+
+  it('mantener presionada una tarjeta la selecciona; tocar otras las agrega sin abrirlas', async () => {
+    await render(<Pantalla />);
+    await mantener(casa);
+    expect(screen.getByLabelText(S.count(1))).toBeTruthy();
+    expect(tarjeta('Casa').props.accessibilityState).toEqual({ selected: true });
+    await fireEvent.press(tarjeta('Súper'));
+    expect(screen.getByLabelText(S.count(2))).toBeTruthy();
+    expect(globalThis.mockRouter.push).not.toHaveBeenCalled();
+    // Mientras se selecciona no hay buscador ni botón de nueva lista.
+    expect(screen.queryByLabelText(L.searchPlaceholder)).toBeNull();
+    expect(screen.queryByRole('button', { name: L.newList })).toBeNull();
+  });
+
+  it('tocar una elegida la quita; con ninguna se sale de la selección', async () => {
+    await render(<Pantalla />);
+    await mantener(casa);
+    await fireEvent.press(tarjeta('Casa'));
+    expect(screen.queryByRole('button', { name: S.cancel })).toBeNull();
+    expect(screen.getByLabelText(L.searchPlaceholder)).toBeTruthy();
+  });
+
+  it('las compartidas conmigo no se pueden seleccionar', async () => {
+    await render(<Pantalla />);
+    await mantener(casa);
+    await fireEvent.press(tarjeta('De Ana'));
+    expect(screen.getByLabelText(S.count(1))).toBeTruthy();
+  });
+
+  it('la X sale sin cambiar nada', async () => {
+    await render(<Pantalla />);
+    await mantener(casa);
+    await fireEvent.press(screen.getByRole('button', { name: S.cancel }));
+    expect(screen.queryByLabelText(S.count(1))).toBeNull();
+    expect(mockMut.updateMany.mutate).not.toHaveBeenCalled();
+  });
+
+  it('eliminar pide confirmación con cuántas listas y elementos, y borra todas', async () => {
+    await render(<Pantalla />);
+    await mantener(casa);
+    await fireEvent.press(tarjeta('Súper'));
+    await fireEvent.press(screen.getByRole('button', { name: S.delete }));
+    expect(mockConfirm).toHaveBeenCalledWith(expect.objectContaining({ title: S.deleteTitle(2), message: S.deleteWithItems(8), destructive: true }));
+    expect(mockMut.removeMany.mutate).toHaveBeenCalledWith(['l1', 'l2'], expect.anything());
+    expect(screen.queryByRole('button', { name: S.cancel })).toBeNull();
+  });
+
+  it('archivar y fijar se aplican a todas; si ya están todas fijadas, se quitan', async () => {
+    await render(<Pantalla />);
+    await mantener(casa);
+    await fireEvent.press(tarjeta('Súper'));
+    await fireEvent.press(screen.getByRole('button', { name: S.archive }));
+    expect(mockMut.updateMany.mutate).toHaveBeenLastCalledWith({ ids: ['l1', 'l2'], patch: { is_archived: true } }, expect.anything());
+
+    await mantener(viaje);
+    await fireEvent.press(screen.getByRole('button', { name: S.unpin }));
+    expect(mockMut.updateMany.mutate).toHaveBeenLastCalledWith({ ids: ['l3'], patch: { is_pinned: false } }, expect.anything());
+  });
+
+  it('etiquetar pone la etiqueta a todas; si ya la tienen todas, la quita', async () => {
+    await render(<Pantalla />);
+    await mantener(casa);
+    await fireEvent.press(tarjeta('Súper'));
+    await fireEvent.press(screen.getByRole('button', { name: S.tag }));
+    // "Hogar" la tiene Casa pero no Súper: tocarla se la pone a las dos.
+    await fireEvent.press(screen.getByRole('checkbox', { name: S.tagState('Hogar', 'algunas') }));
+    expect(mockMut.setTagMany.mutate).toHaveBeenCalledWith({ ids: ['l1', 'l2'], tagId: 't1', puesta: true }, expect.anything());
+
+    await mantener(casa);
+    await fireEvent.press(screen.getByRole('button', { name: S.tag }));
+    await fireEvent.press(screen.getByRole('checkbox', { name: S.tagState('Hogar', 'todas') }));
+    expect(mockMut.setTagMany.mutate).toHaveBeenLastCalledWith({ ids: ['l1'], tagId: 't1', puesta: false }, expect.anything());
+  });
+
+  it('"Seleccionar" en el menú de la tarjeta empieza la selección (web, sin pulsación larga)', async () => {
+    await render(<Pantalla />);
+    await fireEvent.press(screen.getByRole('button', { name: L.actionsFor('Casa') }));
+    await fireEvent.press(screen.getByRole('button', { name: S.start }));
+    expect(screen.getByLabelText(S.count(1))).toBeTruthy();
+  });
+
+  it('en Archivadas no hay selección', async () => {
+    mockDatos.archivadas = [lista('a1', 'Vieja', { is_archived: true })];
+    await render(<Pantalla />);
+    await fireEvent.press(screen.getByRole('button', { name: L.seeArchived }));
+    expect(mockMantener.fn).toBeUndefined();
   });
 });

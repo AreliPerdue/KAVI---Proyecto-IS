@@ -42,6 +42,16 @@ Por eso **los ítems nunca entran en la rejilla de horas**, ni siquiera cuando l
   lista vacía en el inicio.
 - **RF-L3.** Fijar una lista la manda al principio. El orden entre listas se reordena arrastrando.
 - **RF-L4.** Buscar por nombre de lista y por texto de ítem, incluidos los ya completados.
+- **RF-L28. Selección múltiple, como en Google Keep** (9 oct 2026, T270). **Mantener presionada
+  una tarjeta sin moverla** la selecciona y entra en modo selección: cada tarjeta muestra su
+  palomita y **tocar** pone o quita otras en vez de abrirlas. Mantener y **arrastrar** sigue
+  reordenando. Arriba, una barra dice cuántas hay ("3 seleccionadas") y ofrece, para todas a la
+  vez: **fijar / quitar de fijadas**, **etiquetar** (agregar o quitar una etiqueta, RF-L22 —es el
+  "folder"—), **color**, **archivar** y **eliminar**. Eliminar pide confirmación y dice cuántas
+  listas y cuántos elementos se pierden. La X o "Atrás" sale sin cambiar nada; al terminar una
+  acción también se sale. Las listas **compartidas conmigo** no se pueden seleccionar: no son
+  mías para borrarlas ni archivarlas. En web, con mouse, la selección empieza desde las
+  acciones de la tarjeta ("Seleccionar").
 - **RF-L23. La lista completa puede tener fecha.** Aparte de la de cada elemento: dice para
   cuándo tiene que estar **terminada entera**. "La maleta es para el sábado" no decide
   cuándo compras el bloqueador, así que ponerle fecha a la lista no les pone ni les quita
@@ -276,6 +286,8 @@ pendiente sin fecha**.
 - *Dado* un ítem con fecha del sábado **y hora**, *cuando* abro el sábado, *entonces* sigue en la franja de arriba: la hora no lo mueve a la rejilla.
 - *Dado* un ítem visible en la franja del día, *cuando* lo palomeo ahí, *entonces* al abrir su lista ya está en "Completados".
 - *Dado* que archivo una lista, *cuando* vuelvo al inicio, *entonces* no está, y la encuentro en "Archivadas" con todos sus ítems.
+- *Dado* el inicio de Listas, *cuando* mantengo presionada una tarjeta sin moverla, *entonces* queda seleccionada con su palomita y tocar otras las agrega a la selección sin abrirlas.
+- *Dado* tres listas seleccionadas, *cuando* elijo "Eliminar" y confirmo, *entonces* se borran las tres; *cuando* elijo una etiqueta, *entonces* las tres la llevan; *cuando* toco la X, *entonces* salgo sin cambiar nada.
 - *Dado* una lista compartida con permiso de "ver", *cuando* la abro, *entonces* no tengo cómo agregar ni palomear (fase 2).
 
 ## UI

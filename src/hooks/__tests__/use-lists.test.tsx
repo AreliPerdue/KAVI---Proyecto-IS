@@ -11,7 +11,7 @@ import type { ListItem } from '@/types/domain';
 const mockBuscar = jest.fn();
 const mockPorFecha = jest.fn();
 const mockReordenar = jest.fn();
-const mockServ = { add: jest.fn(), update: jest.fn(), remove: jest.fn(), toggle: jest.fn(), run: jest.fn() };
+const mockServ = { add: jest.fn(), update: jest.fn(), remove: jest.fn(), toggle: jest.fn(), run: jest.fn(), updateList: jest.fn(), removeList: jest.fn(), setTag: jest.fn() };
 jest.mock('@/providers', () => ({ useAuth: () => ({ userId: 'u1' }) }));
 jest.mock('@/services/lists', () => ({
   ...jest.requireActual('@/services/lists'),
@@ -23,6 +23,9 @@ jest.mock('@/services/lists', () => ({
   removeListItem: (...a: unknown[]) => mockServ.remove(...a),
   toggleListItem: (...a: unknown[]) => mockServ.toggle(...a),
   setRunItem: (...a: unknown[]) => mockServ.run(...a),
+  updateList: (...a: unknown[]) => mockServ.updateList(...a),
+  removeList: (...a: unknown[]) => mockServ.removeList(...a),
+  setListTag: (...a: unknown[]) => mockServ.setTag(...a),
 }));
 
 beforeEach(() => {
@@ -186,5 +189,50 @@ describe('optimista (T268)', () => {
     await act(async () => { result.current.toggleRunItem.mutate({ runId: 'run1', itemId: 'a', done: true }); });
     expect(queryClient.getQueryData<{ completed_item_ids: string[]; completed_count: number }[]>(clave)?.[0]).toEqual(expect.objectContaining({ completed_item_ids: ['a'], completed_count: 1 }));
     await act(async () => { r.resolver({}); });
+  });
+});
+
+describe('acciones en grupo (RF-L28)', () => {
+  const lista = (id: string, over = {}) => ({ id, name: id, is_pinned: false, tag_ids: [] as string[], ...over });
+  /** Promesas que el "servidor" deja pendientes y la prueba suelta al final (sin esto, Jest no termina). */
+  const pendientes: (() => void)[] = [];
+  const enCamino = () => new Promise<void>((r) => { pendientes.push(r); });
+  afterEach(async () => { await act(async () => { pendientes.splice(0).forEach((r) => r()); }); });
+
+  const montarInicio = async () => {
+    const { Wrapper, queryClient } = crearWrapper();
+    queryClient.setQueryDefaults(['lists'], { gcTime: Infinity });
+    queryClient.setQueryData(listKeys.list('u1'), [lista('a'), lista('b'), lista('c', { tag_ids: ['t1'] })]);
+    const { result } = await renderHook(() => useListMutations(), { wrapper: Wrapper });
+    const inicio = () => queryClient.getQueryData<{ id: string; is_pinned: boolean; tag_ids: string[] }[]>(listKeys.list('u1')) ?? [];
+    return { result, inicio };
+  };
+
+  it('fijar varias se ve al momento y llama al servidor por cada una', async () => {
+    mockServ.updateList.mockImplementation(enCamino);
+    const { result, inicio } = await montarInicio();
+    await act(async () => { result.current.updateMany.mutate({ ids: ['a', 'c'], patch: { is_pinned: true } }); });
+    expect(inicio().filter((l) => l.is_pinned).map((l) => l.id)).toEqual(['a', 'c']);
+    expect(mockServ.updateList.mock.calls.map(([id]) => id)).toEqual(['a', 'c']);
+  });
+
+  it('archivar y eliminar varias las sacan del inicio; si falla, vuelven', async () => {
+    mockServ.removeList.mockRejectedValue(new Error('sin red'));
+    mockServ.updateList.mockImplementation(enCamino);
+    const { result, inicio } = await montarInicio();
+    await act(async () => { result.current.updateMany.mutate({ ids: ['b'], patch: { is_archived: true } }); });
+    expect(inicio().map((l) => l.id)).toEqual(['a', 'c']);
+    await act(async () => { await result.current.removeMany.mutateAsync(['a', 'c']).catch(() => undefined); });
+    await waitFor(() => expect(inicio().map((l) => l.id)).toEqual(['a', 'c']));
+  });
+
+  it('etiquetar varias agrega o quita la etiqueta a todas', async () => {
+    mockServ.setTag.mockImplementation(enCamino);
+    const { result, inicio } = await montarInicio();
+    await act(async () => { result.current.setTagMany.mutate({ ids: ['a', 'c'], tagId: 't1', puesta: true }); });
+    expect(inicio().find((l) => l.id === 'a')?.tag_ids).toEqual(['t1']);
+    expect(inicio().find((l) => l.id === 'c')?.tag_ids).toEqual(['t1']);
+    await act(async () => { result.current.setTagMany.mutate({ ids: ['a', 'c'], tagId: 't1', puesta: false }); });
+    expect(inicio().flatMap((l) => l.tag_ids)).toEqual([]);
   });
 });
