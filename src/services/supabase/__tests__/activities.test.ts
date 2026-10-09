@@ -364,3 +364,64 @@ describe('extendRecurrenceHorizon', () => {
     expect(mockSb.secuencia).not.toContain('insert');
   });
 });
+
+/**
+ * Zona horaria de la serie (T272): con ella la base se niega a recrear un día excluido aunque
+ * lo intente una versión vieja de la app (trigger `activities_skip_excluded`).
+ */
+describe('zona de la serie (T272)', () => {
+  const zona = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const updates = () => mockSb.llamadas.filter(([m]) => m === 'update').map(([, v]) => v as Record<string, unknown>);
+
+  it('crear una serie guarda la zona del dispositivo en la madre', async () => {
+    mockSb.encolar({ data: fila({ recurrence_rule: 'FREQ=DAILY' }), error: null }, { data: [], error: null }, { data: null, error: null });
+    await supabaseActivities.create('u1', {
+      title: 'Diaria', start_at: BASE.toISOString(), end_at: fin(1).toISOString(),
+      recurrence: { freq: 'DAILY', byDay: [], until: '2026-09-11' },
+    });
+    expect((mockSb.argsDe('insert')?.[0] as Record<string, unknown>).recurrence_tz).toBe(zona);
+  });
+
+  it('una actividad suelta no lleva zona', async () => {
+    mockSb.responder({ data: fila(), error: null });
+    await supabaseActivities.create('u1', { title: 'Junta', start_at: BASE.toISOString(), end_at: fin(1).toISOString() });
+    expect((mockSb.argsDe('insert')?.[0] as Record<string, unknown>).recurrence_tz).toBeUndefined();
+  });
+
+  it('borrar una ocurrencia guarda el día y la zona en la madre', async () => {
+    mockSb.encolar(
+      { data: fila({ id: 'hija', recurrence_parent_id: 'madre' }), error: null },
+      { data: fila({ id: 'madre', recurrence_rule: 'FREQ=DAILY' }), error: null },
+      { data: null, error: null },
+      { data: null, error: null },
+    );
+    await supabaseActivities.remove('hija', 'this');
+    expect(updates()[0]).toEqual({ recurrence_exdates: [toDayKeyLocal(BASE)], recurrence_tz: zona });
+  });
+
+  it('una serie vieja con días excluidos y sin zona la recibe al regenerarse', async () => {
+    const futuro = new Date(Date.now() + 80 * 86_400_000).toISOString();
+    mockSb.encolar(
+      { data: [fila({ id: 'madre', recurrence_rule: 'FREQ=DAILY', recurrence_exdates: ['2026-09-09'], recurrence_tz: null })], error: null },
+      { data: null, error: null },
+      { data: [{ start_at: futuro }], error: null },
+    );
+    await supabaseActivities.extendRecurrenceHorizon('u1');
+    expect(updates()).toEqual([{ recurrence_tz: zona }]);
+  });
+
+  it('si ya tiene zona, o no tiene días excluidos, no se escribe nada', async () => {
+    const futuro = new Date(Date.now() + 80 * 86_400_000).toISOString();
+    mockSb.encolar(
+      { data: [fila({ id: 'm1', recurrence_rule: 'FREQ=DAILY', recurrence_exdates: ['2026-09-09'], recurrence_tz: 'America/Mexico_City' }), fila({ id: 'm2', recurrence_rule: 'FREQ=DAILY' })], error: null },
+      { data: [{ start_at: futuro }], error: null },
+      { data: [{ start_at: futuro }], error: null },
+    );
+    await supabaseActivities.extendRecurrenceHorizon('u1');
+    expect(updates()).toEqual([]);
+  });
+});
+
+function toDayKeyLocal(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}

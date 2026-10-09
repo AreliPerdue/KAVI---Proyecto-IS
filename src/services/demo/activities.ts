@@ -1,7 +1,7 @@
 import { addDays } from 'date-fns';
 
 import { AuthUiError } from '@/lib/auth-errors';
-import { durationMinutes, fromIso, toDayKey, toIso } from '@/lib/dates';
+import { durationMinutes, fromIso, localTimeZone, toDayKey, toIso } from '@/lib/dates';
 import {
   horizonEnd,
   missingOccurrences,
@@ -38,7 +38,7 @@ function seriesRoot(activity: Activity): Activity {
 /** Excluye de su serie el día de una instancia (la borrada o la que se movió de día). */
 function excluirDia(instance: Activity) {
   const root = seriesRoot(instance);
-  demoState.activities = demoState.activities.map((a) => (a.id === root.id ? { ...a, recurrence_exdates: withExdate(a.recurrence_exdates, instance.start_at) } : a));
+  demoState.activities = demoState.activities.map((a) => (a.id === root.id ? { ...a, recurrence_exdates: withExdate(a.recurrence_exdates, instance.start_at), recurrence_tz: a.recurrence_tz ?? localTimeZone() } : a));
 }
 
 /** Crea instancias de una serie desde `after` hasta el horizonte. */
@@ -104,6 +104,8 @@ export const demoActivities: ActivitiesApi = {
       end_at: fields.end_at,
       all_day: fields.all_day ?? false,
       recurrence_rule: recurrence ? toRRule(recurrence) : null,
+      // Igual que en Supabase (T272); aquí no hay trigger, pero el dato queda igual.
+      recurrence_tz: recurrence ? localTimeZone() : null,
       recurrence_parent_id: null,
       is_gym: fields.is_gym ?? false,
       created_at: now,

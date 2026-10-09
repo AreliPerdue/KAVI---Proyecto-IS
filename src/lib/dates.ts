@@ -51,6 +51,15 @@ export function toDayKey(date: Date): string {
   return format(date, 'yyyy-MM-dd');
 }
 
+/** Zona horaria IANA del dispositivo (p. ej. "America/Mexico_City"), o `null` si no se sabe. */
+export function localTimeZone(): string | null {
+  try {
+    return Intl.DateTimeFormat().resolvedOptions().timeZone || null;
+  } catch {
+    return null;
+  }
+}
+
 export function fromDayKey(key: string): Date {
   const [y, m, d] = key.split('-').map(Number);
   return new Date(y ?? 1970, (m ?? 1) - 1, d ?? 1);

@@ -863,6 +863,12 @@ Plan y decisiones en `docs/gym/AUDITORIA.md`. Cada fase cierra con typecheck, li
   (NFR-1, RF-L5) Dep: T268
 
 ### Bugs reportados
+- [x] T272 **La ocurrencia borrada volvía tras algunos inicios de sesión** (9 oct 2026, serie del 1 al 9 de
+  octubre, se borró solo el 9). Causa: el APK del 23 sep es anterior a T249 y no conoce los días excluidos; al
+  iniciar sesión regeneraba la serie y recreaba el 9. Arreglo en la base: trigger `activities_skip_excluded`
+  omite cualquier ocurrencia en un día excluido de su madre, según la zona guardada en `recurrence_tz`; la app
+  la escribe al crear una serie y al excluir un día, y la completa en series viejas al regenerar. Probado con
+  PGlite (9 casos, incluido el borde de zona horaria) y aplicado en producción. (RF-C8) Dep: T249
 - [x] T249 **Una ocurrencia borrada de una serie vuelve a aparecer al recargar.** Reporte (4
   oct 2026): actividad de lunes a viernes con fecha de fin; se borró solo un viernes y al
   refrescar regresó. Causa probable: borrar "solo esta" elimina la fila, pero no queda registro

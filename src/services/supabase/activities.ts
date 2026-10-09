@@ -1,7 +1,7 @@
 import { addDays } from 'date-fns';
 
 import { AuthUiError } from '@/lib/auth-errors';
-import { durationMinutes, fromIso, toDayKey, toIso } from '@/lib/dates';
+import { durationMinutes, fromIso, localTimeZone, toDayKey, toIso } from '@/lib/dates';
 import {
   horizonEnd,
   missingOccurrences,
@@ -72,7 +72,8 @@ async function excluirDia(instance: Activity): Promise<void> {
   const root = await findRoot(instance);
   const { error } = await getSupabase()
     .from('activities')
-    .update({ recurrence_exdates: withExdate(root.recurrence_exdates, instance.start_at) })
+    // La zona va junto con el día: es lo que deja a la base negarse a recrearlo (T272).
+    .update({ recurrence_exdates: withExdate(root.recurrence_exdates, instance.start_at), recurrence_tz: root.recurrence_tz ?? localTimeZone() })
     .eq('id', root.id);
   if (error) throw toError(error);
 }
@@ -172,6 +173,7 @@ export const supabaseActivities: ActivitiesApi = {
           ...fields,
           owner_id: userId,
           recurrence_rule: recurrence ? toRRule(recurrence) : null,
+          ...(recurrence ? { recurrence_tz: localTimeZone() } : {}),
         })
         .select('*')
         .single(),
@@ -274,7 +276,12 @@ export const supabaseActivities: ActivitiesApi = {
       if (heir) {
         const { error: heirError } = await db
           .from('activities')
-          .update({ recurrence_rule: current.recurrence_rule, recurrence_exdates: current.recurrence_exdates ?? [], recurrence_parent_id: null })
+          .update({
+            recurrence_rule: current.recurrence_rule,
+            recurrence_exdates: current.recurrence_exdates ?? [],
+            recurrence_tz: current.recurrence_tz ?? localTimeZone(),
+            recurrence_parent_id: null,
+          })
           .eq('id', heir.id);
         if (heirError) throw toError(heirError);
         const { error: rest } = await db
@@ -307,6 +314,18 @@ export const supabaseActivities: ActivitiesApi = {
     for (const root of roots) {
       const rule = parseRRule(root.recurrence_rule);
       if (!rule) continue;
+      /*
+       * Series de antes de T272 con días excluidos y sin zona: se completa aquí, la primera
+       * vez que una versión nueva abre el calendario. Desde ese momento la base protege esos
+       * días aunque una versión vieja intente recrearlos.
+       */
+      if ((root.recurrence_exdates ?? []).length > 0 && !root.recurrence_tz) {
+        const zona = localTimeZone();
+        if (zona) {
+          const { error } = await getSupabase().from('activities').update({ recurrence_tz: zona }).eq('id', root.id);
+          if (error) throw toError(error);
+        }
+      }
       const last = unwrap(
         await getSupabase()
           .from('activities')

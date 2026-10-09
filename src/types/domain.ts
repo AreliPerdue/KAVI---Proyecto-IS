@@ -87,6 +87,11 @@ export type Activity = {
   recurrence_parent_id: string | null;
   /** Días 'yyyy-MM-dd' que la serie ya no genera (EXDATE, T249). Solo en la madre. */
   recurrence_exdates?: string[];
+  /**
+   * Zona IANA de quien armó la serie (T272). Con ella la base sabe qué día local es cada
+   * ocurrencia y se niega a recrear un día excluido, aunque lo intente una versión vieja.
+   */
+  recurrence_tz?: string | null;
   is_gym: boolean;
   /** Quién ve el título. El nivel del calendario sigue siendo el techo (RF-C14). */
   visibility: ActivityVisibility;
