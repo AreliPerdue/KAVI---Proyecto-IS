@@ -1,0 +1,76 @@
+# Spec 13c · KAVI Library — Herramientas sobre la página
+
+> **Borrador (9 oct 2026).** Parte de la spec 13. Todo lo de aquí es una **anotación**: vive encima de la
+> página, nunca cambia el archivo (spec 13 §3), y funciona igual en libros y en creaciones.
+
+## 1. Leer mejor (RF-BH1 – RF-BH6)
+
+- **RF-BH1. Zoom** con pellizco (o Ctrl/⌘ y rueda en web) en cualquier forma de leer; doble toque vuelve al
+  ajuste de página.
+- **RF-BH2. Tamaño de letra** (EPUB y creaciones; en PDF el equivalente es el zoom).
+- **RF-BH3. Tipo de letra:** una selección incluida (con serifas, sin serifas, para dislexia, manuscrita) y
+  las que suba la persona (RF-BH4).
+- **RF-BH4. Fuentes propias.** Se suben archivos `.ttf`/`.otf`/`.woff2`. Antes de la primera, un aviso que
+  hay que aceptar: *"Tú eres responsable de tener la licencia de las fuentes que subas. Usa fuentes libres o
+  que te pertenezcan."* Se guardan en Storage y se usan en todos los dispositivos de la persona.
+- **RF-BH5. Tema del lector:** claro, oscuro, sepia, y personalizado (color de la página y de la letra por
+  separado). Independiente del tema de la app.
+- **RF-BH6. Escuchar.** Un botón lee en voz alta desde donde va la página (voz del sistema, decisión B7),
+  resaltando la frase que se está leyendo; velocidad ajustable; sigue con la pantalla bloqueada en teléfono.
+
+## 2. Marcar (RF-BH7 – RF-BH9)
+
+- **RF-BH7. Subrayar:** seleccionar texto ofrece colores (los de los Nobi) y estilos (resaltado, subrayado,
+  tachado). Tocar un subrayado deja cambiarlo, agregarle nota o quitarlo.
+- **RF-BH8. Definir:** al seleccionar una palabra, el menú ofrece **Definir** (decisión B5), que muestra el
+  significado sin salir del libro (fuente según decisión B4).
+- **RF-BH9. Copiar** el texto seleccionado (solo de libros sin restricción).
+
+## 3. Escribir (RF-BH10 – RF-BH12)
+
+- **RF-BH10. Cuadros de texto** en cualquier lugar de la página: se escriben, se mueven, se cambian de tamaño
+  y de color. Es la forma de escribir en web.
+- **RF-BH11. Lápiz y dedo** (teléfono y tableta): pluma, marcador, lápiz de color y borrador, con grosor y
+  color. Con **Apple Pencil**, presión e inclinación; con el dedo, trazo de grosor fijo. Un modo "solo lápiz"
+  evita que la palma o el dedo dibujen sin querer.
+  - Excepción de plataforma (P5): en web se dibuja con mouse o lápiz de tableta, sin presión.
+- **RF-BH12. Imágenes:** se insertan desde la galería o la cámara, se mueven, rotan y cambian de tamaño.
+
+## 4. Pegar cosas, como en papel (RF-BH13 – RF-BH16)
+
+- **RF-BH13. Stickers:** de una colección incluida (por estilo, spec 13e) o de una imagen propia. Se colocan
+  en cualquier parte, se **rotan** con dos dedos, cambian de tamaño, se **quitan** y quedan en una charola
+  ("Quitados") de donde se **vuelven a poner** —como un sticker reutilizable—.
+- **RF-BH14. Post-its:** cuadrados de color (paleta de los Nobi) con texto o trazo; se pegan, se mueven, se
+  rotan un poco y se pueden **doblar** para que solo se vea una esquina. Tocar uno doblado lo abre.
+- **RF-BH15. Separadores:** las pestañitas que salen del borde. La persona elige **en qué borde** (arriba,
+  abajo, izquierda o derecha) y **a qué altura**; llevan color y una palabra corta. Se ven desde fuera, en
+  el canto del libro, y tocar uno salta a su página.
+- **RF-BH16. Capas:** lo pegado lleva orden (traer al frente, mandar atrás) y se puede **bloquear** para no
+  moverlo sin querer.
+
+## 5. Encontrar lo anotado (RF-BH17 – RF-BH18)
+
+- **RF-BH17.** Un panel lista todo lo anotado de la pieza —subrayados, notas, post-its, separadores— con su
+  página; tocar uno salta ahí. Se filtra por tipo y color.
+- **RF-BH18.** Deshacer y rehacer en todo lo de esta spec (como el logger del gym, RF-F40).
+
+## 6. Lo técnico
+
+- Las anotaciones se guardan en `library_annotations` con posición estable (spec 13 §5) y se pintan en una
+  capa propia: en el motor web para subrayados y cuadros de texto; con Skia para el lápiz.
+- El lápiz usa `react-native-skia` con eventos de puntero (presión de Apple Pencil en iOS).
+- Escuchar: `expo-speech` en teléfono y la Web Speech API en web.
+
+## 7. Criterios de aceptación
+
+- *Dado* un párrafo, *cuando* lo selecciono y elijo amarillo, *entonces* queda subrayado y aparece en el
+  panel de anotaciones con su página.
+- *Dado* un sticker puesto, *cuando* lo quito, *entonces* desaparece de la página y aparece en "Quitados";
+  *cuando* lo arrastro de vuelta, *entonces* queda donde lo suelte, con su rotación.
+- *Dado* un separador rojo en el borde superior de la página 50, *cuando* cierro el libro y lo vuelvo a
+  abrir, *entonces* lo veo en el canto y tocarlo me lleva a la página 50.
+- *Dado* que subo una fuente, *cuando* es la primera, *entonces* debo aceptar el aviso de licencias antes de
+  que se guarde.
+- *Dado* un EPUB con subrayados, *cuando* cambio el tamaño de letra, *entonces* los subrayados siguen sobre
+  las mismas palabras.

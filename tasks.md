@@ -879,10 +879,74 @@ Plan y decisiones en `docs/gym/AUDITORIA.md`. Cada fase cierra con typecheck, li
   (equivalente a `EXDATE`) y que `materialize` las respete en los dos backends; confirmar con
   una prueba que reproduzca el caso exacto antes de tocar nada. (RF-C8) Dep: —
 
+## Fase L — KAVI Library (spec 13, en borrador)
+Se diseña y desarrolla **aparte**: el módulo vive oculto (fuera de Más y de la barra) hasta la etapa L7.
+Nada de L1 en adelante empieza sin aprobar las decisiones B1–B9 (T274).
+
+### L0 · Spec y cimientos
+- [x] T273 Spec 13 en seis partes: general (`13-library.md`), librería (13a), formatos y formas de leer (13b),
+  herramientas sobre la página (13c), fichas (13d) y creaciones por capas (13e). Borrador del 9 oct 2026.
+  Dep: —
+- [ ] T274 Aprobar las decisiones B1–B9 con Areli; con B1, enmienda a la constitución (P8, y las excepciones de
+  P5: Apple Pencil, horizontal obligatoria) y alcance en la spec 01. Dep: T273
+- [ ] T275 Datos: migración con `library_items`, `library_shelves`, `library_shelf_items`, `library_annotations`,
+  `library_card_templates`, `library_cards`, `library_pages`, `library_fonts` (todas con RLS por dueño) y bucket
+  privado de Storage con sus políticas; contrato `LibraryApi` en Supabase y en demo. (spec 13 §6) Dep: T274
+- [ ] T276 Módulo oculto: ruta de laboratorio solo en desarrollo y demo, registrado en `constants/modules` sin
+  aparecer en Más ni en la barra. (spec 13 §4) Dep: T274
+
+### L1 · Núcleo: librería y leer PDF/EPUB
+- [ ] T277 Librería con vistas de portadas y lista; vista recordada. (RF-BL1, RF-BL3, RF-BL4) Dep: T275, T276
+- [ ] T278 Importar PDF y EPUB: metadatos, portada (o generada), color dominante, rechazo con candado.
+  (RF-BL11 – RF-BL14) Dep: T275
+- [ ] T279 Motor de lectura web (pdf.js y foliate-js) en WebView y en web; lectura en scroll; avance y barra de
+  página; buscar dentro. (RF-BR1, RF-BR2, RF-BR4, RF-BR6, RF-BR9, RF-BR10) Dep: T278
+- [ ] T280 Libreros propios, orden, filtros (incluido color) y buscador. (RF-BL5 – RF-BL10, RF-BL18) Dep: T277
+- [ ] T281 Menú de cada pieza y selección múltiple. (RF-BL15 – RF-BL17) Dep: T280
+
+### L2 · Formas de leer
+- [ ] T282 Vista de librero con lomos sobre repisas. (RF-BL2) Dep: T277
+- [ ] T283 Páginas de lado y cambio de forma de leer sin perder la posición. (RF-BR7, RF-BR8) Dep: T279
+- [ ] T284 Libro real: dos páginas, paso de página arrastrando la esquina (Skia + Reanimated), horizontal
+  obligatoria en teléfono, sin animación con movimiento reducido. (RF-BR5) Dep: T283
+- [ ] T285 Sin conexión: archivo guardado en el dispositivo y cola local de anotaciones. (RF-BR3) Dep: T279
+
+### L3 · Herramientas sobre la página
+- [ ] T286 Capa de anotaciones con posición estable, panel de anotaciones, capas y bloqueo, deshacer.
+  (RF-BH16 – RF-BH18) Dep: T279
+- [ ] T287 Subrayar con colores y estilos, definir, copiar. (RF-BH7 – RF-BH9) Dep: T286
+- [ ] T288 Zoom, tamaño y tipo de letra incluidos, tema del lector. (RF-BH1 – RF-BH3, RF-BH5) Dep: T279
+- [ ] T289 Cuadros de texto e imágenes. (RF-BH10, RF-BH12) Dep: T286
+- [ ] T290 Stickers con charola de quitados, post-its que se doblan, separadores en el borde elegido.
+  (RF-BH13 – RF-BH15) Dep: T286
+- [ ] T291 Lápiz y dedo con Skia; presión del Apple Pencil; modo "solo lápiz". (RF-BH11) Dep: T286
+- [ ] T292 Escuchar en voz alta con la frase resaltada. (RF-BH6) Dep: T279
+
+### L4 · Fichas de calificación
+- [ ] T293 Plantillas de ficha incluidas y editor de campos y aspecto. (RF-BF1 – RF-BF3, RF-BF5) Dep: T275
+- [ ] T294 Fichas pegadas en la pieza y ofrecer llenarla al terminar. (RF-BF4, RF-BF6, RF-BF7) Dep: T293, T279
+- [ ] T295 Mis reseñas: todas las fichas, orden, filtros y totales. (RF-BF8 – RF-BF10) Dep: T294
+
+### L5 · Creaciones y plantillas por capas
+- [ ] T296 Sistema de plantillas por capas: formato JSON + SVG, render, cambios guardados como diferencias.
+  (RF-BP7, spec 13e §5) Dep: T275
+- [ ] T297 Cuadernos, diarios y álbumes con sus páginas. (RF-BP1 – RF-BP3) Dep: T296
+- [ ] T298 Estilo Ciudad/viajero completo en los colores de los Nobi, con variantes de ciudad.
+  (RF-BP4, RF-BP5) Dep: T296, decisión B9
+- [ ] T299 Trackers interactivos y acomodos de fotos. (RF-BP8, RF-BP9) Dep: T297
+
+### L6 · Formatos de oficina y fuentes propias
+- [ ] T300 Word/Pages, PowerPoint/Keynote y Excel/Numbers según la decisión B3. (spec 13b §1) Dep: T279
+- [ ] T301 Fuentes propias con aviso de licencias. (RF-BH4) Dep: T288
+
+### L7 · Conectar a la app
+- [ ] T302 Library visible en Más y elegible para la barra; una actividad de Lectura se liga a una pieza y la
+  abre donde iba. (spec 13 §4) Dep: L1 – L5
+
 ### Largo plazo (cuando KAVI se lance al público)
 Distribución en iOS y cuenta de Apple Developer · notificaciones push con la app cerrada ·
 funciones con IA (categorización, lenguaje natural libre, sugerencias) · código de barras ·
 imágenes en listas (gratis en dinero, caro en horas) · sincronización offline real.
 
 ## Backlog futuro (NO implementar — P8)
-Módulos de otras dimensiones (KAVI Reader, nutrición) · push remoto · export/import calendarios · offline completo · plantillas de rutina.
+Módulos de otras dimensiones (nutrición; KAVI Library ya tiene spec: Fase L) · push remoto · export/import calendarios · offline completo · plantillas de rutina.
