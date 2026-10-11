@@ -135,7 +135,7 @@ export function ExercisePicker({ visible, onClose, onPick }: ExercisePickerProps
   );
 
   return (
-    <Sheet visible={visible} onClose={cerrar} title={tx.fitness.picker.title} scrollable={false} maxHeightRatio={0.9}>
+    <Sheet visible={visible} onClose={cerrar} title={tx.fitness.picker.title} scrollable={false} fullScreen>
       <View style={[styles.buscador, { borderColor: theme.border, backgroundColor: theme.surfaceAlt }]}>
         <Search size={IconSize.inline} strokeWidth={IconStroke} color={theme.textTertiary} />
         <TextInput

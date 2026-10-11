@@ -28,6 +28,12 @@ export type SheetProps = {
    * completa para que la lista sepa cuánto espacio tiene.
    */
   scrollable?: boolean;
+  /**
+   * En teléfono ocupa **toda** la pantalla: el fondo pasa por detrás de la barra de estado y
+   * de la de navegación, y el contenido respeta esas zonas (el selector de ejercicios). En web
+   * ancho sigue siendo un diálogo centrado.
+   */
+  fullScreen?: boolean;
 };
 
 /**
@@ -51,7 +57,7 @@ function useKeyboardHeight(): number {
 }
 
 /** Hoja inferior (móvil) / diálogo centrado (web ancho) con scrim y cierre accesible. */
-export function Sheet({ visible, onClose, title, children, maxHeightRatio = 0.85, scrollable = true }: SheetProps) {
+export function Sheet({ visible, onClose, title, children, maxHeightRatio = 0.85, scrollable = true, fullScreen = false }: SheetProps) {
   const tx = useT();
   const theme = useTheme();
   const insets = useSafeAreaInsets();
@@ -73,9 +79,17 @@ export function Sheet({ visible, onClose, title, children, maxHeightRatio = 0.85
   const yaEncogio = keyboard > 0 && altoSinTeclado > 0 ? Math.max(0, altoSinTeclado - altoRaiz) : 0;
   const subir = Math.max(0, keyboard - yaEncogio);
   const available = (altoRaiz || height) - subir;
+  const completa = fullScreen && !centered;
 
   return (
-    <Modal visible={visible} transparent animationType={centered ? 'fade' : 'slide'} onRequestClose={onClose}>
+    <Modal
+      visible={visible}
+      transparent
+      animationType={centered ? 'fade' : 'slide'}
+      onRequestClose={onClose}
+      // Pantalla completa de verdad en Android: la ventana del Modal dibuja detrás de las barras.
+      statusBarTranslucent={completa}
+      navigationBarTranslucent={completa}>
       {/* En Android un Modal queda fuera de la raíz de gestos: sin esto, arrastrar no responde. */}
       <GestureHandlerRootView
         onLayout={(e) => {
@@ -89,19 +103,24 @@ export function Sheet({ visible, onClose, title, children, maxHeightRatio = 0.85
         <View
           style={[
             styles.panel,
-            centered ? styles.panelCentered : styles.panelBottom,
+            centered ? styles.panelCentered : completa ? styles.panelCompleto : styles.panelBottom,
             {
               backgroundColor: theme.surface,
               // Con scroll propio la hoja necesita alto fijo: una lista flexible dentro de
-              // un alto máximo se encoge a nada.
-              ...(scrollable ? { maxHeight: available * maxHeightRatio } : { height: available * maxHeightRatio }),
+              // un alto máximo se encoge a nada. A pantalla completa, todo el alto disponible.
+              ...(completa
+                ? { height: available }
+                : scrollable
+                  ? { maxHeight: available * maxHeightRatio }
+                  : { height: available * maxHeightRatio }),
               // Con el teclado abierto la hoja sube por encima de él y el inset ya no aplica.
               marginBottom: centered ? 0 : subir,
+              paddingTop: completa ? insets.top + Spacing.sm : undefined,
               paddingBottom: centered || keyboard > 0 ? Spacing.lg : insets.bottom + Spacing.lg,
-              boxShadow: Shadow.floating,
+              boxShadow: completa ? undefined : Shadow.floating,
             },
           ]}>
-          {!centered ? <View style={[styles.grabber, { backgroundColor: theme.border }]} /> : null}
+          {!centered && !completa ? <View style={[styles.grabber, { backgroundColor: theme.border }]} /> : null}
           {title ? (
             <View style={styles.header}>
               <AppText variant="heading" accessibilityRole="header" style={styles.title}>
@@ -130,6 +149,8 @@ const styles = StyleSheet.create({
   rootCentered: { justifyContent: 'center', alignItems: 'center' },
   panel: { paddingHorizontal: Spacing.lg, gap: Spacing.sm },
   panelBottom: { borderTopLeftRadius: Radius.xl, borderTopRightRadius: Radius.xl, borderCurve: 'continuous', paddingTop: Spacing.sm },
+  /* Sin esquinas ni sombra: es la pantalla, no una hoja encima de ella. */
+  panelCompleto: { paddingTop: Spacing.sm },
   panelCentered: { width: 480, maxWidth: '92%', borderRadius: Radius.xl, borderCurve: 'continuous', paddingTop: Spacing.lg },
   grabber: { alignSelf: 'center', width: 36, height: 4, borderRadius: 2, marginBottom: Spacing.xs },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginRight: -OPTICAL_INSET },

@@ -68,3 +68,34 @@ it('sin teclado no sube nada', async () => {
   await medir(800);
   expect(piezas().margen()).toBe(0);
 });
+
+describe('pantalla completa (selector de ejercicios)', () => {
+  const montarCompleta = () =>
+    render(
+      <Sheet visible onClose={jest.fn()} title="Elegir ejercicio" fullScreen scrollable={false}>
+        <Text>contenido</Text>
+      </Sheet>,
+    );
+  const altoPanel = () => {
+    const scrim = screen.getAllByRole('button', { name: 'Cerrar' })[0]!;
+    const raiz = scrim.parent as unknown as { children: { props: { style: unknown } }[] };
+    return StyleSheet.flatten(raiz.children[1]!.props.style as ViewStyle);
+  };
+
+  it('ocupa todo el alto de la pantalla, sin bordes redondeados', async () => {
+    await montarCompleta();
+    await medir(800);
+    expect(altoPanel().height).toBe(800);
+    expect(altoPanel().borderTopLeftRadius).toBeUndefined();
+  });
+
+  it('con el teclado abierto se acorta lo que el teclado tapa, sin hueco', async () => {
+    await montarCompleta();
+    await medir(800);
+    await abrirTeclado(300);
+    expect(altoPanel()).toEqual(expect.objectContaining({ height: 500, marginBottom: 300 }));
+    // Donde el sistema ya encogió la ventana, ni margen ni hueco.
+    await medir(500);
+    expect(altoPanel()).toEqual(expect.objectContaining({ height: 500, marginBottom: 0 }));
+  });
+});
