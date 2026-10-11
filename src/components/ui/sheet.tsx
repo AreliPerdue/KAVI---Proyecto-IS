@@ -58,12 +58,33 @@ export function Sheet({ visible, onClose, title, children, maxHeightRatio = 0.85
   const { width, height } = useWindowDimensions();
   const centered = Platform.OS === 'web' && width >= 768;
   const keyboard = useKeyboardHeight();
-  const available = height - keyboard;
+
+  /*
+   * Cuánto hay que subir la hoja por el teclado: solo lo que el sistema **no** subió ya.
+   *
+   * Según dónde corra la app, Android encoge la ventana del `Modal` al abrir el teclado (Expo
+   * Go, algunos teléfonos) o no la toca (la compilación propia, de borde a borde). Antes se
+   * sumaba siempre el alto del teclado, y donde el sistema ya había encogido la ventana la hoja
+   * subía dos veces: quedaba un hueco del alto del teclado entre la hoja y el teclado. Ahora se
+   * compara el alto real de la ventana con el que tenía sin teclado.
+   */
+  const [altoRaiz, setAltoRaiz] = useState(0);
+  const [altoSinTeclado, setAltoSinTeclado] = useState(0);
+  const yaEncogio = keyboard > 0 && altoSinTeclado > 0 ? Math.max(0, altoSinTeclado - altoRaiz) : 0;
+  const subir = Math.max(0, keyboard - yaEncogio);
+  const available = (altoRaiz || height) - subir;
 
   return (
     <Modal visible={visible} transparent animationType={centered ? 'fade' : 'slide'} onRequestClose={onClose}>
       {/* En Android un Modal queda fuera de la raíz de gestos: sin esto, arrastrar no responde. */}
-      <GestureHandlerRootView style={[styles.root, centered ? styles.rootCentered : null]}>
+      <GestureHandlerRootView
+        onLayout={(e) => {
+          const alto = e.nativeEvent.layout.height;
+          setAltoRaiz(alto);
+          // Medida sin teclado: la referencia para saber si el sistema encogió la ventana.
+          if (keyboard === 0) setAltoSinTeclado(alto);
+        }}
+        style={[styles.root, centered ? styles.rootCentered : null]}>
         <Pressable accessibilityRole="button" accessibilityLabel={tx.common.close} onPress={onClose} style={[StyleSheet.absoluteFill, { backgroundColor: theme.overlay }]} />
         <View
           style={[
@@ -75,7 +96,7 @@ export function Sheet({ visible, onClose, title, children, maxHeightRatio = 0.85
               // un alto máximo se encoge a nada.
               ...(scrollable ? { maxHeight: available * maxHeightRatio } : { height: available * maxHeightRatio }),
               // Con el teclado abierto la hoja sube por encima de él y el inset ya no aplica.
-              marginBottom: centered ? 0 : keyboard,
+              marginBottom: centered ? 0 : subir,
               paddingBottom: centered || keyboard > 0 ? Spacing.lg : insets.bottom + Spacing.lg,
               boxShadow: Shadow.floating,
             },
