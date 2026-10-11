@@ -502,8 +502,11 @@ function FilaSerie(p: FilaProps) {
       )}
       onSwipeableOpen={(direction) => {
         swipe.current?.close();
-        // "left" = se abrieron las acciones de la izquierda, es decir, se deslizó a la derecha.
-        if (String(direction) === 'left') p.onDuplicate(exercise, set);
+        // La librería dice hacia dónde se movió la fila, no qué panel se abrió: "right" es
+        // deslizar a la derecha, que destapa el panel de la izquierda (Duplicar); "left"
+        // destapa el de la derecha (Borrar). Antes estaba al revés y cada etiqueta hacía la
+        // acción de la otra (reporte del 11 oct 2026).
+        if (String(direction) === 'right') p.onDuplicate(exercise, set);
         else p.onDelete(exercise, set);
       }}>
       {contenido}
