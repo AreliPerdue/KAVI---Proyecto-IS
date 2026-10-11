@@ -146,8 +146,18 @@ que se copian a `docs/gym/intensificadores.md` en la Fase G5. Aquí, las claves.
   `post_exhaust`, `contrast` y `paired_sets`. Se eligen varios ejercicios y se toca "Agrupar como…".
   Llevan etiquetas A1/A2 con color, el logger salta solo al siguiente del grupo y el descanso corre al terminar la ronda.
 - RF-F46. **Protocolos:** `straight_sets`, `pyramid`, `reverse_pyramid`, `wave_loading`, `ladder`, `emom`,
-  `amrap_time`, `tabata`, `density`, `fst7`, `gvt`, `widowmaker`, `heavy_light` y `hit`. Aplicar uno genera
-  las series con objetivos y timers. EMOM y Tabata llevan cuenta regresiva y aviso.
+  `amrap_time`, `tabata`, `density`, `fst7`, `gvt`, `widowmaker`, `heavy_light` y `hit`; y desde el 11 oct 2026
+  (T303) `five_by_five`, `five_three_one`, `double_pyramid`, `ramp_to_max`, `top_backoff`, `e2mom`, `death_by`,
+  `hundred_reps`, `descending_ladder` y `custom_intervals`. Aplicar uno genera las series con objetivos y timers.
+  EMOM y Tabata llevan cuenta regresiva y aviso.
+  - **Elegir en dos pasos.** (1) Los protocolos se agrupan por **objetivo** —Fuerza, Hipertrofia, Resistencia,
+    Por tiempo— y cada uno muestra su nombre, una línea de qué es y una **vista previa** ("12 · 10 · 8 · 6",
+    "8 × 20 s / 10 s"). (2) Al tocar uno no se aplica de inmediato: se ven **las series que va a crear**, con
+    peso y reps, y se ajusta con − / + lo que ese protocolo admite (series, reps, minutos, rondas, segundos de
+    trabajo y descanso, % de bajada, semana de 5/3/1) y el **peso base** (el de la última serie o la vez
+    pasada). Un aviso dice cuántas series pendientes se reemplazan (las hechas se quedan). "Aplicar" crea las
+    series; "Cambiar protocolo" vuelve al paso 1.
+  - Los valores elegidos se guardan en `protocol_config` del ejercicio y los usa el timer del protocolo.
 - RF-F47. **Modificadores** en cualquier serie: RPE (1–10 en medios) o RIR (0–5+), según el ajuste y con
   conversión RIR ≈ 10 − RPE; tipo de fallo; ROM; lateralidad; carga (lastre, asistencia, déficit, pines);
   equipo (cinturón, straps, rodilleras, muñequeras, sleeves, coderas, zapatos); spotter.

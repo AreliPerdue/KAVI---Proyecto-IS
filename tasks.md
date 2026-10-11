@@ -862,6 +862,13 @@ Plan y decisiones en `docs/gym/AUDITORIA.md`. Cada fase cierra con typecheck, li
   calendario se repintaba entero al agregar en una lista) y agregar elementos sin trabas en el teléfono.
   (NFR-1, RF-L5) Dep: T268
 
+### Feedback del 11 oct 2026 (spec 07)
+- [x] T303 Protocolos en dos pasos y diez nuevos: elegir por objetivo (Fuerza, Hipertrofia, Resistencia, Por
+  tiempo) con vista previa; ver las series que se crean y ajustar con − / + series, reps, minutos, rondas,
+  trabajo/descanso, % de bajada, semana de 5/3/1 y el peso base; los valores se guardan en `protocol_config` y
+  los usa el timer. Nuevos: 5 × 5, 5/3/1, pirámide doble, rampa al máximo, serie top + back-offs, E2MOM, Death
+  by…, 100 reps, escalera descendente e intervalos a tu medida. (RF-F46) Dep: —
+
 ### Bugs reportados
 - [x] T272 **La ocurrencia borrada volvía tras algunos inicios de sesión** (9 oct 2026, serie del 1 al 9 de
   octubre, se borró solo el 9). Causa: el APK del 23 sep es anterior a T249 y no conoce los días excluidos; al

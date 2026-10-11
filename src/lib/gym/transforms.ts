@@ -1,4 +1,4 @@
-import type { ProtocolKey, IntensifierKey } from '@/constants/intensifiers';
+import { protocolParam, type IntensifierKey, type ProtocolKey, type ProtocolParam, type ProtocolParams } from '@/constants/intensifiers';
 import { getLanguage, type Language, t } from '@/i18n';
 import type { SegmentKind, SetSegment, SetTarget, WeightUnit, WorkoutSet } from '@/types/domain';
 
@@ -170,73 +170,159 @@ function serieObjetivo(exerciseId: string, orden: number, peso: number | null, t
  * Las series que genera un protocolo (RF-F46), a partir del peso de trabajo. Los pesos
  * relativos (pirámide, RPT) se redondean a lo que se puede cargar.
  */
-export function protocolSets(key: ProtocolKey, exerciseId: string, startOrder: number, workKg: number | null, unit: WeightUnit): WorkoutSet[] {
+export function protocolSets(
+  key: ProtocolKey,
+  exerciseId: string,
+  startOrder: number,
+  workKg: number | null,
+  unit: WeightUnit,
+  params?: ProtocolParams | null,
+): WorkoutSet[] {
   const r = (kg: number | null, f: number) => (kg === null ? null : round(Math.round((kg * f) / 2.5) * 2.5, 2));
   const n = (i: number) => startOrder + i;
   const reps = (min: number, max = min): SetTarget => ({ reps_min: min, reps_max: max });
+  const v = (param: ProtocolParam) => protocolParam(key, param, params);
+  const serie = (i: number, kg: number | null, objetivo: SetTarget, extra?: Partial<WorkoutSet>) => serieObjetivo(exerciseId, n(i), kg, objetivo, unit, extra);
+  /** `cuantas` pasos con el factor de carga repartido de `desde` a `hasta`. */
+  const lineal = (cuantas: number, desde: number, hasta: number) =>
+    Array.from({ length: cuantas }, (_, i) => (cuantas === 1 ? hasta : desde + ((hasta - desde) * i) / (cuantas - 1)));
+
   switch (key) {
-    case 'straight_sets':
-      return [0, 1, 2].map((i) => serieObjetivo(exerciseId, n(i), workKg, reps(8, 12), unit));
-    case 'pyramid':
-      return [[12, 0.8], [10, 0.87], [8, 0.93], [6, 1]].map(([rp, f], i) => serieObjetivo(exerciseId, n(i), r(workKg, f), reps(rp), unit));
-    case 'reverse_pyramid':
-      return [[6, 1], [8, 0.9], [10, 0.8]].map(([rp, f], i) => serieObjetivo(exerciseId, n(i), r(workKg, f), reps(rp), unit, { set_type: i === 0 ? 'top_set' : 'backoff' }));
-    case 'wave_loading':
-      return [[3, 0.9], [2, 0.95], [1, 1], [3, 0.92], [2, 0.97], [1, 1.02]].map(([rp, f], i) => serieObjetivo(exerciseId, n(i), r(workKg, f), reps(rp), unit));
-    case 'ladder':
-      return [1, 2, 3, 4, 5].map((rp, i) => serieObjetivo(exerciseId, n(i), workKg, reps(rp), unit));
-    case 'emom':
-      return Array.from({ length: 10 }, (_, i) => serieObjetivo(exerciseId, n(i), workKg, reps(5), unit));
-    case 'amrap_time':
-      return [serieObjetivo(exerciseId, n(0), workKg, { duration_sec: 600 }, unit, { set_type: 'amrap' })];
-    case 'tabata':
-      return Array.from({ length: 8 }, (_, i) => serieObjetivo(exerciseId, n(i), workKg, { duration_sec: 20 }, unit));
-    case 'density':
-      return [serieObjetivo(exerciseId, n(0), workKg, { duration_sec: 900 }, unit)];
-    case 'fst7':
-      return Array.from({ length: 7 }, (_, i) => serieObjetivo(exerciseId, n(i), workKg, reps(10, 12), unit, { rest_after_sec: null }));
-    case 'gvt':
-      return Array.from({ length: 10 }, (_, i) => serieObjetivo(exerciseId, n(i), workKg, reps(10), unit));
-    case 'widowmaker':
-      return [serieObjetivo(exerciseId, n(0), workKg, reps(20), unit)];
-    case 'heavy_light':
+    case 'straight_sets': {
+      const min = v('repsMin');
+      const max = Math.max(min, v('repsMax'));
+      return Array.from({ length: v('sets') }, (_, i) => serie(i, workKg, reps(min, max)));
+    }
+    case 'pyramid': {
+      const pasos = v('steps');
+      return lineal(pasos, 0.8, 1).map((f, i) => serie(i, r(workKg, f), reps(Math.max(2, 12 - 2 * i))));
+    }
+    case 'double_pyramid': {
+      const pasos = v('steps');
+      const subida = lineal(pasos, 0.8, 1).map((f, i) => ({ f, rp: Math.max(2, 12 - 2 * i) }));
+      return [...subida, ...[...subida].reverse()].map(({ f, rp }, i) => serie(i, r(workKg, f), reps(rp)));
+    }
+    case 'reverse_pyramid': {
+      const baja = v('dropPercent') / 100;
+      return Array.from({ length: v('sets') }, (_, i) => serie(i, r(workKg, 1 - baja * i), reps(6 + 2 * i), { set_type: i === 0 ? 'top_set' : 'backoff' }));
+    }
+    case 'top_backoff': {
+      const baja = v('dropPercent') / 100;
       return [
-        serieObjetivo(exerciseId, n(0), workKg, reps(5), unit, { set_type: 'top_set' }),
-        serieObjetivo(exerciseId, n(1), r(workKg, 0.6), reps(15), unit, { set_type: 'backoff' }),
+        serie(0, workKg, reps(5), { set_type: 'top_set' }),
+        ...Array.from({ length: v('sets') }, (_, i) => serie(i + 1, r(workKg, 1 - baja), reps(8), { set_type: 'backoff' })),
       ];
+    }
+    case 'ramp_to_max': {
+      const pasos = v('steps');
+      return lineal(pasos, 0.6, 1).map((f, i) => serie(i, r(workKg, f), reps(Math.max(1, pasos - i)), i === pasos - 1 ? { set_type: 'top_set' } : undefined));
+    }
+    case 'five_by_five':
+      return Array.from({ length: v('sets') }, (_, i) => serie(i, workKg, reps(v('reps'))));
+    case 'five_three_one': {
+      // Semanas de Wendler sobre el máximo de entrenamiento; la última serie es "+" (AMRAP).
+      const semanas: Record<number, [number, number][]> = {
+        1: [[0.65, 5], [0.75, 5], [0.85, 5]],
+        2: [[0.7, 3], [0.8, 3], [0.9, 3]],
+        3: [[0.75, 5], [0.85, 3], [0.95, 1]],
+      };
+      const semana = semanas[v('week')] ?? semanas[1]!;
+      return semana.map(([f, rp], i) => serie(i, r(workKg, f), reps(rp), i === semana.length - 1 ? { set_type: 'amrap' } : undefined));
+    }
+    case 'wave_loading': {
+      const base = [[3, 0.9], [2, 0.95], [1, 1]] as const;
+      return Array.from({ length: v('rounds') }, (_, ola) => base.map(([rp, f]) => ({ rp, f: f + 0.02 * ola })))
+        .flat()
+        .map(({ rp, f }, i) => serie(i, r(workKg, f), reps(rp)));
+    }
+    case 'ladder':
+      return Array.from({ length: v('steps') }, (_, i) => serie(i, workKg, reps(i + 1)));
+    case 'descending_ladder': {
+      const desde = v('steps');
+      return Array.from({ length: desde }, (_, i) => serie(i, workKg, reps(desde - i)));
+    }
+    case 'hundred_reps': {
+      const total = v('total');
+      const series = Math.ceil(total / 25);
+      return Array.from({ length: series }, (_, i) => serie(i, workKg, reps(Math.min(25, total - 25 * i))));
+    }
+    case 'emom':
+      return Array.from({ length: v('minutes') }, (_, i) => serie(i, workKg, reps(v('reps'))));
+    case 'e2mom':
+      return Array.from({ length: v('rounds') }, (_, i) => serie(i, workKg, reps(v('reps'))));
+    case 'death_by':
+      return Array.from({ length: v('minutes') }, (_, i) => serie(i, workKg, reps(i + 1)));
+    case 'amrap_time':
+      return [serie(0, workKg, { duration_sec: v('minutes') * 60 }, { set_type: 'amrap' })];
+    case 'tabata':
+      return Array.from({ length: v('rounds') }, (_, i) => serie(i, workKg, { duration_sec: v('workSec') }));
+    case 'custom_intervals':
+      return Array.from({ length: v('rounds') }, (_, i) => serie(i, workKg, { duration_sec: v('workSec') }));
+    case 'density':
+      return [serie(0, workKg, { duration_sec: v('minutes') * 60 })];
+    case 'fst7':
+      return Array.from({ length: v('sets') }, (_, i) => serie(i, workKg, reps(10, 12), { rest_after_sec: null }));
+    case 'gvt':
+      return Array.from({ length: v('sets') }, (_, i) => serie(i, workKg, reps(v('reps'))));
+    case 'widowmaker':
+      return [serie(0, workKg, reps(v('reps')))];
+    case 'heavy_light':
+      return [serie(0, workKg, reps(5), { set_type: 'top_set' }), serie(1, r(workKg, 0.6), reps(15), { set_type: 'backoff' })];
     case 'hit':
-      return [serieObjetivo(exerciseId, n(0), workKg, reps(6, 10), unit, { set_type: 'failure', failure: 'muscular' })];
+      return [serie(0, workKg, reps(6, 10), { set_type: 'failure', failure: 'muscular' })];
   }
 }
 
 /** Descanso que sugiere cada protocolo entre series; `null` = el de siempre. */
-export function protocolRestSec(key: ProtocolKey): number | null {
+export function protocolRestSec(key: ProtocolKey, params?: ProtocolParams | null): number | null {
   switch (key) {
     case 'fst7':
-      return 40;
     case 'gvt':
-      return 75;
     case 'tabata':
-      return 10;
-    case 'emom':
-      return null;
+    case 'custom_intervals':
+      return protocolParam(key, 'restSec', params);
     default:
       return null;
   }
 }
 
 /** Configuración del timer de intervalos de un protocolo (RF-F46). */
-export function protocolTimer(key: ProtocolKey): { workSec: number; restSec: number; rounds: number } | null {
+export function protocolTimer(key: ProtocolKey, params?: ProtocolParams | null): { workSec: number; restSec: number; rounds: number } | null {
+  const v = (param: ProtocolParam) => protocolParam(key, param, params);
   switch (key) {
     case 'emom':
-      return { workSec: 60, restSec: 0, rounds: 10 };
+      return { workSec: 60, restSec: 0, rounds: v('minutes') };
+    case 'death_by':
+      return { workSec: 60, restSec: 0, rounds: v('minutes') };
+    case 'e2mom':
+      return { workSec: 120, restSec: 0, rounds: v('rounds') };
     case 'tabata':
-      return { workSec: 20, restSec: 10, rounds: 8 };
+    case 'custom_intervals':
+      return { workSec: v('workSec'), restSec: v('restSec'), rounds: v('rounds') };
     case 'amrap_time':
-      return { workSec: 600, restSec: 0, rounds: 1 };
+      return { workSec: v('minutes') * 60, restSec: 0, rounds: 1 };
     case 'density':
-      return { workSec: 900, restSec: 0, rounds: 1 };
+      return { workSec: v('minutes') * 60, restSec: 0, rounds: 1 };
     default:
       return null;
   }
+}
+
+/**
+ * Vista previa corta de lo que genera un protocolo (T303): "12 · 10 · 8 · 6", "5 × 5",
+ * "3 × 8–12", "8 × 20 s / 10 s". Sale de las series que generaría, así no se desfasa.
+ */
+export function protocolPreview(key: ProtocolKey, params?: ProtocolParams | null): string {
+  const timer = protocolTimer(key, params);
+  const seg = (sec: number) => (sec >= 60 && sec % 60 === 0 ? `${sec / 60} min` : `${sec} s`);
+  if (timer) {
+    if (timer.rounds === 1) return seg(timer.workSec);
+    return `${timer.rounds} × ${seg(timer.workSec)}${timer.restSec > 0 ? ` / ${seg(timer.restSec)}` : ''}`;
+  }
+  const objetivos = protocolSets(key, 'vista', 1, null, 'kg', params).map((s) => s.target);
+  const texto = objetivos.map((o) => (o?.reps_min && o.reps_max && o.reps_max !== o.reps_min ? `${o.reps_min}–${o.reps_max}` : String(o?.reps_min ?? '')));
+  const iguales = texto.every((t) => t === texto[0]);
+  if (iguales && texto.length > 1) return `${texto.length} × ${texto[0]}`;
+  if (texto.length > 7) return `${texto.slice(0, 3).join(' · ')} … ${texto.at(-1)}`;
+  return texto.join(' · ');
 }

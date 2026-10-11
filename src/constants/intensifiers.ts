@@ -75,24 +75,68 @@ export const GROUP_TYPES: { value: ExerciseGroupType; label: string; description
 
 export type ProtocolKey =
   | 'straight_sets' | 'pyramid' | 'reverse_pyramid' | 'wave_loading' | 'ladder' | 'emom' | 'amrap_time'
-  | 'tabata' | 'density' | 'fst7' | 'gvt' | 'widowmaker' | 'heavy_light' | 'hit';
+  | 'tabata' | 'density' | 'fst7' | 'gvt' | 'widowmaker' | 'heavy_light' | 'hit'
+  // T303
+  | 'five_by_five' | 'five_three_one' | 'double_pyramid' | 'ramp_to_max' | 'top_backoff' | 'e2mom'
+  | 'death_by' | 'hundred_reps' | 'descending_ladder' | 'custom_intervals';
 
-export const PROTOCOLS: { key: ProtocolKey; label: string; description: string; timer: boolean }[] = [
-  { key: 'straight_sets', label: 'Series rectas', description: '3 × 8–12 con el mismo peso.', timer: false },
-  { key: 'pyramid', label: 'Pirámide', description: 'El peso sube y las reps bajan: 12-10-8-6.', timer: false },
-  { key: 'reverse_pyramid', label: 'Pirámide inversa (RPT)', description: 'La pesada primero; luego −10 % y más reps.', timer: false },
-  { key: 'wave_loading', label: 'Ondas', description: '3-2-1 y otra vez 3-2-1, un poco más pesado.', timer: false },
-  { key: 'ladder', label: 'Escalera', description: '1, 2, 3, 4, 5 reps.', timer: false },
-  { key: 'emom', label: 'EMOM', description: 'Un bloque al inicio de cada minuto, 10 minutos.', timer: true },
-  { key: 'amrap_time', label: 'AMRAP por tiempo', description: 'Todas las reps posibles en 10 minutos.', timer: true },
-  { key: 'tabata', label: 'Tabata', description: '8 rondas de 20 s de trabajo y 10 s de descanso.', timer: true },
-  { key: 'density', label: 'Densidad (EDT)', description: 'Más trabajo en un bloque fijo de 15 minutos.', timer: true },
-  { key: 'fst7', label: 'FST-7', description: '7 series de 10–12 con 30–45 s de descanso.', timer: false },
-  { key: 'gvt', label: 'German Volume (10 × 10)', description: '10 series de 10 con el mismo peso.', timer: false },
-  { key: 'widowmaker', label: 'Widowmaker', description: 'Una serie de 20 reps con tu peso de 10.', timer: false },
-  { key: 'heavy_light', label: 'Pesado-ligero', description: 'Una pesada de 5 y una ligera de 15.', timer: false },
-  { key: 'hit', label: 'HIT', description: 'Una sola serie al fallo total.', timer: false },
+/** Para qué sirve, que es como se agrupan al elegir (RF-F46, T303). */
+export type ProtocolGoal = 'strength' | 'hypertrophy' | 'endurance' | 'timed';
+
+/** Lo que se puede ajustar de un protocolo antes de aplicarlo. */
+export type ProtocolParam =
+  | 'sets' | 'reps' | 'repsMin' | 'repsMax' | 'steps' | 'dropPercent' | 'minutes' | 'rounds' | 'workSec' | 'restSec' | 'week' | 'total';
+
+export type ProtocolParamDef = { key: ProtocolParam; min: number; max: number; step: number; default: number };
+export type ProtocolParams = Partial<Record<ProtocolParam, number>>;
+
+const p = (key: ProtocolParam, def: number, min: number, max: number, step = 1): ProtocolParamDef => ({ key, default: def, min, max, step });
+
+export type ProtocolInfo = { key: ProtocolKey; label: string; description: string; timer: boolean; goal: ProtocolGoal; params: ProtocolParamDef[] };
+
+/**
+ * Los valores por omisión de cada parámetro son los de siempre: aplicar un protocolo sin tocar
+ * nada genera exactamente las mismas series que antes de T303.
+ */
+export const PROTOCOLS: ProtocolInfo[] = [
+  // Fuerza
+  { key: 'five_by_five', goal: 'strength', label: '5 × 5', description: '5 series de 5 con el mismo peso.', timer: false, params: [p('sets', 5, 3, 8), p('reps', 5, 3, 8)] },
+  { key: 'five_three_one', goal: 'strength', label: '5/3/1', description: 'Tres series sobre tu máximo de entrenamiento; la última, todas las que salgan.', timer: false, params: [p('week', 1, 1, 3)] },
+  { key: 'ramp_to_max', goal: 'strength', label: 'Rampa al máximo', description: 'Subes de peso y bajas reps hasta una serie top.', timer: false, params: [p('steps', 5, 3, 8)] },
+  { key: 'top_backoff', goal: 'strength', label: 'Serie top + back-offs', description: 'Una pesada y luego varias más ligeras.', timer: false, params: [p('sets', 3, 1, 5), p('dropPercent', 10, 5, 30, 5)] },
+  { key: 'reverse_pyramid', goal: 'strength', label: 'Pirámide inversa (RPT)', description: 'La pesada primero; luego −10 % y más reps.', timer: false, params: [p('sets', 3, 2, 5), p('dropPercent', 10, 5, 20, 5)] },
+  { key: 'wave_loading', goal: 'strength', label: 'Ondas', description: '3-2-1 y otra vez 3-2-1, un poco más pesado.', timer: false, params: [p('rounds', 2, 1, 3)] },
+  { key: 'ladder', goal: 'strength', label: 'Escalera', description: '1, 2, 3, 4, 5 reps.', timer: false, params: [p('steps', 5, 3, 10)] },
+  // Hipertrofia
+  { key: 'straight_sets', goal: 'hypertrophy', label: 'Series rectas', description: '3 × 8–12 con el mismo peso.', timer: false, params: [p('sets', 3, 1, 10), p('repsMin', 8, 1, 30), p('repsMax', 12, 1, 30)] },
+  { key: 'pyramid', goal: 'hypertrophy', label: 'Pirámide', description: 'El peso sube y las reps bajan: 12-10-8-6.', timer: false, params: [p('steps', 4, 3, 6)] },
+  { key: 'double_pyramid', goal: 'hypertrophy', label: 'Pirámide doble', description: 'Subes y vuelves a bajar: 12-10-8-8-10-12.', timer: false, params: [p('steps', 3, 2, 4)] },
+  { key: 'fst7', goal: 'hypertrophy', label: 'FST-7', description: '7 series de 10–12 con 30–45 s de descanso.', timer: false, params: [p('sets', 7, 5, 9), p('restSec', 40, 20, 90, 5)] },
+  { key: 'gvt', goal: 'hypertrophy', label: 'German Volume (10 × 10)', description: '10 series de 10 con el mismo peso.', timer: false, params: [p('sets', 10, 5, 10), p('reps', 10, 6, 12), p('restSec', 75, 30, 120, 15)] },
+  { key: 'heavy_light', goal: 'hypertrophy', label: 'Pesado-ligero', description: 'Una pesada de 5 y una ligera de 15.', timer: false, params: [] },
+  { key: 'widowmaker', goal: 'hypertrophy', label: 'Widowmaker', description: 'Una serie de 20 reps con tu peso de 10.', timer: false, params: [p('reps', 20, 15, 30)] },
+  { key: 'hit', goal: 'hypertrophy', label: 'HIT', description: 'Una sola serie al fallo total.', timer: false, params: [] },
+  // Resistencia
+  { key: 'hundred_reps', goal: 'endurance', label: '100 reps', description: 'Llegar a 100 reps en las series que hagan falta.', timer: false, params: [p('total', 100, 50, 200, 10)] },
+  { key: 'descending_ladder', goal: 'endurance', label: 'Escalera descendente', description: '10, 9, 8… hasta 1 rep.', timer: false, params: [p('steps', 10, 5, 15)] },
+  // Por tiempo
+  { key: 'emom', goal: 'timed', label: 'EMOM', description: 'Un bloque al inicio de cada minuto, 10 minutos.', timer: true, params: [p('minutes', 10, 5, 30), p('reps', 5, 1, 20)] },
+  { key: 'e2mom', goal: 'timed', label: 'E2MOM', description: 'Un bloque cada 2 minutos; más peso, más descanso.', timer: true, params: [p('rounds', 6, 3, 15), p('reps', 3, 1, 10)] },
+  { key: 'death_by', goal: 'timed', label: 'Death by…', description: 'Minuto 1: 1 rep; minuto 2: 2 reps… hasta que no llegues.', timer: true, params: [p('minutes', 10, 5, 20)] },
+  { key: 'amrap_time', goal: 'timed', label: 'AMRAP por tiempo', description: 'Todas las reps posibles en 10 minutos.', timer: true, params: [p('minutes', 10, 3, 30)] },
+  { key: 'tabata', goal: 'timed', label: 'Tabata', description: '8 rondas de 20 s de trabajo y 10 s de descanso.', timer: true, params: [p('rounds', 8, 4, 12), p('workSec', 20, 10, 60, 5), p('restSec', 10, 5, 60, 5)] },
+  { key: 'custom_intervals', goal: 'timed', label: 'Intervalos a tu medida', description: 'Tú eliges el trabajo, el descanso y las rondas.', timer: true, params: [p('rounds', 6, 1, 20), p('workSec', 40, 10, 300, 5), p('restSec', 20, 0, 180, 5)] },
+  { key: 'density', goal: 'timed', label: 'Densidad (EDT)', description: 'Más trabajo en un bloque fijo de 15 minutos.', timer: true, params: [p('minutes', 15, 5, 30)] },
 ];
+
+/** El valor de un parámetro: el elegido si está en rango; si no, el de siempre. */
+export function protocolParam(key: ProtocolKey, param: ProtocolParam, params: ProtocolParams | null | undefined): number {
+  const def = PROTOCOLS.find((x) => x.key === key)?.params.find((x) => x.key === param);
+  const elegido = params?.[param];
+  if (!def) return elegido ?? 0;
+  if (typeof elegido !== 'number' || !Number.isFinite(elegido)) return def.default;
+  return Math.min(def.max, Math.max(def.min, elegido));
+}
 
 /** Equipo de apoyo que se marca por serie (RF-F47). */
 export const GEAR: { value: string; label: string }[] = [

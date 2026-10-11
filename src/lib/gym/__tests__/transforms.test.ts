@@ -6,7 +6,7 @@
 import { INTENSIFIERS, PROTOCOLS, type IntensifierKey, type ProtocolKey } from '@/constants/intensifiers';
 import { applyOutbox, type OutboxEntry } from '@/lib/gym/outbox';
 import { mergeSets, splitSet } from '@/lib/gym/sets';
-import { applyIntensifier, protocolRestSec, protocolSets, protocolTimer, removeIntensifier, unusualCombination } from '@/lib/gym/transforms';
+import { applyIntensifier, protocolPreview, protocolRestSec, protocolSets, protocolTimer, removeIntensifier, unusualCombination } from '@/lib/gym/transforms';
 import { suggestVariants } from '@/lib/gym/variants';
 
 import { delCatalogo, ejercicio, seg, serie } from './fixtures';
@@ -122,6 +122,8 @@ describe('protocolos (RF-F46)', () => {
   const esperado: Record<ProtocolKey, number> = {
     straight_sets: 3, pyramid: 4, reverse_pyramid: 3, wave_loading: 6, ladder: 5, emom: 10, amrap_time: 1, tabata: 8,
     density: 1, fst7: 7, gvt: 10, widowmaker: 1, heavy_light: 2, hit: 1,
+    five_by_five: 5, five_three_one: 3, double_pyramid: 6, ramp_to_max: 5, top_backoff: 4, e2mom: 6, death_by: 10,
+    hundred_reps: 4, descending_ladder: 10, custom_intervals: 6,
   };
 
   it.each(PROTOCOLS.map((p) => p.key))('%s genera sus series en orden', (key) => {
@@ -225,4 +227,83 @@ describe('variantes del drop mecánico (RF-F44)', () => {
 
 it('fixtures: un tramo nuevo nace vacío', () => {
   expect(seg()).toMatchObject({ kind: 'main', weight_kg: null, reps: null });
+});
+
+/** Protocolos ajustables (T303): cada parámetro cambia lo que se genera, dentro de su rango. */
+describe('protocolos con parámetros (T303)', () => {
+  const reps = (sets: ReturnType<typeof protocolSets>) => sets.map((s) => s.target?.reps_min);
+  const kg = (sets: ReturnType<typeof protocolSets>) => sets.map((s) => s.segments[0]?.weight_kg);
+
+  it('sin parámetros, los 14 de siempre generan lo mismo que antes', () => {
+    expect(reps(protocolSets('pyramid', 'we', 1, 100, 'kg'))).toEqual([12, 10, 8, 6]);
+    expect(kg(protocolSets('pyramid', 'we', 1, 100, 'kg'))).toEqual([80, 87.5, 92.5, 100]);
+    expect(kg(protocolSets('reverse_pyramid', 'we', 1, 100, 'kg'))).toEqual([100, 90, 80]);
+    expect(protocolTimer('tabata')).toEqual({ workSec: 20, restSec: 10, rounds: 8 });
+    expect(protocolRestSec('gvt')).toBe(75);
+  });
+
+  it('series rectas: número de series y rango de reps', () => {
+    const s = protocolSets('straight_sets', 'we', 1, 60, 'kg', { sets: 5, repsMin: 6, repsMax: 8 });
+    expect(s).toHaveLength(5);
+    expect(s[0]?.target).toEqual(expect.objectContaining({ reps_min: 6, reps_max: 8 }));
+  });
+
+  it('un valor fuera de rango se lleva al límite, y uno inválido vuelve al de siempre', () => {
+    expect(protocolSets('five_by_five', 'we', 1, 100, 'kg', { sets: 50 })).toHaveLength(8);
+    expect(protocolSets('five_by_five', 'we', 1, 100, 'kg', { sets: Number.NaN })).toHaveLength(5);
+  });
+
+  it('5/3/1: porcentajes de cada semana sobre el máximo de entrenamiento; la última es AMRAP', () => {
+    const s1 = protocolSets('five_three_one', 'we', 1, 100, 'kg', { week: 1 });
+    expect(kg(s1)).toEqual([65, 75, 85]);
+    expect(reps(s1)).toEqual([5, 5, 5]);
+    expect(s1.at(-1)?.set_type).toBe('amrap');
+    expect(kg(protocolSets('five_three_one', 'we', 1, 100, 'kg', { week: 3 }))).toEqual([75, 85, 95]);
+    expect(reps(protocolSets('five_three_one', 'we', 1, 100, 'kg', { week: 3 }))).toEqual([5, 3, 1]);
+  });
+
+  it('pirámide doble sube y baja; rampa al máximo termina en serie top', () => {
+    expect(reps(protocolSets('double_pyramid', 'we', 1, 100, 'kg'))).toEqual([12, 10, 8, 8, 10, 12]);
+    const rampa = protocolSets('ramp_to_max', 'we', 1, 100, 'kg');
+    expect(reps(rampa)).toEqual([5, 4, 3, 2, 1]);
+    expect(kg(rampa)).toEqual([60, 70, 80, 90, 100]);
+    expect(rampa.at(-1)?.set_type).toBe('top_set');
+  });
+
+  it('serie top + back-offs: la top y luego las ligeras con el % elegido', () => {
+    const s = protocolSets('top_backoff', 'we', 1, 100, 'kg', { sets: 2, dropPercent: 20 });
+    expect(s.map((x) => x.set_type)).toEqual(['top_set', 'backoff', 'backoff']);
+    expect(kg(s)).toEqual([100, 80, 80]);
+  });
+
+  it('100 reps reparte en series de 25; escalera descendente baja hasta 1; death by sube cada minuto', () => {
+    expect(reps(protocolSets('hundred_reps', 'we', 1, null, 'kg', { total: 90 }))).toEqual([25, 25, 25, 15]);
+    expect(reps(protocolSets('descending_ladder', 'we', 1, null, 'kg', { steps: 5 }))).toEqual([5, 4, 3, 2, 1]);
+    expect(reps(protocolSets('death_by', 'we', 1, null, 'kg', { minutes: 5 }))).toEqual([1, 2, 3, 4, 5]);
+  });
+
+  it('el timer y el descanso salen de los parámetros', () => {
+    expect(protocolTimer('custom_intervals', { rounds: 4, workSec: 45, restSec: 15 })).toEqual({ workSec: 45, restSec: 15, rounds: 4 });
+    expect(protocolRestSec('custom_intervals', { restSec: 30 })).toBe(30);
+    expect(protocolTimer('e2mom', { rounds: 8 })).toEqual({ workSec: 120, restSec: 0, rounds: 8 });
+    expect(protocolTimer('emom', { minutes: 12 })).toEqual({ workSec: 60, restSec: 0, rounds: 12 });
+  });
+
+  it('vista previa corta de cada protocolo', () => {
+    expect(protocolPreview('pyramid')).toBe('12 · 10 · 8 · 6');
+    expect(protocolPreview('five_by_five')).toBe('5 × 5');
+    expect(protocolPreview('straight_sets')).toBe('3 × 8–12');
+    expect(protocolPreview('tabata')).toBe('8 × 20 s / 10 s');
+    expect(protocolPreview('emom')).toBe('10 × 1 min');
+    expect(protocolPreview('amrap_time')).toBe('10 min');
+    expect(protocolPreview('descending_ladder')).toBe('10 · 9 · 8 … 1');
+  });
+
+  it('cada protocolo pertenece a un objetivo y sus valores por omisión están en su rango', () => {
+    for (const p of PROTOCOLS) {
+      expect(['strength', 'hypertrophy', 'endurance', 'timed']).toContain(p.goal);
+      for (const d of p.params) expect(d.default >= d.min && d.default <= d.max).toBe(true);
+      expect(p.timer).toBe(p.goal === 'timed');
+    }
+  });
 });

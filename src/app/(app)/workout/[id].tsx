@@ -18,13 +18,14 @@ import { VariantSheet } from '@/components/fitness/variant-sheet';
 import { NoteSheet } from '@/components/fitness/note-sheet';
 import { ReorderExercisesSheet } from '@/components/fitness/reorder-exercises-sheet';
 import { NumpadSheet, type NumpadField } from '@/components/fitness/numpad-sheet';
+import { ProtocolSheet } from '@/components/fitness/protocol-sheet';
 import { RestTimerBar } from '@/components/fitness/rest-timer-bar';
 import { ToolsSheet } from '@/components/fitness/tools-sheet';
 import { ModalHeader } from '@/components/modal-header';
 import { ActionRow, AppText, Banner, Button, Chip, DatePickerSheet, ErrorState, FieldButton, IconButton, LoadingState, Screen, Sheet, SwitchRow, TextField, TimePickerSheet } from '@/components/ui';
 import { SESSION_TAGS, SET_TAGS } from '@/constants/gym-notes';
 import { gymratLine } from '@/constants/gymrat';
-import { PROTOCOLS, SET_TYPES, type ProtocolKey } from '@/constants/intensifiers';
+import { SET_TYPES, type ProtocolKey, type ProtocolParams } from '@/constants/intensifiers';
 import { IconSize, IconStroke, Radius, Spacing } from '@/constants/theme';
 import { useActivitiesRange } from '@/hooks/use-activities-range';
 import { useEditHistory } from '@/hooks/use-edit-history';
@@ -502,19 +503,25 @@ export default function WorkoutScreen() {
    * ejercicio se reemplaza; lo ya hecho se queda, y las nuevas van después. El peso de
    * trabajo es el de la última serie, o el de la vez pasada.
    */
-  const aplicarProtocolo = (exercise: WorkoutExerciseDetail, key: ProtocolKey) => {
+  /** Peso de partida de un protocolo: la última serie con peso, o la primera de la vez pasada. */
+  const pesoTrabajoDe = (exercise: WorkoutExerciseDetail) =>
+    [...exercise.workout_sets].reverse().find((s) => s.segments[0]?.weight_kg)?.segments[0]?.weight_kg ??
+    analisis.get(exercise.id)?.previous[0]?.segments[0]?.weight_kg ??
+    null;
+
+  /** Con lo elegido en la hoja (T303): parámetros y peso base, que se guardan en el ejercicio. */
+  const aplicarProtocolo = (exercise: WorkoutExerciseDetail, key: ProtocolKey, params: ProtocolParams = {}, base = pesoTrabajoDe(exercise)) => {
     const hechas = exercise.workout_sets.filter((s) => s.completed_at);
     const pendientes = exercise.workout_sets.filter((s) => !s.completed_at);
-    const pesoTrabajo =
-      [...exercise.workout_sets].reverse().find((s) => s.segments[0]?.weight_kg)?.segments[0]?.weight_kg ??
-      analisis.get(exercise.id)?.previous[0]?.segments[0]?.weight_kg ??
-      null;
-    const nuevas = protocolSets(key, exercise.id, nextSortOrder(hechas), pesoTrabajo, unit);
+    const nuevas = protocolSets(key, exercise.id, nextSortOrder(hechas), base, unit, params);
     historia.batch(() => {
       pendientes.forEach((s) => quitar(s.id));
       nuevas.forEach(guardar);
     });
-    mutations.updateExercise.mutate({ id: exercise.id, patch: { protocol: key, rest_target_sec: protocolRestSec(key) } }, { onSuccess: () => void sesion.refetch() });
+    mutations.updateExercise.mutate(
+      { id: exercise.id, patch: { protocol: key, protocol_config: params, rest_target_sec: protocolRestSec(key, params) } },
+      { onSuccess: () => void sesion.refetch() },
+    );
   };
 
   // ── Sesión ───────────────────────────────────────────────────────────────────────────
@@ -743,7 +750,7 @@ export default function WorkoutScreen() {
                 protocolLabel={exercise.protocol ? protocolLabel(exercise.protocol, lang) : null}
                 stickyNote={exercise.exercise_id ? notasFijas.get(exercise.exercise_id) ?? null : null}
                 celebrate={!serio}
-                onOpenTimer={exercise.protocol && protocolTimer(exercise.protocol as ProtocolKey) ? setTimerPara : undefined}
+                onOpenTimer={exercise.protocol && protocolTimer(exercise.protocol as ProtocolKey, exercise.protocol_config as ProtocolParams) ? setTimerPara : undefined}
                 onAddSet={agregarSerie}
                 onEdit={abrirTeclado}
                 onToggle={alternar}
@@ -1236,27 +1243,21 @@ export default function WorkoutScreen() {
         onCreate={(input) => mutations.createGroup.mutate({ workoutId: data.id, input }, { onSuccess: () => void sesion.refetch() })}
       />
 
-      <Sheet visible={protocoloPara !== null} onClose={() => setProtocoloPara(null)} title={w.protocolTitle}>
-        <AppText variant="caption" color="textSecondary">
-          {w.protocolIntro}
-        </AppText>
-        {PROTOCOLS.map((pr) => (
-          <ActionRow
-            key={pr.key}
-            icon={<ListOrdered size={IconSize.action} strokeWidth={IconStroke} color={theme.text} />}
-            label={`${tx.training.protocols[pr.key].label} — ${tx.training.protocols[pr.key].description}`}
-            onPress={() => {
-              if (protocoloPara) aplicarProtocolo(protocoloPara, pr.key);
-              setProtocoloPara(null);
-            }}
-          />
-        ))}
-      </Sheet>
+      <ProtocolSheet
+        visible={protocoloPara !== null}
+        onClose={() => setProtocoloPara(null)}
+        baseKg={protocoloPara ? pesoTrabajoDe(protocoloPara) : null}
+        unit={unit}
+        pendingCount={protocoloPara ? protocoloPara.workout_sets.filter((x) => !x.completed_at).length : 0}
+        onApply={(key, params, base) => {
+          if (protocoloPara) aplicarProtocolo(protocoloPara, key, params, base);
+        }}
+      />
 
       <IntervalTimerSheet
         visible={timerPara !== null}
         title={timerPara?.protocol ? protocolLabel(timerPara.protocol, lang) : w.timer}
-        config={timerPara?.protocol ? protocolTimer(timerPara.protocol as ProtocolKey) : null}
+        config={timerPara?.protocol ? protocolTimer(timerPara.protocol as ProtocolKey, timerPara.protocol_config as ProtocolParams) : null}
         onClose={() => setTimerPara(null)}
       />
 
