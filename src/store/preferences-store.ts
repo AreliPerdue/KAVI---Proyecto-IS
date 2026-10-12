@@ -3,6 +3,7 @@ import { create } from 'zustand';
 import { type Accesos, accesosValidos, DEFAULT_ACCESOS } from '@/constants/modules';
 import { type Language, type LanguagePreference, resolveLanguage, setLanguage } from '@/i18n/language';
 import { type CalendarView, setTimeFormat, type TimeFormat } from '@/lib/dates';
+import { DEFAULT_LIBRARY_VIEW, type LibraryView, libraryViewValida } from '@/lib/library/shelf';
 import { getJson, setJson } from '@/lib/storage';
 
 const PREFS_KEY = 'kavi.preferences';
@@ -49,6 +50,7 @@ type Prefs = {
   pinnedViews: CalendarView[];
   accesos: Accesos;
   overlayRecientes: Record<string, string>;
+  libraryView: LibraryView;
 };
 
 type PreferencesState = {
@@ -89,6 +91,8 @@ type PreferencesState = {
    * de personas por recientes; vive en el dispositivo y no sale de él.
    */
   overlayRecientes: Record<string, string>;
+  /** Vista de la librería de KAVI Library: portadas o lista (RF-BL4). */
+  libraryView: LibraryView;
   hydrated: boolean;
   setTimeFormat: (formato: TimeFormat) => void;
   setLanguage: (idioma: LanguagePreference) => void;
@@ -101,6 +105,7 @@ type PreferencesState = {
   togglePinnedView: (view: CalendarView) => void;
   setAccesos: (accesos: Accesos) => void;
   marcarSuperpuesto: (userId: string) => void;
+  setLibraryView: (vista: LibraryView) => void;
   hydrate: () => Promise<void>;
 };
 
@@ -136,6 +141,7 @@ export const usePreferencesStore = create<PreferencesState>((set, get) => ({
   selfColor: null,
   accesos: DEFAULT_ACCESOS,
   overlayRecientes: {},
+  libraryView: DEFAULT_LIBRARY_VIEW,
   hydrated: false,
 
   setTimeFormat: (formato) => {
@@ -225,6 +231,12 @@ export const usePreferencesStore = create<PreferencesState>((set, get) => ({
     persistir({ ...get(), overlayRecientes: siguiente });
   },
 
+  setLibraryView: (vista) => {
+    elegidoEnEstaSesion.add('libraryView');
+    set({ libraryView: vista });
+    persistir({ ...get(), libraryView: vista });
+  },
+
   marcarVisto: () => {
     if (get().visto) return;
     elegidoEnEstaSesion.add('visto');
@@ -264,6 +276,7 @@ export const usePreferencesStore = create<PreferencesState>((set, get) => ({
       selfColor: guardado('selfColor', prefs?.selfColor ?? null),
       accesos: guardado('accesos', accesosValidos(prefs?.accesos)),
       overlayRecientes: guardado('overlayRecientes', prefs?.overlayRecientes ?? {}),
+      libraryView: guardado('libraryView', libraryViewValida(prefs?.libraryView)),
       hydrated: true,
     });
     // Lo elegido antes de hidratar se guardo con el resto de valores por omision;
@@ -274,7 +287,7 @@ export const usePreferencesStore = create<PreferencesState>((set, get) => ({
 
 /** Se guarda el conjunto entero: son dos claves y así no pueden desincronizarse. */
 function persistir(
-  estado: Pick<PreferencesState, 'timeFormat' | 'timeFormatChosen' | 'language' | 'lastWorkoutTitle' | 'showWorkouts' | 'showBirthdays' | 'visto' | 'appearance' | 'selfColor' | 'pinnedViews' | 'accesos' | 'overlayRecientes'>,
+  estado: Pick<PreferencesState, 'timeFormat' | 'timeFormatChosen' | 'language' | 'lastWorkoutTitle' | 'showWorkouts' | 'showBirthdays' | 'visto' | 'appearance' | 'selfColor' | 'pinnedViews' | 'accesos' | 'overlayRecientes' | 'libraryView'>,
 ): void {
   void setJson(PREFS_KEY, {
     timeFormat: estado.timeFormat,
@@ -289,5 +302,6 @@ function persistir(
     selfColor: estado.selfColor,
     accesos: estado.accesos,
     overlayRecientes: estado.overlayRecientes,
+    libraryView: estado.libraryView,
   } satisfies Prefs);
 }

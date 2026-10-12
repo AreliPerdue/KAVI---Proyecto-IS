@@ -13,4 +13,11 @@ export const library: Dictionary['library'] = {
   profileRow: 'Library',
   profileHint: 'What’s new in KAVI while it’s being built. Just for you and your testers.',
   pieces: (n) => `${n} ${n === 1 ? 'item' : 'items'}`,
+  viewLabel: 'Library view',
+  viewCovers: 'Covers',
+  viewList: 'List',
+  progressPage: (pagina, total) => `p. ${pagina} of ${total}`,
+  progressPercent: (porcentaje) => `${porcentaje}% read`,
+  unread: 'Not opened',
+  finished: 'Finished',
 };

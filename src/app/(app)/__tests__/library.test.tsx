@@ -2,9 +2,10 @@
  * Biblioteca en desarrollo (spec 13 §4, T276): avisa que está en construcción, muestra el espacio
  * usado (B2) y las piezas o su estado vacío.
  */
-import { render, screen } from '@testing-library/react-native';
+import { fireEvent, render, screen } from '@testing-library/react-native';
 
 import { es } from '@/i18n/es';
+import { usePreferencesStore } from '@/store/preferences-store';
 
 const L = es.library;
 const MB = 1024 * 1024;
@@ -14,14 +15,29 @@ let mockEspacio: Record<string, unknown>;
 jest.mock('@/hooks/use-library', () => ({
   useLibraryItems: () => mockPiezas,
   useLibraryUsage: () => mockEspacio,
+  useLibraryFileUrl: () => ({ data: undefined }),
 }));
 
 /* eslint-disable-next-line @typescript-eslint/no-require-imports -- tras los mocks */
 const Pantalla = require('@/app/(app)/library').default as () => React.ReactElement;
 
+/** Una pieza con lo mínimo; lo demás, como recién importada. */
+const pieza = (id: string, extra: Record<string, unknown> = {}) => ({
+  id,
+  title: id,
+  authors: [],
+  cover_path: null,
+  cover_color: null,
+  page_count: null,
+  progress: 0,
+  last_position: null,
+  ...extra,
+});
+
 const ok = (data: unknown) => ({ data, isPending: false, isError: false, isSuccess: true, error: null, refetch: jest.fn() });
 
 beforeEach(() => {
+  usePreferencesStore.setState({ libraryView: 'covers' });
   mockPiezas = ok([]);
   mockEspacio = ok({ usedBytes: 0, limitBytes: 500 * MB });
 });
@@ -34,10 +50,8 @@ it('dice que está en desarrollo y, sin piezas, invita a lo que viene', async ()
 });
 
 it('lista las piezas con su autor y cuenta cuántas son', async () => {
-  mockPiezas = ok([
-    { id: 'l1', title: 'Rayuela', authors: ['Julio Cortázar'] },
-    { id: 'l2', title: 'Ficciones', authors: [] },
-  ]);
+  mockPiezas = ok([pieza('l1', { title: 'Rayuela', authors: ['Julio Cortázar'] }), pieza('l2', { title: 'Ficciones' })]);
+  usePreferencesStore.setState({ libraryView: 'list' });
   mockEspacio = ok({ usedBytes: 12 * MB, limitBytes: 500 * MB });
   await render(<Pantalla />);
   expect(screen.getByText('Rayuela')).toBeTruthy();
@@ -58,4 +72,52 @@ it('si falla, lo dice y deja reintentar', async () => {
   mockPiezas = { data: undefined, isPending: false, isError: true, isSuccess: false, error: new Error('Sin conexión.'), refetch };
   await render(<Pantalla />);
   expect(screen.getByText('Sin conexión.')).toBeTruthy();
+});
+
+/** La librería (spec 13a, T277): portadas en rejilla o lista, y la vista se recuerda (RF-BL4). */
+describe('vistas', () => {
+  const libros = () => [
+    pieza('l1', { title: 'Rayuela', authors: ['Julio Cortázar'], page_count: 340, progress: 0.35, last_position: { page: 120 } }),
+    pieza('l2', { title: 'Ficciones', progress: 0.5, last_position: { cfi: 'epubcfi(/6/4)' } }),
+    pieza('l3', { title: 'Pedro Páramo' }),
+    pieza('l4', { title: 'Aura', page_count: 60, progress: 1, last_position: { page: 60 } }),
+  ];
+
+  /** La rejilla se reparte según el ancho medido: sin medir no hay portadas que pintar. */
+  async function medir(ancho: number) {
+    await fireEvent(screen.getByTestId('library-list'), 'layout', { nativeEvent: { layout: { width: ancho, height: 800, x: 0, y: 0 } } });
+  }
+
+  it('portadas: cada pieza con su título y autor debajo, y el avance para el lector de pantalla', async () => {
+    mockPiezas = ok(libros());
+    await render(<Pantalla />);
+    await medir(360);
+    expect(screen.getByLabelText('Rayuela, Julio Cortázar, ' + L.progressPage(120, 340))).toBeTruthy();
+    expect(screen.getByLabelText('Ficciones, ' + L.progressPercent(50))).toBeTruthy();
+    expect(screen.getByLabelText('Pedro Páramo, ' + L.unread)).toBeTruthy();
+    expect(screen.getByRole('tab', { name: L.viewCovers, selected: true })).toBeTruthy();
+  });
+
+  it('lista: el avance se ve a la derecha', async () => {
+    mockPiezas = ok(libros());
+    usePreferencesStore.setState({ libraryView: 'list' });
+    await render(<Pantalla />);
+    expect(screen.getByText(L.progressPage(120, 340))).toBeTruthy();
+    expect(screen.getByText(L.progressPercent(50))).toBeTruthy();
+    expect(screen.getByText(L.unread)).toBeTruthy();
+    expect(screen.getByText(L.finished)).toBeTruthy();
+  });
+
+  it('cambiar de vista la guarda en las preferencias', async () => {
+    mockPiezas = ok(libros());
+    await render(<Pantalla />);
+    await fireEvent.press(screen.getByRole('tab', { name: L.viewList }));
+    expect(usePreferencesStore.getState().libraryView).toBe('list');
+    expect(screen.getByText(L.progressPage(120, 340))).toBeTruthy();
+  });
+
+  it('sin piezas no ofrece el selector de vista', async () => {
+    await render(<Pantalla />);
+    expect(screen.queryByRole('tab', { name: L.viewList })).toBeNull();
+  });
 });

@@ -911,7 +911,10 @@ Decisiones B1–B9 aprobadas el 12 oct 2026 (T274); ver la tabla de la spec 13 �
   hasta L7. (spec 13 §4) Dep: T274
 
 ### L1 · Núcleo: librería y leer PDF/EPUB
-- [ ] T277 Librería con vistas de portadas y lista; vista recordada. (RF-BL1, RF-BL3, RF-BL4) Dep: T275, T276
+- [x] T277 Librería con vistas de portadas y lista; vista recordada. (RF-BL1, RF-BL3, RF-BL4) Dep: T275, T276
+  **Hecho (12 oct 2026):** rejilla de portadas 2:3 (2 columnas en teléfono, hasta 6 en web) con portada generada
+  en un color de los Nobi cuando no hay imagen; lista con portada chica y avance ("p. 120 de 340", "%",
+  "Terminado"); la vista se guarda en las preferencias del dispositivo. Abrir una pieza llega con T279.
 - [ ] T278 Importar PDF y EPUB: metadatos, portada (o generada), color dominante, rechazo con candado.
   (RF-BL11 – RF-BL14) Dep: T275
 - [ ] T279 Motor de lectura web (pdf.js y foliate-js) en WebView y en web; lectura en scroll; avance y barra de

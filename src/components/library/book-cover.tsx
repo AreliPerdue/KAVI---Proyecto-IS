@@ -1,0 +1,61 @@
+import { Image } from 'expo-image';
+import { StyleSheet, Text, View } from 'react-native';
+
+import { Radius, Spacing, Typography } from '@/constants/theme';
+import { useLibraryFileUrl } from '@/hooks/use-library';
+import { useTheme } from '@/hooks/use-theme';
+import { colorDePortada, textoSobre } from '@/lib/library/shelf';
+import type { LibraryItem } from '@/types/domain';
+
+type Props = {
+  item: Pick<LibraryItem, 'id' | 'title' | 'authors' | 'cover_path' | 'cover_color'>;
+  /** Ancho en px; el alto sale de la proporción de libro, 2:3 (RF-BL1). */
+  width: number;
+  /** Miniatura de la lista (RF-BL3): sin texto, que a ese tamaño no se lee. */
+  thumb?: boolean;
+};
+
+/**
+ * La portada de una pieza. Si tiene imagen, la imagen; si no —o mientras llega—, una portada
+ * generada con el título sobre el color de la pieza (RF-BL12), que siempre es el mismo.
+ * Es decorativa: quien la usa pone el título en su etiqueta de accesibilidad.
+ */
+export function BookCover({ item, width, thumb = false }: Props) {
+  const theme = useTheme();
+  const url = useLibraryFileUrl(item.cover_path);
+  const fondo = colorDePortada(item);
+  const tinta = textoSobre(fondo);
+
+  return (
+    <View
+      accessible={false}
+      importantForAccessibility="no-hide-descendants"
+      style={[
+        styles.portada,
+        thumb ? styles.portadaChica : null,
+        { width, height: Math.round(width * 1.5), backgroundColor: fondo, borderColor: theme.border },
+      ]}>
+      {!thumb && !url.data ? (
+        <View style={styles.generada}>
+          <Text numberOfLines={4} style={[styles.titulo, { color: tinta, fontSize: width < 130 ? 14 : 16 }]}>
+            {item.title}
+          </Text>
+          {item.authors.length > 0 ? (
+            <Text numberOfLines={2} style={[styles.autor, { color: tinta }]}>
+              {item.authors.join(', ')}
+            </Text>
+          ) : null}
+        </View>
+      ) : null}
+      {url.data ? <Image source={{ uri: url.data }} style={StyleSheet.absoluteFill} contentFit="cover" transition={150} /> : null}
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  portada: { borderRadius: Radius.sm, borderCurve: 'continuous', borderWidth: StyleSheet.hairlineWidth, overflow: 'hidden' },
+  portadaChica: { borderRadius: 4 },
+  generada: { flex: 1, padding: Spacing.md, justifyContent: 'space-between' },
+  titulo: { ...Typography.bodyStrong, lineHeight: undefined },
+  autor: { ...Typography.caption, opacity: 0.85 },
+});

@@ -315,3 +315,27 @@ describe('elegir algo mientras se leen las preferencias', () => {
     expect(otra.store.usePreferencesStore.getState().timeFormat).toBe('12h');
   });
 });
+
+/** KAVI Library recuerda su vista en el dispositivo, como el calendario (RF-BL4, T277). */
+describe('vista de la biblioteca', () => {
+  it('arranca en portadas', () => {
+    const { store: { usePreferencesStore } } = fresh();
+    expect(usePreferencesStore.getState().libraryView).toBe('covers');
+  });
+
+  it('la lista elegida se recuerda para la próxima sesión', async () => {
+    const { store: { usePreferencesStore } } = fresh();
+    usePreferencesStore.getState().setLibraryView('list');
+
+    const otra = fresh();
+    await otra.store.usePreferencesStore.getState().hydrate();
+    expect(otra.store.usePreferencesStore.getState().libraryView).toBe('list');
+  });
+
+  it('una vista guardada que ya no existe vuelve a portadas', async () => {
+    mockAlmacen.set('kavi.preferences', JSON.stringify({ libraryView: 'carrusel' }));
+    const { store: { usePreferencesStore } } = fresh();
+    await usePreferencesStore.getState().hydrate();
+    expect(usePreferencesStore.getState().libraryView).toBe('covers');
+  });
+});

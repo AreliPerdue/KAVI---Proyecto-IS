@@ -12,4 +12,11 @@ export const library = {
   profileRow: 'Biblioteca',
   profileHint: 'Lo nuevo de KAVI mientras se construye. Solo para ti y tus testers.',
   pieces: (n: number) => `${n} ${n === 1 ? 'pieza' : 'piezas'}`,
+  viewLabel: 'Vista de la biblioteca',
+  viewCovers: 'Portadas',
+  viewList: 'Lista',
+  progressPage: (pagina: number, total: number) => `p. ${pagina} de ${total}`,
+  progressPercent: (porcentaje: number) => `${porcentaje} % leído`,
+  unread: 'Sin abrir',
+  finished: 'Terminado',
 };
