@@ -957,16 +957,33 @@ Decisiones B1–B9 aprobadas el 12 oct 2026 (T274); ver la tabla de la spec 13 �
   como PDF (decisión B3): servicio de conversión (LibreOffice/Gotenberg) y dónde alojarlo. (spec 13b §1) Dep: T279
 - [ ] T301 Fuentes propias con aviso de licencias. (RF-BH4) Dep: T288
 
+### LC · Club de lectura (spec 13f)
+- [x] T304 Spec 13f y decisiones C1–C6 con Areli; enmienda a la spec 13 (§3.4, §6, §7, §8) y a la 01. Dep: T274
+  **Hecho (12 oct 2026):** C1 a su ritmo y en vivo · C2 anotaciones compartidas por omisión y editables por
+  todos · C3 sin llamada (no es simple; al largo plazo) · C4 copia propia para cada miembro, que se la queda ·
+  C5 hasta 12 · C6 después de L3.
+- [ ] T305 Datos: `library_clubs`, `library_club_members`, `club_id` y `author_id` en `library_annotations`,
+  RLS con `library_club_member()` y `are_connected`, lectura del original para miembros en Storage; en
+  Supabase y demo. (spec 13f §5) Dep: T275
+- [ ] T306 Crear club desde el menú de la pieza, invitar contactos (tope 12), aceptar con copia propia y aviso
+  de espacio, salir, quitar y cerrar sin borrar copias. (RF-BC1 – RF-BC5) Dep: T305, T281
+- [ ] T307 Anotaciones del club: compartidas por omisión, "Solo para mí", editables por todos con autor y
+  color, capa ocultable; al desconectarse se quedan en la copia. (RF-BC6 – RF-BC8) Dep: T306, T286
+- [ ] T308 Avance de cada quien en el club y en la barra del lector. (RF-BC9) Dep: T306, T279
+- [ ] T309 Sesión en vivo con Realtime (presence y broadcast): seguir, soltarse, pasar el mando, señalar.
+  (RF-BC10 – RF-BC14) Dep: T306, T283
+
 ### L7 · Conectar a la app
 - [ ] T302 Library visible en Más y elegible para la barra; una actividad de Lectura se liga a una pieza y la
-  abre donde iba. (spec 13 §4) Dep: L1 – L5
+  abre donde iba. (spec 13 §4) Dep: L1 – L5, LC
 
 ### Largo plazo (cuando KAVI se lance al público)
 Distribución en iOS y cuenta de Apple Developer · notificaciones push con la app cerrada ·
 funciones con IA (categorización, lenguaje natural libre, sugerencias) · código de barras ·
 imágenes en listas (gratis en dinero, caro en horas) · sincronización offline real · **voz propia para escuchar
 los libros de KAVI Library**: una API de lectura en voz alta con la voz de Areli (grabarla y entrenarla), en
-lugar de la voz del sistema (decisión B7, 12 oct 2026).
+lugar de la voz del sistema (decisión B7, 12 oct 2026) · **llamada de voz del club de lectura** (WebRTC con un
+servidor de audio como LiveKit o Daily; spec 13f §6, decisión C3).
 
 ## Backlog futuro (NO implementar — P8)
 Módulos de otras dimensiones (nutrición; KAVI Library ya tiene spec: Fase L) · push remoto · export/import calendarios · offline completo · plantillas de rutina.

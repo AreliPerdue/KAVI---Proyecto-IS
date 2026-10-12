@@ -1,0 +1,124 @@
+# Spec 13f · KAVI Library — Club de lectura
+
+> **Aprobada (12 oct 2026).** Pedida por Areli el 12 oct; decisiones C1–C6 en §9. Parte de la spec 13, a la
+> que enmienda: compartir un libro con contactos **dentro de un club** entra al alcance (spec 13 §3.4 y §7).
+
+## 1. Qué es
+
+Un **club de lectura** (*Book club* en inglés) es un grupo de contactos que lee **el mismo PDF o EPUB**
+dentro de KAVI. Cada quien tiene **su propia copia** del libro, anotan juntos sobre ella, pueden leer a su
+ritmo viendo por dónde van los demás, o juntarse en una **sesión en vivo** donde quien la dirige pasa de
+página y todos lo siguen en tiempo real. Al terminar, cada quien se queda con su copia.
+
+Es la única parte de Library que se comparte, y solo con quien se invita (P4).
+
+## 2. Crear el club e invitar (RF-BC1 – RF-BC5)
+
+- **RF-BC1.** Desde el menú de una pieza (13a, RF-BL15) → **"Leer en club"**: se le pone nombre (por omisión,
+  el título del libro) y se eligen contactos. Solo libros PDF o EPUB; las creaciones (13e) no.
+- **RF-BC2.** Solo se invita a **contactos aceptados** (igual que el calendario compartido, spec 06). Hasta
+  **12 personas** contando a quien lo crea (C5).
+- **RF-BC3. Aceptar da una copia propia** (C4). La invitación llega a Compartido con Aceptar y Rechazar.
+  Aceptar **copia el archivo a la librería de quien acepta**, con una marca de club: es suyo, lo puede
+  descargar como cualquier libro suyo (RF-BR1) y **cuenta en su espacio** (B2). Si no le alcanza el espacio,
+  se le dice cuánto falta antes de aceptar.
+- **RF-BC4.** **Quien crea el club es su anfitrión**: invita, quita personas, cambia el nombre y cierra el
+  club. Quitar a alguien, que salga o cerrar el club **no le borra su copia**: solo la desconecta del club
+  (RF-BC8).
+- **RF-BC5. Aviso de derechos.** Como cada miembro recibe una copia, antes de crear el club una línea dice:
+  "Comparte solo libros que tengas derecho a compartir".
+
+## 3. Anotar juntos (RF-BC6 – RF-BC8)
+
+- **RF-BC6. Compartidas por omisión** (C2). Dentro de un libro de club, lo que se subraya, escribe o pega
+  (13c) lo ven todos los miembros, con el **color y el nombre** de quien lo hizo (el color por persona de
+  spec 06, RF-S15). Una anotación se puede marcar **"Solo para mí"** al crearla o después.
+- **RF-BC7. Todos pueden editar** las anotaciones del club: moverlas, cambiarlas o quitarlas, como un
+  documento compartido. Cada una dice quién la hizo y quién la cambió por última vez; deshacer (RF-BH18)
+  regresa lo que yo cambié. La capa del club se puede ocultar para leer limpio.
+- **RF-BC8. Cada quien se queda con su copia.** Al salir, ser quitado o cerrarse el club, las anotaciones del
+  club que había en ese momento **se quedan en la copia de cada quien** como suyas, con el nombre de quien
+  las hizo, y desde ahí ya no se sincronizan.
+
+## 4. Leer a su ritmo y en vivo (RF-BC9 – RF-BC14)
+
+- **RF-BC9. Por dónde va cada quien.** En el club y en la barra de avance (RF-BR10) se ven los avatares de
+  los miembros en el lugar donde van. Cada quien puede apagar que los demás vean su avance.
+- **RF-BC10. Sesión en vivo** (C1). Cualquier miembro puede empezarla; los demás reciben un aviso en la app
+  ("Ana está leyendo *Rayuela* en vivo") y entran con un toque. Quien la empieza la **dirige**.
+- **RF-BC11. Seguir a quien dirige.** Al pasar de página, cambiar de capítulo o saltar, los demás llegan al
+  mismo lugar en menos de un segundo con buena red. En EPUB se sigue por posición del texto (CFI), no por
+  número de página, porque cada quien puede tener otro tamaño de letra o forma de leer.
+- **RF-BC12.** Cada quien puede **soltarse** ("Leer por mi cuenta") y volver con "Seguir a Ana". Quien dirige
+  puede pasar el mando a otro miembro.
+- **RF-BC13. Señalar.** Quien dirige puede tocar un pasaje y se ilumina un momento en la pantalla de todos.
+- **RF-BC14.** Arriba se ve quién está en la sesión. Si quien dirige se va, el mando pasa a quien lleva más
+  tiempo dentro; si se van todos, la sesión termina sola.
+
+## 5. Datos y tiempo real
+
+- `library_clubs`: id, anfitrión, nombre, tipo y huella del archivo (para saber que todas las copias son el
+  mismo libro), creado.
+- `library_club_members`: club, persona, estado (`pending`/`accepted`), su copia (`library_items.id`, propia),
+  si muestra su avance.
+- **Las copias son piezas normales** de cada dueño (`library_items`, RLS por dueño de T275), con `club_id`
+  mientras estén conectadas. Copiar el archivo usa la copia de Storage de Supabase: leer el original del
+  anfitrión (política para miembros aceptados) y escribir en la carpeta propia (política por dueño ya
+  existente). El tope de 500 MB lo cuida el mismo disparador.
+- **Las anotaciones del club** son filas de `library_annotations` con `club_id` y `author_id`; las privadas
+  lo llevan nulo. Como todas las copias son el mismo archivo, la posición (página + coordenadas o CFI) vale en
+  todas. Al desconectarse una copia, el cliente copia las del club a filas propias (RF-BC8).
+- **RLS (P4):** una función `library_club_member(club_id)` decide quién ve el club, sus miembros y sus
+  anotaciones, y quién puede editarlas. Solo se invita a conexiones `accepted` (`are_connected`, spec 06).
+  Toda tabla nueva lleva RLS desde su creación.
+- **Sesión en vivo:** un canal de Supabase Realtime por club, con *presence* (quién está y dónde va) y
+  *broadcast* (posición de quien dirige y señalar). Nada de la sesión se guarda en la base. Las anotaciones del
+  club llegan por los cambios de la tabla, como Compartido (RF-S14).
+- **Eliminar la cuenta** (RF-A12): cierra los clubes que dirigía (cada miembro conserva su copia) y la quita
+  de los demás.
+- **Modo demo:** los otros miembros son contactos simulados, igual que en Compartido.
+
+## 6. Fuera de esta versión
+
+- **Llamada de voz del club** (C3). Areli la quería si era simple, y no lo es: para hasta 12 personas pide un
+  módulo nativo de WebRTC, un servidor intermedio de audio (LiveKit o Daily, de paga a partir de cierto uso)
+  con su función para dar acceso, permisos de micrófono en las tres plataformas y audio en segundo plano.
+  Mientras, cada quien habla por fuera. Queda en el largo plazo de `tasks.md`.
+- Chat del club (P8 deja fuera el chat) · video · clubes públicos o con personas que no son contactos ·
+  compartir creaciones (cuadernos, diarios, álbumes) · calendario de lectura del club (se puede hacer con una
+  actividad compartida de Lectura).
+
+## 7. Criterios de aceptación
+
+- *Dado* un PDF mío de 20 MB y dos contactos aceptados, *cuando* creo "Club de *Rayuela*" y aceptan,
+  *entonces* cada quien lo tiene en su librería con la marca de club, puede descargarlo y su espacio usado
+  sube 20 MB.
+- *Dado* un contacto con 490 MB usados, *cuando* abre la invitación a ese club, *entonces* ve que le faltan
+  10 MB y aceptar no deja una copia a medias.
+- *Dado* alguien que no es mi contacto, *cuando* intento invitarlo por la API, *entonces* la base lo rechaza.
+- *Dado* un club, *cuando* subrayo un párrafo, *entonces* los demás lo ven con mi color y mi nombre; *cuando*
+  marco otro como "Solo para mí", *entonces* nadie más lo ve.
+- *Dado* un subrayado de Ana en el club, *cuando* le cambio el color, *entonces* todos ven el nuevo color y
+  que lo cambié yo.
+- *Dado* una sesión en vivo que dirijo, *cuando* paso a la página 40, *entonces* los miembros que me siguen
+  llegan a la 40 en menos de un segundo; *cuando* uno se suelta, *entonces* mis cambios ya no lo mueven.
+- *Dado* un EPUB con letra grande en un teléfono y chica en otro, *cuando* quien dirige avanza, *entonces*
+  ambos quedan en el mismo párrafo.
+- *Dado* que cierro el club, *cuando* un miembro abre su copia, *entonces* sigue ahí con todas las
+  anotaciones del club como suyas, y lo que yo anote después ya no le llega.
+
+## 8. Etapa
+
+**LC · Club de lectura**, después de L3 (necesita el lector y la capa de anotaciones) y antes de L7, para que
+salga a la luz junto con el resto de Library (C6).
+
+## 9. Decisiones (aprobadas el 12 oct 2026)
+
+| # | Pregunta | Lo aprobado |
+|---|---|---|
+| **C1** | ¿Qué es "tiempo real"? | **Las dos cosas:** cada quien a su ritmo viendo el avance de los demás, y sesión en vivo donde se sigue a quien dirige. |
+| **C2** | ¿Qué anotaciones ve el club? | **Todas por omisión**; cada una se puede marcar "Solo para mí". Todos los miembros pueden editarlas (RF-BC7). |
+| **C3** | ¿Cómo conversan? | Una **llamada** si fuera simple; no lo es (§6), así que **cada quien por fuera** y la llamada al largo plazo. |
+| **C4** | ¿Los miembros tienen el archivo? | **Sí: cada quien recibe su copia**, la descarga, anota sobre ella con el club y **se la queda** al terminar. Cuenta en su propio espacio. |
+| **C5** | Tamaño del club | **Hasta 12 personas** (propuesta; Areli puede cambiarla). |
+| **C6** | ¿Cuándo se construye? | **Etapa LC, después de L3** y antes de L7 (propuesta; Areli puede cambiarla). |

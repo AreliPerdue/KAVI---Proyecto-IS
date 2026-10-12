@@ -1,7 +1,8 @@
 # Spec 13 · KAVI Library
 
 > **Aprobada (12 oct 2026).** Escrita a partir de la visión de Areli el 9 oct; las decisiones B1–B9 de §9
-> se aprobaron el 12 oct (T274). Es la spec general: el detalle vive en cinco partes.
+> se aprobaron el 12 oct (T274). Es la spec general: el detalle vive en seis partes. El club de lectura
+> (13f) se agregó el 12 oct (T304) con sus decisiones C1–C6.
 >
 > | Parte | Qué cubre | Requisitos |
 > |---|---|---|
@@ -10,6 +11,7 @@
 > | `13c-library-tools.md` | Herramientas sobre la página: subrayar, notas, lápiz, stickers, voz… | RF-BH |
 > | `13d-library-score-cards.md` | Fichas de calificación y su resumen | RF-BF |
 > | `13e-library-creations.md` | Cuadernos, diarios y álbumes; plantillas por capas | RF-BP |
+> | `13f-library-book-club.md` | Club de lectura: leer un PDF o EPUB con contactos, juntos y en vivo | RF-BC |
 
 ## 1. Qué es
 
@@ -45,8 +47,9 @@ Es grande a propósito, y por eso se construye **por capas** (§8): primero un n
    llegó, y se pueden exportar.
 3. **Todo es personalizable, pero nada lo exige.** Cada pieza trae valores por omisión bonitos (los colores
    de los Nobi); personalizar es opcional (P2).
-4. **Privado por omisión (P4).** Los libros, las anotaciones y las fichas son de quien los subió. Compartir
-   queda fuera de esta versión (§7).
+4. **Privado por omisión (P4).** Los libros, las anotaciones y las fichas son de quien los subió. Lo único
+   que se comparte es un libro dentro de un **club de lectura** (13f), con contactos que se invitan y que
+   aceptan.
 5. **Multiplataforma con excepciones escritas (P5).** Lo que dependa del hardware (Apple Pencil, girar el
    teléfono) se dice en su requisito y tiene alternativa en las otras plataformas.
 
@@ -90,6 +93,7 @@ Es grande a propósito, y por eso se construye **por capas** (§8): primero un n
 | `library_card_templates` / `library_cards` | Diseños de ficha y las fichas pegadas a cada pieza, con sus valores y dónde van. |
 | `library_pages` | Las páginas de una creación: plantilla, capas y su contenido. |
 | `library_fonts` | Las fuentes que subió cada persona (archivo en Storage). |
+| `library_clubs` / `library_club_members` | Los clubes de lectura, sus miembros y la copia de cada quien (13f §5). Las anotaciones del club son filas de `library_annotations` con `club_id`. |
 
 El catálogo de plantillas, estilos, stickers y fuentes incluidas vive en el cliente
 (`src/constants/library/`), como el catálogo de ejercicios.
@@ -102,7 +106,8 @@ la app vacía la carpeta antes de llamar a `delete_my_account`.
 
 ## 7. Fuera de esta versión
 
-Compartir piezas o anotaciones con contactos · tienda o compra de libros · DRM (libros con candado de
+Compartir piezas o anotaciones con contactos fuera de un club de lectura (13f) · llamada de voz del club
+(13f §6) · tienda o compra de libros · DRM (libros con candado de
 Kindle, Apple Books o Google Play no se pueden abrir: solo archivos libres) · OCR de escaneos ·
 traducción · sincronizar con Kindle o Goodreads · editar el texto de un PDF o EPUB (se anota encima, no se
 reescribe) · colaboración en tiempo real en una creación.
@@ -118,6 +123,7 @@ reescribe) · colaboración en tiempo real en una creación.
 | **L4** | Fichas de calificación y su resumen. | 13d |
 | **L5** | Creaciones: cuadernos, diarios y álbumes con plantillas por capas; trackers. | 13e |
 | **L6** | Formatos de oficina (conversión a PDF) y fuentes propias. | 13b, 13c |
+| **LC** | Club de lectura: copia para cada miembro, anotar juntos, avance de cada quien y sesión en vivo. | 13f |
 | **L7** | Conectar: Library visible en Más y en la barra, y ligada a actividades de Lectura. | 13 |
 
 Cada etapa termina con su incremento probado (P7) y se puede usar sola.
