@@ -54,6 +54,8 @@ export const errors: Dictionary['errors'] = {
   usernameInvalid: 'That username isn’t valid: lowercase letters, numbers and underscores only.',
   accountDeleteFailed: 'The account couldn’t be deleted. Check your connection and try again.',
   myAccountDeleteFailed: 'Your account couldn’t be deleted. Check your connection and try again.',
+  libraryQuota: 'Your library reached its 500 MB limit. Delete a book to make room.',
+  libraryFileTooBig: 'The file is over 50 MB, the most a book can be.',
   statsFailed: 'The stats couldn’t be loaded.',
   alreadyConnected: 'There’s already a request or a contact between you.',
   cantShareFiles: 'This device can’t share files.',

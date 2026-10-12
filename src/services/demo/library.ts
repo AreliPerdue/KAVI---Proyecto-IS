@@ -1,0 +1,370 @@
+import { AuthUiError } from '@/lib/auth-errors';
+import { LIBRARY_LIMITS } from '@/constants/library';
+import type { LibraryApi } from '@/services/contracts';
+import { delay, emitDataChange, nextId } from '@/services/demo/store';
+import { nombreSeguro } from '@/lib/library/files';
+import type {
+  LibraryAnnotation,
+  LibraryCard,
+  LibraryCardTemplate,
+  LibraryFileBody,
+  LibraryFont,
+  LibraryItem,
+  LibraryPage,
+  LibraryShelf,
+  LibraryShelfItem,
+} from '@/types/domain';
+import { t } from '@/i18n';
+
+/**
+ * KAVI Library en memoria, con las mismas reglas que la base (`20261012100000_library.sql`):
+ * tope de 500 MB por persona, 50 MB por archivo, una ficha por plantilla en cada pieza, y borrar
+ * una pieza se lleva lo que cuelga de ella. Los archivos se guardan aquí mismo.
+ */
+const items: LibraryItem[] = [];
+const shelves: LibraryShelf[] = [];
+const shelfItems: (LibraryShelfItem & { owner_id: string })[] = [];
+const annotations: LibraryAnnotation[] = [];
+const templates: LibraryCardTemplate[] = [];
+const cards: LibraryCard[] = [];
+const pages: LibraryPage[] = [];
+const fonts: LibraryFont[] = [];
+const archivos = new Map<string, { body: LibraryFileBody; type: string }>();
+
+const ahora = () => new Date().toISOString();
+const copia = <T>(x: T): T => JSON.parse(JSON.stringify(x)) as T;
+
+function buscar<T extends { id: string }>(lista: T[], id: string): T {
+  const x = lista.find((e) => e.id === id);
+  if (!x) throw new AuthUiError(t().errors.noPermission);
+  return x;
+}
+
+function tamanoDe(body: LibraryFileBody): number {
+  if (body instanceof ArrayBuffer) return body.byteLength;
+  if (body instanceof Uint8Array) return body.byteLength;
+  return (body as Blob).size;
+}
+
+function usado(userId: string, salvo?: string): number {
+  return items.filter((i) => i.owner_id === userId && i.id !== salvo).reduce((total, i) => total + i.file_size, 0);
+}
+
+function revisarEspacio(userId: string, tamano: number, salvo?: string) {
+  if (tamano > LIBRARY_LIMITS.fileBytes) throw new AuthUiError(t().errors.libraryFileTooBig);
+  if (usado(userId, salvo) + tamano > LIBRARY_LIMITS.userBytes) throw new AuthUiError(t().errors.libraryQuota);
+}
+
+function borrarCarpeta(prefijo: string) {
+  for (const ruta of [...archivos.keys()]) if (ruta.startsWith(`${prefijo}/`)) archivos.delete(ruta);
+}
+
+function quitarDe<T>(lista: T[], quitar: (x: T) => boolean) {
+  for (let i = lista.length - 1; i >= 0; i--) if (quitar(lista[i] as T)) lista.splice(i, 1);
+}
+
+export const demoLibrary: LibraryApi = {
+  async listItems(userId) {
+    await delay();
+    return copia(items.filter((i) => i.owner_id === userId).sort((a, b) => b.created_at.localeCompare(a.created_at)));
+  },
+
+  async getItem(itemId) {
+    await delay();
+    return copia(buscar(items, itemId));
+  },
+
+  async createItem(userId, input) {
+    await delay();
+    revisarEspacio(userId, input.file_size ?? 0);
+    const t0 = ahora();
+    const item: LibraryItem = {
+      id: input.id ?? nextId('libro'),
+      owner_id: userId,
+      family: input.family,
+      kind: input.kind,
+      title: input.title.trim(),
+      authors: input.authors ?? [],
+      category: input.category ?? null,
+      genres: input.genres ?? [],
+      cover_path: input.cover_path ?? null,
+      cover_color: input.cover_color ?? null,
+      file_path: input.file_path ?? null,
+      pdf_path: input.pdf_path ?? null,
+      file_size: input.file_size ?? 0,
+      page_count: input.page_count ?? null,
+      progress: 0,
+      last_position: null,
+      reading_mode: null,
+      style: input.style ?? null,
+      base_color: input.base_color ?? null,
+      created_at: t0,
+      updated_at: t0,
+    };
+    items.push(item);
+    emitDataChange();
+    return copia(item);
+  },
+
+  async updateItem(itemId, patch) {
+    await delay();
+    const item = buscar(items, itemId);
+    if (patch.file_size !== undefined) revisarEspacio(item.owner_id, patch.file_size, item.id);
+    Object.assign(item, patch, patch.title !== undefined ? { title: patch.title.trim() } : {}, { updated_at: ahora() });
+    emitDataChange();
+    return copia(item);
+  },
+
+  async removeItem(itemId) {
+    await delay();
+    const item = buscar(items, itemId);
+    borrarCarpeta(`${item.owner_id}/${item.id}`);
+    quitarDe(items, (i) => i.id === itemId);
+    quitarDe(shelfItems, (s) => s.item_id === itemId);
+    quitarDe(annotations, (a) => a.item_id === itemId);
+    quitarDe(cards, (c) => c.item_id === itemId);
+    quitarDe(pages, (p) => p.item_id === itemId);
+    emitDataChange();
+  },
+
+  async usage(userId) {
+    await delay();
+    return { usedBytes: usado(userId), limitBytes: LIBRARY_LIMITS.userBytes };
+  },
+
+  async uploadFile(userId, itemId, fileName, body, contentType) {
+    await delay();
+    if (tamanoDe(body) > LIBRARY_LIMITS.fileBytes) throw new AuthUiError(t().errors.libraryFileTooBig);
+    const ruta = `${userId}/${itemId}/${nombreSeguro(fileName)}`;
+    archivos.set(ruta, { body, type: contentType });
+    return ruta;
+  },
+
+  async fileUrl(path) {
+    await delay();
+    const archivo = archivos.get(path);
+    if (!archivo) throw new AuthUiError(t().errors.noPermission);
+    // En web un Blob se abre con una URL local; en Jest o en el teléfono basta con la ruta.
+    if (typeof Blob !== 'undefined' && archivo.body instanceof Blob && typeof URL !== 'undefined' && 'createObjectURL' in URL) {
+      return URL.createObjectURL(archivo.body);
+    }
+    return `demo://${path}`;
+  },
+
+  async removeAllFiles(userId) {
+    await delay();
+    borrarCarpeta(userId);
+  },
+
+  async listShelves(userId) {
+    await delay();
+    return copia(shelves.filter((s) => s.owner_id === userId).sort((a, b) => a.sort_order - b.sort_order));
+  },
+
+  async createShelf(userId, input) {
+    await delay();
+    const mias = shelves.filter((s) => s.owner_id === userId);
+    const t0 = ahora();
+    const shelf: LibraryShelf = {
+      id: nextId('librero'),
+      owner_id: userId,
+      name: input.name.trim(),
+      color: input.color ?? null,
+      icon: input.icon ?? null,
+      sort_order: (mias.reduce((m, s) => Math.max(m, s.sort_order), 0) || 0) + 1024,
+      created_at: t0,
+      updated_at: t0,
+    };
+    shelves.push(shelf);
+    emitDataChange();
+    return copia(shelf);
+  },
+
+  async updateShelf(shelfId, patch) {
+    await delay();
+    const shelf = buscar(shelves, shelfId);
+    Object.assign(shelf, patch, patch.name !== undefined ? { name: patch.name.trim() } : {}, { updated_at: ahora() });
+    emitDataChange();
+    return copia(shelf);
+  },
+
+  async removeShelf(shelfId) {
+    await delay();
+    quitarDe(shelves, (s) => s.id === shelfId);
+    quitarDe(shelfItems, (s) => s.shelf_id === shelfId);
+    emitDataChange();
+  },
+
+  async listShelfItems(userId) {
+    await delay();
+    return copia(shelfItems.filter((s) => s.owner_id === userId).map(({ owner_id: _o, ...resto }) => resto));
+  },
+
+  async addToShelf(userId, shelfId, itemId) {
+    await delay();
+    if (shelfItems.some((s) => s.shelf_id === shelfId && s.item_id === itemId)) return;
+    const enEse = shelfItems.filter((s) => s.shelf_id === shelfId);
+    shelfItems.push({
+      shelf_id: shelfId,
+      item_id: itemId,
+      owner_id: userId,
+      sort_order: enEse.reduce((m, s) => Math.max(m, s.sort_order), 0) + 1024,
+      added_at: ahora(),
+    });
+    emitDataChange();
+  },
+
+  async removeFromShelf(shelfId, itemId) {
+    await delay();
+    quitarDe(shelfItems, (s) => s.shelf_id === shelfId && s.item_id === itemId);
+    emitDataChange();
+  },
+
+  async moveInShelf(shelfId, itemId, sortOrder) {
+    await delay();
+    const fila = shelfItems.find((s) => s.shelf_id === shelfId && s.item_id === itemId);
+    if (fila) fila.sort_order = sortOrder;
+    emitDataChange();
+  },
+
+  async listAnnotations(itemId) {
+    await delay();
+    return copia(annotations.filter((a) => a.item_id === itemId).sort((a, b) => a.z - b.z));
+  },
+
+  async saveAnnotations(userId, entradas) {
+    await delay();
+    const t0 = ahora();
+    for (const e of entradas) {
+      const previa = annotations.find((a) => a.id === e.id);
+      if (previa) Object.assign(previa, e, { updated_at: t0 });
+      else
+        annotations.push({
+          id: e.id, item_id: e.item_id, owner_id: userId, kind: e.kind, locator: e.locator,
+          content: e.content ?? {}, z: e.z ?? 0, removed: e.removed ?? false, locked: e.locked ?? false,
+          created_at: t0, updated_at: t0,
+        });
+    }
+    emitDataChange();
+  },
+
+  async removeAnnotations(ids) {
+    await delay();
+    const quitar = new Set(ids);
+    quitarDe(annotations, (a) => quitar.has(a.id));
+    emitDataChange();
+  },
+
+  async listCardTemplates(userId) {
+    await delay();
+    return copia(templates.filter((p) => p.owner_id === userId));
+  },
+
+  async saveCardTemplate(userId, input) {
+    await delay();
+    const t0 = ahora();
+    const previa = input.id ? templates.find((p) => p.id === input.id) : undefined;
+    if (previa) {
+      Object.assign(previa, input, { name: input.name.trim(), updated_at: t0 });
+      emitDataChange();
+      return copia(previa);
+    }
+    const nueva: LibraryCardTemplate = {
+      id: input.id ?? nextId('plantilla'), owner_id: userId, name: input.name.trim(), fields: input.fields, look: input.look ?? {},
+      created_at: t0, updated_at: t0,
+    };
+    templates.push(nueva);
+    emitDataChange();
+    return copia(nueva);
+  },
+
+  async removeCardTemplate(templateId) {
+    await delay();
+    quitarDe(templates, (p) => p.id === templateId);
+    quitarDe(cards, (c) => c.template_id === templateId);
+    emitDataChange();
+  },
+
+  async listCards(userId) {
+    await delay();
+    return copia(cards.filter((c) => c.owner_id === userId).sort((a, b) => b.updated_at.localeCompare(a.updated_at)));
+  },
+
+  async saveCard(userId, input) {
+    await delay();
+    const t0 = ahora();
+    // Una ficha por plantilla en cada pieza (RF-BF7): guardar otra vez la reemplaza.
+    const previa = cards.find((c) => c.item_id === input.item_id && c.template_id === input.template_id);
+    if (previa) {
+      Object.assign(previa, input, { id: previa.id, updated_at: t0 });
+      emitDataChange();
+      return copia(previa);
+    }
+    const nueva: LibraryCard = {
+      id: input.id ?? nextId('ficha'), item_id: input.item_id, template_id: input.template_id, owner_id: userId,
+      values: input.values ?? {}, placement: input.placement ?? 'back', created_at: t0, updated_at: t0,
+    };
+    cards.push(nueva);
+    emitDataChange();
+    return copia(nueva);
+  },
+
+  async removeCard(cardId) {
+    await delay();
+    quitarDe(cards, (c) => c.id === cardId);
+    emitDataChange();
+  },
+
+  async listPages(itemId) {
+    await delay();
+    return copia(pages.filter((p) => p.item_id === itemId).sort((a, b) => a.sort_order - b.sort_order));
+  },
+
+  async savePages(userId, entradas) {
+    await delay();
+    const t0 = ahora();
+    for (const e of entradas) {
+      const previa = pages.find((p) => p.id === e.id);
+      if (previa) Object.assign(previa, e, { updated_at: t0 });
+      else
+        pages.push({
+          id: e.id, item_id: e.item_id, owner_id: userId, template: e.template, sort_order: e.sort_order ?? 1024,
+          layers: e.layers ?? {}, created_at: t0, updated_at: t0,
+        });
+    }
+    emitDataChange();
+  },
+
+  async removePage(pageId) {
+    await delay();
+    quitarDe(pages, (p) => p.id === pageId);
+    emitDataChange();
+  },
+
+  async listFonts(userId) {
+    await delay();
+    return copia(fonts.filter((f) => f.owner_id === userId));
+  },
+
+  async addFont(userId, input) {
+    await delay();
+    if (input.size > LIBRARY_LIMITS.fontBytes) throw new AuthUiError(t().errors.libraryFileTooBig);
+    const ruta = `${userId}/fonts/${nombreSeguro(input.name)}.${input.format}`;
+    archivos.set(ruta, { body: input.body, type: `font/${input.format}` });
+    const fuente: LibraryFont = {
+      id: nextId('fuente'), owner_id: userId, name: input.name.trim(), file_path: ruta, format: input.format,
+      file_size: input.size, license_accepted_at: input.licenseAcceptedAt, created_at: ahora(),
+    };
+    fonts.push(fuente);
+    emitDataChange();
+    return copia(fuente);
+  },
+
+  async removeFont(fontId) {
+    await delay();
+    const fuente = buscar(fonts, fontId);
+    archivos.delete(fuente.file_path);
+    quitarDe(fonts, (f) => f.id === fontId);
+    emitDataChange();
+  },
+};

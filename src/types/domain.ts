@@ -547,3 +547,153 @@ export type ListItemInput = Pick<ListItem, 'title'> &
  * acto con el mismo id que tendrá en la base, y guardarlo es un solo viaje al servidor.
  */
 export type NewListItemInput = ListItemInput & Partial<Pick<ListItem, 'id' | 'sort_order'>>;
+
+// ─── KAVI Library (spec 13) ───────────────────────────────────────────────────────────
+
+export type LibraryFamily = 'book' | 'creation';
+export type LibraryBookKind = 'pdf' | 'epub' | 'docx' | 'pages' | 'pptx' | 'keynote' | 'xlsx' | 'numbers';
+export type LibraryCreationKind = 'notebook' | 'journal' | 'album';
+export type LibraryKind = LibraryBookKind | LibraryCreationKind;
+export type ReadingMode = 'book' | 'scroll' | 'paged';
+
+/** Dónde va uno dentro de una pieza: página (+ coordenadas 0–1) en PDF, CFI en EPUB. */
+export type LibraryLocator = { page?: number; cfi?: string; x?: number; y?: number; w?: number; h?: number };
+
+/** Una pieza de la librería: un libro importado o una creación (spec 13 §2). */
+export type LibraryItem = {
+  id: string;
+  owner_id: string;
+  family: LibraryFamily;
+  kind: LibraryKind;
+  title: string;
+  authors: string[];
+  category: string | null;
+  genres: string[];
+  cover_path: string | null;
+  /** Color dominante de la portada (`#RRGGBB`), para el lomo y el filtro (RF-BL13). */
+  cover_color: string | null;
+  file_path: string | null;
+  /** El PDF que se lee cuando el original es de oficina (decisión B3). */
+  pdf_path: string | null;
+  file_size: number;
+  page_count: number | null;
+  progress: number;
+  last_position: LibraryLocator | null;
+  reading_mode: ReadingMode | null;
+  style: string | null;
+  base_color: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type LibraryItemInput = Pick<LibraryItem, 'family' | 'kind' | 'title'> &
+  Partial<
+    Pick<
+      LibraryItem,
+      'id' | 'authors' | 'category' | 'genres' | 'cover_path' | 'cover_color' | 'file_path' | 'pdf_path' | 'file_size' | 'page_count' | 'style' | 'base_color'
+    >
+  >;
+
+export type LibraryItemPatch = Partial<Omit<LibraryItem, 'id' | 'owner_id' | 'family' | 'created_at' | 'updated_at'>>;
+
+export type LibraryShelf = {
+  id: string;
+  owner_id: string;
+  name: string;
+  color: string | null;
+  icon: string | null;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+};
+
+export type LibraryShelfItem = { shelf_id: string; item_id: string; sort_order: number; added_at: string };
+
+export type LibraryAnnotationKind = 'highlight' | 'note' | 'textbox' | 'ink' | 'sticker' | 'postit' | 'bookmark' | 'image';
+
+/** Lo que va encima de una página (spec 13c). Nunca cambia el archivo. */
+export type LibraryAnnotation = {
+  id: string;
+  item_id: string;
+  owner_id: string;
+  kind: LibraryAnnotationKind;
+  locator: LibraryLocator;
+  content: Record<string, unknown>;
+  z: number;
+  /** Un sticker quitado vive en la charola y se puede volver a poner (RF-BH13). */
+  removed: boolean;
+  locked: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
+export type LibraryAnnotationInput = Pick<LibraryAnnotation, 'id' | 'item_id' | 'kind' | 'locator'> &
+  Partial<Pick<LibraryAnnotation, 'content' | 'z' | 'removed' | 'locked'>>;
+
+export type CardFieldType = 'scale' | 'choice' | 'text' | 'date' | 'boolean';
+
+/** Un campo de ficha (RF-BF2). Los valores se guardan por `id`, no por etiqueta. */
+export type CardField = {
+  id: string;
+  type: CardFieldType;
+  label: string;
+  /** Escala: máximo (5 o 10) y símbolo (estrella, corazón, chile…). */
+  max?: number;
+  symbol?: string;
+  /** Opción: las posibles y si se eligen varias. */
+  options?: string[];
+  multiple?: boolean;
+  /** Texto: corto o largo. */
+  long?: boolean;
+};
+
+export type LibraryCardTemplate = {
+  id: string;
+  owner_id: string;
+  name: string;
+  fields: CardField[];
+  look: Record<string, unknown>;
+  created_at: string;
+  updated_at: string;
+};
+
+export type CardPlacement = 'front' | 'back' | 'first_page' | 'last_page';
+
+export type LibraryCard = {
+  id: string;
+  item_id: string;
+  template_id: string;
+  owner_id: string;
+  values: Record<string, unknown>;
+  placement: CardPlacement;
+  created_at: string;
+  updated_at: string;
+};
+
+/** Una página de una creación: su plantilla y lo cambiado sobre ella (spec 13e §5). */
+export type LibraryPage = {
+  id: string;
+  item_id: string;
+  owner_id: string;
+  sort_order: number;
+  template: string;
+  layers: Record<string, unknown>;
+  created_at: string;
+  updated_at: string;
+};
+
+export type LibraryFontFormat = 'ttf' | 'otf' | 'woff2';
+
+export type LibraryFont = {
+  id: string;
+  owner_id: string;
+  name: string;
+  file_path: string;
+  format: LibraryFontFormat;
+  file_size: number;
+  license_accepted_at: string;
+  created_at: string;
+};
+
+/** Contenido de un archivo para subirlo: en web un Blob; en el teléfono, sus bytes. */
+export type LibraryFileBody = Blob | ArrayBuffer | Uint8Array;

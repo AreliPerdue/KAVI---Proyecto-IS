@@ -91,6 +91,12 @@ Es grande a propósito, y por eso se construye **por capas** (§8): primero un n
 El catálogo de plantillas, estilos, stickers y fuentes incluidas vive en el cliente
 (`src/constants/library/`), como el catálogo de ejercicios.
 
+**Aplicado en producción el 12 oct 2026** (`20261012100000_library.sql`, T275): las ocho tablas con RLS por
+dueño (las hijas además comprueban que la pieza y el librero sean de quien escribe), el tope de 500 MB por
+persona en la base (`library_quota`) y el bucket privado `library` con 50 MB por archivo y una carpeta por
+persona. **Eliminar la cuenta** (RF-A12) borra también sus archivos: Storage no se borra en cascada, así que
+la app vacía la carpeta antes de llamar a `delete_my_account`.
+
 ## 7. Fuera de esta versión
 
 Compartir piezas o anotaciones con contactos · tienda o compra de libros · DRM (libros con candado de

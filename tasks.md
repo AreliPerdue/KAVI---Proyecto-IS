@@ -900,9 +900,12 @@ Decisiones B1–B9 aprobadas el 12 oct 2026 (T274); ver la tabla de la spec 13 �
   lo de oficina se convierte a PDF · B4 diccionario mixto gratis · B5 mantener presionado · B6 horizontal
   obligatoria · B7 voz del sistema (voz propia, al largo plazo) · B8 Biblioteca / Library · B9 Moderno/luxury y
   Cottagecore con dragones.
-- [ ] T275 Datos: migración con `library_items`, `library_shelves`, `library_shelf_items`, `library_annotations`,
+- [x] T275 Datos: migración con `library_items`, `library_shelves`, `library_shelf_items`, `library_annotations`,
   `library_card_templates`, `library_cards`, `library_pages`, `library_fonts` (todas con RLS por dueño) y bucket
   privado de Storage con sus políticas; contrato `LibraryApi` en Supabase y en demo. (spec 13 §6) Dep: T274
+  **Hecho (12 oct 2026):** migración probada con PGlite (22 casos: aislamiento entre personas, tope, 50 MB,
+  cascada) y aplicada en producción; `LibraryApi` en `services/supabase/library.ts` y `services/demo/library.ts`;
+  eliminar la cuenta borra antes los archivos de la biblioteca.
 - [ ] T276 Módulo oculto: ruta de laboratorio solo en desarrollo y demo, registrado en `constants/modules` sin
   aparecer en Más ni en la barra. (spec 13 §4) Dep: T274
 

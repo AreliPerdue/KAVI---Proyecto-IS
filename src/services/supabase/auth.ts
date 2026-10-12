@@ -3,6 +3,7 @@ import * as Linking from 'expo-linking';
 
 import { AUTH_MESSAGES, AuthUiError, toAuthMessage } from '@/lib/auth-errors';
 import { getSupabase } from '@/lib/supabase';
+import { supabaseLibrary } from '@/services/supabase/library';
 import type { AuthApi } from '@/services/contracts';
 import type { AuthUser } from '@/types/domain';
 import { t } from '@/i18n';
@@ -96,6 +97,10 @@ export const supabaseAuth: AuthApi = {
     const db = getSupabase();
     const { error: signInError } = await db.auth.signInWithPassword({ email: email.trim().toLowerCase(), password });
     if (signInError) throw new AuthUiError(AUTH_MESSAGES.invalidCredentials, signInError);
+    // Los archivos de la biblioteca no se borran en cascada con la cuenta (viven en Storage, no en
+    // una tabla): se borran antes, mientras la sesión todavía puede tocar su carpeta (T275).
+    const { data: sesion } = await db.auth.getSession();
+    if (sesion.session) await supabaseLibrary.removeAllFiles(sesion.session.user.id);
     const { error } = await db.rpc('delete_my_account');
     if (error) throw new AuthUiError(t().errors.myAccountDeleteFailed, error);
     // El usuario ya no existe en el servidor: solo queda olvidar la sesión en este dispositivo.

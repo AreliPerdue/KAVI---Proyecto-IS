@@ -1,6 +1,7 @@
 import { DEMO_OTP } from '@/constants/demo';
 import { AUTH_MESSAGES, AuthUiError } from '@/lib/auth-errors';
 import type { AuthApi } from '@/services/contracts';
+import { demoLibrary } from '@/services/demo/library';
 import { delay, demoState, nextId, setCurrentUser } from '@/services/demo/store';
 
 /** Altas a medias: correo verificado pero sin contraseña todavía. */
@@ -146,6 +147,8 @@ export const demoAuth: AuthApi = {
     const account = demoState.accounts.find((a) => a.user.email === normalized);
     if (!account || account.password !== password) throw new AuthUiError(AUTH_MESSAGES.invalidCredentials);
     demoState.accounts = demoState.accounts.filter((a) => a !== account);
+    // Igual que en Supabase: los archivos de la biblioteca se van con la cuenta (T275).
+    await demoLibrary.removeAllFiles(account.user.id);
     setCurrentUser(null);
   },
 

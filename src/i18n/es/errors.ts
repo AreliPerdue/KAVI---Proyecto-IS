@@ -53,6 +53,8 @@ export const errors = {
   usernameInvalid: 'Ese usuario no es válido: solo letras minúsculas, números y guion bajo.',
   accountDeleteFailed: 'No se pudo eliminar la cuenta. Revisa tu conexión e inténtalo de nuevo.',
   myAccountDeleteFailed: 'No se pudo eliminar tu cuenta. Revisa tu conexión e inténtalo de nuevo.',
+  libraryQuota: 'Tu biblioteca llegó a su límite de 500 MB. Borra algún libro para hacer espacio.',
+  libraryFileTooBig: 'El archivo pesa más de 50 MB, que es el máximo por libro.',
   statsFailed: 'No se pudieron leer las estadísticas.',
   alreadyConnected: 'Ya hay una solicitud o un contacto entre ustedes.',
   cantShareFiles: 'Este dispositivo no puede compartir archivos.',

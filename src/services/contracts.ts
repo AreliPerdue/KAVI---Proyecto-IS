@@ -36,6 +36,19 @@ import type {
   CustomExerciseInput,
   WorkoutExerciseInput,
   WorkoutInput,
+  LibraryAnnotation,
+  LibraryAnnotationInput,
+  LibraryCard,
+  LibraryCardTemplate,
+  LibraryFileBody,
+  LibraryFont,
+  LibraryFontFormat,
+  LibraryItem,
+  LibraryItemInput,
+  LibraryItemPatch,
+  LibraryShelf,
+  LibraryShelfItem,
+  LibraryPage,
 } from '@/types/domain';
 
 export type SignUpInput = {
@@ -447,4 +460,56 @@ export interface ConsentApi {
   decideGuardianRequest(token: string, approve: boolean): Promise<GuardianStatus>;
   /** Menores de 16: la cuenta se elimina con su sesión actual, sin pedir la contraseña otra vez. */
   deleteUnderageAccount(): Promise<void>;
+}
+
+/**
+ * KAVI Library (spec 13 §6). Todo es de su dueño; las rutas de Storage van en
+ * `<uid>/<pieza>/<archivo>` y la base no deja pasar de 500 MB por persona (B2).
+ */
+export interface LibraryApi {
+  listItems(userId: string): Promise<LibraryItem[]>;
+  getItem(itemId: string): Promise<LibraryItem>;
+  createItem(userId: string, input: LibraryItemInput): Promise<LibraryItem>;
+  updateItem(itemId: string, patch: LibraryItemPatch): Promise<LibraryItem>;
+  /** Borra la pieza, lo que cuelga de ella y sus archivos. */
+  removeItem(itemId: string): Promise<void>;
+  /** Cuánto ocupa la librería de la persona y su tope. */
+  usage(userId: string): Promise<{ usedBytes: number; limitBytes: number }>;
+
+  /** Sube un archivo a la carpeta de la persona y devuelve su ruta. */
+  uploadFile(userId: string, itemId: string, fileName: string, body: LibraryFileBody, contentType: string): Promise<string>;
+  /** Una dirección temporal para leer un archivo privado. */
+  fileUrl(path: string): Promise<string>;
+  /** Borra todos los archivos de la persona (al eliminar la cuenta, RF-A12). */
+  removeAllFiles(userId: string): Promise<void>;
+
+  listShelves(userId: string): Promise<LibraryShelf[]>;
+  createShelf(userId: string, input: Pick<LibraryShelf, 'name'> & Partial<Pick<LibraryShelf, 'color' | 'icon'>>): Promise<LibraryShelf>;
+  updateShelf(shelfId: string, patch: Partial<Pick<LibraryShelf, 'name' | 'color' | 'icon' | 'sort_order'>>): Promise<LibraryShelf>;
+  removeShelf(shelfId: string): Promise<void>;
+  listShelfItems(userId: string): Promise<LibraryShelfItem[]>;
+  addToShelf(userId: string, shelfId: string, itemId: string): Promise<void>;
+  removeFromShelf(shelfId: string, itemId: string): Promise<void>;
+  moveInShelf(shelfId: string, itemId: string, sortOrder: number): Promise<void>;
+
+  listAnnotations(itemId: string): Promise<LibraryAnnotation[]>;
+  /** Guarda (crea o reemplaza) por id: las anotaciones llevan id del cliente (RF-BR3). */
+  saveAnnotations(userId: string, annotations: readonly LibraryAnnotationInput[]): Promise<void>;
+  removeAnnotations(ids: readonly string[]): Promise<void>;
+
+  listCardTemplates(userId: string): Promise<LibraryCardTemplate[]>;
+  saveCardTemplate(userId: string, input: Pick<LibraryCardTemplate, 'name' | 'fields'> & Partial<Pick<LibraryCardTemplate, 'id' | 'look'>>): Promise<LibraryCardTemplate>;
+  removeCardTemplate(templateId: string): Promise<void>;
+  listCards(userId: string): Promise<LibraryCard[]>;
+  saveCard(userId: string, input: Pick<LibraryCard, 'item_id' | 'template_id'> & Partial<Pick<LibraryCard, 'id' | 'values' | 'placement'>>): Promise<LibraryCard>;
+  removeCard(cardId: string): Promise<void>;
+
+  listPages(itemId: string): Promise<LibraryPage[]>;
+  savePages(userId: string, pages: readonly (Pick<LibraryPage, 'id' | 'item_id' | 'template'> & Partial<Pick<LibraryPage, 'sort_order' | 'layers'>>)[]): Promise<void>;
+  removePage(pageId: string): Promise<void>;
+
+  listFonts(userId: string): Promise<LibraryFont[]>;
+  /** Solo con el aviso de licencias aceptado (RF-BH4). */
+  addFont(userId: string, input: { name: string; format: LibraryFontFormat; body: LibraryFileBody; size: number; licenseAcceptedAt: string }): Promise<LibraryFont>;
+  removeFont(fontId: string): Promise<void>;
 }

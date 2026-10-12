@@ -66,6 +66,30 @@ export function fakeSupabase(inicial?: RespuestaSupabase) {
       llamadas.push(['rpc', nombre, args]);
       return cadena();
     },
+    /** Storage: cada operación queda registrada y contesta con la siguiente respuesta. */
+    storage: {
+      from(bucket: string) {
+        llamadas.push(['storage', bucket]);
+        return {
+          upload: (ruta: string, _cuerpo: unknown, opciones?: unknown) => {
+            llamadas.push(['upload', ruta, opciones]);
+            return siguiente();
+          },
+          remove: (rutas: string[]) => {
+            llamadas.push(['remove', rutas]);
+            return siguiente();
+          },
+          list: (prefijo: string, opciones?: unknown) => {
+            llamadas.push(['list', prefijo, opciones]);
+            return siguiente();
+          },
+          createSignedUrl: (ruta: string, segundos: number) => {
+            llamadas.push(['createSignedUrl', ruta, segundos]);
+            return siguiente();
+          },
+        };
+      },
+    },
   };
 
   return {

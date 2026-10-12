@@ -38,6 +38,10 @@ export function toError(error: { message: string; code?: string; details?: strin
   if (error.code === '23505') {
     return new AuthUiError(t().errors.alreadyExists, error);
   }
+  // El tope de 500 MB por persona de KAVI Library (B2) lo impone la base con este aviso.
+  if (error.hint === 'library_quota' || error.message === 'library_quota') {
+    return new AuthUiError(t().errors.libraryQuota, error);
+  }
   return new AuthUiError(AUTH_MESSAGES.generic, error);
 }
 

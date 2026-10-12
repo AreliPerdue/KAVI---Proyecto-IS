@@ -25,6 +25,8 @@ jest.mock('@/lib/supabase', () => ({
   getSupabase: () => ({ auth: mockAuth, rpc: (...a: unknown[]) => mockRpc(...a) }),
 }));
 jest.mock('expo-linking', () => ({ createURL: (ruta: string) => `kavi://${ruta}` }));
+const mockBorrarArchivos = jest.fn();
+jest.mock('@/services/supabase/library', () => ({ supabaseLibrary: { removeAllFiles: (...a: unknown[]) => mockBorrarArchivos(...a) } }));
 
 /* eslint-disable-next-line @typescript-eslint/no-require-imports -- tras el mock */
 const { supabaseAuth } = require('@/services/supabase/auth') as typeof import('@/services/supabase/auth');
@@ -269,6 +271,8 @@ describe('eliminar la cuenta (T263)', () => {
     mockAuth.signInWithPassword.mockReset();
     mockAuth.signOut.mockReset();
     mockRpc.mockReset();
+    mockBorrarArchivos.mockReset().mockResolvedValue(undefined);
+    mockAuth.getSession.mockReset().mockResolvedValue({ data: { session: { user: USUARIO } } });
   });
 
   it('con la contraseña equivocada no borra nada', async () => {
@@ -285,6 +289,17 @@ describe('eliminar la cuenta (T263)', () => {
     expect(mockAuth.signInWithPassword).toHaveBeenCalledWith({ email: 'areli@kavi.app', password: 'buena1234' });
     expect(mockRpc).toHaveBeenCalledWith('delete_my_account');
     expect(mockAuth.signOut).toHaveBeenCalledWith({ scope: 'local' });
+  });
+
+  it('borra los archivos de la biblioteca antes que la cuenta (Storage no se borra en cascada)', async () => {
+    const orden: string[] = [];
+    mockAuth.signInWithPassword.mockResolvedValue(ok({ user: USUARIO }));
+    mockBorrarArchivos.mockImplementation(async () => { orden.push('archivos'); });
+    mockRpc.mockImplementation(async () => { orden.push('cuenta'); return { error: null }; });
+    mockAuth.signOut.mockResolvedValue({ error: null });
+    await supabaseAuth.deleteAccount('areli@kavi.app', 'buena1234');
+    expect(mockBorrarArchivos).toHaveBeenCalledWith('u1');
+    expect(orden).toEqual(['archivos', 'cuenta']);
   });
 
   it('si la base no pudo borrar, lo dice y no cierra la sesión', async () => {
