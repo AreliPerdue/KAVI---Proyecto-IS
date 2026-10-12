@@ -17,7 +17,7 @@ Física, emocional, social, intelectual, espiritual, financiera y ocupacional. C
 - Un usuario solo ve de otros lo que le fue explícitamente compartido.
 
 ## P5. Multiplataforma real
-Toda funcionalidad de V1 debe operar en iOS, Android y web con experiencia equivalente. Se prefieren soluciones compatibles con las tres plataformas sobre soluciones óptimas en una sola. Excepción documentada: notificaciones push en web pueden degradarse a recordatorios in-app. Excepción documentada (enmienda del 4 oct 2026, spec 11): la lectura de datos de salud existe solo en iOS y Android, porque la web no tiene acceso a ellos; en web, Fitness muestra el Gym Tracker completo y un aviso de que la actividad del teléfono se ve en la app.
+Toda funcionalidad de V1 debe operar en iOS, Android y web con experiencia equivalente. Se prefieren soluciones compatibles con las tres plataformas sobre soluciones óptimas en una sola. Excepción documentada: notificaciones push en web pueden degradarse a recordatorios in-app. Excepción documentada (enmienda del 4 oct 2026, spec 11): la lectura de datos de salud existe solo en iOS y Android, porque la web no tiene acceso a ellos; en web, Fitness muestra el Gym Tracker completo y un aviso de que la actividad del teléfono se ve en la app. Excepciones documentadas (enmienda del 12 oct 2026, spec 13): en KAVI Library, la presión e inclinación del lápiz existen solo con Apple Pencil (en web se dibuja sin presión); el modo *libro real* fija la pantalla en horizontal solo en teléfono; y el diccionario usa la fuente que cada plataforma ofrece (el del sistema donde exista, un enlace a la RAE donde no).
 
 ## P6. Arquitectura modular alrededor de la actividad
 La **actividad** es la entidad central. Los módulos especializados (fitness en V1; lectura, nutrición, etc. en el futuro) se conectan a actividades, nunca al revés. Agregar un módulo futuro no debe requerir modificar el calendario.
@@ -26,7 +26,9 @@ La **actividad** es la entidad central. Los módulos especializados (fitness en 
 Se construye por fases (tasks.md). Cada fase termina con un incremento funcional probado. No se inicia una fase sin cerrar los hitos de la anterior. Entrega final: **26 de septiembre de 2026**.
 
 ## P8. Alcance V1 cerrado
-V1 = auth + calendario + temas/dimensiones + compartido con reminders compartidos + mini gym tracker + compatibilidad multiplataforma. Todo lo demás (KAVI Reader, nutrición, métricas avanzadas, chat, etc.) se documenta como futuro y **no se implementa**.
+V1 = auth + calendario + temas/dimensiones + compartido con reminders compartidos + mini gym tracker + compatibilidad multiplataforma. Todo lo demás (nutrición, métricas avanzadas, chat, etc.) se documenta como futuro y **no se implementa**, salvo lo que una enmienda traiga explícitamente al alcance.
+
+**Enmienda (12 oct 2026, spec 13).** Se agrega al alcance V2 **KAVI Library** (antes "KAVI Reader"), el módulo de la dimensión intelectual: leer, anotar y crear (decisión B1). Se desarrolla **oculto** —fuera de Más y de la barra— y solo se muestra al cerrar la etapa L7 de `tasks.md`, cuando esté pulido. Sigue P6: se conecta a las actividades de Lectura, nunca al revés. Nutrición y los demás módulos siguen fuera.
 
 **Enmienda (4 oct 2026, spec 11).** Se agrega al alcance V2: *Fitness amplio*, la lectura, con permiso explícito, de datos de actividad desde la plataforma de salud del dispositivo (Health Connect en Android y HealthKit en iOS). Solo lectura; sin escritura hacia esas plataformas ni métricas de recuperación en esta versión.
 

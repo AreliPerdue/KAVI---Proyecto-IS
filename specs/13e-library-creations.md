@@ -1,6 +1,6 @@
 # Spec 13e · KAVI Library — Creaciones y plantillas por capas
 
-> **Borrador (9 oct 2026).** Parte de la spec 13. Es la pieza más pesada de diseño: aquí se decide cómo
+> **Aprobada (12 oct 2026).** Parte de la spec 13. Es la pieza más pesada de diseño: aquí se decide cómo
 > se construye cada plantilla para que todo se pueda personalizar.
 
 ## 1. Qué se crea (RF-BP1 – RF-BP3)
@@ -16,11 +16,17 @@
 
 - **RF-BP4. Estilos:** familias completas con la misma estética. Cada estilo trae **portada**, **páginas**
   (rayada, cuadrícula, punteada, en blanco), **plantillas especiales** (RF-BP8) y **stickers** propios para
-  cada tipo de creación. Ejemplo inicial: **Ciudad/viajero** (una ciudad en la portada, boletos, mapas,
-  sellos de pasaporte como stickers).
+  cada tipo de creación.
 - **RF-BP5. Colores de partida:** cada estilo existe en los colores de los Nobi; se elige uno al crear.
-- **RF-BP6.** Estilos de la primera versión: por decidir con Areli (decisión B9); se recomienda empezar con
-  **dos** muy bien hechos antes que muchos a medias.
+- **RF-BP6. Los dos estilos de la primera versión** (decisión B9, 12 oct 2026), completos antes de hacer más:
+  - **Moderno / luxury.** Líneas limpias, tipografía elegante, dorados y mármol, papeles con textura fina.
+    Su portada estrella es una **ciudad**: skyline con edificios intercambiables por ciudad (Ciudad de México,
+    París, Nueva York, Tokio…), cielo (día, atardecer, noche con luces encendidas), nubes y marco dorado.
+    Stickers: boletos, sellos de pasaporte, copas, flores secas, etiquetas doradas.
+  - **Cottagecore con dragones.** Tierno y de cuento: bosque, cabañas, hongos, flores silvestres, frascos de
+    mermelada… y **dragones bebé** como personajes (durmiendo en un libro, tomando té, cargando flores). La
+    portada es un claro del bosque con capas de árboles, flores, el dragón y el cielo. Stickers: dragones en
+    poses, hongos, tazas, panes, cartas con sello de cera.
 
 ## 3. Todo por capas (RF-BP7)
 
@@ -59,8 +65,10 @@
 
 ## 6. Criterios de aceptación
 
-- *Dado* un diario estilo Ciudad en color Nobi azul, *cuando* cambio los edificios a "París", *entonces* la
-  portada muestra París y el cielo, las nubes y el resto quedan igual.
+- *Dado* un diario estilo Moderno/luxury en color Nobi azul, *cuando* cambio los edificios a "París",
+  *entonces* la portada muestra París y el cielo, las nubes y el resto quedan igual.
+- *Dado* un cuaderno Cottagecore, *cuando* cambio el dragón de la portada por "dragón tomando té", *entonces*
+  el bosque, las flores y el cielo quedan igual.
 - *Dado* una portada personalizada, *cuando* toco "Restablecer el cielo", *entonces* solo el cielo vuelve a
   como venía.
 - *Dado* un tracker de hábitos, *cuando* toco la casilla del día 5, *entonces* se rellena con el color del
@@ -68,8 +76,7 @@
 - *Dado* un álbum, *cuando* agrego una página "3 fotos" y elijo tres de la galería, *entonces* cada una
   queda en su marco y se puede mover y recortar dentro de él.
 
-## 7. Decisión pendiente
+## 7. Pendiente para L5
 
-| # | Decisión | Recomendación |
-|---|---|---|
-| **B9** | Estilos de la primera versión y quién dibuja las capas (Areli, ilustración comprada con licencia, o generada y retocada). | Dos estilos (Ciudad/viajero y uno minimalista); dibujos propios o con licencia comercial clara. |
+Quién dibuja las capas de cada estilo (Areli, ilustración con licencia comercial clara, u otra vía). Se decide
+al empezar L5; lo que se use debe poder separarse en capas con nombre (§5).

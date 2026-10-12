@@ -1,6 +1,6 @@
 # Spec 13b · KAVI Library — Formatos y formas de leer
 
-> **Borrador (9 oct 2026).** Parte de la spec 13.
+> **Aprobada (12 oct 2026).** Parte de la spec 13.
 
 ## 1. Formatos (RF-BR1 – RF-BR4)
 
@@ -8,9 +8,9 @@
 |---|---|---|
 | **PDF** | Tal cual, con pdf.js (página fija). | L1 |
 | **EPUB** | Texto que se reacomoda (cambia de letra y tamaño), con foliate-js/epub.js. | L1 |
-| **Word (.docx) / Pages** | Convertido a PDF al importar (decisión B3). | L6 |
+| **Word (.docx) / Pages** | Convertido a PDF al importar; luego, como cualquier PDF (decisión B3). | L6 |
 | **PowerPoint (.pptx) / Keynote** | Convertido a PDF: una diapositiva por página. | L6 |
-| **Excel (.xlsx) / Numbers** | Convertido a PDF, o como tabla en el cliente (decisión B3). | L6 |
+| **Excel (.xlsx) / Numbers** | Convertido a PDF: cada hoja, en páginas (decisión B3). | L6 |
 | **Cuadernos, diarios, álbumes** | Creaciones de KAVI (spec 13e). | L5 |
 
 - **RF-BR1.** El archivo original se guarda tal cual en Storage; lo que se lee es el original o, si hubo que

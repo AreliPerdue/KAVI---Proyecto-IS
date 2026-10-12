@@ -1,6 +1,6 @@
 # Spec 13d · KAVI Library — Fichas de calificación
 
-> **Borrador (9 oct 2026).** Parte de la spec 13.
+> **Aprobada (12 oct 2026).** Parte de la spec 13.
 
 ## 1. Qué es
 

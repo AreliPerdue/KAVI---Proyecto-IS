@@ -1,6 +1,6 @@
 # Spec 13a · KAVI Library — La librería
 
-> **Borrador (9 oct 2026).** Parte de la spec 13; ver ahí el glosario, el modelo de datos y las decisiones.
+> **Aprobada (12 oct 2026).** Parte de la spec 13; ver ahí el glosario, el modelo de datos y las decisiones.
 
 ## 1. Qué ve la persona
 

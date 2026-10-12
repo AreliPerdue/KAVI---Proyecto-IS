@@ -1,8 +1,7 @@
 # Spec 13 · KAVI Library
 
-> **Borrador (9 oct 2026).** Escrita a partir de la visión de Areli; nada de esto se implementa hasta
-> aprobar las decisiones de §9. Es la spec general: el detalle vive en cinco partes que se aprueban por
-> separado.
+> **Aprobada (12 oct 2026).** Escrita a partir de la visión de Areli el 9 oct; las decisiones B1–B9 de §9
+> se aprobaron el 12 oct (T274). Es la spec general: el detalle vive en cinco partes.
 >
 > | Parte | Qué cubre | Requisitos |
 > |---|---|---|
@@ -75,7 +74,8 @@ Es grande a propósito, y por eso se construye **por capas** (§8): primero un n
 - **Las anotaciones se guardan por posición estable:** en PDF, página y coordenadas relativas (0–1); en
   EPUB, su CFI. Así sobreviven a cambiar el tamaño de letra o la pantalla.
 - **Formatos de oficina** (Word, PowerPoint, Excel y sus equivalentes de Apple) no se pueden pintar fiel en
-  el teléfono: se **convierten a PDF** al importarlos (decisión B3).
+  el teléfono: se **convierten a PDF** al importarlos y desde ahí se tratan como cualquier PDF —subrayar,
+  anotar, todo— (decisión B3). La conversión corre en un servicio aparte; dónde se aloja se decide en L6.
 
 ## 6. Modelo de datos (borrador; toda tabla con RLS desde su creación)
 
@@ -113,16 +113,16 @@ reescribe) · colaboración en tiempo real en una creación.
 
 Cada etapa termina con su incremento probado (P7) y se puede usar sola.
 
-## 9. Decisiones pendientes (se aprueban antes de L1)
+## 9. Decisiones (aprobadas el 12 oct 2026)
 
-| # | Decisión | Recomendación |
+| # | Decisión | Lo aprobado |
 |---|---|---|
-| **B1** | Enmendar P8 para traer KAVI Library al alcance (V2), desarrollado oculto hasta L7. | Sí. |
-| **B2** | Espacio: el plan gratis de Supabase da 1 GB de Storage en total y 50 MB por archivo. ¿Límite por persona, o plan de pago? | Empezar con 50 MB por archivo y 500 MB por persona, y avisar al acercarse. |
-| **B3** | Formatos de oficina: convertir a PDF en un servidor (Gotenberg/LibreOffice en un contenedor; Vercel no lo corre) o mostrar solo lo que se puede en el cliente (Word como texto, Excel como tabla, sin PowerPoint). | Etapa L6 aparte; empezar con Word y Excel en el cliente y decidir el servidor ahí. |
-| **B4** | Diccionario: no hay uno gratis que sirva igual en las tres plataformas y en español. | Inglés con *Free Dictionary API*; español con el diccionario del sistema donde exista (iOS) y un enlace a la RAE en lo demás. |
-| **B5** | Gesto para el diccionario: doble toque o mantener presionado. | Mantener presionado selecciona la palabra (es lo que el teléfono ya hace) y el menú ofrece "Definir". |
-| **B6** | ¿El *libro real* obliga a girar el teléfono, o lo sugiere? | Obliga en teléfono (es lo que pediste); en tableta y web se adapta al ancho. |
-| **B7** | Escuchar el texto: voz del sistema (gratis, sin red) o voces naturales de pago. | Voz del sistema (`expo-speech` / Web Speech). |
-| **B8** | Nombre del módulo en la interfaz. | "Biblioteca" / "Library" (KAVI Library). |
-| **B9** | Estilos de la primera versión y quién dibuja las capas (detalle en 13e §7). | Dos estilos muy bien hechos: Ciudad/viajero y uno minimalista. |
+| **B1** | ¿Library entra al alcance? | **Sí**, como V2 por enmienda a P8, y se desarrolla **oculto** hasta L7. |
+| **B2** | ¿Dónde viven los archivos? | **Supabase Storage con límites:** 50 MB por archivo y 500 MB por persona, con aviso al acercarse. Se sincroniza entre dispositivos. |
+| **B3** | Formatos de oficina | **Se convierten a PDF** al importarlos y se tratan como PDF (subrayar, anotar…). Servicio de conversión aparte (LibreOffice/Gotenberg); su alojamiento se decide en L6. |
+| **B4** | Diccionario | **Mixto y gratis:** inglés con *Free Dictionary API*; español con el diccionario del sistema donde exista (iPhone) y un enlace a la RAE en lo demás. |
+| **B5** | Gesto para definir | **Mantener presionado** selecciona la palabra y el menú ofrece Definir, Subrayar, Copiar y Escuchar. |
+| **B6** | Libro real en teléfono | **Obliga a girar** a horizontal mientras se lee así; en tableta y web se adapta al ancho. |
+| **B7** | Escuchar | **Voz del sistema** (`expo-speech` / Web Speech) para empezar. Más adelante, una voz propia (la de Areli) por API: queda en el largo plazo de `tasks.md`. |
+| **B8** | Nombre | **"Biblioteca"** en español y **"Library"** en inglés; el nombre largo es KAVI Library. |
+| **B9** | Estilos de inicio | **Dos muy bien hechos:** **Moderno/luxury** (la portada de ciudad con edificios intercambiables vive aquí) y **Cottagecore** tierno, con dragones. Detalle en 13e. |

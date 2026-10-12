@@ -1,6 +1,6 @@
 # Spec 13c · KAVI Library — Herramientas sobre la página
 
-> **Borrador (9 oct 2026).** Parte de la spec 13. Todo lo de aquí es una **anotación**: vive encima de la
+> **Aprobada (12 oct 2026).** Parte de la spec 13. Todo lo de aquí es una **anotación**: vive encima de la
 > página, nunca cambia el archivo (spec 13 §3), y funciona igual en libros y en creaciones.
 
 ## 1. Leer mejor (RF-BH1 – RF-BH6)

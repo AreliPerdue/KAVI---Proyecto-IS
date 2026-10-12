@@ -19,6 +19,7 @@ Los calendarios tradicionales registran compromisos, pero no relacionan la plani
 | F4 | Calendario compartido + reminders compartidos + disponibilidad | `06-shared-calendar.md` |
 | F5 | Módulo fitness (mini gym tracker) | `07-fitness.md` |
 | F6 | Requisitos no funcionales (rendimiento, seguridad, compatibilidad) | `08-nfr.md` |
+| F7 | KAVI Library (V2, oculto hasta L7): librería, lectura, anotaciones, fichas y creaciones | `13-library.md` (+ 13a–13e) |
 
 ## Navegación (T188, T189; aprobada el 5 oct 2026)
 - RF-N1. **Barra de accesos en teléfono (iOS y Android): cuatro lugares.** El primero es siempre el
@@ -51,7 +52,7 @@ Criterios de aceptación:
 - Given la web, When la abro, Then la barra superior muestra todos los módulos.
 
 ## Fuera de alcance V1
-- Módulos de otras dimensiones (lectura, nutrición, meditación, finanzas).
+- Módulos de otras dimensiones (nutrición, meditación, finanzas). La lectura entró como KAVI Library (F7) por la enmienda del 12 oct 2026.
 - Estadísticas/analytics de entrenamientos o de distribución del tiempo.
 - Chat o mensajería entre usuarios.
 - Importar/exportar calendarios externos (Google/Apple Calendar).

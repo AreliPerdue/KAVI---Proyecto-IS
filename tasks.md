@@ -886,16 +886,20 @@ Plan y decisiones en `docs/gym/AUDITORIA.md`. Cada fase cierra con typecheck, li
   (equivalente a `EXDATE`) y que `materialize` las respete en los dos backends; confirmar con
   una prueba que reproduzca el caso exacto antes de tocar nada. (RF-C8) Dep: —
 
-## Fase L — KAVI Library (spec 13, en borrador)
+## Fase L — KAVI Library (spec 13, aprobada el 12 oct 2026)
 Se diseña y desarrolla **aparte**: el módulo vive oculto (fuera de Más y de la barra) hasta la etapa L7.
-Nada de L1 en adelante empieza sin aprobar las decisiones B1–B9 (T274).
+Decisiones B1–B9 aprobadas el 12 oct 2026 (T274); ver la tabla de la spec 13 §9.
 
 ### L0 · Spec y cimientos
 - [x] T273 Spec 13 en seis partes: general (`13-library.md`), librería (13a), formatos y formas de leer (13b),
   herramientas sobre la página (13c), fichas (13d) y creaciones por capas (13e). Borrador del 9 oct 2026.
   Dep: —
-- [ ] T274 Aprobar las decisiones B1–B9 con Areli; con B1, enmienda a la constitución (P8, y las excepciones de
-  P5: Apple Pencil, horizontal obligatoria) y alcance en la spec 01. Dep: T273
+- [x] T274 Aprobar las decisiones B1–B9 con Areli; con B1, enmienda a la constitución (P8, y las excepciones de
+  P5: Apple Pencil, horizontal obligatoria, diccionario) y alcance en la spec 01. Dep: T273
+  **Hecho (12 oct 2026):** B1 oculto hasta L7 · B2 Supabase con 50 MB por archivo y 500 MB por persona · B3 todo
+  lo de oficina se convierte a PDF · B4 diccionario mixto gratis · B5 mantener presionado · B6 horizontal
+  obligatoria · B7 voz del sistema (voz propia, al largo plazo) · B8 Biblioteca / Library · B9 Moderno/luxury y
+  Cottagecore con dragones.
 - [ ] T275 Datos: migración con `library_items`, `library_shelves`, `library_shelf_items`, `library_annotations`,
   `library_card_templates`, `library_cards`, `library_pages`, `library_fonts` (todas con RLS por dueño) y bucket
   privado de Storage con sus políticas; contrato `LibraryApi` en Supabase y en demo. (spec 13 §6) Dep: T274
@@ -938,12 +942,15 @@ Nada de L1 en adelante empieza sin aprobar las decisiones B1–B9 (T274).
 - [ ] T296 Sistema de plantillas por capas: formato JSON + SVG, render, cambios guardados como diferencias.
   (RF-BP7, spec 13e §5) Dep: T275
 - [ ] T297 Cuadernos, diarios y álbumes con sus páginas. (RF-BP1 – RF-BP3) Dep: T296
-- [ ] T298 Estilo Ciudad/viajero completo en los colores de los Nobi, con variantes de ciudad.
-  (RF-BP4, RF-BP5) Dep: T296, decisión B9
+- [ ] T298 Estilo Moderno/luxury completo en los colores de los Nobi: portada de ciudad con edificios por ciudad,
+  cielo y nubes intercambiables; páginas, plantillas y stickers. (RF-BP4 – RF-BP6) Dep: T296
+- [ ] T298b Estilo Cottagecore con dragones completo en los colores de los Nobi: bosque, flores, cabaña y
+  dragones bebé por capas; páginas, plantillas y stickers. (RF-BP4 – RF-BP6) Dep: T296
 - [ ] T299 Trackers interactivos y acomodos de fotos. (RF-BP8, RF-BP9) Dep: T297
 
 ### L6 · Formatos de oficina y fuentes propias
-- [ ] T300 Word/Pages, PowerPoint/Keynote y Excel/Numbers según la decisión B3. (spec 13b §1) Dep: T279
+- [ ] T300 Word/Pages, PowerPoint/Keynote y Excel/Numbers se convierten a PDF al importarlos y se leen y anotan
+  como PDF (decisión B3): servicio de conversión (LibreOffice/Gotenberg) y dónde alojarlo. (spec 13b §1) Dep: T279
 - [ ] T301 Fuentes propias con aviso de licencias. (RF-BH4) Dep: T288
 
 ### L7 · Conectar a la app
@@ -953,7 +960,9 @@ Nada de L1 en adelante empieza sin aprobar las decisiones B1–B9 (T274).
 ### Largo plazo (cuando KAVI se lance al público)
 Distribución en iOS y cuenta de Apple Developer · notificaciones push con la app cerrada ·
 funciones con IA (categorización, lenguaje natural libre, sugerencias) · código de barras ·
-imágenes en listas (gratis en dinero, caro en horas) · sincronización offline real.
+imágenes en listas (gratis en dinero, caro en horas) · sincronización offline real · **voz propia para escuchar
+los libros de KAVI Library**: una API de lectura en voz alta con la voz de Areli (grabarla y entrenarla), en
+lugar de la voz del sistema (decisión B7, 12 oct 2026).
 
 ## Backlog futuro (NO implementar — P8)
 Módulos de otras dimensiones (nutrición; KAVI Library ya tiene spec: Fase L) · push remoto · export/import calendarios · offline completo · plantillas de rutina.
