@@ -295,3 +295,12 @@ describe('abrir Compartido', () => {
     expect(globalThis.mockRouter.navigate).toHaveBeenLastCalledWith({ pathname: '/(app)/modulo/[id]', params: { id: 'shared' } });
   });
 });
+
+/** KAVI Library en desarrollo (T276): se entra desde Perfil, no desde Más ni la barra. */
+describe('Biblioteca en desarrollo', () => {
+  it('la fila de "En desarrollo" abre la Biblioteca', async () => {
+    await render(<Pantalla />);
+    await fireEvent.press(screen.getByRole('button', { name: /^Biblioteca/ }));
+    expect(globalThis.mockRouter.push).toHaveBeenCalledWith('/(app)/library');
+  });
+});

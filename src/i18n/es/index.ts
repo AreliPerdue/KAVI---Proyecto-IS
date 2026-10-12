@@ -8,6 +8,7 @@ import { dates } from './dates';
 import { errors } from './errors';
 import { fitness } from './fitness';
 import { glossary } from './glossary';
+import { library } from './library';
 import { lists } from './lists';
 import { nav } from './nav';
 import { notifications } from './notifications';
@@ -18,4 +19,4 @@ import { themes } from './themes';
 import { training } from './training';
 
 /** El español manda: su forma es el tipo de todos los diccionarios (spec 12, RF-I8). */
-export const es = { account, auth, calendar, catalog, colors, common, dates, errors, fitness, glossary, lists, nav, notifications, privacy, profile, shared, themes, training };
+export const es = { account, auth, calendar, catalog, colors, common, dates, errors, fitness, glossary, library, lists, nav, notifications, privacy, profile, shared, themes, training };

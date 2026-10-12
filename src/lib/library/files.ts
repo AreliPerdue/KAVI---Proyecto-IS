@@ -1,3 +1,5 @@
+import { formatNumber, getLanguage, type Language } from '@/i18n';
+
 /**
  * Nombre de archivo seguro para una ruta de Storage (spec 13 §6): sin acentos, sin barras ni
  * caracteres raros. La ruta es `<uid>/<pieza>/<nombre>`; una barra en el nombre la rompería.
@@ -13,4 +15,12 @@ export function nombreSeguro(nombre: string): string {
     .replace(/[^a-zA-Z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '');
   return `${limpio || 'archivo'}${extension}`;
+}
+
+/** "850 KB", "12.4 MB", "500 MB": el tamaño como lo diría una persona. */
+export function formatBytes(bytes: number, lang: Language = getLanguage()): string {
+  const kb = bytes / 1024;
+  if (kb < 1024) return `${formatNumber(Math.max(0, Math.round(kb)), lang)} KB`;
+  const mb = kb / 1024;
+  return `${formatNumber(mb < 10 ? Math.round(mb * 10) / 10 : Math.round(mb), lang)} MB`;
 }

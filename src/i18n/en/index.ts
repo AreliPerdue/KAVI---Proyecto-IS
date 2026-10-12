@@ -9,6 +9,7 @@ import { dates } from './dates';
 import { errors } from './errors';
 import { fitness } from './fitness';
 import { glossary } from './glossary';
+import { library } from './library';
 import { lists } from './lists';
 import { nav } from './nav';
 import { notifications } from './notifications';
@@ -18,4 +19,4 @@ import { shared } from './shared';
 import { themes } from './themes';
 import { training } from './training';
 
-export const en: Dictionary = { account, auth, calendar, catalog, colors, common, dates, errors, fitness, glossary, lists, nav, notifications, privacy, profile, shared, themes, training };
+export const en: Dictionary = { account, auth, calendar, catalog, colors, common, dates, errors, fitness, glossary, library, lists, nav, notifications, privacy, profile, shared, themes, training };

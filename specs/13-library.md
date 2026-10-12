@@ -53,8 +53,11 @@ Es grande a propósito, y por eso se construye **por capas** (§8): primero un n
 ## 4. Cómo se conecta con el resto de KAVI (P1, P6)
 
 - **Se desarrolla aparte.** Mientras no esté pulido, Library vive como módulo **oculto**: no aparece en Más
-  ni se puede elegir para la barra (RF-N3/N6). Se entra por una ruta de laboratorio solo en desarrollo y
-  en el demo. "Conectarlo a la app" (§8, etapa L7) es mostrarlo en Más y en la barra, sin tocar nada más.
+  ni se puede elegir para la barra (RF-N3/N6), y no está en `constants/modules`. Se entra por una ruta de
+  laboratorio (`/(app)/library`) desde **Perfil → En desarrollo → Biblioteca**, en todas las versiones:
+  hoy la app solo la usan Areli y sus testers (decisión del 12 oct 2026), y la pantalla avisa que está en
+  construcción. "Conectarlo a la app" (§8, etapa L7) es registrarlo en `constants/modules`, mostrarlo en
+  Más y en la barra, y quitar la fila de Perfil, sin tocar nada más.
 - **Con el calendario** (al conectarlo): una actividad con el tema **Lectura** puede ligarse a una pieza
   ("leer *Rayuela* 30 min"); desde la actividad se abre el libro en la página donde iba, igual que una
   actividad de gimnasio abre su sesión. Library nunca modifica el calendario (P6).

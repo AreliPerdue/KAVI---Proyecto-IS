@@ -906,8 +906,9 @@ Decisiones B1–B9 aprobadas el 12 oct 2026 (T274); ver la tabla de la spec 13 �
   **Hecho (12 oct 2026):** migración probada con PGlite (22 casos: aislamiento entre personas, tope, 50 MB,
   cascada) y aplicada en producción; `LibraryApi` en `services/supabase/library.ts` y `services/demo/library.ts`;
   eliminar la cuenta borra antes los archivos de la biblioteca.
-- [ ] T276 Módulo oculto: ruta de laboratorio solo en desarrollo y demo, registrado en `constants/modules` sin
-  aparecer en Más ni en la barra. (spec 13 §4) Dep: T274
+- [x] T276 Módulo oculto: ruta de laboratorio `/(app)/library` con aviso "En desarrollo", espacio usado y
+  estado vacío; se entra desde Perfil → En desarrollo, fuera de Más, de la barra y de `constants/modules`
+  hasta L7. (spec 13 §4) Dep: T274
 
 ### L1 · Núcleo: librería y leer PDF/EPUB
 - [ ] T277 Librería con vistas de portadas y lista; vista recordada. (RF-BL1, RF-BL3, RF-BL4) Dep: T275, T276

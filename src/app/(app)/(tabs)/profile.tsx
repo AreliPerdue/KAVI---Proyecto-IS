@@ -4,6 +4,7 @@ import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import {
   Bell,
+  BookOpen,
   BellOff,
   CalendarSearch,
   ChartNoAxesColumn,
@@ -419,6 +420,19 @@ export default function ProfileScreen() {
       </SettingsGroup>
 
       <SettingsGroup title={tx.profile.notices}>{notificationsRow()}</SettingsGroup>
+
+      {/*
+        KAVI Library mientras se construye (spec 13 §4, T276): no está en Más ni en la barra hasta L7.
+        Se entra desde aquí; la app hoy solo la usan Areli y sus testers.
+      */}
+      <SettingsGroup title={tx.library.profileSection}>
+        <SettingsRow
+          icon={<BookOpen size={IconSize.inline} strokeWidth={IconStroke} color={theme.textSecondary} />}
+          label={tx.library.profileRow}
+          hint={tx.library.profileHint}
+          onPress={() => router.push('/(app)/library')}
+        />
+      </SettingsGroup>
 
       {/* Solo existe para cuentas `adminkavi` (RF-AD3). Ocultarlo no es el control de
           acceso: las funciones del panel comprueban el rol en la base (RF-AD6). */}
