@@ -988,7 +988,7 @@ Decisiones B1–B9 aprobadas el 12 oct 2026 (T274); ver la tabla de la spec 13 �
 ### L2 · Formas de leer
 - [x] T311 Portada, lomo y contraportada con imagen y color propios, y cuentagotas para elegir cada color.
   (RF-BL20, RF-BL21, de KAVI Reader) Dep: T278, T281
-- [ ] T282 Vista de librero con lomos sobre repisas (con la imagen del lomo si la hay). (RF-BL2) Dep: T277, T311
+- [x] T282 Vista de librero con lomos sobre repisas (con la imagen del lomo si la hay). (RF-BL2) Dep: T277, T311
 - [ ] T283 Páginas de lado y cambio de forma de leer sin perder la posición. (RF-BR7, RF-BR8) Dep: T279
 - [ ] T284 Libro real a pantalla completa con la hoja que se dobla en 3D (como FlipHTML5): en vertical una
   página, en horizontal dos (la portada sola a la derecha, luego en pares); arrastrar la esquina con Skia +

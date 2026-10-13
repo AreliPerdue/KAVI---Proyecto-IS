@@ -12,7 +12,7 @@ import { avanceDe } from '@/lib/library/shelf';
 import type { LibraryItem } from '@/types/domain';
 
 /** "p. 120 de 340", "35 % leído", "Terminado" o "Sin abrir" (RF-BL3). */
-function textoAvance(item: LibraryItem, l: Dictionary['library']): string {
+export function textoAvance(item: LibraryItem, l: Dictionary['library']): string {
   const avance = avanceDe(item);
   if (!avance) return l.unread;
   if (avance.tipo === 'terminado') return l.finished;
@@ -20,13 +20,13 @@ function textoAvance(item: LibraryItem, l: Dictionary['library']): string {
 }
 
 /** Lo que dice un lector de pantalla de cada pieza: título, autor y avance (y si está elegida). */
-function etiqueta(item: LibraryItem, l: Dictionary['library'], seleccion?: boolean, saga?: string): string {
+export function etiqueta(item: LibraryItem, l: Dictionary['library'], seleccion?: boolean, saga?: string): string {
   const estado = seleccion === undefined ? null : seleccion ? l.selection.selected : l.selection.notSelected;
   return [item.title, item.authors.join(', '), saga, textoAvance(item, l), estado].filter(Boolean).join(', ');
 }
 
 /** Mantener presionado sin mover selecciona, como en Listas (RF-BL15, RF-L28). */
-const RETARDO_MS = 350;
+export const RETARDO_MS = 350;
 
 export type LibraryItemProps = {
   item: LibraryItem;

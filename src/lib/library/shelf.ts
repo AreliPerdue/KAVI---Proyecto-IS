@@ -7,9 +7,9 @@ import type { LibraryItem } from '@/types/domain';
  * Lo que la librería de KAVI Library calcula para pintarse (spec 13a). Sin React: se prueba solo.
  */
 
-/** Las vistas de la librería (RF-BL1, RF-BL3). El librero de lomos (RF-BL2) llega en L2. */
-export type LibraryView = 'covers' | 'list';
-export const LIBRARY_VIEWS: readonly LibraryView[] = ['covers', 'list'];
+/** Las vistas de la librería: portadas (RF-BL1), librero de lomos (RF-BL2, T282) y lista (RF-BL3). */
+export type LibraryView = 'covers' | 'shelf' | 'list';
+export const LIBRARY_VIEWS: readonly LibraryView[] = ['covers', 'shelf', 'list'];
 export const DEFAULT_LIBRARY_VIEW: LibraryView = 'covers';
 
 /** Lo guardado en el dispositivo, o la vista por omisión si no es una que exista hoy. */
@@ -30,7 +30,7 @@ export function columnasPara(ancho: number): number {
 }
 
 /** Un número estable a partir de un texto (FNV-1a), para que cada pieza conserve su color. */
-function huella(texto: string): number {
+export function huella(texto: string): number {
   let h = 0x811c9dc5;
   for (let i = 0; i < texto.length; i++) {
     h ^= texto.charCodeAt(i);

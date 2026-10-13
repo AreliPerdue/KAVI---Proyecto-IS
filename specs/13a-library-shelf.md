@@ -15,6 +15,18 @@ arriba, un buscador, y los controles de orden y filtros. Abajo, el botón **+** 
   librero de verdad. El lomo lleva el color dominante de la portada y el título en vertical. El grosor del
   lomo sale del número de páginas (con un mínimo y un máximo para que se pueda tocar). Tocar un lomo lo
   "saca" del librero con una animación corta y muestra su portada antes de abrirlo.
+  - Es la vista **Librero**, entre Portadas y Lista. Las repisas se llenan en orden hasta donde quepan en el
+    ancho, así que en web caben más libros por repisa.
+  - **Grosor:** 32 a 72 px, más o menos 100 páginas ≈ 36 px y 300 ≈ 48 px; un libro sin páginas conocidas
+    (EPUB) mide 40. El alto varía un poco entre libros (156 – 196 px), siempre el mismo para cada uno.
+  - El título va de abajo hacia arriba, como en los libros en español, en tinta o papel según se lea mejor.
+    Con imagen de lomo (RF-BL20) se ve la imagen y no se le escribe encima.
+  - Al tocar un lomo, el libro **sube** (200 ms; con movimiento reducido, sin animación) y luego aparece
+    una hoja con su portada, autor y avance, con **"Leer"** y **"Más acciones"** (el menú, RF-BL16).
+  - Mantener presionado selecciona, como en las otras vistas. Una saga apilada (RF-BL25) se ve como
+    colección: sus primeros cinco lomos juntos y "+n" si son más; tocarla la abre.
+  - En el librero no se arrastra: se acomoda en Portadas o Lista (RF-BL7) y el librero sigue ese orden.
+    (T282, 13 oct 2026)
 - **RF-BL3. Lista.** Una fila por pieza: portada chica a la izquierda, título, autor y avance ("p. 120 de
   340") a la derecha.
 - **RF-BL4.** La vista elegida se recuerda en el dispositivo, como la del calendario.

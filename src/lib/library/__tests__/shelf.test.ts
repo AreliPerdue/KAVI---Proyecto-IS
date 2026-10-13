@@ -68,7 +68,8 @@ describe('avanceDe (RF-BL3)', () => {
 
 it('libraryViewValida descarta lo que no es una vista', () => {
   expect(libraryViewValida('list')).toBe('list');
-  expect(libraryViewValida('shelf')).toBe('covers');
+  expect(libraryViewValida('shelf')).toBe('shelf');
+  expect(libraryViewValida('repisas')).toBe('covers');
   expect(libraryViewValida(undefined)).toBe('covers');
 });
 

@@ -2,6 +2,7 @@ import { useRouter } from 'expo-router';
 import { BookOpen, ChevronLeft, FolderMinus, FolderPlus, FlaskConical, Library, Search, SlidersHorizontal, Tag, Trash2, X } from 'lucide-react-native';
 import { useEffect, useMemo, useState } from 'react';
 import { BackHandler, FlatList, type LayoutChangeEvent, StyleSheet, TextInput, View } from 'react-native';
+import { useReducedMotion } from 'react-native-reanimated';
 
 import { ActiveFilters } from '@/components/library/active-filters';
 import { BulkCategorySheet } from '@/components/library/bulk-category-sheet';
@@ -16,6 +17,8 @@ import { ShelfEditSheet } from '@/components/library/shelf-edit-sheet';
 import { ShelfTabs } from '@/components/library/shelf-tabs';
 import { BulkSeriesSheet } from '@/components/library/bulk-series-sheet';
 import { SeriesStackCard, SeriesStackRow } from '@/components/library/series-stack';
+import { LibrarySpine, SeriesSpines } from '@/components/library/book-spine';
+import { Repisa, SpinePreviewSheet } from '@/components/library/bookshelf';
 import { AddToShelfSheet, ShelvesManageSheet } from '@/components/library/shelves-sheets';
 import { SortFilterSheet } from '@/components/library/sort-filter-sheet';
 import { arrastreReciente } from '@/components/lists/drag-guard';
@@ -24,7 +27,7 @@ import { DraggableRows } from '@/components/lists/draggable-rows';
 import { LibraryCoverCard, LibraryRow } from '@/components/library/library-item';
 import { AppText, Banner, EmptyState, ErrorState, Fab, IconButton, LoadingState, Screen, Segmented } from '@/components/ui';
 import { LIBRARY_WARN_RATIO } from '@/constants/library';
-import { Fonts, IconSize, IconStroke, Radius, Spacing, Typography } from '@/constants/theme';
+import { Fonts, IconSize, IconStroke, Motion, Radius, Spacing, Typography } from '@/constants/theme';
 import {
   useLibraryItems,
   useLibraryUsage,
@@ -45,6 +48,7 @@ import type { LibroLeido } from '@/lib/library/import';
 import { cuantosFiltros, type FiltrosBiblioteca, opcionesDeFiltro, ordenEntre, piezasVisibles, SIN_FILTROS } from '@/lib/library/filters';
 import { agruparSagas, type EntradaDeLibreria, etiquetaDeSaga, porNumero } from '@/lib/library/series';
 import { columnasPara, type LibraryView } from '@/lib/library/shelf';
+import { anchoDeSaga, grosorDeLomo, repartirEnRepisas } from '@/lib/library/spines';
 import { useConfirm, useSnackbar } from '@/providers';
 import { usePreferencesStore } from '@/store/preferences-store';
 import type { LibraryItem, LibraryShelf } from '@/types/domain';
@@ -61,6 +65,10 @@ import type { LibraryItem, LibraryShelf } from '@/types/domain';
  *
  * Cada pieza (T281): tocar la abre; el ⋯ abre su menú (RF-BL16); mantener presionado empieza a
  * seleccionar (RF-BL15), y con varias elegidas se les cambia la categoría o se eliminan.
+ *
+ * El librero (T282, RF-BL2): las mismas entradas, de lomo y repartidas en repisas según el ancho; tocar
+ * un lomo lo saca y muestra su portada antes de abrirlo. Ahí no se arrastra: se acomoda en Portadas o Lista
+ * y el librero sigue ese orden.
  *
  * Organizar (T280): libreros como pestañas (RF-BL5 – RF-BL7), buscador (RF-BL18), orden recordado y
  * filtros combinables con sus chips (RF-BL8, RF-BL10). Dentro de un librero, "Como los acomodé" deja
@@ -140,6 +148,25 @@ export default function LibraryScreen() {
     () => (apilando ? agruparSagas(visibles, sagas) : visibles.map((pieza) => ({ tipo: 'pieza' as const, pieza }))),
     [apilando, visibles, sagas],
   );
+  // El librero (RF-BL2): las mismas entradas, de lomo, en las repisas que quepan en el ancho.
+  const repisas: RepisaDelLibrero[] = useMemo(() => {
+    if (vista !== 'shelf' || ancho === 0) return [];
+    const anchoDe = (e: EntradaDeLibreria) => (e.tipo === 'saga' ? anchoDeSaga(e.piezas.map((p) => p.page_count)) : grosorDeLomo(e.pieza.page_count));
+    return repartirEnRepisas(entradas, anchoDe, ancho - Spacing.xs * 2).map((fila, i) => ({ tipo: 'repisa' as const, numero: i + 1, entradas: fila }));
+  }, [vista, ancho, entradas]);
+  // Tocar un lomo primero lo sube y, ya afuera, se abre su portada; con movimiento reducido, de una vez.
+  const [sacada, setSacada] = useState<LibraryItem | null>(null);
+  const [sacandoId, setSacandoId] = useState<string | null>(null);
+  const sinMovimiento = useReducedMotion();
+  const sacar = (pieza: LibraryItem) => {
+    setSacandoId(pieza.id);
+    if (sinMovimiento) setSacada(pieza);
+    else setTimeout(() => setSacada(pieza), Motion.base + 80);
+  };
+  const devolver = () => {
+    setSacada(null);
+    setSacandoId(null);
+  };
   const opciones = useMemo(() => opcionesDeFiltro(piezas.data ?? []), [piezas.data]);
   const membresia = useMemo(() => {
     const mapa = new Map<string, Set<string>>();
@@ -234,7 +261,8 @@ export default function LibraryScreen() {
   // esconderían a los vecinos—, en Todos o en un librero.
   // Con las sagas apiladas o una saga abierta (que va por número) no se arrastra: las pilas no tienen un
   // solo lugar.
-  const acomodando = orden === 'manual' && !busqueda.trim() && nFiltros === 0 && !seleccionando && !apilando && !sagaAbierta;
+  // En el librero tampoco: los lomos se acomodan en Portadas o Lista y el librero sigue ese orden.
+  const acomodando = orden === 'manual' && !busqueda.trim() && nFiltros === 0 && !seleccionando && !apilando && !sagaAbierta && vista !== 'shelf';
   const salirDeSeleccion = () => setSeleccion(new Set());
   const alternar = (id: string) =>
     setSeleccion((previa) => {
@@ -493,6 +521,7 @@ export default function LibraryScreen() {
           label={l.viewLabel}
           options={[
             { value: 'covers', label: l.viewCovers },
+            { value: 'shelf', label: l.viewShelf },
             { value: 'list', label: l.viewList },
           ]}
           value={vista}
@@ -519,15 +548,15 @@ export default function LibraryScreen() {
 
   return (
     <Screen>
-      <FlatList<EntradaDeLibreria>
+      <FlatList<EntradaDeLibreria | RepisaDelLibrero>
         // Cambiar el número de columnas pide montar la lista de nuevo.
         key={`${vista}-${columnas}`}
         testID="library-list"
         // Acomodando dentro de un librero, las piezas van en la rejilla que se arrastra (abajo).
-        data={hayPiezas && !acomodando ? entradas : []}
+        data={!hayPiezas || acomodando ? [] : vista === 'shelf' ? repisas : entradas}
         // La selección cambia cómo se pinta cada pieza (palomita, marco): que la lista se entere.
-        extraData={seleccion}
-        keyExtractor={(e) => (e.tipo === 'saga' ? `saga-${e.saga.id}` : e.pieza.id)}
+        extraData={[seleccion, sacandoId]}
+        keyExtractor={(e) => (e.tipo === 'repisa' ? `repisa-${e.numero}` : e.tipo === 'saga' ? `saga-${e.saga.id}` : e.pieza.id)}
         numColumns={columnas}
         ListHeaderComponent={encabezado}
         onLayout={(e: LayoutChangeEvent) => setAncho(e.nativeEvent.layout.width)}
@@ -535,6 +564,27 @@ export default function LibraryScreen() {
         contentContainerStyle={vista === 'covers' ? styles.rejilla : undefined}
         renderItem={({ item: e }) => {
           if (vista === 'covers' && ancho === 0) return null;
+          if (e.tipo === 'repisa') {
+            return (
+              <Repisa numero={e.numero}>
+                {e.entradas.map((x) =>
+                  x.tipo === 'saga' ? (
+                    <SeriesSpines key={`saga-${x.saga.id}`} {...propsDePila(x)} />
+                  ) : (
+                    <LibrarySpine
+                      key={x.pieza.id}
+                      {...propsDe(x.pieza)}
+                      sacado={sacandoId === x.pieza.id}
+                      onPress={() => {
+                        if (seleccionando) alternar(x.pieza.id);
+                        else if (!sacandoId) sacar(x.pieza);
+                      }}
+                    />
+                  ),
+                )}
+              </Repisa>
+            );
+          }
           if (e.tipo === 'saga') return vista === 'covers' ? <SeriesStackCard {...propsDePila(e)} width={anchoPortada} /> : <SeriesStackRow {...propsDePila(e)} />;
           return vista === 'covers' ? <LibraryCoverCard {...propsDe(e.pieza)} width={anchoPortada} /> : <LibraryRow {...propsDe(e.pieza)} />;
         }}
@@ -574,6 +624,18 @@ export default function LibraryScreen() {
         onRemoveFromShelf={libreroActual ? (p) => quitarDelLibrero([p.id]) : undefined}
         onSelect={(p) => setSeleccion(new Set([p.id]))}
         onDelete={(p) => eliminarPiezas([p])}
+      />
+      <SpinePreviewSheet
+        item={sacada}
+        onClose={devolver}
+        onRead={(p) => {
+          devolver();
+          abrir(p.id);
+        }}
+        onMenu={(p) => {
+          devolver();
+          setMenuDe(p);
+        }}
       />
       <EditItemSheet item={editando} onClose={() => setEditando(null)} />
       <DetailsSheet
@@ -636,6 +698,9 @@ export default function LibraryScreen() {
     </Screen>
   );
 }
+
+/** Una repisa del librero con sus entradas (libros o sagas apiladas). */
+type RepisaDelLibrero = { tipo: 'repisa'; numero: number; entradas: EntradaDeLibreria[] };
 
 const styles = StyleSheet.create({
   content: { gap: Spacing.md, paddingBottom: Spacing.lg },

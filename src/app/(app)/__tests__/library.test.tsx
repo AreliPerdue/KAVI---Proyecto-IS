@@ -201,6 +201,71 @@ describe('vistas', () => {
   });
 });
 
+/** El librero (RF-BL2, T282): los libros de lomo sobre repisas; tocar uno lo saca y muestra su portada. */
+describe('librero', () => {
+  const libros = () => [
+    pieza('l1', { title: 'Rayuela', authors: ['Julio Cortázar'], page_count: 340 }),
+    pieza('l2', { title: 'Ficciones' }),
+    pieza('l3', { title: 'Pedro Páramo' }),
+    pieza('l4', { title: 'Aura', page_count: 60 }),
+  ];
+  beforeEach(() => {
+    mockPiezas = ok(libros());
+    usePreferencesStore.setState({ libraryView: 'shelf', libraryOrder: 'title', librarySeriesView: 'loose' });
+    globalThis.mockRouter.push.mockClear();
+  });
+  // Que "Apiladas" no se quede puesta para las pruebas que siguen.
+  afterEach(() => usePreferencesStore.setState({ librarySeriesView: 'loose' }));
+  const medir = (ancho: number) =>
+    fireEvent(screen.getByTestId('library-list'), 'layout', { nativeEvent: { layout: { width: ancho, height: 800, x: 0, y: 0 } } });
+
+  it('los lomos se reparten en las repisas que quepan en el ancho', async () => {
+    await render(<Pantalla />);
+    expect(screen.getByRole('tab', { name: L.viewShelf, selected: true })).toBeTruthy();
+    await medir(360);
+    expect(screen.getByLabelText(L.spine.shelfLabel(1))).toBeTruthy();
+    expect(screen.queryByLabelText(L.spine.shelfLabel(2))).toBeNull();
+    // Más angosto: Rayuela (50) y Aura (34) caben juntos; los otros dos (40 + 40), en la siguiente.
+    await medir(120);
+    expect(screen.getByLabelText(L.spine.shelfLabel(2))).toBeTruthy();
+    expect(screen.getAllByRole('button', { name: /^(Aura|Ficciones|Pedro Páramo|Rayuela),/ })).toHaveLength(4);
+  });
+
+  it('tocar un lomo muestra su portada y desde ahí se lee o se llega al menú', async () => {
+    await render(<Pantalla />);
+    await medir(360);
+    const lomo = screen.getByRole('button', { name: /^Rayuela, Julio Cortázar/ });
+    expect(lomo.props.accessibilityHint).toBe(L.spine.takeOut('Rayuela'));
+    await fireEvent.press(lomo);
+    // Primero sube; la portada aparece ya afuera.
+    expect(globalThis.mockRouter.push).not.toHaveBeenCalled();
+    await fireEvent.press(await screen.findByRole('button', { name: L.spine.read }));
+    expect(globalThis.mockRouter.push).toHaveBeenCalledWith({ pathname: '/(app)/book/[id]', params: { id: 'l1' } });
+    await fireEvent.press(screen.getByRole('button', { name: /^Aura,/ }));
+    await fireEvent.press(await screen.findByRole('button', { name: L.spine.more }));
+    expect(screen.getByRole('button', { name: L.item.edit })).toBeTruthy();
+  });
+
+  it('mantener presionado un lomo selecciona; tocar otro lo agrega', async () => {
+    await render(<Pantalla />);
+    await medir(360);
+    await fireEvent(screen.getByRole('button', { name: /^Rayuela,/ }), 'longPress');
+    await fireEvent.press(screen.getByRole('button', { name: /^Aura,/ }));
+    expect(screen.getByLabelText(L.selection.count(2))).toBeTruthy();
+    expect(screen.queryByRole('button', { name: L.spine.read })).toBeNull();
+  });
+
+  it('una saga apilada se ve como colección; tocarla la abre', async () => {
+    mockPiezas = ok([...libros(), pieza('a1', { title: 'Una corte de rosas', series_id: 's1', series_index: 1 }), pieza('a2', { title: 'Una corte de niebla', series_id: 's1', series_index: 2 })]);
+    mockSagas = [{ id: 's1', name: 'ACOTAR' }];
+    usePreferencesStore.setState({ librarySeriesView: 'stacked' });
+    await render(<Pantalla />);
+    await medir(360);
+    await fireEvent.press(screen.getByRole('button', { name: L.series.stack('ACOTAR', 2) }));
+    expect(screen.getAllByRole('button', { name: /^Una corte/ })).toHaveLength(2);
+  });
+});
+
 /** Importar un libro (RF-BL11 – RF-BL14, T278): el + elige el archivo y una hoja deja corregir los datos. */
 describe('importar', () => {
   const archivo = { name: 'rayuela.pdf', mime: 'application/pdf', bytes: new Uint8Array(2048) };
