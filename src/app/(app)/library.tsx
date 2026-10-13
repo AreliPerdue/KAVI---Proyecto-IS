@@ -6,6 +6,7 @@ import { BackHandler, FlatList, type LayoutChangeEvent, StyleSheet, TextInput, V
 import { ActiveFilters } from '@/components/library/active-filters';
 import { BulkCategorySheet } from '@/components/library/bulk-category-sheet';
 import { CoverSheet } from '@/components/library/cover-sheet';
+import { DetailsSheet } from '@/components/library/details-sheet';
 import { EditItemSheet } from '@/components/library/edit-item-sheet';
 import { ImportSheet } from '@/components/library/import-sheet';
 import { ItemSheet } from '@/components/library/item-sheet';
@@ -225,6 +226,7 @@ export default function LibraryScreen() {
   const [menuDe, setMenuDe] = useState<LibraryItem | null>(null);
   const [editando, setEditando] = useState<LibraryItem | null>(null);
   const [portadaDe, setPortadaDe] = useState<LibraryItem | null>(null);
+  const [detallesDe, setDetallesDe] = useState<LibraryItem | null>(null);
   const [seleccion, setSeleccion] = useState<ReadonlySet<string>>(() => new Set());
   const [categoriaVarias, setCategoriaVarias] = useState(false);
   const seleccionando = seleccion.size > 0;
@@ -565,6 +567,7 @@ export default function LibraryScreen() {
         onClose={() => setMenuDe(null)}
         onOpen={(p) => abrir(p.id)}
         onEdit={setEditando}
+        onDetails={setDetallesDe}
         onCover={setPortadaDe}
         onAddToShelf={(p) => setAgregandoA([p.id])}
         shelfName={libreroActual?.name}
@@ -573,6 +576,19 @@ export default function LibraryScreen() {
         onDelete={(p) => eliminarPiezas([p])}
       />
       <EditItemSheet item={editando} onClose={() => setEditando(null)} />
+      <DetailsSheet
+        item={detallesDe}
+        items={piezas.data ?? []}
+        sagas={sagas}
+        libreros={listaLibreros}
+        membresia={membresia}
+        onClose={() => setDetallesDe(null)}
+        onShow={setDetallesDe}
+        onRead={(p) => {
+          setDetallesDe(null);
+          abrir(p.id);
+        }}
+      />
       <CoverSheet item={portadaDe} onClose={() => setPortadaDe(null)} />
       <BulkSeriesSheet count={seleccion.size} visible={sagaVarias} onClose={() => setSagaVarias(false)} onApply={ponerEnSaga} />
       <BulkCategorySheet count={seleccion.size} visible={categoriaVarias} onClose={() => setCategoriaVarias(false)} onApply={aplicarCategoria} />

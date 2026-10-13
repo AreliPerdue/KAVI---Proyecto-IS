@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/providers';
 import { LIBRARY_URL_SECONDS } from '@/constants/library';
 import {
+  addLink,
   addToShelf,
   clearCustomCover,
   createShelf,
@@ -13,17 +14,20 @@ import {
   libraryFileUrl,
   type LibraryItem,
   type LibraryItemPatch,
+  type LibraryLink,
   type LibrarySeries,
   type LibraryShelf,
   type LibraryShelfItem,
   libraryUsage,
   listLibraryItems,
+  listLinks,
   listSeries,
   listShelfItems,
   listShelves,
   moveInShelf,
   removeFromShelf,
   removeLibraryItem,
+  removeLink,
   removeSeries,
   removeShelf,
   renameSeries,
@@ -43,6 +47,7 @@ export const libraryKeys = {
   shelves: (userId: string | null) => ['library', 'shelves', userId] as const,
   shelfItems: (userId: string | null) => ['library', 'shelf-items', userId] as const,
   series: (userId: string | null) => ['library', 'series', userId] as const,
+  links: (userId: string | null) => ['library', 'links', userId] as const,
 };
 
 /** Las piezas de la persona, de la más nueva a la más vieja. */
@@ -313,5 +318,30 @@ export function useSeriesMutations() {
   return {
     renombrar: useMutation({ mutationFn: ({ id, nombre }: { id: string; nombre: string }) => renameSeries(id, nombre), onSettled: refrescar }),
     borrar: useMutation({ mutationFn: (id: string) => removeSeries(id), onSettled: refrescar }),
+  };
+}
+
+/** Los enlaces entre libros (RF-BL27). */
+export function useLinks() {
+  const { userId } = useAuth();
+  return useQuery<LibraryLink[]>({ queryKey: libraryKeys.links(userId), queryFn: () => listLinks(userId as string), enabled: !!userId });
+}
+
+/** Enlazar dos libros o quitar un enlace; quitar se ve al instante. */
+export function useLinkMutations() {
+  const { userId } = useAuth();
+  const queryClient = useQueryClient();
+  const clave = libraryKeys.links(userId);
+  const refrescar = () => queryClient.invalidateQueries({ queryKey: clave });
+  return {
+    enlazar: useMutation({
+      mutationFn: ({ from, to, kind }: { from: string; to: string; kind: LibraryLink['kind'] }) => addLink(userId as string, from, to, kind),
+      onSettled: refrescar,
+    }),
+    quitar: useMutation({
+      mutationFn: (id: string) => removeLink(id),
+      onMutate: (id) => queryClient.setQueryData<LibraryLink[]>(clave, (l) => l?.filter((k) => k.id !== id)),
+      onSettled: refrescar,
+    }),
   };
 }

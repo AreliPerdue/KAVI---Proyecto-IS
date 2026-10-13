@@ -17,6 +17,8 @@ export type {
   LibraryKind,
   LibraryPage,
   LibraryShelf,
+  LibraryLink,
+  LibraryLinkKind,
   LibrarySeries,
   LibraryShelfItem,
 } from '@/types/domain';
@@ -29,6 +31,9 @@ export const removeLibraryItem = libraryApi.removeItem;
 export const libraryUsage = libraryApi.usage;
 export const uploadLibraryFile = libraryApi.uploadFile;
 export const libraryFileUrl = libraryApi.fileUrl;
+export const listLinks = libraryApi.listLinks;
+export const addLink = libraryApi.addLink;
+export const removeLink = libraryApi.removeLink;
 export const listSeries = libraryApi.listSeries;
 export const ensureSeries = libraryApi.ensureSeries;
 export const renameSeries = libraryApi.renameSeries;

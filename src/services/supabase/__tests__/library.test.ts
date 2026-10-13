@@ -169,3 +169,8 @@ describe('sagas (T315)', () => {
     expect(mockSb.argsDe('insert')?.[0]).toEqual({ owner_id: 'u1', name: 'Harry Potter' });
   });
 });
+
+it('enlazar una pareja que ya estaba enlazada lo dice claro (T316)', async () => {
+  mockSb.encolar({ data: null, error: { message: 'duplicate key', code: '23505' } as never });
+  await expect(supabaseLibrary.addLink('u1', 'a', 'b', 'related')).rejects.toThrow(es.library.links.duplicate);
+});

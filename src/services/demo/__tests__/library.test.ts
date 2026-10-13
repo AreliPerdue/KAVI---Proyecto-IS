@@ -134,3 +134,20 @@ describe('sagas (T315)', () => {
     expect((await api.getItem(libro.id)).series_id).toBeNull();
   });
 });
+
+describe('enlaces (T316)', () => {
+  it('enlazar dos libros propios, sin repetir la pareja; borrar un libro se lleva sus enlaces', async () => {
+    const api = fresh();
+    const a = await api.createItem('u1', { family: 'book', kind: 'pdf', title: 'A' });
+    const b = await api.createItem('u1', { family: 'book', kind: 'pdf', title: 'B' });
+    const ajeno = await api.createItem('u2', { family: 'book', kind: 'pdf', title: 'Ajeno' });
+    await api.addLink('u1', a.id, b.id, 'prequel');
+    await expect(api.addLink('u1', b.id, a.id, 'related')).rejects.toThrow();
+    await expect(api.addLink('u1', a.id, a.id, 'related')).rejects.toThrow();
+    await expect(api.addLink('u1', a.id, ajeno.id, 'related')).rejects.toThrow();
+    expect(await api.listLinks('u1')).toHaveLength(1);
+    expect(await api.listLinks('u2')).toHaveLength(0);
+    await api.removeItem(b.id);
+    expect(await api.listLinks('u1')).toHaveLength(0);
+  });
+});

@@ -617,6 +617,14 @@ export type LibraryItemInput = Pick<LibraryItem, 'family' | 'kind' | 'title'> &
 
 export type LibraryItemPatch = Partial<Omit<LibraryItem, 'id' | 'owner_id' | 'family' | 'created_at' | 'updated_at'>>;
 
+/**
+ * Un enlace entre dos piezas (RF-BL27), leído de `from_item` a `to_item`: `prequel` (from es precuela de
+ * to), `spinoff` (from es spin-off de to), `universe` y `related` (simétricos) y `notes` (from es el
+ * cuaderno de notas de to).
+ */
+export type LibraryLinkKind = 'prequel' | 'spinoff' | 'universe' | 'related' | 'notes';
+export type LibraryLink = { id: string; owner_id: string; from_item: string; to_item: string; kind: LibraryLinkKind; created_at: string };
+
 /** Una saga de la persona (RF-BL24): "Una corte de rosas y espinas". */
 export type LibrarySeries = { id: string; owner_id: string; name: string; created_at: string; updated_at: string };
 

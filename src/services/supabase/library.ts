@@ -13,6 +13,7 @@ import type {
   LibraryFont,
   LibraryItem,
   LibraryPage,
+  LibraryLink,
   LibrarySeries,
   LibraryShelf,
   LibraryShelfItem,
@@ -140,6 +141,21 @@ export const supabaseLibrary: LibraryApi = {
 
   async removeSeries(seriesId) {
     sinError(await db().from('library_series').delete().eq('id', seriesId));
+  },
+
+  async listLinks(userId) {
+    return unwrap(await db().from('library_links').select('*').eq('owner_id', userId).order('created_at')) as LibraryLink[];
+  },
+
+  async addLink(userId, fromItem, toItem, kind) {
+    const r = await db().from('library_links').insert({ owner_id: userId, from_item: fromItem, to_item: toItem, kind }).select('*').single();
+    // El índice único por pareja (en cualquier sentido) dice que ya estaban enlazados.
+    if (r.error?.code === '23505') throw new AuthUiError(t().library.links.duplicate, r.error);
+    return unwrap(r) as LibraryLink;
+  },
+
+  async removeLink(linkId) {
+    sinError(await db().from('library_links').delete().eq('id', linkId));
   },
 
   async listShelves(userId) {

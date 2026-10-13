@@ -102,7 +102,7 @@ Es grande a propósito, y por eso se construye **por capas** (§8): primero un n
 | `library_pages` | Las páginas de una creación: plantilla, capas y su contenido. |
 | `library_fonts` | Las fuentes que subió cada persona (archivo en Storage). |
 | `library_series` | Las sagas de cada persona (nombre, único sin importar mayúsculas); cada libro guarda su saga y su número (`series_id`, `series_index`). Un disparador impide colgar un libro de una saga ajena. Aplicado el 13 oct 2026 (`20261013120000_library_series.sql`, T315) (13a, RF-BL24). |
-| `library_links` | Enlaces entre piezas: de, a, tipo (precuela, secuela, spin-off, mismo universo, relacionado, notas) (13a, RF-BL27). |
+| `library_links` | Enlaces entre piezas, leídos de `from_item` a `to_item`: `prequel`, `spinoff`, `universe`, `related`, `notes` ("secuela de" se guarda como precuela al revés). Un solo enlace por pareja en cualquier sentido; las dos piezas deben ser de quien enlaza. Aplicado el 13 oct 2026 (`20261013130000_library_links.sql`, T316) (13a, RF-BL27). |
 | `library_reading_sessions` | Cada sesión de lectura: pieza, inicio, fin, duración en segundos y posición inicial y final (13b, RF-BR11 – RF-BR13). |
 | `library_clips` | Los recortes: pieza (se queda en nulo si se borra, con el título guardado), tipo (texto o imagen), texto o ruta de la imagen en R2, posición, nota y fecha (13c, RF-BH19 – RF-BH21). |
 | `library_clubs` / `library_club_members` | Los clubes de lectura, sus miembros y la copia de cada quien (13f §5). Las anotaciones del club son filas de `library_annotations` con `club_id`. |

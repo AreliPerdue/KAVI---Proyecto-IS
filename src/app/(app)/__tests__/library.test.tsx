@@ -20,6 +20,8 @@ const mockCategorizar = { mutate: jest.fn() };
 const mockActualizar = { mutate: jest.fn(), isError: false };
 let mockLibreros: Record<string, unknown>[] = [];
 let mockSagas: Record<string, unknown>[] = [];
+let mockEnlaces: Record<string, unknown>[] = [];
+const mockEnlacesMut = { enlazar: { mutate: jest.fn(), isPending: false }, quitar: { mutate: jest.fn() } };
 const mockAsignarSaga = { mutate: jest.fn() };
 let mockEnLibreros: Record<string, unknown>[] = [];
 const mockLibrerosMut = {
@@ -48,6 +50,8 @@ jest.mock('@/hooks/use-library', () => ({
   useShelfItems: () => ({ data: mockEnLibreros }),
   useShelfMutations: () => mockLibrerosMut,
   useSeries: () => ({ data: mockSagas }),
+  useLinks: () => ({ data: mockEnlaces }),
+  useLinkMutations: () => mockEnlacesMut,
   useAssignSeries: () => mockAsignarSaga,
 }));
 // Arrastrar no se puede simular con gestos en Jest: los dobles pintan las piezas y guardan `onReorder`.
@@ -83,6 +87,8 @@ const pieza = (id: string, extra: Record<string, unknown> = {}) => ({
   sort_order: 0,
   series_id: null,
   series_index: null,
+  kind: 'pdf',
+  file_size: 1024,
   created_at: '2026-10-01T00:00:00Z',
   page_count: null,
   progress: 0,
@@ -99,6 +105,9 @@ beforeEach(() => {
   mockEnLibreros = [];
   mockSagas = [];
   mockAsignarSaga.mutate.mockReset();
+  mockEnlaces = [];
+  mockEnlacesMut.enlazar.mutate.mockReset();
+  mockEnlacesMut.quitar.mutate.mockReset();
   mockArrastrable = null;
   for (const m of Object.values(mockLibrerosMut)) m.mutate.mockReset();
   mockPiezas = ok([]);
@@ -502,5 +511,54 @@ describe('sagas', () => {
     await fireEvent.changeText(screen.getByLabelText(L.series.field), 'Clásicos');
     await fireEvent.press(screen.getAllByRole('button', { name: L.series.put }).at(-1)!);
     expect(mockAsignarSaga.mutate.mock.calls[0][0]).toEqual({ nombre: 'Clásicos', asignar: [{ id: 'x', numero: 1 }, { id: 'a1', numero: 2 }] });
+  });
+});
+
+/** Detalles y libros enlazados (T316, RF-BL27). */
+describe('detalles y enlaces', () => {
+  beforeEach(() => {
+    mockPiezas = ok([
+      pieza('a', { title: 'El hobbit', authors: ['J. R. R. Tolkien'] }),
+      pieza('b', { title: 'El señor de los anillos', authors: ['J. R. R. Tolkien'] }),
+      pieza('c', { title: 'Rayuela' }),
+    ]);
+    mockEnlaces = [{ id: 'k1', from_item: 'a', to_item: 'b', kind: 'prequel' }];
+    usePreferencesStore.setState({ libraryView: 'list', libraryOrder: 'recent' });
+  });
+
+  const abrirDetalles = async (titulo: string) => {
+    await fireEvent.press(screen.getByRole('button', { name: L.actionsFor(titulo) }));
+    await fireEvent.press(screen.getByRole('button', { name: L.details.open }));
+  };
+
+  it('los enlaces se leen desde los dos lados y tocar uno muestra el otro libro', async () => {
+    await render(<Pantalla />);
+    await abrirDetalles('El señor de los anillos');
+    await fireEvent.press(screen.getByRole('button', { name: `${L.links.roles.prequel}: El hobbit` }));
+    expect(screen.getByRole('button', { name: `${L.links.roles.sequel}: El señor de los anillos` })).toBeTruthy();
+  });
+
+  it('enlazar: qué es este libro, con cuál, y se guarda en el sentido correcto', async () => {
+    await render(<Pantalla />);
+    await abrirDetalles('Rayuela');
+    expect(screen.getByText(L.links.empty)).toBeTruthy();
+    await fireEvent.press(screen.getByRole('button', { name: L.links.add }));
+    await fireEvent.press(screen.getByRole('radio', { name: L.links.options.isSequelOf }));
+    await fireEvent.changeText(screen.getByLabelText(L.links.searchPlaceholder), 'hobbit');
+    await fireEvent.press(screen.getByRole('button', { name: 'El hobbit' }));
+    // "Rayuela es secuela de El hobbit" se guarda como "El hobbit es precuela de Rayuela".
+    expect(mockEnlacesMut.enlazar.mutate.mock.calls[0][0]).toEqual({ from: 'a', to: 'c', kind: 'prequel' });
+  });
+
+  it('un libro ya enlazado no se puede volver a elegir; quitar un enlace', async () => {
+    await render(<Pantalla />);
+    await abrirDetalles('El hobbit');
+    await fireEvent.press(screen.getByRole('button', { name: L.links.add }));
+    await fireEvent.press(screen.getByRole('radio', { name: L.links.options.related }));
+    expect(screen.getByRole('button', { name: `El señor de los anillos, ${L.links.already}` }).props.accessibilityState).toEqual({ disabled: true });
+    await fireEvent.press(screen.getAllByRole('button', { name: es.common.cancel }).at(-1)!);
+    await fireEvent.press(screen.getAllByRole('button', { name: es.common.cancel }).at(-1)!);
+    await fireEvent.press(screen.getByRole('button', { name: L.links.remove('El señor de los anillos') }));
+    expect(mockEnlacesMut.quitar.mutate).toHaveBeenCalledWith('k1');
   });
 });

@@ -46,6 +46,8 @@ import type {
   LibraryItem,
   LibraryItemInput,
   LibraryItemPatch,
+  LibraryLink,
+  LibraryLinkKind,
   LibrarySeries,
   LibraryShelf,
   LibraryShelfItem,
@@ -494,6 +496,11 @@ export interface LibraryApi {
   renameSeries(seriesId: string, name: string): Promise<LibrarySeries>;
   /** Borra la saga; sus libros se quedan, sin saga. */
   removeSeries(seriesId: string): Promise<void>;
+
+  /** Los enlaces entre piezas de la persona (RF-BL27). */
+  listLinks(userId: string): Promise<LibraryLink[]>;
+  addLink(userId: string, fromItem: string, toItem: string, kind: LibraryLinkKind): Promise<LibraryLink>;
+  removeLink(linkId: string): Promise<void>;
 
   listShelves(userId: string): Promise<LibraryShelf[]>;
   createShelf(userId: string, input: Pick<LibraryShelf, 'name'> & Partial<Pick<LibraryShelf, 'color' | 'icon'>>): Promise<LibraryShelf>;

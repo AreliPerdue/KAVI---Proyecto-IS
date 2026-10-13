@@ -152,7 +152,11 @@ Areli empezó Library en marzo de 2026 como un proyecto aparte, **KAVI Reader** 
     B dice que A es su precuela.
   - **Libro ↔ cuaderno o diario:** por ejemplo, el cuaderno de notas de una saga o el diario de lectura. Se
     abre uno desde el otro. (Las creaciones llegan en L5; hasta entonces solo se enlazan libros.)
-  - Los enlaces se ven en "Detalles" del libro, y tocar uno abre la otra pieza.
+  - Los enlaces se ven en "Detalles" del libro (nueva opción del menú ⋯, con todos sus datos y un botón
+    "Leer"), y tocar uno muestra los detalles de la otra pieza. Se enlaza en dos pasos: qué es este libro
+    ("es precuela de…", "tiene como spin-off a…") y con cuál, buscándolo por título o autor. Un enlace se
+    guarda una sola vez, una pareja no se enlaza dos veces, y borrar un libro borra sus enlaces. (T316,
+    13 oct 2026)
 
 ## 11. Criterios de aceptación
 

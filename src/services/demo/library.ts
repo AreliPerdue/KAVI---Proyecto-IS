@@ -13,6 +13,7 @@ import type {
   LibraryFont,
   LibraryItem,
   LibraryPage,
+  LibraryLink,
   LibrarySeries,
   LibraryShelf,
   LibraryShelfItem,
@@ -27,6 +28,7 @@ import { t } from '@/i18n';
 const items: LibraryItem[] = [];
 const shelves: LibraryShelf[] = [];
 const series: LibrarySeries[] = [];
+const links: LibraryLink[] = [];
 const shelfItems: (LibraryShelfItem & { owner_id: string })[] = [];
 const annotations: LibraryAnnotation[] = [];
 const templates: LibraryCardTemplate[] = [];
@@ -130,6 +132,7 @@ export const demoLibrary: LibraryApi = {
     const item = buscar(items, itemId);
     borrarCarpeta(`${item.owner_id}/${item.id}`);
     quitarDe(items, (i) => i.id === itemId);
+    quitarDe(links, (k) => k.from_item === itemId || k.to_item === itemId);
     quitarDe(shelfItems, (s) => s.item_id === itemId);
     quitarDe(annotations, (a) => a.item_id === itemId);
     quitarDe(cards, (c) => c.item_id === itemId);
@@ -199,6 +202,32 @@ export const demoLibrary: LibraryApi = {
     quitarDe(series, (s) => s.id === seriesId);
     // Como la base (`on delete set null`): los libros se quedan, sin saga.
     for (const i of items) if (i.series_id === seriesId) i.series_id = null;
+    emitDataChange();
+  },
+
+  async listLinks(userId) {
+    await delay();
+    return copia(links.filter((k) => k.owner_id === userId));
+  },
+
+  async addLink(userId, fromItem, toItem, kind) {
+    await delay();
+    // Las mismas reglas que la base: piezas propias, distintas, y un solo enlace por pareja.
+    if (fromItem === toItem) throw new AuthUiError(t().errors.noPermission);
+    const mias = (id: string) => items.some((i) => i.id === id && i.owner_id === userId);
+    if (!mias(fromItem) || !mias(toItem)) throw new AuthUiError(t().errors.noPermission);
+    if (links.some((k) => k.owner_id === userId && ((k.from_item === fromItem && k.to_item === toItem) || (k.from_item === toItem && k.to_item === fromItem)))) {
+      throw new AuthUiError(t().library.links.duplicate);
+    }
+    const nuevo: LibraryLink = { id: nextId('link'), owner_id: userId, from_item: fromItem, to_item: toItem, kind, created_at: ahora() };
+    links.push(nuevo);
+    emitDataChange();
+    return copia(nuevo);
+  },
+
+  async removeLink(linkId) {
+    await delay();
+    quitarDe(links, (k) => k.id === linkId);
     emitDataChange();
   },
 
