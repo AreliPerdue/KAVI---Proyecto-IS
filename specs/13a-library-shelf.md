@@ -19,8 +19,10 @@ arriba, un buscador, y los controles de orden y filtros. Abajo, el botón **+** 
     ancho, así que en web caben más libros por repisa.
   - **Grosor:** 32 a 72 px, más o menos 100 páginas ≈ 36 px y 300 ≈ 48 px; un libro sin páginas conocidas
     (EPUB) mide 40. El alto varía un poco entre libros (156 – 196 px), siempre el mismo para cada uno.
-  - El título va de abajo hacia arriba, como en los libros en español, en tinta o papel según se lea mejor.
-    Con imagen de lomo (RF-BL20) se ve la imagen y no se le escribe encima.
+  - El título va de abajo hacia arriba, como en los libros en español, en tinta o papel según se lea mejor;
+    si no cabe en un renglón pasa a dos. Con imagen de lomo (RF-BL20) se ve la imagen **completa**, sin
+    recortar: el lomo toma el alto que pide la imagen a su grosor (hasta 260 px; si pide más, se ve entera
+    dentro con el color del lomo alrededor) y no se le escribe encima.
   - Al tocar un lomo, el libro **sube** (200 ms; con movimiento reducido, sin animación) y luego aparece
     una hoja con su portada, autor y avance, con **"Leer"** y **"Más acciones"** (el menú, RF-BL16).
   - Mantener presionado selecciona, como en las otras vistas. Una saga apilada (RF-BL25) se ve como

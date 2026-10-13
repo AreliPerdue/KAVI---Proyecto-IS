@@ -1,5 +1,5 @@
 /** El lomo (RF-BL2, RF-BL20; T282): la imagen del lomo si la hay; si no, su color con el título. Es decorativo (oculto al lector de pantalla), por eso se busca con los ocultos. */
-import { render, screen } from '@testing-library/react-native';
+import { fireEvent, render, screen } from '@testing-library/react-native';
 import { StyleSheet } from 'react-native';
 
 import { BookSpine } from '@/components/library/book-spine';
@@ -26,4 +26,21 @@ it('con imagen de lomo, la imagen y sin título encima', async () => {
   await render(<BookSpine item={libro({ spine_path: 'u1/l1/spine.jpg' })} />);
   expect(screen.queryByText('Rayuela', { includeHiddenElements: true })).toBeNull();
   expect(screen.getByTestId('lomo-imagen', { includeHiddenElements: true })).toBeTruthy();
+});
+
+it('con imagen, el lomo toma el alto de la imagen para que no se recorte', async () => {
+  await render(<BookSpine item={libro({ spine_path: 'u1/l1/spine.jpg' })} />);
+  const imagen = screen.getByTestId('lomo-imagen', { includeHiddenElements: true });
+  await fireEvent(imagen, 'load', { nativeEvent: { source: { width: 100, height: 400 } } });
+  // 340 páginas = 50 px de grosor; la imagen pide 4 veces eso.
+  expect(StyleSheet.flatten(screen.getByTestId('lomo', { includeHiddenElements: true }).props.style)).toMatchObject({ width: 50, height: 200 });
+  expect(screen.getByTestId('lomo-imagen', { includeHiddenElements: true }).props.contentFit).toBe('cover');
+  // Una imagen larguísima se topa y se ve entera dentro.
+  await fireEvent(screen.getByTestId('lomo-imagen', { includeHiddenElements: true }), 'load', { nativeEvent: { source: { width: 100, height: 2000 } } });
+  expect(screen.getByTestId('lomo-imagen', { includeHiddenElements: true }).props.contentFit).toBe('contain');
+});
+
+it('el título largo puede ir en dos renglones', async () => {
+  await render(<BookSpine item={libro({ title: 'A Court of Wings and Ruin' })} />);
+  expect(screen.getByText('A Court of Wings and Ruin', { includeHiddenElements: true }).props.numberOfLines).toBe(2);
 });

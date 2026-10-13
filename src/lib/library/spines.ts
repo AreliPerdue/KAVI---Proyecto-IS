@@ -14,6 +14,21 @@ export const LOMO_MAX = 72;
 export const LOMO_ALTO_MIN = 156;
 export const LOMO_ALTO_MAX = 196;
 
+/** Lo más alto que puede ser un lomo con imagen: más, y ya no parece libro junto a los demás. */
+export const LOMO_ALTO_IMAGEN_MAX = 260;
+
+/**
+ * El alto de un lomo con imagen (RF-BL20): el que pide la imagen a ese grosor, para que se vea completa
+ * y no recortada. Entre el mínimo de los lomos y `LOMO_ALTO_IMAGEN_MAX`; si la imagen pide más o menos,
+ * se queda en el tope y la imagen se ve entera dentro (con el color del lomo en lo que sobre).
+ */
+export function altoConImagen(grosor: number, anchoImagen: number, altoImagen: number): { alto: number; ajustada: boolean } {
+  if (anchoImagen <= 0 || altoImagen <= 0) return { alto: LOMO_ALTO_MIN, ajustada: false };
+  const pedido = Math.round((grosor * altoImagen) / anchoImagen);
+  const alto = Math.min(LOMO_ALTO_IMAGEN_MAX, Math.max(LOMO_ALTO_MIN, pedido));
+  return { alto, ajustada: alto === pedido };
+}
+
 /** Separación entre lomos de una repisa. */
 export const ENTRE_LOMOS = 3;
 

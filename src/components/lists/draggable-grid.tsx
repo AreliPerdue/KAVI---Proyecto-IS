@@ -88,8 +88,11 @@ export function DraggableGrid<T>({ items, columns, keyOf, renderItem, onReorder,
               </Celda>
             );
           })}
-          {/* Rellena el hueco de una fila incompleta para que la tarjeta no se estire. */}
-          {fila.length < columns ? <View style={styles.hueco} /> : null}
+          {/* Una celda vacía por cada que falta en una fila incompleta: así cada tarjeta mide lo mismo que en
+              una fila llena (con un solo relleno, en 3 o más columnas las tarjetas se repartían el hueco). */}
+          {Array.from({ length: columns - fila.length }, (_, i) => (
+            <View key={`hueco-${i}`} testID="hueco" style={styles.hueco} />
+          ))}
         </View>
       ))}
     </View>

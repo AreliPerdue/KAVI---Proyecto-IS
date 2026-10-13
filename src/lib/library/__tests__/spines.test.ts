@@ -1,5 +1,5 @@
 /** El librero (RF-BL2, T282): cuánto mide cada lomo y cómo se reparten en repisas. */
-import { anchoDeSaga, ANCHO_RESTO, altoDeLomo, grosorDeLomo, LOMO_ALTO_MAX, LOMO_ALTO_MIN, LOMO_MAX, LOMO_MIN, LOMO_SIN_PAGINAS, repartirEnRepisas } from '@/lib/library/spines';
+import { altoConImagen, anchoDeSaga, ANCHO_RESTO, altoDeLomo, grosorDeLomo, LOMO_ALTO_IMAGEN_MAX, LOMO_ALTO_MAX, LOMO_ALTO_MIN, LOMO_MAX, LOMO_MIN, LOMO_SIN_PAGINAS, repartirEnRepisas } from '@/lib/library/spines';
 
 describe('grosor', () => {
   it('más páginas, más grueso, entre el mínimo y el máximo', () => {
@@ -41,4 +41,16 @@ describe('repisas', () => {
 it('una saga ocupa sus primeros cinco lomos y el "+n" si son más', () => {
   expect(anchoDeSaga([100, 300])).toBe(36 + 48);
   expect(anchoDeSaga([null, null, null, null, null, null, null])).toBe(5 * LOMO_SIN_PAGINAS + ANCHO_RESTO);
+});
+
+describe('lomo con imagen', () => {
+  it('toma el alto que pide la imagen a su grosor, para verse completa', () => {
+    expect(altoConImagen(50, 100, 400)).toEqual({ alto: 200, ajustada: true });
+  });
+
+  it('entre el mínimo y el tope; ahí la imagen se ve entera dentro', () => {
+    expect(altoConImagen(50, 100, 1000)).toEqual({ alto: LOMO_ALTO_IMAGEN_MAX, ajustada: false });
+    expect(altoConImagen(50, 100, 100)).toEqual({ alto: LOMO_ALTO_MIN, ajustada: false });
+    expect(altoConImagen(50, 0, 100)).toEqual({ alto: LOMO_ALTO_MIN, ajustada: false });
+  });
 });
