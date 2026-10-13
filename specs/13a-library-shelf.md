@@ -79,7 +79,25 @@ arriba, un buscador, y los controles de orden y filtros. Abajo, el botón **+** 
 - **RF-BL18.** El buscador encuentra por título, autor, categoría y género. Buscar **dentro** del texto de
   los libros es de la spec 13b.
 
-## 8. Criterios de aceptación
+## 8. Lo que venía de KAVI Reader (RF-BL19 – RF-BL22)
+
+Areli empezó Library en marzo de 2026 como un proyecto aparte, **KAVI Reader** (repos `kavi_reader` e
+`interactive-reader`, Next.js con pdf.js). Lo descartó, pero tenía estas ideas que no estaban en esta spec
+(agregadas el 12 oct 2026):
+
+- **RF-BL19. Más datos del libro**, todos opcionales, en "Editar datos" (RF-BL16) y en la hoja de importar
+  bajo "Más datos": **editorial**, **lugar de publicación**, **edición**, **número de capítulos** y
+  **sinopsis**. Un EPUB los propone de su OPF (`dc:publisher`, `dc:description`); un PDF no los trae.
+- **RF-BL20. Portada, lomo y contraportada.** Además de la portada, se pueden poner imágenes propias del
+  **lomo** y de la **contraportada**, cada una con su color. El librero (RF-BL2) usa la imagen del lomo si la
+  hay; la contraportada se ve al final del libro real (13b) y es donde puede ir pegada una ficha (13d,
+  RF-BF4). Sin imagen, el lomo y la contraportada salen del color de la portada.
+- **RF-BL21. Cuentagotas.** El color de cada parte se calcula solo (RF-BL13), pero se puede cambiar tocando un
+  punto de su imagen, que toma ese color, o escribiendo el hex. Se ve una muestra junto al valor.
+- **RF-BL22. Encabezado de la librería** con el wordmark **KAVI Library** (Moirai One + Poiret One, dentro de
+  `components/ui/Wordmark`, como el de la app) y un saludo con el nombre: "Qué gusto verte de nuevo, Areli".
+
+## 9. Criterios de aceptación
 
 - *Dado* que tengo 20 libros, *cuando* elijo la vista Librero, *entonces* los veo de lomo sobre repisas, con
   el color de su portada y el título en vertical.
@@ -90,3 +108,7 @@ arriba, un buscador, y los controles de orden y filtros. Abajo, el botón **+** 
 - *Dado* un PDF sin portada, *cuando* lo importo, *entonces* aparece con una portada generada con su título.
 - *Dado* un EPUB con candado, *cuando* intento importarlo, *entonces* KAVI me dice que no se puede abrir
   porque tiene protección y no lo agrega.
+- *Dado* un PDF que solo prohíbe imprimir, *cuando* lo importo, *entonces* se agrega; *dado* uno que pide
+  contraseña para abrirse, *entonces* KAVI me dice por qué no y no lo agrega.
+- *Dado* un libro con imagen de lomo, *cuando* veo el librero, *entonces* su lomo es esa imagen; *cuando* toco
+  un punto dorado de la portada con el cuentagotas, *entonces* el color de la portada pasa a ese dorado.

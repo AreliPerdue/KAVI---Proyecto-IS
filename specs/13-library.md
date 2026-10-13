@@ -87,7 +87,7 @@ Es grande a propósito, y por eso se construye **por capas** (§8): primero un n
 
 | Tabla | Qué guarda |
 |---|---|
-| `library_items` | Cada pieza: dueño, familia (libro/creación), tipo (pdf, epub, docx…, cuaderno, diario, álbum), título, autor(es), portada, color dominante (hex), géneros, categoría, fecha en que se agregó, ruta del archivo, número de páginas, progreso y última posición. |
+| `library_items` | Cada pieza: dueño, familia (libro/creación), tipo (pdf, epub, docx…, cuaderno, diario, álbum), título, autor(es), portada, color dominante (hex), géneros, categoría, fecha en que se agregó, ruta del archivo, número de páginas, progreso y última posición. Con RF-BL19 – RF-BL20 suma editorial, lugar de publicación, edición, capítulos, sinopsis, y lomo y contraportada (ruta y color de cada uno). |
 | `library_shelves` / `library_shelf_items` | Los libreros propios y qué piezas tiene cada uno, con su orden. |
 | `library_annotations` | Cada anotación: pieza, tipo, posición (página + coordenadas o CFI), contenido (`jsonb`: texto, color, trazo, sticker, rotación, tamaño), orden de capa y si está guardada o "quitada" (los stickers se quitan y se vuelven a poner). |
 | `library_card_templates` / `library_cards` | Diseños de ficha y las fichas pegadas a cada pieza, con sus valores y dónde van. |

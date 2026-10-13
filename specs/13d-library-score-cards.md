@@ -10,7 +10,8 @@ ven juntas en un resumen.
 
 ## 2. Diseñar la ficha (RF-BF1 – RF-BF5)
 
-- **RF-BF1. Plantillas incluidas** para empezar: "Reseña rápida" (estrellas + notas), "Diario de lectura"
+- **RF-BF1. Plantillas incluidas** para empezar: "Reseña rápida" (estrellas del 1 al 5, calificación del 1
+  al 10 —las dos, como en KAVI Reader— y notas), "Diario de lectura"
   (estrellas, género, fechas de inicio y fin, frase favorita, notas) y "Romance" (estrellas, picante,
   *tropes*, personaje favorito). Todas se pueden copiar y cambiar.
 - **RF-BF2. Campos** que se agregan, quitan y reordenan:

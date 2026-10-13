@@ -26,6 +26,10 @@
 - **RF-BR5. Libro real.** Dos páginas a la vista, una frente a la otra, con el lomo en medio. Pasar de
   página es **arrastrar la esquina** (la hoja se curva y deja ver la siguiente mientras se arrastra) o un
   toque en el borde (la hoja da la vuelta sola). Soltar a medias regresa la hoja.
+  - Como en un libro de verdad, **la primera página (la portada) va sola, del lado derecho**; después van
+    en pares: 2–3, 4–5… La barra de avance dice "pp. 2–3 de 340" (idea de KAVI Reader).
+  - Las zonas para pasar de página con un toque son el **20 % de cada borde**; el centro queda libre para
+    seleccionar texto y anotar.
   - **En teléfono obliga a girar a horizontal** (decisión B6): al entrar, si el teléfono está vertical, se
     muestra "Gira tu teléfono" con una animación, y la pantalla queda fija en horizontal mientras dure.
   - En tableta y web se adapta: dos páginas si cabe, una si no.

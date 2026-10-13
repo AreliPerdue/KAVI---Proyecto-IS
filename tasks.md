@@ -928,12 +928,19 @@ Decisiones B1–B9 aprobadas el 12 oct 2026 (T274); ver la tabla de la spec 13 �
   Dep: T278
 - [ ] T280 Libreros propios, orden, filtros (incluido color) y buscador. (RF-BL5 – RF-BL10, RF-BL18) Dep: T277
 - [ ] T281 Menú de cada pieza y selección múltiple. (RF-BL15 – RF-BL17) Dep: T280
+- [ ] T310 Más datos del libro (editorial, lugar, edición, capítulos, sinopsis): columnas nuevas, "Más datos" al
+  importar y al editar, y lo que proponga el OPF. (RF-BL19, de KAVI Reader) Dep: T278, T281
+- [ ] T312 Encabezado de la librería con el wordmark KAVI Library y saludo con el nombre. (RF-BL22, de KAVI
+  Reader) Dep: T277
 
 ### L2 · Formas de leer
-- [ ] T282 Vista de librero con lomos sobre repisas. (RF-BL2) Dep: T277
+- [ ] T311 Portada, lomo y contraportada con imagen y color propios, y cuentagotas para elegir cada color.
+  (RF-BL20, RF-BL21, de KAVI Reader) Dep: T278, T281
+- [ ] T282 Vista de librero con lomos sobre repisas (con la imagen del lomo si la hay). (RF-BL2) Dep: T277, T311
 - [ ] T283 Páginas de lado y cambio de forma de leer sin perder la posición. (RF-BR7, RF-BR8) Dep: T279
-- [ ] T284 Libro real: dos páginas, paso de página arrastrando la esquina (Skia + Reanimated), horizontal
-  obligatoria en teléfono, sin animación con movimiento reducido. (RF-BR5) Dep: T283
+- [ ] T284 Libro real: dos páginas (la portada sola a la derecha, luego en pares), paso de página arrastrando
+  la esquina (Skia + Reanimated) o tocando el 20 % del borde, horizontal obligatoria en teléfono, sin animación
+  con movimiento reducido. (RF-BR5) Dep: T283
 - [ ] T285 Sin conexión: archivo guardado en el dispositivo y cola local de anotaciones. (RF-BR3) Dep: T279
 
 ### L3 · Herramientas sobre la página
