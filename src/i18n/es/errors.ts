@@ -57,6 +57,7 @@ export const errors = {
   libraryFileTooBig: 'El archivo pesa más de 50 MB, que es el máximo por libro.',
   libraryFilesUnavailable: 'Los archivos de la biblioteca no están disponibles por ahora. Inténtalo más tarde.',
   libraryFilesFailed: 'No se pudo completar con los archivos de la biblioteca. Revisa tu conexión e inténtalo de nuevo.',
+  libraryUploadFailed: 'No se pudo subir el archivo a la biblioteca. Inténtalo de nuevo en un momento.',
   libraryFormat: 'Por ahora solo se pueden traer libros en PDF o EPUB.',
   libraryPassword: 'Este PDF pide contraseña para abrirse y KAVI no puede leerlo. Quítale la contraseña y vuelve a intentarlo.',
   libraryDrm: 'Este libro tiene la protección de la tienda donde se compró (DRM) y solo se abre en su app. KAVI acepta archivos sin esa protección.',

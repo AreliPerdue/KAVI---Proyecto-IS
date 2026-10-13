@@ -471,8 +471,11 @@ export interface LibraryApi {
   getItem(itemId: string): Promise<LibraryItem>;
   createItem(userId: string, input: LibraryItemInput): Promise<LibraryItem>;
   updateItem(itemId: string, patch: LibraryItemPatch): Promise<LibraryItem>;
-  /** Borra la pieza, lo que cuelga de ella y sus archivos. */
-  removeItem(itemId: string): Promise<void>;
+  /**
+   * Borra la pieza, lo que cuelga de ella y sus archivos. Con `force`, la fila se borra aunque no se
+   * hayan podido borrar los archivos: es para deshacer una importación que no llegó a subir nada.
+   */
+  removeItem(itemId: string, options?: { force?: boolean }): Promise<void>;
   /** Cuánto ocupa la librería de la persona y su tope. */
   usage(userId: string): Promise<{ usedBytes: number; limitBytes: number }>;
 

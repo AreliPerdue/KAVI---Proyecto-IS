@@ -70,7 +70,21 @@ describe('archivos en R2', () => {
 
   it('si R2 rechaza la subida, falla con un mensaje claro', async () => {
     mockFetch.mockResolvedValueOnce(json(200, { url: 'https://r2/firmada', headers: {} })).mockResolvedValueOnce(json(403, {}));
-    await expect(supabaseLibrary.uploadFile('u1', 'l1', 'a.pdf', new Uint8Array([1]), 'application/pdf')).rejects.toThrow(es.errors.libraryFilesFailed);
+    await expect(supabaseLibrary.uploadFile('u1', 'l1', 'a.pdf', new Uint8Array([1]), 'application/pdf')).rejects.toThrow(es.errors.libraryUploadFailed);
+  });
+
+  it('si la subida a R2 se corta (en web, CORS se ve así), no dice "sin conexión": la firma sí llegó', async () => {
+    const aviso = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+    mockFetch.mockResolvedValueOnce(json(200, { url: 'https://r2/firmada', headers: {} })).mockRejectedValueOnce(new TypeError('Failed to fetch'));
+    await expect(supabaseLibrary.uploadFile('u1', 'l1', 'a.pdf', new Uint8Array([1]), 'application/pdf')).rejects.toThrow(es.errors.libraryUploadFailed);
+    aviso.mockRestore();
+  });
+
+  it('con force, la fila se borra aunque R2 no responda (deshacer una importación fallida)', async () => {
+    mockSb.encolar({ data: { id: 'l1', owner_id: 'u1' }, error: null }, { data: null, error: null });
+    mockFetch.mockResolvedValueOnce(json(502, { code: 'failed' }));
+    await supabaseLibrary.removeItem('l1', { force: true });
+    expect(mockSb.secuencia).toContain('delete');
   });
 
   it.each([
@@ -120,7 +134,7 @@ describe('archivos en R2', () => {
     mockFetch.mockResolvedValueOnce(json(200, { url: 'https://r2/f', headers: {} })).mockResolvedValueOnce(json(500, {}));
     await expect(
       supabaseLibrary.addFont('u1', { name: 'Mi letra', format: 'ttf', body: new Uint8Array([1]), size: 1, licenseAcceptedAt: '2026-10-12T00:00:00Z' }),
-    ).rejects.toThrow(es.errors.libraryFilesFailed);
+    ).rejects.toThrow(es.errors.libraryUploadFailed);
     expect(cuerpoDe(0)).toEqual({ action: 'upload', fontId: 'f1', path: 'u1/fonts/Mi-letra.ttf', contentType: 'font/ttf', size: 1 });
     expect(mockSb.secuencia.filter((m) => m === 'delete')).toHaveLength(1);
   });

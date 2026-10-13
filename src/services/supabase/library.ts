@@ -86,10 +86,16 @@ export const supabaseLibrary: LibraryApi = {
     return unwrap(await db().from('library_items').update(fila).eq('id', itemId).select('*').single()) as LibraryItem;
   },
 
-  async removeItem(itemId) {
+  async removeItem(itemId, options) {
     const item = unwrap(await db().from('library_items').select('id, owner_id').eq('id', itemId).single()) as Pick<LibraryItem, 'id' | 'owner_id'>;
     // Primero los archivos: si se borrara antes la fila, quedarían huérfanos ocupando espacio.
-    await archivos({ action: 'delete', itemId: item.id });
+    // Al deshacer una importación fallida (`force`) puede que R2 sea justo lo que falla; entonces
+    // la fila se borra igual, porque una pieza sin archivo no se puede abrir.
+    try {
+      await archivos({ action: 'delete', itemId: item.id });
+    } catch (e) {
+      if (!options?.force) throw e;
+    }
     sinError(await db().from('library_items').delete().eq('id', itemId));
   },
 
@@ -278,9 +284,12 @@ async function subir(
     // `content-length` lo pone la plataforma y tiene que coincidir con el tamaño firmado.
     respuesta = await fetch(firma.url, { method: 'PUT', headers: firma.headers, body: body as BodyInit });
   } catch (e) {
-    throw new AuthUiError(isOfflineError(e) ? AUTH_MESSAGES.offline : t().errors.libraryFilesFailed, e);
+    // La firma acaba de llegar, así que hay conexión: en web, un rechazo de R2 sin encabezados de CORS
+    // se ve igual que estar sin red. Decir "sin conexión" aquí confundía.
+    console.warn('[library] subida a R2', e instanceof Error ? e.message : e);
+    throw new AuthUiError(t().errors.libraryUploadFailed, e);
   }
-  if (!respuesta.ok) throw new AuthUiError(t().errors.libraryFilesFailed);
+  if (!respuesta.ok) throw new AuthUiError(t().errors.libraryUploadFailed);
 }
 
 function tamanoDe(body: LibraryFileBody): number {

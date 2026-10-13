@@ -54,7 +54,8 @@ it('un título en blanco usa el del archivo; un PDF sin extensión la recibe', a
 it('si la subida falla, borra la pieza y avisa el error (RF-BR2)', async () => {
   mockApi.uploadFile.mockRejectedValueOnce(new Error('Sin conexión.'));
   await expect(importLibraryBook('u1', { id: 'p3', libro: libro(), title: 'Rayuela', authors: [], genres: [] })).rejects.toThrow('Sin conexión.');
-  expect(mockApi.removeItem).toHaveBeenCalledWith('p3');
+  // Con `force`: aunque R2 sea justo lo que falló, la pieza vacía no se queda en la librería.
+  expect(mockApi.removeItem).toHaveBeenCalledWith('p3', { force: true });
 });
 
 it('si la base rechaza la pieza (tope de espacio), no sube nada', async () => {

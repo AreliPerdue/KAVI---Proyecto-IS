@@ -91,7 +91,7 @@ export async function importLibraryBook(userId: string, { id, libro, title, auth
     await libraryApi.uploadFile(userId, id, nombre, archivo.bytes, TIPO_CONTENIDO[formato]);
     if (datos.cover && portada) await libraryApi.uploadFile(userId, id, portada, datos.cover.bytes, datos.cover.mime);
   } catch (e) {
-    await libraryApi.removeItem(id).catch(() => undefined);
+    await libraryApi.removeItem(id, { force: true }).catch(() => undefined);
     throw e;
   }
   return item;

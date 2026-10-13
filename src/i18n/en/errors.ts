@@ -57,6 +57,7 @@ export const errors: Dictionary['errors'] = {
   libraryQuota: 'Your library reached its 500 MB limit. Delete a book to make room.',
   libraryFilesUnavailable: 'Library files aren’t available right now. Try again later.',
   libraryFilesFailed: 'Couldn’t finish with the library files. Check your connection and try again.',
+  libraryUploadFailed: 'The file couldn’t be uploaded to the library. Try again in a moment.',
   libraryFormat: 'For now you can only bring in books as PDF or EPUB.',
   libraryPassword: 'This PDF asks for a password to open, so KAVI can’t read it. Remove the password and try again.',
   libraryDrm: 'This book has the store’s protection (DRM) and only opens in its app. KAVI accepts files without that protection.',
