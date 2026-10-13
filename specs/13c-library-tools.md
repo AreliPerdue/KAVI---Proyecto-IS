@@ -55,14 +55,29 @@
   página; tocar uno salta ahí. Se filtra por tipo y color.
 - **RF-BH18.** Deshacer y rehacer en todo lo de esta spec (como el logger del gym, RF-F40).
 
-## 6. Lo técnico
+## 6. Recortes (RF-BH19 – RF-BH21) — 13 oct 2026
+
+Como recortar de un libro o de una revista: se guarda un pedazo para después.
+
+- **RF-BH19. Recorte de texto.** Al seleccionar texto, el menú (decisión B5) ofrece **"Recortar"**: se
+  guarda el fragmento con su libro, su página (o CFI) y la fecha, como los *clippings* de Kindle. En libros
+  que prohíben copiar (RF-BH9) se guarda solo la referencia, sin el texto.
+- **RF-BH20. Recorte de imagen.** Desde las herramientas, **"Recortar imagen"**: se marca un rectángulo sobre
+  la página (un dibujo, una tabla, un pedazo de la página) y se guarda como imagen, con su libro y página.
+- **RF-BH21. Mis recortes.** Una sección de Library junta todos los recortes, de texto y de imagen, con su
+  libro, más recientes primero; se filtran por libro y por tipo, se les puede escribir una nota, y tocar uno
+  abre el libro en ese lugar. Un recorte de imagen se puede **pegar** en un cuaderno, diario o álbum (13e)
+  como imagen o sticker, y uno de texto, como cuadro de texto. Borrar el libro no borra sus recortes: se
+  quedan con su título.
+
+## 7. Lo técnico
 
 - Las anotaciones se guardan en `library_annotations` con posición estable (spec 13 §5) y se pintan en una
   capa propia: en el motor web para subrayados y cuadros de texto; con Skia para el lápiz.
 - El lápiz usa `react-native-skia` con eventos de puntero (presión de Apple Pencil en iOS).
 - Escuchar: `expo-speech` en teléfono y la Web Speech API en web.
 
-## 7. Criterios de aceptación
+## 8. Criterios de aceptación
 
 - *Dado* un párrafo, *cuando* lo selecciono y elijo amarillo, *entonces* queda subrayado y aparece en el
   panel de anotaciones con su página.
@@ -74,3 +89,7 @@
   que se guarde.
 - *Dado* un EPUB con subrayados, *cuando* cambio el tamaño de letra, *entonces* los subrayados siguen sobre
   las mismas palabras.
+- *Dado* un párrafo seleccionado, *cuando* elijo "Recortar", *entonces* aparece en Mis recortes con su libro y
+  página, y tocarlo me lleva ahí.
+- *Dado* un PDF con un mapa, *cuando* marco un rectángulo sobre el mapa con "Recortar imagen", *entonces* se
+  guarda como imagen en Mis recortes y la puedo pegar en un cuaderno.

@@ -99,7 +99,45 @@ Areli empezó Library en marzo de 2026 como un proyecto aparte, **KAVI Reader** 
 - **RF-BL22. Encabezado de la librería** con el wordmark **KAVI Library** (Moirai One + Poiret One, dentro de
   `components/ui/Wordmark`, como el de la app) y un saludo con el nombre: "Qué gusto verte de nuevo, Areli".
 
-## 9. Criterios de aceptación
+## 9. Portada propia (RF-BL23) — 13 oct 2026
+
+- **RF-BL23. Cambiar la portada.** Por omisión cada libro muestra la portada que trae el archivo (la imagen
+  del EPUB o la primera página del PDF, RF-BL12). Desde el menú de la pieza (RF-BL16) → **"Cambiar
+  portada"** se pone otra imagen:
+  - **Teléfono:** elegirla de la galería, tomar una foto o elegir un archivo de imagen; o **pegarla** si hay
+    una imagen copiada.
+  - **Web:** elegir un archivo, **arrastrarla** sobre la portada (se ilumina al pasar por encima) o
+    **pegarla** con ⌘V / Ctrl+V.
+  - Antes de guardarla se ve cómo queda en proporción de libro (2:3), con su color dominante calculado
+    (RF-BL13), que después se puede cambiar con el cuentagotas (RF-BL21).
+  - **"Volver a la original"** regresa a la portada del archivo.
+  - Imágenes JPEG, PNG, WebP o HEIC de hasta 5 MB; se guardan en R2 como la portada del libro.
+
+## 10. Sagas y libros enlazados (RF-BL24 – RF-BL27) — 13 oct 2026
+
+- **RF-BL24. Sagas.** Un libro puede pertenecer a una **saga** (serie) con su **número** dentro de ella
+  ("Una corte de rosas y espinas", #1). La saga y el número se ponen al editar los datos (RF-BL16) o al
+  importar; si el EPUB los trae (`belongs-to-collection` de EPUB 3 o `calibre:series`), KAVI los propone.
+  Varios libros se pueden poner en la misma saga a la vez con la selección múltiple (RF-BL15).
+- **RF-BL25. Cómo se ven las sagas: lo elige la persona.** Un ajuste de la librería, recordado en el
+  dispositivo como la vista (RF-BL4):
+  - **Apiladas:** cada saga es una sola pila de portadas ("ACOTAR · 5 libros"); tocarla abre la saga con
+    sus libros en orden.
+  - **Sueltas:** cada libro en su lugar, con una etiqueta "ACOTAR #2".
+  En cualquiera de las dos se puede ordenar y filtrar por saga (RF-BL8, RF-BL10), y dentro de una saga el
+  orden es siempre el número.
+- **RF-BL26. El siguiente de la saga.** Al terminar un libro (100 %), además de la ficha (13d, RF-BF6),
+  KAVI ofrece "Seguir con #3: …" si el siguiente ya está en la librería.
+- **RF-BL27. Libros enlazados.** Fuera de las sagas, un libro se puede **enlazar** con otro libro o con una
+  creación propia (13e):
+  - **Entre libros**, con el tipo de enlace: *precuela*, *secuela*, *spin-off*, *mismo universo* o
+    *relacionado* (libre). El enlace se ve en los dos libros, cada uno con su sentido: si A es precuela de B,
+    B dice que A es su precuela.
+  - **Libro ↔ cuaderno o diario:** por ejemplo, el cuaderno de notas de una saga o el diario de lectura. Se
+    abre uno desde el otro. (Las creaciones llegan en L5; hasta entonces solo se enlazan libros.)
+  - Los enlaces se ven en "Detalles" del libro, y tocar uno abre la otra pieza.
+
+## 11. Criterios de aceptación
 
 - *Dado* que tengo 20 libros, *cuando* elijo la vista Librero, *entonces* los veo de lomo sobre repisas, con
   el color de su portada y el título en vertical.
@@ -114,3 +152,13 @@ Areli empezó Library en marzo de 2026 como un proyecto aparte, **KAVI Reader** 
   contraseña para abrirse, *entonces* KAVI me dice por qué no y no lo agrega.
 - *Dado* un libro con imagen de lomo, *cuando* veo el librero, *entonces* su lomo es esa imagen; *cuando* toco
   un punto dorado de la portada con el cuentagotas, *entonces* el color de la portada pasa a ese dorado.
+- *Dado* un PDF con la portada de su primera página, *cuando* arrastro una imagen sobre ella en la web (o la
+  pego con ⌘V), *entonces* veo cómo queda y, al guardar, es su portada; *cuando* elijo "Volver a la
+  original", *entonces* regresa la primera página.
+- *Dado* cinco libros de la misma saga con su número, *cuando* elijo "Apiladas", *entonces* veo una pila
+  "ACOTAR · 5 libros" y al tocarla los libros en orden; *cuando* elijo "Sueltas", *entonces* cada libro
+  aparece con "ACOTAR #n".
+- *Dado* que termino el #2 de una saga y tengo el #3, *cuando* llego al 100 %, *entonces* KAVI me ofrece
+  seguir con el #3.
+- *Dado* que enlazo A como precuela de B, *cuando* abro los detalles de B, *entonces* dice que A es su
+  precuela y tocarlo abre A.

@@ -943,6 +943,15 @@ Decisiones B1–B9 aprobadas el 12 oct 2026 (T274); ver la tabla de la spec 13 �
   PDF y EPUB; falta probarlo en un teléfono (WebView).
 - [ ] T280 Libreros propios, orden, filtros (incluido color) y buscador. (RF-BL5 – RF-BL10, RF-BL18) Dep: T277
 - [ ] T281 Menú de cada pieza y selección múltiple. (RF-BL15 – RF-BL17) Dep: T280
+- [ ] T314 Cambiar portada: desde el menú de la pieza, subir de galería, cámara o archivo; en web, arrastrar y
+  soltar o pegar con ⌘V / Ctrl+V; en teléfono, pegar una imagen copiada; vista previa 2:3 con su color; "Volver
+  a la original". (RF-BL23, 13 oct 2026) Dep: T281, T279
+- [ ] T315 Sagas: datos (`library_series`, saga y número en la pieza, con RLS), asignarlas al editar o a varios a
+  la vez, proponerlas desde el EPUB, ajuste "Apiladas / Sueltas" recordado, orden y filtro por saga, ofrecer el
+  siguiente al terminar. (RF-BL24 – RF-BL26) Dep: T280, T281
+- [ ] T316 Libros enlazados: `library_links` con RLS, enlazar con tipo (precuela, secuela, spin-off, mismo
+  universo, relacionado) y verlos desde los dos lados en "Detalles"; libro ↔ cuaderno o diario cuando existan
+  las creaciones. (RF-BL27) Dep: T315 (la parte de creaciones, T297)
 - [ ] T310 Más datos del libro (editorial, lugar, edición, capítulos, sinopsis): columnas nuevas, "Más datos" al
   importar y al editar, y lo que proponga el OPF. (RF-BL19, de KAVI Reader) Dep: T278, T281
 - [ ] T312 Encabezado de la librería con el wordmark KAVI Library y saludo con el nombre. (RF-BL22, de KAVI
@@ -973,6 +982,9 @@ Decisiones B1–B9 aprobadas el 12 oct 2026 (T274); ver la tabla de la spec 13 �
   (RF-BH13 – RF-BH15) Dep: T286
 - [ ] T291 Lápiz y dedo con Skia; presión del Apple Pencil; modo "solo lápiz". (RF-BH11) Dep: T286
 - [ ] T292 Escuchar en voz alta con la frase resaltada. (RF-BH6) Dep: T279
+- [ ] T317 Recortes de texto ("Recortar" al seleccionar) y de imagen (rectángulo sobre la página), `library_clips`
+  con RLS e imágenes en R2, sección "Mis recortes" con filtros y nota; pegar en creaciones cuando existan.
+  (RF-BH19 – RF-BH21, 13 oct 2026) Dep: T286 (pegar en creaciones, T297)
 
 ### L4 · Fichas de calificación
 - [ ] T293 Plantillas de ficha incluidas y editor de campos y aspecto. (RF-BF1 – RF-BF3, RF-BF5) Dep: T275

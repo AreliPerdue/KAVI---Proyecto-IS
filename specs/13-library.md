@@ -101,6 +101,9 @@ Es grande a propósito, y por eso se construye **por capas** (§8): primero un n
 | `library_card_templates` / `library_cards` | Diseños de ficha y las fichas pegadas a cada pieza, con sus valores y dónde van. |
 | `library_pages` | Las páginas de una creación: plantilla, capas y su contenido. |
 | `library_fonts` | Las fuentes que subió cada persona (archivo en Storage). |
+| `library_series` | Las sagas de cada persona (nombre); cada libro guarda su saga y su número (`series_id`, `series_index`) (13a, RF-BL24). |
+| `library_links` | Enlaces entre piezas: de, a, tipo (precuela, secuela, spin-off, mismo universo, relacionado, notas) (13a, RF-BL27). |
+| `library_clips` | Los recortes: pieza (se queda en nulo si se borra, con el título guardado), tipo (texto o imagen), texto o ruta de la imagen en R2, posición, nota y fecha (13c, RF-BH19 – RF-BH21). |
 | `library_clubs` / `library_club_members` | Los clubes de lectura, sus miembros y la copia de cada quien (13f §5). Las anotaciones del club son filas de `library_annotations` con `club_id`. |
 
 El catálogo de plantillas, estilos, stickers y fuentes incluidas vive en el cliente
