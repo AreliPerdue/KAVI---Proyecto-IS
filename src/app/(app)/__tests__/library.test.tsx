@@ -89,6 +89,11 @@ const pieza = (id: string, extra: Record<string, unknown> = {}) => ({
   series_index: null,
   kind: 'pdf',
   file_size: 1024,
+  publisher: null,
+  publish_place: null,
+  edition: null,
+  chapter_count: null,
+  synopsis: null,
   created_at: '2026-10-01T00:00:00Z',
   page_count: null,
   progress: 0,
@@ -287,7 +292,20 @@ describe('menú y selección', () => {
     await fireEvent.changeText(screen.getByLabelText(L.fieldGenres), 'Novela, Clásicos');
     await fireEvent.press(screen.getByRole('button', { name: L.item.save }));
     expect(mockActualizar.mutate).toHaveBeenCalledWith(
-      { id: 'l1', patch: { title: 'Rayuela (1963)', authors: ['Julio Cortázar'], genres: ['Novela', 'Clásicos'], category: L.item.categorySuggestions[0] } },
+      {
+        id: 'l1',
+        patch: {
+          title: 'Rayuela (1963)',
+          authors: ['Julio Cortázar'],
+          genres: ['Novela', 'Clásicos'],
+          category: L.item.categorySuggestions[0],
+          publisher: null,
+          publish_place: null,
+          edition: null,
+          chapter_count: null,
+          synopsis: null,
+        },
+      },
       expect.anything(),
     );
   });
@@ -561,4 +579,14 @@ describe('detalles y enlaces', () => {
     await fireEvent.press(screen.getByRole('button', { name: L.links.remove('El señor de los anillos') }));
     expect(mockEnlacesMut.quitar.mutate).toHaveBeenCalledWith('k1');
   });
+});
+
+it('editar los más datos y verlos en Detalles (RF-BL19, T310)', async () => {
+  mockPiezas = ok([pieza('l1', { title: 'Rayuela', synopsis: 'Una novela que se lee de dos maneras.', publisher: 'Sudamericana' })]);
+  usePreferencesStore.setState({ libraryView: 'list', libraryOrder: 'recent' });
+  await render(<Pantalla />);
+  await fireEvent.press(screen.getByRole('button', { name: L.actionsFor('Rayuela') }));
+  await fireEvent.press(screen.getByRole('button', { name: L.details.open }));
+  expect(screen.getByText('Una novela que se lee de dos maneras.')).toBeTruthy();
+  expect(screen.getByText('Sudamericana')).toBeTruthy();
 });

@@ -36,6 +36,9 @@ export function leerEpub(bytes: Uint8Array): DatosLibro {
     pageCount: null,
     cover: portada(bytes, opf, rutaOpf),
     serie: saga(opf),
+    editorial: textos(opf, 'publisher')[0],
+    // La descripción de muchos EPUB viene en HTML (a veces escapado): se queda solo el texto.
+    sinopsis: limpiarHtml(opf, 'description'),
   };
 }
 
@@ -145,4 +148,17 @@ function entidades(texto: string): string {
     .replace(/&lt;/g, '<')
     .replace(/&gt;/g, '>')
     .replace(/&amp;/g, '&');
+}
+
+/** El texto de `<dc:nombre>` aunque traiga HTML escapado (`&lt;p&gt;…`), con los párrafos como saltos de línea. */
+function limpiarHtml(opf: string, nombre: string): string | undefined {
+  const m = new RegExp(`<(?:\\w+:)?${nombre}\\b[^>]*>([\\s\\S]*?)</(?:\\w+:)?${nombre}>`).exec(opf);
+  if (!m) return undefined;
+  const html = entidades(m[1]);
+  const texto = entidades(html.replace(/<\/(p|div|li)>|<br\s*\/?>/gi, '\n').replace(/<[^>]+>/g, ''))
+    .split('\n')
+    .map((l) => l.replace(/\s+/g, ' ').trim())
+    .filter(Boolean)
+    .join('\n');
+  return texto || undefined;
 }

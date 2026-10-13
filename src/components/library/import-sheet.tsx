@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { BookCover } from './book-cover';
+import { MAS_DATOS_VACIOS, MoreDetails, masDatosParaGuardar } from './more-details';
 import { SeriesField } from './series-field';
 
 import { AppText, Banner, Button, Sheet, TextField } from '@/components/ui';
@@ -58,6 +59,8 @@ function Contenido({ id, libro, onClose }: { id: string; libro: LibroLeido; onCl
   // La saga que trae el EPUB, si la trae (RF-BL24); se puede cambiar o quitar.
   const [saga, setSaga] = useState(datos.serie?.nombre ?? '');
   const [numero, setNumero] = useState(datos.serie?.numero != null ? numeroDeSaga(datos.serie.numero) : '');
+  // Más datos (RF-BL19): el EPUB propone editorial y sinopsis.
+  const [mas, setMas] = useState({ ...MAS_DATOS_VACIOS, publisher: datos.editorial ?? '', synopsis: datos.sinopsis ?? '' });
 
   const portada = useMemo(
     () => (datos.cover ? `data:${datos.cover.mime};base64,${bytesToBase64(datos.cover.bytes)}` : null),
@@ -74,6 +77,7 @@ function Contenido({ id, libro, onClose }: { id: string; libro: LibroLeido; onCl
         authors: autores === null ? datos.authors : lista(autores),
         genres: generos === null ? datos.genres : lista(generos),
         serie: saga.trim() ? { nombre: saga, numero: leerNumeroDeSaga(numero) } : null,
+        mas: masDatosParaGuardar(mas),
       },
       {
         onSuccess: (item) => {
@@ -108,6 +112,7 @@ function Contenido({ id, libro, onClose }: { id: string; libro: LibroLeido; onCl
       />
       <TextField label={l.fieldGenres} hint={l.listHint} value={generos ?? datos.genres.join(', ')} onChangeText={setGeneros} />
       <SeriesField nombre={saga} onNombre={setSaga} numero={numero} onNumero={setNumero} />
+      <MoreDetails value={mas} onChange={setMas} />
 
       {importar.isError ? <Banner tone="error" message={importar.error.message} /> : null}
 

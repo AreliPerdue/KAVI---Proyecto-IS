@@ -976,8 +976,10 @@ Decisiones B1–B9 aprobadas el 12 oct 2026 (T274); ver la tabla de la spec 13 �
   migración probada con PGlite (7 casos) y aplicada en producción; "Detalles" en el menú de cada libro con sus
   datos, "Leer" y los libros enlazados leídos desde los dos lados; enlazar en dos pasos con búsqueda; quitar
   un enlace; una pareja enlazada no se vuelve a ofrecer.
-- [ ] T310 Más datos del libro (editorial, lugar, edición, capítulos, sinopsis): columnas nuevas, "Más datos" al
+- [x] T310 Más datos del libro (editorial, lugar, edición, capítulos, sinopsis): columnas nuevas, "Más datos" al
   importar y al editar, y lo que proponga el OPF. (RF-BL19, de KAVI Reader) Dep: T278, T281
+  **Hecho (13 oct 2026):** cinco columnas opcionales con topes (migración probada con PGlite); sección plegable
+  "Más datos" al importar y al editar; el EPUB propone editorial y sinopsis (sin HTML); Detalles las muestra.
 - [ ] T312 Encabezado de la librería con el wordmark KAVI Library y saludo con el nombre. (RF-BL22, de KAVI
   Reader) Dep: T277
 

@@ -118,3 +118,22 @@ describe('saga desde el EPUB (RF-BL24)', () => {
     expect(leerEpub(epub({ metadata: '<dc:title>Suelto</dc:title>' })).serie).toBeNull();
   });
 });
+
+describe('más datos desde el EPUB (RF-BL19)', () => {
+  it('editorial de dc:publisher y sinopsis de dc:description, sin el HTML escapado', () => {
+    const datos = leerEpub(
+      epub({
+        metadata:
+          '<dc:title>Rayuela</dc:title><dc:publisher>Editorial Sudamericana</dc:publisher><dc:description>&lt;p&gt;Una novela que se lee &lt;b&gt;de dos maneras&lt;/b&gt;.&lt;/p&gt;&lt;p&gt;Rayuela &amp;amp; otros.&lt;/p&gt;</dc:description>',
+      }),
+    );
+    expect(datos.editorial).toBe('Editorial Sudamericana');
+    expect(datos.sinopsis).toBe('Una novela que se lee de dos maneras.\nRayuela & otros.');
+  });
+
+  it('sin esos datos, no inventa nada', () => {
+    const datos = leerEpub(epub({ metadata: '<dc:title>Suelto</dc:title>' }));
+    expect(datos.editorial).toBeUndefined();
+    expect(datos.sinopsis).toBeUndefined();
+  });
+});

@@ -9,6 +9,9 @@ export type DatosLibro = {
   cover: { bytes: Uint8Array; mime: string; ext: string } | null;
   /** La saga y el número, si el EPUB los trae (RF-BL24). */
   serie?: { nombre: string; numero: number | null } | null;
+  /** Editorial y sinopsis, si el EPUB las trae (RF-BL19). */
+  editorial?: string;
+  sinopsis?: string;
 };
 
 /** Un archivo elegido para importar, ya leído. */

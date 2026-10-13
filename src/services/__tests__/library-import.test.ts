@@ -134,3 +134,10 @@ it('sin saga no crea ninguna', async () => {
   expect(mockApi.ensureSeries).not.toHaveBeenCalled();
   expect(mockApi.createItem.mock.calls[0][1]).not.toHaveProperty('series_id');
 });
+
+it('los más datos van con la pieza (RF-BL19)', async () => {
+  const { importLibraryBook } = require('@/services/library') as typeof import('@/services/library');
+  mockApi.createItem.mockClear();
+  await importLibraryBook('u1', { id: 'p11', libro: libro(), title: 'Rayuela', authors: [], genres: [], mas: { publisher: 'Sudamericana', chapter_count: 155 } });
+  expect(mockApi.createItem).toHaveBeenCalledWith('u1', expect.objectContaining({ publisher: 'Sudamericana', chapter_count: 155 }));
+});

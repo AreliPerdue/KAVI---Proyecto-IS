@@ -55,6 +55,15 @@ export const library = {
     removed: (nombre: string, n: number) => `${n === 1 ? 'Quitado' : `${n} quitados`} de «${nombre}».`,
     count: (n: number) => `${n} ${n === 1 ? 'libro' : 'libros'}`,
   },
+  more: {
+    title: 'Más datos',
+    publisher: 'Editorial',
+    place: 'Lugar de publicación',
+    edition: 'Edición',
+    editionPlaceholder: '1.ª, de bolsillo…',
+    chapters: 'Capítulos',
+    synopsis: 'Sinopsis',
+  },
   details: {
     open: 'Detalles',
     title: 'Detalles',

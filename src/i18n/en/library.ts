@@ -56,6 +56,15 @@ export const library: Dictionary['library'] = {
     removed: (nombre, n) => `${n === 1 ? 'Removed' : `${n} removed`} from “${nombre}”.`,
     count: (n) => `${n} ${n === 1 ? 'book' : 'books'}`,
   },
+  more: {
+    title: 'More details',
+    publisher: 'Publisher',
+    place: 'Place of publication',
+    edition: 'Edition',
+    editionPlaceholder: '1st, paperback…',
+    chapters: 'Chapters',
+    synopsis: 'Synopsis',
+  },
   details: {
     open: 'Details',
     title: 'Details',

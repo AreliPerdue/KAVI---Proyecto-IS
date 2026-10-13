@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
+import { MoreDetails, masDatosDe, masDatosParaGuardar } from './more-details';
 import { SeriesField } from './series-field';
 
 import { Banner, Button, Chip, Sheet, TextField } from '@/components/ui';
@@ -50,6 +51,7 @@ function Formulario({ item, onClose }: { item: LibraryItem; onClose: () => void 
   const [autores, setAutores] = useState<string | null>(null);
   const [generos, setGeneros] = useState<string | null>(null);
   const [categoria, setCategoria] = useState(item.category ?? '');
+  const [mas, setMas] = useState(() => masDatosDe(item));
   const [error, setError] = useState<string | null>(null);
 
   const guardar = () => {
@@ -65,6 +67,7 @@ function Formulario({ item, onClose }: { item: LibraryItem; onClose: () => void 
           authors: autores === null ? item.authors : lista(autores),
           genres: generos === null ? item.genres : lista(generos),
           category: categoria.trim() || null,
+          ...masDatosParaGuardar(mas),
         },
       },
       { onSuccess: () => showSnackbar({ message: m.saved }), onError: () => showSnackbar({ message: m.failed }) },
@@ -101,6 +104,7 @@ function Formulario({ item, onClose }: { item: LibraryItem; onClose: () => void 
       </View>
       <TextField label={l.fieldGenres} hint={l.listHint} value={generos ?? item.genres.join(', ')} onChangeText={setGeneros} />
       <SeriesField nombre={saga ?? sagaActual} onNombre={setSaga} numero={numero} onNumero={setNumero} />
+      <MoreDetails value={mas} onChange={setMas} />
       {actualizar.isError ? <Banner tone="error" message={m.failed} /> : null}
       <Button title={m.save} onPress={guardar} />
       <Button title={tx.common.cancel} variant="ghost" onPress={onClose} />

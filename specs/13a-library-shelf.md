@@ -99,7 +99,9 @@ Areli empezó Library en marzo de 2026 como un proyecto aparte, **KAVI Reader** 
 
 - **RF-BL19. Más datos del libro**, todos opcionales, en "Editar datos" (RF-BL16) y en la hoja de importar
   bajo "Más datos": **editorial**, **lugar de publicación**, **edición**, **número de capítulos** y
-  **sinopsis**. Un EPUB los propone de su OPF (`dc:publisher`, `dc:description`); un PDF no los trae.
+  **sinopsis**. Un EPUB los propone de su OPF (`dc:publisher`, `dc:description`, quitándole el HTML que a
+  veces trae); un PDF no los trae. Van en una sección plegable para que importar siga siendo rápido, y
+  "Detalles" los muestra con la sinopsis completa. (T310, 13 oct 2026)
 - **RF-BL20. Portada, lomo y contraportada.** Además de la portada, se pueden poner imágenes propias del
   **lomo** y de la **contraportada**, cada una con su color. El librero (RF-BL2) usa la imagen del lomo si la
   hay; la contraportada se ve al final del libro real (13b) y es donde puede ir pegada una ficha (13d,

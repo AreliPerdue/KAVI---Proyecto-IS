@@ -580,6 +580,12 @@ export type LibraryItem = {
   /** Saga a la que pertenece y su número en ella (RF-BL24); el número admite decimales (#1.5). */
   series_id: string | null;
   series_index: number | null;
+  /** Más datos, todos opcionales (RF-BL19, de KAVI Reader). */
+  publisher: string | null;
+  publish_place: string | null;
+  edition: string | null;
+  chapter_count: number | null;
+  synopsis: string | null;
   file_path: string | null;
   /** El PDF que se lee cuando el original es de oficina (decisión B3). */
   pdf_path: string | null;
@@ -612,6 +618,11 @@ export type LibraryItemInput = Pick<LibraryItem, 'family' | 'kind' | 'title'> &
       | 'base_color'
       | 'series_id'
       | 'series_index'
+      | 'publisher'
+      | 'publish_place'
+      | 'edition'
+      | 'chapter_count'
+      | 'synopsis'
     >
   >;
 

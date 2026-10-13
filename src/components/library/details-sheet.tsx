@@ -73,6 +73,10 @@ function Contenido({ item, items, sagas, libreros, membresia, onShow, onRead }: 
     [d.category, item.category ?? d.none],
     [d.genres, item.genres.join(', ') || d.none],
     [d.series, saga ? etiquetaDeSaga(saga.name, item.series_index) : d.none],
+    [tx.library.more.publisher, item.publisher ?? d.none],
+    [tx.library.more.place, item.publish_place ?? d.none],
+    [tx.library.more.edition, item.edition ?? d.none],
+    [tx.library.more.chapters, item.chapter_count != null ? String(item.chapter_count) : d.none],
     [d.shelves, enLibreros.join(', ') || d.none],
   ];
 
@@ -105,6 +109,15 @@ function Contenido({ item, items, sagas, libreros, membresia, onShow, onRead }: 
           </View>
         ))}
       </View>
+
+      {item.synopsis ? (
+        <View style={styles.seccion}>
+          <AppText variant="label" color="textSecondary">
+            {tx.library.more.synopsis}
+          </AppText>
+          <AppText variant="body">{item.synopsis}</AppText>
+        </View>
+      ) : null}
 
       <View style={styles.seccion}>
         <AppText variant="label" color="textSecondary">

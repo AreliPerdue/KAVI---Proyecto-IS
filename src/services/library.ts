@@ -72,6 +72,8 @@ export type ImportarLibro = {
   genres: string[];
   /** La saga y su número (RF-BL24); se busca por nombre o se crea. */
   serie?: { nombre: string; numero: number | null } | null;
+  /** Más datos (RF-BL19). */
+  mas?: Partial<Pick<LibraryItem, 'publisher' | 'publish_place' | 'edition' | 'chapter_count' | 'synopsis'>>;
 };
 
 const TIPO_CONTENIDO: Record<LibroLeido['formato'], string> = { pdf: 'application/pdf', epub: 'application/epub+zip' };
@@ -82,7 +84,7 @@ const TIPO_CONTENIDO: Record<LibroLeido['formato'], string> = { pdf: 'applicatio
  * en `<uid>/<pieza>/`. Si la subida falla, se borra la pieza: un libro sin archivo no se puede
  * abrir y no debe quedarse en la librería (RF-BR2).
  */
-export async function importLibraryBook(userId: string, { id, libro, title, authors, genres, serie }: ImportarLibro): Promise<LibraryItem> {
+export async function importLibraryBook(userId: string, { id, libro, title, authors, genres, serie, mas }: ImportarLibro): Promise<LibraryItem> {
   const { archivo, formato, datos, color } = libro;
   const nombre = /\.(pdf|epub)$/i.test(archivo.name) ? archivo.name : `${archivo.name}.${formato}`;
   const portada = datos.cover ? `cover.${datos.cover.ext}` : null;
@@ -100,6 +102,7 @@ export async function importLibraryBook(userId: string, { id, libro, title, auth
     file_size: archivo.bytes.length,
     page_count: datos.pageCount,
     ...(saga ? { series_id: saga.id, series_index: serie?.numero ?? null } : {}),
+    ...mas,
   });
   try {
     await libraryApi.uploadFile(userId, id, nombre, archivo.bytes, TIPO_CONTENIDO[formato]);
