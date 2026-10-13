@@ -1,3 +1,5 @@
+import { Platform } from 'react-native';
+
 import { AuthUiError } from '@/lib/auth-errors';
 import { LIBRARY_LIMITS } from '@/constants/library';
 import type { LibraryApi } from '@/services/contracts';
@@ -144,9 +146,11 @@ export const demoLibrary: LibraryApi = {
     await delay();
     const archivo = archivos.get(path);
     if (!archivo) throw new AuthUiError(t().errors.noPermission);
-    // En web un Blob se abre con una URL local; en Jest o en el teléfono basta con la ruta.
-    if (typeof Blob !== 'undefined' && archivo.body instanceof Blob && typeof URL !== 'undefined' && 'createObjectURL' in URL) {
-      return URL.createObjectURL(archivo.body);
+    // En web el archivo se abre con una URL local, venga como Blob o como bytes (lo que sube la
+    // importación, T278); en Jest o en el teléfono basta con la ruta.
+    if (Platform.OS === 'web' && typeof Blob !== 'undefined' && typeof URL !== 'undefined' && 'createObjectURL' in URL) {
+      const blob = archivo.body instanceof Blob ? archivo.body : new Blob([archivo.body as BlobPart], { type: archivo.type });
+      return URL.createObjectURL(blob);
     }
     return `demo://${path}`;
   },

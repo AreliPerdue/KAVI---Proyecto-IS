@@ -1,4 +1,5 @@
 import { Image } from 'expo-image';
+import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { Radius, Spacing, Typography } from '@/constants/theme';
@@ -13,6 +14,8 @@ type Props = {
   width: number;
   /** Miniatura de la lista (RF-BL3): sin texto, que a ese tamaño no se lee. */
   thumb?: boolean;
+  /** Una imagen que todavía no está en Storage, como la del libro que se está importando. */
+  uri?: string | null;
 };
 
 /**
@@ -20,9 +23,13 @@ type Props = {
  * generada con el título sobre el color de la pieza (RF-BL12), que siempre es el mismo.
  * Es decorativa: quien la usa pone el título en su etiqueta de accesibilidad.
  */
-export function BookCover({ item, width, thumb = false }: Props) {
+export function BookCover({ item, width, thumb = false, uri }: Props) {
   const theme = useTheme();
-  const url = useLibraryFileUrl(item.cover_path);
+  const firmada = useLibraryFileUrl(uri ? null : item.cover_path);
+  const url = { data: uri ?? firmada.data };
+  // Si la imagen no carga (dirección vencida, sin red), se queda la portada generada con su título.
+  const [fallo, setFallo] = useState<string | null>(null);
+  const imagen = url.data && url.data !== fallo ? url.data : null;
   const fondo = colorDePortada(item);
   const tinta = textoSobre(fondo);
 
@@ -35,7 +42,7 @@ export function BookCover({ item, width, thumb = false }: Props) {
         thumb ? styles.portadaChica : null,
         { width, height: Math.round(width * 1.5), backgroundColor: fondo, borderColor: theme.border },
       ]}>
-      {!thumb && !url.data ? (
+      {!thumb && !imagen ? (
         <View style={styles.generada}>
           <Text numberOfLines={4} style={[styles.titulo, { color: tinta, fontSize: width < 130 ? 14 : 16 }]}>
             {item.title}
@@ -47,7 +54,9 @@ export function BookCover({ item, width, thumb = false }: Props) {
           ) : null}
         </View>
       ) : null}
-      {url.data ? <Image source={{ uri: url.data }} style={StyleSheet.absoluteFill} contentFit="cover" transition={150} /> : null}
+      {imagen ? (
+        <Image source={{ uri: imagen }} style={StyleSheet.absoluteFill} contentFit="cover" transition={150} onError={() => setFallo(imagen)} />
+      ) : null}
     </View>
   );
 }

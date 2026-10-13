@@ -1,5 +1,8 @@
 /** KAVI Library (spec 13). Fachada sobre el backend activo; hooks y UI solo importan esto. */
+import { nombreSeguro } from '@/lib/library/files';
+import type { LibroLeido } from '@/lib/library/import';
 import { libraryApi } from '@/services/backend';
+import type { LibraryItem } from '@/types/domain';
 
 export type {
   CardField,
@@ -48,3 +51,48 @@ export const removePage = libraryApi.removePage;
 export const listFonts = libraryApi.listFonts;
 export const addFont = libraryApi.addFont;
 export const removeFont = libraryApi.removeFont;
+
+/** Lo que la persona confirmó al importar (RF-BL12): los datos ya corregidos y el libro leído. */
+export type ImportarLibro = {
+  /** Se decide al leer el archivo, para que la portada generada de la vista previa sea la misma. */
+  id: string;
+  libro: LibroLeido;
+  title: string;
+  authors: string[];
+  genres: string[];
+};
+
+const TIPO_CONTENIDO: Record<LibroLeido['formato'], string> = { pdf: 'application/pdf', epub: 'application/epub+zip' };
+
+/**
+ * Guarda un libro importado (RF-BL11 – RF-BL14). Primero la fila, porque es la base la que cuida
+ * el tope de 500 MB (B2) y así no se sube un archivo que no cabe; después el archivo y la portada
+ * en `<uid>/<pieza>/`. Si la subida falla, se borra la pieza: un libro sin archivo no se puede
+ * abrir y no debe quedarse en la librería (RF-BR2).
+ */
+export async function importLibraryBook(userId: string, { id, libro, title, authors, genres }: ImportarLibro): Promise<LibraryItem> {
+  const { archivo, formato, datos, color } = libro;
+  const nombre = /\.(pdf|epub)$/i.test(archivo.name) ? archivo.name : `${archivo.name}.${formato}`;
+  const portada = datos.cover ? `cover.${datos.cover.ext}` : null;
+  const item = await libraryApi.createItem(userId, {
+    id,
+    family: 'book',
+    kind: formato,
+    title: title.trim() || datos.title,
+    authors,
+    genres,
+    file_path: `${userId}/${id}/${nombreSeguro(nombre)}`,
+    cover_path: portada ? `${userId}/${id}/${portada}` : null,
+    cover_color: color,
+    file_size: archivo.bytes.length,
+    page_count: datos.pageCount,
+  });
+  try {
+    await libraryApi.uploadFile(userId, id, nombre, archivo.bytes, TIPO_CONTENIDO[formato]);
+    if (datos.cover && portada) await libraryApi.uploadFile(userId, id, portada, datos.cover.bytes, datos.cover.mime);
+  } catch (e) {
+    await libraryApi.removeItem(id).catch(() => undefined);
+    throw e;
+  }
+  return item;
+}

@@ -41,14 +41,29 @@ arriba, un buscador, y los controles de orden y filtros. Abajo, el botón **+** 
 ## 5. Agregar piezas (RF-BL11 – RF-BL14)
 
 - **RF-BL11.** El **+** ofrece: "Importar un libro" (elige un archivo) y "Crear" (cuaderno, diario, álbum
-  → spec 13e).
+  → spec 13e). Mientras no existan las creaciones (L5), el **+** abre directo el selector de archivos.
 - **RF-BL12.** Al importar, KAVI lee del archivo lo que pueda —título, autor, portada, géneros, número de
   páginas— y deja corregir todo antes de guardar. Si no hay portada, genera una con el título sobre un
   color de los Nobi.
+  - **EPUB:** título, autores, temas (como géneros) y la imagen de portada salen de su paquete OPF.
+  - **PDF:** título, autor, palabras clave (como géneros) y páginas salen de su ficha interna. Su portada es
+    la primera página pintada, y pintarla necesita el motor de lectura: llega con T279; mientras, el PDF
+    entra con la portada generada.
+  - Si el archivo no trae título, se propone el nombre del archivo sin extensión.
+  - Varios autores se escriben separados por comas; lo que trae el archivo se guarda tal cual mientras no
+    se toque (un autor "Cortázar, Julio" no se parte en dos).
 - **RF-BL13. Color de la portada:** se calcula el color dominante al importar (o al cambiar la portada) y se
   guarda como hex; es lo que usan el lomo (RF-BL2) y el filtro de color (RF-BL10).
-- **RF-BL14.** Formatos que se aceptan y su límite de tamaño: los de la spec 13b y la decisión B2. Un
-  archivo con candado (DRM) se rechaza con un mensaje claro de por qué.
+- **RF-BL14.** Formatos que se aceptan y su límite de tamaño: los de la spec 13b y la decisión B2. El formato
+  se reconoce por el contenido, no por el nombre. Un archivo con candado se rechaza con un mensaje claro de
+  por qué y no deja nada en la librería:
+  - **DRM de tienda:** EPUB con `rights.xml` (Adobe), `sinf.xml` (Apple) o capítulos cifrados; PDF con un
+    manejador de cifrado que no es el estándar.
+  - **PDF que pide contraseña para abrirse:** se rechaza.
+  - **PDF que solo restringe imprimir o copiar** (contraseña de dueño, la de usuario vacía): **se acepta**,
+    porque cualquier lector lo abre. Se comprueba con el método del estándar (ISO 32000, revisiones 2 a 6),
+    sin descifrar el libro. Sus textos internos van cifrados, así que el título sale del nombre del archivo.
+  - Las fuentes ofuscadas de un EPUB libre no cuentan como candado.
 
 ## 6. Cada pieza (RF-BL15 – RF-BL17)
 

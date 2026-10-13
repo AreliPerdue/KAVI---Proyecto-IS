@@ -1,8 +1,8 @@
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { useAuth } from '@/providers';
 import { LIBRARY_URL_SECONDS } from '@/constants/library';
-import { libraryFileUrl, libraryUsage, listLibraryItems, type LibraryItem } from '@/services/library';
+import { importLibraryBook, type ImportarLibro, libraryFileUrl, libraryUsage, listLibraryItems, type LibraryItem } from '@/services/library';
 
 /** Claves de KAVI Library (spec 13): todo cuelga de `['library']`. */
 export const libraryKeys = {
@@ -35,5 +35,15 @@ export function useLibraryFileUrl(path: string | null) {
     enabled: !!path,
     staleTime: (LIBRARY_URL_SECONDS - 300) * 1000,
     gcTime: (LIBRARY_URL_SECONDS - 300) * 1000,
+  });
+}
+
+/** Guardar un libro importado (T278); al terminar, bien o mal, se refrescan la librería y el espacio. */
+export function useImportBook() {
+  const { userId } = useAuth();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (datos: ImportarLibro) => importLibraryBook(userId as string, datos),
+    onSettled: () => queryClient.invalidateQueries({ queryKey: libraryKeys.all }),
   });
 }

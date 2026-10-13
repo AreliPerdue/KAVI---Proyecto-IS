@@ -9,6 +9,15 @@ module.exports = {
   preset: 'jest-expo',
   setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
   testMatch: ['<rootDir>/src/**/__tests__/**/*.test.ts?(x)'],
+  /*
+   * Los del preset de Expo más `@noble` (cifrado de PDF en KAVI Library, T278), que solo se
+   * publica como módulos ES y Jest tiene que pasarlo a CommonJS.
+   */
+  transformIgnorePatterns: [
+    '/node_modules/(?!(.pnpm|react-native|@react-native|@react-native-community|expo|@expo|@expo-google-fonts|react-navigation|@react-navigation|@sentry/react-native|native-base|standard-navigation|@noble))',
+    '/node_modules/react-native-reanimated/plugin/',
+    '/node_modules/@react-native/babel-preset/',
+  ],
   moduleNameMapper: {
     // El orden importa: Jest usa la primera clave que casa.
     '\\.(css)$': '<rootDir>/__mocks__/style-mock.js',

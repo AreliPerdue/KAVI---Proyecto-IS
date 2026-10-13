@@ -915,10 +915,17 @@ Decisiones B1–B9 aprobadas el 12 oct 2026 (T274); ver la tabla de la spec 13 �
   **Hecho (12 oct 2026):** rejilla de portadas 2:3 (2 columnas en teléfono, hasta 6 en web) con portada generada
   en un color de los Nobi cuando no hay imagen; lista con portada chica y avance ("p. 120 de 340", "%",
   "Terminado"); la vista se guarda en las preferencias del dispositivo. Abrir una pieza llega con T279.
-- [ ] T278 Importar PDF y EPUB: metadatos, portada (o generada), color dominante, rechazo con candado.
+- [x] T278 Importar PDF y EPUB: metadatos, portada (o generada), color dominante, rechazo con candado.
   (RF-BL11 – RF-BL14) Dep: T275
+  **Hecho (12 oct 2026):** el + elige el archivo (`expo-document-picker`) y una hoja deja corregir título,
+  autores y géneros; EPUB con `fflate` (OPF, portada, DRM), PDF con `pdf-lib` y la prueba de contraseña vacía
+  del estándar (`@noble`), color dominante con `expo-image-manipulator`. Se guarda la fila primero (tope en la
+  base) y luego los archivos; si la subida falla, se borra la pieza. Metro resuelve `tslib` a su versión ES
+  (con la de `pdf-lib` la app no cargaba). Módulos nativos nuevos: el APK se recompila (Expo Go ya los trae).
 - [ ] T279 Motor de lectura web (pdf.js y foliate-js) en WebView y en web; lectura en scroll; avance y barra de
-  página; buscar dentro. (RF-BR1, RF-BR2, RF-BR4, RF-BR6, RF-BR9, RF-BR10) Dep: T278
+  página; buscar dentro; al abrir un PDF por primera vez, su primera página se guarda como portada (con su
+  color dominante) en lugar de la generada (RF-BL12). (RF-BR1, RF-BR2, RF-BR4, RF-BR6, RF-BR9, RF-BR10)
+  Dep: T278
 - [ ] T280 Libreros propios, orden, filtros (incluido color) y buscador. (RF-BL5 – RF-BL10, RF-BL18) Dep: T277
 - [ ] T281 Menú de cada pieza y selección múltiple. (RF-BL15 – RF-BL17) Dep: T280
 

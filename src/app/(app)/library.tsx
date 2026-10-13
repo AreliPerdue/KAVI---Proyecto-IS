@@ -2,15 +2,18 @@ import { BookOpen, FlaskConical } from 'lucide-react-native';
 import { useState } from 'react';
 import { FlatList, type LayoutChangeEvent, StyleSheet, View } from 'react-native';
 
+import { ImportSheet } from '@/components/library/import-sheet';
 import { LibraryCoverCard, LibraryRow } from '@/components/library/library-item';
 import { ModalHeader } from '@/components/modal-header';
-import { AppText, EmptyState, ErrorState, LoadingState, Screen, Segmented } from '@/components/ui';
+import { AppText, Banner, EmptyState, ErrorState, Fab, LoadingState, Screen, Segmented } from '@/components/ui';
 import { LIBRARY_WARN_RATIO } from '@/constants/library';
 import { IconSize, IconStroke, Radius, Spacing } from '@/constants/theme';
 import { useLibraryItems, useLibraryUsage } from '@/hooks/use-library';
 import { useTheme } from '@/hooks/use-theme';
 import { useLanguage, useT } from '@/i18n';
+import { uuidv4 } from '@/lib/gym/ids';
 import { formatBytes } from '@/lib/library/files';
+import type { LibroLeido } from '@/lib/library/import';
 import { columnasPara, type LibraryView } from '@/lib/library/shelf';
 import { usePreferencesStore } from '@/store/preferences-store';
 import type { LibraryItem } from '@/types/domain';
@@ -44,6 +47,30 @@ export default function LibraryScreen() {
   const columnas = vista === 'covers' ? columnasPara(ancho) : 1;
   const anchoPortada = columnas > 1 ? Math.floor((ancho - Spacing.lg * (columnas - 1)) / columnas) : 0;
   const hayPiezas = piezas.isSuccess && piezas.data.length > 0;
+
+  // Importar (RF-BL11 – RF-BL14): elegir, leer y revisar. El + lleva directo al archivo; "Crear"
+  // (cuadernos, diarios, álbumes) se suma a este botón en L5.
+  const [leyendo, setLeyendo] = useState(false);
+  const [errorImportar, setErrorImportar] = useState<string | null>(null);
+  const [pendiente, setPendiente] = useState<{ id: string; libro: LibroLeido } | null>(null);
+  const importar = async () => {
+    if (leyendo) return;
+    setErrorImportar(null);
+    try {
+      // El lector de PDF y EPUB pesa y solo hace falta al importar: se evalúa hasta aquí, así un
+      // problema al cargarlo se queda en este botón y no tumba la pantalla.
+      // eslint-disable-next-line @typescript-eslint/no-require-imports -- carga perezosa
+      const { elegirLibro, leerLibro } = require('@/lib/library/import') as typeof import('@/lib/library/import');
+      const archivo = await elegirLibro();
+      if (!archivo) return;
+      setLeyendo(true);
+      setPendiente({ id: uuidv4(), libro: await leerLibro(archivo) });
+    } catch (e) {
+      setErrorImportar(e instanceof Error ? e.message : String(e));
+    } finally {
+      setLeyendo(false);
+    }
+  };
 
   const encabezado = (
     <View style={styles.content}>
@@ -82,6 +109,9 @@ export default function LibraryScreen() {
           ) : null}
         </View>
       ) : null}
+
+      {leyendo ? <Banner message={l.reading} /> : null}
+      {errorImportar ? <Banner tone="error" message={errorImportar} /> : null}
 
       {hayPiezas ? (
         <Segmented<LibraryView>
@@ -125,7 +155,11 @@ export default function LibraryScreen() {
           vista === 'covers' ? (ancho > 0 ? <LibraryCoverCard item={item} width={anchoPortada} /> : null) : <LibraryRow item={item} />
         }
         showsVerticalScrollIndicator={false}
+        // Que la última fila no quede bajo el +.
+        ListFooterComponent={<View style={styles.pie} />}
       />
+      <Fab label={l.importBook} onPress={importar} />
+      <ImportSheet pendiente={pendiente} onClose={() => setPendiente(null)} />
     </Screen>
   );
 }
@@ -133,6 +167,7 @@ export default function LibraryScreen() {
 const styles = StyleSheet.create({
   content: { gap: Spacing.md, paddingBottom: Spacing.lg },
   rejilla: { gap: Spacing.xl },
+  pie: { height: 88 },
   fila: { gap: Spacing.lg },
   flex: { flex: 1, gap: 2 },
   aviso: { flexDirection: 'row', gap: Spacing.sm, padding: Spacing.md, borderRadius: Radius.md, borderCurve: 'continuous' },

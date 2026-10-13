@@ -12,11 +12,19 @@ const MB = 1024 * 1024;
 let mockPiezas: Record<string, unknown>;
 let mockEspacio: Record<string, unknown>;
 
+const mockImportar = { mutate: jest.fn(), isPending: false, isError: false, error: null as Error | null };
+const mockSnackbar = jest.fn();
+const mockElegir = jest.fn();
+const mockLeer = jest.fn();
+
 jest.mock('@/hooks/use-library', () => ({
   useLibraryItems: () => mockPiezas,
   useLibraryUsage: () => mockEspacio,
   useLibraryFileUrl: () => ({ data: undefined }),
+  useImportBook: () => mockImportar,
 }));
+jest.mock('@/providers', () => ({ useSnackbar: () => mockSnackbar }));
+jest.mock('@/lib/library/import', () => ({ elegirLibro: () => mockElegir(), leerLibro: (a: unknown) => mockLeer(a) }));
 
 /* eslint-disable-next-line @typescript-eslint/no-require-imports -- tras los mocks */
 const Pantalla = require('@/app/(app)/library').default as () => React.ReactElement;
@@ -119,5 +127,58 @@ describe('vistas', () => {
   it('sin piezas no ofrece el selector de vista', async () => {
     await render(<Pantalla />);
     expect(screen.queryByRole('tab', { name: L.viewList })).toBeNull();
+  });
+});
+
+/** Importar un libro (RF-BL11 – RF-BL14, T278): el + elige el archivo y una hoja deja corregir los datos. */
+describe('importar', () => {
+  const archivo = { name: 'rayuela.pdf', mime: 'application/pdf', bytes: new Uint8Array(2048) };
+  const leido = {
+    formato: 'pdf',
+    archivo,
+    datos: { title: 'Rayuela', authors: ['Cortázar, Julio'], genres: [], pageCount: 340, cover: null },
+    color: null,
+  };
+
+  beforeEach(() => {
+    mockImportar.mutate.mockReset();
+    mockLeer.mockClear();
+    mockImportar.isError = false;
+    mockElegir.mockResolvedValue(archivo);
+    mockLeer.mockResolvedValue(leido);
+  });
+
+  it('propone lo que leyó del archivo y guarda lo corregido', async () => {
+    await render(<Pantalla />);
+    await fireEvent.press(screen.getByRole('button', { name: L.importBook }));
+    expect(await screen.findByText(L.reviewTitle)).toBeTruthy();
+    expect(screen.getByText(L.bookMeta('PDF', '2 KB', 340))).toBeTruthy();
+    expect(screen.getByDisplayValue('Cortázar, Julio')).toBeTruthy();
+
+    await fireEvent.changeText(screen.getByDisplayValue('Rayuela'), 'Rayuela (edición conmemorativa)');
+    await fireEvent.changeText(screen.getByLabelText(L.fieldGenres), 'Novela, Clásicos');
+    await fireEvent.press(screen.getByRole('button', { name: L.add }));
+
+    const [datos, opciones] = mockImportar.mutate.mock.calls[0];
+    // El autor sin tocar se guarda tal cual: la coma de "Cortázar, Julio" no lo parte en dos.
+    expect(datos).toEqual(expect.objectContaining({ title: 'Rayuela (edición conmemorativa)', authors: ['Cortázar, Julio'], genres: ['Novela', 'Clásicos'] }));
+    await opciones.onSuccess({ title: 'Rayuela (edición conmemorativa)' });
+    expect(mockSnackbar).toHaveBeenCalledWith({ message: L.added('Rayuela (edición conmemorativa)') });
+  });
+
+  it('cancelar el selector no hace nada', async () => {
+    mockElegir.mockResolvedValue(null);
+    await render(<Pantalla />);
+    await fireEvent.press(screen.getByRole('button', { name: L.importBook }));
+    expect(mockLeer).not.toHaveBeenCalled();
+    expect(screen.queryByText(L.reviewTitle)).toBeNull();
+  });
+
+  it('un archivo con candado se rechaza con su motivo y no abre la hoja', async () => {
+    mockLeer.mockRejectedValue(new Error(es.errors.libraryDrm));
+    await render(<Pantalla />);
+    await fireEvent.press(screen.getByRole('button', { name: L.importBook }));
+    expect(await screen.findByText(es.errors.libraryDrm)).toBeTruthy();
+    expect(screen.queryByText(L.reviewTitle)).toBeNull();
   });
 });
