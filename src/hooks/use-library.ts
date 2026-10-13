@@ -9,6 +9,7 @@ import {
   libraryFileUrl,
   libraryUsage,
   listLibraryItems,
+  removeLibraryItem,
   type LibraryItem,
   type LibraryItemPatch,
   saveLibraryCover,
@@ -94,6 +95,57 @@ export function useSaveCover() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ id, jpeg, color }: { id: string; jpeg: Uint8Array; color: string | null }) => saveLibraryCover(userId as string, id, jpeg, color),
+    onSettled: () => queryClient.invalidateQueries({ queryKey: libraryKeys.all }),
+  });
+}
+
+/** Cambiar los datos de una pieza (RF-BL16). Se ve al instante en la librería; si falla, se deshace. */
+export function useUpdateLibraryItem() {
+  const { userId } = useAuth();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, patch }: { id: string; patch: LibraryItemPatch }) => updateLibraryItem(id, patch),
+    onMutate: async ({ id, patch }) => {
+      await queryClient.cancelQueries({ queryKey: libraryKeys.items(userId) });
+      const antes = queryClient.getQueryData<LibraryItem[]>(libraryKeys.items(userId));
+      queryClient.setQueryData<LibraryItem[]>(libraryKeys.items(userId), (lista) => lista?.map((i) => (i.id === id ? { ...i, ...patch } : i)));
+      return { antes };
+    },
+    onError: (_e, _v, ctx) => queryClient.setQueryData(libraryKeys.items(userId), ctx?.antes),
+    onSettled: () => queryClient.invalidateQueries({ queryKey: libraryKeys.all }),
+  });
+}
+
+/** Poner la misma categoría a varias piezas (RF-BL15). `null` las deja sin categoría. */
+export function useSetLibraryCategory() {
+  const { userId } = useAuth();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ ids, category }: { ids: readonly string[]; category: string | null }) => {
+      await Promise.all(ids.map((id) => updateLibraryItem(id, { category })));
+    },
+    onMutate: ({ ids, category }) => {
+      queryClient.setQueryData<LibraryItem[]>(libraryKeys.items(userId), (lista) => lista?.map((i) => (ids.includes(i.id) ? { ...i, category } : i)));
+    },
+    onSettled: () => queryClient.invalidateQueries({ queryKey: libraryKeys.all }),
+  });
+}
+
+/**
+ * Eliminar una o varias piezas con sus archivos, anotaciones y fichas (RF-BL15, RF-BL16). Desaparecen
+ * de la librería de inmediato; si alguna no se pudo borrar, la librería vuelve a pedirse y reaparece.
+ */
+export function useRemoveLibraryItems() {
+  const { userId } = useAuth();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (ids: readonly string[]) => {
+      // De a una: cada pieza borra su carpeta en R2 antes de su fila.
+      for (const id of ids) await removeLibraryItem(id);
+    },
+    onMutate: (ids) => {
+      queryClient.setQueryData<LibraryItem[]>(libraryKeys.items(userId), (lista) => lista?.filter((i) => !ids.includes(i.id)));
+    },
     onSettled: () => queryClient.invalidateQueries({ queryKey: libraryKeys.all }),
   });
 }

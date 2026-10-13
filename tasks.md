@@ -942,7 +942,12 @@ Decisiones B1–B9 aprobadas el 12 oct 2026 (T274); ver la tabla de la spec 13 �
   web: CSP propia de `/reader/` y COEP `credentialless` para las portadas de R2. Probado en el navegador con
   PDF y EPUB; falta probarlo en un teléfono (WebView).
 - [ ] T280 Libreros propios, orden, filtros (incluido color) y buscador. (RF-BL5 – RF-BL10, RF-BL18) Dep: T277
-- [ ] T281 Menú de cada pieza y selección múltiple. (RF-BL15 – RF-BL17) Dep: T280
+- [x] T281 Menú de cada pieza y selección múltiple. (RF-BL15 – RF-BL17) Dep: T280
+  **Hecho (13 oct 2026, antes que T280 por decisión de Areli):** botón ⋯ en cada pieza con Abrir, Editar datos
+  (título, autores, categoría con sugerencias, géneros), Seleccionar y Eliminar (confirma y avisa qué se borra);
+  mantener presionado selecciona con palomitas, y con varias se cambia la categoría o se eliminan; "Atrás" de
+  Android sale de la selección. Lo que depende de otras tareas se agrega con ellas: agregar o mover a librero
+  (T280), ver su ficha (L4) y cambiar portada (T314).
 - [ ] T314 Cambiar portada: desde el menú de la pieza, subir de galería, cámara o archivo; en web, arrastrar y
   soltar o pegar con ⌘V / Ctrl+V; en teléfono, pegar una imagen copiada; vista previa 2:3 con su color; "Volver
   a la original". (RF-BL23, 13 oct 2026) Dep: T281, T279

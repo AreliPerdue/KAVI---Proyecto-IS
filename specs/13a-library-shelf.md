@@ -70,7 +70,10 @@ arriba, un buscador, y los controles de orden y filtros. Abajo, el botón **+** 
 ## 6. Cada pieza (RF-BL15 – RF-BL17)
 
 - **RF-BL15.** Mantener presionada una pieza la selecciona, como en Listas (RF-L28): con varias se puede
-  mover a un librero, cambiar categoría, o eliminar.
+  mover a un librero, cambiar categoría, o eliminar. Mientras se selecciona, tocar una pieza la elige o la
+  suelta en vez de abrirla, se esconde el **+** y "Atrás" (Android) sale de la selección. El menú de cada
+  pieza se abre con su botón **⋯** —en web no hay pulsación larga con mouse— y desde ahí también se puede
+  empezar a seleccionar. (T281, 13 oct 2026)
 - **RF-BL16.** El menú de una pieza: abrir, editar datos (título, autor, portada, categoría, géneros),
   agregar a librero, ver su ficha (13d), eliminar. Eliminar pide confirmación y dice que también se borran
   sus anotaciones y fichas.

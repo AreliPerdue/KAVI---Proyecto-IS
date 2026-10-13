@@ -14,6 +14,10 @@ let mockEspacio: Record<string, unknown>;
 
 const mockImportar = { mutate: jest.fn(), isPending: false, isError: false, error: null as Error | null };
 const mockSnackbar = jest.fn();
+const mockConfirm = jest.fn();
+const mockEliminar = { mutate: jest.fn() };
+const mockCategorizar = { mutate: jest.fn() };
+const mockActualizar = { mutate: jest.fn(), isError: false };
 const mockElegir = jest.fn();
 const mockLeer = jest.fn();
 
@@ -22,8 +26,11 @@ jest.mock('@/hooks/use-library', () => ({
   useLibraryUsage: () => mockEspacio,
   useLibraryFileUrl: () => ({ data: undefined }),
   useImportBook: () => mockImportar,
+  useRemoveLibraryItems: () => mockEliminar,
+  useSetLibraryCategory: () => mockCategorizar,
+  useUpdateLibraryItem: () => mockActualizar,
 }));
-jest.mock('@/providers', () => ({ useSnackbar: () => mockSnackbar }));
+jest.mock('@/providers', () => ({ useSnackbar: () => mockSnackbar, useConfirm: () => mockConfirm }));
 // El generador de portadas tiene su propia prueba; aquí solo estorba (abre un motor web).
 jest.mock('@/components/library/pdf-cover-worker', () => ({ PdfCoverWorker: () => null }));
 jest.mock('@/lib/library/import', () => ({ elegirLibro: () => mockElegir(), leerLibro: (a: unknown) => mockLeer(a) }));
@@ -191,4 +198,108 @@ it('tocar un libro lo abre en el lector (RF-BL17)', async () => {
   await render(<Pantalla />);
   await fireEvent.press(screen.getByRole('button', { name: /^Rayuela/ }));
   expect(globalThis.mockRouter.push).toHaveBeenCalledWith({ pathname: '/(app)/book/[id]', params: { id: 'l1' } });
+});
+
+/** Cada pieza (T281): su menú, editar datos, eliminar y la selección múltiple (RF-BL15, RF-BL16). */
+describe('menú y selección', () => {
+  const libros = () => [
+    pieza('l1', { title: 'Rayuela', authors: ['Julio Cortázar'], genres: ['Novela'], category: null }),
+    pieza('l2', { title: 'Ficciones', genres: [], category: null }),
+    pieza('l3', { title: 'Aura', genres: [], category: 'Escuela' }),
+  ];
+
+  beforeEach(() => {
+    mockPiezas = ok(libros());
+    usePreferencesStore.setState({ libraryView: 'list' });
+    for (const m of [mockConfirm, mockEliminar.mutate, mockCategorizar.mutate, mockActualizar.mutate, mockSnackbar]) m.mockReset();
+    mockConfirm.mockResolvedValue(true);
+  });
+
+  it('el ⋯ abre el menú; Abrir lleva al lector', async () => {
+    await render(<Pantalla />);
+    await fireEvent.press(screen.getByRole('button', { name: L.actionsFor('Rayuela') }));
+    expect(screen.getByText(L.item.edit)).toBeTruthy();
+    await fireEvent.press(screen.getByRole('button', { name: L.item.open }));
+    expect(globalThis.mockRouter.push).toHaveBeenCalledWith({ pathname: '/(app)/book/[id]', params: { id: 'l1' } });
+  });
+
+  it('editar datos: título, categoría con sugerencia y géneros; lo no tocado se queda igual', async () => {
+    await render(<Pantalla />);
+    await fireEvent.press(screen.getByRole('button', { name: L.actionsFor('Rayuela') }));
+    await fireEvent.press(screen.getByRole('button', { name: L.item.edit }));
+    await fireEvent.changeText(screen.getByDisplayValue('Rayuela'), '  Rayuela (1963) ');
+    await fireEvent.press(screen.getByText(L.item.categorySuggestions[0]));
+    await fireEvent.changeText(screen.getByLabelText(L.fieldGenres), 'Novela, Clásicos');
+    await fireEvent.press(screen.getByRole('button', { name: L.item.save }));
+    expect(mockActualizar.mutate).toHaveBeenCalledWith(
+      { id: 'l1', patch: { title: 'Rayuela (1963)', authors: ['Julio Cortázar'], genres: ['Novela', 'Clásicos'], category: L.item.categorySuggestions[0] } },
+      expect.anything(),
+    );
+  });
+
+  it('un título vacío no se guarda', async () => {
+    await render(<Pantalla />);
+    await fireEvent.press(screen.getByRole('button', { name: L.actionsFor('Rayuela') }));
+    await fireEvent.press(screen.getByRole('button', { name: L.item.edit }));
+    await fireEvent.changeText(screen.getByDisplayValue('Rayuela'), '   ');
+    await fireEvent.press(screen.getByRole('button', { name: L.item.save }));
+    expect(screen.getByText(L.item.titleRequired)).toBeTruthy();
+    expect(mockActualizar.mutate).not.toHaveBeenCalled();
+  });
+
+  it('eliminar pide confirmación, dice qué se borra y avisa al terminar', async () => {
+    await render(<Pantalla />);
+    await fireEvent.press(screen.getByRole('button', { name: L.actionsFor('Ficciones') }));
+    await fireEvent.press(screen.getByRole('button', { name: L.item.delete }));
+    expect(mockConfirm).toHaveBeenCalledWith(expect.objectContaining({ title: L.item.deleteTitle('Ficciones'), message: L.item.deleteMessage, destructive: true }));
+    const [ids, opciones] = mockEliminar.mutate.mock.calls[0];
+    expect(ids).toEqual(['l2']);
+    opciones.onSuccess();
+    expect(mockSnackbar).toHaveBeenCalledWith({ message: L.item.deleted('Ficciones') });
+  });
+
+  it('si no confirma, no se borra nada', async () => {
+    mockConfirm.mockResolvedValue(false);
+    await render(<Pantalla />);
+    await fireEvent.press(screen.getByRole('button', { name: L.actionsFor('Ficciones') }));
+    await fireEvent.press(screen.getByRole('button', { name: L.item.delete }));
+    expect(mockEliminar.mutate).not.toHaveBeenCalled();
+  });
+
+  it('mantener presionado selecciona; tocar agrega; cambiar la categoría a todas', async () => {
+    await render(<Pantalla />);
+    await fireEvent(screen.getByRole('button', { name: /^Rayuela/ }), 'longPress');
+    expect(screen.getByLabelText(L.selection.count(1))).toBeTruthy();
+    await fireEvent.press(screen.getByRole('button', { name: /^Aura/ }));
+    expect(screen.getByLabelText(L.selection.count(2))).toBeTruthy();
+    // Mientras se selecciona, tocar no abre el libro y el + se esconde.
+    expect(globalThis.mockRouter.push).not.toHaveBeenCalled();
+    expect(screen.queryByRole('button', { name: L.importBook })).toBeNull();
+    await fireEvent.press(screen.getByRole('button', { name: L.selection.category }));
+    await fireEvent.press(screen.getByText(L.item.categorySuggestions[1]));
+    const [datos, opciones] = mockCategorizar.mutate.mock.calls[0];
+    expect(datos).toEqual({ ids: ['l1', 'l3'], category: L.item.categorySuggestions[1] });
+    opciones.onSuccess();
+    expect(mockSnackbar).toHaveBeenCalledWith({ message: L.selection.categorized(L.item.categorySuggestions[1], 2) });
+    expect(screen.queryByLabelText(L.selection.count(2))).toBeNull();
+  });
+
+  it('eliminar varias confirma con la cuenta y borra todas', async () => {
+    await render(<Pantalla />);
+    await fireEvent(screen.getByRole('button', { name: /^Rayuela/ }), 'longPress');
+    await fireEvent.press(screen.getByRole('button', { name: /^Ficciones/ }));
+    await fireEvent.press(screen.getByRole('button', { name: L.selection.delete }));
+    expect(mockConfirm).toHaveBeenCalledWith(expect.objectContaining({ title: L.selection.deleteTitle(2) }));
+    expect(mockEliminar.mutate.mock.calls[0][0]).toEqual(['l1', 'l2']);
+  });
+
+  it('tocar una elegida la suelta, y la X sale de la selección', async () => {
+    await render(<Pantalla />);
+    await fireEvent(screen.getByRole('button', { name: /^Rayuela/ }), 'longPress');
+    await fireEvent.press(screen.getByRole('button', { name: /^Aura/ }));
+    await fireEvent.press(screen.getByRole('button', { name: /^Rayuela/ }));
+    expect(screen.getByLabelText(L.selection.count(1))).toBeTruthy();
+    await fireEvent.press(screen.getByRole('button', { name: L.selection.cancel }));
+    expect(screen.getByRole('button', { name: L.importBook })).toBeTruthy();
+  });
 });
