@@ -30,7 +30,7 @@ jest.mock('@supabase/supabase-js', () => ({
         // Imita la RLS y los filtros: solo lo que coincide con el id o con alguna ruta.
         const coincide = (f: Fila) =>
           consulta.filtros.every(([m, col, val]) =>
-            m === 'eq' ? f[col as string] === val : String(col).includes(`"${String(f.file_path)}"`) || String(col).includes(`"${String(f.cover_path)}"`),
+            m === 'eq' ? f[col as string] === val : ['file_path', 'cover_path', 'custom_cover_path'].some((k) => f[k] && String(col).includes(`"${String(f[k])}"`)),
           );
         return { data: filas.filter(coincide), error: null };
       };
@@ -78,7 +78,17 @@ afterAll(() => {
 beforeEach(() => {
   Object.assign(process.env, ENV);
   mockUsuario = { id: UID };
-  mockPiezas = [{ id: ITEM, owner_id: UID, file_path: `${UID}/${ITEM}/rayuela.pdf`, pdf_path: null, cover_path: `${UID}/${ITEM}/cover.png`, file_size: 1000 }];
+  mockPiezas = [
+    {
+      id: ITEM,
+      owner_id: UID,
+      file_path: `${UID}/${ITEM}/rayuela.pdf`,
+      pdf_path: null,
+      cover_path: `${UID}/${ITEM}/cover.png`,
+      custom_cover_path: `${UID}/${ITEM}/cover-custom.jpg`,
+      file_size: 1000,
+    },
+  ];
   mockFuentes = [{ id: 'f1', file_path: `${UID}/fonts/Mi-letra.ttf`, file_size: 500 }];
   mockConsultas.length = 0;
   mockR2.mockReset();
@@ -113,6 +123,14 @@ describe('subir', () => {
   it('el archivo tiene que medir lo que dice su fila (la que cuidó el tope de espacio)', async () => {
     const r = await pedir({ action: 'upload', itemId: ITEM, path: `${UID}/${ITEM}/rayuela.pdf`, contentType: 'application/pdf', size: 999_999 });
     expect(r).toEqual({ status: 413, body: expect.objectContaining({ code: 'tooBig' }) });
+  });
+
+  it('la portada propia (RF-BL23) también se sube y se lee, hasta 5 MB', async () => {
+    const subir = await pedir({ action: 'upload', itemId: ITEM, path: `${UID}/${ITEM}/cover-custom.jpg`, contentType: 'image/jpeg', size: 200_000 });
+    expect(subir.status).toBe(200);
+    expect((await pedir({ action: 'read', path: `${UID}/${ITEM}/cover-custom.jpg` })).status).toBe(200);
+    const grande = await pedir({ action: 'upload', itemId: ITEM, path: `${UID}/${ITEM}/cover-custom.jpg`, contentType: 'image/jpeg', size: 5 * 1024 * 1024 + 1 });
+    expect(grande.status).toBe(413);
   });
 
   it('una portada puede pesar hasta 5 MB', async () => {

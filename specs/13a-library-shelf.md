@@ -114,7 +114,10 @@ Areli empezó Library en marzo de 2026 como un proyecto aparte, **KAVI Reader** 
   - Antes de guardarla se ve cómo queda en proporción de libro (2:3), con su color dominante calculado
     (RF-BL13), que después se puede cambiar con el cuentagotas (RF-BL21).
   - **"Volver a la original"** regresa a la portada del archivo.
-  - Imágenes JPEG, PNG, WebP o HEIC de hasta 5 MB; se guardan en R2 como la portada del libro.
+  - La imagen se reduce a 1200 px de ancho si es más ancha (nunca se agranda) y se guarda en JPEG, así
+    sirven igual JPEG, PNG, WebP o HEIC (fotos de iPhone). Queda en R2 en la carpeta del libro, **aparte**
+    de la del archivo (`custom_cover_path`): por eso volver a la original no tiene que sacarla otra vez del
+    archivo. La función de archivos acepta portadas de hasta 5 MB. (T314, 13 oct 2026)
 
 ## 10. Sagas y libros enlazados (RF-BL24 – RF-BL27) — 13 oct 2026
 

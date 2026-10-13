@@ -12,7 +12,9 @@ import {
   removeLibraryItem,
   type LibraryItem,
   type LibraryItemPatch,
+  clearCustomCover,
   saveLibraryCover,
+  setCustomCover,
   updateLibraryItem,
 } from '@/services/library';
 
@@ -148,4 +150,28 @@ export function useRemoveLibraryItems() {
     },
     onSettled: () => queryClient.invalidateQueries({ queryKey: libraryKeys.all }),
   });
+}
+
+/**
+ * Portada propia (RF-BL23): poner una o volver a la original. Al terminar se vuelve a pedir todo lo de
+ * la librería, incluida la dirección firmada de la portada, para que se vea la nueva imagen.
+ */
+export function useCustomCover() {
+  const { userId } = useAuth();
+  const queryClient = useQueryClient();
+  const refrescar = () => queryClient.invalidateQueries({ queryKey: libraryKeys.all });
+  const poner = useMutation({
+    mutationFn: ({ item, jpeg, color }: { item: LibraryItem; jpeg: Uint8Array; color: string | null }) => setCustomCover(userId as string, item, jpeg, color),
+    onSettled: refrescar,
+  });
+  const quitar = useMutation({
+    mutationFn: (id: string) => clearCustomCover(id),
+    onMutate: (id) => {
+      queryClient.setQueryData<LibraryItem[]>(libraryKeys.items(userId), (lista) =>
+        lista?.map((i) => (i.id === id ? { ...i, custom_cover_path: null, custom_cover_color: null } : i)),
+      );
+    },
+    onSettled: refrescar,
+  });
+  return { poner, quitar };
 }

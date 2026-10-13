@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { BackHandler, FlatList, type LayoutChangeEvent, StyleSheet, View } from 'react-native';
 
 import { BulkCategorySheet } from '@/components/library/bulk-category-sheet';
+import { CoverSheet } from '@/components/library/cover-sheet';
 import { EditItemSheet } from '@/components/library/edit-item-sheet';
 import { ImportSheet } from '@/components/library/import-sheet';
 import { ItemSheet } from '@/components/library/item-sheet';
@@ -68,6 +69,7 @@ export default function LibraryScreen() {
   // Menú, edición y selección (T281).
   const [menuDe, setMenuDe] = useState<LibraryItem | null>(null);
   const [editando, setEditando] = useState<LibraryItem | null>(null);
+  const [portadaDe, setPortadaDe] = useState<LibraryItem | null>(null);
   const [seleccion, setSeleccion] = useState<ReadonlySet<string>>(() => new Set());
   const [categoriaVarias, setCategoriaVarias] = useState(false);
   const seleccionando = seleccion.size > 0;
@@ -272,10 +274,12 @@ export default function LibraryScreen() {
         onClose={() => setMenuDe(null)}
         onOpen={(p) => abrir(p.id)}
         onEdit={setEditando}
+        onCover={setPortadaDe}
         onSelect={(p) => setSeleccion(new Set([p.id]))}
         onDelete={(p) => eliminarPiezas([p])}
       />
       <EditItemSheet item={editando} onClose={() => setEditando(null)} />
+      <CoverSheet item={portadaDe} onClose={() => setPortadaDe(null)} />
       <BulkCategorySheet count={seleccion.size} visible={categoriaVarias} onClose={() => setCategoriaVarias(false)} onApply={aplicarCategoria} />
       {hayPiezas ? <PdfCoverWorker items={piezas.data} /> : null}
     </Screen>

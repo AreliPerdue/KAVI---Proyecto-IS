@@ -1,7 +1,7 @@
 /** Lo que calcula la librería de KAVI Library para pintarse (spec 13a, T277). */
 import { PEOPLE_COLORS } from '@/constants/people-colors';
 import { INK, PAPER } from '@/constants/theme';
-import { avanceDe, colorDePortada, columnasPara, libraryViewValida, textoSobre } from '@/lib/library/shelf';
+import { avanceDe, colorDePortada, columnasPara, libraryViewValida, rutaDePortada, textoSobre } from '@/lib/library/shelf';
 
 describe('columnasPara (RF-BL1)', () => {
   it.each([
@@ -70,4 +70,15 @@ it('libraryViewValida descarta lo que no es una vista', () => {
   expect(libraryViewValida('list')).toBe('list');
   expect(libraryViewValida('shelf')).toBe('covers');
   expect(libraryViewValida(undefined)).toBe('covers');
+});
+
+describe('portada propia (RF-BL23)', () => {
+  it('se ve la propia mientras exista, con su color; si no, la del archivo', () => {
+    const base = { id: 'a', cover_path: 'u/a/cover.jpg', cover_color: '#123456' };
+    expect(rutaDePortada(base)).toBe('u/a/cover.jpg');
+    const conPropia = { ...base, custom_cover_path: 'u/a/cover-custom.jpg', custom_cover_color: '#EC4899' };
+    expect(rutaDePortada(conPropia)).toBe('u/a/cover-custom.jpg');
+    expect(colorDePortada(conPropia)).toBe('#EC4899');
+    expect(colorDePortada({ ...base, custom_cover_path: null, custom_cover_color: null })).toBe('#123456');
+  });
 });

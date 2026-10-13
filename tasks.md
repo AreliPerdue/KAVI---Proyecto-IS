@@ -948,9 +948,13 @@ Decisiones B1–B9 aprobadas el 12 oct 2026 (T274); ver la tabla de la spec 13 �
   mantener presionado selecciona con palomitas, y con varias se cambia la categoría o se eliminan; "Atrás" de
   Android sale de la selección. Lo que depende de otras tareas se agrega con ellas: agregar o mover a librero
   (T280), ver su ficha (L4) y cambiar portada (T314).
-- [ ] T314 Cambiar portada: desde el menú de la pieza, subir de galería, cámara o archivo; en web, arrastrar y
+- [x] T314 Cambiar portada: desde el menú de la pieza, subir de galería, cámara o archivo; en web, arrastrar y
   soltar o pegar con ⌘V / Ctrl+V; en teléfono, pegar una imagen copiada; vista previa 2:3 con su color; "Volver
   a la original". (RF-BL23, 13 oct 2026) Dep: T281, T279
+  **Hecho (13 oct 2026):** portada propia aparte de la del archivo (migración aplicada en producción y probada con
+  PGlite), imagen reducida a 1200 px y en JPEG, función de R2 que la acepta; probado en el navegador elegir
+  archivo, arrastrar, pegar y volver a la original. Módulos nativos nuevos (`expo-image-picker`,
+  `expo-clipboard`): el APK se recompila; Expo Go ya los trae.
 - [ ] T315 Sagas: datos (`library_series`, saga y número en la pieza, con RLS), asignarlas al editar o a varios a
   la vez, proponerlas desde el EPUB, ajuste "Apiladas / Sueltas" recordado, orden y filtro por saga, ofrecer el
   siguiente al terminar. (RF-BL24 – RF-BL26) Dep: T280, T281

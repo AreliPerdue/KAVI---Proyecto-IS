@@ -572,6 +572,9 @@ export type LibraryItem = {
   cover_path: string | null;
   /** Color dominante de la portada (`#RRGGBB`), para el lomo y el filtro (RF-BL13). */
   cover_color: string | null;
+  /** Portada que puso la persona (RF-BL23); se muestra en lugar de la del archivo mientras exista. */
+  custom_cover_path: string | null;
+  custom_cover_color: string | null;
   file_path: string | null;
   /** El PDF que se lee cuando el original es de oficina (decisión B3). */
   pdf_path: string | null;

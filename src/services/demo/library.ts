@@ -91,6 +91,8 @@ export const demoLibrary: LibraryApi = {
       genres: input.genres ?? [],
       cover_path: input.cover_path ?? null,
       cover_color: input.cover_color ?? null,
+      custom_cover_path: null,
+      custom_cover_color: null,
       file_path: input.file_path ?? null,
       pdf_path: input.pdf_path ?? null,
       file_size: input.file_size ?? 0,

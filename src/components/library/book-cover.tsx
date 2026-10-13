@@ -5,11 +5,11 @@ import { StyleSheet, Text, View } from 'react-native';
 import { Radius, Spacing, Typography } from '@/constants/theme';
 import { useLibraryFileUrl } from '@/hooks/use-library';
 import { useTheme } from '@/hooks/use-theme';
-import { colorDePortada, textoSobre } from '@/lib/library/shelf';
+import { colorDePortada, rutaDePortada, textoSobre } from '@/lib/library/shelf';
 import type { LibraryItem } from '@/types/domain';
 
 type Props = {
-  item: Pick<LibraryItem, 'id' | 'title' | 'authors' | 'cover_path' | 'cover_color'>;
+  item: Pick<LibraryItem, 'id' | 'title' | 'authors' | 'cover_path' | 'cover_color'> & Partial<Pick<LibraryItem, 'custom_cover_path' | 'custom_cover_color'>>;
   /** Ancho en px; el alto sale de la proporción de libro, 2:3 (RF-BL1). */
   width: number;
   /** Miniatura de la lista (RF-BL3): sin texto, que a ese tamaño no se lee. */
@@ -25,7 +25,7 @@ type Props = {
  */
 export function BookCover({ item, width, thumb = false, uri }: Props) {
   const theme = useTheme();
-  const firmada = useLibraryFileUrl(uri ? null : item.cover_path);
+  const firmada = useLibraryFileUrl(uri ? null : rutaDePortada(item));
   const url = { data: uri ?? firmada.data };
   // Si la imagen no carga (dirección vencida, sin red), se queda la portada generada con su título.
   const [fallo, setFallo] = useState<string | null>(null);

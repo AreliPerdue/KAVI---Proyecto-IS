@@ -39,11 +39,18 @@ function huella(texto: string): number {
   return h >>> 0;
 }
 
+/** La imagen de portada que se ve: la que puso la persona (RF-BL23) o la del archivo (RF-BL12). */
+export function rutaDePortada(item: Pick<LibraryItem, 'cover_path'> & Partial<Pick<LibraryItem, 'custom_cover_path'>>): string | null {
+  return item.custom_cover_path ?? item.cover_path;
+}
+
 /**
- * Color de la portada: el dominante de la imagen (RF-BL13) o, si no tiene, uno de los Nobi elegido
- * por su id para que no cambie entre aperturas ni entre dispositivos (RF-BL12).
+ * Color de la portada: el de la portada propia si la hay (RF-BL23), si no el dominante de la del
+ * archivo (RF-BL13) y, si no tiene, uno de los Nobi elegido por su id para que no cambie entre
+ * aperturas ni entre dispositivos (RF-BL12).
  */
-export function colorDePortada(item: Pick<LibraryItem, 'id' | 'cover_color'>): string {
+export function colorDePortada(item: Pick<LibraryItem, 'id' | 'cover_color'> & Partial<Pick<LibraryItem, 'custom_cover_path' | 'custom_cover_color'>>): string {
+  if (item.custom_cover_path && item.custom_cover_color) return item.custom_cover_color;
   return item.cover_color ?? PEOPLE_COLORS[huella(item.id) % PEOPLE_COLORS.length].hex;
 }
 

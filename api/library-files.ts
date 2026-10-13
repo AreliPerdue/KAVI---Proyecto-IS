@@ -12,7 +12,8 @@
  *
  * Acciones (POST, JSON):
  * - `upload` `{ itemId | fontId, path, contentType, size }` → dirección para subir con `PUT`. La ruta
- *   debe ser el archivo, el PDF o la portada de esa pieza, o el archivo de esa fuente. El tamaño queda
+ *   debe ser el archivo, el PDF o una portada de esa pieza (la del archivo o la propia), o el archivo
+ *   de esa fuente. El tamaño queda
  *   firmado: el archivo debe medir lo que dice su fila (la base cuida el tope de 500 MB con ese número),
  *   una portada 5 MB o menos y una fuente 10 MB o menos.
  * - `read` `{ path }` → dirección para leer con `GET`, válida una hora.
@@ -37,7 +38,15 @@ const MAX_FUENTE = 10 * 1024 * 1024;
 const SEGUNDOS_LECTURA = 3600;
 const SEGUNDOS_SUBIDA = 900;
 
-type Pieza = { id: string; owner_id: string; file_path: string | null; pdf_path: string | null; cover_path: string | null; file_size: number };
+type Pieza = {
+  id: string;
+  owner_id: string;
+  file_path: string | null;
+  pdf_path: string | null;
+  cover_path: string | null;
+  custom_cover_path: string | null;
+  file_size: number;
+};
 type Fuente = { id: string; file_path: string; file_size: number };
 
 type R2 = { cuenta: string; llave: string; secreto: string; bucket: string };
@@ -116,11 +125,11 @@ function entidades(texto: string): string {
 const texto = (v: unknown) => (typeof v === 'string' ? v : '');
 
 async function pieza(supabase: SupabaseClient, filtro: { id?: string; ruta?: string }): Promise<Pieza | null> {
-  let consulta = supabase.from('library_items').select('id, owner_id, file_path, pdf_path, cover_path, file_size');
+  let consulta = supabase.from('library_items').select('id, owner_id, file_path, pdf_path, cover_path, custom_cover_path, file_size');
   if (filtro.id) consulta = consulta.eq('id', filtro.id);
   if (filtro.ruta) {
     const r = filtro.ruta.replace(/[,()"]/g, '');
-    consulta = consulta.or(`file_path.eq."${r}",pdf_path.eq."${r}",cover_path.eq."${r}"`);
+    consulta = consulta.or(`file_path.eq."${r}",pdf_path.eq."${r}",cover_path.eq."${r}",custom_cover_path.eq."${r}"`);
   }
   const { data, error } = await consulta.limit(1);
   if (error) throw new Error(`select ${error.code ?? ''} ${error.message}`);
@@ -185,7 +194,8 @@ export async function POST(request: Request): Promise<Response> {
         }
         const item = suya(ruta) ? await pieza(supabase, { id: texto(cuerpo.itemId) }) : null;
         if (!item || !ruta.startsWith(`${uid}/${item.id}/`)) return responder(403, { code: 'forbidden', error: 'No tienes permiso para guardar ese archivo.' });
-        const esPortada = ruta === item.cover_path;
+        // La del archivo o la que puso la persona (RF-BL23): las dos son imágenes chicas.
+        const esPortada = ruta === item.cover_path || ruta === item.custom_cover_path;
         const esArchivo = ruta === item.file_path || ruta === item.pdf_path;
         if (!esPortada && !esArchivo) return responder(403, { code: 'forbidden', error: 'No tienes permiso para guardar ese archivo.' });
         const tope = esPortada ? MAX_PORTADA : MAX_ARCHIVO;

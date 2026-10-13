@@ -75,6 +75,14 @@
             "minSdkVersion": 26
           }
         }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "KAVI usa tus fotos para ponerle portada a tus libros.",
+          "cameraPermission": "KAVI usa la cámara para tomar la foto de la portada de un libro.",
+          "microphonePermission": false
+        }
       ]
     ],
     "experiments": {
