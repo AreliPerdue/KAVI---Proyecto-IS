@@ -1,5 +1,4 @@
-import { Platform } from 'react-native';
-
+import { apiUrl } from '@/lib/api';
 import { AUTH_MESSAGES, AuthUiError, isOfflineError } from '@/lib/auth-errors';
 import type { GuardianStatus } from '@/lib/consent';
 import { getSupabase } from '@/lib/supabase';
@@ -7,13 +6,8 @@ import type { ConsentApi } from '@/services/contracts';
 import { toError, traducirDeLaBase, unwrap } from '@/services/supabase/errors';
 import { getLanguage, t } from '@/i18n';
 
-/**
- * La función de Vercel que manda el correo (`api/guardian-consent.ts`). En la web publicada es
- * del mismo origen (la CSP solo permite `'self'`); en el teléfono va con la dirección completa.
- * En el servidor local de desarrollo no existe: el envío falla con un mensaje claro.
- */
-const SITIO = 'https://kavi-proyecto-is.vercel.app';
-const API_CORREO = Platform.OS === 'web' ? '/api/guardian-consent' : `${SITIO}/api/guardian-consent`;
+/** La función de Vercel que manda el correo (`api/guardian-consent.ts`). */
+const API_CORREO = apiUrl('guardian-consent');
 
 type GuardianRow = { guardian_email: string; status: Exclude<GuardianStatus, 'expired'>; expires_at: string };
 

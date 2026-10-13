@@ -75,8 +75,16 @@ Es grande a propósito, y por eso se construye **por capas** (§8): primero un n
   mismo motor.
 - **Dibujo y animación nativos donde importa:** el lápiz (Apple Pencil, dedo) y el paso de página del modo
   *libro real* se dibujan con Skia y Reanimated, que ya usa la app.
-- **Archivos en Supabase Storage**, en un bucket privado con RLS por dueño (P4). La base guarda los
-  metadatos; el archivo se descarga y se guarda en el dispositivo para leer sin conexión.
+- **Archivos en Cloudflare R2** (decisión B2, enmendada el 12 oct 2026), en un bucket privado con una
+  carpeta por persona (`<uid>/<pieza>/<archivo>`). Todo lo demás —metadatos, anotaciones, fichas, tope de
+  espacio— sigue en Supabase.
+  - Las llaves de R2 nunca están en la app: viven en la función de Vercel `api/library-files`, que revisa la
+    sesión de Supabase y, con la RLS de `library_items`, que la ruta sea de una pieza de quien pide (P4).
+  - La función solo **firma direcciones temporales**; el archivo va directo entre el dispositivo y R2.
+  - La firma de subida fija el tamaño: el archivo principal debe medir lo que dice su fila (la que cuida
+    el tope de 500 MB) y una portada, como mucho 5 MB.
+  - El archivo se descarga y se guarda en el dispositivo para leer sin conexión.
+  - En el modo demo los archivos siguen en memoria.
 - **Las anotaciones se guardan por posición estable:** en PDF, página y coordenadas relativas (0–1); en
   EPUB, su CFI. Así sobreviven a cambiar el tamaño de letra o la pantalla.
 - **Formatos de oficina** (Word, PowerPoint, Excel y sus equivalentes de Apple) no se pueden pintar fiel en
@@ -100,9 +108,12 @@ El catálogo de plantillas, estilos, stickers y fuentes incluidas vive en el cli
 
 **Aplicado en producción el 12 oct 2026** (`20261012100000_library.sql`, T275): las ocho tablas con RLS por
 dueño (las hijas además comprueban que la pieza y el librero sean de quien escribe), el tope de 500 MB por
-persona en la base (`library_quota`) y el bucket privado `library` con 50 MB por archivo y una carpeta por
-persona. **Eliminar la cuenta** (RF-A12) borra también sus archivos: Storage no se borra en cascada, así que
-la app vacía la carpeta antes de llamar a `delete_my_account`.
+persona en la base (`library_quota`) y el bucket privado `library` de Supabase Storage con 50 MB por archivo
+y una carpeta por persona. **Eliminar la cuenta** (RF-A12) borra también sus archivos: un almacén de archivos
+no se borra en cascada con la base, así que la app vacía la carpeta antes de llamar a `delete_my_account`.
+
+**Archivos en R2 (T313, 12 oct 2026).** Con el cambio de B2, los archivos pasan a Cloudflare R2 y el bucket
+`library` de Supabase queda sin uso; se quita en una migración cuando se confirme que está vacío.
 
 ## 7. Fuera de esta versión
 
@@ -133,7 +144,7 @@ Cada etapa termina con su incremento probado (P7) y se puede usar sola.
 | # | Decisión | Lo aprobado |
 |---|---|---|
 | **B1** | ¿Library entra al alcance? | **Sí**, como V2 por enmienda a P8, y se desarrolla **oculto** hasta L7. |
-| **B2** | ¿Dónde viven los archivos? | **Supabase Storage con límites:** 50 MB por archivo y 500 MB por persona, con aviso al acercarse. Se sincroniza entre dispositivos. |
+| **B2** | ¿Dónde viven los archivos? | **Con límites:** 50 MB por archivo y 500 MB por persona, con aviso al acercarse. Se sincroniza entre dispositivos. **Enmienda (12 oct 2026):** los archivos van en **Cloudflare R2** y no en Supabase Storage. El plan gratis de Supabase da 1 GB en total y cobra la descarga; R2 da 10 GB gratis y **no cobra descargas**, que es lo que más gasta leer libros. Todo lo demás de KAVI sigue en Supabase. |
 | **B3** | Formatos de oficina | **Se convierten a PDF** al importarlos y se tratan como PDF (subrayar, anotar…). Servicio de conversión aparte (LibreOffice/Gotenberg); su alojamiento se decide en L6. |
 | **B4** | Diccionario | **Mixto y gratis:** inglés con *Free Dictionary API*; español con el diccionario del sistema donde exista (iPhone) y un enlace a la RAE en lo demás. |
 | **B5** | Gesto para definir | **Mantener presionado** selecciona la palabra y el menú ofrece Definir, Subrayar, Copiar y Escuchar. |

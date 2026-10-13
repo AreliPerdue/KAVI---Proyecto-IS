@@ -12,7 +12,7 @@
   las que suba la persona (RF-BH4).
 - **RF-BH4. Fuentes propias.** Se suben archivos `.ttf`/`.otf`/`.woff2`. Antes de la primera, un aviso que
   hay que aceptar: *"Tú eres responsable de tener la licencia de las fuentes que subas. Usa fuentes libres o
-  que te pertenezcan."* Se guardan en Storage y se usan en todos los dispositivos de la persona.
+  que te pertenezcan."* Se guardan en R2, como los libros, y se usan en todos los dispositivos de la persona.
 - **RF-BH5. Tema del lector:** claro, oscuro, sepia, y personalizado (color de la página y de la letra por
   separado). Independiente del tema de la app.
 - **RF-BH6. Escuchar.** Un botón lee en voz alta desde donde va la página (voz del sistema, decisión B7),

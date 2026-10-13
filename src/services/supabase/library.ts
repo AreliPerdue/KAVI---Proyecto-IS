@@ -1,6 +1,7 @@
-import { AuthUiError } from '@/lib/auth-errors';
+import { apiUrl } from '@/lib/api';
+import { AUTH_MESSAGES, AuthUiError, isOfflineError } from '@/lib/auth-errors';
 import { getSupabase } from '@/lib/supabase';
-import { LIBRARY_BUCKET, LIBRARY_LIMITS, LIBRARY_URL_SECONDS } from '@/constants/library';
+import { LIBRARY_LIMITS } from '@/constants/library';
 import { nombreSeguro } from '@/lib/library/files';
 import type { LibraryApi } from '@/services/contracts';
 import { toError, unwrap } from '@/services/supabase/errors';
@@ -19,37 +20,45 @@ import { t } from '@/i18n';
 
 /**
  * KAVI Library sobre Supabase (spec 13 §6). La RLS deja a cada quien solo lo suyo; aquí no se
- * filtra por dueño más que para no pedir de más. Los archivos van en el bucket privado
- * `library`, en `<uid>/<pieza>/<archivo>`.
+ * filtra por dueño más que para no pedir de más.
+ *
+ * Los archivos van en Cloudflare R2 (decisión B2, T313), en `<uid>/<pieza>/<archivo>`. La app no
+ * tiene las llaves: le pide a la función `api/library-files` una dirección firmada y sube o baja
+ * directo con ella.
  */
 const db = () => getSupabase();
-const bucket = () => getSupabase().storage.from(LIBRARY_BUCKET);
+
+/** Errores de la función de archivos, en el idioma de la app (spec 12). */
+const ERRORES: Record<string, () => string> = {
+  unavailable: () => t().errors.libraryFilesUnavailable,
+  signIn: () => t().errors.signInRequired,
+  forbidden: () => t().errors.noPermission,
+  tooBig: () => t().errors.libraryFileTooBig,
+};
+
+/** Llama a `api/library-files` con la sesión de quien usa la app. */
+async function archivos<T>(cuerpo: Record<string, unknown>): Promise<T> {
+  const { data } = await getSupabase().auth.getSession();
+  const jwt = data.session?.access_token;
+  if (!jwt) throw new AuthUiError(t().errors.signInRequired);
+  let respuesta: Response;
+  try {
+    respuesta = await fetch(apiUrl('library-files'), {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', authorization: `Bearer ${jwt}` },
+      body: JSON.stringify(cuerpo),
+    });
+  } catch (e) {
+    throw new AuthUiError(isOfflineError(e) ? AUTH_MESSAGES.offline : t().errors.libraryFilesFailed, e);
+  }
+  const json = (await respuesta.json().catch(() => null)) as (T & { code?: string }) | null;
+  if (!respuesta.ok || !json) throw new AuthUiError((json?.code && ERRORES[json.code]?.()) || t().errors.libraryFilesFailed);
+  return json;
+}
 
 /** Lanza si hubo error, sin esperar datos (borrar, `upsert` sin `select`). */
 function sinError(result: { error: { message: string; code?: string; hint?: string } | null }): void {
   if (result.error) throw toError(result.error);
-}
-
-/** Todas las rutas dentro de una carpeta, bajando por subcarpetas (Storage no lista en profundidad). */
-async function rutasDe(prefijo: string): Promise<string[]> {
-  const { data, error } = await bucket().list(prefijo, { limit: 1000 });
-  if (error) throw toError(error);
-  const rutas: string[] = [];
-  for (const entrada of data ?? []) {
-    const ruta = `${prefijo}/${entrada.name}`;
-    // Las carpetas vienen sin id ni metadatos.
-    if (entrada.id) rutas.push(ruta);
-    else rutas.push(...(await rutasDe(ruta)));
-  }
-  return rutas;
-}
-
-async function borrarCarpeta(prefijo: string): Promise<void> {
-  const rutas = await rutasDe(prefijo);
-  for (let i = 0; i < rutas.length; i += 100) {
-    const { error } = await bucket().remove(rutas.slice(i, i + 100));
-    if (error) throw toError(error);
-  }
 }
 
 export const supabaseLibrary: LibraryApi = {
@@ -80,7 +89,7 @@ export const supabaseLibrary: LibraryApi = {
   async removeItem(itemId) {
     const item = unwrap(await db().from('library_items').select('id, owner_id').eq('id', itemId).single()) as Pick<LibraryItem, 'id' | 'owner_id'>;
     // Primero los archivos: si se borrara antes la fila, quedarían huérfanos ocupando espacio.
-    await borrarCarpeta(`${item.owner_id}/${item.id}`);
+    await archivos({ action: 'delete', itemId: item.id });
     sinError(await db().from('library_items').delete().eq('id', itemId));
   },
 
@@ -93,22 +102,17 @@ export const supabaseLibrary: LibraryApi = {
     const tamano = tamanoDe(body);
     if (tamano > LIBRARY_LIMITS.fileBytes) throw new AuthUiError(t().errors.libraryFileTooBig);
     const ruta = `${userId}/${itemId}/${nombreSeguro(fileName)}`;
-    const { error } = await bucket().upload(ruta, body, { contentType, upsert: true });
-    if (error) {
-      if (/payload too large|exceeded the maximum/i.test(error.message)) throw new AuthUiError(t().errors.libraryFileTooBig, error);
-      throw toError(error);
-    }
+    await subir(archivos, { itemId, path: ruta, contentType, size: tamano }, body);
     return ruta;
   },
 
   async fileUrl(path) {
-    const { data, error } = await bucket().createSignedUrl(path, LIBRARY_URL_SECONDS);
-    if (error || !data) throw toError(error ?? { message: 'sin url' });
-    return data.signedUrl;
+    return (await archivos<{ url: string }>({ action: 'read', path })).url;
   },
 
-  async removeAllFiles(userId) {
-    await borrarCarpeta(userId);
+  async removeAllFiles() {
+    // La función borra la carpeta de la sesión, no la de un id que mande la app.
+    await archivos({ action: 'deleteAll' });
   },
 
   async listShelves(userId) {
@@ -232,9 +236,8 @@ export const supabaseLibrary: LibraryApi = {
   async addFont(userId, input) {
     if (input.size > LIBRARY_LIMITS.fontBytes) throw new AuthUiError(t().errors.libraryFileTooBig);
     const ruta = `${userId}/fonts/${nombreSeguro(input.name)}.${input.format}`;
-    const { error } = await bucket().upload(ruta, input.body, { contentType: `font/${input.format}`, upsert: true });
-    if (error) throw toError(error);
-    return unwrap(
+    // Primero la fila: la función de archivos solo firma rutas que ya están en la base.
+    const fila = unwrap(
       await db()
         .from('library_fonts')
         .insert({
@@ -248,15 +251,37 @@ export const supabaseLibrary: LibraryApi = {
         .select('*')
         .single(),
     ) as LibraryFont;
+    try {
+      await subir(archivos, { fontId: fila.id, path: ruta, contentType: `font/${input.format}`, size: input.size }, input.body);
+    } catch (e) {
+      await db().from('library_fonts').delete().eq('id', fila.id);
+      throw e;
+    }
+    return fila;
   },
 
   async removeFont(fontId) {
-    const fuente = unwrap(await db().from('library_fonts').select('file_path').eq('id', fontId).single()) as Pick<LibraryFont, 'file_path'>;
-    const { error } = await bucket().remove([fuente.file_path]);
-    if (error) throw toError(error);
+    await archivos({ action: 'delete', fontId });
     sinError(await db().from('library_fonts').delete().eq('id', fontId));
   },
 };
+
+/** Pide la firma de subida y manda el archivo directo a R2 con ella. */
+async function subir(
+  pedir: typeof archivos,
+  datos: { itemId?: string; fontId?: string; path: string; contentType: string; size: number },
+  body: LibraryFileBody,
+): Promise<void> {
+  const firma = await pedir<{ url: string; headers: Record<string, string> }>({ action: 'upload', ...datos });
+  let respuesta: Response;
+  try {
+    // `content-length` lo pone la plataforma y tiene que coincidir con el tamaño firmado.
+    respuesta = await fetch(firma.url, { method: 'PUT', headers: firma.headers, body: body as BodyInit });
+  } catch (e) {
+    throw new AuthUiError(isOfflineError(e) ? AUTH_MESSAGES.offline : t().errors.libraryFilesFailed, e);
+  }
+  if (!respuesta.ok) throw new AuthUiError(t().errors.libraryFilesFailed);
+}
 
 function tamanoDe(body: LibraryFileBody): number {
   if (body instanceof ArrayBuffer) return body.byteLength;

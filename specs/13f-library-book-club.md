@@ -62,9 +62,9 @@ Es la única parte de Library que se comparte, y solo con quien se invita (P4).
 - `library_club_members`: club, persona, estado (`pending`/`accepted`), su copia (`library_items.id`, propia),
   si muestra su avance.
 - **Las copias son piezas normales** de cada dueño (`library_items`, RLS por dueño de T275), con `club_id`
-  mientras estén conectadas. Copiar el archivo usa la copia de Storage de Supabase: leer el original del
-  anfitrión (política para miembros aceptados) y escribir en la carpeta propia (política por dueño ya
-  existente). El tope de 500 MB lo cuida el mismo disparador.
+  mientras estén conectadas. Copiar el archivo lo hace la función `api/library-files` dentro de R2
+  (decisión B2): comprueba que quien acepta sea miembro aceptado del club y copia el original del anfitrión
+  a la carpeta del miembro, sin pasar por el teléfono. El tope de 500 MB lo cuida el mismo disparador.
 - **Las anotaciones del club** son filas de `library_annotations` con `club_id` y `author_id`; las privadas
   lo llevan nulo. Como todas las copias son el mismo archivo, la posición (página + coordenadas o CFI) vale en
   todas. Al desconectarse una copia, el cliente copia las del club a filas propias (RF-BC8).

@@ -13,7 +13,7 @@
 | **Excel (.xlsx) / Numbers** | Convertido a PDF: cada hoja, en páginas (decisión B3). | L6 |
 | **Cuadernos, diarios, álbumes** | Creaciones de KAVI (spec 13e). | L5 |
 
-- **RF-BR1.** El archivo original se guarda tal cual en Storage; lo que se lee es el original o, si hubo que
+- **RF-BR1.** El archivo original se guarda tal cual en R2 (decisión B2); lo que se lee es el original o, si hubo que
   convertirlo, el PDF resultante. La persona puede descargar el original.
 - **RF-BR2.** Un archivo que no se puede abrir (dañado, con candado, formato raro) da un mensaje claro y no
   deja una pieza vacía en la librería.

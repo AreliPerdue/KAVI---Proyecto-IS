@@ -922,10 +922,19 @@ Decisiones B1–B9 aprobadas el 12 oct 2026 (T274); ver la tabla de la spec 13 �
   del estándar (`@noble`), color dominante con `expo-image-manipulator`. Se guarda la fila primero (tope en la
   base) y luego los archivos; si la subida falla, se borra la pieza. Metro resuelve `tslib` a su versión ES
   (con la de `pdf-lib` la app no cargaba). Módulos nativos nuevos: el APK se recompila (Expo Go ya los trae).
+- [ ] T313 Archivos de Library en Cloudflare R2 (enmienda a B2): función de Vercel `api/library-files` que revisa
+  la sesión y la pieza y firma direcciones temporales para subir (tamaño fijado), leer y borrar; `LibraryApi`
+  de Supabase sube y baja directo con ellas; CSP de la web con el dominio de R2; quitar el bucket `library` de
+  Supabase cuando esté vacío. Lo de Areli: cuenta de Cloudflare, bucket, token y CORS de R2 y variables en
+  Vercel. (spec 13 §5, §9 B2) Dep: T278
+  **Código listo (12 oct 2026):** `api/library-files.ts` (subir, leer, borrar pieza, fuente o cuenta; tamaño
+  firmado; errores con código traducido en la app), `LibraryApi` de Supabase y las fuentes sobre R2, CSP con
+  `*.r2.cloudflarestorage.com`; firma comparada con botocore. Falta para marcarla: que Areli cree el bucket y
+  las variables, y probar de punta a punta en producción (subir, leer, borrar).
 - [ ] T279 Motor de lectura web (pdf.js y foliate-js) en WebView y en web; lectura en scroll; avance y barra de
   página; buscar dentro; al abrir un PDF por primera vez, su primera página se guarda como portada (con su
   color dominante) en lugar de la generada (RF-BL12). (RF-BR1, RF-BR2, RF-BR4, RF-BR6, RF-BR9, RF-BR10)
-  Dep: T278
+  Dep: T278, T313
 - [ ] T280 Libreros propios, orden, filtros (incluido color) y buscador. (RF-BL5 – RF-BL10, RF-BL18) Dep: T277
 - [ ] T281 Menú de cada pieza y selección múltiple. (RF-BL15 – RF-BL17) Dep: T280
 - [ ] T310 Más datos del libro (editorial, lugar, edición, capítulos, sinopsis): columnas nuevas, "Más datos" al
