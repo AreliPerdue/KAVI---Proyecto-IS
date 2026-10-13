@@ -931,10 +931,16 @@ Decisiones B1–B9 aprobadas el 12 oct 2026 (T274); ver la tabla de la spec 13 �
   firmado; errores con código traducido en la app), `LibraryApi` de Supabase y las fuentes sobre R2, CSP con
   `*.r2.cloudflarestorage.com`; firma comparada con botocore. Falta para marcarla: que Areli cree el bucket y
   las variables, y probar de punta a punta en producción (subir, leer, borrar).
-- [ ] T279 Motor de lectura web (pdf.js y foliate-js) en WebView y en web; lectura en scroll; avance y barra de
+- [x] T279 Motor de lectura web (pdf.js y foliate-js) en WebView y en web; lectura en scroll; avance y barra de
   página; buscar dentro; al abrir un PDF por primera vez, su primera página se guarda como portada (con su
   color dominante) en lugar de la generada (RF-BL12). (RF-BR1, RF-BR2, RF-BR4, RF-BR6, RF-BR9, RF-BR10)
   Dep: T278, T313
+  **Hecho (13 oct 2026):** motor en `public/reader/` (pdf.js *legacy* + foliate-js, copiados en `postinstall`),
+  iframe en web y WebView en el teléfono, protocolo de mensajes con pruebas; lector `/(app)/book/[id]` con
+  avance guardado al detenerse, barra para saltar, búsqueda sin acentos y errores claros; tocar un libro lo
+  abre; portadas de PDF dibujadas por un motor invisible (también las de libros ya subidos). Seguridad de la
+  web: CSP propia de `/reader/` y COEP `credentialless` para las portadas de R2. Probado en el navegador con
+  PDF y EPUB; falta probarlo en un teléfono (WebView).
 - [ ] T280 Libreros propios, orden, filtros (incluido color) y buscador. (RF-BL5 – RF-BL10, RF-BL18) Dep: T277
 - [ ] T281 Menú de cada pieza y selección múltiple. (RF-BL15 – RF-BL17) Dep: T280
 - [ ] T310 Más datos del libro (editorial, lugar, edición, capítulos, sinopsis): columnas nuevas, "Más datos" al
@@ -949,11 +955,13 @@ Decisiones B1–B9 aprobadas el 12 oct 2026 (T274); ver la tabla de la spec 13 �
 - [ ] T283 Páginas de lado y cambio de forma de leer sin perder la posición. (RF-BR7, RF-BR8) Dep: T279
 - [ ] T284 Libro real a pantalla completa con la hoja que se dobla en 3D (como FlipHTML5): en vertical una
   página, en horizontal dos (la portada sola a la derecha, luego en pares); arrastrar la esquina con Skia +
-  Reanimated; sin animación con movimiento reducido. (RF-BR5, B6 enmendada el 13 oct) Dep: T283
+  Reanimated; sin animación con movimiento reducido. En web, la `Permissions-Policy` de `vercel.json` tiene que
+  permitir `fullscreen=(self)` (hoy lo bloquea). (RF-BR5, B6 enmendada el 13 oct) Dep: T283
 - [ ] T284b Pasar de página sin botones: 20 % de cada borde, centro para mostrar u ocultar los controles,
   deslizar; en web, *trackpad* hacia los lados (una página por gesto), flechas, Re Pág / Av Pág y espacio;
   seleccionar texto nunca pasa de página. (RF-BR7b) Dep: T283
-- [ ] T285 Sin conexión: archivo guardado en el dispositivo y cola local de anotaciones. (RF-BR3) Dep: T279
+- [ ] T285 Sin conexión: archivo guardado en el dispositivo y cola local de anotaciones; empaquetar el motor de
+  lectura dentro de la app (hoy el teléfono lo carga de la web). (RF-BR3) Dep: T279
 
 ### L3 · Herramientas sobre la página
 - [ ] T286 Capa de anotaciones con posición estable, panel de anotaciones, capas y bloqueo, deshacer.

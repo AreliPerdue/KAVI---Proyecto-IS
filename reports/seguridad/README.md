@@ -160,10 +160,14 @@ Dos cosas que hay que recordar al tocar la aplicación:
 - **El hash de la CSP.** Si una versión futura de Expo cambia el script de
   arranque, el hash deja de coincidir y la web no hidrata. Se recalcula con el
   sha256 en base64 del contenido del `<script>` sin `src` de `dist/index.html`.
-- **`Cross-Origin-Embedder-Policy: require-corp`.** Hoy es seguro porque todos
-  los recursos son del mismo origen. El día que se muestren avatares alojados en
-  Supabase Storage habrá que añadir ese origen a `img-src` y comprobar que
-  Supabase envía `Cross-Origin-Resource-Policy`, o esas imágenes no cargarán.
+- **`Cross-Origin-Embedder-Policy: credentialless`** (antes `require-corp`, cambiado el
+  13 oct 2026, T279). Con `require-corp`, el navegador bloqueaba toda imagen de otro
+  origen que no mandara `Cross-Origin-Resource-Policy`, y las portadas de KAVI Library
+  vienen de Cloudflare R2, que no lo manda. `credentialless` las deja cargar **sin
+  cookies** y conserva el aislamiento entre orígenes en Chrome. Además, `/reader/` (el
+  motor de lectura) tiene su propia CSP: se puede enmarcar solo desde el mismo origen
+  (`frame-ancestors 'self'`), permite `blob:` para los capítulos de EPUB y
+  `'wasm-unsafe-eval'` para los decodificadores de imagen de pdf.js.
 
 ## Archivos
 

@@ -178,8 +178,9 @@ describe('borrar', () => {
     expect(r).toEqual({ status: 200, body: { removed: 2 } });
     const listado = new URL(mockR2.mock.calls[0][0].url);
     expect(listado.searchParams.get('prefix')).toBe(`${UID}/${ITEM}/`);
+    // Se borran en paralelo: el orden en que terminan no importa.
     const borrados = mockR2.mock.calls.filter(([req]) => req.method === 'DELETE').map(([req]) => new URL(req.url).pathname);
-    expect(borrados).toEqual([`/kavi-library/${UID}/${ITEM}/rayuela.pdf`, `/kavi-library/${UID}/${ITEM}/cover.png`]);
+    expect(borrados.sort()).toEqual([`/kavi-library/${UID}/${ITEM}/cover.png`, `/kavi-library/${UID}/${ITEM}/rayuela.pdf`]);
     // Las peticiones a R2 van firmadas en el encabezado.
     expect(mockR2.mock.calls[0][0].headers.get('authorization')).toMatch(/^AWS4-HMAC-SHA256 /);
   });

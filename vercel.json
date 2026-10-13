@@ -9,6 +9,10 @@
     {
       "source": "/workout/:id",
       "destination": "/workout/[id]"
+    },
+    {
+      "source": "/book/:id",
+      "destination": "/book/[id]"
     }
   ],
   "headers": [
@@ -41,7 +45,7 @@
         },
         {
           "key": "Cross-Origin-Embedder-Policy",
-          "value": "require-corp"
+          "value": "credentialless"
         },
         {
           "key": "Cross-Origin-Resource-Policy",
@@ -50,6 +54,19 @@
         {
           "key": "Access-Control-Allow-Origin",
           "value": "https://kavi-proyecto-is.vercel.app"
+        }
+      ]
+    },
+    {
+      "source": "/reader/(.*)",
+      "headers": [
+        {
+          "key": "Content-Security-Policy",
+          "value": "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'self'; form-action 'none'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://*.r2.cloudflarestorage.com; font-src 'self' data: blob:; connect-src 'self' data: blob: https://*.r2.cloudflarestorage.com; frame-src 'self' blob:; worker-src 'self' blob:; upgrade-insecure-requests"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "SAMEORIGIN"
         }
       ]
     }

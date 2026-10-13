@@ -32,7 +32,7 @@ const SOLO_EN_SERVICIOS = {
 module.exports = defineConfig([
   expoConfig,
   {
-    ignores: ['dist/*'],
+    ignores: ['dist/*', 'public/reader/vendor/**'],
   },
   {
     files: ['src/**/*.{ts,tsx}'],

@@ -59,8 +59,23 @@
 
 ## 4. Lo técnico
 
-- **Motor web único** (spec 13 §5) dentro de `react-native-webview` en teléfono y directo en web. La
-  comunicación con la app va por mensajes (abrir, ir a posición, aplicar tema, anotaciones).
+- **Motor web único** (spec 13 §5): la página `public/reader/engine.html`, que la web sirve en
+  `/reader/`. En web se abre en un iframe del mismo origen; en el teléfono, con `react-native-webview`,
+  desde la web publicada (que es también el origen al que R2 le permite leer). La comunicación con la app
+  va por mensajes JSON (`src/lib/library/reader-protocol.ts`): abrir, ir a, buscar, portada; y de vuelta,
+  listo, abierto, posición, resultados, error. (T279, 13 oct 2026)
+  - **PDF** con pdf.js (`pdfjs-dist`, compilación *legacy*), página por página en scroll, con capa de
+    texto para buscar (y, en L3, subrayar). Las páginas se pintan al acercarse y se sueltan al alejarse.
+  - **EPUB** con foliate-js: scroll, posición por CFI y búsqueda.
+  - El libro **se descarga completo** al abrirlo: la dirección firmada de R2 vence en una hora y una
+    sesión de lectura puede durar más.
+  - La búsqueda no distingue mayúsculas ni acentos y encuentra frases partidas entre renglones.
+  - Las librerías las copia `scripts/vendor-reader.mjs` al instalar (`postinstall`); no se suben al repo.
+  - `/reader/` tiene su propia CSP en `vercel.json` (se enmarca solo desde el mismo origen, `blob:` para
+    los capítulos de EPUB, `'wasm-unsafe-eval'` para pdf.js), y el sitio usa
+    `Cross-Origin-Embedder-Policy: credentialless` para poder mostrar las portadas de R2.
+  - **Sin conexión (T285):** hoy el teléfono carga el motor de la web; para leer sin red habrá que
+    empaquetarlo dentro de la app.
 - **Libro real:** la curvatura se pinta con Skia sobre la imagen de la página o las dos páginas (captura del
   motor), con Reanimated para seguir el dedo a 60 fps. La pantalla completa oculta la barra de estado
   (`expo-status-bar`) y la de navegación de Android; en web se usa la API de pantalla completa del navegador

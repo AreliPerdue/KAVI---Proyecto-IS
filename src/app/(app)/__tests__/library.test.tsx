@@ -24,6 +24,8 @@ jest.mock('@/hooks/use-library', () => ({
   useImportBook: () => mockImportar,
 }));
 jest.mock('@/providers', () => ({ useSnackbar: () => mockSnackbar }));
+// El generador de portadas tiene su propia prueba; aquí solo estorba (abre un motor web).
+jest.mock('@/components/library/pdf-cover-worker', () => ({ PdfCoverWorker: () => null }));
 jest.mock('@/lib/library/import', () => ({ elegirLibro: () => mockElegir(), leerLibro: (a: unknown) => mockLeer(a) }));
 
 /* eslint-disable-next-line @typescript-eslint/no-require-imports -- tras los mocks */
@@ -181,4 +183,12 @@ describe('importar', () => {
     expect(await screen.findByText(es.errors.libraryDrm)).toBeTruthy();
     expect(screen.queryByText(L.reviewTitle)).toBeNull();
   });
+});
+
+it('tocar un libro lo abre en el lector (RF-BL17)', async () => {
+  mockPiezas = ok([pieza('l1', { title: 'Rayuela', authors: ['Julio Cortázar'] })]);
+  usePreferencesStore.setState({ libraryView: 'list' });
+  await render(<Pantalla />);
+  await fireEvent.press(screen.getByRole('button', { name: /^Rayuela/ }));
+  expect(globalThis.mockRouter.push).toHaveBeenCalledWith({ pathname: '/(app)/book/[id]', params: { id: 'l1' } });
 });

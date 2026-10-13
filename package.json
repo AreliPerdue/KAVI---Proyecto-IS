@@ -43,9 +43,11 @@
     "expo-system-ui": "~57.0.3",
     "expo-web-browser": "~57.0.2",
     "fflate": "^0.8.3",
+    "foliate-js": "^1.0.1",
     "lucide-react-native": "^1.38.0",
     "nodemailer": "^10.0.15",
     "pdf-lib": "^1.17.1",
+    "pdfjs-dist": "^6.4.299",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "react-hook-form": "^7.87.0",
@@ -58,6 +60,7 @@
     "react-native-svg": "15.15.4",
     "react-native-view-shot": "5.1.0",
     "react-native-web": "~0.21.0",
+    "react-native-webview": "13.16.1",
     "react-native-worklets": "0.10.1",
     "zod": "^4.5.4",
     "zustand": "^5.0.15"
@@ -76,6 +79,7 @@
     "typescript": "~6.0.3"
   },
   "scripts": {
+    "postinstall": "node scripts/vendor-reader.mjs",
     "typecheck": "tsc --noEmit",
     "test": "jest",
     "test:watch": "jest --watch",

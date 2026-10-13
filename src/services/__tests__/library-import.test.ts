@@ -63,3 +63,26 @@ it('si la base rechaza la pieza (tope de espacio), no sube nada', async () => {
   await expect(importLibraryBook('u1', { id: 'p4', libro: libro(), title: 'Rayuela', authors: [], genres: [] })).rejects.toThrow('límite');
   expect(mockApi.uploadFile).not.toHaveBeenCalled();
 });
+
+describe('portada de un PDF (RF-BL12, T279)', () => {
+  const mockUpdate = jest.fn(async () => ({}));
+  beforeAll(() => {
+    (mockApi as Record<string, unknown>).updateItem = mockUpdate;
+  });
+  beforeEach(() => mockUpdate.mockClear());
+
+  it('primero la ruta en la fila y después la imagen', async () => {
+    const { saveLibraryCover } = require('@/services/library') as typeof import('@/services/library');
+    await saveLibraryCover('u1', 'p1', new Uint8Array([7]), '#1E2761');
+    expect(mockUpdate).toHaveBeenCalledWith('p1', { cover_path: 'u1/p1/cover.jpg', cover_color: '#1E2761' });
+    expect(mockApi.uploadFile).toHaveBeenCalledWith('u1', 'p1', 'cover.jpg', new Uint8Array([7]), 'image/jpeg');
+    expect(mockUpdate.mock.invocationCallOrder[0]).toBeLessThan(mockApi.uploadFile.mock.invocationCallOrder[0]);
+  });
+
+  it('si la subida falla, la fila vuelve a quedar sin portada', async () => {
+    const { saveLibraryCover } = require('@/services/library') as typeof import('@/services/library');
+    mockApi.uploadFile.mockRejectedValueOnce(new Error('sin red'));
+    await expect(saveLibraryCover('u1', 'p1', new Uint8Array([7]), null)).rejects.toThrow('sin red');
+    expect(mockUpdate).toHaveBeenLastCalledWith('p1', { cover_path: null, cover_color: null });
+  });
+});

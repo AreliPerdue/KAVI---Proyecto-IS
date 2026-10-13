@@ -57,3 +57,6 @@ reports/seguridad/zap-manual-*.html
 
 # Vercel CLI (enlace local al proyecto)
 .vercel
+
+# Librerías del motor de lectura (T279): las copia `scripts/vendor-reader.mjs` al instalar.
+public/reader/vendor/

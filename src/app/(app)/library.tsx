@@ -1,8 +1,10 @@
+import { useRouter } from 'expo-router';
 import { BookOpen, FlaskConical } from 'lucide-react-native';
 import { useState } from 'react';
 import { FlatList, type LayoutChangeEvent, StyleSheet, View } from 'react-native';
 
 import { ImportSheet } from '@/components/library/import-sheet';
+import { PdfCoverWorker } from '@/components/library/pdf-cover-worker';
 import { LibraryCoverCard, LibraryRow } from '@/components/library/library-item';
 import { ModalHeader } from '@/components/modal-header';
 import { AppText, Banner, EmptyState, ErrorState, Fab, LoadingState, Screen, Segmented } from '@/components/ui';
@@ -47,6 +49,8 @@ export default function LibraryScreen() {
   const columnas = vista === 'covers' ? columnasPara(ancho) : 1;
   const anchoPortada = columnas > 1 ? Math.floor((ancho - Spacing.lg * (columnas - 1)) / columnas) : 0;
   const hayPiezas = piezas.isSuccess && piezas.data.length > 0;
+  const router = useRouter();
+  const abrir = (id: string) => router.push({ pathname: '/(app)/book/[id]', params: { id } });
 
   // Importar (RF-BL11 – RF-BL14): elegir, leer y revisar. El + lleva directo al archivo; "Crear"
   // (cuadernos, diarios, álbumes) se suma a este botón en L5.
@@ -152,7 +156,11 @@ export default function LibraryScreen() {
         columnWrapperStyle={columnas > 1 ? styles.fila : undefined}
         contentContainerStyle={vista === 'covers' ? styles.rejilla : undefined}
         renderItem={({ item }) =>
-          vista === 'covers' ? (ancho > 0 ? <LibraryCoverCard item={item} width={anchoPortada} /> : null) : <LibraryRow item={item} />
+          vista === 'covers' ? (
+            ancho > 0 ? <LibraryCoverCard item={item} width={anchoPortada} onPress={() => abrir(item.id)} /> : null
+          ) : (
+            <LibraryRow item={item} onPress={() => abrir(item.id)} />
+          )
         }
         showsVerticalScrollIndicator={false}
         // Que la última fila no quede bajo el +.
@@ -160,6 +168,7 @@ export default function LibraryScreen() {
       />
       <Fab label={l.importBook} onPress={importar} />
       <ImportSheet pendiente={pendiente} onClose={() => setPendiente(null)} />
+      {hayPiezas ? <PdfCoverWorker items={piezas.data} /> : null}
     </Screen>
   );
 }

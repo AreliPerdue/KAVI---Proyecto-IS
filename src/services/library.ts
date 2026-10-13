@@ -96,3 +96,18 @@ export async function importLibraryBook(userId: string, { id, libro, title, auth
   }
   return item;
 }
+
+/**
+ * La portada de un PDF es su primera página (RF-BL12): el motor la dibuja después de subir el libro
+ * y aquí se guarda. Primero la ruta en la fila —la función de archivos solo firma rutas que ya están
+ * en la base— y después la imagen; si la subida falla, la fila vuelve a quedar sin portada.
+ */
+export async function saveLibraryCover(userId: string, itemId: string, jpeg: Uint8Array, color: string | null): Promise<void> {
+  await libraryApi.updateItem(itemId, { cover_path: `${userId}/${itemId}/cover.jpg`, cover_color: color });
+  try {
+    await libraryApi.uploadFile(userId, itemId, 'cover.jpg', jpeg, 'image/jpeg');
+  } catch (e) {
+    await libraryApi.updateItem(itemId, { cover_path: null, cover_color: null }).catch(() => undefined);
+    throw e;
+  }
+}

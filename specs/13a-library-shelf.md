@@ -47,8 +47,10 @@ arriba, un buscador, y los controles de orden y filtros. Abajo, el botón **+** 
   color de los Nobi.
   - **EPUB:** título, autores, temas (como géneros) y la imagen de portada salen de su paquete OPF.
   - **PDF:** título, autor, palabras clave (como géneros) y páginas salen de su ficha interna. Su portada es
-    la primera página pintada, y pintarla necesita el motor de lectura: llega con T279; mientras, el PDF
-    entra con la portada generada.
+    la **primera página dibujada**, como la muestra el Finder: el motor de lectura la dibuja después de
+    subir el libro y se guarda en R2 con su color dominante (T279). Mientras, y si no se pudo dibujar, se
+    ve la portada generada. Los PDF que se subieron antes reciben la suya la próxima vez que se abre la
+    librería.
   - Si el archivo no trae título, se propone el nombre del archivo sin extensión.
   - Varios autores se escriben separados por comas; lo que trae el archivo se guarda tal cual mientras no
     se toque (un autor "Cortázar, Julio" no se parte en dos).
