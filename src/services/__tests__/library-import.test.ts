@@ -88,33 +88,44 @@ describe('portada de un PDF (RF-BL12, T279)', () => {
   });
 });
 
-describe('portada propia (RF-BL23, T314)', () => {
+describe('portada, lomo y contraportada propias (RF-BL20, RF-BL23; T311, T314)', () => {
   const mockUpdate = jest.fn(async () => ({}));
   beforeAll(() => {
     (mockApi as Record<string, unknown>).updateItem = mockUpdate;
   });
   beforeEach(() => mockUpdate.mockClear());
-  const pieza = { id: 'p1', custom_cover_path: null, custom_cover_color: null };
+  const pieza = { id: 'p1', custom_cover_path: null, custom_cover_color: null, spine_path: null, spine_color: null } as never;
 
-  it('va aparte de la del archivo: ruta propia en la fila y después la imagen', async () => {
-    const { setCustomCover } = require('@/services/library') as typeof import('@/services/library');
-    await setCustomCover('u1', pieza, new Uint8Array([5]), '#EC4899');
+  it('la portada va aparte de la del archivo: ruta propia en la fila y después la imagen', async () => {
+    const { setCoverPart } = require('@/services/library') as typeof import('@/services/library');
+    await setCoverPart('u1', pieza, 'front', new Uint8Array([5]), '#EC4899');
     expect(mockUpdate).toHaveBeenCalledWith('p1', { custom_cover_path: 'u1/p1/cover-custom.jpg', custom_cover_color: '#EC4899' });
     expect(mockApi.uploadFile).toHaveBeenLastCalledWith('u1', 'p1', 'cover-custom.jpg', new Uint8Array([5]), 'image/jpeg');
   });
 
-  it('si la subida falla, se queda la portada que tenía', async () => {
-    const { setCustomCover } = require('@/services/library') as typeof import('@/services/library');
+  it('el lomo y la contraportada tienen su propio archivo', async () => {
+    const { setCoverPart } = require('@/services/library') as typeof import('@/services/library');
+    await setCoverPart('u1', pieza, 'spine', new Uint8Array([6]), '#111111');
+    expect(mockUpdate).toHaveBeenCalledWith('p1', { spine_path: 'u1/p1/spine.jpg', spine_color: '#111111' });
+    expect(mockApi.uploadFile).toHaveBeenLastCalledWith('u1', 'p1', 'spine.jpg', new Uint8Array([6]), 'image/jpeg');
+    await setCoverPart('u1', pieza, 'back', new Uint8Array([7]), null);
+    expect(mockUpdate).toHaveBeenLastCalledWith('p1', { back_cover_path: 'u1/p1/back.jpg', back_cover_color: null });
+  });
+
+  it('si la subida falla, se queda la imagen que tenía', async () => {
+    const { setCoverPart } = require('@/services/library') as typeof import('@/services/library');
     mockApi.uploadFile.mockRejectedValueOnce(new Error('sin red'));
-    const conPropia = { id: 'p1', custom_cover_path: 'u1/p1/cover-custom.jpg', custom_cover_color: '#111111' };
-    await expect(setCustomCover('u1', conPropia, new Uint8Array([5]), '#EC4899')).rejects.toThrow('sin red');
+    const conPropia = { id: 'p1', custom_cover_path: 'u1/p1/cover-custom.jpg', custom_cover_color: '#111111' } as never;
+    await expect(setCoverPart('u1', conPropia, 'front', new Uint8Array([5]), '#EC4899')).rejects.toThrow('sin red');
     expect(mockUpdate).toHaveBeenLastCalledWith('p1', { custom_cover_path: 'u1/p1/cover-custom.jpg', custom_cover_color: '#111111' });
   });
 
-  it('volver a la original solo quita la propia', async () => {
-    const { clearCustomCover } = require('@/services/library') as typeof import('@/services/library');
-    await clearCustomCover('p1');
+  it('quitar solo borra la imagen de esa parte', async () => {
+    const { clearCoverPart } = require('@/services/library') as typeof import('@/services/library');
+    await clearCoverPart('p1', 'front');
     expect(mockUpdate).toHaveBeenCalledWith('p1', { custom_cover_path: null, custom_cover_color: null });
+    await clearCoverPart('p1', 'spine');
+    expect(mockUpdate).toHaveBeenLastCalledWith('p1', { spine_path: null, spine_color: null });
   });
 });
 

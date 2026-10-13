@@ -105,9 +105,18 @@ Areli empezó Library en marzo de 2026 como un proyecto aparte, **KAVI Reader** 
 - **RF-BL20. Portada, lomo y contraportada.** Además de la portada, se pueden poner imágenes propias del
   **lomo** y de la **contraportada**, cada una con su color. El librero (RF-BL2) usa la imagen del lomo si la
   hay; la contraportada se ve al final del libro real (13b) y es donde puede ir pegada una ficha (13d,
-  RF-BF4). Sin imagen, el lomo y la contraportada salen del color de la portada.
+  RF-BF4). Sin imagen, el lomo y la contraportada salen del color de la portada. Se editan en la misma hoja que
+  la portada (RF-BL23), con pestañas **Portada · Lomo · Contraportada**; cada imagen llega por los mismos
+  caminos que la portada propia y se guarda igual (JPEG, 1200 px máx.) como `spine.jpg` / `back.jpg` junto al
+  libro. "Quitar imagen" regresa el lomo o la contraportada a su color. (T311, 13 oct 2026)
 - **RF-BL21. Cuentagotas.** El color de cada parte se calcula solo (RF-BL13), pero se puede cambiar tocando un
   punto de su imagen, que toma ese color, o escribiendo el hex. Se ve una muestra junto al valor.
+  - El cuentagotas lee una muestra de 60 px de la imagen y promedia el cuadrito de 3×3 alrededor del punto,
+    para que un pixel suelto no decida; lo transparente no cuenta. Si la imagen no se puede leer, lo dice y
+    quedan el hex y la paleta.
+  - Además del hex hay una **paleta rápida** con los colores del filtro (RF-BL10).
+  - El hex se acepta con o sin `#` y en minúsculas; "Aplicar" se activa solo con un color de 6 cifras.
+  - En la portada, el color cambia el de la propia si la hay, y si no el de la del archivo. (T311, 13 oct 2026)
 - **RF-BL22. Encabezado de la librería** con el wordmark **KAVI Library** (Moirai One + Poiret One, dentro de
   `components/ui/Wordmark`, como el de la app) y un saludo con el nombre: "Qué gusto verte de nuevo, Areli".
   Es el primer nombre del nombre visible; sin nombre visible, el saludo va sin nombre (el username nunca se
@@ -116,8 +125,8 @@ Areli empezó Library en marzo de 2026 como un proyecto aparte, **KAVI Reader** 
 ## 9. Portada propia (RF-BL23) — 13 oct 2026
 
 - **RF-BL23. Cambiar la portada.** Por omisión cada libro muestra la portada que trae el archivo (la imagen
-  del EPUB o la primera página del PDF, RF-BL12). Desde el menú de la pieza (RF-BL16) → **"Cambiar
-  portada"** se pone otra imagen:
+  del EPUB o la primera página del PDF, RF-BL12). Desde el menú de la pieza (RF-BL16) → **"Portada, lomo y
+  contraportada"** (antes "Cambiar portada"; T311) se pone otra imagen:
   - **Teléfono:** elegirla de la galería, tomar una foto o elegir un archivo de imagen; o **pegarla** si hay
     una imagen copiada.
   - **Web:** elegir un archivo, **arrastrarla** sobre la portada (se ilumina al pasar por encima) o

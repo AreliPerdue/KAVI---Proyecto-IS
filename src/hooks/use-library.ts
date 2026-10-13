@@ -2,10 +2,11 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { useAuth } from '@/providers';
 import { LIBRARY_URL_SECONDS } from '@/constants/library';
+import { cambioDeColor, COLUMNAS_DE_PARTE, type ParteDeTapa } from '@/lib/library/cover/parts';
 import {
   addLink,
   addToShelf,
-  clearCustomCover,
+  clearCoverPart,
   createShelf,
   ensureSeries,
   getLibraryItem,
@@ -32,7 +33,7 @@ import {
   removeShelf,
   renameSeries,
   saveLibraryCover,
-  setCustomCover,
+  setCoverPart,
   updateLibraryItem,
   updateShelf,
 } from '@/services/library';
@@ -176,27 +177,34 @@ export function useRemoveLibraryItems() {
 }
 
 /**
- * Portada propia (RF-BL23): poner una o volver a la original. Al terminar se vuelve a pedir todo lo de
- * la librería, incluida la dirección firmada de la portada, para que se vea la nueva imagen.
+ * Las caras del libro (RF-BL20, RF-BL21, RF-BL23): poner una imagen propia, quitarla o cambiar el color de
+ * una. Al terminar se vuelve a pedir todo lo de la librería, incluida la dirección firmada de la imagen.
  */
-export function useCustomCover() {
+export function useCoverParts() {
   const { userId } = useAuth();
   const queryClient = useQueryClient();
   const refrescar = () => queryClient.invalidateQueries({ queryKey: libraryKeys.all });
+  // En la lista y en la pieza sola: la hoja sigue abierta y se ve el cambio en cuanto se hace.
+  const cambiarEnLista = (id: string, patch: Partial<LibraryItem>) => {
+    queryClient.setQueryData<LibraryItem[]>(libraryKeys.items(userId), (lista) => lista?.map((i) => (i.id === id ? { ...i, ...patch } : i)));
+    queryClient.setQueryData<LibraryItem>(libraryKeys.item(id), (i) => (i ? { ...i, ...patch } : i));
+  };
   const poner = useMutation({
-    mutationFn: ({ item, jpeg, color }: { item: LibraryItem; jpeg: Uint8Array; color: string | null }) => setCustomCover(userId as string, item, jpeg, color),
+    mutationFn: ({ item, parte, jpeg, color }: { item: LibraryItem; parte: ParteDeTapa; jpeg: Uint8Array; color: string | null }) =>
+      setCoverPart(userId as string, item, parte, jpeg, color),
     onSettled: refrescar,
   });
   const quitar = useMutation({
-    mutationFn: (id: string) => clearCustomCover(id),
-    onMutate: (id) => {
-      queryClient.setQueryData<LibraryItem[]>(libraryKeys.items(userId), (lista) =>
-        lista?.map((i) => (i.id === id ? { ...i, custom_cover_path: null, custom_cover_color: null } : i)),
-      );
-    },
+    mutationFn: ({ id, parte }: { id: string; parte: ParteDeTapa }) => clearCoverPart(id, parte),
+    onMutate: ({ id, parte }) => cambiarEnLista(id, { [COLUMNAS_DE_PARTE[parte].ruta]: null, [COLUMNAS_DE_PARTE[parte].color]: null }),
     onSettled: refrescar,
   });
-  return { poner, quitar };
+  const colorear = useMutation({
+    mutationFn: ({ item, parte, hex }: { item: LibraryItem; parte: ParteDeTapa; hex: string }) => updateLibraryItem(item.id, cambioDeColor(item, parte, hex)),
+    onMutate: ({ item, parte, hex }) => cambiarEnLista(item.id, cambioDeColor(item, parte, hex)),
+    onSettled: refrescar,
+  });
+  return { poner, quitar, colorear };
 }
 
 /** Los libreros de la persona, en su orden (RF-BL5, RF-BL7). */

@@ -575,6 +575,11 @@ export type LibraryItem = {
   /** Portada que puso la persona (RF-BL23); se muestra en lugar de la del archivo mientras exista. */
   custom_cover_path: string | null;
   custom_cover_color: string | null;
+  /** Lomo y contraportada propios, cada uno con su color (RF-BL20); sin imagen salen del de la portada. */
+  spine_path: string | null;
+  spine_color: string | null;
+  back_cover_path: string | null;
+  back_cover_color: string | null;
   /** Su lugar en la librería cuando se acomoda arrastrando (RF-BL7); lo nuevo, primero. */
   sort_order: number;
   /** Saga a la que pertenece y su número en ella (RF-BL24); el número admite decimales (#1.5). */

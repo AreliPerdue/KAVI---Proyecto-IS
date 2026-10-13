@@ -45,6 +45,8 @@ type Pieza = {
   pdf_path: string | null;
   cover_path: string | null;
   custom_cover_path: string | null;
+  spine_path: string | null;
+  back_cover_path: string | null;
   file_size: number;
 };
 type Fuente = { id: string; file_path: string; file_size: number };
@@ -125,11 +127,13 @@ function entidades(texto: string): string {
 const texto = (v: unknown) => (typeof v === 'string' ? v : '');
 
 async function pieza(supabase: SupabaseClient, filtro: { id?: string; ruta?: string }): Promise<Pieza | null> {
-  let consulta = supabase.from('library_items').select('id, owner_id, file_path, pdf_path, cover_path, custom_cover_path, file_size');
+  let consulta = supabase.from('library_items').select('id, owner_id, file_path, pdf_path, cover_path, custom_cover_path, spine_path, back_cover_path, file_size');
   if (filtro.id) consulta = consulta.eq('id', filtro.id);
   if (filtro.ruta) {
     const r = filtro.ruta.replace(/[,()"]/g, '');
-    consulta = consulta.or(`file_path.eq."${r}",pdf_path.eq."${r}",cover_path.eq."${r}",custom_cover_path.eq."${r}"`);
+    consulta = consulta.or(
+      `file_path.eq."${r}",pdf_path.eq."${r}",cover_path.eq."${r}",custom_cover_path.eq."${r}",spine_path.eq."${r}",back_cover_path.eq."${r}"`,
+    );
   }
   const { data, error } = await consulta.limit(1);
   if (error) throw new Error(`select ${error.code ?? ''} ${error.message}`);
@@ -194,8 +198,9 @@ export async function POST(request: Request): Promise<Response> {
         }
         const item = suya(ruta) ? await pieza(supabase, { id: texto(cuerpo.itemId) }) : null;
         if (!item || !ruta.startsWith(`${uid}/${item.id}/`)) return responder(403, { code: 'forbidden', error: 'No tienes permiso para guardar ese archivo.' });
-        // La del archivo o la que puso la persona (RF-BL23): las dos son imágenes chicas.
-        const esPortada = ruta === item.cover_path || ruta === item.custom_cover_path;
+        // Las imágenes de las caras del libro (RF-BL20, RF-BL23): la portada del archivo o la propia, el lomo
+        // y la contraportada. Todas son chicas.
+        const esPortada = [item.cover_path, item.custom_cover_path, item.spine_path, item.back_cover_path].includes(ruta);
         const esArchivo = ruta === item.file_path || ruta === item.pdf_path;
         if (!esPortada && !esArchivo) return responder(403, { code: 'forbidden', error: 'No tienes permiso para guardar ese archivo.' });
         const tope = esPortada ? MAX_PORTADA : MAX_ARCHIVO;

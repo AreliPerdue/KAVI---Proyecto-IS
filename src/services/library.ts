@@ -1,5 +1,6 @@
 /** KAVI Library (spec 13). Fachada sobre el backend activo; hooks y UI solo importan esto. */
 import { nombreSeguro } from '@/lib/library/files';
+import { COLUMNAS_DE_PARTE, type ParteDeTapa } from '@/lib/library/cover/parts';
 import type { LibroLeido } from '@/lib/library/import';
 import { libraryApi } from '@/services/backend';
 import type { LibraryItem } from '@/types/domain';
@@ -130,28 +131,24 @@ export async function saveLibraryCover(userId: string, itemId: string, jpeg: Uin
 }
 
 /**
- * Poner una portada propia (RF-BL23). Va aparte de la del archivo, para poder volver a ella. Primero la
- * ruta en la fila —la función de archivos solo firma rutas que ya están en la base— y después la
- * imagen; si la subida falla, la pieza se queda con la portada que tenía.
+ * Poner la imagen propia de una cara del libro (RF-BL20, RF-BL23): la portada (aparte de la del archivo,
+ * para poder volver a ella), el lomo o la contraportada. Primero la ruta en la fila —la función de
+ * archivos solo firma rutas que ya están en la base— y después la imagen; si la subida falla, la pieza
+ * se queda como estaba.
  */
-export async function setCustomCover(
-  userId: string,
-  item: Pick<LibraryItem, 'id' | 'custom_cover_path' | 'custom_cover_color'>,
-  jpeg: Uint8Array,
-  color: string | null,
-): Promise<void> {
-  await libraryApi.updateItem(item.id, { custom_cover_path: `${userId}/${item.id}/cover-custom.jpg`, custom_cover_color: color });
+export async function setCoverPart(userId: string, item: LibraryItem, parte: ParteDeTapa, jpeg: Uint8Array, color: string | null): Promise<void> {
+  const { ruta, color: columnaColor, archivo } = COLUMNAS_DE_PARTE[parte];
+  await libraryApi.updateItem(item.id, { [ruta]: `${userId}/${item.id}/${archivo}`, [columnaColor]: color });
   try {
-    await libraryApi.uploadFile(userId, item.id, 'cover-custom.jpg', jpeg, 'image/jpeg');
+    await libraryApi.uploadFile(userId, item.id, archivo, jpeg, 'image/jpeg');
   } catch (e) {
-    await libraryApi
-      .updateItem(item.id, { custom_cover_path: item.custom_cover_path, custom_cover_color: item.custom_cover_color })
-      .catch(() => undefined);
+    await libraryApi.updateItem(item.id, { [ruta]: item[ruta], [columnaColor]: item[columnaColor] }).catch(() => undefined);
     throw e;
   }
 }
 
-/** "Volver a la original" (RF-BL23): se deja de usar la portada propia; la del archivo nunca se tocó. */
-export async function clearCustomCover(itemId: string): Promise<void> {
-  await libraryApi.updateItem(itemId, { custom_cover_path: null, custom_cover_color: null });
+/** Quitar la imagen propia de una cara: la portada vuelve a la del archivo; el lomo y la contraportada, al color. */
+export async function clearCoverPart(itemId: string, parte: ParteDeTapa): Promise<void> {
+  const { ruta, color } = COLUMNAS_DE_PARTE[parte];
+  await libraryApi.updateItem(itemId, { [ruta]: null, [color]: null });
 }

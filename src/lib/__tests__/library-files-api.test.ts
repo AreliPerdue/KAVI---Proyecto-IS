@@ -30,7 +30,7 @@ jest.mock('@supabase/supabase-js', () => ({
         // Imita la RLS y los filtros: solo lo que coincide con el id o con alguna ruta.
         const coincide = (f: Fila) =>
           consulta.filtros.every(([m, col, val]) =>
-            m === 'eq' ? f[col as string] === val : ['file_path', 'cover_path', 'custom_cover_path'].some((k) => f[k] && String(col).includes(`"${String(f[k])}"`)),
+            m === 'eq' ? f[col as string] === val : ['file_path', 'cover_path', 'custom_cover_path', 'spine_path', 'back_cover_path'].some((k) => f[k] && String(col).includes(`"${String(f[k])}"`)),
           );
         return { data: filas.filter(coincide), error: null };
       };
@@ -86,6 +86,8 @@ beforeEach(() => {
       pdf_path: null,
       cover_path: `${UID}/${ITEM}/cover.png`,
       custom_cover_path: `${UID}/${ITEM}/cover-custom.jpg`,
+      spine_path: `${UID}/${ITEM}/spine.jpg`,
+      back_cover_path: `${UID}/${ITEM}/back.jpg`,
       file_size: 1000,
     },
   ];
@@ -131,6 +133,14 @@ describe('subir', () => {
     expect((await pedir({ action: 'read', path: `${UID}/${ITEM}/cover-custom.jpg` })).status).toBe(200);
     const grande = await pedir({ action: 'upload', itemId: ITEM, path: `${UID}/${ITEM}/cover-custom.jpg`, contentType: 'image/jpeg', size: 5 * 1024 * 1024 + 1 });
     expect(grande.status).toBe(413);
+  });
+
+  it('el lomo y la contraportada (RF-BL20, T311) se suben y se leen como portadas', async () => {
+    for (const nombre of ['spine.jpg', 'back.jpg']) {
+      expect((await pedir({ action: 'upload', itemId: ITEM, path: `${UID}/${ITEM}/${nombre}`, contentType: 'image/jpeg', size: 200_000 })).status).toBe(200);
+      expect((await pedir({ action: 'read', path: `${UID}/${ITEM}/${nombre}` })).status).toBe(200);
+      expect((await pedir({ action: 'upload', itemId: ITEM, path: `${UID}/${ITEM}/${nombre}`, contentType: 'image/jpeg', size: 5 * 1024 * 1024 + 1 })).status).toBe(413);
+    }
   });
 
   it('una portada puede pesar hasta 5 MB', async () => {

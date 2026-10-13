@@ -97,6 +97,10 @@ export const demoLibrary: LibraryApi = {
       cover_color: input.cover_color ?? null,
       custom_cover_path: null,
       custom_cover_color: null,
+      spine_path: null,
+      spine_color: null,
+      back_cover_path: null,
+      back_cover_color: null,
       // Como la base: lo nuevo entra al principio.
       sort_order: -Date.now() / 1000,
       series_id: input.series_id ?? null,
