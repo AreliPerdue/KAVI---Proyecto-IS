@@ -2,6 +2,9 @@ import type { Dictionary } from '../types';
 
 export const library: Dictionary['library'] = {
   title: 'Library',
+  brand: 'Library',
+  brandA11y: 'KAVI Library',
+  greeting: (nombre) => (nombre ? `Nice to see you back, ${nombre}` : 'Nice to see you back'),
   inDevelopment: 'In development',
   devHint: 'Library is being built in stages. What you see here changes often and isn’t in More or the tab bar yet.',
   emptyTitle: 'Your library is empty',

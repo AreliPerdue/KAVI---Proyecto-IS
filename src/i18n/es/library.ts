@@ -1,6 +1,10 @@
 /** KAVI Library (spec 13). Biblioteca en español (decisión B8). */
 export const library = {
   title: 'Biblioteca',
+  /** Nombre de marca del módulo en el wordmark (decisión B8): igual en los dos idiomas. */
+  brand: 'Library',
+  brandA11y: 'KAVI Library',
+  greeting: (nombre: string | null) => (nombre ? `Qué gusto verte de nuevo, ${nombre}` : 'Qué gusto verte de nuevo'),
   inDevelopment: 'En desarrollo',
   devHint: 'Library se está construyendo por etapas. Lo que ves aquí cambia seguido y todavía no está en Más ni en la barra.',
   emptyTitle: 'Tu biblioteca está vacía',

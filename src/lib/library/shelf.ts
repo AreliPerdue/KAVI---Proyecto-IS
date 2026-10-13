@@ -73,3 +73,12 @@ export function avanceDe(item: Pick<LibraryItem, 'page_count' | 'progress' | 'la
   if (item.progress > 0) return { tipo: 'porcentaje', porcentaje: Math.max(1, Math.round(item.progress * 100)) };
   return null;
 }
+
+/**
+ * El nombre para el saludo de la librería (RF-BL22): el primero del nombre visible ("Areli" de "Areli
+ * Perdue"). Sin nombre visible no hay nombre: el username nunca se muestra como texto (RF-A9).
+ */
+export function primerNombre(nombreVisible: string | null | undefined): string | null {
+  const primero = nombreVisible?.trim().split(/\s+/)[0];
+  return primero || null;
+}

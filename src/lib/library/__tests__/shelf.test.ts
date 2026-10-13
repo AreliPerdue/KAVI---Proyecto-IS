@@ -1,7 +1,7 @@
 /** Lo que calcula la librería de KAVI Library para pintarse (spec 13a, T277). */
 import { PEOPLE_COLORS } from '@/constants/people-colors';
 import { INK, PAPER } from '@/constants/theme';
-import { avanceDe, colorDePortada, columnasPara, libraryViewValida, rutaDePortada, textoSobre } from '@/lib/library/shelf';
+import { avanceDe, colorDePortada, columnasPara, libraryViewValida, primerNombre, rutaDePortada, textoSobre } from '@/lib/library/shelf';
 
 describe('columnasPara (RF-BL1)', () => {
   it.each([
@@ -81,4 +81,11 @@ describe('portada propia (RF-BL23)', () => {
     expect(colorDePortada(conPropia)).toBe('#EC4899');
     expect(colorDePortada({ ...base, custom_cover_path: null, custom_cover_color: null })).toBe('#123456');
   });
+});
+
+it('primer nombre para el saludo (RF-BL22): el primero del nombre visible, o nada', () => {
+  expect(primerNombre('Areli Perdue')).toBe('Areli');
+  expect(primerNombre('  María José  ')).toBe('María');
+  expect(primerNombre('')).toBeNull();
+  expect(primerNombre(null)).toBeNull();
 });

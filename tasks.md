@@ -980,8 +980,10 @@ Decisiones B1–B9 aprobadas el 12 oct 2026 (T274); ver la tabla de la spec 13 �
   importar y al editar, y lo que proponga el OPF. (RF-BL19, de KAVI Reader) Dep: T278, T281
   **Hecho (13 oct 2026):** cinco columnas opcionales con topes (migración probada con PGlite); sección plegable
   "Más datos" al importar y al editar; el EPUB propone editorial y sinopsis (sin HTML); Detalles las muestra.
-- [ ] T312 Encabezado de la librería con el wordmark KAVI Library y saludo con el nombre. (RF-BL22, de KAVI
+- [x] T312 Encabezado de la librería con el wordmark KAVI Library y saludo con el nombre. (RF-BL22, de KAVI
   Reader) Dep: T277
+  **Hecho (13 oct 2026):** `Wordmark` acepta el nombre de un módulo en la fuente del eslogan; encabezado con
+  regresar, "KAVI Library" (título para el lector de pantalla) y "Qué gusto verte de nuevo, <primer nombre>".
 
 ### L2 · Formas de leer
 - [ ] T311 Portada, lomo y contraportada con imagen y color propios, y cuentagotas para elegir cada color.

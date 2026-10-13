@@ -34,6 +34,13 @@ describe('Wordmark', () => {
     expect(estiloDe(screen.getByText(SLOGAN)).fontFamily).toBe(BrandFonts.slogan);
   });
 
+  it('con un modulo lo pone al lado, en la fuente del eslogan y un poco mas chico (RF-BL22)', async () => {
+    await render(<Wordmark size={30} module="Library" />);
+    const modulo = estiloDe(screen.getByText('Library'));
+    expect(modulo.fontFamily).toBe(BrandFonts.slogan);
+    expect(modulo.fontSize).toBe(24);
+  });
+
   it('el tamano escala el wordmark', async () => {
     await render(<Wordmark size={48} />);
     expect(estiloDe(screen.getByText('KAVI')).fontSize).toBe(48);

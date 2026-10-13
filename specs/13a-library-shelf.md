@@ -110,6 +110,8 @@ Areli empezó Library en marzo de 2026 como un proyecto aparte, **KAVI Reader** 
   punto de su imagen, que toma ese color, o escribiendo el hex. Se ve una muestra junto al valor.
 - **RF-BL22. Encabezado de la librería** con el wordmark **KAVI Library** (Moirai One + Poiret One, dentro de
   `components/ui/Wordmark`, como el de la app) y un saludo con el nombre: "Qué gusto verte de nuevo, Areli".
+  Es el primer nombre del nombre visible; sin nombre visible, el saludo va sin nombre (el username nunca se
+  muestra, RF-A9). Para el lector de pantalla, "KAVI Library" es el título de la pantalla. (T312, 13 oct 2026)
 
 ## 9. Portada propia (RF-BL23) — 13 oct 2026
 

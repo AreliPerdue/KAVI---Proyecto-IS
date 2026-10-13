@@ -68,6 +68,8 @@ jest.mock('@/components/lists/draggable-rows', () => ({
   },
 }));
 jest.mock('@/providers', () => ({ useSnackbar: () => mockSnackbar, useConfirm: () => mockConfirm }));
+let mockPerfil: Record<string, unknown> | undefined = { display_name: 'Areli Perdue', username: 'areli' };
+jest.mock('@/hooks/use-profile', () => ({ useMyProfile: () => ({ data: mockPerfil }) }));
 // El generador de portadas tiene su propia prueba; aquí solo estorba (abre un motor web).
 jest.mock('@/components/library/pdf-cover-worker', () => ({ PdfCoverWorker: () => null }));
 jest.mock('@/lib/library/import', () => ({ elegirLibro: () => mockElegir(), leerLibro: (a: unknown) => mockLeer(a) }));
@@ -589,4 +591,30 @@ it('editar los más datos y verlos en Detalles (RF-BL19, T310)', async () => {
   await fireEvent.press(screen.getByRole('button', { name: L.details.open }));
   expect(screen.getByText('Una novela que se lee de dos maneras.')).toBeTruthy();
   expect(screen.getByText('Sudamericana')).toBeTruthy();
+});
+
+/** Encabezado "KAVI Library" con saludo (RF-BL22, T312). */
+describe('encabezado', () => {
+  afterEach(() => {
+    mockPerfil = { display_name: 'Areli Perdue', username: 'areli' };
+  });
+
+  it('el wordmark KAVI Library es el título, y saluda por el primer nombre', async () => {
+    await render(<Pantalla />);
+    expect(screen.getByRole('header', { name: L.brandA11y })).toBeTruthy();
+    expect(screen.getByText(L.greeting('Areli'))).toBeTruthy();
+  });
+
+  it('sin nombre visible saluda sin nombre: el usuario nunca se muestra', async () => {
+    mockPerfil = { display_name: null, username: 'areli' };
+    await render(<Pantalla />);
+    expect(screen.getByText(L.greeting(null))).toBeTruthy();
+    expect(screen.queryByText(/areli/)).toBeNull();
+  });
+
+  it('regresar vuelve a donde estaba', async () => {
+    await render(<Pantalla />);
+    await fireEvent.press(screen.getByRole('button', { name: es.common.back }));
+    expect(globalThis.mockRouter.back).toHaveBeenCalled();
+  });
 });

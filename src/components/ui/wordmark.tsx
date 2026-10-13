@@ -17,6 +17,11 @@ export type WordmarkProps = {
   sloganInline?: boolean;
   /** Color propio del eslogan; por defecto el mismo del wordmark. */
   sloganColor?: ThemeColor;
+  /**
+   * Nombre de un módulo junto a "KAVI", en la fuente del eslogan: "KAVI Library" (spec 13a, RF-BL22),
+   * como el logo de KAVI Reader. Va en la misma línea, un poco más chico.
+   */
+  module?: string;
 };
 
 /**
@@ -24,14 +29,14 @@ export type WordmarkProps = {
  * Reproduce las proporciones del logo (`Brand`), así que ambas piezas escalan juntas.
  * Es la única parte de la app que usa fuentes que no son la del sistema.
  */
-export function Wordmark({ size = 34, color = 'text', slogan = false, sloganInline = false, sloganColor }: WordmarkProps) {
+export function Wordmark({ size = 34, color = 'text', slogan = false, sloganInline = false, sloganColor, module }: WordmarkProps) {
   const theme = useTheme();
   const sloganSize = sloganInline
     ? Math.max(MIN_SLOGAN_SIZE, Math.round(size * Brand.sloganScale))
     : Math.round(size * Brand.sloganScale);
 
   return (
-    <View style={sloganInline ? styles.rootInline : styles.root}>
+    <View style={sloganInline || module ? styles.rootInline : styles.root}>
       {/* Sin `accessibilityRole="header"`: es la marca, no el encabezado de la
           pantalla. Marcarla como encabezado la anunciaba en la barra web de todas
           las pantallas y dejaba el título real fuera de la lista de encabezados. */}
@@ -49,6 +54,21 @@ export function Wordmark({ size = 34, color = 'text', slogan = false, sloganInli
       >
         KAVI
       </Text>
+      {module ? (
+        <Text
+          style={[
+            styles.slogan,
+            {
+              color: theme[color],
+              fontSize: Math.round(size * MODULE_SCALE),
+              lineHeight: Math.round(size * 1.3),
+              letterSpacing: size * MODULE_SCALE * Brand.sloganTracking,
+            },
+          ]}
+        >
+          {module}
+        </Text>
+      ) : null}
       {slogan ? (
         <Text
           style={[
@@ -67,6 +87,9 @@ export function Wordmark({ size = 34, color = 'text', slogan = false, sloganInli
     </View>
   );
 }
+
+/** El nombre del módulo, en proporción al wordmark (KAVI Reader usaba 50 y 40 px). */
+const MODULE_SCALE = 0.8;
 
 /** Minimo de la escala tipografica: nada de texto por debajo de 12 px. */
 const MIN_SLOGAN_SIZE = 12;

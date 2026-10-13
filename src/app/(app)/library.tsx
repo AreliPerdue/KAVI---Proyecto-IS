@@ -9,6 +9,7 @@ import { CoverSheet } from '@/components/library/cover-sheet';
 import { DetailsSheet } from '@/components/library/details-sheet';
 import { EditItemSheet } from '@/components/library/edit-item-sheet';
 import { ImportSheet } from '@/components/library/import-sheet';
+import { LibraryHeader } from '@/components/library/library-header';
 import { ItemSheet } from '@/components/library/item-sheet';
 import { PdfCoverWorker } from '@/components/library/pdf-cover-worker';
 import { ShelfEditSheet } from '@/components/library/shelf-edit-sheet';
@@ -21,7 +22,6 @@ import { arrastreReciente } from '@/components/lists/drag-guard';
 import { DraggableGrid } from '@/components/lists/draggable-grid';
 import { DraggableRows } from '@/components/lists/draggable-rows';
 import { LibraryCoverCard, LibraryRow } from '@/components/library/library-item';
-import { ModalHeader } from '@/components/modal-header';
 import { AppText, Banner, EmptyState, ErrorState, Fab, IconButton, LoadingState, Screen, Segmented } from '@/components/ui';
 import { LIBRARY_WARN_RATIO } from '@/constants/library';
 import { Fonts, IconSize, IconStroke, Radius, Spacing, Typography } from '@/constants/theme';
@@ -388,7 +388,7 @@ export default function LibraryScreen() {
           </IconButton>
         </View>
       ) : (
-        <ModalHeader back title={l.title} />
+        <LibraryHeader />
       )}
 
       <View style={[styles.aviso, { backgroundColor: theme.surfaceAlt }]}>
