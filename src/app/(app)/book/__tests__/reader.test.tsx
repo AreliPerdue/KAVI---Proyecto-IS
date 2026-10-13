@@ -7,6 +7,7 @@ import { act, fireEvent, render, screen } from '@testing-library/react-native';
 
 import { es } from '@/i18n/es';
 import type { MensajeAlMotor, MensajeDelMotor } from '@/lib/library/reader-protocol';
+import { usePreferencesStore } from '@/store/preferences-store';
 
 const R = es.library.reader;
 const mockEnviados: MensajeAlMotor[] = [];
@@ -52,11 +53,12 @@ beforeEach(() => {
   mockSagas = [];
   mockPieza = pdf;
   mockUrl = { data: 'https://r2/firmada', isError: false, refetch: jest.fn() };
+  usePreferencesStore.setState({ readingModes: {} });
 });
 
 it('abre el PDF en la página donde se quedó y muestra que está abriendo', async () => {
   await render(<Lector />);
-  expect(mockEnviados[0]).toEqual({ type: 'open', format: 'pdf', url: 'https://r2/firmada', position: { page: 120 } });
+  expect(mockEnviados[0]).toEqual({ type: 'open', format: 'pdf', url: 'https://r2/firmada', position: { page: 120 }, mode: 'scroll' });
   expect(screen.getByText(R.opening)).toBeTruthy();
   await responder({ type: 'opened', total: 340 });
   expect(screen.queryByText(R.opening)).toBeNull();
@@ -183,5 +185,48 @@ describe('el siguiente de la saga', () => {
     await fireEvent.press(screen.getByRole('button', { name: es.library.series.nextLater }));
     await responder({ type: 'position', page: 10, total: 10, fraction: 1 });
     expect(screen.queryByText(es.library.series.nextTitle)).toBeNull();
+  });
+});
+
+/** Formas de leer (RF-BR6 – RF-BR8, T283): scroll o páginas de lado, recordada por libro. */
+describe('forma de leer', () => {
+  it('se abre con la forma recordada de ese libro', async () => {
+    usePreferencesStore.setState({ readingModes: { l1: 'paged' } });
+    await render(<Lector />);
+    expect(mockEnviados[0]).toMatchObject({ type: 'open', mode: 'paged' });
+  });
+
+  it('cambiarla con el libro abierto avisa al motor y se recuerda solo para ese libro', async () => {
+    await render(<Lector />);
+    await responder({ type: 'opened', total: 340 });
+    await fireEvent.press(screen.getByRole('button', { name: R.mode }));
+    expect(screen.getByText(R.modeScrollHint)).toBeTruthy();
+    await fireEvent.press(screen.getByRole('tab', { name: R.modePaged }));
+    expect(mockEnviados.at(-1)).toEqual({ type: 'mode', mode: 'paged' });
+    expect(usePreferencesStore.getState().readingModes).toEqual({ l1: 'paged' });
+    expect(screen.getByText(R.modePagedHint)).toBeTruthy();
+    // Volver a scroll no deja nada guardado: es la de omisión.
+    await fireEvent.press(screen.getByRole('tab', { name: R.modeScroll }));
+    expect(mockEnviados.at(-1)).toEqual({ type: 'mode', mode: 'scroll' });
+    expect(usePreferencesStore.getState().readingModes).toEqual({});
+  });
+
+  it('en páginas de lado, el toque en el centro oculta y vuelve a mostrar los controles', async () => {
+    usePreferencesStore.setState({ readingModes: { l1: 'paged' } });
+    await render(<Lector />);
+    await responder({ type: 'opened', total: 340 });
+    await responder({ type: 'tap' });
+    expect(screen.queryByRole('button', { name: R.mode })).toBeNull();
+    expect(screen.queryByRole('adjustable')).toBeNull();
+    await responder({ type: 'tap' });
+    expect(screen.getByRole('button', { name: R.mode })).toBeTruthy();
+    expect(screen.getByRole('adjustable')).toBeTruthy();
+  });
+
+  it('en scroll los controles no se ocultan', async () => {
+    await render(<Lector />);
+    await responder({ type: 'opened', total: 340 });
+    await responder({ type: 'tap' });
+    expect(screen.getByRole('button', { name: R.mode })).toBeTruthy();
   });
 });

@@ -10,6 +10,7 @@ describe('leerMensaje', () => {
     [{ type: 'position', cfi: 'epubcfi(/6/2!/4)', fraction: 1.4 }, { type: 'position', cfi: 'epubcfi(/6/2!/4)', fraction: 1, page: undefined, total: undefined }],
     [{ type: 'search', count: 3, index: 0, searching: true }, { type: 'search', count: 3, index: 0, searching: true }],
     [{ type: 'cover', dataUrl: 'data:image/jpeg;base64,AAA' }, { type: 'cover', dataUrl: 'data:image/jpeg;base64,AAA' }],
+    [{ type: 'tap' }, { type: 'tap' }],
     [{ type: 'error', code: 'password' }, { type: 'error', code: 'password', message: undefined }],
     [{ type: 'error', code: 'raro', message: 'x' }, { type: 'error', code: 'unknown', message: 'x' }],
   ])('%j', (crudo, esperado) => {

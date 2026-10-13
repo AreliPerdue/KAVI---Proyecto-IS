@@ -281,5 +281,11 @@ export const library = {
     closeSearch: 'Cerrar la búsqueda',
     progressA11y: (avance: string) => `Avance: ${avance}. Arrastra para ir a otra parte del libro.`,
     jumpTo: (avance: string) => `Ir a ${avance}`,
+    mode: 'Forma de leer',
+    modeScroll: 'Scroll',
+    modePaged: 'Páginas de lado',
+    modeScrollHint: 'Las páginas una debajo de otra, como un PDF.',
+    modePagedHint: 'Una página a la vez. Toca los bordes o desliza para pasar de página, y toca el centro para ver u ocultar los controles.',
+    modePagedHintWeb: 'Una página a la vez. Usa ← →, desliza dos dedos en el trackpad o haz clic en los bordes; un clic en el centro muestra u oculta los controles.',
   },
 };

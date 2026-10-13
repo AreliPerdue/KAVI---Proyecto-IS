@@ -4,6 +4,7 @@ import { type Accesos, accesosValidos, DEFAULT_ACCESOS } from '@/constants/modul
 import { type Language, type LanguagePreference, resolveLanguage, setLanguage } from '@/i18n/language';
 import { type CalendarView, setTimeFormat, type TimeFormat } from '@/lib/dates';
 import { type OrdenBiblioteca, ORDEN_POR_OMISION, ordenValido } from '@/lib/library/filters';
+import { type FormaDeLeer, formasValidas, recordarForma } from '@/lib/library/reading-mode';
 import { type VistaDeSagas, VISTA_DE_SAGAS_POR_OMISION, vistaDeSagasValida } from '@/lib/library/series';
 import { DEFAULT_LIBRARY_VIEW, type LibraryView, libraryViewValida } from '@/lib/library/shelf';
 import { getJson, setJson } from '@/lib/storage';
@@ -55,6 +56,7 @@ type Prefs = {
   libraryView: LibraryView;
   libraryOrder: OrdenBiblioteca;
   librarySeriesView: VistaDeSagas;
+  readingModes: Record<string, FormaDeLeer>;
 };
 
 type PreferencesState = {
@@ -101,6 +103,11 @@ type PreferencesState = {
   libraryOrder: OrdenBiblioteca;
   /** Sagas apiladas o sueltas (RF-BL25), recordado como la vista. */
   librarySeriesView: VistaDeSagas;
+  /**
+   * La forma de leer de cada libro (RF-BR8, T283), por id. Va en el dispositivo: en el teléfono se puede
+   * preferir el scroll y en la web las páginas de lado. Sin entrada, scroll.
+   */
+  readingModes: Record<string, FormaDeLeer>;
   hydrated: boolean;
   setTimeFormat: (formato: TimeFormat) => void;
   setLanguage: (idioma: LanguagePreference) => void;
@@ -116,6 +123,7 @@ type PreferencesState = {
   setLibraryView: (vista: LibraryView) => void;
   setLibraryOrder: (orden: OrdenBiblioteca) => void;
   setLibrarySeriesView: (vista: VistaDeSagas) => void;
+  setReadingMode: (itemId: string, forma: FormaDeLeer) => void;
   hydrate: () => Promise<void>;
 };
 
@@ -154,6 +162,7 @@ export const usePreferencesStore = create<PreferencesState>((set, get) => ({
   libraryView: DEFAULT_LIBRARY_VIEW,
   libraryOrder: ORDEN_POR_OMISION,
   librarySeriesView: VISTA_DE_SAGAS_POR_OMISION,
+  readingModes: {},
   hydrated: false,
 
   setTimeFormat: (formato) => {
@@ -261,6 +270,13 @@ export const usePreferencesStore = create<PreferencesState>((set, get) => ({
     persistir({ ...get(), librarySeriesView: vista });
   },
 
+  setReadingMode: (itemId, forma) => {
+    elegidoEnEstaSesion.add('readingModes');
+    const siguiente = recordarForma(get().readingModes, itemId, forma);
+    set({ readingModes: siguiente });
+    persistir({ ...get(), readingModes: siguiente });
+  },
+
   marcarVisto: () => {
     if (get().visto) return;
     elegidoEnEstaSesion.add('visto');
@@ -303,6 +319,7 @@ export const usePreferencesStore = create<PreferencesState>((set, get) => ({
       libraryView: guardado('libraryView', libraryViewValida(prefs?.libraryView)),
       libraryOrder: guardado('libraryOrder', ordenValido(prefs?.libraryOrder)),
       librarySeriesView: guardado('librarySeriesView', vistaDeSagasValida(prefs?.librarySeriesView)),
+      readingModes: guardado('readingModes', formasValidas(prefs?.readingModes)),
       hydrated: true,
     });
     // Lo elegido antes de hidratar se guardo con el resto de valores por omision;
@@ -313,7 +330,7 @@ export const usePreferencesStore = create<PreferencesState>((set, get) => ({
 
 /** Se guarda el conjunto entero: son dos claves y así no pueden desincronizarse. */
 function persistir(
-  estado: Pick<PreferencesState, 'timeFormat' | 'timeFormatChosen' | 'language' | 'lastWorkoutTitle' | 'showWorkouts' | 'showBirthdays' | 'visto' | 'appearance' | 'selfColor' | 'pinnedViews' | 'accesos' | 'overlayRecientes' | 'libraryView' | 'libraryOrder' | 'librarySeriesView'>,
+  estado: Pick<PreferencesState, 'timeFormat' | 'timeFormatChosen' | 'language' | 'lastWorkoutTitle' | 'showWorkouts' | 'showBirthdays' | 'visto' | 'appearance' | 'selfColor' | 'pinnedViews' | 'accesos' | 'overlayRecientes' | 'libraryView' | 'libraryOrder' | 'librarySeriesView' | 'readingModes'>,
 ): void {
   void setJson(PREFS_KEY, {
     timeFormat: estado.timeFormat,
@@ -331,5 +348,6 @@ function persistir(
     libraryView: estado.libraryView,
     libraryOrder: estado.libraryOrder,
     librarySeriesView: estado.librarySeriesView,
+    readingModes: estado.readingModes,
   } satisfies Prefs);
 }

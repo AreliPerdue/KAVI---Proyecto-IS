@@ -34,6 +34,36 @@
         padding: 12px 0 96px;
         box-sizing: border-box;
       }
+      /* Páginas de lado (RF-BR7, T283): una a la vez, centrada; la pista se corre hacia los lados. */
+      #pdf.paginado {
+        overflow: hidden;
+        padding: 0;
+        touch-action: pinch-zoom;
+      }
+      #pdf.paginado .pista {
+        display: flex;
+        height: 100%;
+        transition: transform 260ms ease-out;
+      }
+      #pdf.paginado .pista.sin-animar {
+        transition: none;
+      }
+      #pdf.paginado .hoja {
+        flex: 0 0 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      #pdf.paginado .pagina {
+        margin: 0;
+        flex: none;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        #pdf.paginado .pista {
+          transition: none;
+        }
+      }
       .pagina {
         position: relative;
         margin: 0 auto 12px;

@@ -5,12 +5,17 @@
  * origen y el teléfono en un WebView. La app y el motor solo se hablan por mensajes JSON; los tipos
  * viven del lado de la app en `src/lib/library/reader-protocol.ts`.
  *
- * App → motor: `open`, `goTo`, `search`, `searchStep`, `searchClear`, `cover`.
- * Motor → app: `ready`, `opened`, `position`, `search`, `cover`, `error`.
+ * App → motor: `open`, `goTo`, `mode`, `turn`, `search`, `searchStep`, `searchClear`, `cover`.
+ * Motor → app: `ready`, `opened`, `position`, `search`, `tap`, `cover`, `error`.
  *
- * PDF con pdf.js (página fija, en scroll, con capa de texto para buscar); EPUB con foliate-js (texto
- * que se reacomoda, posición por CFI). El archivo se descarga directo de R2 con la dirección firmada
- * que manda la app.
+ * PDF con pdf.js (página fija, con capa de texto para buscar); EPUB con foliate-js (texto que se
+ * reacomoda, posición por CFI). El archivo se descarga directo de R2 con la dirección firmada que manda
+ * la app.
+ *
+ * Dos formas de leer (13b, RF-BR6 – RF-BR8; T283): **scroll** (una página debajo de otra) y **páginas de
+ * lado** (una a la vez, que se desliza). En páginas de lado se pasa de página sin botones (RF-BR7b): toque o
+ * clic en el 20 % de cada borde, deslizar el dedo, el trackpad hacia los lados, las flechas, Re Pág / Av Pág
+ * y la barra espaciadora. El centro avisa `tap` para que la app muestre u oculte sus controles.
  */
 import { buscarEnPedazos } from './text-search.js';
 
@@ -46,12 +51,17 @@ async function atender(m) {
   switch (m.type) {
     case 'open':
       cerrar();
+      forma = m.mode === 'paged' ? 'paged' : 'scroll';
       if (m.format === 'pdf') await abrirPdf(m.url, m.position);
       else if (m.format === 'epub') await abrirEpub(m.url, m.position);
       else throw Object.assign(new Error('formato'), { name: 'FormatoDesconocido' });
       return;
     case 'goTo':
       return irA(m);
+    case 'mode':
+      return cambiarForma(m.mode === 'paged' ? 'paged' : 'scroll');
+    case 'turn':
+      return pasar(m.step === -1 ? -1 : 1);
     case 'search':
       return buscar(m.query ?? '');
     case 'searchStep':
@@ -75,7 +85,8 @@ function codigoDe(e) {
 
 // ─── Estado ──────────────────────────────────────────────────────────────────
 
-let pdf = null; // { doc, paginas: HTMLElement[], tamanos, observador, renderizadas: Map }
+let pdf = null; // { doc, raiz, pista, paginas: HTMLElement[], observador, renderizadas: Map, total, pagina }
+let forma = 'scroll'; // 'scroll' | 'paged'
 let epub = null; // { view }
 let busqueda = { consulta: '', resultados: [], actual: -1 };
 
@@ -139,9 +150,53 @@ async function cargarPdf(url) {
   }
 }
 
-/** Ancho de página en pantalla: todo el ancho con un margen, sin pasar de 900 px (web ancha). */
-function anchoDePagina() {
-  return Math.min(window.innerWidth - 16, 900);
+/**
+ * La escala de una página en pantalla. En scroll, todo el ancho con un margen, sin pasar de 900 px (web
+ * ancha); en páginas de lado, la página entera a la vista: lo que quepa a lo ancho y a lo alto.
+ */
+function escalaDe(base) {
+  const ancho = Math.min(window.innerWidth - 16, 900) / base.width;
+  if (forma !== 'paged') return ancho;
+  return Math.min((window.innerWidth - 16) / base.width, (window.innerHeight - 16) / base.height);
+}
+
+/** Medida provisional de cada página mientras no se pinta: la de la primera. */
+function medirProvisionales() {
+  const escala = escalaDe(pdf.base);
+  for (const div of pdf.paginas) {
+    div.style.width = `${Math.round(pdf.base.width * escala)}px`;
+    div.style.height = `${Math.round(pdf.base.height * escala)}px`;
+  }
+}
+
+/**
+ * Qué se pinta: en scroll, una pantalla de adelanto arriba y abajo; en páginas de lado, la de cada lado.
+ * Lo que queda lejos se suelta.
+ */
+function observar() {
+  pdf.observador?.disconnect();
+  pdf.observador = new IntersectionObserver(
+    (entradas) => {
+      for (const e of entradas) {
+        const n = Number(e.target.dataset.pagina);
+        if (e.isIntersecting) pintar(n);
+        else despintar(n);
+      }
+    },
+    { root: pdf.raiz, rootMargin: forma === 'paged' ? '0px 100%' : '150% 0px' },
+  );
+  pdf.paginas.forEach((p) => pdf.observador.observe(p));
+}
+
+/** Rehacer la página con otra forma o tamaño: se suelta lo pintado y se vuelve a la misma página. */
+function reacomodarPdf() {
+  if (!pdf) return;
+  const pagina = pdf.pagina || 1;
+  pdf.raiz.classList.toggle('paginado', forma === 'paged');
+  for (const n of [...pdf.renderizadas.keys()]) despintar(n);
+  medirProvisionales();
+  observar();
+  irAPaginaPdf(pagina, false);
 }
 
 async function abrirPdf(url, posicion) {
@@ -150,43 +205,56 @@ async function abrirPdf(url, posicion) {
   const primera = await doc.getPage(1);
   const base = primera.getViewport({ scale: 1 });
 
+  // raíz (lo que se desplaza) → pista (lo que se corre en páginas de lado) → hoja (el lugar de cada
+  // página, que la centra) → página.
   const raiz = document.createElement('div');
   raiz.id = 'pdf';
+  const pista = document.createElement('div');
+  pista.className = 'pista';
+  raiz.append(pista);
   document.body.append(raiz);
 
-  const ancho = anchoDePagina();
   const paginas = [];
   for (let n = 1; n <= total; n++) {
+    const hoja = document.createElement('div');
+    hoja.className = 'hoja';
     const div = document.createElement('div');
     div.className = 'pagina';
     div.dataset.pagina = String(n);
-    // Mientras no se pinta, cada página toma la proporción de la primera.
-    div.style.width = `${ancho}px`;
-    div.style.height = `${Math.round((ancho * base.height) / base.width)}px`;
-    raiz.append(div);
+    hoja.append(div);
+    pista.append(hoja);
     paginas.push(div);
   }
 
-  const renderizadas = new Map();
-  const observador = new IntersectionObserver(
-    (entradas) => {
-      for (const e of entradas) {
-        const n = Number(e.target.dataset.pagina);
-        if (e.isIntersecting) pintar(n);
-        else despintar(n);
-      }
-    },
-    // Se pinta con una pantalla de adelanto arriba y abajo, y se suelta lo que queda lejos.
-    { root: raiz, rootMargin: '150% 0px' },
-  );
-  pdf = { doc, tarea, raiz, paginas, renderizadas, observador, total, pagina: 0 };
-  paginas.forEach((p) => observador.observe(p));
+  pdf = { doc, tarea, raiz, pista, paginas, base, renderizadas: new Map(), observador: null, total, pagina: 0 };
+  raiz.classList.toggle('paginado', forma === 'paged');
+  medirProvisionales();
+  observar();
+  gestosDePaginas(raiz);
 
   raiz.addEventListener('scroll', () => requestAnimationFrame(avisarPosicion), { passive: true });
   enviar({ type: 'opened', total });
 
-  const inicio = Math.min(Math.max(1, posicion?.page ?? 1), total);
-  if (inicio > 1) paginas[inicio - 1].scrollIntoView({ block: 'start' });
+  irAPaginaPdf(Math.min(Math.max(1, posicion?.page ?? 1), total), false);
+}
+
+/** Ir a una página del PDF: en scroll se desplaza hasta ella; en páginas de lado, la pista se corre. */
+function irAPaginaPdf(n, animar = true) {
+  if (!pdf) return;
+  const pagina = Math.min(Math.max(1, n), pdf.total);
+  if (forma === 'paged') {
+    pdf.raiz.scrollTop = 0;
+    pdf.pista.classList.toggle('sin-animar', !animar);
+    pdf.pista.style.transform = `translateX(${-(pagina - 1) * 100}%)`;
+    if (pagina !== pdf.pagina) {
+      pdf.pagina = pagina;
+      enviar({ type: 'position', page: pagina, total: pdf.total, fraction: pagina / pdf.total });
+    }
+    return;
+  }
+  pdf.pista.style.transform = '';
+  if (pagina > 1) pdf.paginas[pagina - 1].scrollIntoView({ block: 'start' });
+  else pdf.raiz.scrollTop = 0;
   avisarPosicion();
 }
 
@@ -197,9 +265,8 @@ async function pintar(n) {
   const pagina = await pdf.doc.getPage(n);
   if (estado.cancelado || !pdf) return;
   const div = pdf.paginas[n - 1];
-  const ancho = anchoDePagina();
   const base = pagina.getViewport({ scale: 1 });
-  const vista = pagina.getViewport({ scale: ancho / base.width });
+  const vista = pagina.getViewport({ scale: escalaDe(base) });
   div.style.width = `${Math.round(vista.width)}px`;
   div.style.height = `${Math.round(vista.height)}px`;
   div.style.setProperty('--total-scale-factor', String(vista.scale));
@@ -243,7 +310,7 @@ function despintar(n) {
 
 /** La página que ocupa el tercio de arriba de la pantalla es "donde voy" (RF-BR9). */
 function avisarPosicion() {
-  if (!pdf) return;
+  if (!pdf || forma === 'paged') return;
   const { raiz, paginas, total } = pdf;
   const linea = raiz.scrollTop + raiz.clientHeight / 3;
   let actual = 1;
@@ -279,6 +346,7 @@ async function abrirEpub(url, posicion) {
     // foliate avisa varias veces por el mismo lugar (al pintar, al acomodar): solo cuenta si cambió.
     if (!cfi || cfi === ultimo) return;
     ultimo = cfi;
+    if (epub) epub.ultimo = cfi;
     enviar({
       type: 'position',
       cfi,
@@ -294,21 +362,142 @@ async function abrirEpub(url, posicion) {
   });
 
   await view.open(archivo);
-  view.renderer.setAttribute('flow', 'scrolled');
   view.renderer.setAttribute('margin', '32px');
   view.renderer.setAttribute('max-inline-size', '720px');
+  formaEpub(view);
+  // Los toques en los bordes y el centro, el teclado y el trackpad van dentro de cada capítulo (otro
+  // documento); el deslizar con el dedo ya lo hace foliate.
+  view.addEventListener('load', (e) => gestosDePaginas(e.detail.doc, true));
+  gestosDePaginas(raiz, true);
   enviar({ type: 'opened', total: null });
   if (posicion?.cfi) await view.init({ lastLocation: posicion.cfi });
   else if (posicion?.fraction) await view.goToFraction(posicion.fraction);
   else await view.init({ showTextStart: false });
 }
 
+/** En páginas de lado, una columna a la vez (como Kindle), con la animación de foliate salvo con movimiento reducido. */
+function formaEpub(view) {
+  const r = view.renderer;
+  r.setAttribute('flow', forma === 'paged' ? 'paginated' : 'scrolled');
+  r.setAttribute('max-column-count', '1');
+  if (forma === 'paged' && !matchMedia('(prefers-reduced-motion: reduce)').matches) r.setAttribute('animated', '');
+  else r.removeAttribute('animated');
+}
+
+// ─── Formas de leer (RF-BR6 – RF-BR8) ───────────────────────────────────────
+
+/** Cambiar de forma sin perder el lugar: en PDF, la misma página; en EPUB, foliate se queda en su CFI. */
+async function cambiarForma(nueva) {
+  if (nueva === forma) return;
+  forma = nueva;
+  if (pdf) return reacomodarPdf();
+  if (epub) {
+    const cfi = epub.ultimo;
+    formaEpub(epub.view);
+    if (cfi) await epub.view.goTo(cfi);
+  }
+}
+
+/** Una página adelante o atrás (solo en páginas de lado). */
+async function pasar(paso) {
+  if (forma !== 'paged') return;
+  if (pdf) return irAPaginaPdf((pdf.pagina || 1) + paso);
+  if (epub) await (paso > 0 ? epub.view.next() : epub.view.prev());
+}
+
+// Al girar el teléfono o cambiar el tamaño de la ventana, la página se vuelve a acomodar (foliate lo hace
+// solo con el EPUB).
+let esperaDeTamano = null;
+window.addEventListener('resize', () => {
+  clearTimeout(esperaDeTamano);
+  esperaDeTamano = setTimeout(() => pdf && reacomodarPdf(), 150);
+});
+
+/**
+ * Pasar de página sin botones (RF-BR7b) sobre `objetivo` (la raíz del PDF, o el documento de cada capítulo
+ * del EPUB). Seleccionar o arrastrar sobre el texto nunca cambia de página; solo un toque o clic quieto, o
+ * un deslizamiento corto del dedo.
+ */
+function gestosDePaginas(objetivo, esEpub = false) {
+  const doc = objetivo.ownerDocument ?? objetivo;
+  const ventana = doc.defaultView ?? window;
+  let inicio = null;
+
+  /** La x en la ventana del motor: los capítulos del EPUB viven en un iframe que foliate corre de lado. */
+  const xEnPantalla = (e) => e.clientX + (ventana.frameElement && ventana !== window ? ventana.frameElement.getBoundingClientRect().left : 0);
+  const haySeleccion = () => !!doc.getSelection?.()?.toString();
+
+  objetivo.addEventListener('pointerdown', (e) => {
+    inicio = forma === 'paged' && e.isPrimary ? { x: e.clientX, y: e.clientY, t: e.timeStamp, toque: e.pointerType === 'touch' } : null;
+  });
+  objetivo.addEventListener('pointerup', (e) => {
+    const i = inicio;
+    inicio = null;
+    if (!i || forma !== 'paged' || haySeleccion()) return;
+    const dx = e.clientX - i.x;
+    const dy = e.clientY - i.y;
+    const dt = e.timeStamp - i.t;
+    // Deslizar el dedo (en EPUB lo hace foliate).
+    if (i.toque && !esEpub && Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy) * 1.5 && dt < 700) {
+      void pasar(dx < 0 ? 1 : -1);
+      return;
+    }
+    // Un toque o clic quieto; mantener presionado es para seleccionar.
+    if (Math.hypot(dx, dy) > 8 || dt > 500) return;
+    if (e.target?.closest?.('a[href]')) return;
+    const x = xEnPantalla(e) / window.innerWidth;
+    if (x < 0.2) void pasar(-1);
+    else if (x > 0.8) void pasar(1);
+    else enviar({ type: 'tap' });
+  });
+  objetivo.addEventListener('pointercancel', () => (inicio = null));
+
+  // El trackpad (o la rueda): un deslizamiento largo pasa una sola página. Se espera a que pare antes de
+  // dejar pasar otra.
+  let acumulado = 0;
+  let bloqueado = false;
+  let pausa = null;
+  objetivo.addEventListener(
+    'wheel',
+    (e) => {
+      if (forma !== 'paged' || e.ctrlKey) return; // Ctrl + rueda es el zoom (13c)
+      e.preventDefault();
+      const delta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
+      clearTimeout(pausa);
+      pausa = setTimeout(() => {
+        acumulado = 0;
+        bloqueado = false;
+      }, 250);
+      if (bloqueado) return;
+      acumulado += delta;
+      if (Math.abs(acumulado) > 40) {
+        bloqueado = true;
+        void pasar(acumulado > 0 ? 1 : -1);
+      }
+    },
+    { passive: false },
+  );
+
+  // El documento del motor ya escucha las teclas (abajo); los capítulos del EPUB son otros documentos.
+  if (doc !== document) doc.addEventListener('keydown', teclas);
+}
+
+function teclas(e) {
+  if (forma !== 'paged' || e.metaKey || e.ctrlKey || e.altKey) return;
+  const adelante = e.key === 'ArrowRight' || e.key === 'PageDown' || (e.key === ' ' && !e.shiftKey);
+  const atras = e.key === 'ArrowLeft' || e.key === 'PageUp' || (e.key === ' ' && e.shiftKey);
+  if (!adelante && !atras) return;
+  e.preventDefault();
+  void pasar(adelante ? 1 : -1);
+}
+
+document.addEventListener('keydown', teclas);
+
 // ─── Ir a ────────────────────────────────────────────────────────────────────
 
 async function irA({ page, cfi, fraction }) {
   if (pdf) {
-    const n = page ?? Math.round((fraction ?? 0) * (pdf.total - 1)) + 1;
-    pdf.paginas[Math.min(Math.max(1, n), pdf.total) - 1].scrollIntoView({ block: 'start' });
+    irAPaginaPdf(page ?? Math.round((fraction ?? 0) * (pdf.total - 1)) + 1);
     return;
   }
   if (epub) {
@@ -369,7 +558,9 @@ async function irAResultado() {
   const r = busqueda.resultados[busqueda.actual];
   enviar({ type: 'search', count: busqueda.resultados.length, index: busqueda.actual });
   if (!r) return;
-  if (pdf) {
+  if (pdf && forma === 'paged') {
+    irAPaginaPdf(r.pagina);
+  } else if (pdf) {
     const div = pdf.paginas[r.pagina - 1];
     const marca = div.querySelector('mark.actual');
     if (marca) marca.scrollIntoView({ block: 'center' });
@@ -431,7 +622,7 @@ function marcarPagina(n) {
     }
     if (i < texto.length) div.append(texto.slice(i).join(''));
   }
-  if (pdf.centrarAlMarcar && indiceActual >= 0) {
+  if (pdf.centrarAlMarcar && indiceActual >= 0 && forma !== 'paged') {
     pdf.centrarAlMarcar = false;
     capa.textDivs.find((d) => d.querySelector('mark.actual'))?.scrollIntoView({ block: 'center' });
   }

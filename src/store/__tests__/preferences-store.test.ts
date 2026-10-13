@@ -339,3 +339,18 @@ describe('vista de la biblioteca', () => {
     expect(usePreferencesStore.getState().libraryView).toBe('covers');
   });
 });
+
+/** La forma de leer de cada libro se recuerda en el dispositivo (RF-BR8, T283). */
+describe('forma de leer', () => {
+  it('se recuerda por libro para la próxima sesión, sin lo que ya no existe', async () => {
+    const { store: { usePreferencesStore } } = fresh();
+    usePreferencesStore.getState().setReadingMode('l1', 'paged');
+    expect(usePreferencesStore.getState().readingModes).toEqual({ l1: 'paged' });
+
+    const guardado = JSON.parse(mockAlmacen.get('kavi.preferences') as string) as Record<string, unknown>;
+    mockAlmacen.set('kavi.preferences', JSON.stringify({ ...guardado, readingModes: { ...(guardado.readingModes as object), l2: 'holograma' } }));
+    const otra = fresh();
+    await otra.store.usePreferencesStore.getState().hydrate();
+    expect(otra.store.usePreferencesStore.getState().readingModes).toEqual({ l1: 'paged' });
+  });
+});

@@ -1,18 +1,20 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { ChevronDown, ChevronLeft, ChevronUp, Search, X } from 'lucide-react-native';
+import { ChevronDown, ChevronLeft, ChevronUp, GalleryHorizontal, Rows3, Search, X } from 'lucide-react-native';
 import { useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, StyleSheet, TextInput, View } from 'react-native';
+import { ActivityIndicator, Platform, StyleSheet, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ReaderEngine, type ReaderEngineHandle } from '@/components/library/reader-engine';
 import { ReaderProgress } from '@/components/library/reader-progress';
-import { AppText, Button, IconButton } from '@/components/ui';
+import { AppText, Button, IconButton, Segmented, Sheet } from '@/components/ui';
 import { Fonts, IconSize, IconStroke, Radius, Spacing, Typography } from '@/constants/theme';
 import { useLibraryFileUrl, useLibraryItem, useLibraryItems, useSaveReadingPosition, useSeries } from '@/hooks/use-library';
 import { useTheme } from '@/hooks/use-theme';
 import { useT } from '@/i18n';
 import { cambioDePosicion, type CodigoDeError, type MensajeDelMotor, posicionGuardada } from '@/lib/library/reader-protocol';
+import { FORMA_POR_OMISION, type FormaDeLeer } from '@/lib/library/reading-mode';
 import { etiquetaDeSaga, siguienteDeSaga } from '@/lib/library/series';
+import { usePreferencesStore } from '@/store/preferences-store';
 
 /** Cuánto se espera sin moverse antes de guardar la posición: así no se escribe en cada página. */
 const GUARDAR_MS = 1200;
@@ -20,9 +22,13 @@ const GUARDAR_MS = 1200;
 type Posicion = Extract<MensajeDelMotor, { type: 'position' }>;
 
 /**
- * El lector de KAVI Library (spec 13b, T279): PDF y EPUB en scroll, con su avance guardado, la barra
- * para saltar y la búsqueda dentro del libro. El libro lo pinta el motor web (`public/reader/`), en
- * un WebView en el teléfono y en un iframe en la web.
+ * El lector de KAVI Library (spec 13b, T279): PDF y EPUB, con su avance guardado, la barra para saltar y
+ * la búsqueda dentro del libro. El libro lo pinta el motor web (`public/reader/`), en un WebView en el
+ * teléfono y en un iframe en la web.
+ *
+ * Formas de leer (T283, RF-BR6 – RF-BR8): scroll o páginas de lado, recordada por libro en el
+ * dispositivo. Cambiarla no mueve el lugar. En páginas de lado, el toque en el centro muestra u oculta
+ * los controles (RF-BR7b) para que solo quede la página.
  */
 export default function ReaderScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -56,14 +62,53 @@ function Lector({ id }: { id: string }) {
   const [consulta, setConsulta] = useState('');
   const [resultado, setResultado] = useState<{ count: number; index: number; searching: boolean } | null>(null);
 
+  const forma = usePreferencesStore((s) => s.readingModes[id] ?? FORMA_POR_OMISION);
+  const setForma = usePreferencesStore((s) => s.setReadingMode);
+  const [eligiendoForma, setEligiendoForma] = useState(false);
+  const [ocultos, setOcultos] = useState(false);
+  // En scroll los controles siempre se ven: no hay centro que tocar para traerlos.
+  const controles = forma === 'scroll' || !ocultos || buscando;
+
   // Abrir una sola vez por dirección firmada, en el lugar donde se quedó (RF-BL17).
   const abiertoCon = useRef<string | null>(null);
   useEffect(() => {
     const pieza = item.data;
     if (!pieza || !url.data || abiertoCon.current === url.data) return;
     abiertoCon.current = url.data;
-    motor.current?.send({ type: 'open', format: pieza.kind === 'epub' ? 'epub' : 'pdf', url: url.data, position: posicionGuardada(pieza) });
+    motor.current?.send({ type: 'open', format: pieza.kind === 'epub' ? 'epub' : 'pdf', url: url.data, position: posicionGuardada(pieza), mode: forma });
+    // La forma con que se abre es la de ese momento; los cambios después van por `mode` (abajo).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [item.data, url.data]);
+
+  // Cambiar de forma con el libro abierto: el motor se queda en el mismo lugar (RF-BR8).
+  const formaEnMotor = useRef(forma);
+  useEffect(() => {
+    if (!abierto || formaEnMotor.current === forma) return;
+    formaEnMotor.current = forma;
+    motor.current?.send({ type: 'mode', mode: forma });
+  }, [abierto, forma]);
+
+  // En la web, las flechas también pasan de página cuando el foco está fuera del libro (RF-BR7b); con el
+  // foco dentro, las atiende el motor.
+  useEffect(() => {
+    if (Platform.OS !== 'web' || forma !== 'paged') return;
+    const alTeclear = (e: KeyboardEvent) => {
+      const destino = e.target as HTMLElement | null;
+      if (e.metaKey || e.ctrlKey || e.altKey || destino?.closest?.('input, textarea, [contenteditable="true"]')) return;
+      const adelante = e.key === 'ArrowRight' || e.key === 'PageDown' || (e.key === ' ' && !e.shiftKey);
+      const atras = e.key === 'ArrowLeft' || e.key === 'PageUp' || (e.key === ' ' && e.shiftKey);
+      if (!adelante && !atras) return;
+      e.preventDefault();
+      motor.current?.send({ type: 'turn', step: adelante ? 1 : -1 });
+    };
+    window.addEventListener('keydown', alTeclear);
+    return () => window.removeEventListener('keydown', alTeclear);
+  }, [forma]);
+
+  const elegirForma = (nueva: FormaDeLeer) => {
+    setForma(id, nueva);
+    setOcultos(false);
+  };
 
   // Guardar la posición cuando la lectura se detiene, y al salir lo que haya quedado pendiente.
   const pendiente = useRef<{ timer: ReturnType<typeof setTimeout>; guardar: () => void } | null>(null);
@@ -95,6 +140,9 @@ function Lector({ id }: { id: string }) {
       }
       case 'search':
         setResultado({ count: m.count, index: m.index, searching: !!m.searching });
+        return;
+      case 'tap':
+        setOcultos((o) => !o);
         return;
       case 'error':
         setError(m.code);
@@ -144,7 +192,7 @@ function Lector({ id }: { id: string }) {
 
   return (
     <View style={[styles.pantalla, { backgroundColor: theme.background, paddingTop: insets.top }]}>
-      {buscando ? (
+      {!controles ? null : buscando ? (
         <View style={styles.barra}>
           <View style={[styles.campo, { backgroundColor: theme.surface, borderColor: theme.border }]}>
             <Search size={IconSize.inline} strokeWidth={IconStroke} color={theme.textTertiary} />
@@ -183,6 +231,13 @@ function Lector({ id }: { id: string }) {
           <AppText variant="bodyStrong" numberOfLines={1} style={styles.titulo}>
             {item.data?.title ?? ''}
           </AppText>
+          <IconButton label={r.mode} onPress={() => setEligiendoForma(true)} disabled={!abierto}>
+            {forma === 'paged' ? (
+              <GalleryHorizontal size={IconSize.action} strokeWidth={IconStroke} color={abierto ? theme.text : theme.textTertiary} />
+            ) : (
+              <Rows3 size={IconSize.action} strokeWidth={IconStroke} color={abierto ? theme.text : theme.textTertiary} />
+            )}
+          </IconButton>
           <IconButton label={r.search} onPress={() => setBuscando(true)} disabled={!abierto}>
             <Search size={IconSize.action} strokeWidth={IconStroke} color={abierto ? theme.text : theme.textTertiary} />
           </IconButton>
@@ -222,7 +277,7 @@ function Lector({ id }: { id: string }) {
         </View>
       ) : null}
 
-      {abierto ? (
+      {abierto && controles ? (
         <View style={{ paddingBottom: insets.bottom + Spacing.xs }}>
           <ReaderProgress
             fraction={fraccion}
@@ -233,6 +288,25 @@ function Lector({ id }: { id: string }) {
           />
         </View>
       ) : null}
+      {abierto && !controles ? <View style={{ height: insets.bottom }} /> : null}
+
+      <Sheet visible={eligiendoForma} onClose={() => setEligiendoForma(false)} title={r.mode}>
+        <View style={styles.formas}>
+          <Segmented<FormaDeLeer>
+            fullWidth
+            label={r.mode}
+            options={[
+              { value: 'scroll', label: r.modeScroll },
+              { value: 'paged', label: r.modePaged },
+            ]}
+            value={forma}
+            onChange={elegirForma}
+          />
+          <AppText variant="caption" color="textSecondary">
+            {forma === 'scroll' ? r.modeScrollHint : Platform.OS === 'web' ? r.modePagedHintWeb : r.modePagedHint}
+          </AppText>
+        </View>
+      </Sheet>
     </View>
   );
 }
@@ -266,5 +340,6 @@ const styles = StyleSheet.create({
     borderCurve: 'continuous',
     boxShadow: '0 4px 16px rgba(22,23,26,0.08)',
   },
+  formas: { gap: Spacing.md },
   siguienteBotones: { flexDirection: 'row', justifyContent: 'flex-end', gap: Spacing.sm, marginTop: Spacing.sm },
 });

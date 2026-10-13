@@ -1,6 +1,7 @@
 import { Platform } from 'react-native';
 
 import { SITIO } from '@/lib/api';
+import type { FormaDeLeer } from '@/lib/library/reading-mode';
 import type { LibraryItem, LibraryLocator } from '@/types/domain';
 
 /**
@@ -17,8 +18,12 @@ export const URL_MOTOR = Platform.OS === 'web' ? '/reader/engine.html' : `${SITI
 export type Posicion = { page?: number; cfi?: string; fraction?: number };
 
 export type MensajeAlMotor =
-  | { type: 'open'; format: 'pdf' | 'epub'; url: string; position?: Posicion }
+  | { type: 'open'; format: 'pdf' | 'epub'; url: string; position?: Posicion; mode?: FormaDeLeer }
   | ({ type: 'goTo' } & Posicion)
+  /** Cambiar la forma de leer sin perder el lugar (RF-BR8, T283). */
+  | { type: 'mode'; mode: FormaDeLeer }
+  /** Pasar una página en páginas de lado: las flechas del teclado de la app, en web (RF-BR7b). */
+  | { type: 'turn'; step: 1 | -1 }
   | { type: 'search'; query: string }
   | { type: 'searchStep'; step: 1 | -1 }
   | { type: 'searchClear' }
@@ -32,6 +37,8 @@ export type MensajeDelMotor =
   | { type: 'position'; page?: number; total?: number; cfi?: string; fraction: number }
   | { type: 'search'; count: number; index: number; searching?: boolean }
   | { type: 'cover'; dataUrl: string }
+  /** Toque o clic en el centro de la página: mostrar u ocultar los controles (RF-BR7b). */
+  | { type: 'tap' }
   | { type: 'error'; code: CodigoDeError; message?: string };
 
 const CODIGOS: readonly CodigoDeError[] = ['password', 'damaged', 'network', 'unknown'];
@@ -65,6 +72,8 @@ export function leerMensaje(crudo: unknown): MensajeDelMotor | null {
       };
     case 'search':
       return numero(m.count) && numero(m.index) ? { type: 'search', count: m.count, index: m.index, searching: m.searching === true } : null;
+    case 'tap':
+      return { type: 'tap' };
     case 'cover':
       return typeof m.dataUrl === 'string' && m.dataUrl.startsWith('data:image/') ? { type: 'cover', dataUrl: m.dataUrl } : null;
     case 'error':

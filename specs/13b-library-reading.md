@@ -51,6 +51,17 @@
     cambia de página. Un clic que termina una selección tampoco.
 - **RF-BR8.** La forma de leer se cambia desde el lector en cualquier momento y se recuerda por pieza; la
   posición se conserva al cambiar.
+  - Se elige con el botón **"Forma de leer"** de la barra del lector (Scroll · Páginas de lado), con una
+    línea que explica cómo se pasa de página. Al cambiar, el PDF se queda en la misma página y el EPUB en
+    el mismo lugar del texto (su CFI).
+  - Se recuerda **en el dispositivo**, por libro: en el teléfono se puede preferir el scroll y en la web
+    las páginas de lado. Sin elegir, scroll. Solo se guarda lo distinto del scroll, hasta 500 libros.
+  - En **páginas de lado** el PDF se ve entero (lo que quepa a lo ancho y a lo alto) y se desliza al pasar
+    (260 ms, sin animación con movimiento reducido); el EPUB va en una columna, como Kindle. Girar el
+    teléfono o cambiar el tamaño de la ventana vuelve a acomodar la página sin perder el lugar.
+  - Ahí ya funciona RF-BR7b: bordes, centro (oculta o muestra la barra de arriba y la de avance), deslizar
+    el dedo, trackpad, flechas, Re Pág / Av Pág y espacio. En scroll los controles no se ocultan. (T283,
+    13 oct 2026)
 
 ## 3. Avance (RF-BR9 – RF-BR10)
 
@@ -78,9 +89,14 @@
   desde la web publicada (que es también el origen al que R2 le permite leer). La comunicación con la app
   va por mensajes JSON (`src/lib/library/reader-protocol.ts`): abrir, ir a, buscar, portada; y de vuelta,
   listo, abierto, posición, resultados, error. (T279, 13 oct 2026)
-  - **PDF** con pdf.js (`pdfjs-dist`, compilación *legacy*), página por página en scroll, con capa de
-    texto para buscar (y, en L3, subrayar). Las páginas se pintan al acercarse y se sueltan al alejarse.
-  - **EPUB** con foliate-js: scroll, posición por CFI y búsqueda.
+  - **PDF** con pdf.js (`pdfjs-dist`, compilación *legacy*), en scroll o de lado, con capa de texto para
+    buscar (y, en L3, subrayar). Las páginas se pintan al acercarse y se sueltan al alejarse (de lado, la de
+    cada lado).
+  - **EPUB** con foliate-js: scroll (`flow="scrolled"`) o de lado (`flow="paginated"`, una columna),
+    posición por CFI y búsqueda. El deslizar con el dedo lo hace foliate; los bordes, el centro, el
+    teclado y el trackpad los pone el motor en cada capítulo.
+  - Mensajes de T283: `mode` y `turn` (app → motor; `open` lleva la forma) y `tap` (motor → app, el
+    centro).
   - El libro **se descarga completo** al abrirlo: la dirección firmada de R2 vence en una hora y una
     sesión de lectura puede durar más.
   - La búsqueda no distingue mayúsculas ni acentos y encuentra frases partidas entre renglones.

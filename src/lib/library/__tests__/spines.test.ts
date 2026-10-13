@@ -16,7 +16,10 @@ describe('grosor', () => {
 
 it('el alto varía entre libros pero cada uno mide siempre lo mismo', () => {
   const altos = ['a', 'b', 'c', 'd', 'e', 'f'].map(altoDeLomo);
-  for (const a of altos) expect(a).toBeGreaterThanOrEqual(LOMO_ALTO_MIN), expect(a).toBeLessThanOrEqual(LOMO_ALTO_MAX);
+  for (const a of altos) {
+    expect(a).toBeGreaterThanOrEqual(LOMO_ALTO_MIN);
+    expect(a).toBeLessThanOrEqual(LOMO_ALTO_MAX);
+  }
   expect(new Set(altos).size).toBeGreaterThan(1);
   expect(altoDeLomo('a')).toBe(altos[0]);
 });

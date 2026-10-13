@@ -281,5 +281,11 @@ export const library: Dictionary['library'] = {
     closeSearch: 'Close search',
     progressA11y: (avance) => `Progress: ${avance}. Drag to go to another part of the book.`,
     jumpTo: (avance) => `Go to ${avance}`,
+    mode: 'Reading mode',
+    modeScroll: 'Scroll',
+    modePaged: 'Side pages',
+    modeScrollHint: 'Pages one below the other, like a PDF.',
+    modePagedHint: 'One page at a time. Tap the edges or swipe to turn the page, and tap the center to show or hide the controls.',
+    modePagedHintWeb: 'One page at a time. Use ← →, swipe two fingers on the trackpad or click the edges; a click in the center shows or hides the controls.',
   },
 };
