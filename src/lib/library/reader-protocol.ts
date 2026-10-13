@@ -10,15 +10,23 @@ import type { LibraryItem, LibraryLocator } from '@/types/domain';
  */
 
 /**
- * Dónde vive el motor. En la web, del mismo origen (la CSP no deja enmarcar otro sitio); en el
- * teléfono, la web publicada, que es también el origen al que R2 le permite leer (CORS del bucket).
+ * Dónde vive el motor. En la web, del mismo origen (la CSP no deja enmarcar otro sitio). En el teléfono
+ * viene empaquetado en la app (T285) y esta es solo su dirección base: la web publicada, que es también el
+ * origen al que R2 le permite leer (CORS del bucket) y de donde pdf.js pide sus archivos de apoyo.
  */
-export const URL_MOTOR = Platform.OS === 'web' ? '/reader/engine.html' : `${SITIO}/reader/engine.html`;
+export const URL_MOTOR = Platform.OS === 'web' ? '/reader/engine.html' : `${SITIO}/reader/`;
 
 export type Posicion = { page?: number; cfi?: string; fraction?: number };
 
 export type MensajeAlMotor =
   | { type: 'open'; format: 'pdf' | 'epub'; url: string; position?: Posicion; mode?: FormaDeLeer }
+  /**
+   * El libro desde el teléfono (T285): la app lo lee de su copia local y lo manda en pedazos en base64;
+   * el motor lo abre al llegar `openEnd`.
+   */
+  | { type: 'openBegin'; format: 'pdf' | 'epub'; size: number; position?: Posicion; mode?: FormaDeLeer }
+  | { type: 'openChunk'; data: string }
+  | { type: 'openEnd' }
   | ({ type: 'goTo' } & Posicion)
   /** Cambiar la forma de leer sin perder el lugar (RF-BR8, T283). */
   | { type: 'mode'; mode: FormaDeLeer }

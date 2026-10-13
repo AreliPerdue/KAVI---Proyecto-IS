@@ -10,6 +10,8 @@ import { ReaderProgress } from '@/components/library/reader-progress';
 import { AppText, Button, IconButton, Segmented, Sheet } from '@/components/ui';
 import { Fonts, IconSize, IconStroke, Radius, Spacing, Typography } from '@/constants/theme';
 import { usePantallaCompleta } from '@/hooks/use-full-screen';
+import { useLibrarySync } from '@/hooks/use-library-sync';
+import { useAbrirCopiaLocal } from '@/hooks/use-local-book';
 import { useLibraryFileUrl, useLibraryItem, useLibraryItems, useSaveReadingPosition, useSeries } from '@/hooks/use-library';
 import { useTheme } from '@/hooks/use-theme';
 import { useT } from '@/i18n';
@@ -27,6 +29,9 @@ type Posicion = Extract<MensajeDelMotor, { type: 'position' }>;
  * El lector de KAVI Library (spec 13b, T279): PDF y EPUB, con su avance guardado, la barra para saltar y
  * la búsqueda dentro del libro. El libro lo pinta el motor web (`public/reader/`), en un WebView en el
  * teléfono y en un iframe en la web.
+ *
+ * Sin conexión (T285, RF-BR3): en el teléfono el libro se baja una vez y luego se lee de su copia, con
+ * o sin red; el avance leído sin red sube al volver.
  *
  * Formas de leer (T283, T284; RF-BR5 – RF-BR8): scroll, páginas de lado o libro real, recordada por libro
  * en el dispositivo. Cambiarla no mueve el lugar. Fuera del scroll, el toque en el centro muestra u oculta
@@ -49,7 +54,11 @@ function Lector({ id }: { id: string }) {
 
   const item = useLibraryItem(id);
   const ruta = item.data ? (item.data.pdf_path ?? item.data.file_path) : null;
-  const url = useLibraryFileUrl(ruta);
+  // En el teléfono el libro sale de su copia local; la dirección firmada solo la usa la web.
+  const nativo = Platform.OS !== 'web';
+  const url = useLibraryFileUrl(nativo ? null : ruta);
+  const abrirCopia = useAbrirCopiaLocal();
+  useLibrarySync();
   const guardar = useSaveReadingPosition();
   const todas = useLibraryItems();
   const sagas = useSeries();
@@ -58,7 +67,7 @@ function Lector({ id }: { id: string }) {
 
   const motor = useRef<ReaderEngineHandle>(null);
   const [abierto, setAbierto] = useState(false);
-  const [error, setError] = useState<CodigoDeError | null>(null);
+  const [error, setError] = useState<CodigoDeError | 'offline' | null>(null);
   const [posicion, setPosicion] = useState<Posicion | null>(null);
   const [buscando, setBuscando] = useState(false);
   const [consulta, setConsulta] = useState('');
@@ -68,18 +77,28 @@ function Lector({ id }: { id: string }) {
   const setForma = usePreferencesStore((s) => s.setReadingMode);
   const [eligiendoForma, setEligiendoForma] = useState(false);
   // El libro real arranca solo con el libro; las otras, con los controles a la vista.
+  // Reintentar en el teléfono vuelve a intentar bajar la copia (el efecto de abrir corre de nuevo).
+  const [intento, setIntento] = useState(0);
   const [ocultos, setOcultos] = useState(forma === 'book');
 
   // Abrir una sola vez por dirección firmada, en el lugar donde se quedó (RF-BL17).
   const abiertoCon = useRef<string | null>(null);
   useEffect(() => {
     const pieza = item.data;
-    if (!pieza || !url.data || abiertoCon.current === url.data) return;
+    if (!pieza || !ruta) return;
+    if (nativo) {
+      // Una vez por libro (y otra si se reintenta): de la copia, o bajándola si aún no está.
+      if (abiertoCon.current === ruta) return;
+      abiertoCon.current = ruta;
+      abrirCopia(pieza, ruta, forma, (m) => motor.current?.send(m)).catch(() => setError('offline'));
+      return;
+    }
+    if (!url.data || abiertoCon.current === url.data) return;
     abiertoCon.current = url.data;
     motor.current?.send({ type: 'open', format: pieza.kind === 'epub' ? 'epub' : 'pdf', url: url.data, position: posicionGuardada(pieza), mode: forma });
     // La forma con que se abre es la de ese momento; los cambios después van por `mode` (abajo).
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [item.data, url.data]);
+  }, [item.data, url.data, ruta, intento]);
 
   // Cambiar de forma con el libro abierto: el motor se queda en el mismo lugar (RF-BR8).
   const formaEnMotor = useRef(forma);
@@ -156,7 +175,8 @@ function Lector({ id }: { id: string }) {
     setError(null);
     setAbierto(false);
     abiertoCon.current = null;
-    void url.refetch();
+    if (nativo) setIntento((n) => n + 1);
+    else void url.refetch();
   };
 
   const esEpub = item.data?.kind === 'epub';
@@ -188,15 +208,17 @@ function Lector({ id }: { id: string }) {
   const sinArchivo = item.isSuccess && !ruta;
   const mensajeError = sinArchivo
     ? r.noFile
-    : error === 'password'
-      ? r.errorPassword
-      : error === 'damaged'
-        ? r.errorDamaged
-        : error === 'network' || url.isError
-          ? r.errorNetwork
-          : error
-            ? r.errorUnknown
-            : null;
+    : error === 'offline'
+      ? r.errorOffline
+      : error === 'password'
+        ? r.errorPassword
+        : error === 'damaged'
+          ? r.errorDamaged
+          : error === 'network' || url.isError
+            ? r.errorNetwork
+            : error
+              ? r.errorUnknown
+              : null;
 
   // En scroll los controles siempre se ven: no hay centro que tocar para traerlos. Mientras abre o si
   // falla, tampoco se esconden: tiene que quedar cómo salir.

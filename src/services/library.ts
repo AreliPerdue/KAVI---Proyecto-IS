@@ -32,6 +32,7 @@ export const removeLibraryItem = libraryApi.removeItem;
 export const libraryUsage = libraryApi.usage;
 export const uploadLibraryFile = libraryApi.uploadFile;
 export const libraryFileUrl = libraryApi.fileUrl;
+export const downloadLibraryFile = libraryApi.downloadFile;
 export const listLinks = libraryApi.listLinks;
 export const addLink = libraryApi.addLink;
 export const removeLink = libraryApi.removeLink;

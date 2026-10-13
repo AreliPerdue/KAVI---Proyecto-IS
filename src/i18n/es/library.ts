@@ -270,6 +270,7 @@ export const library = {
     errorPassword: 'Este PDF pide contraseña y KAVI no puede abrirlo.',
     errorDamaged: 'No se pudo abrir el libro. El archivo puede estar dañado.',
     errorNetwork: 'No se pudo descargar el libro. Revisa tu conexión e inténtalo de nuevo.',
+    errorOffline: 'Este libro aún no está en tu teléfono. Ábrelo una vez con conexión y después podrás leerlo sin red.',
     errorUnknown: 'Algo falló al abrir el libro. Inténtalo de nuevo.',
     retry: 'Reintentar',
     search: 'Buscar en el libro',

@@ -21,6 +21,7 @@
     "date-fns": "^4.4.0",
     "date-fns-tz": "^3.2.0",
     "expo": "~57.0.19",
+    "expo-asset": "~57.0.19",
     "expo-audio": "~57.0.5",
     "expo-build-properties": "^57.0.22",
     "expo-clipboard": "~57.0.2",
@@ -74,6 +75,7 @@
     "@types/jest": "^30.0.0",
     "@types/nodemailer": "^8.0.2",
     "@types/react": "~19.2.2",
+    "esbuild": "^0.28.2",
     "eslint": "^9.39.5",
     "eslint-config-expo": "~57.0.2",
     "jest": "^30.5.2",
@@ -83,7 +85,7 @@
     "typescript": "~6.0.3"
   },
   "scripts": {
-    "postinstall": "node scripts/vendor-reader.mjs",
+    "postinstall": "node scripts/vendor-reader.mjs && node scripts/build-reader-bundle.mjs",
     "typecheck": "tsc --noEmit",
     "test": "jest",
     "test:watch": "jest --watch",

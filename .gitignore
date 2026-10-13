@@ -60,3 +60,6 @@ reports/seguridad/zap-manual-*.html
 
 # Librerías del motor de lectura (T279): las copia `scripts/vendor-reader.mjs` al instalar.
 public/reader/vendor/
+
+# Motor de lectura empaquetado para el teléfono (T285): lo arma scripts/build-reader-bundle.mjs
+assets/reader/

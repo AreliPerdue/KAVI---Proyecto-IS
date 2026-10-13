@@ -83,7 +83,8 @@
           "cameraPermission": "KAVI usa la cámara para tomar la foto de la portada de un libro.",
           "microphonePermission": false
         }
-      ]
+      ],
+      "expo-asset"
     ],
     "experiments": {
       "typedRoutes": true,

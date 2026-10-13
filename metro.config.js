@@ -1,5 +1,5 @@
 /**
- * Metro con la configuración de Expo y un solo ajuste.
+ * Metro con la configuración de Expo y dos ajustes.
  *
  * `pdf-lib` (KAVI Library, T278) trae `tslib` 1, cuyo `exports` manda a Metro, por la condición
  * `import`, a `modules/index.js`: un envoltorio que hace `import tslib from '../tslib.js'` sobre
@@ -16,5 +16,8 @@ config.resolver.resolveRequest = (context, moduleName, platform) => {
   const nombre = moduleName === 'tslib' ? 'tslib/tslib.es6.js' : moduleName;
   return (resolverBase ?? context.resolveRequest)(context, nombre, platform);
 };
+
+// El motor de lectura empaquetado para el teléfono (T285) viaja como un archivo más de la app.
+config.resolver.assetExts = [...config.resolver.assetExts, 'html'];
 
 module.exports = config;

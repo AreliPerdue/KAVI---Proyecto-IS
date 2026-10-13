@@ -1,3 +1,4 @@
+import { File } from 'expo-file-system';
 import { apiUrl } from '@/lib/api';
 import { AUTH_MESSAGES, AuthUiError, isOfflineError } from '@/lib/auth-errors';
 import { getSupabase } from '@/lib/supabase';
@@ -116,6 +117,12 @@ export const supabaseLibrary: LibraryApi = {
 
   async fileUrl(path) {
     return (await archivos<{ url: string }>({ action: 'read', path })).url;
+  },
+
+  async downloadFile(path, destinationUri) {
+    const url = (await archivos<{ url: string }>({ action: 'read', path })).url;
+    // Directo de R2 al disco: el libro no pasa por JavaScript.
+    await File.downloadFileAsync(url, new File(destinationUri), { idempotent: true });
   },
 
   async removeAllFiles() {

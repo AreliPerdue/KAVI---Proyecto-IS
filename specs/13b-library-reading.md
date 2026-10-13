@@ -19,6 +19,20 @@
   deja una pieza vacía en la librería.
 - **RF-BR3. Sin conexión.** Lo que ya se abrió una vez queda en el dispositivo y se lee sin red; las
   anotaciones hechas sin red se guardan y suben al volver (misma idea que la cola de series del gym).
+  - **Hecho en el teléfono (T285, 13 oct 2026).** La primera vez que se abre un libro se baja a la carpeta
+    de documentos de la app (`library/<pieza>/<archivo>`) y desde entonces se lee de ahí, con o sin red:
+    no se vuelve a descargar. Si el libro cambia de archivo, se baja el nuevo. Borrar el libro borra su
+    copia; eliminar la cuenta, todas.
+  - Sin red y sin copia, el lector lo dice: "Este libro aún no está en tu teléfono. Ábrelo una vez con
+    conexión y después podrás leerlo sin red", con "Reintentar".
+  - La última lista de la librería se guarda en el dispositivo (de quién es, para que otra cuenta no la
+    vea); sin red, la librería y el lector usan esa. Las portadas sin red salen de su color.
+  - **Cola local** (`lib/library/offline/outbox.ts`): el avance de lectura se guarda primero ahí y sube al
+    servidor; sin red se queda y se reintenta cada 10 s y al volver la app al frente. Lo que la cola aún no
+    sube se ve encima de lo del servidor, así el libro abre donde se quedó. Las anotaciones de L3 entran en
+    esta misma cola con su propia operación.
+  - **En la web** no hay copia: el motor descarga el libro con su dirección firmada, y sin red la web misma
+    no carga.
 - **RF-BR4. Buscar dentro del libro:** en PDF y EPUB se busca texto y se salta a cada resultado.
 
 ## 2. Formas de leer (RF-BR5 – RF-BR8)
@@ -116,8 +130,15 @@
   - `/reader/` tiene su propia CSP en `vercel.json` (se enmarca solo desde el mismo origen, `blob:` para
     los capítulos de EPUB, `'wasm-unsafe-eval'` para pdf.js), y el sitio usa
     `Cross-Origin-Embedder-Policy: credentialless` para poder mostrar las portadas de R2.
-  - **Sin conexión (T285):** hoy el teléfono carga el motor de la web; para leer sin red habrá que
-    empaquetarlo dentro de la app.
+  - **Sin conexión (T285):** en el teléfono el motor viene **dentro de la app**: `scripts/build-reader-bundle.mjs`
+    (en `postinstall`) lo empaqueta con esbuild en una sola página, `assets/reader/engine.html` (~2 MB: motor,
+    pdf.js, foliate y StPageFlip, con el worker de pdf.js como texto que arranca desde un `blob:`). El WebView
+    la abre con la web de KAVI como dirección base: así puede pedir portadas a R2 y, con red, los archivos de
+    apoyo de pdf.js (mapas CJK, fuentes estándar); sin red, un PDF que los necesite puede verse con otra
+    letra. El libro no lo descarga el motor: la app lo lee de su copia local y se lo manda en pedazos de
+    medio mega en base64 (`openBegin`, `openChunk`, `openEnd`).
+  - **Ojo:** como el motor del teléfono va dentro de la app, un cambio en `public/reader/` llega al
+    teléfono con la siguiente versión de la app, no al publicar la web.
 - **Libro real (enmendado el 13 oct 2026, T284):** la hoja se dobla **dentro del motor** con StPageFlip
   (`page-flip`, MIT, ~45 KB), que `scripts/vendor-reader.mjs` copia como pdf.js y foliate. Antes decía Skia
   en la app sobre capturas del motor; se cambió porque así funciona igual en las tres plataformas, sin

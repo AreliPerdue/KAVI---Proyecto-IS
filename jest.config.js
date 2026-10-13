@@ -21,6 +21,7 @@ module.exports = {
   moduleNameMapper: {
     // El orden importa: Jest usa la primera clave que casa.
     '\\.(css)$': '<rootDir>/__mocks__/style-mock.js',
+    '\\.(html)$': '<rootDir>/__mocks__/file-mock.js',
     '^@/assets/(.*)$': '<rootDir>/assets/$1',
     '^@/(.*)$': '<rootDir>/src/$1',
   },

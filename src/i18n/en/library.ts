@@ -270,6 +270,7 @@ export const library: Dictionary['library'] = {
     errorPassword: 'This PDF asks for a password, so KAVI can’t open it.',
     errorDamaged: 'The book couldn’t be opened. The file may be damaged.',
     errorNetwork: 'The book couldn’t be downloaded. Check your connection and try again.',
+    errorOffline: 'This book isn’t on your phone yet. Open it once with a connection and you’ll be able to read it offline.',
     errorUnknown: 'Something went wrong opening the book. Try again.',
     retry: 'Try again',
     search: 'Search in the book',

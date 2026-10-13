@@ -1,3 +1,4 @@
+import { File } from 'expo-file-system';
 import { Platform } from 'react-native';
 
 import { AuthUiError } from '@/lib/auth-errors';
@@ -173,6 +174,15 @@ export const demoLibrary: LibraryApi = {
       return URL.createObjectURL(blob);
     }
     return `demo://${path}`;
+  },
+
+  async downloadFile(path, destinationUri) {
+    await delay();
+    const archivo = archivos.get(path);
+    if (!archivo) throw new AuthUiError(t().errors.noPermission);
+    const { body } = archivo;
+    const bytes = body instanceof Uint8Array ? body : body instanceof ArrayBuffer ? new Uint8Array(body) : new Uint8Array(await body.arrayBuffer());
+    new File(destinationUri).write(bytes);
   },
 
   async removeAllFiles(userId) {

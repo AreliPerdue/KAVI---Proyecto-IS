@@ -999,7 +999,7 @@ Decisiones B1–B9 aprobadas el 12 oct 2026 (T274); ver la tabla de la spec 13 �
   deslizar; en web, *trackpad* hacia los lados (una página por gesto), flechas, Re Pág / Av Pág y espacio;
   seleccionar texto nunca pasa de página. (RF-BR7b) Dep: T283 — Hecha junto con T283 y T284 (motor
   `public/reader/engine.js`); falta probar el deslizar con el dedo en un teléfono.
-- [ ] T285 Sin conexión: archivo guardado en el dispositivo y cola local de anotaciones; empaquetar el motor de
+- [x] T285 Sin conexión: archivo guardado en el dispositivo y cola local de anotaciones; empaquetar el motor de
   lectura dentro de la app (hoy el teléfono lo carga de la web). (RF-BR3) Dep: T279
 - [ ] T318 Tiempo de lectura: cronómetro que suma por libro (pausa en segundo plano o tras 5 min sin tocar
   nada), sesiones guardadas (`library_reading_sessions` con RLS) y resumen por libro y de la biblioteca:

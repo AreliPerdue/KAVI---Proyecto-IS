@@ -30,6 +30,11 @@ jest.mock('@/components/library/reader-engine', () => {
   return { ReaderEngine: Motor };
 });
 const mockPantallaCompleta = jest.fn();
+// En el teléfono (Jest corre como iOS) el libro sale de su copia local (T285): el doble anota qué se pidió
+// y manda al motor el comienzo, como el de verdad.
+const mockAbrirCopia = jest.fn();
+jest.mock('@/hooks/use-local-book', () => ({ useAbrirCopiaLocal: () => mockAbrirCopia }));
+jest.mock('@/hooks/use-library-sync', () => ({ useLibrarySync: () => undefined }));
 // La barra de estado real agenda trabajo con `setImmediate` y se atora tras la prueba con relojes falsos;
 // el doble solo recuerda si se pidió escondida.
 let mockBarraEscondida: boolean | undefined;
@@ -66,11 +71,17 @@ beforeEach(() => {
   mockUrl = { data: 'https://r2/firmada', isError: false, refetch: jest.fn() };
   usePreferencesStore.setState({ readingModes: {} });
   mockPantallaCompleta.mockReset();
+  mockAbrirCopia.mockReset();
+  mockAbrirCopia.mockImplementation(async (pieza: { kind: string }, _ruta: string, forma: string, enviar: (m: MensajeAlMotor) => void) => {
+    const { posicionGuardada } = jest.requireActual<typeof import('@/lib/library/reader-protocol')>('@/lib/library/reader-protocol');
+    enviar({ type: 'openBegin', format: pieza.kind === 'epub' ? 'epub' : 'pdf', size: 1, position: posicionGuardada(pieza as never), mode: forma as never });
+  });
 });
 
 it('abre el PDF en la página donde se quedó y muestra que está abriendo', async () => {
   await render(<Lector />);
-  expect(mockEnviados[0]).toEqual({ type: 'open', format: 'pdf', url: 'https://r2/firmada', position: { page: 120 }, mode: 'scroll' });
+  expect(mockAbrirCopia).toHaveBeenCalledWith(expect.objectContaining({ id: 'l1' }), 'u1/l1/rayuela.pdf', 'scroll', expect.any(Function));
+  expect(mockEnviados[0]).toEqual({ type: 'openBegin', format: 'pdf', size: 1, position: { page: 120 }, mode: 'scroll' });
   expect(screen.getByText(R.opening)).toBeTruthy();
   await responder({ type: 'opened', total: 340 });
   expect(screen.queryByText(R.opening)).toBeNull();
@@ -80,7 +91,7 @@ it('abre el PDF en la página donde se quedó y muestra que está abriendo', asy
 it('un EPUB se abre con su CFI', async () => {
   mockPieza = { ...pdf, kind: 'epub', last_position: { cfi: 'epubcfi(/6/4)' } };
   await render(<Lector />);
-  expect(mockEnviados[0]).toEqual(expect.objectContaining({ format: 'epub', position: { cfi: 'epubcfi(/6/4)' } }));
+  expect(mockEnviados[0]).toEqual(expect.objectContaining({ type: 'openBegin', format: 'epub', position: { cfi: 'epubcfi(/6/4)' } }));
 });
 
 it('guarda la posición cuando la lectura se detiene, no en cada página (RF-BR9)', async () => {
@@ -162,8 +173,17 @@ it.each([
   expect(!!boton).toBe(reintentable);
   if (boton) {
     await fireEvent.press(boton);
-    expect(mockUrl.refetch).toHaveBeenCalled();
+    // En el teléfono reintentar vuelve a abrir la copia (o a bajarla).
+    expect(mockAbrirCopia).toHaveBeenCalledTimes(2);
   }
+});
+
+it('sin red y sin copia en el teléfono, dice que hay que abrirlo una vez con conexión (RF-BR3)', async () => {
+  mockAbrirCopia.mockRejectedValueOnce(new TypeError('Network request failed'));
+  await render(<Lector />);
+  expect(await screen.findByText(R.errorOffline)).toBeTruthy();
+  await fireEvent.press(screen.getByRole('button', { name: R.retry }));
+  expect(mockAbrirCopia).toHaveBeenCalledTimes(2);
 });
 
 it('una pieza sin archivo lo dice y no abre el motor', async () => {
@@ -205,7 +225,7 @@ describe('forma de leer', () => {
   it('se abre con la forma recordada de ese libro', async () => {
     usePreferencesStore.setState({ readingModes: { l1: 'paged' } });
     await render(<Lector />);
-    expect(mockEnviados[0]).toMatchObject({ type: 'open', mode: 'paged' });
+    expect(mockEnviados[0]).toMatchObject({ type: 'openBegin', mode: 'paged' });
   });
 
   it('cambiarla con el libro abierto avisa al motor y se recuerda solo para ese libro', async () => {

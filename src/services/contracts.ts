@@ -486,6 +486,11 @@ export interface LibraryApi {
   uploadFile(userId: string, itemId: string, fileName: string, body: LibraryFileBody, contentType: string): Promise<string>;
   /** Una dirección temporal para leer un archivo privado. */
   fileUrl(path: string): Promise<string>;
+  /**
+   * Baja un archivo privado a una ruta del dispositivo (`file://…`), para leerlo sin conexión (RF-BR3,
+   * T285). Solo en el teléfono.
+   */
+  downloadFile(path: string, destinationUri: string): Promise<void>;
   /** Borra todos los archivos de la persona (al eliminar la cuenta, RF-A12). */
   removeAllFiles(userId: string): Promise<void>;
 

@@ -1,6 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
+import { subirPendientes } from '@/hooks/use-library-sync';
 import { useAuth } from '@/providers';
+import { isOfflineError } from '@/lib/auth-errors';
+import { borrarCopias } from '@/lib/library/offline/copies';
+import { aplicarPendientes, encolar, type PatchDeAvance, pendientes } from '@/lib/library/offline/outbox';
+import { guardarLista, listaGuardada } from '@/lib/library/offline/snapshot';
 import { LIBRARY_URL_SECONDS } from '@/constants/library';
 import { cambioDeColor, COLUMNAS_DE_PARTE, type ParteDeTapa } from '@/lib/library/cover/parts';
 import {
@@ -52,9 +57,29 @@ export const libraryKeys = {
 };
 
 /** Las piezas de la persona, de la más nueva a la más vieja. */
+/**
+ * La librería de la persona. Cada vez que llega del servidor se guarda una copia en el dispositivo; sin
+ * red se usa esa copia (RF-BR3, T285). En los dos casos, con lo que la cola aún no sube encima (el avance
+ * leído sin red).
+ */
 export function useLibraryItems() {
   const { userId } = useAuth();
-  return useQuery<LibraryItem[]>({ queryKey: libraryKeys.items(userId), queryFn: () => listLibraryItems(userId as string), enabled: !!userId });
+  return useQuery<LibraryItem[]>({
+    queryKey: libraryKeys.items(userId),
+    queryFn: async () => {
+      const id = userId as string;
+      try {
+        const items = await listLibraryItems(id);
+        void guardarLista(id, items).catch(() => undefined);
+        return aplicarPendientes(items, await pendientes());
+      } catch (e) {
+        const guardada = isOfflineError(e) ? await listaGuardada(id) : null;
+        if (!guardada) throw e;
+        return aplicarPendientes(guardada, await pendientes());
+      }
+    },
+    enabled: !!userId,
+  });
 }
 
 /** Cuánto espacio usa y su tope (decisión B2). */
@@ -93,7 +118,18 @@ export function useLibraryItem(id: string) {
   const queryClient = useQueryClient();
   return useQuery<LibraryItem>({
     queryKey: libraryKeys.item(id),
-    queryFn: () => getLibraryItem(id),
+    // Sin red, la pieza de la copia guardada de la librería (RF-BR3, T285).
+    queryFn: async () => {
+      try {
+        const [item] = aplicarPendientes([await getLibraryItem(id)], await pendientes());
+        return item;
+      } catch (e) {
+        const guardada = isOfflineError(e) && userId ? (await listaGuardada(userId))?.find((i) => i.id === id) : undefined;
+        if (!guardada) throw e;
+        const [item] = aplicarPendientes([guardada], await pendientes());
+        return item;
+      }
+    },
     enabled: !!userId && !!id,
     initialData: () => queryClient.getQueryData<LibraryItem[]>(libraryKeys.items(userId))?.find((i) => i.id === id),
   });
@@ -107,7 +143,11 @@ export function useSaveReadingPosition() {
   const { userId } = useAuth();
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, patch }: { id: string; patch: Pick<LibraryItemPatch, 'last_position' | 'progress'> }) => updateLibraryItem(id, patch),
+    // Primero a la cola del dispositivo y luego al servidor: sin red se queda ahí y sube al volver (RF-BR3).
+    mutationFn: async ({ id, patch }: { id: string; patch: PatchDeAvance }) => {
+      await encolar({ op: 'position', itemId: id, patch, at: Date.now() });
+      await subirPendientes();
+    },
     onMutate: ({ id, patch }) => {
       queryClient.setQueryData<LibraryItem[]>(libraryKeys.items(userId), (lista) => lista?.map((i) => (i.id === id ? { ...i, ...patch } : i)));
       queryClient.setQueryData<LibraryItem>(libraryKeys.item(id), (i) => (i ? { ...i, ...patch } : i));
@@ -169,6 +209,8 @@ export function useRemoveLibraryItems() {
       // De a una: cada pieza borra su carpeta en R2 antes de su fila.
       for (const id of ids) await removeLibraryItem(id);
     },
+    // Y su copia en el teléfono (T285).
+    onSuccess: (_, ids) => borrarCopias(ids),
     onMutate: (ids) => {
       queryClient.setQueryData<LibraryItem[]>(libraryKeys.items(userId), (lista) => lista?.filter((i) => !ids.includes(i.id)));
     },

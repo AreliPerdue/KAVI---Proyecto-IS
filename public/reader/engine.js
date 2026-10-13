@@ -5,12 +5,14 @@
  * origen y el teléfono en un WebView. La app y el motor solo se hablan por mensajes JSON; los tipos
  * viven del lado de la app en `src/lib/library/reader-protocol.ts`.
  *
- * App → motor: `open`, `goTo`, `mode`, `turn`, `search`, `searchStep`, `searchClear`, `cover`.
+ * App → motor: `open`, `openBegin` / `openChunk` / `openEnd`, `goTo`, `mode`, `turn`, `search`, `searchStep`,
+ * `searchClear`, `cover`.
  * Motor → app: `ready`, `opened`, `position`, `search`, `tap`, `cover`, `error`.
  *
  * PDF con pdf.js (página fija, con capa de texto para buscar); EPUB con foliate-js (texto que se
- * reacomoda, posición por CFI). El archivo se descarga directo de R2 con la dirección firmada que manda
- * la app.
+ * reacomoda, posición por CFI). En la web el archivo se descarga directo de R2 con la dirección firmada que
+ * manda la app; en el teléfono (T285, sin conexión) la app lo guarda en el dispositivo y lo manda en
+ * pedazos (`openBegin`, `openChunk`, `openEnd`).
  *
  * Tres formas de leer (13b, RF-BR5 – RF-BR8; T283, T284): **scroll** (una página debajo de otra),
  * **páginas de lado** (una a la vez, que se desliza) y **libro real** (la hoja se dobla; ver `book.js`).
@@ -20,7 +22,9 @@
  */
 import { buscarEnPedazos } from './text-search.js';
 
-const VENDOR = new URL('./vendor/', import.meta.url).href;
+// Las librerías van junto al motor. Empaquetado en la app (T285), la página no tiene dirección propia: los
+// archivos de apoyo de pdf.js (mapas de caracteres, fuentes) se piden a la web, si hay red.
+const VENDOR = new URL('./vendor/', globalThis.KAVI_BASE ?? import.meta.url).href;
 
 // ─── Mensajes ────────────────────────────────────────────────────────────────
 
@@ -48,15 +52,46 @@ window.addEventListener('message', recibir);
 // Android entrega los mensajes del WebView en `document`.
 document.addEventListener('message', recibir);
 
+/** El libro que llega en pedazos desde la app (T285): se arma aquí y se abre al llegar el último. */
+let llegando = null;
+
+/** "Hola" en base64 → sus bytes. */
+function bytesDe(base64) {
+  const texto = atob(base64);
+  const bytes = new Uint8Array(texto.length);
+  for (let i = 0; i < texto.length; i++) bytes[i] = texto.charCodeAt(i);
+  return bytes;
+}
+
+async function abrir(m, fuente) {
+  cerrar();
+  forma = formaDe(m.mode);
+  if (m.format === 'pdf') await abrirPdf(fuente, m.position);
+  else if (m.format === 'epub') await abrirEpub(fuente, m.position);
+  else throw Object.assign(new Error('formato'), { name: 'FormatoDesconocido' });
+}
+
 async function atender(m) {
   switch (m.type) {
     case 'open':
-      cerrar();
-      forma = formaDe(m.mode);
-      if (m.format === 'pdf') await abrirPdf(m.url, m.position);
-      else if (m.format === 'epub') await abrirEpub(m.url, m.position);
-      else throw Object.assign(new Error('formato'), { name: 'FormatoDesconocido' });
+      return abrir(m, { url: m.url });
+    case 'openBegin':
+      llegando = { m, datos: new Uint8Array(Math.max(0, m.size | 0)), lleno: 0 };
       return;
+    case 'openChunk': {
+      if (!llegando) return;
+      const pedazo = bytesDe(m.data ?? '');
+      if (llegando.lleno + pedazo.length > llegando.datos.length) throw Object.assign(new Error('tamaño'), { name: 'FormatoDesconocido' });
+      llegando.datos.set(pedazo, llegando.lleno);
+      llegando.lleno += pedazo.length;
+      return;
+    }
+    case 'openEnd': {
+      const listo = llegando;
+      llegando = null;
+      if (!listo || listo.lleno !== listo.datos.length) throw Object.assign(new Error('incompleto'), { name: 'FormatoDesconocido' });
+      return abrir(listo.m, { datos: listo.datos });
+    }
     case 'goTo':
       return irA(m);
     case 'mode':
@@ -123,8 +158,12 @@ function cerrar() {
 
 let pdfjsCargado = null;
 function pdfjs() {
-  pdfjsCargado ??= import(`${VENDOR}pdfjs/pdf.min.mjs`).then((lib) => {
-    lib.GlobalWorkerOptions.workerSrc = `${VENDOR}pdfjs/pdf.worker.min.mjs`;
+  pdfjsCargado ??= import('./vendor/pdfjs/pdf.min.mjs').then((lib) => {
+    // Empaquetado, el worker viene como texto dentro de la página; en la web, su archivo.
+    if (globalThis.KAVI_PDF_WORKER) {
+      const url = URL.createObjectURL(new Blob([globalThis.KAVI_PDF_WORKER], { type: 'text/javascript' }));
+      lib.GlobalWorkerOptions.workerPort = new Worker(url, { type: 'module' });
+    } else lib.GlobalWorkerOptions.workerSrc = `${VENDOR}pdfjs/pdf.worker.min.mjs`;
     return lib;
   });
   return pdfjsCargado;
@@ -134,10 +173,8 @@ function pdfjs() {
  * Descarga el libro completo y lo abre. No se pide por partes: la dirección firmada de R2 vence en
  * una hora y una sesión de lectura puede durar más; con todo en memoria, el vencimiento no importa.
  */
-async function cargarPdf(url) {
-  const [lib, respuesta] = await Promise.all([pdfjs(), fetch(url)]);
-  if (!respuesta.ok) throw Object.assign(new Error(`HTTP ${respuesta.status}`), { name: 'ResponseException' });
-  const datos = new Uint8Array(await respuesta.arrayBuffer());
+async function cargarPdf(fuente) {
+  const [lib, datos] = await Promise.all([pdfjs(), bytesDeFuente(fuente)]);
   const tarea = lib.getDocument({
     data: datos,
     cMapUrl: `${VENDOR}pdfjs/cmaps/`,
@@ -156,6 +193,14 @@ async function cargarPdf(url) {
     if (tarea.destroyed && !e?.name) throw Object.assign(new Error('password'), { name: 'PasswordException' });
     throw e;
   }
+}
+
+/** Los bytes del libro: los que ya llegaron de la app, o descargados de la dirección firmada. */
+async function bytesDeFuente(fuente) {
+  if (fuente.datos) return fuente.datos;
+  const respuesta = await fetch(fuente.url);
+  if (!respuesta.ok) throw Object.assign(new Error(`HTTP ${respuesta.status}`), { name: 'ResponseException' });
+  return new Uint8Array(await respuesta.arrayBuffer());
 }
 
 /**
@@ -207,8 +252,8 @@ function reacomodarPdf() {
   irAPaginaPdf(pagina, false);
 }
 
-async function abrirPdf(url, posicion) {
-  const { doc, tarea } = await cargarPdf(url);
+async function abrirPdf(fuente, posicion) {
+  const { doc, tarea } = await cargarPdf(fuente);
   const total = doc.numPages;
   const primera = await doc.getPage(1);
   const base = primera.getViewport({ scale: 1 });
@@ -337,11 +382,9 @@ function avisarPosicion() {
 
 // ─── EPUB ────────────────────────────────────────────────────────────────────
 
-async function abrirEpub(url, posicion) {
-  const [, { Overlayer }] = await Promise.all([import(`${VENDOR}foliate/view.js`), import(`${VENDOR}foliate/overlayer.js`)]);
-  const respuesta = await fetch(url);
-  if (!respuesta.ok) throw Object.assign(new Error(`HTTP ${respuesta.status}`), { name: 'ResponseException' });
-  const archivo = new File([await respuesta.blob()], 'libro.epub', { type: 'application/epub+zip' });
+async function abrirEpub(fuente, posicion) {
+  const [, { Overlayer }] = await Promise.all([import('./vendor/foliate/view.js'), import('./vendor/foliate/overlayer.js')]);
+  const archivo = new File([await bytesDeFuente(fuente)], 'libro.epub', { type: 'application/epub+zip' });
 
   const raiz = document.createElement('div');
   raiz.id = 'epub';
@@ -746,7 +789,7 @@ function marcarPagina(n) {
 
 /** Dibuja la primera página y la devuelve como JPEG: es la portada del PDF, como en el Finder. */
 async function portada(url, ancho) {
-  const { doc, tarea } = await cargarPdf(url);
+  const { doc, tarea } = await cargarPdf({ url });
   try {
     const pagina = await doc.getPage(1);
     const base = pagina.getViewport({ scale: 1 });
