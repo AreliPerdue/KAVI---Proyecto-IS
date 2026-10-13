@@ -148,7 +148,7 @@ Cada etapa termina con su incremento probado (P7) y se puede usar sola.
 | **B3** | Formatos de oficina | **Se convierten a PDF** al importarlos y se tratan como PDF (subrayar, anotar…). Servicio de conversión aparte (LibreOffice/Gotenberg); su alojamiento se decide en L6. |
 | **B4** | Diccionario | **Mixto y gratis:** inglés con *Free Dictionary API*; español con el diccionario del sistema donde exista (iPhone) y un enlace a la RAE en lo demás. |
 | **B5** | Gesto para definir | **Mantener presionado** selecciona la palabra y el menú ofrece Definir, Subrayar, Copiar y Escuchar. |
-| **B6** | Libro real en teléfono | **Obliga a girar** a horizontal mientras se lee así; en tableta y web se adapta al ancho. |
+| **B6** | Libro real en teléfono | ~~Obliga a girar a horizontal~~. **Enmienda (13 oct 2026):** funciona en las dos orientaciones y a pantalla completa: en vertical, una página que se dobla en 3D (como FlipHTML5); en horizontal, dos páginas con el lomo en medio. Se pasa de página con toques en los bordes, deslizando, con el *trackpad* o las flechas; el centro muestra los controles (13b, RF-BR5 y RF-BR7b). |
 | **B7** | Escuchar | **Voz del sistema** (`expo-speech` / Web Speech) para empezar. Más adelante, una voz propia (la de Areli) por API: queda en el largo plazo de `tasks.md`. |
 | **B8** | Nombre | **"Biblioteca"** en español y **"Library"** en inglés; el nombre largo es KAVI Library. |
 | **B9** | Estilos de inicio | **Dos muy bien hechos:** **Moderno/luxury** (la portada de ciudad con edificios intercambiables vive aquí) y **Cottagecore** tierno, con dragones. Detalle en 13e. |

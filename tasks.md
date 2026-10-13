@@ -947,9 +947,12 @@ Decisiones B1–B9 aprobadas el 12 oct 2026 (T274); ver la tabla de la spec 13 �
   (RF-BL20, RF-BL21, de KAVI Reader) Dep: T278, T281
 - [ ] T282 Vista de librero con lomos sobre repisas (con la imagen del lomo si la hay). (RF-BL2) Dep: T277, T311
 - [ ] T283 Páginas de lado y cambio de forma de leer sin perder la posición. (RF-BR7, RF-BR8) Dep: T279
-- [ ] T284 Libro real: dos páginas (la portada sola a la derecha, luego en pares), paso de página arrastrando
-  la esquina (Skia + Reanimated) o tocando el 20 % del borde, horizontal obligatoria en teléfono, sin animación
-  con movimiento reducido. (RF-BR5) Dep: T283
+- [ ] T284 Libro real a pantalla completa con la hoja que se dobla en 3D (como FlipHTML5): en vertical una
+  página, en horizontal dos (la portada sola a la derecha, luego en pares); arrastrar la esquina con Skia +
+  Reanimated; sin animación con movimiento reducido. (RF-BR5, B6 enmendada el 13 oct) Dep: T283
+- [ ] T284b Pasar de página sin botones: 20 % de cada borde, centro para mostrar u ocultar los controles,
+  deslizar; en web, *trackpad* hacia los lados (una página por gesto), flechas, Re Pág / Av Pág y espacio;
+  seleccionar texto nunca pasa de página. (RF-BR7b) Dep: T283
 - [ ] T285 Sin conexión: archivo guardado en el dispositivo y cola local de anotaciones. (RF-BR3) Dep: T279
 
 ### L3 · Herramientas sobre la página
