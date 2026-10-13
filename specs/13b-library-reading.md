@@ -36,6 +36,18 @@
   - **Arrastrar la esquina** dobla la hoja siguiendo el dedo (o el cursor) y deja ver la siguiente; soltar
     a medias la regresa, soltar pasada la mitad la termina de voltear.
   - Con movimiento reducido (accesibilidad), la hoja cambia sin la animación de curvatura.
+  - **Hecho (T284, 13 oct 2026), para PDF y EPUB.** Se elige en "Forma de leer" → **Libro real**; la hoja se
+    cierra y queda solo el libro: sin la barra de la app, sin la barra de estado y, en Android, sin la de
+    navegación (se asoma deslizando desde el borde). En la web, la pantalla completa del navegador (Esc la
+    quita). El centro trae los controles; mientras abre o si falla, se ven para poder salir.
+  - La portada (y la última página) son de pasta dura: giran rígidas. Las demás se doblan. Al pasar con un
+    toque en el borde, las flechas o el trackpad, la hoja se dobla sola desde la esquina de abajo.
+  - Dos páginas cuando caben a buen tamaño (el ancho llega a 1.8 veces el de una página a todo lo alto); si
+    no, una. Girar el teléfono o cambiar la ventana rehace el libro en el mismo lugar.
+  - **EPUB:** el texto se acomoda en páginas fijas del tamaño de la hoja (proporción 2:3, letra con serifa
+    de 17 px, márgenes de 28 px), capítulo por capítulo, y luego se dobla como el PDF. La posición se sigue
+    guardando como CFI, así que cambiar entre las tres formas no pierde el lugar. El porcentaje de la barra
+    sale de las páginas del libro real y puede diferir un poco del que dan las otras formas.
 - **RF-BR6. Scroll hacia abajo,** como un PDF: las páginas una debajo de otra.
 - **RF-BR7. Páginas de lado,** como Kindle: una página a la vez, se desliza a la izquierda o derecha.
 - **RF-BR7b. Pasar de página sin botones** (libro real y páginas de lado; 13 oct 2026). No hay flechas en
@@ -106,10 +118,21 @@
     `Cross-Origin-Embedder-Policy: credentialless` para poder mostrar las portadas de R2.
   - **Sin conexión (T285):** hoy el teléfono carga el motor de la web; para leer sin red habrá que
     empaquetarlo dentro de la app.
-- **Libro real:** la curvatura se pinta con Skia sobre la imagen de la página o las dos páginas (captura del
-  motor), con Reanimated para seguir el dedo a 60 fps. La pantalla completa oculta la barra de estado
-  (`expo-status-bar`) y la de navegación de Android; en web se usa la API de pantalla completa del navegador
-  cuando la persona entra al modo.
+- **Libro real (enmendado el 13 oct 2026, T284):** la hoja se dobla **dentro del motor** con StPageFlip
+  (`page-flip`, MIT, ~45 KB), que `scripts/vendor-reader.mjs` copia como pdf.js y foliate. Antes decía Skia
+  en la app sobre capturas del motor; se cambió porque así funciona igual en las tres plataformas, sin
+  recompilar la app ni cargar ~7 MB de Skia en la web, y porque una página de EPUB (HTML) no se puede
+  capturar bien como imagen. StPageFlip trae lo que pide RF-BR5: una o dos páginas, la portada sola,
+  arrastrar la esquina y sombras. El código vive en `public/reader/book.js`:
+  - PDF: cada hoja es un canvas que se pinta al acercarse (tres a cada lado) y se suelta al alejarse.
+  - EPUB: cada capítulo se acomoda en columnas del tamaño de la hoja en un lugar fuera de la vista (eso da
+    cuántas páginas tiene y traduce entre página y CFI); las hojas cercanas se arman con una copia del
+    capítulo en su propio *shadow DOM* y las lejanas quedan vacías. Las hojas de estilo del capítulo se
+    leen como texto, porque la CSP del motor no deja cargar `blob:` como hoja de estilo.
+  - La pantalla completa esconde la barra de estado (`expo-status-bar`) y la de navegación de Android
+    (`expo-navigation-bar`, ya incluido en Expo Go; el APK propio se recompila). En la web, la API de
+    pantalla completa del navegador; `vercel.json` permite `fullscreen=(self)`.
+  - Mensajes: `open` y `mode` aceptan `book`; `position` lleva `pageEnd` con dos páginas a la vista.
 - **Conversión de oficina (L6):** función en un servidor con LibreOffice (Gotenberg); el PDF resultante se
   guarda junto al original. Decisión B3.
 

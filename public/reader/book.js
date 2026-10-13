@@ -1,0 +1,371 @@
+/**
+ * Libro real (spec 13b, RF-BR5; T284): la hoja se dobla al pasar, como en FlipHTML5. La animación es de
+ * StPageFlip (`page-flip`, MIT), dentro del motor: igual en la web, el iPhone y Android.
+ *
+ * - Vertical: una página a la vez. Horizontal (o una ventana ancha): dos, con la portada sola a la derecha
+ *   y luego en pares. Se decide por lo que quepa: dos si caben a buen tamaño, una si no.
+ * - PDF: cada página es un canvas que se pinta al acercarse.
+ * - EPUB: cada capítulo se acomoda en columnas del tamaño de la hoja y cada columna es una página. Las
+ *   páginas cercanas se arman con una copia del capítulo; las lejanas quedan vacías. La posición se sigue
+ *   guardando como CFI, así cambiar de forma de leer no pierde el lugar.
+ *
+ * Los toques en los bordes y el centro, el teclado y el trackpad los pone `engine.js`; aquí, el arrastre de
+ * la esquina y el deslizar con el dedo, que hace StPageFlip.
+ */
+import { PageFlip } from './vendor/page-flip/page-flip.module.js';
+
+const MARGEN = 8; // alrededor del libro
+const MARGEN_TEXTO = 28; // dentro de la página de un EPUB
+const CERCA = 3; // páginas que se arman a cada lado de la actual
+
+const sinMovimiento = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/** El tamaño de la hoja y si van dos: dos si caben sin que cada una quede chica. */
+export function medidas(proporcion) {
+  const W = window.innerWidth - MARGEN * 2;
+  const H = window.innerHeight - MARGEN * 2;
+  const dos = W >= 1.8 * H * proporcion;
+  let alto = H;
+  let ancho = alto * proporcion;
+  const cabe = dos ? W / 2 : W;
+  if (ancho > cabe) {
+    ancho = cabe;
+    alto = ancho / proporcion;
+  }
+  return { ancho: Math.floor(ancho), alto: Math.floor(alto), dos };
+}
+
+/**
+ * Arma el hojeador sobre `paginas` (elementos ya del tamaño de la hoja). `alPasar(indice, dos)` avisa la
+ * página a la vista (la de la izquierda en un par).
+ */
+function hojeador(raiz, paginas, { ancho, alto, dos, inicio, alPasar }) {
+  const caja = document.createElement('div');
+  caja.className = 'libro-caja';
+  caja.style.width = `${dos ? ancho * 2 : ancho}px`;
+  const bloque = document.createElement('div');
+  caja.append(bloque);
+  raiz.replaceChildren(caja);
+
+  const pf = new PageFlip(bloque, {
+    width: ancho,
+    height: alto,
+    size: 'fixed',
+    startPage: inicio,
+    showCover: true,
+    usePortrait: true,
+    autoSize: true,
+    drawShadow: true,
+    maxShadowOpacity: 0.5,
+    flippingTime: sinMovimiento() ? 1 : 700,
+    showPageCorners: !sinMovimiento(),
+    mobileScrollSupport: true,
+  });
+  // Un clic quieto no pasa de página aquí: los bordes y el centro los atiende el motor (RF-BR7b), así el
+  // centro muestra los controles en vez de voltear la hoja.
+  const detener = pf.userStop.bind(pf);
+  pf.userStop = (pos, deslizo = false) => {
+    if (pf.isUserTouch && !deslizo && !pf.isUserMove) {
+      pf.isUserTouch = false;
+      return;
+    }
+    detener(pos, deslizo);
+  };
+  pf.on('flip', (e) => alPasar(e.data, pf.getOrientation() === 'landscape'));
+  pf.on('init', (e) => alPasar(e.data.page, e.data.mode === 'landscape'));
+  pf.loadFromHTML(paginas);
+  return pf;
+}
+
+/** Pasar con la hoja que se dobla, o de golpe con movimiento reducido. */
+function pasarEn(pf, paso) {
+  if (sinMovimiento()) {
+    if (paso > 0) pf.turnToNextPage();
+    else pf.turnToPrevPage();
+    return;
+  }
+  if (paso > 0) pf.flipNext('bottom');
+  else pf.flipPrev('bottom');
+}
+
+/** La página (o el par) a la vista, contando desde 1: "p. 1" sola o "pp. 2–3". */
+function aLaVista(indice, dos, total) {
+  const pagina = indice + 1;
+  const hasta = dos && indice > 0 && indice + 1 < total ? indice + 2 : pagina;
+  return { pagina, hasta };
+}
+
+// ─── PDF ─────────────────────────────────────────────────────────────────────
+
+/**
+ * El libro real de un PDF. `pintar(n, canvas, ancho, alto)` dibuja la página n en el canvas. `avisar`
+ * recibe { pagina, hasta, total }.
+ */
+export function libroPdf({ raiz, doc, total, base, inicio, pintar, avisar }) {
+  const { ancho, alto, dos } = medidas(base.width / base.height);
+  const ratio = Math.min(window.devicePixelRatio || 1, 3);
+  const paginas = [];
+  const pintadas = new Set();
+  for (let n = 1; n <= total; n++) {
+    const div = document.createElement('div');
+    div.className = 'hoja-libro';
+    paginas.push(div);
+  }
+
+  /** Pinta las cercanas y suelta las lejanas: con 400 páginas no hay 400 canvas en memoria. */
+  const acercar = (indice) => {
+    for (let i = 0; i < total; i++) {
+      const cerca = i >= indice - CERCA && i <= indice + CERCA + 1;
+      if (cerca && !pintadas.has(i)) {
+        pintadas.add(i);
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.floor(ancho * ratio);
+        canvas.height = Math.floor(alto * ratio);
+        paginas[i].append(canvas);
+        void pintar(i + 1, canvas, ancho * ratio, alto * ratio);
+      } else if (!cerca && pintadas.has(i)) {
+        pintadas.delete(i);
+        paginas[i].replaceChildren();
+      }
+    }
+  };
+
+  let actual = Math.min(Math.max(0, inicio - 1), total - 1);
+  acercar(actual);
+  const pf = hojeador(raiz, paginas, {
+    ancho,
+    alto,
+    dos,
+    inicio: actual,
+    alPasar: (indice, enPar) => {
+      actual = indice;
+      acercar(indice);
+      avisar({ ...aLaVista(indice, enPar, total), total });
+    },
+  });
+
+  return {
+    pasar: (paso) => pasarEn(pf, paso),
+    irA: (pagina) => {
+      const i = Math.min(Math.max(0, pagina - 1), total - 1);
+      acercar(i);
+      pf.turnToPage(i);
+      actual = i;
+      avisar({ ...aLaVista(i, pf.getOrientation() === 'landscape', total), total });
+    },
+    pagina: () => actual + 1,
+    cerrar: () => pf.destroy(),
+  };
+}
+
+// ─── EPUB ────────────────────────────────────────────────────────────────────
+
+/** Los estilos de la página de un EPUB: los del capítulo más los nuestros, que acomodan en columnas. */
+function estilosDePagina(ancho, alto, cssDelCapitulo) {
+  const columna = ancho - MARGEN_TEXTO * 2;
+  return `${cssDelCapitulo}
+/* La hoja recorta: el contenido se corre de lado y solo se ve su columna. */
+:host { all: initial; display: block; width: ${ancho}px; height: ${alto}px; overflow: hidden; background: #fff; }
+.contenido {
+  box-sizing: content-box; width: ${columna}px; height: ${alto - MARGEN_TEXTO * 2}px; padding: ${MARGEN_TEXTO}px;
+  column-width: ${columna}px; column-gap: ${MARGEN_TEXTO * 2}px; column-fill: auto;
+  font-family: Georgia, 'Times New Roman', serif; font-size: 17px; line-height: 1.5; color: #1a1a1a;
+  text-align: start; hyphens: auto; overflow-wrap: break-word;
+}
+.contenido img, .contenido svg, .contenido video { max-width: 100%; max-height: ${alto - MARGEN_TEXTO * 2}px; object-fit: contain; break-inside: avoid; }
+.contenido script, .contenido style, .contenido link { display: none; }
+.contenido a { color: inherit; }`;
+}
+
+/** Lee un capítulo ya preparado por foliate (sus recursos son direcciones `blob:`) y su CSS. */
+async function leerCapitulo(seccion) {
+  const url = await seccion.load();
+  const texto = await (await fetch(url)).text();
+  let doc = new DOMParser().parseFromString(texto, 'application/xhtml+xml');
+  if (doc.querySelector('parsererror')) doc = new DOMParser().parseFromString(texto, 'text/html');
+  // El CSP del motor no deja cargar hojas de estilo `blob:`: se traen como texto.
+  const partes = [];
+  for (const el of doc.querySelectorAll('style, link[rel~="stylesheet"]')) {
+    if (el.localName === 'style') partes.push(el.textContent ?? '');
+    else {
+      const href = el.getAttribute('href');
+      if (href) partes.push(await fetch(new URL(href, url)).then((r) => r.text()).catch(() => ''));
+    }
+  }
+  return { doc, css: partes.join('\n') };
+}
+
+/** Copia el cuerpo del capítulo nodo por nodo: el mismo árbol, para que los CFI apunten igual. */
+function copiaDelCuerpo(doc) {
+  const contenido = document.createElement('div');
+  contenido.className = 'contenido';
+  for (const nodo of doc.body?.childNodes ?? []) contenido.append(document.importNode(nodo, true));
+  return contenido;
+}
+
+/** Un elemento con su sombra (estilos aislados del motor) y una copia del capítulo dentro. */
+function pagina(ancho, alto, capitulo) {
+  const host = document.createElement('div');
+  host.className = 'hoja-libro';
+  const sombra = host.attachShadow({ mode: 'open' });
+  const estilo = document.createElement('style');
+  estilo.textContent = estilosDePagina(ancho, alto, capitulo.css);
+  sombra.append(estilo);
+  if (capitulo) {
+    const contenido = copiaDelCuerpo(capitulo.doc);
+    sombra.append(contenido);
+  }
+  return { host, sombra };
+}
+
+/** El camino de índices desde la raíz hasta un nodo, y al revés. */
+function camino(raiz, nodo) {
+  const pasos = [];
+  for (let n = nodo; n && n !== raiz; n = n.parentNode) pasos.unshift([...n.parentNode.childNodes].indexOf(n));
+  return pasos;
+}
+function seguir(raiz, pasos) {
+  let n = raiz;
+  for (const i of pasos) n = n?.childNodes[i];
+  return n ?? null;
+}
+
+/** Espera las imágenes del capítulo (cambian el largo), sin quedarse colgado si una no carga. */
+function imagenesListas(raiz) {
+  const imagenes = [...raiz.querySelectorAll('img')];
+  const tope = new Promise((r) => setTimeout(r, 3000));
+  return Promise.race([Promise.all(imagenes.map((i) => (i.complete ? null : i.decode().catch(() => null)))), tope]);
+}
+
+/**
+ * El libro real de un EPUB. `view` es el foliate-view abierto (su libro, sus CFI); `cfi`, dónde abrir.
+ * `avisar` recibe { cfi, pagina, total, fraccion }.
+ */
+export async function libroEpub({ raiz, view, cfi, avisar }) {
+  // La proporción de una página de libro de bolsillo; el texto se acomoda a lo que quepa.
+  const { ancho, alto, dos } = medidas(2 / 3);
+  const libro = view.book;
+
+  // Medir: cada capítulo en un lugar fuera de la vista, del tamaño de la hoja. Se quedan ahí para
+  // traducir entre páginas y CFI.
+  const medidor = document.createElement('div');
+  medidor.className = 'libro-medidor';
+  document.body.append(medidor);
+  const capitulos = [];
+  let total = 0;
+  for (const [indice, seccion] of libro.sections.entries()) {
+    if (seccion.linear === 'no') continue;
+    const capitulo = await leerCapitulo(seccion);
+    const { host, sombra } = pagina(ancho, alto, capitulo);
+    medidor.append(host);
+    const contenido = sombra.querySelector('.contenido');
+    await imagenesListas(contenido);
+    const n = Math.max(1, Math.round((contenido.scrollWidth + MARGEN_TEXTO * 2) / ancho));
+    capitulos.push({ indice, ...capitulo, contenido, inicio: total, n });
+    total += n;
+  }
+
+  const capituloDe = (g) => capitulos.findLast((c) => c.inicio <= g) ?? capitulos[0];
+  const columnaDe = (c, rect) => Math.floor((rect.left - c.contenido.getBoundingClientRect().left + 1) / ancho);
+
+  /** El CFI de una página: el primer texto que cae en su columna. */
+  const cfiDe = (g) => {
+    const c = capituloDe(g);
+    const k = g - c.inicio;
+    const andador = document.createTreeWalker(c.contenido, NodeFilter.SHOW_TEXT, (n) => (n.textContent.trim() ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_SKIP));
+    for (let n = andador.nextNode(); n; n = andador.nextNode()) {
+      const r = document.createRange();
+      r.selectNodeContents(n);
+      if ([...r.getClientRects()].some((rect) => columnaDe(c, rect) >= k)) {
+        const original = seguir(c.doc.body, camino(c.contenido, n));
+        if (!original) break;
+        const rango = c.doc.createRange();
+        rango.setStart(original, 0);
+        rango.collapse(true);
+        return view.getCFI(c.indice, rango);
+      }
+    }
+    return view.getCFI(c.indice);
+  };
+
+  /** La página de un CFI: dónde cae su punto en el capítulo acomodado. */
+  const paginaDe = (valor) => {
+    try {
+      const { index, anchor } = view.resolveCFI(valor);
+      const c = capitulos.find((x) => x.indice === index) ?? capitulos.findLast((x) => x.indice < index) ?? capitulos[0];
+      if (c.indice !== index || !anchor) return c.inicio;
+      const rango = anchor(c.doc);
+      const nodo = seguir(c.contenido, camino(c.doc.body, rango.startContainer));
+      if (!nodo) return c.inicio;
+      const r = document.createRange();
+      if (nodo.nodeType === Node.TEXT_NODE) r.setStart(nodo, Math.min(rango.startOffset, nodo.length));
+      else r.selectNode(nodo);
+      const rect = r.getClientRects()[0] ?? (nodo.nodeType === Node.ELEMENT_NODE ? nodo.getBoundingClientRect() : null);
+      return rect ? c.inicio + Math.min(c.n - 1, Math.max(0, columnaDe(c, rect))) : c.inicio;
+    } catch {
+      return 0;
+    }
+  };
+
+  // Las páginas del hojeador: vacías hasta que se acercan.
+  const paginas = [];
+  for (const c of capitulos) {
+    for (let k = 0; k < c.n; k++) {
+      const div = document.createElement('div');
+      div.className = 'hoja-libro';
+      div.dataset.capitulo = String(c.indice);
+      div.dataset.columna = String(k);
+      paginas.push(div);
+    }
+  }
+  const armadas = new Set();
+  const acercar = (indice) => {
+    for (let i = 0; i < total; i++) {
+      const cerca = i >= indice - CERCA && i <= indice + CERCA + 1;
+      if (cerca && !armadas.has(i)) {
+        armadas.add(i);
+        const c = capituloDe(i);
+        const sombra = paginas[i].shadowRoot ?? paginas[i].attachShadow({ mode: 'open' });
+        const estilo = document.createElement('style');
+        estilo.textContent = estilosDePagina(ancho, alto, c.css);
+        const contenido = copiaDelCuerpo(c.doc);
+        contenido.style.transform = `translateX(${-(i - c.inicio) * ancho}px)`;
+        sombra.replaceChildren(estilo, contenido);
+      } else if (!cerca && armadas.has(i)) {
+        armadas.delete(i);
+        paginas[i].shadowRoot?.replaceChildren();
+      }
+    }
+  };
+
+  let actual = cfi ? paginaDe(cfi) : 0;
+  const decir = (indice, enPar) => {
+    actual = indice;
+    acercar(indice);
+    const { pagina: p } = aLaVista(indice, enPar, total);
+    avisar({ cfi: cfiDe(indice), pagina: p, total, fraccion: total > 1 ? indice / (total - 1) : 1 });
+  };
+  acercar(actual);
+  const pf = hojeador(raiz, paginas, { ancho, alto, dos, inicio: actual, alPasar: decir });
+
+  return {
+    pasar: (paso) => pasarEn(pf, paso),
+    irACfi: (valor) => {
+      const i = paginaDe(valor);
+      acercar(i);
+      pf.turnToPage(i);
+      decir(i, pf.getOrientation() === 'landscape');
+    },
+    irAFraccion: (f) => {
+      const i = Math.round(Math.min(Math.max(0, f), 1) * (total - 1));
+      acercar(i);
+      pf.turnToPage(i);
+      decir(i, pf.getOrientation() === 'landscape');
+    },
+    cfi: () => cfiDe(actual),
+    cerrar: () => {
+      pf.destroy();
+      medidor.remove();
+    },
+  };
+}

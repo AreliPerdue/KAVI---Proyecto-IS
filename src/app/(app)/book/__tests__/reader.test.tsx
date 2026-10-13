@@ -29,6 +29,17 @@ jest.mock('@/components/library/reader-engine', () => {
   Motor.displayName = 'MotorDeLectura';
   return { ReaderEngine: Motor };
 });
+const mockPantallaCompleta = jest.fn();
+// La barra de estado real agenda trabajo con `setImmediate` y se atora tras la prueba con relojes falsos;
+// el doble solo recuerda si se pidió escondida.
+let mockBarraEscondida: boolean | undefined;
+jest.mock('expo-status-bar', () => ({
+  StatusBar: ({ hidden }: { hidden?: boolean }) => {
+    mockBarraEscondida = hidden;
+    return null;
+  },
+}));
+jest.mock('@/hooks/use-full-screen', () => ({ usePantallaCompleta: (activa: boolean) => mockPantallaCompleta(activa) }));
 jest.mock('@/hooks/use-library', () => ({
   useLibraryItem: () => ({ data: mockPieza, isSuccess: !!mockPieza }),
   useLibraryFileUrl: () => mockUrl,
@@ -54,6 +65,7 @@ beforeEach(() => {
   mockPieza = pdf;
   mockUrl = { data: 'https://r2/firmada', isError: false, refetch: jest.fn() };
   usePreferencesStore.setState({ readingModes: {} });
+  mockPantallaCompleta.mockReset();
 });
 
 it('abre el PDF en la página donde se quedó y muestra que está abriendo', async () => {
@@ -228,5 +240,41 @@ describe('forma de leer', () => {
     await responder({ type: 'opened', total: 340 });
     await responder({ type: 'tap' });
     expect(screen.getByRole('button', { name: R.mode })).toBeTruthy();
+  });
+});
+
+/** Libro real (RF-BR5, T284): a pantalla completa, sin controles al entrar, y "pp. 2–3" con dos páginas. */
+describe('libro real', () => {
+  it('elegirlo cierra la hoja, esconde los controles y pide pantalla completa', async () => {
+    await render(<Lector />);
+    await responder({ type: 'opened', total: 340 });
+    expect(mockPantallaCompleta).toHaveBeenLastCalledWith(false);
+    await fireEvent.press(screen.getByRole('button', { name: R.mode }));
+    await fireEvent.press(screen.getByRole('tab', { name: R.modeBook }));
+    expect(mockEnviados.at(-1)).toEqual({ type: 'mode', mode: 'book' });
+    expect(usePreferencesStore.getState().readingModes).toEqual({ l1: 'book' });
+    expect(screen.queryByText(R.modeBookHint)).toBeNull();
+    expect(screen.queryByRole('button', { name: R.mode })).toBeNull();
+    expect(mockPantallaCompleta).toHaveBeenLastCalledWith(true);
+    expect(mockBarraEscondida).toBe(true);
+    // El centro trae los controles.
+    await responder({ type: 'tap' });
+    expect(screen.getByRole('button', { name: R.mode })).toBeTruthy();
+  });
+
+  it('con dos páginas a la vista, la barra dice el par', async () => {
+    usePreferencesStore.setState({ readingModes: { l1: 'book' } });
+    await render(<Lector />);
+    await responder({ type: 'opened', total: 340 });
+    await responder({ type: 'position', page: 2, pageEnd: 3, total: 340, fraction: 2 / 340 });
+    await responder({ type: 'tap' });
+    expect(screen.getByText(es.library.progressPages(2, 3, 340))).toBeTruthy();
+  });
+
+  it('mientras abre, los controles se ven para poder salir', async () => {
+    usePreferencesStore.setState({ readingModes: { l1: 'book' } });
+    await render(<Lector />);
+    expect(screen.getByRole('button', { name: es.common.back })).toBeTruthy();
+    expect(mockPantallaCompleta).toHaveBeenLastCalledWith(false);
   });
 });

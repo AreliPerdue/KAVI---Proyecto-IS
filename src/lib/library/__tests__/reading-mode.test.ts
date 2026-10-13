@@ -3,7 +3,8 @@ import { formasValidas, formaValida, MAX_FORMAS, recordarForma } from '@/lib/lib
 
 it('lo que no es una forma vuelve a scroll', () => {
   expect(formaValida('paged')).toBe('paged');
-  expect(formaValida('book')).toBe('scroll');
+  expect(formaValida('book')).toBe('book');
+  expect(formaValida('holograma')).toBe('scroll');
   expect(formaValida(undefined)).toBe('scroll');
 });
 

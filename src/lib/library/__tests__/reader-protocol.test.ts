@@ -11,6 +11,8 @@ describe('leerMensaje', () => {
     [{ type: 'search', count: 3, index: 0, searching: true }, { type: 'search', count: 3, index: 0, searching: true }],
     [{ type: 'cover', dataUrl: 'data:image/jpeg;base64,AAA' }, { type: 'cover', dataUrl: 'data:image/jpeg;base64,AAA' }],
     [{ type: 'tap' }, { type: 'tap' }],
+    [{ type: 'position', page: 2, pageEnd: 3, total: 340, fraction: 0.01 }, { type: 'position', page: 2, pageEnd: 3, total: 340, fraction: 0.01, cfi: undefined }],
+    [{ type: 'position', page: 2, pageEnd: 2, total: 340, fraction: 0.01 }, { type: 'position', page: 2, total: 340, fraction: 0.01, cfi: undefined }],
     [{ type: 'error', code: 'password' }, { type: 'error', code: 'password', message: undefined }],
     [{ type: 'error', code: 'raro', message: 'x' }, { type: 'error', code: 'unknown', message: 'x' }],
   ])('%j', (crudo, esperado) => {

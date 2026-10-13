@@ -12,10 +12,11 @@
  * reacomoda, posición por CFI). El archivo se descarga directo de R2 con la dirección firmada que manda
  * la app.
  *
- * Dos formas de leer (13b, RF-BR6 – RF-BR8; T283): **scroll** (una página debajo de otra) y **páginas de
- * lado** (una a la vez, que se desliza). En páginas de lado se pasa de página sin botones (RF-BR7b): toque o
- * clic en el 20 % de cada borde, deslizar el dedo, el trackpad hacia los lados, las flechas, Re Pág / Av Pág
- * y la barra espaciadora. El centro avisa `tap` para que la app muestre u oculte sus controles.
+ * Tres formas de leer (13b, RF-BR5 – RF-BR8; T283, T284): **scroll** (una página debajo de otra),
+ * **páginas de lado** (una a la vez, que se desliza) y **libro real** (la hoja se dobla; ver `book.js`).
+ * En las dos últimas se pasa de página sin botones (RF-BR7b): toque o clic en el 20 % de cada borde,
+ * deslizar el dedo, el trackpad hacia los lados, las flechas, Re Pág / Av Pág y la barra espaciadora. El
+ * centro avisa `tap` para que la app muestre u oculte sus controles.
  */
 import { buscarEnPedazos } from './text-search.js';
 
@@ -51,7 +52,7 @@ async function atender(m) {
   switch (m.type) {
     case 'open':
       cerrar();
-      forma = m.mode === 'paged' ? 'paged' : 'scroll';
+      forma = formaDe(m.mode);
       if (m.format === 'pdf') await abrirPdf(m.url, m.position);
       else if (m.format === 'epub') await abrirEpub(m.url, m.position);
       else throw Object.assign(new Error('formato'), { name: 'FormatoDesconocido' });
@@ -59,7 +60,7 @@ async function atender(m) {
     case 'goTo':
       return irA(m);
     case 'mode':
-      return cambiarForma(m.mode === 'paged' ? 'paged' : 'scroll');
+      return cambiarForma(formaDe(m.mode));
     case 'turn':
       return pasar(m.step === -1 ? -1 : 1);
     case 'search':
@@ -86,12 +87,19 @@ function codigoDe(e) {
 // ─── Estado ──────────────────────────────────────────────────────────────────
 
 let pdf = null; // { doc, raiz, pista, paginas: HTMLElement[], observador, renderizadas: Map, total, pagina }
-let forma = 'scroll'; // 'scroll' | 'paged'
+let forma = 'scroll'; // 'scroll' | 'paged' | 'book'
+let libro = null; // el libro real abierto (book.js): { pasar, irA | irACfi, cerrar, … }
+let libroRaiz = null;
+
+const formaDe = (valor) => (valor === 'paged' || valor === 'book' ? valor : 'scroll');
+/** Páginas de lado y libro real se pasan igual: sin scroll, con bordes, teclado y trackpad. */
+const porPaginas = () => forma !== 'scroll';
 let epub = null; // { view }
 let busqueda = { consulta: '', resultados: [], actual: -1 };
 
 function cerrar() {
   limpiarBusqueda();
+  salirDelLibro();
   if (pdf) {
     pdf.observador.disconnect();
     pdf.tarea.destroy();
@@ -235,7 +243,9 @@ async function abrirPdf(url, posicion) {
   raiz.addEventListener('scroll', () => requestAnimationFrame(avisarPosicion), { passive: true });
   enviar({ type: 'opened', total });
 
-  irAPaginaPdf(Math.min(Math.max(1, posicion?.page ?? 1), total), false);
+  const inicio = Math.min(Math.max(1, posicion?.page ?? 1), total);
+  if (forma === 'book') await entrarAlLibro(inicio);
+  else irAPaginaPdf(inicio, false);
 }
 
 /** Ir a una página del PDF: en scroll se desplaza hasta ella; en páginas de lado, la pista se corre. */
@@ -310,7 +320,7 @@ function despintar(n) {
 
 /** La página que ocupa el tercio de arriba de la pantalla es "donde voy" (RF-BR9). */
 function avisarPosicion() {
-  if (!pdf || forma === 'paged') return;
+  if (!pdf || forma !== 'scroll') return;
   const { raiz, paginas, total } = pdf;
   const linea = raiz.scrollTop + raiz.clientHeight / 3;
   let actual = 1;
@@ -344,7 +354,8 @@ async function abrirEpub(url, posicion) {
   view.addEventListener('relocate', (e) => {
     const { fraction, cfi, location } = e.detail ?? {};
     // foliate avisa varias veces por el mismo lugar (al pintar, al acomodar): solo cuenta si cambió.
-    if (!cfi || cfi === ultimo) return;
+    // En el libro real la posición la dice el hojeador; foliate queda escondido detrás.
+    if (!cfi || cfi === ultimo || forma === 'book') return;
     ultimo = cfi;
     if (epub) epub.ultimo = cfi;
     enviar({
@@ -373,6 +384,7 @@ async function abrirEpub(url, posicion) {
   if (posicion?.cfi) await view.init({ lastLocation: posicion.cfi });
   else if (posicion?.fraction) await view.goToFraction(posicion.fraction);
   else await view.init({ showTextStart: false });
+  if (forma === 'book') await entrarAlLibro(posicion?.cfi ?? null);
 }
 
 /** En páginas de lado, una columna a la vez (como Kindle), con la animación de foliate salvo con movimiento reducido. */
@@ -386,31 +398,124 @@ function formaEpub(view) {
 
 // ─── Formas de leer (RF-BR6 – RF-BR8) ───────────────────────────────────────
 
-/** Cambiar de forma sin perder el lugar: en PDF, la misma página; en EPUB, foliate se queda en su CFI. */
+/**
+ * Cambiar de forma sin perder el lugar: en PDF, la misma página; en EPUB, el mismo CFI (foliate o el
+ * libro real lo traducen a su página).
+ */
 async function cambiarForma(nueva) {
   if (nueva === forma) return;
+  const antes = forma;
+  // Dónde va: lo sabe quien está a la vista.
+  const pagina = libro?.pagina?.() ?? pdf?.pagina ?? 1;
+  const cfi = libro?.cfi?.() ?? epub?.ultimo ?? null;
   forma = nueva;
-  if (pdf) return reacomodarPdf();
+  if (antes === 'book') salirDelLibro();
+  if (nueva === 'book') return entrarAlLibro(pdf ? pagina : cfi);
+  if (pdf) {
+    pdf.pagina = pagina;
+    return reacomodarPdf();
+  }
   if (epub) {
-    const cfi = epub.ultimo;
     formaEpub(epub.view);
     if (cfi) await epub.view.goTo(cfi);
   }
 }
 
-/** Una página adelante o atrás (solo en páginas de lado). */
+// ─── Libro real (RF-BR5, T284) ───────────────────────────────────────────────
+
+let creandoLibro = null;
+
+/** Abre el libro real donde va (la página del PDF o el CFI del EPUB) y esconde la otra vista. */
+async function entrarAlLibro(donde) {
+  const { libroPdf, libroEpub } = await import('./book.js');
+  salirDelLibro();
+  libroRaiz = document.createElement('div');
+  libroRaiz.id = 'libro';
+  document.body.append(libroRaiz);
+  gestosDePaginas(libroRaiz, true);
+  if (pdf) {
+    pdf.raiz.style.display = 'none';
+    libro = libroPdf({
+      raiz: libroRaiz,
+      doc: pdf.doc,
+      total: pdf.total,
+      base: pdf.base,
+      inicio: typeof donde === 'number' ? donde : 1,
+      pintar: pintarEnCanvas,
+      avisar: ({ pagina, hasta, total }) => {
+        pdf.pagina = pagina;
+        enviar({ type: 'position', page: pagina, pageEnd: hasta, total, fraction: pagina / total });
+      },
+    });
+    return;
+  }
+  if (epub) {
+    epub.raiz.style.display = 'none';
+    const raiz = libroRaiz;
+    const tarea = libroEpub({
+      raiz,
+      view: epub.view,
+      cfi: typeof donde === 'string' ? donde : epub.ultimo,
+      avisar: ({ cfi, pagina, total, fraccion }) => {
+        if (epub) epub.ultimo = cfi;
+        enviar({ type: 'position', cfi, page: pagina, total, fraction: fraccion });
+      },
+    });
+    creandoLibro = tarea;
+    const creado = await tarea;
+    // Si mientras se acomodaba se cambió de forma o de libro, este ya no va.
+    if (creandoLibro !== tarea || libroRaiz !== raiz) return creado.cerrar();
+    creandoLibro = null;
+    libro = creado;
+  }
+}
+
+function salirDelLibro() {
+  creandoLibro = null;
+  try {
+    libro?.cerrar();
+  } catch {
+    // ya se había ido
+  }
+  libro = null;
+  libroRaiz?.remove();
+  libroRaiz = null;
+  if (pdf) pdf.raiz.style.display = '';
+  if (epub) epub.raiz.style.display = '';
+}
+
+/** Pinta una página del PDF en el canvas de una hoja del libro real. */
+async function pintarEnCanvas(n, canvas, ancho, alto) {
+  if (!pdf) return;
+  const pagina = await pdf.doc.getPage(n);
+  const base = pagina.getViewport({ scale: 1 });
+  const vista = pagina.getViewport({ scale: Math.min(ancho / base.width, alto / base.height) });
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.translate((canvas.width - vista.width) / 2, (canvas.height - vista.height) / 2);
+  await pagina.render({ canvasContext: ctx, canvas, viewport: vista }).promise.catch(() => undefined);
+}
+
+/** Una página adelante o atrás (páginas de lado o libro real). */
 async function pasar(paso) {
-  if (forma !== 'paged') return;
+  if (!porPaginas()) return;
+  if (forma === 'book') return libro?.pasar(paso);
   if (pdf) return irAPaginaPdf((pdf.pagina || 1) + paso);
   if (epub) await (paso > 0 ? epub.view.next() : epub.view.prev());
 }
 
-// Al girar el teléfono o cambiar el tamaño de la ventana, la página se vuelve a acomodar (foliate lo hace
-// solo con el EPUB).
+// Al girar el teléfono o cambiar el tamaño de la ventana, la página se vuelve a acomodar sin perder el
+// lugar (foliate lo hace solo con el EPUB): en el libro real, de una a dos páginas o al revés.
 let esperaDeTamano = null;
 window.addEventListener('resize', () => {
   clearTimeout(esperaDeTamano);
-  esperaDeTamano = setTimeout(() => pdf && reacomodarPdf(), 150);
+  esperaDeTamano = setTimeout(() => {
+    if (forma === 'book' && (libro || creandoLibro)) {
+      const donde = pdf ? (libro?.pagina?.() ?? pdf.pagina) : (libro?.cfi?.() ?? epub?.ultimo);
+      void entrarAlLibro(donde);
+    } else if (pdf) reacomodarPdf();
+  }, 200);
 });
 
 /**
@@ -428,12 +533,12 @@ function gestosDePaginas(objetivo, esEpub = false) {
   const haySeleccion = () => !!doc.getSelection?.()?.toString();
 
   objetivo.addEventListener('pointerdown', (e) => {
-    inicio = forma === 'paged' && e.isPrimary ? { x: e.clientX, y: e.clientY, t: e.timeStamp, toque: e.pointerType === 'touch' } : null;
+    inicio = porPaginas() && e.isPrimary ? { x: e.clientX, y: e.clientY, t: e.timeStamp, toque: e.pointerType === 'touch' } : null;
   });
   objetivo.addEventListener('pointerup', (e) => {
     const i = inicio;
     inicio = null;
-    if (!i || forma !== 'paged' || haySeleccion()) return;
+    if (!i || !porPaginas() || haySeleccion()) return;
     const dx = e.clientX - i.x;
     const dy = e.clientY - i.y;
     const dt = e.timeStamp - i.t;
@@ -460,7 +565,7 @@ function gestosDePaginas(objetivo, esEpub = false) {
   objetivo.addEventListener(
     'wheel',
     (e) => {
-      if (forma !== 'paged' || e.ctrlKey) return; // Ctrl + rueda es el zoom (13c)
+      if (!porPaginas() || e.ctrlKey) return; // Ctrl + rueda es el zoom (13c)
       e.preventDefault();
       const delta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
       clearTimeout(pausa);
@@ -483,7 +588,7 @@ function gestosDePaginas(objetivo, esEpub = false) {
 }
 
 function teclas(e) {
-  if (forma !== 'paged' || e.metaKey || e.ctrlKey || e.altKey) return;
+  if (!porPaginas() || e.metaKey || e.ctrlKey || e.altKey) return;
   const adelante = e.key === 'ArrowRight' || e.key === 'PageDown' || (e.key === ' ' && !e.shiftKey);
   const atras = e.key === 'ArrowLeft' || e.key === 'PageUp' || (e.key === ' ' && e.shiftKey);
   if (!adelante && !atras) return;
@@ -496,6 +601,12 @@ document.addEventListener('keydown', teclas);
 // ─── Ir a ────────────────────────────────────────────────────────────────────
 
 async function irA({ page, cfi, fraction }) {
+  if (forma === 'book' && libro) {
+    if (pdf) return libro.irA(page ?? Math.round((fraction ?? 0) * (pdf.total - 1)) + 1);
+    if (cfi) return libro.irACfi(cfi);
+    if (typeof fraction === 'number') return libro.irAFraccion(fraction);
+    return;
+  }
   if (pdf) {
     irAPaginaPdf(page ?? Math.round((fraction ?? 0) * (pdf.total - 1)) + 1);
     return;
@@ -558,7 +669,10 @@ async function irAResultado() {
   const r = busqueda.resultados[busqueda.actual];
   enviar({ type: 'search', count: busqueda.resultados.length, index: busqueda.actual });
   if (!r) return;
-  if (pdf && forma === 'paged') {
+  if (forma === 'book' && libro) {
+    if (pdf) libro.irA(r.pagina);
+    else if (r.cfi) libro.irACfi(r.cfi);
+  } else if (pdf && forma === 'paged') {
     irAPaginaPdf(r.pagina);
   } else if (pdf) {
     const div = pdf.paginas[r.pagina - 1];

@@ -124,6 +124,37 @@
       .textLayer mark.actual {
         background: var(--marca-actual);
       }
+      /* Libro real (RF-BR5, T284): el libro centrado en la pantalla, la hoja la dobla StPageFlip. */
+      #libro {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        user-select: none;
+        -webkit-user-select: none;
+      }
+      .libro-caja {
+        max-width: 100%;
+      }
+      .hoja-libro {
+        background: var(--papel);
+        overflow: hidden;
+      }
+      .hoja-libro canvas {
+        display: block;
+        width: 100%;
+        height: 100%;
+      }
+      /* Donde se acomodan los capítulos de un EPUB para contar sus páginas: fuera de la vista. */
+      .libro-medidor {
+        position: fixed;
+        left: -100000px;
+        top: 0;
+        visibility: hidden;
+        pointer-events: none;
+      }
       #epub {
         position: absolute;
         inset: 0;

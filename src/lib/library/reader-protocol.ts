@@ -34,7 +34,8 @@ export type CodigoDeError = 'password' | 'damaged' | 'network' | 'unknown';
 export type MensajeDelMotor =
   | { type: 'ready' }
   | { type: 'opened'; total: number | null }
-  | { type: 'position'; page?: number; total?: number; cfi?: string; fraction: number }
+  /** `pageEnd`: en el libro real con dos páginas, la de la derecha ("pp. 2–3", RF-BR5). */
+  | { type: 'position'; page?: number; pageEnd?: number; total?: number; cfi?: string; fraction: number }
   | { type: 'search'; count: number; index: number; searching?: boolean }
   | { type: 'cover'; dataUrl: string }
   /** Toque o clic en el centro de la página: mostrar u ocultar los controles (RF-BR7b). */
@@ -67,6 +68,7 @@ export function leerMensaje(crudo: unknown): MensajeDelMotor | null {
         type: 'position',
         fraction: Math.min(Math.max(m.fraction, 0), 1),
         page: numero(m.page) ? m.page : undefined,
+        ...(numero(m.pageEnd) && numero(m.page) && m.pageEnd > m.page ? { pageEnd: m.pageEnd } : {}),
         total: numero(m.total) ? m.total : undefined,
         cfi: typeof m.cfi === 'string' ? m.cfi : undefined,
       };

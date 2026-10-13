@@ -1,5 +1,6 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { ChevronDown, ChevronLeft, ChevronUp, GalleryHorizontal, Rows3, Search, X } from 'lucide-react-native';
+import { StatusBar } from 'expo-status-bar';
+import { BookOpen, ChevronDown, ChevronLeft, ChevronUp, GalleryHorizontal, Rows3, Search, X } from 'lucide-react-native';
 import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Platform, StyleSheet, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -8,6 +9,7 @@ import { ReaderEngine, type ReaderEngineHandle } from '@/components/library/read
 import { ReaderProgress } from '@/components/library/reader-progress';
 import { AppText, Button, IconButton, Segmented, Sheet } from '@/components/ui';
 import { Fonts, IconSize, IconStroke, Radius, Spacing, Typography } from '@/constants/theme';
+import { usePantallaCompleta } from '@/hooks/use-full-screen';
 import { useLibraryFileUrl, useLibraryItem, useLibraryItems, useSaveReadingPosition, useSeries } from '@/hooks/use-library';
 import { useTheme } from '@/hooks/use-theme';
 import { useT } from '@/i18n';
@@ -26,9 +28,9 @@ type Posicion = Extract<MensajeDelMotor, { type: 'position' }>;
  * la búsqueda dentro del libro. El libro lo pinta el motor web (`public/reader/`), en un WebView en el
  * teléfono y en un iframe en la web.
  *
- * Formas de leer (T283, RF-BR6 – RF-BR8): scroll o páginas de lado, recordada por libro en el
- * dispositivo. Cambiarla no mueve el lugar. En páginas de lado, el toque en el centro muestra u oculta
- * los controles (RF-BR7b) para que solo quede la página.
+ * Formas de leer (T283, T284; RF-BR5 – RF-BR8): scroll, páginas de lado o libro real, recordada por libro
+ * en el dispositivo. Cambiarla no mueve el lugar. Fuera del scroll, el toque en el centro muestra u oculta
+ * los controles (RF-BR7b). El libro real va a pantalla completa y arranca sin controles: solo el libro.
  */
 export default function ReaderScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -65,9 +67,8 @@ function Lector({ id }: { id: string }) {
   const forma = usePreferencesStore((s) => s.readingModes[id] ?? FORMA_POR_OMISION);
   const setForma = usePreferencesStore((s) => s.setReadingMode);
   const [eligiendoForma, setEligiendoForma] = useState(false);
-  const [ocultos, setOcultos] = useState(false);
-  // En scroll los controles siempre se ven: no hay centro que tocar para traerlos.
-  const controles = forma === 'scroll' || !ocultos || buscando;
+  // El libro real arranca solo con el libro; las otras, con los controles a la vista.
+  const [ocultos, setOcultos] = useState(forma === 'book');
 
   // Abrir una sola vez por dirección firmada, en el lugar donde se quedó (RF-BL17).
   const abiertoCon = useRef<string | null>(null);
@@ -91,7 +92,7 @@ function Lector({ id }: { id: string }) {
   // En la web, las flechas también pasan de página cuando el foco está fuera del libro (RF-BR7b); con el
   // foco dentro, las atiende el motor.
   useEffect(() => {
-    if (Platform.OS !== 'web' || forma !== 'paged') return;
+    if (Platform.OS !== 'web' || forma === 'scroll') return;
     const alTeclear = (e: KeyboardEvent) => {
       const destino = e.target as HTMLElement | null;
       if (e.metaKey || e.ctrlKey || e.altKey || destino?.closest?.('input, textarea, [contenteditable="true"]')) return;
@@ -107,7 +108,8 @@ function Lector({ id }: { id: string }) {
 
   const elegirForma = (nueva: FormaDeLeer) => {
     setForma(id, nueva);
-    setOcultos(false);
+    setOcultos(nueva === 'book');
+    if (nueva === 'book') setEligiendoForma(false);
   };
 
   // Guardar la posición cuando la lectura se detiene, y al salir lo que haya quedado pendiente.
@@ -164,7 +166,13 @@ function Lector({ id }: { id: string }) {
   // cuenta, para que "p. 4" en el texto sea la página 4 de verdad. En EPUB, la fracción del motor.
   const paginaEn = (f: number) => Math.min(total, Math.max(1, Math.round(f * (total - 1)) + 1));
   const fraccion = porPagina ? ((posicion?.page ?? 1) - 1) / (total - 1) : (posicion?.fraction ?? item.data?.progress ?? 0);
-  const etiqueta = (f: number) => (porPagina ? l.progressPage(paginaEn(f), total) : l.progressPercent(Math.round(f * 100)));
+  // Con dos páginas a la vista (libro real), "pp. 2–3 de 340" mientras no se arrastre la barra.
+  const etiqueta = (f: number) =>
+    porPagina && forma === 'book' && f === fraccion && posicion?.pageEnd
+      ? l.progressPages(posicion.page ?? 1, posicion.pageEnd, total)
+      : porPagina
+        ? l.progressPage(paginaEn(f), total)
+        : l.progressPercent(Math.round(f * 100));
   const saltar = (f: number) => motor.current?.send(porPagina ? { type: 'goTo', page: paginaEn(f) } : { type: 'goTo', fraction: f });
 
   const cerrarBusqueda = () => {
@@ -190,8 +198,15 @@ function Lector({ id }: { id: string }) {
             ? r.errorUnknown
             : null;
 
+  // En scroll los controles siempre se ven: no hay centro que tocar para traerlos. Mientras abre o si
+  // falla, tampoco se esconden: tiene que quedar cómo salir.
+  const controles = forma === 'scroll' || !ocultos || buscando || !abierto || !!mensajeError;
+  const pantallaCompleta = forma === 'book' && abierto && !mensajeError;
+  usePantallaCompleta(pantallaCompleta);
+
   return (
     <View style={[styles.pantalla, { backgroundColor: theme.background, paddingTop: insets.top }]}>
+      <StatusBar hidden={pantallaCompleta} />
       {!controles ? null : buscando ? (
         <View style={styles.barra}>
           <View style={[styles.campo, { backgroundColor: theme.surface, borderColor: theme.border }]}>
@@ -232,7 +247,9 @@ function Lector({ id }: { id: string }) {
             {item.data?.title ?? ''}
           </AppText>
           <IconButton label={r.mode} onPress={() => setEligiendoForma(true)} disabled={!abierto}>
-            {forma === 'paged' ? (
+            {forma === 'book' ? (
+              <BookOpen size={IconSize.action} strokeWidth={IconStroke} color={abierto ? theme.text : theme.textTertiary} />
+            ) : forma === 'paged' ? (
               <GalleryHorizontal size={IconSize.action} strokeWidth={IconStroke} color={abierto ? theme.text : theme.textTertiary} />
             ) : (
               <Rows3 size={IconSize.action} strokeWidth={IconStroke} color={abierto ? theme.text : theme.textTertiary} />
@@ -298,12 +315,13 @@ function Lector({ id }: { id: string }) {
             options={[
               { value: 'scroll', label: r.modeScroll },
               { value: 'paged', label: r.modePaged },
+              { value: 'book', label: r.modeBook },
             ]}
             value={forma}
             onChange={elegirForma}
           />
           <AppText variant="caption" color="textSecondary">
-            {forma === 'scroll' ? r.modeScrollHint : Platform.OS === 'web' ? r.modePagedHintWeb : r.modePagedHint}
+            {forma === 'scroll' ? r.modeScrollHint : forma === 'book' ? r.modeBookHint : Platform.OS === 'web' ? r.modePagedHintWeb : r.modePagedHint}
           </AppText>
         </View>
       </Sheet>

@@ -1,9 +1,9 @@
 /**
- * Formas de leer (spec 13b, RF-BR6 – RF-BR8; T283): scroll hacia abajo o páginas de lado. El libro real
- * (RF-BR5) se suma en T284. Sin React.
+ * Formas de leer (spec 13b, RF-BR5 – RF-BR8; T283, T284): scroll hacia abajo, páginas de lado o libro real
+ * (la hoja se dobla, a pantalla completa). Sin React.
  */
-export type FormaDeLeer = 'scroll' | 'paged';
-export const FORMAS_DE_LEER: readonly FormaDeLeer[] = ['scroll', 'paged'];
+export type FormaDeLeer = 'scroll' | 'paged' | 'book';
+export const FORMAS_DE_LEER: readonly FormaDeLeer[] = ['scroll', 'paged', 'book'];
 export const FORMA_POR_OMISION: FormaDeLeer = 'scroll';
 
 /** Cuántos libros se recuerdan; de sobra, y así la preferencia no crece sin fin. */

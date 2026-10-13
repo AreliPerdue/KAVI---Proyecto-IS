@@ -8,6 +8,7 @@
  * - pdf.js (`pdfjs-dist`, compilación *legacy* para WebViews no tan nuevos): el lector, su worker, los
  *   mapas de caracteres (CJK), las fuentes estándar y los decodificadores en WASM.
  * - foliate-js: el lector de EPUB (scroll, CFI, búsqueda).
+ * - StPageFlip (`page-flip`, MIT): la hoja que se dobla del libro real (13b, RF-BR5; T284).
  */
 import { cpSync, existsSync, mkdirSync, rmSync } from 'node:fs';
 import { createRequire } from 'node:module';
@@ -21,6 +22,7 @@ const destino = join(raiz, 'public', 'reader', 'vendor');
 // Cada carpeta se ubica por un archivo que el paquete sí exporta (foliate-js no exporta su package.json).
 const pdfjs = dirname(require.resolve('pdfjs-dist/package.json'));
 const foliate = dirname(require.resolve('foliate-js/view.js'));
+const pageFlip = dirname(dirname(dirname(require.resolve('page-flip'))));
 
 rmSync(destino, { recursive: true, force: true });
 mkdirSync(join(destino, 'pdfjs'), { recursive: true });
@@ -38,4 +40,8 @@ cpSync(foliate, join(destino, 'foliate'), {
   filter: (ruta) => !/^(tests|rollup|ui|node_modules)([/\\]|$)|eslint\.config\.js$|rollup\.config\.js$|^reader\.(html|js)$/.test(relative(foliate, ruta)),
 });
 
-console.log('[vendor-reader] pdf.js y foliate-js copiados a public/reader/vendor');
+mkdirSync(join(destino, 'page-flip'), { recursive: true });
+cpSync(join(pageFlip, 'dist', 'js', 'page-flip.module.js'), join(destino, 'page-flip', 'page-flip.module.js'));
+cpSync(join(pageFlip, 'LICENSE'), join(destino, 'page-flip', 'LICENSE'));
+
+console.log('[vendor-reader] pdf.js, foliate-js y page-flip copiados a public/reader/vendor');
