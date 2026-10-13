@@ -941,7 +941,14 @@ Decisiones B1–B9 aprobadas el 12 oct 2026 (T274); ver la tabla de la spec 13 �
   abre; portadas de PDF dibujadas por un motor invisible (también las de libros ya subidos). Seguridad de la
   web: CSP propia de `/reader/` y COEP `credentialless` para las portadas de R2. Probado en el navegador con
   PDF y EPUB; falta probarlo en un teléfono (WebView).
-- [ ] T280 Libreros propios, orden, filtros (incluido color) y buscador. (RF-BL5 – RF-BL10, RF-BL18) Dep: T277
+- [x] T280 Libreros propios, orden, filtros (incluido color) y buscador. (RF-BL5 – RF-BL10, RF-BL18) Dep: T277
+  **Hecho (13 oct 2026):** libreros como pestañas con color e icono; crear, editar, eliminar (los libros se
+  quedan) y reordenar en "Administrar libreros"; "Agregar a librero" desde el menú de cada libro y desde la
+  selección, y "Quitar de este librero". Buscador sin acentos; orden recordado; filtros de fecha, género,
+  autor y color de portada con chips. A pedido de Areli, **los libros se acomodan arrastrando también en
+  "Todos"**: `sort_order` en `library_items` (migración aplicada en producción), "Como los acomodé" como orden
+  de omisión. En web, la imagen de portada ya no se arrastra sola (cancelaba el gesto). Pendiente: con cientos
+  de libros, la rejilla que se arrastra no es virtualizada (NFR-3); se revisa si la librería crece tanto.
 - [x] T281 Menú de cada pieza y selección múltiple. (RF-BL15 – RF-BL17) Dep: T280
   **Hecho (13 oct 2026, antes que T280 por decisión de Areli):** botón ⋯ en cada pieza con Abrir, Editar datos
   (título, autores, categoría con sugerencias, géneros), Seleccionar y Eliminar (confirma y avisa qué se borra);
@@ -980,6 +987,9 @@ Decisiones B1–B9 aprobadas el 12 oct 2026 (T274); ver la tabla de la spec 13 �
   seleccionar texto nunca pasa de página. (RF-BR7b) Dep: T283
 - [ ] T285 Sin conexión: archivo guardado en el dispositivo y cola local de anotaciones; empaquetar el motor de
   lectura dentro de la app (hoy el teléfono lo carga de la web). (RF-BR3) Dep: T279
+- [ ] T318 Tiempo de lectura: cronómetro que suma por libro (pausa en segundo plano o tras 5 min sin tocar
+  nada), sesiones guardadas (`library_reading_sessions` con RLS) y resumen por libro y de la biblioteca:
+  sesiones, tiempo total, promedio, días y horas. (RF-BR11 – RF-BR13, idea de Areli del 13 oct 2026) Dep: T279
 
 ### L3 · Herramientas sobre la página
 - [ ] T286 Capa de anotaciones con posición estable, panel de anotaciones, capas y bloqueo, deshacer.

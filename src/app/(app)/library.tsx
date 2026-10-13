@@ -1,29 +1,47 @@
 import { useRouter } from 'expo-router';
-import { BookOpen, FlaskConical, Tag, Trash2, X } from 'lucide-react-native';
+import { BookOpen, FolderMinus, FolderPlus, FlaskConical, Search, SlidersHorizontal, Tag, Trash2, X } from 'lucide-react-native';
 import { useEffect, useMemo, useState } from 'react';
-import { BackHandler, FlatList, type LayoutChangeEvent, StyleSheet, View } from 'react-native';
+import { BackHandler, FlatList, type LayoutChangeEvent, StyleSheet, TextInput, View } from 'react-native';
 
+import { ActiveFilters } from '@/components/library/active-filters';
 import { BulkCategorySheet } from '@/components/library/bulk-category-sheet';
 import { CoverSheet } from '@/components/library/cover-sheet';
 import { EditItemSheet } from '@/components/library/edit-item-sheet';
 import { ImportSheet } from '@/components/library/import-sheet';
 import { ItemSheet } from '@/components/library/item-sheet';
 import { PdfCoverWorker } from '@/components/library/pdf-cover-worker';
+import { ShelfEditSheet } from '@/components/library/shelf-edit-sheet';
+import { ShelfTabs } from '@/components/library/shelf-tabs';
+import { AddToShelfSheet, ShelvesManageSheet } from '@/components/library/shelves-sheets';
+import { SortFilterSheet } from '@/components/library/sort-filter-sheet';
+import { arrastreReciente } from '@/components/lists/drag-guard';
+import { DraggableGrid } from '@/components/lists/draggable-grid';
+import { DraggableRows } from '@/components/lists/draggable-rows';
 import { LibraryCoverCard, LibraryRow } from '@/components/library/library-item';
 import { ModalHeader } from '@/components/modal-header';
 import { AppText, Banner, EmptyState, ErrorState, Fab, IconButton, LoadingState, Screen, Segmented } from '@/components/ui';
 import { LIBRARY_WARN_RATIO } from '@/constants/library';
-import { IconSize, IconStroke, Radius, Spacing } from '@/constants/theme';
-import { useLibraryItems, useLibraryUsage, useRemoveLibraryItems, useSetLibraryCategory } from '@/hooks/use-library';
+import { Fonts, IconSize, IconStroke, Radius, Spacing, Typography } from '@/constants/theme';
+import {
+  useLibraryItems,
+  useLibraryUsage,
+  useRemoveLibraryItems,
+  useSetLibraryCategory,
+  useShelfItems,
+  useShelfMutations,
+  useShelves,
+  useUpdateLibraryItem,
+} from '@/hooks/use-library';
 import { useTheme } from '@/hooks/use-theme';
 import { useLanguage, useT } from '@/i18n';
 import { uuidv4 } from '@/lib/gym/ids';
 import { formatBytes } from '@/lib/library/files';
 import type { LibroLeido } from '@/lib/library/import';
+import { cuantosFiltros, type FiltrosBiblioteca, opcionesDeFiltro, ordenEntre, piezasVisibles, SIN_FILTROS } from '@/lib/library/filters';
 import { columnasPara, type LibraryView } from '@/lib/library/shelf';
 import { useConfirm, useSnackbar } from '@/providers';
 import { usePreferencesStore } from '@/store/preferences-store';
-import type { LibraryItem } from '@/types/domain';
+import type { LibraryItem, LibraryShelf } from '@/types/domain';
 
 /**
  * KAVI Library, laboratorio (spec 13 §4, T276).
@@ -37,6 +55,10 @@ import type { LibraryItem } from '@/types/domain';
  *
  * Cada pieza (T281): tocar la abre; el ⋯ abre su menú (RF-BL16); mantener presionado empieza a
  * seleccionar (RF-BL15), y con varias elegidas se les cambia la categoría o se eliminan.
+ *
+ * Organizar (T280): libreros como pestañas (RF-BL5 – RF-BL7), buscador (RF-BL18), orden recordado y
+ * filtros combinables con sus chips (RF-BL8, RF-BL10). Dentro de un librero, "Como los acomodé" deja
+ * reordenar arrastrando, con la misma rejilla que Listas.
  */
 export default function LibraryScreen() {
   const theme = useTheme();
@@ -56,6 +78,8 @@ export default function LibraryScreen() {
   const [ancho, setAncho] = useState(0);
   const columnas = vista === 'covers' ? columnasPara(ancho) : 1;
   const anchoPortada = columnas > 1 ? Math.floor((ancho - Spacing.lg * (columnas - 1)) / columnas) : 0;
+  // La rejilla que se arrastra deja su propio espacio entre celdas (el de Listas).
+  const anchoPortadaRejilla = columnas > 1 ? Math.floor((ancho - Spacing.sm * (columnas - 1)) / columnas) : 0;
   const hayPiezas = piezas.isSuccess && piezas.data.length > 0;
   const router = useRouter();
   const abrir = (id: string) => router.push({ pathname: '/(app)/book/[id]', params: { id } });
@@ -63,8 +87,116 @@ export default function LibraryScreen() {
   const showSnackbar = useSnackbar();
   const eliminar = useRemoveLibraryItems();
   const categorizar = useSetLibraryCategory();
+  const actualizar = useUpdateLibraryItem();
   const m = l.item;
   const sel = l.selection;
+  const sh = l.shelves;
+  const f = l.find;
+
+  // Organizar (T280).
+  const libreros = useShelves();
+  const enLibreros = useShelfItems();
+  const librerosMut = useShelfMutations();
+  const orden = usePreferencesStore((s) => s.libraryOrder);
+  const setOrden = usePreferencesStore((s) => s.setLibraryOrder);
+  const [libreroId, setLibreroId] = useState<string | null>(null);
+  const [busqueda, setBusqueda] = useState('');
+  const [filtros, setFiltros] = useState<FiltrosBiblioteca>(SIN_FILTROS);
+  const [filtrando, setFiltrando] = useState(false);
+  const [libreroEditando, setLibreroEditando] = useState<LibraryShelf | 'nuevo' | null>(null);
+  const [administrando, setAdministrando] = useState(false);
+  const [agregandoA, setAgregandoA] = useState<readonly string[] | null>(null);
+  // Al crear un librero desde "Agregar a librero", los libros que se estaban agregando entran en él.
+  const [agregarAlCrear, setAgregarAlCrear] = useState<readonly string[] | null>(null);
+
+  const listaLibreros = useMemo(() => libreros.data ?? [], [libreros.data]);
+  const libreroActual = listaLibreros.find((x) => x.id === libreroId) ?? null;
+  const enLibrerosDatos = useMemo(() => enLibreros.data ?? [], [enLibreros.data]);
+  const visibles = useMemo(
+    () => piezasVisibles(piezas.data ?? [], { busqueda, orden, filtros, libreroId: libreroActual?.id ?? null, enLibreros: enLibrerosDatos }),
+    [piezas.data, busqueda, orden, filtros, libreroActual, enLibrerosDatos],
+  );
+  const opciones = useMemo(() => opcionesDeFiltro(piezas.data ?? []), [piezas.data]);
+  const membresia = useMemo(() => {
+    const mapa = new Map<string, Set<string>>();
+    for (const e of enLibrerosDatos) mapa.set(e.item_id, (mapa.get(e.item_id) ?? new Set()).add(e.shelf_id));
+    return mapa;
+  }, [enLibrerosDatos]);
+  const cuentas = useMemo(() => {
+    const mapa = new Map<string, number>();
+    for (const e of enLibrerosDatos) mapa.set(e.shelf_id, (mapa.get(e.shelf_id) ?? 0) + 1);
+    return mapa;
+  }, [enLibrerosDatos]);
+  const nFiltros = cuantosFiltros(filtros);
+
+  const guardarLibrero = (datos: { name: string; color: string; icon: string }) => {
+    if (libreroEditando && libreroEditando !== 'nuevo') {
+      librerosMut.editar.mutate({ id: libreroEditando.id, datos });
+      return;
+    }
+    const pendientes = agregarAlCrear;
+    setAgregarAlCrear(null);
+    librerosMut.crear.mutate(datos, {
+      onSuccess: (nuevo) => {
+        if (pendientes?.length) {
+          librerosMut.agregar.mutate({ shelfId: nuevo.id, itemIds: pendientes });
+          showSnackbar({ message: sh.added(nuevo.name, pendientes.length) });
+        } else setLibreroId(nuevo.id);
+      },
+    });
+  };
+
+  const eliminarLibrero = async (librero: LibraryShelf) => {
+    const ok = await confirm({ title: sh.deleteTitle(librero.name), message: sh.deleteMessage, confirmLabel: sh.delete, destructive: true });
+    if (!ok) return;
+    if (libreroId === librero.id) setLibreroId(null);
+    librerosMut.borrar.mutate(librero.id);
+  };
+
+  const alternarEnLibrero = (librero: LibraryShelf, agregar: boolean) => {
+    const ids = agregandoA ?? [];
+    if (ids.length === 1 && !agregar) {
+      librerosMut.quitar.mutate({ shelfId: librero.id, itemIds: ids });
+      showSnackbar({ message: sh.removed(librero.name, 1) });
+      return;
+    }
+    librerosMut.agregar.mutate({ shelfId: librero.id, itemIds: ids });
+    showSnackbar({ message: sh.added(librero.name, ids.length) });
+    // Con varios, elegir un librero termina la acción; con uno se pueden marcar varios libreros.
+    if (ids.length > 1) {
+      setAgregandoA(null);
+      salirDeSeleccion();
+    }
+  };
+
+  const quitarDelLibrero = (ids: readonly string[]) => {
+    if (!libreroActual) return;
+    librerosMut.quitar.mutate({ shelfId: libreroActual.id, itemIds: ids });
+    showSnackbar({ message: sh.removed(libreroActual.name, ids.length) });
+    salirDeSeleccion();
+  };
+
+  /**
+   * Mover una pieza (RF-BL7): toma el punto medio entre sus nuevos vecinos, así solo se escribe una
+   * fila. En un librero cambia su lugar en ese librero; en Todos, su lugar en la librería.
+   */
+  const acomodar = (from: number, to: number) => {
+    if (from === to) return;
+    const movida = visibles[from];
+    const sin = visibles.filter((_, i) => i !== from);
+    const antes = sin[to - 1];
+    const despues = sin[to];
+    if (libreroActual) {
+      const ordenDe = (id: string) => Number(enLibrerosDatos.find((e) => e.shelf_id === libreroActual.id && e.item_id === id)?.sort_order ?? 0);
+      librerosMut.mover.mutate({
+        shelfId: libreroActual.id,
+        itemId: movida.id,
+        orden: ordenEntre(antes ? ordenDe(antes.id) : undefined, despues ? ordenDe(despues.id) : undefined),
+      });
+      return;
+    }
+    actualizar.mutate({ id: movida.id, patch: { sort_order: ordenEntre(antes?.sort_order, despues?.sort_order) } });
+  };
 
   // Menú, edición y selección (T281).
   const [menuDe, setMenuDe] = useState<LibraryItem | null>(null);
@@ -73,6 +205,9 @@ export default function LibraryScreen() {
   const [seleccion, setSeleccion] = useState<ReadonlySet<string>>(() => new Set());
   const [categoriaVarias, setCategoriaVarias] = useState(false);
   const seleccionando = seleccion.size > 0;
+  // Arrastrar para acomodar (RF-BL7): en "Como los acomodé" y viendo todo —sin búsqueda ni filtros, que
+  // esconderían a los vecinos—, en Todos o en un librero.
+  const acomodando = orden === 'manual' && !busqueda.trim() && nFiltros === 0 && !seleccionando;
   const salirDeSeleccion = () => setSeleccion(new Set());
   const alternar = (id: string) =>
     setSeleccion((previa) => {
@@ -129,7 +264,12 @@ export default function LibraryScreen() {
     item,
     seleccionando,
     elegida: seleccion.has(item.id),
-    onPress: () => (seleccionando ? alternar(item.id) : abrir(item.id)),
+    onPress: () => {
+      // Soltar una pieza que se acaba de arrastrar no debe abrirla.
+      if (arrastreReciente()) return;
+      if (seleccionando) alternar(item.id);
+      else abrir(item.id);
+    },
     onLongPress: () => alternar(item.id),
     onMenu: () => setMenuDe(item),
   });
@@ -168,6 +308,14 @@ export default function LibraryScreen() {
           <AppText variant="heading" tabular accessibilityLabel={sel.count(seleccion.size)} style={styles.flex}>
             {seleccion.size}
           </AppText>
+          <IconButton label={sh.addTo} onPress={() => setAgregandoA([...seleccion])}>
+            <FolderPlus size={IconSize.action} strokeWidth={IconStroke} color={theme.text} />
+          </IconButton>
+          {libreroActual ? (
+            <IconButton label={sh.removeFrom(libreroActual.name)} onPress={() => quitarDelLibrero([...seleccion])}>
+              <FolderMinus size={IconSize.action} strokeWidth={IconStroke} color={theme.text} />
+            </IconButton>
+          ) : null}
           <IconButton label={sel.category} onPress={() => setCategoriaVarias(true)}>
             <Tag size={IconSize.action} strokeWidth={IconStroke} color={theme.text} />
           </IconButton>
@@ -213,6 +361,50 @@ export default function LibraryScreen() {
         </View>
       ) : null}
 
+      {hayPiezas ? (
+        <>
+          <ShelfTabs
+            shelves={listaLibreros}
+            value={libreroActual?.id ?? null}
+            onChange={setLibreroId}
+            onNew={() => setLibreroEditando('nuevo')}
+            onManage={() => setAdministrando(true)}
+          />
+          <View style={styles.buscar}>
+            <View style={[styles.campo, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+              <Search size={IconSize.inline} strokeWidth={IconStroke} color={theme.textTertiary} />
+              <TextInput
+                value={busqueda}
+                onChangeText={setBusqueda}
+                placeholder={f.searchPlaceholder}
+                placeholderTextColor={theme.textTertiary}
+                accessibilityLabel={f.search}
+                returnKeyType="search"
+                style={[styles.entrada, { color: theme.text }]}
+              />
+              {busqueda ? (
+                <IconButton label={f.clearSearch} onPress={() => setBusqueda('')}>
+                  <X size={16} strokeWidth={IconStroke} color={theme.textSecondary} />
+                </IconButton>
+              ) : null}
+            </View>
+            <View>
+              <IconButton label={f.filterCount(nFiltros)} onPress={() => setFiltrando(true)}>
+                <SlidersHorizontal size={IconSize.action} strokeWidth={IconStroke} color={nFiltros ? theme.today : theme.text} />
+              </IconButton>
+              {nFiltros ? (
+                <View pointerEvents="none" style={[styles.insignia, { backgroundColor: theme.today }]}>
+                  <AppText variant="caption" style={{ color: theme.onInk }} tabular>
+                    {nFiltros}
+                  </AppText>
+                </View>
+              ) : null}
+            </View>
+          </View>
+          <ActiveFilters filtros={filtros} onChange={setFiltros} />
+        </>
+      ) : null}
+
       {leyendo ? <Banner message={l.reading} /> : null}
       {errorImportar ? <Banner tone="error" message={errorImportar} /> : null}
 
@@ -238,6 +430,11 @@ export default function LibraryScreen() {
           description={l.emptyDescription}
         />
       ) : null}
+      {hayPiezas && visibles.length === 0 ? (
+        <AppText variant="body" color="textSecondary" style={styles.vacio}>
+          {busqueda.trim() || nFiltros ? f.noResults : sh.empty}
+        </AppText>
+      ) : null}
     </View>
   );
 
@@ -247,7 +444,8 @@ export default function LibraryScreen() {
         // Cambiar el número de columnas pide montar la lista de nuevo.
         key={`${vista}-${columnas}`}
         testID="library-list"
-        data={hayPiezas ? piezas.data : []}
+        // Acomodando dentro de un librero, las piezas van en la rejilla que se arrastra (abajo).
+        data={hayPiezas && !acomodando ? visibles : []}
         // La selección cambia cómo se pinta cada pieza (palomita, marco): que la lista se entere.
         extraData={seleccion}
         keyExtractor={(p) => p.id}
@@ -264,8 +462,26 @@ export default function LibraryScreen() {
           )
         }
         showsVerticalScrollIndicator={false}
-        // Que la última fila no quede bajo el +.
-        ListFooterComponent={<View style={styles.pie} />}
+        ListFooterComponent={
+          <>
+            {acomodando && visibles.length > 0 ? (
+              vista === 'covers' ? (
+                <DraggableGrid
+                  items={visibles}
+                  columns={columnas}
+                  keyOf={(p) => p.id}
+                  onReorder={acomodar}
+                  onHold={(p) => alternar(p.id)}
+                  renderItem={(p) => <LibraryCoverCard {...propsDe(p)} onLongPress={undefined} width={anchoPortadaRejilla} />}
+                />
+              ) : (
+                <DraggableRows items={visibles} keyOf={(p) => p.id} onReorder={acomodar} onHold={(p) => alternar(p.id)} renderItem={(p) => <LibraryRow {...propsDe(p)} onLongPress={undefined} />} />
+              )
+            ) : null}
+            {/* Que la última fila no quede bajo el +. */}
+            <View style={styles.pie} />
+          </>
+        }
       />
       {seleccionando ? null : <Fab label={l.importBook} onPress={importar} />}
       <ImportSheet pendiente={pendiente} onClose={() => setPendiente(null)} />
@@ -275,12 +491,52 @@ export default function LibraryScreen() {
         onOpen={(p) => abrir(p.id)}
         onEdit={setEditando}
         onCover={setPortadaDe}
+        onAddToShelf={(p) => setAgregandoA([p.id])}
+        shelfName={libreroActual?.name}
+        onRemoveFromShelf={libreroActual ? (p) => quitarDelLibrero([p.id]) : undefined}
         onSelect={(p) => setSeleccion(new Set([p.id]))}
         onDelete={(p) => eliminarPiezas([p])}
       />
       <EditItemSheet item={editando} onClose={() => setEditando(null)} />
       <CoverSheet item={portadaDe} onClose={() => setPortadaDe(null)} />
       <BulkCategorySheet count={seleccion.size} visible={categoriaVarias} onClose={() => setCategoriaVarias(false)} onApply={aplicarCategoria} />
+      <AddToShelfSheet
+        itemIds={agregandoA}
+        shelves={listaLibreros}
+        membership={membresia}
+        onClose={() => setAgregandoA(null)}
+        onToggle={alternarEnLibrero}
+        onNew={() => {
+          setAgregarAlCrear(agregandoA);
+          setLibreroEditando('nuevo');
+        }}
+      />
+      <ShelfEditSheet
+        shelf={libreroEditando}
+        onClose={() => {
+          setLibreroEditando(null);
+        }}
+        onSave={guardarLibrero}
+        onDelete={eliminarLibrero}
+      />
+      <ShelvesManageSheet
+        visible={administrando}
+        shelves={listaLibreros}
+        counts={cuentas}
+        onClose={() => setAdministrando(false)}
+        onReorder={(ids) => librerosMut.reordenar.mutate(ids)}
+        onEdit={setLibreroEditando}
+      />
+      <SortFilterSheet
+        visible={filtrando}
+        onClose={() => setFiltrando(false)}
+        orden={orden}
+        onOrden={setOrden}
+        filtros={filtros}
+        onFiltros={setFiltros}
+        opciones={opciones}
+        enLibrero={!!libreroActual}
+      />
       {hayPiezas ? <PdfCoverWorker items={piezas.data} /> : null}
     </Screen>
   );
@@ -293,6 +549,21 @@ const styles = StyleSheet.create({
   fila: { gap: Spacing.lg },
   flex: { flex: 1, gap: 2 },
   barraSeleccion: { flexDirection: 'row', alignItems: 'center', minHeight: 48, gap: Spacing.xs },
+  buscar: { flexDirection: 'row', alignItems: 'center', gap: Spacing.xs },
+  campo: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    paddingLeft: Spacing.md,
+    minHeight: 44,
+    borderWidth: 1,
+    borderRadius: Radius.md,
+    borderCurve: 'continuous',
+  },
+  entrada: { flex: 1, minWidth: 0, ...Typography.body, fontFamily: Fonts?.sans, paddingVertical: Spacing.sm },
+  insignia: { position: 'absolute', top: 2, right: 2, minWidth: 18, height: 18, borderRadius: 9, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 4 },
+  vacio: { textAlign: 'center', paddingVertical: Spacing.xl },
   aviso: { flexDirection: 'row', gap: Spacing.sm, padding: Spacing.md, borderRadius: Radius.md, borderCurve: 'continuous' },
   espacio: { gap: Spacing.xs },
   espacioFila: { flexDirection: 'row', justifyContent: 'space-between' },

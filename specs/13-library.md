@@ -95,7 +95,7 @@ Es grande a propósito, y por eso se construye **por capas** (§8): primero un n
 
 | Tabla | Qué guarda |
 |---|---|
-| `library_items` | Con T314 (migración `20261013100000_library_custom_cover.sql`), además `custom_cover_path` y `custom_cover_color`: la portada propia, aparte de la del archivo. Cada pieza: dueño, familia (libro/creación), tipo (pdf, epub, docx…, cuaderno, diario, álbum), título, autor(es), portada, color dominante (hex), géneros, categoría, fecha en que se agregó, ruta del archivo, número de páginas, progreso y última posición. Con RF-BL19 – RF-BL20 suma editorial, lugar de publicación, edición, capítulos, sinopsis, y lomo y contraportada (ruta y color de cada uno). |
+| `library_items` | Con T280 (`20261013110000_library_items_order.sql`), `sort_order`: el lugar en "Todos" al acomodar arrastrando. Con T314 (migración `20261013100000_library_custom_cover.sql`), además `custom_cover_path` y `custom_cover_color`: la portada propia, aparte de la del archivo. Cada pieza: dueño, familia (libro/creación), tipo (pdf, epub, docx…, cuaderno, diario, álbum), título, autor(es), portada, color dominante (hex), géneros, categoría, fecha en que se agregó, ruta del archivo, número de páginas, progreso y última posición. Con RF-BL19 – RF-BL20 suma editorial, lugar de publicación, edición, capítulos, sinopsis, y lomo y contraportada (ruta y color de cada uno). |
 | `library_shelves` / `library_shelf_items` | Los libreros propios y qué piezas tiene cada uno, con su orden. |
 | `library_annotations` | Cada anotación: pieza, tipo, posición (página + coordenadas o CFI), contenido (`jsonb`: texto, color, trazo, sticker, rotación, tamaño), orden de capa y si está guardada o "quitada" (los stickers se quitan y se vuelven a poner). |
 | `library_card_templates` / `library_cards` | Diseños de ficha y las fichas pegadas a cada pieza, con sus valores y dónde van. |
@@ -103,6 +103,7 @@ Es grande a propósito, y por eso se construye **por capas** (§8): primero un n
 | `library_fonts` | Las fuentes que subió cada persona (archivo en Storage). |
 | `library_series` | Las sagas de cada persona (nombre); cada libro guarda su saga y su número (`series_id`, `series_index`) (13a, RF-BL24). |
 | `library_links` | Enlaces entre piezas: de, a, tipo (precuela, secuela, spin-off, mismo universo, relacionado, notas) (13a, RF-BL27). |
+| `library_reading_sessions` | Cada sesión de lectura: pieza, inicio, fin, duración en segundos y posición inicial y final (13b, RF-BR11 – RF-BR13). |
 | `library_clips` | Los recortes: pieza (se queda en nulo si se borra, con el título guardado), tipo (texto o imagen), texto o ruta de la imagen en R2, posición, nota y fecha (13c, RF-BH19 – RF-BH21). |
 | `library_clubs` / `library_club_members` | Los clubes de lectura, sus miembros y la copia de cada quien (13f §5). Las anotaciones del club son filas de `library_annotations` con `club_id`. |
 

@@ -3,19 +3,29 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/providers';
 import { LIBRARY_URL_SECONDS } from '@/constants/library';
 import {
+  addToShelf,
+  clearCustomCover,
+  createShelf,
   getLibraryItem,
   importLibraryBook,
   type ImportarLibro,
   libraryFileUrl,
-  libraryUsage,
-  listLibraryItems,
-  removeLibraryItem,
   type LibraryItem,
   type LibraryItemPatch,
-  clearCustomCover,
+  type LibraryShelf,
+  type LibraryShelfItem,
+  libraryUsage,
+  listLibraryItems,
+  listShelfItems,
+  listShelves,
+  moveInShelf,
+  removeFromShelf,
+  removeLibraryItem,
+  removeShelf,
   saveLibraryCover,
   setCustomCover,
   updateLibraryItem,
+  updateShelf,
 } from '@/services/library';
 
 /** Claves de KAVI Library (spec 13): todo cuelga de `['library']`. */
@@ -25,6 +35,8 @@ export const libraryKeys = {
   usage: (userId: string | null) => ['library', 'usage', userId] as const,
   url: (path: string | null) => ['library', 'url', path] as const,
   item: (id: string) => ['library', 'item', id] as const,
+  shelves: (userId: string | null) => ['library', 'shelves', userId] as const,
+  shelfItems: (userId: string | null) => ['library', 'shelf-items', userId] as const,
 };
 
 /** Las piezas de la persona, de la más nueva a la más vieja. */
@@ -174,4 +186,91 @@ export function useCustomCover() {
     onSettled: refrescar,
   });
   return { poner, quitar };
+}
+
+/** Los libreros de la persona, en su orden (RF-BL5, RF-BL7). */
+export function useShelves() {
+  const { userId } = useAuth();
+  return useQuery<LibraryShelf[]>({ queryKey: libraryKeys.shelves(userId), queryFn: () => listShelves(userId as string), enabled: !!userId });
+}
+
+/** Qué piezas hay en cada librero y en qué orden (RF-BL6). */
+export function useShelfItems() {
+  const { userId } = useAuth();
+  return useQuery<LibraryShelfItem[]>({ queryKey: libraryKeys.shelfItems(userId), queryFn: () => listShelfItems(userId as string), enabled: !!userId });
+}
+
+type DatosLibrero = Pick<LibraryShelf, 'name'> & Partial<Pick<LibraryShelf, 'color' | 'icon'>>;
+
+/**
+ * Todo lo que cambia libreros (T280): crearlos, editarlos, reordenarlos y borrarlos, y poner, quitar o
+ * mover piezas en ellos. Cada cambio se ve al instante y al terminar se vuelve a pedir lo de la base.
+ */
+export function useShelfMutations() {
+  const { userId } = useAuth();
+  const queryClient = useQueryClient();
+  const claveLibreros = libraryKeys.shelves(userId);
+  const claveEnLibreros = libraryKeys.shelfItems(userId);
+  const refrescar = () =>
+    Promise.all([queryClient.invalidateQueries({ queryKey: claveLibreros }), queryClient.invalidateQueries({ queryKey: claveEnLibreros })]);
+  const cambiarEnLibreros = (f: (lista: LibraryShelfItem[]) => LibraryShelfItem[]) =>
+    queryClient.setQueryData<LibraryShelfItem[]>(claveEnLibreros, (lista) => f(lista ?? []));
+
+  return {
+    crear: useMutation({ mutationFn: (datos: DatosLibrero) => createShelf(userId as string, datos), onSettled: refrescar }),
+    editar: useMutation({
+      mutationFn: ({ id, datos }: { id: string; datos: Partial<DatosLibrero> }) => updateShelf(id, datos),
+      onMutate: ({ id, datos }) => queryClient.setQueryData<LibraryShelf[]>(claveLibreros, (l) => l?.map((s) => (s.id === id ? { ...s, ...datos } : s))),
+      onSettled: refrescar,
+    }),
+    borrar: useMutation({
+      mutationFn: (id: string) => removeShelf(id),
+      onMutate: (id) => {
+        queryClient.setQueryData<LibraryShelf[]>(claveLibreros, (l) => l?.filter((s) => s.id !== id));
+        cambiarEnLibreros((l) => l.filter((s) => s.shelf_id !== id));
+      },
+      onSettled: refrescar,
+    }),
+    /** Los libreros en su nuevo orden, completo (de arrastrar en "Administrar libreros"). */
+    reordenar: useMutation({
+      mutationFn: async (ids: readonly string[]) => {
+        await Promise.all(ids.map((id, i) => updateShelf(id, { sort_order: (i + 1) * 1024 })));
+      },
+      onMutate: (ids) =>
+        queryClient.setQueryData<LibraryShelf[]>(claveLibreros, (l) =>
+          l ? ids.map((id, i) => ({ ...(l.find((s) => s.id === id) as LibraryShelf), sort_order: (i + 1) * 1024 })).filter((s) => s.id) : l,
+        ),
+      onSettled: refrescar,
+    }),
+    /** Poner piezas en un librero; las que ya estaban se quedan donde estaban (RF-BL6). */
+    agregar: useMutation({
+      mutationFn: async ({ shelfId, itemIds }: { shelfId: string; itemIds: readonly string[] }) => {
+        for (const id of itemIds) await addToShelf(userId as string, shelfId, id);
+      },
+      onMutate: ({ shelfId, itemIds }) =>
+        cambiarEnLibreros((l) => {
+          let ultimo = l.filter((s) => s.shelf_id === shelfId).reduce((m, s) => Math.max(m, Number(s.sort_order)), 0);
+          const nuevos = itemIds
+            .filter((id) => !l.some((s) => s.shelf_id === shelfId && s.item_id === id))
+            .map((id) => ({ shelf_id: shelfId, item_id: id, sort_order: (ultimo += 1024), added_at: new Date().toISOString() }));
+          return [...l, ...nuevos];
+        }),
+      onSettled: refrescar,
+    }),
+    /** Sacar piezas de un librero; no se borran (RF-BL6). */
+    quitar: useMutation({
+      mutationFn: async ({ shelfId, itemIds }: { shelfId: string; itemIds: readonly string[] }) => {
+        await Promise.all(itemIds.map((id) => removeFromShelf(shelfId, id)));
+      },
+      onMutate: ({ shelfId, itemIds }) => cambiarEnLibreros((l) => l.filter((s) => !(s.shelf_id === shelfId && itemIds.includes(s.item_id)))),
+      onSettled: refrescar,
+    }),
+    /** Mover una pieza dentro de su librero (RF-BL7): solo cambia su orden. */
+    mover: useMutation({
+      mutationFn: ({ shelfId, itemId, orden }: { shelfId: string; itemId: string; orden: number }) => moveInShelf(shelfId, itemId, orden),
+      onMutate: ({ shelfId, itemId, orden }) =>
+        cambiarEnLibreros((l) => l.map((s) => (s.shelf_id === shelfId && s.item_id === itemId ? { ...s, sort_order: orden } : s))),
+      onSettled: refrescar,
+    }),
+  };
 }

@@ -24,19 +24,26 @@ arriba, un buscador, y los controles de orden y filtros. Abajo, el botón **+** 
 - **RF-BL5.** Además de "Todos", la persona puede crear **libreros** con nombre, color e icono ("Por leer",
   "Favoritos", "Escuela"). Es opcional: quien no quiera organizar, no ve ningún paso extra (P2).
 - **RF-BL6.** Una pieza puede estar en varios libreros a la vez; quitarla de uno no la borra.
-- **RF-BL7.** Los libreros se eligen como pestañas arriba de la librería y se reordenan arrastrando. Dentro
-  de un librero las piezas también se reordenan arrastrando (mismo gesto que en Listas).
+- **RF-BL7.** Los libreros se eligen como pestañas arriba de la librería y se reordenan arrastrando, desde
+  "Administrar libreros" (el botón de carpeta junto a las pestañas). **Los libros se acomodan agarrándolos y
+  arrastrándolos**, en "Todos" y dentro de cada librero (mismo gesto que en Listas: mantener presionado sin
+  moverse selecciona; moverse arrastra). Cada librero guarda su propio orden y "Todos", el suyo. Se
+  arrastra en "Como los acomodé" y viendo todo —sin búsqueda ni filtros, que esconderían a los vecinos—.
+  Lo nuevo entra al principio. (T280, 13 oct 2026)
 
 ## 4. Orden y filtros (RF-BL8 – RF-BL10)
 
-- **RF-BL8. Ordenar por:** título (A–Z), autor, categoría, fecha en que se agregó, o "como las acomodé"
-  (el orden manual del librero).
+- **RF-BL8. Ordenar por:** "Como los acomodé" (el de omisión: el orden manual de Todos o del librero),
+  lo más reciente, título (A–Z), autor o categoría. El orden elegido se recuerda en el dispositivo.
 - **RF-BL9. Categoría** es una sola por pieza y la elige la persona (con sugerencias: Novela, Escuela,
   Trabajo, Recetas…). Es distinta del **género**, que puede ser varios y viene del archivo si lo trae.
 - **RF-BL10. Filtros** combinables: fecha en que se agregó (rango), género, autor y **color** —se elige un
   color y aparecen las piezas cuya portada se le parece (por distancia de color, no por igualdad exacta)—.
   Los filtros activos se ven como chips que se quitan con una X, y el botón de filtros lleva su cuenta,
-  igual que en el calendario.
+  igual que en el calendario. La fecha tiene atajos (esta semana, este mes, este año) y un rango propio. Los
+  colores del filtro son colores de portada de verdad (rojo, naranja, amarillo, verde, azul, azul marino,
+  morado, rosa, café, crema, gris, negro), no los de los Nobi: esos están aclarados para el fondo oscuro de
+  la app y un azul marino de portada quedaba en el límite.
 
 ## 5. Agregar piezas (RF-BL11 – RF-BL14)
 

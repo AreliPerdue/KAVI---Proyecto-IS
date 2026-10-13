@@ -57,6 +57,20 @@
 - **RF-BR9.** Se guarda la última posición y el porcentaje leído; la librería los muestra (13a, RF-BL3).
 - **RF-BR10.** Una barra delgada abajo dice la página (o el porcentaje en EPUB) y deja saltar arrastrando.
 
+## 3b. Tiempo de lectura (RF-BR11 – RF-BR13) — 13 oct 2026
+
+- **RF-BR11. Cronómetro.** Mientras un libro está abierto, KAVI cuenta el tiempo y lo **suma** al total del
+  libro: si hoy se leyó *La policía de la memoria* 10 min y al volver otros 35, el libro dice **45 min**. Se
+  ve discreto en el lector y en el detalle del libro. Se pausa solo cuando la app pasa a segundo plano, se
+  bloquea la pantalla o no hay ninguna interacción en 5 minutos (el tiempo sin tocar nada no cuenta).
+- **RF-BR12. Sesiones.** Cada vez que se abre un libro queda una **sesión** con su fecha, hora de inicio y de
+  fin, duración y de qué página (o porcentaje) a cuál se leyó. Las sesiones de menos de 1 minuto no se
+  guardan (fue un vistazo).
+- **RF-BR13. Resumen.** Por libro y de toda la biblioteca: cuántas sesiones, cuánto tiempo en total, el
+  promedio por sesión, los días en que se leyó y a qué horas suele leer la persona. Sin gráficas complicadas
+  en esta versión: totales, una lista de sesiones y una franja por día de la semana. Al conectar Library con
+  el calendario (L7), una sesión se puede ver como actividad de Lectura.
+
 ## 4. Lo técnico
 
 - **Motor web único** (spec 13 §5): la página `public/reader/engine.html`, que la web sirve en

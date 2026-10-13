@@ -32,8 +32,8 @@ export type LibraryItemProps = {
   item: LibraryItem;
   /** Tocar: abrir (RF-BL17), o elegir/soltar mientras se selecciona. */
   onPress: () => void;
-  /** Mantener presionado: empezar a seleccionar. */
-  onLongPress: () => void;
+  /** Mantener presionado: empezar a seleccionar. Sin él, lo atiende quien envuelve (la rejilla que se arrastra). */
+  onLongPress?: () => void;
   /** El botón ⋯: el menú de la pieza (RF-BL16). */
   onMenu: () => void;
   seleccionando: boolean;
@@ -88,10 +88,14 @@ export function LibraryCoverCard({ width, ...props }: LibraryItemProps & { width
     <View style={{ width }}>
       <Pressable
         onPress={onPress}
-        onLongPress={() => {
-          tap();
-          onLongPress();
-        }}
+        onLongPress={
+          onLongPress
+            ? () => {
+                tap();
+                onLongPress();
+              }
+            : undefined
+        }
         delayLongPress={RETARDO_MS}
         style={({ pressed }) => [styles.tarjeta, pressed ? styles.presionada : null]}
         accessibilityRole="button"
@@ -127,10 +131,14 @@ export function LibraryRow(props: LibraryItemProps) {
     <View style={[styles.fila, { borderColor: theme.border }]}>
       <Pressable
         onPress={onPress}
-        onLongPress={() => {
-          tap();
-          onLongPress();
-        }}
+        onLongPress={
+          onLongPress
+            ? () => {
+                tap();
+                onLongPress();
+              }
+            : undefined
+        }
         delayLongPress={RETARDO_MS}
         style={({ pressed }) => [styles.filaToque, pressed ? styles.presionada : null]}
         accessibilityRole="button"

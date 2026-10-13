@@ -3,6 +3,7 @@ import { create } from 'zustand';
 import { type Accesos, accesosValidos, DEFAULT_ACCESOS } from '@/constants/modules';
 import { type Language, type LanguagePreference, resolveLanguage, setLanguage } from '@/i18n/language';
 import { type CalendarView, setTimeFormat, type TimeFormat } from '@/lib/dates';
+import { type OrdenBiblioteca, ORDEN_POR_OMISION, ordenValido } from '@/lib/library/filters';
 import { DEFAULT_LIBRARY_VIEW, type LibraryView, libraryViewValida } from '@/lib/library/shelf';
 import { getJson, setJson } from '@/lib/storage';
 
@@ -51,6 +52,7 @@ type Prefs = {
   accesos: Accesos;
   overlayRecientes: Record<string, string>;
   libraryView: LibraryView;
+  libraryOrder: OrdenBiblioteca;
 };
 
 type PreferencesState = {
@@ -93,6 +95,8 @@ type PreferencesState = {
   overlayRecientes: Record<string, string>;
   /** Vista de la librería de KAVI Library: portadas o lista (RF-BL4). */
   libraryView: LibraryView;
+  /** Cómo se ordena la librería (RF-BL8), recordado como la vista. */
+  libraryOrder: OrdenBiblioteca;
   hydrated: boolean;
   setTimeFormat: (formato: TimeFormat) => void;
   setLanguage: (idioma: LanguagePreference) => void;
@@ -106,6 +110,7 @@ type PreferencesState = {
   setAccesos: (accesos: Accesos) => void;
   marcarSuperpuesto: (userId: string) => void;
   setLibraryView: (vista: LibraryView) => void;
+  setLibraryOrder: (orden: OrdenBiblioteca) => void;
   hydrate: () => Promise<void>;
 };
 
@@ -142,6 +147,7 @@ export const usePreferencesStore = create<PreferencesState>((set, get) => ({
   accesos: DEFAULT_ACCESOS,
   overlayRecientes: {},
   libraryView: DEFAULT_LIBRARY_VIEW,
+  libraryOrder: ORDEN_POR_OMISION,
   hydrated: false,
 
   setTimeFormat: (formato) => {
@@ -237,6 +243,12 @@ export const usePreferencesStore = create<PreferencesState>((set, get) => ({
     persistir({ ...get(), libraryView: vista });
   },
 
+  setLibraryOrder: (orden) => {
+    elegidoEnEstaSesion.add('libraryOrder');
+    set({ libraryOrder: orden });
+    persistir({ ...get(), libraryOrder: orden });
+  },
+
   marcarVisto: () => {
     if (get().visto) return;
     elegidoEnEstaSesion.add('visto');
@@ -277,6 +289,7 @@ export const usePreferencesStore = create<PreferencesState>((set, get) => ({
       accesos: guardado('accesos', accesosValidos(prefs?.accesos)),
       overlayRecientes: guardado('overlayRecientes', prefs?.overlayRecientes ?? {}),
       libraryView: guardado('libraryView', libraryViewValida(prefs?.libraryView)),
+      libraryOrder: guardado('libraryOrder', ordenValido(prefs?.libraryOrder)),
       hydrated: true,
     });
     // Lo elegido antes de hidratar se guardo con el resto de valores por omision;
@@ -287,7 +300,7 @@ export const usePreferencesStore = create<PreferencesState>((set, get) => ({
 
 /** Se guarda el conjunto entero: son dos claves y así no pueden desincronizarse. */
 function persistir(
-  estado: Pick<PreferencesState, 'timeFormat' | 'timeFormatChosen' | 'language' | 'lastWorkoutTitle' | 'showWorkouts' | 'showBirthdays' | 'visto' | 'appearance' | 'selfColor' | 'pinnedViews' | 'accesos' | 'overlayRecientes' | 'libraryView'>,
+  estado: Pick<PreferencesState, 'timeFormat' | 'timeFormatChosen' | 'language' | 'lastWorkoutTitle' | 'showWorkouts' | 'showBirthdays' | 'visto' | 'appearance' | 'selfColor' | 'pinnedViews' | 'accesos' | 'overlayRecientes' | 'libraryView' | 'libraryOrder'>,
 ): void {
   void setJson(PREFS_KEY, {
     timeFormat: estado.timeFormat,
@@ -303,5 +316,6 @@ function persistir(
     accesos: estado.accesos,
     overlayRecientes: estado.overlayRecientes,
     libraryView: estado.libraryView,
+    libraryOrder: estado.libraryOrder,
   } satisfies Prefs);
 }

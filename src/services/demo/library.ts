@@ -93,6 +93,8 @@ export const demoLibrary: LibraryApi = {
       cover_color: input.cover_color ?? null,
       custom_cover_path: null,
       custom_cover_color: null,
+      // Como la base: lo nuevo entra al principio.
+      sort_order: -Date.now() / 1000,
       file_path: input.file_path ?? null,
       pdf_path: input.pdf_path ?? null,
       file_size: input.file_size ?? 0,

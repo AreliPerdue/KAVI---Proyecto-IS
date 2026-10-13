@@ -18,6 +18,19 @@ const mockConfirm = jest.fn();
 const mockEliminar = { mutate: jest.fn() };
 const mockCategorizar = { mutate: jest.fn() };
 const mockActualizar = { mutate: jest.fn(), isError: false };
+let mockLibreros: Record<string, unknown>[] = [];
+let mockEnLibreros: Record<string, unknown>[] = [];
+const mockLibrerosMut = {
+  crear: { mutate: jest.fn() },
+  editar: { mutate: jest.fn() },
+  borrar: { mutate: jest.fn() },
+  reordenar: { mutate: jest.fn() },
+  agregar: { mutate: jest.fn() },
+  quitar: { mutate: jest.fn() },
+  mover: { mutate: jest.fn() },
+};
+/** Lo último que pintó la rejilla o las filas que se arrastran, para simular un acomodo. */
+let mockArrastrable: { items: { id: string }[]; onReorder: (from: number, to: number) => void } | null = null;
 const mockElegir = jest.fn();
 const mockLeer = jest.fn();
 
@@ -29,6 +42,22 @@ jest.mock('@/hooks/use-library', () => ({
   useRemoveLibraryItems: () => mockEliminar,
   useSetLibraryCategory: () => mockCategorizar,
   useUpdateLibraryItem: () => mockActualizar,
+  useShelves: () => ({ data: mockLibreros }),
+  useShelfItems: () => ({ data: mockEnLibreros }),
+  useShelfMutations: () => mockLibrerosMut,
+}));
+// Arrastrar no se puede simular con gestos en Jest: los dobles pintan las piezas y guardan `onReorder`.
+jest.mock('@/components/lists/draggable-grid', () => ({
+  DraggableGrid: (props: { items: { id: string }[]; renderItem: (i: unknown) => unknown; onReorder: (a: number, b: number) => void }) => {
+    mockArrastrable = props;
+    return props.items.map((i) => props.renderItem(i));
+  },
+}));
+jest.mock('@/components/lists/draggable-rows', () => ({
+  DraggableRows: (props: { items: { id: string }[]; renderItem: (i: unknown) => unknown; onReorder: (a: number, b: number) => void }) => {
+    mockArrastrable = props;
+    return props.items.map((i) => props.renderItem(i));
+  },
 }));
 jest.mock('@/providers', () => ({ useSnackbar: () => mockSnackbar, useConfirm: () => mockConfirm }));
 // El generador de portadas tiene su propia prueba; aquí solo estorba (abre un motor web).
@@ -45,6 +74,10 @@ const pieza = (id: string, extra: Record<string, unknown> = {}) => ({
   authors: [],
   cover_path: null,
   cover_color: null,
+  genres: [],
+  category: null,
+  sort_order: 0,
+  created_at: '2026-10-01T00:00:00Z',
   page_count: null,
   progress: 0,
   last_position: null,
@@ -54,7 +87,12 @@ const pieza = (id: string, extra: Record<string, unknown> = {}) => ({
 const ok = (data: unknown) => ({ data, isPending: false, isError: false, isSuccess: true, error: null, refetch: jest.fn() });
 
 beforeEach(() => {
-  usePreferencesStore.setState({ libraryView: 'covers' });
+  // Las pruebas de vistas, menú y selección usan la lista normal; las de acomodar, "Como los acomodé".
+  usePreferencesStore.setState({ libraryView: 'covers', libraryOrder: 'recent' });
+  mockLibreros = [];
+  mockEnLibreros = [];
+  mockArrastrable = null;
+  for (const m of Object.values(mockLibrerosMut)) m.mutate.mockReset();
   mockPiezas = ok([]);
   mockEspacio = ok({ usedBytes: 0, limitBytes: 500 * MB });
 });
@@ -301,5 +339,118 @@ describe('menú y selección', () => {
     expect(screen.getByLabelText(L.selection.count(1))).toBeTruthy();
     await fireEvent.press(screen.getByRole('button', { name: L.selection.cancel }));
     expect(screen.getByRole('button', { name: L.importBook })).toBeTruthy();
+  });
+});
+
+/** Organizar (T280): libreros, buscar, filtrar y acomodar arrastrando (RF-BL5 – RF-BL10, RF-BL18). */
+describe('organizar', () => {
+  const libros = () => [
+    pieza('l1', { title: 'Rayuela', authors: ['Julio Cortázar'], genres: ['Novela'], cover_color: '#1F2A5C', sort_order: 10, created_at: '2026-10-01T00:00:00Z' }),
+    pieza('l2', { title: 'Ficciones', authors: ['Jorge Luis Borges'], genres: ['Cuentos'], cover_color: '#C0392B', sort_order: 20, created_at: '2026-10-03T00:00:00Z' }),
+    pieza('l3', { title: 'Aura', authors: ['Carlos Fuentes'], genres: ['Novela'], cover_color: '#F1C40F', sort_order: 30, created_at: '2026-10-02T00:00:00Z' }),
+  ];
+  const visibles = () => screen.getAllByRole('button', { name: /^(Rayuela|Ficciones|Aura),/ }).map((b) => (b.props.accessibilityLabel as string).split(',')[0]);
+
+  beforeEach(() => {
+    mockPiezas = ok(libros());
+    mockLibreros = [{ id: 's1', name: 'Por leer', color: '#C0392B', icon: 'book-open', sort_order: 1024 }];
+    mockEnLibreros = [
+      { shelf_id: 's1', item_id: 'l3', sort_order: 1024, added_at: '' },
+      { shelf_id: 's1', item_id: 'l1', sort_order: 2048, added_at: '' },
+    ];
+    usePreferencesStore.setState({ libraryView: 'list', libraryOrder: 'recent' });
+    mockConfirm.mockReset().mockResolvedValue(true);
+    mockSnackbar.mockReset();
+  });
+
+  it('las pestañas de libreros muestran solo sus libros', async () => {
+    await render(<Pantalla />);
+    expect(visibles()).toEqual(['Ficciones', 'Aura', 'Rayuela']);
+    await fireEvent.press(screen.getByRole('button', { name: 'Por leer' }));
+    expect(visibles()).toEqual(['Aura', 'Rayuela']);
+  });
+
+  it('buscar por autor sin acentos', async () => {
+    await render(<Pantalla />);
+    await fireEvent.changeText(screen.getByLabelText(L.find.search), 'cortazar');
+    expect(visibles()).toEqual(['Rayuela']);
+    await fireEvent.changeText(screen.getByLabelText(L.find.search), 'nada');
+    expect(screen.getByText(L.find.noResults)).toBeTruthy();
+  });
+
+  it('filtrar por color: chip con su nombre y la cuenta en el botón; la ✕ lo quita', async () => {
+    await render(<Pantalla />);
+    await fireEvent.press(screen.getByRole('button', { name: L.find.filterCount(0) }));
+    await fireEvent.press(screen.getByRole('button', { name: L.find.colorA11y('azul marino') }));
+    await fireEvent.press(screen.getByRole('button', { name: L.find.done }));
+    expect(visibles()).toEqual(['Rayuela']);
+    expect(screen.getByRole('button', { name: L.find.filterCount(1) })).toBeTruthy();
+    await fireEvent.press(screen.getByRole('button', { name: L.find.removeFilter('azul marino') }));
+    expect(visibles()).toHaveLength(3);
+  });
+
+  it('elegir el orden lo recuerda', async () => {
+    await render(<Pantalla />);
+    await fireEvent.press(screen.getByRole('button', { name: L.find.filterCount(0) }));
+    await fireEvent.press(screen.getByRole('radio', { name: L.find.sortTitleAZ }));
+    expect(usePreferencesStore.getState().libraryOrder).toBe('title');
+    await fireEvent.press(screen.getByRole('button', { name: L.find.done }));
+    expect(visibles()).toEqual(['Aura', 'Ficciones', 'Rayuela']);
+  });
+
+  it('"Como los acomodé" en Todos: arrastrar guarda el punto medio entre vecinos', async () => {
+    usePreferencesStore.setState({ libraryOrder: 'manual' });
+    await render(<Pantalla />);
+    expect(mockArrastrable?.items.map((i) => i.id)).toEqual(['l1', 'l2', 'l3']);
+    // Aura (30) entre Rayuela (10) y Ficciones (20).
+    mockArrastrable?.onReorder(2, 1);
+    expect(mockActualizar.mutate).toHaveBeenCalledWith({ id: 'l3', patch: { sort_order: 15 } });
+  });
+
+  it('dentro de un librero, arrastrar cambia el orden de ese librero', async () => {
+    usePreferencesStore.setState({ libraryOrder: 'manual' });
+    await render(<Pantalla />);
+    await fireEvent.press(screen.getByRole('button', { name: 'Por leer' }));
+    expect(mockArrastrable?.items.map((i) => i.id)).toEqual(['l3', 'l1']);
+    mockArrastrable?.onReorder(1, 0);
+    expect(mockLibrerosMut.mover.mutate).toHaveBeenCalledWith({ shelfId: 's1', itemId: 'l1', orden: 0 });
+  });
+
+  it('agregar a un librero desde el menú, y quitarlo estando en él', async () => {
+    await render(<Pantalla />);
+    await fireEvent.press(screen.getByRole('button', { name: L.actionsFor('Ficciones') }));
+    await fireEvent.press(screen.getByRole('button', { name: L.shelves.addTo }));
+    await fireEvent.press(screen.getAllByRole('button', { name: 'Por leer' }).at(-1)!);
+    expect(mockLibrerosMut.agregar.mutate).toHaveBeenCalledWith({ shelfId: 's1', itemIds: ['l2'] });
+    expect(mockSnackbar).toHaveBeenCalledWith({ message: L.shelves.added('Por leer', 1) });
+  });
+
+  it('crear un librero desde "Agregar a librero" mete ahí el libro', async () => {
+    mockLibrerosMut.crear.mutate.mockImplementation((_d: unknown, o: { onSuccess: (s: unknown) => void }) => o.onSuccess({ id: 's9', name: 'Favoritos' }));
+    await render(<Pantalla />);
+    await fireEvent.press(screen.getByRole('button', { name: L.actionsFor('Aura') }));
+    await fireEvent.press(screen.getByRole('button', { name: L.shelves.addTo }));
+    await fireEvent.press(screen.getAllByRole('button', { name: L.shelves.new }).at(-1)!);
+    await fireEvent.changeText(screen.getByLabelText(L.shelves.name), 'Favoritos');
+    await fireEvent.press(screen.getByRole('button', { name: L.shelves.save }));
+    expect(mockLibrerosMut.crear.mutate.mock.calls[0][0]).toEqual(expect.objectContaining({ name: 'Favoritos' }));
+    expect(mockLibrerosMut.agregar.mutate).toHaveBeenCalledWith({ shelfId: 's9', itemIds: ['l3'] });
+  });
+
+  it('un librero sin nombre no se guarda', async () => {
+    await render(<Pantalla />);
+    await fireEvent.press(screen.getByRole('button', { name: L.shelves.new }));
+    await fireEvent.press(screen.getByRole('button', { name: L.shelves.save }));
+    expect(screen.getByText(L.shelves.nameRequired)).toBeTruthy();
+    expect(mockLibrerosMut.crear.mutate).not.toHaveBeenCalled();
+  });
+
+  it('eliminar un librero confirma que los libros no se borran', async () => {
+    await render(<Pantalla />);
+    await fireEvent.press(screen.getByRole('button', { name: L.shelves.manage }));
+    await fireEvent.press(screen.getByRole('button', { name: `Por leer, ${L.shelves.count(2)}` }));
+    await fireEvent.press(screen.getByRole('button', { name: L.shelves.delete }));
+    expect(mockConfirm).toHaveBeenCalledWith(expect.objectContaining({ message: L.shelves.deleteMessage }));
+    expect(mockLibrerosMut.borrar.mutate).toHaveBeenCalledWith('s1');
   });
 });

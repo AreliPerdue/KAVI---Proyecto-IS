@@ -575,6 +575,8 @@ export type LibraryItem = {
   /** Portada que puso la persona (RF-BL23); se muestra en lugar de la del archivo mientras exista. */
   custom_cover_path: string | null;
   custom_cover_color: string | null;
+  /** Su lugar en la librería cuando se acomoda arrastrando (RF-BL7); lo nuevo, primero. */
+  sort_order: number;
   file_path: string | null;
   /** El PDF que se lee cuando el original es de oficina (decisión B3). */
   pdf_path: string | null;

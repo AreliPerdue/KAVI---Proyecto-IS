@@ -37,6 +37,9 @@ export function BookCover({ item, width, thumb = false, uri }: Props) {
     <View
       accessible={false}
       importantForAccessibility="no-hide-descendants"
+      // Decorativa también para el puntero: en web, el navegador arrastraba la imagen (`<img>`) por su
+      // cuenta y eso cancelaba el gesto de acomodar los libros. El toque lo atiende la tarjeta.
+      pointerEvents="none"
       style={[
         styles.portada,
         thumb ? styles.portadaChica : null,
