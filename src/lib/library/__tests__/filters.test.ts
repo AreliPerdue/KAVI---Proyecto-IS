@@ -118,3 +118,23 @@ it('límites de "esta semana": siete días contando hoy, hasta el final de hoy',
   expect(new Date(desde)).toEqual(new Date(2026, 9, 7));
   expect(new Date(hasta)).toEqual(new Date(2026, 9, 13, 23, 59, 59, 999));
 });
+
+describe('sagas (RF-BL25)', () => {
+  const conSagas = [
+    pieza('z', { title: 'Zeta', series_id: null }),
+    pieza('a2', { title: 'Una corte de niebla', series_id: 's1', series_index: 2 }),
+    pieza('a1', { title: 'Una corte de rosas', series_id: 's1', series_index: 1 }),
+    pieza('h1', { title: 'Harry', series_id: 's2', series_index: 1 }),
+  ];
+  const nombresDeSagas = new Map([
+    ['s1', 'ACOTAR'],
+    ['s2', 'Harry Potter'],
+  ]);
+  it('ordenar por saga: nombre, luego número; los sueltos al final', () => {
+    expect(piezasVisibles(conSagas, consulta({ orden: 'series', nombresDeSagas })).map((p) => p.id)).toEqual(['a1', 'a2', 'h1', 'z']);
+  });
+  it('filtrar por saga', () => {
+    expect(piezasVisibles(conSagas, consulta({ filtros: { ...SIN_FILTROS, sagas: ['s2'] } })).map((p) => p.id)).toEqual(['h1']);
+    expect(cuantosFiltros({ ...SIN_FILTROS, sagas: ['s1', 's2'] })).toBe(2);
+  });
+});

@@ -20,9 +20,9 @@ function textoAvance(item: LibraryItem, l: Dictionary['library']): string {
 }
 
 /** Lo que dice un lector de pantalla de cada pieza: título, autor y avance (y si está elegida). */
-function etiqueta(item: LibraryItem, l: Dictionary['library'], seleccion?: boolean): string {
+function etiqueta(item: LibraryItem, l: Dictionary['library'], seleccion?: boolean, saga?: string): string {
   const estado = seleccion === undefined ? null : seleccion ? l.selection.selected : l.selection.notSelected;
-  return [item.title, item.authors.join(', '), textoAvance(item, l), estado].filter(Boolean).join(', ');
+  return [item.title, item.authors.join(', '), saga, textoAvance(item, l), estado].filter(Boolean).join(', ');
 }
 
 /** Mantener presionado sin mover selecciona, como en Listas (RF-BL15, RF-L28). */
@@ -38,6 +38,8 @@ export type LibraryItemProps = {
   onMenu: () => void;
   seleccionando: boolean;
   elegida: boolean;
+  /** "ACOTAR #2" en la vista de sagas sueltas (RF-BL25). */
+  etiquetaSaga?: string;
 };
 
 /**
@@ -99,7 +101,7 @@ export function LibraryCoverCard({ width, ...props }: LibraryItemProps & { width
         delayLongPress={RETARDO_MS}
         style={({ pressed }) => [styles.tarjeta, pressed ? styles.presionada : null]}
         accessibilityRole="button"
-        accessibilityLabel={etiqueta(item, l, seleccionando ? elegida : undefined)}
+        accessibilityLabel={etiqueta(item, l, seleccionando ? elegida : undefined, props.etiquetaSaga)}
         accessibilityHint={seleccionando ? undefined : l.openBook(item.title)}
         accessibilityState={seleccionando ? { selected: elegida } : undefined}>
         <View>
@@ -113,6 +115,11 @@ export function LibraryCoverCard({ width, ...props }: LibraryItemProps & { width
           <AppText variant="caption" color="textSecondary" numberOfLines={1}>
             {item.authors.length > 0 ? item.authors.join(', ') : ' '}
           </AppText>
+          {props.etiquetaSaga ? (
+            <AppText variant="caption" color="textTertiary" numberOfLines={1}>
+              {props.etiquetaSaga}
+            </AppText>
+          ) : null}
         </View>
       </Pressable>
       <View style={styles.esquinaPortada}>
@@ -142,7 +149,7 @@ export function LibraryRow(props: LibraryItemProps) {
         delayLongPress={RETARDO_MS}
         style={({ pressed }) => [styles.filaToque, pressed ? styles.presionada : null]}
         accessibilityRole="button"
-        accessibilityLabel={etiqueta(item, l, seleccionando ? elegida : undefined)}
+        accessibilityLabel={etiqueta(item, l, seleccionando ? elegida : undefined, props.etiquetaSaga)}
         accessibilityHint={seleccionando ? undefined : l.openBook(item.title)}
         accessibilityState={seleccionando ? { selected: elegida } : undefined}>
         <BookCover item={item} width={40} thumb />
@@ -150,9 +157,9 @@ export function LibraryRow(props: LibraryItemProps) {
           <AppText variant="bodyStrong" numberOfLines={2}>
             {item.title}
           </AppText>
-          {item.authors.length > 0 ? (
+          {item.authors.length > 0 || props.etiquetaSaga ? (
             <AppText variant="caption" color="textSecondary" numberOfLines={1}>
-              {item.authors.join(', ')}
+              {[item.authors.join(', '), props.etiquetaSaga].filter(Boolean).join(' · ')}
             </AppText>
           ) : null}
         </View>

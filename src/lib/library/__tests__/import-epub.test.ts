@@ -14,7 +14,7 @@ it('lee título, autores y temas del OPF, con entidades', () => {
         '<dc:title>Rayuela &amp; otros</dc:title><dc:creator id="a1">Julio Cortázar</dc:creator><dc:creator>Cortázar, Julio</dc:creator><dc:subject>Novela</dc:subject><dc:subject> Novela </dc:subject><dc:subject>Clásicos</dc:subject>',
     }),
   );
-  expect(datos).toEqual({ title: 'Rayuela & otros', authors: ['Julio Cortázar', 'Cortázar, Julio'], genres: ['Novela', 'Clásicos'], pageCount: null, cover: null });
+  expect(datos).toEqual({ title: 'Rayuela & otros', authors: ['Julio Cortázar', 'Cortázar, Julio'], genres: ['Novela', 'Clásicos'], pageCount: null, cover: null, serie: null });
 });
 
 it('EPUB 3: la portada es la imagen con properties="cover-image"', () => {
@@ -94,5 +94,27 @@ describe('color de la portada (RF-BL13)', () => {
 
   it('un PNG que no sabe leer da null', () => {
     expect(pixelesPng(new Uint8Array(40))).toBeNull();
+  });
+});
+
+describe('saga desde el EPUB (RF-BL24)', () => {
+  it('EPUB 3: belongs-to-collection con su group-position', () => {
+    const datos = leerEpub(
+      epub({
+        metadata:
+          '<dc:title>Una corte de niebla y furia</dc:title><meta property="belongs-to-collection" id="c01">Una corte de rosas y espinas</meta><meta refines="#c01" property="collection-type">series</meta><meta refines="#c01" property="group-position">2</meta>',
+      }),
+    );
+    expect(datos.serie).toEqual({ nombre: 'Una corte de rosas y espinas', numero: 2 });
+  });
+
+  it('Calibre: calibre:series y calibre:series_index', () => {
+    const datos = leerEpub(epub({ metadata: '<dc:title>X</dc:title><meta name="calibre:series" content="Harry Potter"/><meta name="calibre:series_index" content="1.5"/>' }));
+    expect(datos.serie).toEqual({ nombre: 'Harry Potter', numero: 1.5 });
+  });
+
+  it('sin número, la saga sin número; sin saga, nada', () => {
+    expect(leerEpub(epub({ metadata: '<meta name="calibre:series" content="Sola"/>' })).serie).toEqual({ nombre: 'Sola', numero: null });
+    expect(leerEpub(epub({ metadata: '<dc:title>Suelto</dc:title>' })).serie).toBeNull();
   });
 });

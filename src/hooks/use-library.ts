@@ -6,22 +6,27 @@ import {
   addToShelf,
   clearCustomCover,
   createShelf,
+  ensureSeries,
   getLibraryItem,
   importLibraryBook,
   type ImportarLibro,
   libraryFileUrl,
   type LibraryItem,
   type LibraryItemPatch,
+  type LibrarySeries,
   type LibraryShelf,
   type LibraryShelfItem,
   libraryUsage,
   listLibraryItems,
+  listSeries,
   listShelfItems,
   listShelves,
   moveInShelf,
   removeFromShelf,
   removeLibraryItem,
+  removeSeries,
   removeShelf,
+  renameSeries,
   saveLibraryCover,
   setCustomCover,
   updateLibraryItem,
@@ -37,6 +42,7 @@ export const libraryKeys = {
   item: (id: string) => ['library', 'item', id] as const,
   shelves: (userId: string | null) => ['library', 'shelves', userId] as const,
   shelfItems: (userId: string | null) => ['library', 'shelf-items', userId] as const,
+  series: (userId: string | null) => ['library', 'series', userId] as const,
 };
 
 /** Las piezas de la persona, de la más nueva a la más vieja. */
@@ -272,5 +278,40 @@ export function useShelfMutations() {
         cambiarEnLibreros((l) => l.map((s) => (s.shelf_id === shelfId && s.item_id === itemId ? { ...s, sort_order: orden } : s))),
       onSettled: refrescar,
     }),
+  };
+}
+
+/** Las sagas de la persona (RF-BL24). */
+export function useSeries() {
+  const { userId } = useAuth();
+  return useQuery<LibrarySeries[]>({ queryKey: libraryKeys.series(userId), queryFn: () => listSeries(userId as string), enabled: !!userId });
+}
+
+/**
+ * Poner libros en una saga (RF-BL24): la saga se busca por nombre o se crea, y cada libro recibe su
+ * número (o se deja el que tenía). Con `nombre` vacío, los libros quedan sin saga.
+ */
+export function useAssignSeries() {
+  const { userId } = useAuth();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ nombre, asignar }: { nombre: string; asignar: readonly { id: string; numero?: number | null }[] }) => {
+      const saga = nombre.trim() ? await ensureSeries(userId as string, nombre) : null;
+      for (const a of asignar) {
+        await updateLibraryItem(a.id, a.numero === undefined ? { series_id: saga?.id ?? null } : { series_id: saga?.id ?? null, series_index: a.numero });
+      }
+      return saga;
+    },
+    onSettled: () => queryClient.invalidateQueries({ queryKey: libraryKeys.all }),
+  });
+}
+
+/** Renombrar o borrar una saga (sus libros se quedan, sin saga). */
+export function useSeriesMutations() {
+  const queryClient = useQueryClient();
+  const refrescar = () => queryClient.invalidateQueries({ queryKey: libraryKeys.all });
+  return {
+    renombrar: useMutation({ mutationFn: ({ id, nombre }: { id: string; nombre: string }) => renameSeries(id, nombre), onSettled: refrescar }),
+    borrar: useMutation({ mutationFn: (id: string) => removeSeries(id), onSettled: refrescar }),
   };
 }

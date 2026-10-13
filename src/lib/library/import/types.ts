@@ -7,6 +7,8 @@ export type DatosLibro = {
   pageCount: number | null;
   /** La imagen de portada, si el archivo la trae. */
   cover: { bytes: Uint8Array; mime: string; ext: string } | null;
+  /** La saga y el número, si el EPUB los trae (RF-BL24). */
+  serie?: { nombre: string; numero: number | null } | null;
 };
 
 /** Un archivo elegido para importar, ya leído. */

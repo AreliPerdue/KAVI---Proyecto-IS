@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { BookOpen, FolderMinus, FolderPlus, FlaskConical, Search, SlidersHorizontal, Tag, Trash2, X } from 'lucide-react-native';
+import { BookOpen, ChevronLeft, FolderMinus, FolderPlus, FlaskConical, Library, Search, SlidersHorizontal, Tag, Trash2, X } from 'lucide-react-native';
 import { useEffect, useMemo, useState } from 'react';
 import { BackHandler, FlatList, type LayoutChangeEvent, StyleSheet, TextInput, View } from 'react-native';
 
@@ -12,6 +12,8 @@ import { ItemSheet } from '@/components/library/item-sheet';
 import { PdfCoverWorker } from '@/components/library/pdf-cover-worker';
 import { ShelfEditSheet } from '@/components/library/shelf-edit-sheet';
 import { ShelfTabs } from '@/components/library/shelf-tabs';
+import { BulkSeriesSheet } from '@/components/library/bulk-series-sheet';
+import { SeriesStackCard, SeriesStackRow } from '@/components/library/series-stack';
 import { AddToShelfSheet, ShelvesManageSheet } from '@/components/library/shelves-sheets';
 import { SortFilterSheet } from '@/components/library/sort-filter-sheet';
 import { arrastreReciente } from '@/components/lists/drag-guard';
@@ -29,6 +31,8 @@ import {
   useSetLibraryCategory,
   useShelfItems,
   useShelfMutations,
+  useAssignSeries,
+  useSeries,
   useShelves,
   useUpdateLibraryItem,
 } from '@/hooks/use-library';
@@ -38,6 +42,7 @@ import { uuidv4 } from '@/lib/gym/ids';
 import { formatBytes } from '@/lib/library/files';
 import type { LibroLeido } from '@/lib/library/import';
 import { cuantosFiltros, type FiltrosBiblioteca, opcionesDeFiltro, ordenEntre, piezasVisibles, SIN_FILTROS } from '@/lib/library/filters';
+import { agruparSagas, type EntradaDeLibreria, etiquetaDeSaga, porNumero } from '@/lib/library/series';
 import { columnasPara, type LibraryView } from '@/lib/library/shelf';
 import { useConfirm, useSnackbar } from '@/providers';
 import { usePreferencesStore } from '@/store/preferences-store';
@@ -109,12 +114,30 @@ export default function LibraryScreen() {
   // Al crear un librero desde "Agregar a librero", los libros que se estaban agregando entran en él.
   const [agregarAlCrear, setAgregarAlCrear] = useState<readonly string[] | null>(null);
 
+  // Sagas (T315).
+  const sagasConsulta = useSeries();
+  const asignarSaga = useAssignSeries();
+  const sagas = useMemo(() => sagasConsulta.data ?? [], [sagasConsulta.data]);
+  const nombresDeSagas = useMemo(() => new Map(sagas.map((x) => [x.id, x.name])), [sagas]);
+  const vistaSagas = usePreferencesStore((s) => s.librarySeriesView);
+  const setVistaSagas = usePreferencesStore((s) => s.setLibrarySeriesView);
+  const [sagaAbiertaId, setSagaAbiertaId] = useState<string | null>(null);
+  const [sagaVarias, setSagaVarias] = useState(false);
+
   const listaLibreros = useMemo(() => libreros.data ?? [], [libreros.data]);
   const libreroActual = listaLibreros.find((x) => x.id === libreroId) ?? null;
   const enLibrerosDatos = useMemo(() => enLibreros.data ?? [], [enLibreros.data]);
-  const visibles = useMemo(
-    () => piezasVisibles(piezas.data ?? [], { busqueda, orden, filtros, libreroId: libreroActual?.id ?? null, enLibreros: enLibrerosDatos }),
-    [piezas.data, busqueda, orden, filtros, libreroActual, enLibrerosDatos],
+  const sagaAbierta = sagas.find((x) => x.id === sagaAbiertaId) ?? null;
+  const visibles = useMemo(() => {
+    const lista = piezasVisibles(piezas.data ?? [], { busqueda, orden, filtros, libreroId: libreroActual?.id ?? null, enLibreros: enLibrerosDatos, nombresDeSagas });
+    // Una saga abierta muestra solo sus libros, siempre por número (RF-BL25).
+    return sagaAbierta ? lista.filter((p) => p.series_id === sagaAbierta.id).sort(porNumero) : lista;
+  }, [piezas.data, busqueda, orden, filtros, libreroActual, enLibrerosDatos, nombresDeSagas, sagaAbierta]);
+  // Apiladas: cada saga es una pila en el lugar de su primer libro (RF-BL25).
+  const apilando = vistaSagas === 'stacked' && !sagaAbierta;
+  const entradas: EntradaDeLibreria[] = useMemo(
+    () => (apilando ? agruparSagas(visibles, sagas) : visibles.map((pieza) => ({ tipo: 'pieza' as const, pieza }))),
+    [apilando, visibles, sagas],
   );
   const opciones = useMemo(() => opcionesDeFiltro(piezas.data ?? []), [piezas.data]);
   const membresia = useMemo(() => {
@@ -207,7 +230,9 @@ export default function LibraryScreen() {
   const seleccionando = seleccion.size > 0;
   // Arrastrar para acomodar (RF-BL7): en "Como los acomodé" y viendo todo —sin búsqueda ni filtros, que
   // esconderían a los vecinos—, en Todos o en un librero.
-  const acomodando = orden === 'manual' && !busqueda.trim() && nFiltros === 0 && !seleccionando;
+  // Con las sagas apiladas o una saga abierta (que va por número) no se arrastra: las pilas no tienen un
+  // solo lugar.
+  const acomodando = orden === 'manual' && !busqueda.trim() && nFiltros === 0 && !seleccionando && !apilando && !sagaAbierta;
   const salirDeSeleccion = () => setSeleccion(new Set());
   const alternar = (id: string) =>
     setSeleccion((previa) => {
@@ -217,6 +242,16 @@ export default function LibraryScreen() {
       return siguiente;
     });
   const seleccionadas = useMemo(() => (piezas.data ?? []).filter((p) => seleccion.has(p.id)), [piezas.data, seleccion]);
+
+  // "Atrás" de Android cierra la saga abierta antes de salir de la Biblioteca.
+  useEffect(() => {
+    if (!sagaAbiertaId) return;
+    const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+      setSagaAbiertaId(null);
+      return true;
+    });
+    return () => sub.remove();
+  }, [sagaAbiertaId]);
 
   // "Atrás" de Android sale de la selección en vez de salir de la Biblioteca.
   useEffect(() => {
@@ -272,7 +307,31 @@ export default function LibraryScreen() {
     },
     onLongPress: () => alternar(item.id),
     onMenu: () => setMenuDe(item),
+    // En la vista suelta, cada libro de una saga dice cuál es (RF-BL25).
+    etiquetaSaga: item.series_id && nombresDeSagas.has(item.series_id) ? etiquetaDeSaga(nombresDeSagas.get(item.series_id) as string, item.series_index) : undefined,
   });
+
+  const propsDePila = (entrada: Extract<EntradaDeLibreria, { tipo: 'saga' }>) => ({
+    saga: entrada.saga,
+    piezas: entrada.piezas,
+    onPress: () => (seleccionando ? entrada.piezas.forEach((p) => alternar(p.id)) : setSagaAbiertaId(entrada.saga.id)),
+    // Mantener presionada una pila elige todos sus libros.
+    onLongPress: () => setSeleccion((previa) => new Set([...previa, ...entrada.piezas.map((p) => p.id)])),
+  });
+
+  /** Poner en saga a los elegidos, numerados en el orden en que se eligieron si se pidió. */
+  const ponerEnSaga = (nombre: string, numerar: boolean) => {
+    const ids = [...seleccion];
+    setSagaVarias(false);
+    salirDeSeleccion();
+    asignarSaga.mutate(
+      { nombre, asignar: ids.map((id, i) => (numerar ? { id, numero: i + 1 } : { id })) },
+      {
+        onSuccess: () => showSnackbar({ message: l.series.put_done(nombre, ids.length) }),
+        onError: () => showSnackbar({ message: sel.failed }),
+      },
+    );
+  };
 
   // Importar (RF-BL11 – RF-BL14): elegir, leer y revisar. El + lleva directo al archivo; "Crear"
   // (cuadernos, diarios, álbumes) se suma a este botón en L5.
@@ -316,6 +375,9 @@ export default function LibraryScreen() {
               <FolderMinus size={IconSize.action} strokeWidth={IconStroke} color={theme.text} />
             </IconButton>
           ) : null}
+          <IconButton label={l.series.put} onPress={() => setSagaVarias(true)}>
+            <Library size={IconSize.action} strokeWidth={IconStroke} color={theme.text} />
+          </IconButton>
           <IconButton label={sel.category} onPress={() => setCategoriaVarias(true)}>
             <Tag size={IconSize.action} strokeWidth={IconStroke} color={theme.text} />
           </IconButton>
@@ -401,7 +463,22 @@ export default function LibraryScreen() {
               ) : null}
             </View>
           </View>
-          <ActiveFilters filtros={filtros} onChange={setFiltros} />
+          <ActiveFilters filtros={filtros} onChange={setFiltros} nombresDeSagas={nombresDeSagas} />
+          {sagaAbierta ? (
+            <View style={styles.sagaAbierta}>
+              <IconButton label={l.series.back} onPress={() => setSagaAbiertaId(null)}>
+                <ChevronLeft size={IconSize.action} strokeWidth={IconStroke} color={theme.text} />
+              </IconButton>
+              <View style={styles.flex}>
+                <AppText variant="heading" numberOfLines={1}>
+                  {sagaAbierta.name}
+                </AppText>
+                <AppText variant="caption" color="textSecondary">
+                  {l.series.stackCount(visibles.length)}
+                </AppText>
+              </View>
+            </View>
+          ) : null}
         </>
       ) : null}
 
@@ -440,27 +517,25 @@ export default function LibraryScreen() {
 
   return (
     <Screen>
-      <FlatList<LibraryItem>
+      <FlatList<EntradaDeLibreria>
         // Cambiar el número de columnas pide montar la lista de nuevo.
         key={`${vista}-${columnas}`}
         testID="library-list"
         // Acomodando dentro de un librero, las piezas van en la rejilla que se arrastra (abajo).
-        data={hayPiezas && !acomodando ? visibles : []}
+        data={hayPiezas && !acomodando ? entradas : []}
         // La selección cambia cómo se pinta cada pieza (palomita, marco): que la lista se entere.
         extraData={seleccion}
-        keyExtractor={(p) => p.id}
+        keyExtractor={(e) => (e.tipo === 'saga' ? `saga-${e.saga.id}` : e.pieza.id)}
         numColumns={columnas}
         ListHeaderComponent={encabezado}
         onLayout={(e: LayoutChangeEvent) => setAncho(e.nativeEvent.layout.width)}
         columnWrapperStyle={columnas > 1 ? styles.fila : undefined}
         contentContainerStyle={vista === 'covers' ? styles.rejilla : undefined}
-        renderItem={({ item }) =>
-          vista === 'covers' ? (
-            ancho > 0 ? <LibraryCoverCard {...propsDe(item)} width={anchoPortada} /> : null
-          ) : (
-            <LibraryRow {...propsDe(item)} />
-          )
-        }
+        renderItem={({ item: e }) => {
+          if (vista === 'covers' && ancho === 0) return null;
+          if (e.tipo === 'saga') return vista === 'covers' ? <SeriesStackCard {...propsDePila(e)} width={anchoPortada} /> : <SeriesStackRow {...propsDePila(e)} />;
+          return vista === 'covers' ? <LibraryCoverCard {...propsDe(e.pieza)} width={anchoPortada} /> : <LibraryRow {...propsDe(e.pieza)} />;
+        }}
         showsVerticalScrollIndicator={false}
         ListFooterComponent={
           <>
@@ -499,6 +574,7 @@ export default function LibraryScreen() {
       />
       <EditItemSheet item={editando} onClose={() => setEditando(null)} />
       <CoverSheet item={portadaDe} onClose={() => setPortadaDe(null)} />
+      <BulkSeriesSheet count={seleccion.size} visible={sagaVarias} onClose={() => setSagaVarias(false)} onApply={ponerEnSaga} />
       <BulkCategorySheet count={seleccion.size} visible={categoriaVarias} onClose={() => setCategoriaVarias(false)} onApply={aplicarCategoria} />
       <AddToShelfSheet
         itemIds={agregandoA}
@@ -536,6 +612,9 @@ export default function LibraryScreen() {
         onFiltros={setFiltros}
         opciones={opciones}
         enLibrero={!!libreroActual}
+        sagas={sagas}
+        vistaSagas={vistaSagas}
+        onVistaSagas={setVistaSagas}
       />
       {hayPiezas ? <PdfCoverWorker items={piezas.data} /> : null}
     </Screen>
@@ -550,6 +629,7 @@ const styles = StyleSheet.create({
   flex: { flex: 1, gap: 2 },
   barraSeleccion: { flexDirection: 'row', alignItems: 'center', minHeight: 48, gap: Spacing.xs },
   buscar: { flexDirection: 'row', alignItems: 'center', gap: Spacing.xs },
+  sagaAbierta: { flexDirection: 'row', alignItems: 'center', gap: Spacing.xs },
   campo: {
     flex: 1,
     flexDirection: 'row',

@@ -8,10 +8,11 @@ import { ReaderEngine, type ReaderEngineHandle } from '@/components/library/read
 import { ReaderProgress } from '@/components/library/reader-progress';
 import { AppText, Button, IconButton } from '@/components/ui';
 import { Fonts, IconSize, IconStroke, Radius, Spacing, Typography } from '@/constants/theme';
-import { useLibraryFileUrl, useLibraryItem, useSaveReadingPosition } from '@/hooks/use-library';
+import { useLibraryFileUrl, useLibraryItem, useLibraryItems, useSaveReadingPosition, useSeries } from '@/hooks/use-library';
 import { useTheme } from '@/hooks/use-theme';
 import { useT } from '@/i18n';
 import { cambioDePosicion, type CodigoDeError, type MensajeDelMotor, posicionGuardada } from '@/lib/library/reader-protocol';
+import { etiquetaDeSaga, siguienteDeSaga } from '@/lib/library/series';
 
 /** Cuánto se espera sin moverse antes de guardar la posición: así no se escribe en cada página. */
 const GUARDAR_MS = 1200;
@@ -25,6 +26,12 @@ type Posicion = Extract<MensajeDelMotor, { type: 'position' }>;
  */
 export default function ReaderScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
+  // Una pieza nueva arranca de cero (motor, posición, aviso del siguiente): al pasar al siguiente de
+  // la saga se reemplaza la ruta y Expo Router puede reutilizar el componente.
+  return <Lector key={id} id={id} />;
+}
+
+function Lector({ id }: { id: string }) {
   const router = useRouter();
   const theme = useTheme();
   const insets = useSafeAreaInsets();
@@ -36,6 +43,10 @@ export default function ReaderScreen() {
   const ruta = item.data ? (item.data.pdf_path ?? item.data.file_path) : null;
   const url = useLibraryFileUrl(ruta);
   const guardar = useSaveReadingPosition();
+  const todas = useLibraryItems();
+  const sagas = useSeries();
+  // Al terminar un libro de una saga, una vez por apertura, se ofrece el siguiente (RF-BL26).
+  const [ofrecerSiguiente, setOfrecerSiguiente] = useState<'pendiente' | 'visible' | 'cerrado'>('pendiente');
 
   const motor = useRef<ReaderEngineHandle>(null);
   const [abierto, setAbierto] = useState(false);
@@ -79,6 +90,7 @@ export default function ReaderScreen() {
           guardar.mutate({ id, patch: cambioDePosicion(m) });
         };
         pendiente.current = { timer: setTimeout(hacer, GUARDAR_MS), guardar: hacer };
+        if (cambioDePosicion(m).progress >= 1 && ofrecerSiguiente === 'pendiente') setOfrecerSiguiente('visible');
         return;
       }
       case 'search':
@@ -113,6 +125,9 @@ export default function ReaderScreen() {
     setResultado(null);
     motor.current?.send({ type: 'searchClear' });
   };
+
+  const siguiente = item.data && ofrecerSiguiente === 'visible' ? siguienteDeSaga(item.data, todas.data ?? []) : null;
+  const nombreSaga = siguiente?.series_id ? (sagas.data ?? []).find((x) => x.id === siguiente.series_id)?.name : undefined;
 
   const sinArchivo = item.isSuccess && !ruta;
   const mensajeError = sinArchivo
@@ -194,6 +209,19 @@ export default function ReaderScreen() {
         ) : null}
       </View>
 
+      {siguiente && nombreSaga ? (
+        <View style={[styles.siguiente, { backgroundColor: theme.surface, borderColor: theme.border }]} accessibilityRole="alert">
+          <AppText variant="bodyStrong">{l.series.nextTitle}</AppText>
+          <AppText variant="body" color="textSecondary" numberOfLines={2}>
+            {l.series.nextBody(etiquetaDeSaga(nombreSaga, siguiente.series_index), siguiente.title)}
+          </AppText>
+          <View style={styles.siguienteBotones}>
+            <Button title={l.series.nextLater} variant="ghost" onPress={() => setOfrecerSiguiente('cerrado')} />
+            <Button title={l.series.nextOpen} onPress={() => router.replace({ pathname: '/(app)/book/[id]', params: { id: siguiente.id } })} />
+          </View>
+        </View>
+      ) : null}
+
       {abierto ? (
         <View style={{ paddingBottom: insets.bottom + Spacing.xs }}>
           <ReaderProgress
@@ -228,4 +256,15 @@ const styles = StyleSheet.create({
   libro: { flex: 1 },
   capa: { ...StyleSheet.absoluteFill, alignItems: 'center', justifyContent: 'center', gap: Spacing.md, padding: Spacing.xl },
   centrado: { textAlign: 'center' },
+  siguiente: {
+    marginHorizontal: Spacing.lg,
+    marginBottom: Spacing.sm,
+    padding: Spacing.lg,
+    gap: Spacing.xs,
+    borderWidth: 1,
+    borderRadius: Radius.lg,
+    borderCurve: 'continuous',
+    boxShadow: '0 4px 16px rgba(22,23,26,0.08)',
+  },
+  siguienteBotones: { flexDirection: 'row', justifyContent: 'flex-end', gap: Spacing.sm, marginTop: Spacing.sm },
 });

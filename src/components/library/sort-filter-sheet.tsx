@@ -3,13 +3,15 @@ import { Check } from 'lucide-react-native';
 import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
-import { AppText, Button, Chip, ColorSwatch, DatePickerSheet, Sheet } from '@/components/ui';
+import { AppText, Button, Chip, ColorSwatch, DatePickerSheet, Segmented, Sheet } from '@/components/ui';
 import { LIBRARY_FILTER_COLORS } from '@/constants/library';
 import { IconSize, IconStroke, Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useLanguage, useT } from '@/i18n';
 import { formatShortDate } from '@/lib/dates';
 import { type FiltrosBiblioteca, type OrdenBiblioteca, ORDENES, type RangoDeFecha, SIN_FILTROS } from '@/lib/library/filters';
+import type { VistaDeSagas } from '@/lib/library/series';
+import type { LibrarySeries } from '@/types/domain';
 
 export type SortFilterSheetProps = {
   visible: boolean;
@@ -21,6 +23,10 @@ export type SortFilterSheetProps = {
   opciones: { generos: readonly string[]; autores: readonly string[] };
   /** Dentro de un librero, "Como los acomodé" es el orden de ese librero (RF-BL7). */
   enLibrero: boolean;
+  /** Las sagas, para filtrar por ellas y elegir cómo se ven (RF-BL25). */
+  sagas: readonly LibrarySeries[];
+  vistaSagas: VistaDeSagas;
+  onVistaSagas: (vista: VistaDeSagas) => void;
 };
 
 const alternar = (lista: readonly string[], valor: string) => (lista.includes(valor) ? lista.filter((v) => v !== valor) : [...lista, valor]);
@@ -34,7 +40,7 @@ const deIso = (iso: string) => {
  * Ordenar y filtrar la librería (RF-BL8, RF-BL10). El orden se recuerda en el dispositivo; los filtros
  * se combinan y se ven como chips en la librería.
  */
-export function SortFilterSheet({ visible, onClose, orden, onOrden, filtros, onFiltros, opciones, enLibrero }: SortFilterSheetProps) {
+export function SortFilterSheet({ visible, onClose, orden, onOrden, filtros, onFiltros, opciones, enLibrero, sagas, vistaSagas, onVistaSagas }: SortFilterSheetProps) {
   const theme = useTheme();
   const tx = useT();
   const lang = useLanguage();
@@ -48,6 +54,7 @@ export function SortFilterSheet({ visible, onClose, orden, onOrden, filtros, onF
     author: f.sortAuthor,
     category: f.sortCategory,
     manual: f.sortManual,
+    series: tx.library.series.sortSeries,
   };
   const atajos: { valor: Exclude<RangoDeFecha, object>; etiqueta: string }[] = [
     { valor: 'week', etiqueta: f.dateWeek },
@@ -63,7 +70,7 @@ export function SortFilterSheet({ visible, onClose, orden, onOrden, filtros, onF
           <AppText variant="label" color="textSecondary">
             {f.sortTitle}
           </AppText>
-          {ORDENES.map((o) => (
+          {ORDENES.filter((o) => o !== 'series' || sagas.length > 0).map((o) => (
             <Pressable
               key={o}
               accessibilityRole="radio"
@@ -81,6 +88,29 @@ export function SortFilterSheet({ visible, onClose, orden, onOrden, filtros, onF
             {enLibrero ? f.sortManualShelfHint : f.sortManualHint}
           </AppText>
         </View>
+
+        {sagas.length > 0 ? (
+          <View style={styles.seccion}>
+            <AppText variant="label" color="textSecondary">
+              {tx.library.series.viewTitle}
+            </AppText>
+            <Segmented<VistaDeSagas>
+              fullWidth
+              label={tx.library.series.viewTitle}
+              options={[
+                { value: 'loose', label: tx.library.series.viewLoose },
+                { value: 'stacked', label: tx.library.series.viewStacked },
+              ]}
+              value={vistaSagas}
+              onChange={onVistaSagas}
+            />
+            <View style={styles.chips}>
+              {sagas.map((sg) => (
+                <Chip key={sg.id} label={sg.name} compact selected={filtros.sagas.includes(sg.id)} onPress={() => onFiltros({ ...filtros, sagas: alternar(filtros.sagas, sg.id) })} />
+              ))}
+            </View>
+          </View>
+        ) : null}
 
         <View style={styles.seccion}>
           <AppText variant="label" color="textSecondary">

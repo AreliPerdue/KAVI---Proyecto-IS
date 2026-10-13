@@ -14,6 +14,8 @@ let mockResponder: (m: MensajeDelMotor) => void = () => undefined;
 let mockPieza: Record<string, unknown> | undefined;
 let mockUrl: { data?: string; isError: boolean; refetch: jest.Mock };
 const mockGuardar = jest.fn();
+let mockTodas: Record<string, unknown>[] = [];
+let mockSagas: Record<string, unknown>[] = [];
 
 jest.mock('@/components/library/reader-engine', () => {
   /* eslint-disable-next-line @typescript-eslint/no-require-imports -- dentro de la fábrica del mock */
@@ -30,6 +32,8 @@ jest.mock('@/hooks/use-library', () => ({
   useLibraryItem: () => ({ data: mockPieza, isSuccess: !!mockPieza }),
   useLibraryFileUrl: () => mockUrl,
   useSaveReadingPosition: () => ({ mutate: mockGuardar }),
+  useLibraryItems: () => ({ data: mockTodas }),
+  useSeries: () => ({ data: mockSagas }),
 }));
 
 /* eslint-disable-next-line @typescript-eslint/no-require-imports -- tras los mocks */
@@ -44,6 +48,8 @@ beforeEach(() => {
   globalThis.setParametrosDeRuta({ id: 'l1' });
   mockEnviados.length = 0;
   mockGuardar.mockReset();
+  mockTodas = [];
+  mockSagas = [];
   mockPieza = pdf;
   mockUrl = { data: 'https://r2/firmada', isError: false, refetch: jest.fn() };
 });
@@ -151,4 +157,31 @@ it('una pieza sin archivo lo dice y no abre el motor', async () => {
   await render(<Lector />);
   expect(screen.getByText(R.noFile)).toBeTruthy();
   expect(mockEnviados).toEqual([]);
+});
+
+/** Al terminar un libro de una saga, ofrecer el siguiente (RF-BL26, T315). */
+describe('el siguiente de la saga', () => {
+  beforeEach(() => {
+    mockPieza = { ...pdf, series_id: 's1', series_index: 1 };
+    mockTodas = [mockPieza, { id: 'l2', title: 'Una corte de niebla', series_id: 's1', series_index: 2, progress: 0 }];
+    mockSagas = [{ id: 's1', name: 'ACOTAR' }];
+  });
+
+  it('al llegar al final lo ofrece y abrirlo lleva al siguiente', async () => {
+    await render(<Lector />);
+    await responder({ type: 'opened', total: 10 });
+    expect(screen.queryByText(es.library.series.nextTitle)).toBeNull();
+    await responder({ type: 'position', page: 10, total: 10, fraction: 1 });
+    expect(screen.getByText(es.library.series.nextBody('ACOTAR #2', 'Una corte de niebla'))).toBeTruthy();
+    await fireEvent.press(screen.getByRole('button', { name: es.library.series.nextOpen }));
+    expect(globalThis.mockRouter.replace).toHaveBeenCalledWith({ pathname: '/(app)/book/[id]', params: { id: 'l2' } });
+  });
+
+  it('"Ahora no" lo cierra y no vuelve a salir en esta lectura', async () => {
+    await render(<Lector />);
+    await responder({ type: 'position', page: 10, total: 10, fraction: 1 });
+    await fireEvent.press(screen.getByRole('button', { name: es.library.series.nextLater }));
+    await responder({ type: 'position', page: 10, total: 10, fraction: 1 });
+    expect(screen.queryByText(es.library.series.nextTitle)).toBeNull();
+  });
 });

@@ -154,3 +154,18 @@ it('agregar a un librero dos veces no es error (ignora duplicados)', async () =>
     { onConflict: 'shelf_id,item_id', ignoreDuplicates: true },
   ]);
 });
+
+describe('sagas (T315)', () => {
+  it('ensureSeries reusa la que ya existe con ese nombre, sin importar mayúsculas', async () => {
+    mockSb.encolar({ data: [{ id: 's1', name: 'ACOTAR' }], error: null });
+    const saga = await supabaseLibrary.ensureSeries('u1', ' acotar ');
+    expect(saga.id).toBe('s1');
+    expect(mockSb.secuencia).not.toContain('insert');
+  });
+
+  it('si no existe, la crea con el nombre recortado', async () => {
+    mockSb.encolar({ data: [], error: null }, { data: { id: 's2', name: 'Harry Potter' }, error: null });
+    await supabaseLibrary.ensureSeries('u1', '  Harry Potter ');
+    expect(mockSb.argsDe('insert')?.[0]).toEqual({ owner_id: 'u1', name: 'Harry Potter' });
+  });
+});

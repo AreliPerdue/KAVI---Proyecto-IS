@@ -131,14 +131,18 @@ Areli empezó Library en marzo de 2026 como un proyecto aparte, **KAVI Reader** 
 - **RF-BL24. Sagas.** Un libro puede pertenecer a una **saga** (serie) con su **número** dentro de ella
   ("Una corte de rosas y espinas", #1). La saga y el número se ponen al editar los datos (RF-BL16) o al
   importar; si el EPUB los trae (`belongs-to-collection` de EPUB 3 o `calibre:series`), KAVI los propone.
-  Varios libros se pueden poner en la misma saga a la vez con la selección múltiple (RF-BL15).
+  Varios libros se pueden poner en la misma saga a la vez con la selección múltiple (RF-BL15), y por
+  omisión se numeran en el orden en que se eligieron. Escribir el nombre de una saga que ya existe (con
+  otras mayúsculas) reusa esa; el número admite decimales (#1.5). Borrar una saga no borra sus libros.
 - **RF-BL25. Cómo se ven las sagas: lo elige la persona.** Un ajuste de la librería, recordado en el
   dispositivo como la vista (RF-BL4):
   - **Apiladas:** cada saga es una sola pila de portadas ("ACOTAR · 5 libros"); tocarla abre la saga con
     sus libros en orden.
   - **Sueltas:** cada libro en su lugar, con una etiqueta "ACOTAR #2".
   En cualquiera de las dos se puede ordenar y filtrar por saga (RF-BL8, RF-BL10), y dentro de una saga el
-  orden es siempre el número.
+  orden es siempre el número. El ajuste vive en "Ordenar y filtrar", junto al filtro por saga. Mientras las
+  sagas están apiladas (o hay una abierta) no se acomoda arrastrando: una pila no tiene un solo lugar.
+  Mantener presionada una pila elige todos sus libros. (T315, 13 oct 2026)
 - **RF-BL26. El siguiente de la saga.** Al terminar un libro (100 %), además de la ficha (13d, RF-BF6),
   KAVI ofrece "Seguir con #3: …" si el siguiente ya está en la librería.
 - **RF-BL27. Libros enlazados.** Fuera de las sagas, un libro se puede **enlazar** con otro libro o con una

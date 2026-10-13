@@ -2,6 +2,7 @@
 import type { LibroLeido } from '@/lib/library/import';
 
 const mockApi = {
+  ensureSeries: jest.fn(async (_u: string, nombre: string) => ({ id: 'saga-1', name: nombre })),
   createItem: jest.fn(async (_u: string, input: Record<string, unknown>) => ({ ...input, owner_id: 'u1' })),
   uploadFile: jest.fn(async (u: string, id: string, nombre: string) => `${u}/${id}/${nombre}`),
   removeItem: jest.fn(async () => undefined),
@@ -115,4 +116,21 @@ describe('portada propia (RF-BL23, T314)', () => {
     await clearCustomCover('p1');
     expect(mockUpdate).toHaveBeenCalledWith('p1', { custom_cover_path: null, custom_cover_color: null });
   });
+});
+
+it('con saga: la busca o la crea y guarda su número (RF-BL24)', async () => {
+  const { importLibraryBook } = require('@/services/library') as typeof import('@/services/library');
+  mockApi.createItem.mockClear();
+  await importLibraryBook('u1', { id: 'p9', libro: libro(), title: 'Rayuela', authors: [], genres: [], serie: { nombre: 'ACOTAR', numero: 2 } });
+  expect(mockApi.ensureSeries).toHaveBeenCalledWith('u1', 'ACOTAR');
+  expect(mockApi.createItem).toHaveBeenCalledWith('u1', expect.objectContaining({ series_id: 'saga-1', series_index: 2 }));
+});
+
+it('sin saga no crea ninguna', async () => {
+  const { importLibraryBook } = require('@/services/library') as typeof import('@/services/library');
+  mockApi.ensureSeries.mockClear();
+  mockApi.createItem.mockClear();
+  await importLibraryBook('u1', { id: 'p10', libro: libro(), title: 'Rayuela', authors: [], genres: [], serie: null });
+  expect(mockApi.ensureSeries).not.toHaveBeenCalled();
+  expect(mockApi.createItem.mock.calls[0][1]).not.toHaveProperty('series_id');
 });

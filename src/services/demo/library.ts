@@ -13,6 +13,7 @@ import type {
   LibraryFont,
   LibraryItem,
   LibraryPage,
+  LibrarySeries,
   LibraryShelf,
   LibraryShelfItem,
 } from '@/types/domain';
@@ -25,6 +26,7 @@ import { t } from '@/i18n';
  */
 const items: LibraryItem[] = [];
 const shelves: LibraryShelf[] = [];
+const series: LibrarySeries[] = [];
 const shelfItems: (LibraryShelfItem & { owner_id: string })[] = [];
 const annotations: LibraryAnnotation[] = [];
 const templates: LibraryCardTemplate[] = [];
@@ -95,6 +97,8 @@ export const demoLibrary: LibraryApi = {
       custom_cover_color: null,
       // Como la base: lo nuevo entra al principio.
       sort_order: -Date.now() / 1000,
+      series_id: input.series_id ?? null,
+      series_index: input.series_index ?? null,
       file_path: input.file_path ?? null,
       pdf_path: input.pdf_path ?? null,
       file_size: input.file_size ?? 0,
@@ -162,6 +166,40 @@ export const demoLibrary: LibraryApi = {
   async removeAllFiles(userId) {
     await delay();
     borrarCarpeta(userId);
+  },
+
+  async listSeries(userId) {
+    await delay();
+    return copia(series.filter((s) => s.owner_id === userId).sort((a, b) => a.name.localeCompare(b.name, 'es')));
+  },
+
+  async ensureSeries(userId, name) {
+    await delay();
+    const limpio = name.trim();
+    const igual = series.find((s) => s.owner_id === userId && s.name.trim().toLowerCase() === limpio.toLowerCase());
+    if (igual) return copia(igual);
+    const t0 = ahora();
+    const nueva: LibrarySeries = { id: nextId('series'), owner_id: userId, name: limpio, created_at: t0, updated_at: t0 };
+    series.push(nueva);
+    emitDataChange();
+    return copia(nueva);
+  },
+
+  async renameSeries(seriesId, name) {
+    await delay();
+    const s = buscar(series, seriesId);
+    s.name = name.trim();
+    s.updated_at = ahora();
+    emitDataChange();
+    return copia(s);
+  },
+
+  async removeSeries(seriesId) {
+    await delay();
+    quitarDe(series, (s) => s.id === seriesId);
+    // Como la base (`on delete set null`): los libros se quedan, sin saga.
+    for (const i of items) if (i.series_id === seriesId) i.series_id = null;
+    emitDataChange();
   },
 
   async listShelves(userId) {

@@ -962,9 +962,13 @@ Decisiones B1–B9 aprobadas el 12 oct 2026 (T274); ver la tabla de la spec 13 �
   PGlite), imagen reducida a 1200 px y en JPEG, función de R2 que la acepta; probado en el navegador elegir
   archivo, arrastrar, pegar y volver a la original. Módulos nativos nuevos (`expo-image-picker`,
   `expo-clipboard`): el APK se recompila; Expo Go ya los trae.
-- [ ] T315 Sagas: datos (`library_series`, saga y número en la pieza, con RLS), asignarlas al editar o a varios a
+- [x] T315 Sagas: datos (`library_series`, saga y número en la pieza, con RLS), asignarlas al editar o a varios a
   la vez, proponerlas desde el EPUB, ajuste "Apiladas / Sueltas" recordado, orden y filtro por saga, ofrecer el
   siguiente al terminar. (RF-BL24 – RF-BL26) Dep: T280, T281
+  **Hecho (13 oct 2026):** migración probada con PGlite (6 casos) y aplicada en producción; saga y número al
+  importar (propuestos desde EPUB 3 o Calibre), al editar y en la selección ("Poner en saga", numerados en el
+  orden en que se eligieron); sueltas con "Saga #n" o apiladas en pilas que se abren en orden de número; orden y
+  filtro por saga; el lector ofrece el siguiente al llegar al 100 %.
 - [ ] T316 Libros enlazados: `library_links` con RLS, enlazar con tipo (precuela, secuela, spin-off, mismo
   universo, relacionado) y verlos desde los dos lados en "Detalles"; libro ↔ cuaderno o diario cuando existan
   las creaciones. (RF-BL27) Dep: T315 (la parte de creaciones, T297)

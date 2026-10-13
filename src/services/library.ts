@@ -17,6 +17,7 @@ export type {
   LibraryKind,
   LibraryPage,
   LibraryShelf,
+  LibrarySeries,
   LibraryShelfItem,
 } from '@/types/domain';
 
@@ -28,6 +29,10 @@ export const removeLibraryItem = libraryApi.removeItem;
 export const libraryUsage = libraryApi.usage;
 export const uploadLibraryFile = libraryApi.uploadFile;
 export const libraryFileUrl = libraryApi.fileUrl;
+export const listSeries = libraryApi.listSeries;
+export const ensureSeries = libraryApi.ensureSeries;
+export const renameSeries = libraryApi.renameSeries;
+export const removeSeries = libraryApi.removeSeries;
 export const listShelves = libraryApi.listShelves;
 export const createShelf = libraryApi.createShelf;
 export const updateShelf = libraryApi.updateShelf;
@@ -60,6 +65,8 @@ export type ImportarLibro = {
   title: string;
   authors: string[];
   genres: string[];
+  /** La saga y su número (RF-BL24); se busca por nombre o se crea. */
+  serie?: { nombre: string; numero: number | null } | null;
 };
 
 const TIPO_CONTENIDO: Record<LibroLeido['formato'], string> = { pdf: 'application/pdf', epub: 'application/epub+zip' };
@@ -70,10 +77,11 @@ const TIPO_CONTENIDO: Record<LibroLeido['formato'], string> = { pdf: 'applicatio
  * en `<uid>/<pieza>/`. Si la subida falla, se borra la pieza: un libro sin archivo no se puede
  * abrir y no debe quedarse en la librería (RF-BR2).
  */
-export async function importLibraryBook(userId: string, { id, libro, title, authors, genres }: ImportarLibro): Promise<LibraryItem> {
+export async function importLibraryBook(userId: string, { id, libro, title, authors, genres, serie }: ImportarLibro): Promise<LibraryItem> {
   const { archivo, formato, datos, color } = libro;
   const nombre = /\.(pdf|epub)$/i.test(archivo.name) ? archivo.name : `${archivo.name}.${formato}`;
   const portada = datos.cover ? `cover.${datos.cover.ext}` : null;
+  const saga = serie?.nombre.trim() ? await libraryApi.ensureSeries(userId, serie.nombre) : null;
   const item = await libraryApi.createItem(userId, {
     id,
     family: 'book',
@@ -86,6 +94,7 @@ export async function importLibraryBook(userId: string, { id, libro, title, auth
     cover_color: color,
     file_size: archivo.bytes.length,
     page_count: datos.pageCount,
+    ...(saga ? { series_id: saga.id, series_index: serie?.numero ?? null } : {}),
   });
   try {
     await libraryApi.uploadFile(userId, id, nombre, archivo.bytes, TIPO_CONTENIDO[formato]);

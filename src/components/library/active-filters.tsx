@@ -18,7 +18,15 @@ const deIso = (iso: string) => {
  * Los filtros activos como chips que se quitan con su ✕ (RF-BL10), igual que en el calendario. Si hay
  * más de uno, al final "Quitar todo".
  */
-export function ActiveFilters({ filtros, onChange }: { filtros: FiltrosBiblioteca; onChange: (f: FiltrosBiblioteca) => void }) {
+export function ActiveFilters({
+  filtros,
+  onChange,
+  nombresDeSagas,
+}: {
+  filtros: FiltrosBiblioteca;
+  onChange: (f: FiltrosBiblioteca) => void;
+  nombresDeSagas?: ReadonlyMap<string, string>;
+}) {
   const theme = useTheme();
   const lang = useLanguage();
   const f = useT().library.find;
@@ -28,6 +36,10 @@ export function ActiveFilters({ filtros, onChange }: { filtros: FiltrosBibliotec
     const etiqueta =
       fecha === 'week' ? f.dateWeek : fecha === 'month' ? f.dateMonth : fecha === 'year' ? f.dateYear : f.dateChip(formatShortDate(deIso(fecha.desde), lang), formatShortDate(deIso(fecha.hasta), lang));
     chips.push({ clave: 'fecha', etiqueta, quitar: () => onChange({ ...filtros, fecha: null }) });
+  }
+  for (const id of filtros.sagas) {
+    const nombre = nombresDeSagas?.get(id);
+    if (nombre) chips.push({ clave: `s-${id}`, etiqueta: nombre, quitar: () => onChange({ ...filtros, sagas: filtros.sagas.filter((x) => x !== id) }) });
   }
   for (const g of filtros.generos) chips.push({ clave: `g-${g}`, etiqueta: g, quitar: () => onChange({ ...filtros, generos: filtros.generos.filter((x) => x !== g) }) });
   for (const a of filtros.autores) chips.push({ clave: `a-${a}`, etiqueta: a, quitar: () => onChange({ ...filtros, autores: filtros.autores.filter((x) => x !== a) }) });

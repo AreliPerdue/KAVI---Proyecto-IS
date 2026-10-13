@@ -19,6 +19,8 @@ const mockEliminar = { mutate: jest.fn() };
 const mockCategorizar = { mutate: jest.fn() };
 const mockActualizar = { mutate: jest.fn(), isError: false };
 let mockLibreros: Record<string, unknown>[] = [];
+let mockSagas: Record<string, unknown>[] = [];
+const mockAsignarSaga = { mutate: jest.fn() };
 let mockEnLibreros: Record<string, unknown>[] = [];
 const mockLibrerosMut = {
   crear: { mutate: jest.fn() },
@@ -45,6 +47,8 @@ jest.mock('@/hooks/use-library', () => ({
   useShelves: () => ({ data: mockLibreros }),
   useShelfItems: () => ({ data: mockEnLibreros }),
   useShelfMutations: () => mockLibrerosMut,
+  useSeries: () => ({ data: mockSagas }),
+  useAssignSeries: () => mockAsignarSaga,
 }));
 // Arrastrar no se puede simular con gestos en Jest: los dobles pintan las piezas y guardan `onReorder`.
 jest.mock('@/components/lists/draggable-grid', () => ({
@@ -77,6 +81,8 @@ const pieza = (id: string, extra: Record<string, unknown> = {}) => ({
   genres: [],
   category: null,
   sort_order: 0,
+  series_id: null,
+  series_index: null,
   created_at: '2026-10-01T00:00:00Z',
   page_count: null,
   progress: 0,
@@ -91,6 +97,8 @@ beforeEach(() => {
   usePreferencesStore.setState({ libraryView: 'covers', libraryOrder: 'recent' });
   mockLibreros = [];
   mockEnLibreros = [];
+  mockSagas = [];
+  mockAsignarSaga.mutate.mockReset();
   mockArrastrable = null;
   for (const m of Object.values(mockLibrerosMut)) m.mutate.mockReset();
   mockPiezas = ok([]);
@@ -452,5 +460,47 @@ describe('organizar', () => {
     await fireEvent.press(screen.getByRole('button', { name: L.shelves.delete }));
     expect(mockConfirm).toHaveBeenCalledWith(expect.objectContaining({ message: L.shelves.deleteMessage }));
     expect(mockLibrerosMut.borrar.mutate).toHaveBeenCalledWith('s1');
+  });
+});
+
+/** Sagas (T315, RF-BL24 – RF-BL25): etiqueta en sueltas, pila en apiladas, abrirla y poner varios. */
+describe('sagas', () => {
+  const libros = () => [
+    pieza('a2', { title: 'Una corte de niebla', series_id: 's1', series_index: 2, created_at: '2026-10-03T00:00:00Z' }),
+    pieza('x', { title: 'Rayuela', created_at: '2026-10-02T00:00:00Z' }),
+    pieza('a1', { title: 'Una corte de rosas', series_id: 's1', series_index: 1, created_at: '2026-10-01T00:00:00Z' }),
+  ];
+  beforeEach(() => {
+    mockPiezas = ok(libros());
+    mockSagas = [{ id: 's1', name: 'ACOTAR' }];
+    usePreferencesStore.setState({ libraryView: 'list', libraryOrder: 'recent', librarySeriesView: 'loose' });
+  });
+
+  it('sueltas: cada libro dice su saga y su número', async () => {
+    await render(<Pantalla />);
+    expect(screen.getByText('ACOTAR #2')).toBeTruthy();
+    expect(screen.getByText('ACOTAR #1')).toBeTruthy();
+  });
+
+  it('apiladas: una pila en el lugar del primero; tocarla abre la saga en orden de número', async () => {
+    usePreferencesStore.setState({ librarySeriesView: 'stacked' });
+    await render(<Pantalla />);
+    expect(screen.getByRole('button', { name: L.series.stack('ACOTAR', 2) })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: /^Una corte de niebla,/ })).toBeNull();
+    await fireEvent.press(screen.getByRole('button', { name: L.series.stack('ACOTAR', 2) }));
+    const titulos = screen.getAllByRole('button', { name: /^Una corte/ }).map((b) => (b.props.accessibilityLabel as string).split(',')[0]);
+    expect(titulos).toEqual(['Una corte de rosas', 'Una corte de niebla']);
+    await fireEvent.press(screen.getByRole('button', { name: L.series.back }));
+    expect(screen.getByRole('button', { name: L.series.stack('ACOTAR', 2) })).toBeTruthy();
+  });
+
+  it('poner varios en una saga, numerados en el orden en que se eligieron', async () => {
+    await render(<Pantalla />);
+    await fireEvent(screen.getByRole('button', { name: /^Rayuela/ }), 'longPress');
+    await fireEvent.press(screen.getByRole('button', { name: /^Una corte de rosas/ }));
+    await fireEvent.press(screen.getByRole('button', { name: L.series.put }));
+    await fireEvent.changeText(screen.getByLabelText(L.series.field), 'Clásicos');
+    await fireEvent.press(screen.getAllByRole('button', { name: L.series.put }).at(-1)!);
+    expect(mockAsignarSaga.mutate.mock.calls[0][0]).toEqual({ nombre: 'Clásicos', asignar: [{ id: 'x', numero: 1 }, { id: 'a1', numero: 2 }] });
   });
 });

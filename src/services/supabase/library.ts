@@ -13,6 +13,7 @@ import type {
   LibraryFont,
   LibraryItem,
   LibraryPage,
+  LibrarySeries,
   LibraryShelf,
   LibraryShelfItem,
 } from '@/types/domain';
@@ -119,6 +120,26 @@ export const supabaseLibrary: LibraryApi = {
   async removeAllFiles() {
     // La función borra la carpeta de la sesión, no la de un id que mande la app.
     await archivos({ action: 'deleteAll' });
+  },
+
+  async listSeries(userId) {
+    return unwrap(await db().from('library_series').select('*').eq('owner_id', userId).order('name')) as LibrarySeries[];
+  },
+
+  async ensureSeries(userId, name) {
+    const limpio = name.trim();
+    const existentes = unwrap(await db().from('library_series').select('*').eq('owner_id', userId)) as LibrarySeries[];
+    const igual = existentes.find((s) => s.name.trim().toLowerCase() === limpio.toLowerCase());
+    if (igual) return igual;
+    return unwrap(await db().from('library_series').insert({ owner_id: userId, name: limpio }).select('*').single()) as LibrarySeries;
+  },
+
+  async renameSeries(seriesId, name) {
+    return unwrap(await db().from('library_series').update({ name: name.trim() }).eq('id', seriesId).select('*').single()) as LibrarySeries;
+  },
+
+  async removeSeries(seriesId) {
+    sinError(await db().from('library_series').delete().eq('id', seriesId));
   },
 
   async listShelves(userId) {

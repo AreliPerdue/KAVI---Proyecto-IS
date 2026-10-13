@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { BookCover } from './book-cover';
+import { SeriesField } from './series-field';
 
 import { AppText, Banner, Button, Sheet, TextField } from '@/components/ui';
 import { Spacing } from '@/constants/theme';
@@ -10,6 +11,7 @@ import { useLanguage, useT } from '@/i18n';
 import { bytesToBase64 } from '@/lib/library/base64';
 import { formatBytes } from '@/lib/library/files';
 import type { LibroLeido } from '@/lib/library/import';
+import { leerNumeroDeSaga, numeroDeSaga } from '@/lib/library/series';
 import { useSnackbar } from '@/providers';
 
 export type ImportSheetProps = {
@@ -53,6 +55,9 @@ function Contenido({ id, libro, onClose }: { id: string; libro: LibroLeido; onCl
   // no debe partirse en dos solo porque el campo separa con comas.
   const [autores, setAutores] = useState<string | null>(null);
   const [generos, setGeneros] = useState<string | null>(null);
+  // La saga que trae el EPUB, si la trae (RF-BL24); se puede cambiar o quitar.
+  const [saga, setSaga] = useState(datos.serie?.nombre ?? '');
+  const [numero, setNumero] = useState(datos.serie?.numero != null ? numeroDeSaga(datos.serie.numero) : '');
 
   const portada = useMemo(
     () => (datos.cover ? `data:${datos.cover.mime};base64,${bytesToBase64(datos.cover.bytes)}` : null),
@@ -68,6 +73,7 @@ function Contenido({ id, libro, onClose }: { id: string; libro: LibroLeido; onCl
         title: titulo,
         authors: autores === null ? datos.authors : lista(autores),
         genres: generos === null ? datos.genres : lista(generos),
+        serie: saga.trim() ? { nombre: saga, numero: leerNumeroDeSaga(numero) } : null,
       },
       {
         onSuccess: (item) => {
@@ -101,6 +107,7 @@ function Contenido({ id, libro, onClose }: { id: string; libro: LibroLeido; onCl
         autoCapitalize="words"
       />
       <TextField label={l.fieldGenres} hint={l.listHint} value={generos ?? datos.genres.join(', ')} onChangeText={setGeneros} />
+      <SeriesField nombre={saga} onNombre={setSaga} numero={numero} onNumero={setNumero} />
 
       {importar.isError ? <Banner tone="error" message={importar.error.message} /> : null}
 

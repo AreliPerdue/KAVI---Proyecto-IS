@@ -117,3 +117,20 @@ describe('anotaciones, fichas y páginas', () => {
     expect(await api.listFonts(ANA)).toEqual([]);
   });
 });
+
+describe('sagas (T315)', () => {
+  it('ensureSeries reusa la saga con el mismo nombre (sin importar mayúsculas) y borrarla deja los libros sin saga', async () => {
+    const api = fresh();
+    const a = await api.ensureSeries('u1', 'ACOTAR');
+    const b = await api.ensureSeries('u1', '  acotar ');
+    expect(b.id).toBe(a.id);
+    expect(await api.listSeries('u1')).toHaveLength(1);
+    expect(await api.listSeries('u2')).toHaveLength(0);
+    const libro = await api.createItem('u1', { family: 'book', kind: 'pdf', title: 'Una corte', series_id: a.id, series_index: 1 });
+    expect(libro.series_id).toBe(a.id);
+    await api.renameSeries(a.id, 'Una corte de rosas y espinas');
+    expect((await api.listSeries('u1'))[0].name).toBe('Una corte de rosas y espinas');
+    await api.removeSeries(a.id);
+    expect((await api.getItem(libro.id)).series_id).toBeNull();
+  });
+});

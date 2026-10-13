@@ -46,6 +46,7 @@ import type {
   LibraryItem,
   LibraryItemInput,
   LibraryItemPatch,
+  LibrarySeries,
   LibraryShelf,
   LibraryShelfItem,
   LibraryPage,
@@ -485,6 +486,14 @@ export interface LibraryApi {
   fileUrl(path: string): Promise<string>;
   /** Borra todos los archivos de la persona (al eliminar la cuenta, RF-A12). */
   removeAllFiles(userId: string): Promise<void>;
+
+  /** Las sagas de la persona (RF-BL24). */
+  listSeries(userId: string): Promise<LibrarySeries[]>;
+  /** Crea una saga o, si ya hay una con ese nombre (sin importar mayúsculas), devuelve esa. */
+  ensureSeries(userId: string, name: string): Promise<LibrarySeries>;
+  renameSeries(seriesId: string, name: string): Promise<LibrarySeries>;
+  /** Borra la saga; sus libros se quedan, sin saga. */
+  removeSeries(seriesId: string): Promise<void>;
 
   listShelves(userId: string): Promise<LibraryShelf[]>;
   createShelf(userId: string, input: Pick<LibraryShelf, 'name'> & Partial<Pick<LibraryShelf, 'color' | 'icon'>>): Promise<LibraryShelf>;

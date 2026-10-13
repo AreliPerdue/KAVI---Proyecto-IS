@@ -1,5 +1,7 @@
 import { colorDePortada } from './shelf';
 
+import { porNumero } from './series';
+
 import type { LibraryItem, LibraryShelfItem } from '@/types/domain';
 
 /**
@@ -11,8 +13,8 @@ import type { LibraryItem, LibraryShelfItem } from '@/types/domain';
  * Cómo se ordena (RF-BL8). "Como los acomodé" es el de omisión: en "Todos" usa el lugar de cada pieza
  * y dentro de un librero, el del librero; en los dos se acomoda arrastrando (RF-BL7).
  */
-export type OrdenBiblioteca = 'manual' | 'recent' | 'title' | 'author' | 'category';
-export const ORDENES: readonly OrdenBiblioteca[] = ['manual', 'recent', 'title', 'author', 'category'];
+export type OrdenBiblioteca = 'manual' | 'recent' | 'title' | 'author' | 'category' | 'series';
+export const ORDENES: readonly OrdenBiblioteca[] = ['manual', 'recent', 'title', 'author', 'category', 'series'];
 export const ORDEN_POR_OMISION: OrdenBiblioteca = 'manual';
 
 export function ordenValido(valor: unknown): OrdenBiblioteca {
@@ -28,13 +30,15 @@ export type FiltrosBiblioteca = {
   autores: readonly string[];
   /** Un color (`#RRGGBB`): aparecen las portadas que se le parecen, no solo las idénticas. */
   color: string | null;
+  /** Ids de sagas (RF-BL25). */
+  sagas: readonly string[];
 };
 
-export const SIN_FILTROS: FiltrosBiblioteca = { fecha: null, generos: [], autores: [], color: null };
+export const SIN_FILTROS: FiltrosBiblioteca = { fecha: null, generos: [], autores: [], color: null, sagas: [] };
 
 /** Cuántos filtros hay activos: lo que dice el botón de filtros, como en el calendario. */
 export function cuantosFiltros(f: FiltrosBiblioteca): number {
-  return (f.fecha ? 1 : 0) + f.generos.length + f.autores.length + (f.color ? 1 : 0);
+  return (f.fecha ? 1 : 0) + f.generos.length + f.autores.length + (f.color ? 1 : 0) + f.sagas.length;
 }
 
 /** Sin acentos ni mayúsculas, para buscar y comparar como lo haría una persona. */
@@ -106,6 +110,8 @@ export type Consulta = {
   libreroId: string | null;
   /** A qué libreros pertenece cada pieza y en qué orden (RF-BL6, RF-BL7). */
   enLibreros: readonly LibraryShelfItem[];
+  /** Nombre de cada saga, para ordenar por saga (RF-BL25). */
+  nombresDeSagas?: ReadonlyMap<string, string>;
   hoy?: Date;
 };
 
@@ -145,6 +151,7 @@ export function piezasVisibles(items: readonly LibraryItem[], c: Consulta): Libr
     lista = lista.filter((i) => i.authors.some((a) => buscados.includes(plegar(a))));
   }
   if (color) lista = lista.filter((i) => distanciaDeColor(colorDePortada(i), color) <= UMBRAL_DE_COLOR);
+  if (c.filtros.sagas.length) lista = lista.filter((i) => !!i.series_id && c.filtros.sagas.includes(i.series_id));
 
   const porTitulo = (a: LibraryItem, b: LibraryItem) => comparar(a.title, b.title);
   const vacioAlFinal = (a: string | undefined | null, b: string | undefined | null) => (a ? (b ? comparar(a, b) : -1) : b ? 1 : 0);
@@ -156,6 +163,12 @@ export function piezasVisibles(items: readonly LibraryItem[], c: Consulta): Libr
         return vacioAlFinal(a.authors[0], b.authors[0]) || porTitulo(a, b);
       case 'category':
         return vacioAlFinal(a.category, b.category) || porTitulo(a, b);
+      case 'series': {
+        // Por nombre de saga y dentro de ella por número; los que no tienen saga, al final por título.
+        const sa = a.series_id ? c.nombresDeSagas?.get(a.series_id) : undefined;
+        const sb = b.series_id ? c.nombresDeSagas?.get(b.series_id) : undefined;
+        return vacioAlFinal(sa, sb) || (sa && sa === sb ? porNumero(a, b) : 0) || porTitulo(a, b);
+      }
       case 'manual':
         return c.libreroId
           ? (ordenEnLibrero.get(a.id) ?? 0) - (ordenEnLibrero.get(b.id) ?? 0)

@@ -35,7 +35,32 @@ export function leerEpub(bytes: Uint8Array): DatosLibro {
     genres: textos(opf, 'subject'),
     pageCount: null,
     cover: portada(bytes, opf, rutaOpf),
+    serie: saga(opf),
   };
+}
+
+/**
+ * La saga del libro (RF-BL24), si el OPF la trae: EPUB 3 (`belongs-to-collection` con su
+ * `group-position`) o la de Calibre (`calibre:series` y `calibre:series_index`), que es la más común en
+ * libros convertidos.
+ */
+function saga(opf: string): DatosLibro['serie'] {
+  const metas = [...opf.matchAll(/<(?:\w+:)?meta\b[^>]*?(?:\/>|>([\s\S]*?)<\/(?:\w+:)?meta>)/g)].map((m) => ({ etiqueta: m[0], texto: m[1] }));
+  const numero = (t: string | undefined) => {
+    const n = Number.parseFloat((t ?? '').trim());
+    return Number.isFinite(n) && n >= 0 ? n : null;
+  };
+  const coleccion = metas.find((m) => valor(m.etiqueta, 'property') === 'belongs-to-collection' && m.texto?.trim());
+  if (coleccion) {
+    const id = valor(coleccion.etiqueta, 'id');
+    const posicion = id ? metas.find((m) => valor(m.etiqueta, 'refines') === `#${id}` && valor(m.etiqueta, 'property') === 'group-position') : undefined;
+    return { nombre: entidades(coleccion.texto ?? '').trim(), numero: numero(posicion?.texto) };
+  }
+  const calibre = metas.find((m) => valor(m.etiqueta, 'name') === 'calibre:series');
+  const nombre = calibre ? valor(calibre.etiqueta, 'content')?.trim() : undefined;
+  if (!nombre) return null;
+  const indice = metas.find((m) => valor(m.etiqueta, 'name') === 'calibre:series_index');
+  return { nombre, numero: numero(indice ? valor(indice.etiqueta, 'content') : undefined) };
 }
 
 /**

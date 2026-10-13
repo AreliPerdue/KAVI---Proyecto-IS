@@ -577,6 +577,9 @@ export type LibraryItem = {
   custom_cover_color: string | null;
   /** Su lugar en la librería cuando se acomoda arrastrando (RF-BL7); lo nuevo, primero. */
   sort_order: number;
+  /** Saga a la que pertenece y su número en ella (RF-BL24); el número admite decimales (#1.5). */
+  series_id: string | null;
+  series_index: number | null;
   file_path: string | null;
   /** El PDF que se lee cuando el original es de oficina (decisión B3). */
   pdf_path: string | null;
@@ -595,11 +598,27 @@ export type LibraryItemInput = Pick<LibraryItem, 'family' | 'kind' | 'title'> &
   Partial<
     Pick<
       LibraryItem,
-      'id' | 'authors' | 'category' | 'genres' | 'cover_path' | 'cover_color' | 'file_path' | 'pdf_path' | 'file_size' | 'page_count' | 'style' | 'base_color'
+      | 'id'
+      | 'authors'
+      | 'category'
+      | 'genres'
+      | 'cover_path'
+      | 'cover_color'
+      | 'file_path'
+      | 'pdf_path'
+      | 'file_size'
+      | 'page_count'
+      | 'style'
+      | 'base_color'
+      | 'series_id'
+      | 'series_index'
     >
   >;
 
 export type LibraryItemPatch = Partial<Omit<LibraryItem, 'id' | 'owner_id' | 'family' | 'created_at' | 'updated_at'>>;
+
+/** Una saga de la persona (RF-BL24): "Una corte de rosas y espinas". */
+export type LibrarySeries = { id: string; owner_id: string; name: string; created_at: string; updated_at: string };
 
 export type LibraryShelf = {
   id: string;

@@ -1,9 +1,12 @@
 import { useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
+import { SeriesField } from './series-field';
+
 import { Banner, Button, Chip, Sheet, TextField } from '@/components/ui';
 import { Spacing } from '@/constants/theme';
-import { useUpdateLibraryItem } from '@/hooks/use-library';
+import { useAssignSeries, useSeries, useUpdateLibraryItem } from '@/hooks/use-library';
+import { leerNumeroDeSaga, numeroDeSaga } from '@/lib/library/series';
 import { useT } from '@/i18n';
 import { useSnackbar } from '@/providers';
 import type { LibraryItem } from '@/types/domain';
@@ -37,6 +40,11 @@ function Formulario({ item, onClose }: { item: LibraryItem; onClose: () => void 
   const m = l.item;
   const showSnackbar = useSnackbar();
   const actualizar = useUpdateLibraryItem();
+  const asignar = useAssignSeries();
+  const sagas = useSeries();
+  const sagaActual = (sagas.data ?? []).find((x) => x.id === item.series_id)?.name ?? '';
+  const [saga, setSaga] = useState<string | null>(null);
+  const [numero, setNumero] = useState(item.series_index !== null ? numeroDeSaga(item.series_index) : '');
   const [titulo, setTitulo] = useState(item.title);
   // Como al importar: lo que no se toca se guarda tal cual, sin partirlo por sus comas.
   const [autores, setAutores] = useState<string | null>(null);
@@ -61,6 +69,12 @@ function Formulario({ item, onClose }: { item: LibraryItem; onClose: () => void 
       },
       { onSuccess: () => showSnackbar({ message: m.saved }), onError: () => showSnackbar({ message: m.failed }) },
     );
+    // La saga va aparte: por nombre se busca o se crea (RF-BL24). Solo si cambió algo de ella.
+    const nombreSaga = saga ?? sagaActual;
+    const nuevoNumero = leerNumeroDeSaga(numero);
+    if (nombreSaga.trim() !== sagaActual.trim() || nuevoNumero !== item.series_index) {
+      asignar.mutate({ nombre: nombreSaga, asignar: [{ id: item.id, numero: nombreSaga.trim() ? nuevoNumero : null }] }, { onError: () => showSnackbar({ message: m.failed }) });
+    }
     onClose();
   };
 
@@ -86,6 +100,7 @@ function Formulario({ item, onClose }: { item: LibraryItem; onClose: () => void 
         </ScrollView>
       </View>
       <TextField label={l.fieldGenres} hint={l.listHint} value={generos ?? item.genres.join(', ')} onChangeText={setGeneros} />
+      <SeriesField nombre={saga ?? sagaActual} onNombre={setSaga} numero={numero} onNumero={setNumero} />
       {actualizar.isError ? <Banner tone="error" message={m.failed} /> : null}
       <Button title={m.save} onPress={guardar} />
       <Button title={tx.common.cancel} variant="ghost" onPress={onClose} />
