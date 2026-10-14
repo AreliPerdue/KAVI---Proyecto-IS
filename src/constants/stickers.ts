@@ -21,13 +21,16 @@ export type NombreDeSticker =
   | 'hiding'
   | 'holding-heart'
   | 'hopeful'
+  | 'huh'
   | 'idea'
   | 'love-tear-eyed'
   | 'mischief'
+  | 'party'
   | 'pissed'
   | 'popcorn'
   | 'puddle-tears-tantrum'
   | 'puddle-tears'
+  | 'silly-upside-down'
   | 'sleeping'
   | 'smutty'
   | 'speechless'
@@ -55,6 +58,7 @@ export const STICKERS: readonly Sticker[] = [
   nobiRosa('waving', 0.77, require('../../public/reader/stickers/nobi-pink/waving.png')),
   nobiRosa('wink', 0.772, require('../../public/reader/stickers/nobi-pink/wink.png')),
   nobiRosa('excited', 0.81, require('../../public/reader/stickers/nobi-pink/excited.png')),
+  nobiRosa('party', 0.81, require('../../public/reader/stickers/nobi-pink/party.png')),
   nobiRosa('hopeful', 0.77, require('../../public/reader/stickers/nobi-pink/hopeful.png')),
   nobiRosa('holding-heart', 0.77, require('../../public/reader/stickers/nobi-pink/holding-heart.png')),
   nobiRosa('love-tear-eyed', 0.833, require('../../public/reader/stickers/nobi-pink/love-tear-eyed.png')),
@@ -62,9 +66,11 @@ export const STICKERS: readonly Sticker[] = [
   nobiRosa('good-note', 0.81, require('../../public/reader/stickers/nobi-pink/good-note.png')),
   nobiRosa('focused-note', 0.81, require('../../public/reader/stickers/nobi-pink/focused-note.png')),
   nobiRosa('curious', 0.772, require('../../public/reader/stickers/nobi-pink/curious.png')),
+  nobiRosa('huh', 0.772, require('../../public/reader/stickers/nobi-pink/huh.png')),
   nobiRosa('popcorn', 0.833, require('../../public/reader/stickers/nobi-pink/popcorn.png')),
   nobiRosa('smutty', 0.665, require('../../public/reader/stickers/nobi-pink/smutty.png')),
   nobiRosa('mischief', 0.81, require('../../public/reader/stickers/nobi-pink/mischief.png')),
+  nobiRosa('silly-upside-down', 0.767, require('../../public/reader/stickers/nobi-pink/silly-upside-down.png')),
   nobiRosa('speechless', 0.81, require('../../public/reader/stickers/nobi-pink/speechless.png')),
   nobiRosa('hiding', 0.762, require('../../public/reader/stickers/nobi-pink/hiding.png')),
   nobiRosa('worried', 0.858, require('../../public/reader/stickers/nobi-pink/worried.png')),

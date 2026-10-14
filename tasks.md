@@ -1084,7 +1084,7 @@ Decisiones B1–B9 aprobadas el 12 oct 2026 (T274); ver la tabla de la spec 13 �
 - [x] T334 Stickers de los Nobi rosa con charola de "Quitados": pegar, mover, crecer sin deformarse, girar,
   quitar a la charola, volver a pegar con su tamaño y giro, y tirar. (RF-BH13, pedido de Areli del 14 oct
   2026) Dep: T289
-  **Hecho (14 oct 2026):** catálogo `src/constants/stickers.ts` (23 caras, nombres en es/en), imágenes en
+  **Hecho (14 oct 2026):** catálogo `src/constants/stickers.ts` (26 caras, nombres en es/en), imágenes en
   `public/reader/stickers/nobi-pink/` (también dentro de `assets/reader/engine.html`, `KAVI_STICKERS`), tipo
   `sticker` en `public/reader/annotations.js` (asas en las esquinas, proporción fija, giro; la caja sin giro al
   soltar), `sticker-sheet.tsx` y la herramienta en la barra.

@@ -105,7 +105,7 @@
   en cualquier parte, se **rotan** con dos dedos, cambian de tamaño, se **quitan** y quedan en una charola
   ("Quitados") de donde se **vuelven a poner** —como un sticker reutilizable—.
   - **Hecho la colección y la charola (T334, 14 oct 2026, pedido de Areli).** Primera colección: los **Nobi
-    rosa** de Areli (23 caras, de `Nobi/stickers/pink`), reducidas a 400 px y 256 colores (≈ 900 KB) en
+    rosa** de Areli (26 caras, de `Nobi/stickers/pink`; tres llegaron después: ¿Qué?, Fiesta y De cabeza), reducidas a 400 px y 256 colores (≈ 900 KB) en
     `public/reader/stickers/nobi-pink/`; van dentro del motor del teléfono para verse sin red. El botón
     **Pegar un sticker** abre la hoja con **Colección · Quitados (n)**; se elige uno y se toca dónde va, con su
     proporción. Elegido: se mueve, crece o se encoge **sin deformarse** (solo las 4 esquinas), se gira con el
