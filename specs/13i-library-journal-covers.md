@@ -79,6 +79,9 @@
   incluidas en la app (6 materiales, unos pocos cientos de KB en total) para que el Journal se vea sin red.
 - Las texturas finales salen del muestrario de Areli: Claude las limpia, las pasa a grises, las hace tileables
   (sin costuras ni repetición evidente) y las prueba sobre un A5 completo antes de incluirlas.
+- **Hecho T352 (14 oct 2026):** las seis texturas están en `assets/library/materials/` (gris, media 0.5, repetibles
+  por los cuatro lados) y se pintan con `background-blend-mode: soft-light` sobre el color del material; las genera
+  `scripts/journal/texturas.cjs` desde el muestrario.
 - Una persona puede tener **varios Journals**; cada uno es su propia pieza con su portada.
 
 ## 7. Fases propuestas

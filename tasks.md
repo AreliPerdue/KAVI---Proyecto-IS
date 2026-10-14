@@ -1147,8 +1147,12 @@ Reemplazan L5 (13e). Un recorte es una página 1 : √2 del visor de PDF (decisi
   doodles) en la tienda. (RF-CC14 – RF-CC17) Dep: T342, T337
 - [ ] T344 C4 · Plantillas de Recortes (Book Review, Character Collage, Favorite Quotes, Reading Experience, DNF
   Graveyard), Guardar como plantilla y Mis plantillas. (RF-CC18 – RF-CC21) Dep: T343
-- [ ] T352 Texturas de los 6 materiales: limpiar el muestrario de Areli, pasarlas a grises y hacerlas repetibles
+- [x] T352 Texturas de los 6 materiales: limpiar el muestrario de Areli, pasarlas a grises y hacerlas repetibles
   sin costuras; probarlas en un A5 completo. (RF-JC8) Dep: —
+  **Hecho (14 oct 2026):** `scripts/journal/texturas.cjs` (gris con luz pareja, media 0.5, y síntesis por parches
+  sobre un toro) deja `assets/library/materials/<material>.png` (528 px, 576 la madera; ~980 KB las seis). Se
+  mezclan con `soft-light` sobre el color elegido; probadas en A5 con 6 colores. El muestrario es de baja
+  resolución (franjas de ~880 × 97 px): si Areli genera cada material a 2048 px, se vuelven a correr.
 - [ ] T345 J1 · Journal como objeto (varios por persona): A5, 4 encuadernaciones, 6 materiales recolorables, lomo por páginas, cantos y
   contraportada; en el librero y en libro real. (RF-JC1 – RF-JC9) Dep: T351, T352
 - [ ] T346 J2 · Decorar la portada, lomo y contraportada con el lienzo; tratamiento impreso. (RF-JC10, RF-JC11) Dep: T345
