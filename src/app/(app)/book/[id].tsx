@@ -7,6 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ReaderEngine, type ReaderEngineHandle } from '@/components/library/reader-engine';
 import { ReaderProgress } from '@/components/library/reader-progress';
+import { ReaderThemePicker } from '@/components/library/reader-theme-picker';
 import { AppText, Button, IconButton, Segmented, Sheet } from '@/components/ui';
 import { Fonts, IconSize, IconStroke, Radius, Spacing, Typography } from '@/constants/theme';
 import { usePantallaCompleta } from '@/hooks/use-full-screen';
@@ -17,6 +18,7 @@ import { useTheme } from '@/hooks/use-theme';
 import { useT } from '@/i18n';
 import { cambioDePosicion, type CodigoDeError, type MensajeDelMotor, posicionGuardada } from '@/lib/library/reader-protocol';
 import { FORMA_POR_OMISION, type FormaDeLeer } from '@/lib/library/reading-mode';
+import { coloresDe } from '@/lib/library/reader-theme';
 import { etiquetaDeSaga, siguienteDeSaga } from '@/lib/library/series';
 import { usePreferencesStore } from '@/store/preferences-store';
 
@@ -99,6 +101,14 @@ function Lector({ id }: { id: string }) {
     // La forma con que se abre es la de ese momento; los cambios después van por `mode` (abajo).
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [item.data, url.data, ruta, intento]);
+
+  // El tema del lector (RF-BH5): al abrir y cada vez que cambia. Si el motor aún no está listo, espera en
+  // su cola.
+  const temaLectura = usePreferencesStore((s) => s.readerTheme);
+  const { pagina: colorPagina, letra: colorLetra } = coloresDe(temaLectura);
+  useEffect(() => {
+    motor.current?.send({ type: 'theme', page: colorPagina, text: colorLetra });
+  }, [colorPagina, colorLetra]);
 
   // Cambiar de forma con el libro abierto: el motor se queda en el mismo lugar (RF-BR8).
   const formaEnMotor = useRef(forma);
@@ -329,8 +339,9 @@ function Lector({ id }: { id: string }) {
       ) : null}
       {abierto && !controles ? <View style={{ height: insets.bottom }} /> : null}
 
-      <Sheet visible={eligiendoForma} onClose={() => setEligiendoForma(false)} title={r.mode}>
+      <Sheet visible={eligiendoForma} onClose={() => setEligiendoForma(false)} title={r.readingSettings}>
         <View style={styles.formas}>
+          <AppText variant="label">{r.mode}</AppText>
           <Segmented<FormaDeLeer>
             fullWidth
             label={r.mode}
@@ -345,6 +356,7 @@ function Lector({ id }: { id: string }) {
           <AppText variant="caption" color="textSecondary">
             {forma === 'scroll' ? r.modeScrollHint : forma === 'book' ? r.modeBookHint : Platform.OS === 'web' ? r.modePagedHintWeb : r.modePagedHint}
           </AppText>
+          <ReaderThemePicker />
         </View>
       </Sheet>
     </View>

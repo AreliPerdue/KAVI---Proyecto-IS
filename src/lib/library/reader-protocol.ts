@@ -30,6 +30,8 @@ export type MensajeAlMotor =
   | ({ type: 'goTo' } & Posicion)
   /** Cambiar la forma de leer sin perder el lugar (RF-BR8, T283). */
   | { type: 'mode'; mode: FormaDeLeer }
+  /** Los colores de la página y de la letra (tema del lector, RF-BH5). */
+  | { type: 'theme'; page: string; text: string }
   /** Pasar una página en páginas de lado: las flechas del teclado de la app, en web (RF-BR7b). */
   | { type: 'turn'; step: 1 | -1 }
   | { type: 'search'; query: string }

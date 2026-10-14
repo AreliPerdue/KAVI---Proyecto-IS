@@ -165,16 +165,18 @@ function estilosDePagina(ancho, alto, cssDelCapitulo) {
   const columna = ancho - MARGEN_TEXTO * 2;
   return `${cssDelCapitulo}
 /* La hoja recorta: el contenido se corre de lado y solo se ve su columna. */
-:host { all: initial; display: block; width: ${ancho}px; height: ${alto}px; overflow: hidden; background: #fff; }
+:host { all: initial; display: block; width: ${ancho}px; height: ${alto}px; overflow: hidden; background: var(--papel, #fff); }
 .contenido {
   box-sizing: content-box; width: ${columna}px; height: ${alto - MARGEN_TEXTO * 2}px; padding: ${MARGEN_TEXTO}px;
   column-width: ${columna}px; column-gap: ${MARGEN_TEXTO * 2}px; column-fill: auto;
-  font-family: Georgia, 'Times New Roman', serif; font-size: 17px; line-height: 1.5; color: #1a1a1a;
+  font-family: Georgia, 'Times New Roman', serif; font-size: 17px; line-height: 1.5; color: var(--tinta, #1a1a1a);
   text-align: start; hyphens: auto; overflow-wrap: break-word;
 }
 .contenido img, .contenido svg, .contenido video { max-width: 100%; max-height: ${alto - MARGEN_TEXTO * 2}px; object-fit: contain; break-inside: avoid; }
 .contenido script, .contenido style, .contenido link { display: none; }
-.contenido a { color: inherit; }`;
+.contenido a { color: inherit; }
+/* Tema del lector (RF-BH5): la letra y el fondo del tema, aunque el capítulo traiga otros. */
+.contenido *:not(img):not(svg):not(video) { color: inherit !important; background-color: transparent !important; }`;
 }
 
 /** Lee un capítulo ya preparado por foliate (sus recursos son direcciones `blob:`) y su CSS. */

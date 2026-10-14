@@ -134,6 +134,7 @@ reescribe) · colaboración en tiempo real en una creación.
 | **L0** | Spec aprobada (decisiones de §9), enmienda a la constitución, datos y Storage diseñados. | 13 |
 | **L1** | Núcleo: librería con portadas, agregar PDF y EPUB, leer en scroll, progreso. | 13a, 13b |
 | **L2** | Las tres formas de leer, incluido el *libro real* en horizontal con paso de página. | 13b |
+| **L2b** | Más para leer (propuesta, spec 13g): MOBI/AZW3/FB2/CBZ/TXT, interlineado y márgenes, brillo y luz cálida, índice, exportar notas, recortar márgenes y partir escaneos de PDF. | 13g |
 | **L3** | Herramientas: subrayar, notas, separadores, post-its, stickers, zoom, letra, tema; luego lápiz, voz y diccionario. | 13c |
 | **L4** | Fichas de calificación y su resumen. | 13d |
 | **L5** | Creaciones: cuadernos, diarios y álbumes con plantillas por capas; trackers. | 13e |

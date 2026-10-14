@@ -1005,11 +1005,26 @@ Decisiones B1–B9 aprobadas el 12 oct 2026 (T274); ver la tabla de la spec 13 �
   nada), sesiones guardadas (`library_reading_sessions` con RLS) y resumen por libro y de la biblioteca:
   sesiones, tiempo total, promedio, días y horas. (RF-BR11 – RF-BR13, idea de Areli del 13 oct 2026) Dep: T279
 
+### L2b · Más para leer (spec 13g, propuesta del 13 oct 2026; falta aprobarla)
+- [ ] T319 Kindle sin candado (MOBI, AZW3), FB2 y CBZ con foliate; DRM rechazado con su motivo. (RF-BX1, RF-BX2) Dep: T278
+- [ ] T320 TXT como libro que se reacomoda: EPUB mínimo en el dispositivo, capítulos por títulos, UTF-8 o
+  Latin-1. (RF-BX3) Dep: T278
+- [ ] T321 Interlineado, márgenes y alineación en EPUB y texto. (RF-BX4) Dep: T288
+- [ ] T322 Brillo dentro del lector y filtro de luz cálida programable. (RF-BX5, RF-BX6) Dep: T288b
+- [ ] T323 Índice (TOC del EPUB, esquema del PDF) con el capítulo actual marcado. (RF-BX7) Dep: T279
+- [ ] T324 Cuánto falta del capítulo y estimado del libro. (RF-BX8) Dep: T323, T318
+- [ ] T325 Exportar subrayados y notas como Markdown o texto. (RF-BX9) Dep: T286, T287
+- [ ] T326 PDF: recortar márgenes (automático o a mano, pares e impares) y partir dobles páginas escaneadas.
+  (RF-BX10, RF-BX11) Dep: T279
+- [ ] T327 PDF con texto que se reacomoda (saca el texto y lo muestra como EPUB). (RF-BX12) Dep: T279, T288
+
 ### L3 · Herramientas sobre la página
 - [ ] T286 Capa de anotaciones con posición estable, panel de anotaciones, capas y bloqueo, deshacer.
   (RF-BH16 – RF-BH18) Dep: T279
 - [ ] T287 Subrayar con colores y estilos, definir, copiar. (RF-BH7 – RF-BH9) Dep: T286
-- [ ] T288 Zoom, tamaño y tipo de letra incluidos, tema del lector. (RF-BH1 – RF-BH3, RF-BH5) Dep: T279
+- [ ] T288 Zoom, tamaño y tipo de letra incluidos. (RF-BH1 – RF-BH3) Dep: T279
+- [x] T288b Tema del lector: claro, oscuro (fondo negro, letra blanca), sepia y propio, con aviso de poco
+  contraste; en PDF, filtro de dos tonos. Adelantada el 13 oct a pedido de Areli. (RF-BH5) Dep: T279
 - [ ] T289 Cuadros de texto e imágenes. (RF-BH10, RF-BH12) Dep: T286
 - [ ] T290 Stickers con charola de quitados, post-its que se doblan, separadores en el borde elegido.
   (RF-BH13 – RF-BH15) Dep: T286

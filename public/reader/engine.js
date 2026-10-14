@@ -5,8 +5,8 @@
  * origen y el teléfono en un WebView. La app y el motor solo se hablan por mensajes JSON; los tipos
  * viven del lado de la app en `src/lib/library/reader-protocol.ts`.
  *
- * App → motor: `open`, `openBegin` / `openChunk` / `openEnd`, `goTo`, `mode`, `turn`, `search`, `searchStep`,
- * `searchClear`, `cover`.
+ * App → motor: `open`, `openBegin` / `openChunk` / `openEnd`, `goTo`, `mode`, `turn`, `theme`, `search`,
+ * `searchStep`, `searchClear`, `cover`.
  * Motor → app: `ready`, `opened`, `position`, `search`, `tap`, `cover`, `error`.
  *
  * PDF con pdf.js (página fija, con capa de texto para buscar); EPUB con foliate-js (texto que se
@@ -96,6 +96,8 @@ async function atender(m) {
       return irA(m);
     case 'mode':
       return cambiarForma(formaDe(m.mode));
+    case 'theme':
+      return cambiarTema(m.page, m.text);
     case 'turn':
       return pasar(m.step === -1 ? -1 : 1);
     case 'search':
@@ -419,6 +421,7 @@ async function abrirEpub(fuente, posicion) {
   view.renderer.setAttribute('margin', '32px');
   view.renderer.setAttribute('max-inline-size', '720px');
   formaEpub(view);
+  view.renderer.setStyles?.(estilosDeTema());
   // Los toques en los bordes y el centro, el teclado y el trackpad van dentro de cada capítulo (otro
   // documento); el deslizar con el dedo ya lo hace foliate.
   view.addEventListener('load', (e) => gestosDePaginas(e.detail.doc, true));
@@ -462,6 +465,60 @@ async function cambiarForma(nueva) {
     formaEpub(epub.view);
     if (cfi) await epub.view.goTo(cfi);
   }
+}
+
+// ─── Tema del lector (13c, RF-BH5) ───────────────────────────────────────────
+
+const HEX = /^#[0-9a-fA-F]{6}$/;
+let tema = { pagina: '#FFFFFF', letra: '#1A1A1A' };
+
+/**
+ * Los colores de la página y de la letra. En EPUB el texto toma la letra y el fondo la página (lo que el
+ * libro pinte de otro color se iguala). Un PDF es una imagen: se le pasa un filtro de dos tonos, así lo
+ * blanco queda del color de la página y lo negro del de la letra (las fotos se ven en esos dos tonos). Con
+ * página blanca, el PDF se queda tal cual.
+ */
+function cambiarTema(pagina, letra) {
+  if (!HEX.test(pagina ?? '') || !HEX.test(letra ?? '')) return;
+  tema = { pagina, letra };
+  aplicarTema();
+}
+
+function aplicarTema() {
+  const raiz = document.documentElement.style;
+  raiz.setProperty('--papel', tema.pagina);
+  raiz.setProperty('--tinta', tema.letra);
+  const blanca = tema.pagina.toUpperCase() === '#FFFFFF';
+  filtroDeDosTonos(tema.pagina, tema.letra);
+  raiz.setProperty('--filtro-pdf', blanca ? 'none' : 'url(#kavi-tema)');
+  if (epub) epub.view.renderer.setStyles?.(estilosDeTema());
+}
+
+/** Lo que se le pone a cada capítulo de un EPUB (foliate lee el fondo de `--theme-bg-color`). */
+function estilosDeTema() {
+  const { pagina, letra } = tema;
+  return `html { --theme-bg-color: ${pagina}; }
+html, body { background: ${pagina} !important; color: ${letra} !important; }
+body *:not(img):not(svg):not(video) { color: inherit !important; background-color: transparent !important; }
+a:link, a:visited { color: inherit !important; }`;
+}
+
+/** El filtro SVG del PDF: pasa a grises y lleva del negro (letra) al blanco (página). */
+function filtroDeDosTonos(pagina, letra) {
+  const canal = (hex, i) => parseInt(hex.slice(1 + i * 2, 3 + i * 2), 16) / 255;
+  const tabla = (i) => `${canal(letra, i).toFixed(4)} ${canal(pagina, i).toFixed(4)}`;
+  let svg = document.getElementById('kavi-filtros');
+  if (!svg) {
+    svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.id = 'kavi-filtros';
+    svg.setAttribute('aria-hidden', 'true');
+    svg.style.cssText = 'position:absolute;width:0;height:0;overflow:hidden';
+    document.body.append(svg);
+  }
+  svg.innerHTML = `<filter id="kavi-tema" color-interpolation-filters="sRGB">
+<feColorMatrix type="matrix" values="0.2126 0.7152 0.0722 0 0  0.2126 0.7152 0.0722 0 0  0.2126 0.7152 0.0722 0 0  0 0 0 1 0"/>
+<feComponentTransfer><feFuncR type="table" tableValues="${tabla(0)}"/><feFuncG type="table" tableValues="${tabla(1)}"/><feFuncB type="table" tableValues="${tabla(2)}"/></feComponentTransfer>
+</filter>`;
 }
 
 // ─── Libro real (RF-BR5, T284) ───────────────────────────────────────────────

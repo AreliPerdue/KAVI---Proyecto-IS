@@ -298,3 +298,28 @@ describe('libro real', () => {
     expect(mockPantallaCompleta).toHaveBeenLastCalledWith(false);
   });
 });
+
+/** Tema del lector (RF-BH5): se manda al motor al abrir y al cambiarlo. */
+describe('tema del lector', () => {
+  it('manda los colores del tema y, al elegir oscuro, fondo negro y letra blanca', async () => {
+    usePreferencesStore.setState({ readerTheme: { tema: 'light', propio: { pagina: '#F4ECD8', letra: '#5B4636' } } });
+    await render(<Lector />);
+    expect(mockEnviados).toContainEqual({ type: 'theme', page: '#FFFFFF', text: '#1A1A1A' });
+    await responder({ type: 'opened', total: 340 });
+    await fireEvent.press(screen.getByRole('button', { name: R.mode }));
+    await fireEvent.press(screen.getByRole('tab', { name: R.themeDark }));
+    expect(mockEnviados.at(-1)).toEqual({ type: 'theme', page: '#000000', text: '#F2F2F2' });
+    expect(usePreferencesStore.getState().readerTheme.tema).toBe('dark');
+  });
+
+  it('el propio deja elegir página y letra, y avisa si cuesta leer', async () => {
+    usePreferencesStore.setState({ readerTheme: { tema: 'custom', propio: { pagina: '#F4ECD8', letra: '#5B4636' } } });
+    await render(<Lector />);
+    await responder({ type: 'opened', total: 340 });
+    await fireEvent.press(screen.getByRole('button', { name: R.mode }));
+    await fireEvent.press(screen.getByRole('button', { name: R.themeColor(R.themePage, '#121212') }));
+    await fireEvent.press(screen.getByRole('button', { name: R.themeColor(R.themeText, '#3B3B3B') }));
+    expect(mockEnviados.at(-1)).toEqual({ type: 'theme', page: '#121212', text: '#3B3B3B' });
+    expect(screen.getByText(R.themeLowContrast)).toBeTruthy();
+  });
+});

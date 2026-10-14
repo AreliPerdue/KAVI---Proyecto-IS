@@ -1,4 +1,6 @@
 /** Los libros guardados en el teléfono (RF-BR3, T285): bajar una vez, leer en pedazos, borrar. */
+import { base64ToBytes } from '@/lib/library/base64';
+
 type Nodo = { uri: string };
 const mockDisco = new Map<string, Uint8Array>();
 const mockCarpetas = new Set<string>();
@@ -50,8 +52,6 @@ jest.mock('expo-file-system', () => {
   }
   return { Directory, File, Paths: { document: { uri: 'file:///docs' } } };
 });
-
-import { base64ToBytes } from '@/lib/library/base64';
 
 /* eslint-disable-next-line @typescript-eslint/no-require-imports -- tras el mock */
 const copias = require('@/lib/library/offline/copies') as typeof import('@/lib/library/offline/copies');

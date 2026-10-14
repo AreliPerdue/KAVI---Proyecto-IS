@@ -15,6 +15,13 @@
   que te pertenezcan."* Se guardan en R2, como los libros, y se usan en todos los dispositivos de la persona.
 - **RF-BH5. Tema del lector:** claro, oscuro, sepia, y personalizado (color de la página y de la letra por
   separado). Independiente del tema de la app.
+  - **Hecho (T288b, 13 oct 2026).** En la hoja **"Lectura"** del lector (la de la forma de leer), con una
+    muestra de cómo se ve. Oscuro es fondo negro `#000000` y letra `#F2F2F2`; sepia, `#F4ECD8` y `#5B4636`.
+    En "Propio" se eligen página y letra de una paleta o en hex; si juntos no llegan a 4.5:1 de contraste,
+    se avisa pero se deja. Es uno para todos los libros y se recuerda en el dispositivo.
+  - EPUB: el texto toma la letra y el fondo la página (lo que el libro pinte de otro color se iguala). PDF:
+    un filtro de dos tonos (lo blanco al color de la página, lo negro al de la letra; las fotos quedan en esos
+    dos tonos); con página blanca, el PDF queda tal cual. Funciona en las tres formas de leer.
 - **RF-BH6. Escuchar.** Un botón lee en voz alta desde donde va la página (voz del sistema, decisión B7),
   resaltando la frase que se está leyendo; velocidad ajustable; sigue con la pantalla bloqueada en teléfono.
 

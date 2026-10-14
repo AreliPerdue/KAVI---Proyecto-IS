@@ -5,6 +5,7 @@ import { type Language, type LanguagePreference, resolveLanguage, setLanguage } 
 import { type CalendarView, setTimeFormat, type TimeFormat } from '@/lib/dates';
 import { type OrdenBiblioteca, ORDEN_POR_OMISION, ordenValido } from '@/lib/library/filters';
 import { type FormaDeLeer, formasValidas, recordarForma } from '@/lib/library/reading-mode';
+import { type PreferenciaDeTema, TEMA_POR_OMISION, temaValido } from '@/lib/library/reader-theme';
 import { type VistaDeSagas, VISTA_DE_SAGAS_POR_OMISION, vistaDeSagasValida } from '@/lib/library/series';
 import { DEFAULT_LIBRARY_VIEW, type LibraryView, libraryViewValida } from '@/lib/library/shelf';
 import { getJson, setJson } from '@/lib/storage';
@@ -57,6 +58,7 @@ type Prefs = {
   libraryOrder: OrdenBiblioteca;
   librarySeriesView: VistaDeSagas;
   readingModes: Record<string, FormaDeLeer>;
+  readerTheme: PreferenciaDeTema;
 };
 
 type PreferencesState = {
@@ -108,6 +110,8 @@ type PreferencesState = {
    * preferir el scroll y en la web las páginas de lado. Sin entrada, scroll.
    */
   readingModes: Record<string, FormaDeLeer>;
+  /** Tema del lector (RF-BH5): el mismo para todos los libros, aparte del tema de la app. */
+  readerTheme: PreferenciaDeTema;
   hydrated: boolean;
   setTimeFormat: (formato: TimeFormat) => void;
   setLanguage: (idioma: LanguagePreference) => void;
@@ -124,6 +128,7 @@ type PreferencesState = {
   setLibraryOrder: (orden: OrdenBiblioteca) => void;
   setLibrarySeriesView: (vista: VistaDeSagas) => void;
   setReadingMode: (itemId: string, forma: FormaDeLeer) => void;
+  setReaderTheme: (tema: PreferenciaDeTema) => void;
   hydrate: () => Promise<void>;
 };
 
@@ -163,6 +168,7 @@ export const usePreferencesStore = create<PreferencesState>((set, get) => ({
   libraryOrder: ORDEN_POR_OMISION,
   librarySeriesView: VISTA_DE_SAGAS_POR_OMISION,
   readingModes: {},
+  readerTheme: TEMA_POR_OMISION,
   hydrated: false,
 
   setTimeFormat: (formato) => {
@@ -277,6 +283,12 @@ export const usePreferencesStore = create<PreferencesState>((set, get) => ({
     persistir({ ...get(), readingModes: siguiente });
   },
 
+  setReaderTheme: (tema) => {
+    elegidoEnEstaSesion.add('readerTheme');
+    set({ readerTheme: tema });
+    persistir({ ...get(), readerTheme: tema });
+  },
+
   marcarVisto: () => {
     if (get().visto) return;
     elegidoEnEstaSesion.add('visto');
@@ -320,6 +332,7 @@ export const usePreferencesStore = create<PreferencesState>((set, get) => ({
       libraryOrder: guardado('libraryOrder', ordenValido(prefs?.libraryOrder)),
       librarySeriesView: guardado('librarySeriesView', vistaDeSagasValida(prefs?.librarySeriesView)),
       readingModes: guardado('readingModes', formasValidas(prefs?.readingModes)),
+      readerTheme: guardado('readerTheme', temaValido(prefs?.readerTheme)),
       hydrated: true,
     });
     // Lo elegido antes de hidratar se guardo con el resto de valores por omision;
@@ -330,7 +343,7 @@ export const usePreferencesStore = create<PreferencesState>((set, get) => ({
 
 /** Se guarda el conjunto entero: son dos claves y así no pueden desincronizarse. */
 function persistir(
-  estado: Pick<PreferencesState, 'timeFormat' | 'timeFormatChosen' | 'language' | 'lastWorkoutTitle' | 'showWorkouts' | 'showBirthdays' | 'visto' | 'appearance' | 'selfColor' | 'pinnedViews' | 'accesos' | 'overlayRecientes' | 'libraryView' | 'libraryOrder' | 'librarySeriesView' | 'readingModes'>,
+  estado: Pick<PreferencesState, 'timeFormat' | 'timeFormatChosen' | 'language' | 'lastWorkoutTitle' | 'showWorkouts' | 'showBirthdays' | 'visto' | 'appearance' | 'selfColor' | 'pinnedViews' | 'accesos' | 'overlayRecientes' | 'libraryView' | 'libraryOrder' | 'librarySeriesView' | 'readingModes' | 'readerTheme'>,
 ): void {
   void setJson(PREFS_KEY, {
     timeFormat: estado.timeFormat,
@@ -349,5 +362,6 @@ function persistir(
     libraryOrder: estado.libraryOrder,
     librarySeriesView: estado.librarySeriesView,
     readingModes: estado.readingModes,
+    readerTheme: estado.readerTheme,
   } satisfies Prefs);
 }
