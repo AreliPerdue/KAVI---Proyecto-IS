@@ -134,6 +134,20 @@ export default function RootLayout() {
     document.documentElement.setAttribute('data-kavi-theme', scheme);
   }, [scheme]);
 
+  /**
+   * En la web, una imagen no se arrastra con el arrastre nativo del navegador (Firefox no respeta el
+   * `user-drag: none` de `global.css`): cancelaba el gesto de acomodar portadas y lomos (RF-BL7) y, al soltar,
+   * el libro se abría.
+   */
+  useEffect(() => {
+    if (Platform.OS !== 'web') return;
+    const sinArrastre = (e: DragEvent) => {
+      if ((e.target as Element | null)?.tagName === 'IMG') e.preventDefault();
+    };
+    document.addEventListener('dragstart', sinArrastre, true);
+    return () => document.removeEventListener('dragstart', sinArrastre, true);
+  }, []);
+
   return (
     <GestureHandlerRootView style={styles.root}>
       <QueryClientProvider client={queryClient}>

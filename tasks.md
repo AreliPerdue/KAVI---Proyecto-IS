@@ -870,6 +870,12 @@ Plan y decisiones en `docs/gym/AUDITORIA.md`. Cada fase cierra con typecheck, li
   by…, 100 reps, escalera descendente e intervalos a tu medida. (RF-F46) Dep: —
 
 ### Bugs reportados
+- [x] T332 **Acomodar arrastrando: solo se movió un libro y los demás se abrían al agarrarlos** (13 oct 2026).
+  Causa probable (web): las portadas son `<img>` y el navegador inicia su propio arrastre de imagen (o, en
+  Safari del iPhone, el menú de "Guardar imagen"), que cancela el gesto; al soltar, el toque abría el libro.
+  Arreglo: las imágenes de la web no se arrastran ni abren ese menú (`global.css` y `dragstart` cancelado en el
+  layout raíz). En el demo el arrastre con mouse ya funcionaba; falta confirmarlo en el aparato donde pasó.
+  (RF-BL7) Dep: T280
 - [x] T272 **La ocurrencia borrada volvía tras algunos inicios de sesión** (9 oct 2026, serie del 1 al 9 de
   octubre, se borró solo el 9). Causa: el APK del 23 sep es anterior a T249 y no conoce los días excluidos; al
   iniciar sesión regeneraba la serie y recreaba el 9. Arreglo en la base: trigger `activities_skip_excluded`

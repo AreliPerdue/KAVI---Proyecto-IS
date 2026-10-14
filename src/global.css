@@ -43,3 +43,15 @@ select:-webkit-autofill {
   /* Evita el destello amarillo del primer frame antes de aplicar la sombra. */
   transition: background-color 600000s 0s, color 600000s 0s;
 }
+
+/**
+ * Las imágenes de la app no se arrastran con el arrastre nativo del navegador ni abren su menú de "Guardar
+ * imagen" al mantenerlas presionadas (Safari en iPhone). Las portadas y los lomos se acomodan con su propio
+ * gesto (mantener presionado y mover, RF-BL7 / RF-BL7b): el arrastre de imagen del navegador lo cancelaba y,
+ * al soltar, el libro se abría.
+ */
+img {
+  -webkit-user-drag: none;
+  user-drag: none;
+  -webkit-touch-callout: none;
+}
