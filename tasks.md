@@ -1136,6 +1136,15 @@ Decisiones B1–B9 aprobadas el 12 oct 2026 (T274); ver la tabla de la spec 13 �
 - [ ] T294 Fichas pegadas en la pieza y ofrecer llenarla al terminar. (RF-BF4, RF-BF6, RF-BF7) Dep: T293, T279
 - [ ] T295 Mis reseñas: todas las fichas, orden, filtros y totales. (RF-BF8 – RF-BF10) Dep: T294
 
+### Atajos del calendario (spec 04 RF-C19 – RF-C21, propuesta del 14 oct 2026; falta aprobarla)
+- [ ] T353 Fila de atajos personalizable arriba del calendario: agregar, quitar, reordenar y ocultar; Seguir leyendo,
+  Entrenar, Una lista, Nueva actividad fija y Tiempo leído hoy. (RF-C19, RF-C20) Dep: T318
+- [ ] T354 Accesos del ícono (iOS y Android) con `expo-quick-actions`: Seguir leyendo, Nueva actividad, Entrenar.
+  Requiere recompilar. (RF-C21) Dep: T353
+- [ ] T355 Widget de la pantalla de inicio en Android: libro en curso y su avance. (RF-C21) Dep: T353
+- [ ] T356 Widget de la pantalla de inicio en iOS con `expo-widgets`. Bloqueado por la cuenta de Apple Developer.
+  (RF-C21) Dep: T353
+
 ### LK · Lienzo creativo: Recortes y Journal (specs 13h y 13i, aprobadas el 14 oct 2026)
 Reemplazan L5 (13e). Un recorte es una página 1 : √2 del visor de PDF (decisión 3 de Areli).
 - [x] T341 Specs 13h y 13i: propuesta, decisiones de Areli (Fragmentos, reemplazo de 13e, página del visor de PDF,

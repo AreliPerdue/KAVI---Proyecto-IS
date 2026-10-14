@@ -64,6 +64,30 @@ El calendario es la pantalla principal y el hub de toda la app (P1). Desde él s
   se ven actividades*, así que se aplica antes y no dentro de `applyFilters`.
 - RF-C12. Estados de carga (skeleton), vacío ("No tienes actividades este día") y error con retry.
 
+### Atajos (widgets) — propuesta del 14 oct 2026, falta aprobarla
+Pedido de Areli: que en la pantalla principal (el calendario) la persona ponga atajos a lo que más usa, como
+"seguir leyendo" el libro en curso.
+
+- RF-C19. **Fila de atajos** arriba del calendario (debajo del encabezado y las personas): tarjetas chicas que
+  se deslizan de lado. Se **personaliza** desde "Editar atajos": agregar de un catálogo, quitar y reordenar
+  arrastrando; se puede **ocultar** toda la fila. Por defecto, vacía con una invitación ("Agrega atajos a lo que
+  más usas") que se puede descartar. Es del dispositivo (como la vista elegida) y no tapa el mes: el grid se
+  reparte el espacio que queda (RF-C1).
+- RF-C20. **Catálogo inicial:**
+  - **Seguir leyendo:** la portada del libro que se leyó más recientemente y no está terminado, con "p. 12 de 340"
+    o el %; tocarla abre el lector donde se quedó. Sin libros en curso no se ofrece.
+  - **Entrenar:** empieza el entrenamiento de hoy o uno vacío (spec 07).
+  - **Una lista:** una lista elegida (spec 10) con sus pendientes de hoy y un "+" para agregar sin salir.
+  - **Nueva actividad** a una hora o tema fijo (p. ej. "Leer 30 min", que crea la actividad de lectura).
+  - **Tiempo leído hoy** (13b RF-BR13).
+  Cada tarjeta respeta tema claro/oscuro y no trae color propio salvo el de su contenido (portada, dimensión).
+- RF-C21. **Fuera de la app** (fases posteriores, requieren recompilar):
+  - **Accesos del ícono** (mantener presionado el ícono de KAVI): Seguir leyendo, Nueva actividad, Entrenar — iOS
+    y Android, con `expo-quick-actions` (módulo nativo, sin código nativo propio).
+  - **Widget de la pantalla de inicio:** en iOS con `expo-widgets` (estable desde SDK 56; necesita la cuenta de
+    Apple Developer, hoy bloqueada); en Android, con un módulo de la comunidad o nativo (por decidir). El primero:
+    la portada del libro en curso y su avance.
+
 ## Reglas de negocio
 - Actividades pueden traslaparse (sin validación de conflicto en V1; la coordinación se resuelve con disponibilidad en F4).
 - `is_gym` se activa automáticamente si el tema seleccionado es "Gimnasio", y puede alternarse manualmente en el formulario.
