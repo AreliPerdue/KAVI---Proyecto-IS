@@ -575,6 +575,11 @@ export type LibraryLocator = {
   rects?: LibraryTextRect[];
   /** Alto entre ancho de algo pegado que se estiró (T329); sin él, cuadrado. */
   ar?: number;
+  /**
+   * En un EPUB, cuánto se separa la orilla de arriba de lo pegado de su renglón, en tamaños de letra (puede
+   * ser negativo). Así se queda donde se soltó aunque sea en un margen o un hueco sin texto.
+   */
+  dy?: number;
 };
 
 /** Una pieza de la librería: un libro importado o una creación (spec 13 §2). */

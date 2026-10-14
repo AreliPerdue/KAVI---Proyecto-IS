@@ -40,6 +40,7 @@ describe('leerMensaje · capa de anotaciones (T286)', () => {
     [{ type: 'select', id: null }, { type: 'select', id: null }],
     [{ type: 'move', id: 'a1', locator: { cfi: 'epubcfi(/6/4)', x: 0.3, w: 0.24, fraction: 0.5 } }, { type: 'move', id: 'a1', locator: { cfi: 'epubcfi(/6/4)', x: 0.3, w: 0.24, fraction: 0.5 } }],
     [{ type: 'edit', id: 'a1' }, { type: 'edit', id: 'a1' }],
+    [{ type: 'remove', id: 'a1' }, { type: 'remove', id: 'a1' }],
     [{ type: 'selection', text: '' }, { type: 'selection', text: '', locator: null }],
     [{ type: 'zoom', level: 1.5 }, { type: 'zoom', level: 1.5 }],
     [{ type: 'text', id: 'a1', text: 'Hola' }, { type: 'text', id: 'a1', text: 'Hola' }],

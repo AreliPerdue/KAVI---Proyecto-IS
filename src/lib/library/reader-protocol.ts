@@ -105,6 +105,8 @@ export type MensajeDelMotor =
   | { type: 'move'; id: string; locator: LibraryLocator }
   /** Doble toque en algo pegado: abrirlo para escribir. */
   | { type: 'edit'; id: string }
+  /** Supr o Retroceso con algo pegado elegido: quitarlo, como el botón Quitar. */
+  | { type: 'remove'; id: string }
   /** Se terminó de escribir directo en un post-it o un cuadro de texto (T289). */
   | { type: 'text'; id: string; text: string }
   /** Se giró una imagen (grados, 0 – 359). */
@@ -173,6 +175,8 @@ export function leerMensaje(crudo: unknown): MensajeDelMotor | null {
     }
     case 'edit':
       return esId(m.id) ? { type: 'edit', id: m.id } : null;
+    case 'remove':
+      return esId(m.id) ? { type: 'remove', id: m.id } : null;
     case 'text':
       return esId(m.id) && typeof m.text === 'string' ? { type: 'text', id: m.id, text: m.text.slice(0, 1000) } : null;
     case 'rotate':

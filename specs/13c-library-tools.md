@@ -115,8 +115,19 @@
     libro.
   - Cambio de forma: "arrastrarlo de vuelta" es **tocarlo en la charola y luego tocar la página**, porque la
     hoja y la página no comparten el gesto (la charola es nativa y la página es el motor web).
-  - Falta: sticker de **una imagen propia**, girar **con dos dedos** en el teléfono y los demás colores o
-    estilos (13e).
+  - El pack se llama **Primer Rebote** (el de inicio: los Nobi son blobs, como de gelatina, algodón o aire, y
+    vendrán packs de temporada), color **Rosa algodón**.
+  - **Ajustes del 14 oct (pedido de Areli):** elegido ya no lleva contorno ni sombra cuadrada: lo enmarcan
+    solo las asas (las "L" de las esquinas y las rayitas de en medio). Un sticker tiene las 8: las esquinas lo
+    agrandan sin deformarlo y las de los lados lo estiran. El asa de girar es la flecha de girar, no un arco.
+    En EPUB lo pegado se queda **donde se suelta**, también en un margen o un hueco sin texto: la posición
+    guarda el renglón más cercano y cuánto se separa de él (`dy`, en tamaños de letra).
+  - **Supr o Retroceso** quitan lo pegado que esté elegido (como **Quitar**: el sticker va a la charola), salvo
+    mientras se escribe en él o con el foco en un campo. El botón se queda.
+  - **Stickers propios (T335, pendiente, pedido de Areli del 14 oct):** desde una imagen (galería, cámara o
+    archivo), con la opción de ponerle **margen blanco** alrededor de su silueta para que parezca sticker y
+    **ajustar su grosor**. Se guardan en la colección de la persona y se pegan como los incluidos.
+  - Falta: girar **con dos dedos** en el teléfono y los demás colores o estilos (13e).
 - **RF-BH14. Post-its:** cuadrados de color (paleta de los Nobi) con texto o trazo; se pegan, se mueven, se
   rotan un poco y se pueden **doblar** para que solo se vea una esquina. Tocar uno doblado lo abre.
 - **RF-BH15. Separadores:** las pestañitas que salen del borde. La persona elige **en qué borde** (arriba,

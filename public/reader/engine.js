@@ -886,6 +886,7 @@ function gestosDePaginas(objetivo, esEpub = false) {
 }
 
 function teclas(e) {
+  if (anotaciones.alTeclear(e)) return;
   if (!porPaginas() || e.metaKey || e.ctrlKey || e.altKey) return;
   const adelante = e.key === 'ArrowRight' || e.key === 'PageDown' || (e.key === ' ' && !e.shiftKey);
   const atras = e.key === 'ArrowLeft' || e.key === 'PageUp' || (e.key === ' ' && e.shiftKey);

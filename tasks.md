@@ -1087,7 +1087,12 @@ Decisiones B1–B9 aprobadas el 12 oct 2026 (T274); ver la tabla de la spec 13 �
   **Hecho (14 oct 2026):** catálogo `src/constants/stickers.ts` (26 caras, nombres en es/en), imágenes en
   `public/reader/stickers/nobi-pink/` (también dentro de `assets/reader/engine.html`, `KAVI_STICKERS`), tipo
   `sticker` en `public/reader/annotations.js` (asas en las esquinas, proporción fija, giro; la caja sin giro al
-  soltar), `sticker-sheet.tsx` y la herramienta en la barra.
+  soltar), `sticker-sheet.tsx` y la herramienta en la barra. Ajustes del mismo día: sin contorno al elegir
+  (solo asas), 8 asas en el sticker (lados estiran), flecha de girar, en EPUB se queda donde se suelta (`dy`) y
+  Supr/Retroceso quitan lo elegido.
+- [ ] T335 Stickers propios: desde una imagen (galería, cámara o archivo), con margen blanco opcional alrededor
+  de la silueta y su grosor ajustable; se guardan en la colección de la persona y se pegan como los incluidos.
+  (RF-BH13, pedido de Areli del 14 oct 2026) Dep: T334
 - [x] T333 Borrar el archivo de una imagen quitada una hora después, si no se deshizo. (RF-BH12, pedido de
   Areli del 14 oct 2026) Dep: T289
   **Hecho (14 oct 2026):** acción `deleteFile` en `api/library-files.ts` (solo `<uid>/<pieza>/anotaciones/<id>.jpg`

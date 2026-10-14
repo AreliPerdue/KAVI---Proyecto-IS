@@ -217,9 +217,8 @@
         pointer-events: none;
         overflow: hidden;
       }
-      .anotacion.seleccionada {
-        outline: 1.5px solid #131313;
-        outline-offset: 3px;
+      /* Elegido: sin contorno (pedido de Areli, 14 oct); lo enmarcan las asas. El post-it se levanta un poco. */
+      .anotacion.postit.seleccionada {
         box-shadow: 0 4px 14px rgb(0 0 0 / 0.35) !important;
       }
       /*
@@ -281,20 +280,18 @@
       }
       .anotacion .asa-e::after { right: 16px; }
       .anotacion .asa-w::after { left: 16px; }
-      /* Girar una imagen: un arco con su flecha, arriba al centro. */
+      /* Girar una imagen o un sticker: la flecha de girar (la de lucide), arriba al centro. */
       .anotacion .asa-giro {
         left: calc(50% - 16px);
         top: -52px;
         cursor: grab;
       }
       .anotacion .asa-giro::after {
-        left: 8px;
-        top: 8px;
-        width: 16px;
-        height: 16px;
-        border-width: 3px;
-        border-radius: 50%;
-        border-right-color: transparent;
+        left: 5px;
+        top: 5px;
+        width: 22px;
+        height: 22px;
+        background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23131313' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8'/%3E%3Cpath d='M21 3v5h-5'/%3E%3C/svg%3E") center / contain no-repeat;
       }
       /* El cuadro de texto: sin fondo; se ve su orilla al elegirlo, al escribir o si está vacío. */
       .anotacion.textbox.seleccionada,

@@ -377,7 +377,9 @@ export const library = {
     title: 'Stickers',
     collection: 'Colección',
     removed: (n: number) => (n ? `Quitados (${n})` : 'Quitados'),
-    pack: { 'nobi-pink': 'Nobi rosa' } as Record<PaqueteDeStickers, string>,
+    // El nombre del pack y el color de sus Nobi. "Primer Rebote": el de inicio (los Nobi son blobs que rebotan como
+    // gelatina); vendrán los de cada temporada.
+    pack: { 'nobi-pink': 'Primer Rebote · Rosa algodón' } as Record<PaqueteDeStickers, string>,
     pick: (nombre: string) => `Pegar el sticker ${nombre.toLowerCase()}`,
     putBack: (nombre: string) => `Volver a pegar ${nombre.toLowerCase()}`,
     discard: (nombre: string) => `Tirar ${nombre.toLowerCase()}`,

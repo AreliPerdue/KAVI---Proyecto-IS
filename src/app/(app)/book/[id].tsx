@@ -382,6 +382,11 @@ function Lector({ id }: { id: string }) {
         setSeleccionId(m.id);
         motor.current?.send({ type: 'write', id: m.id });
         return;
+      case 'remove': {
+        const a = lista?.find((x) => x.id === m.id);
+        if (a && esPegado(a)) quitar(a);
+        return;
+      }
       case 'error':
         setError(m.code);
         return;
@@ -472,13 +477,16 @@ function Lector({ id }: { id: string }) {
     const z = seleccionada && zAlFondo(lista ?? [], seleccionada.id);
     if (seleccionada && z != null) cambiar(seleccionada, { z });
   };
-  /** Quitar lo elegido. Un sticker no se tira: se va a la charola "Quitados" (RF-BH13). */
-  const quitar = () => {
-    if (!seleccionada) return;
-    if (seleccionada.kind === 'sticker') {
-      cambiar(seleccionada, { removed: true });
+  /**
+   * Quitar lo elegido (el botón, o Supr y Retroceso). Un sticker no se tira: se va a la charola "Quitados"
+   * (RF-BH13).
+   */
+  const quitar = (a: LibraryAnnotation | null = seleccionada) => {
+    if (!a) return;
+    if (a.kind === 'sticker') {
+      cambiar(a, { removed: true });
       avisar({ message: tx.library.stickers.savedToRemoved });
-    } else editor.borrar(seleccionada);
+    } else editor.borrar(a);
     elegir(null);
   };
 
@@ -490,6 +498,29 @@ function Lector({ id }: { id: string }) {
     setHerramienta('sticker');
   };
 
+
+  // Supr o Retroceso quitan lo pegado elegido (pedido de Areli, 14 oct). Con el foco en el libro lo atiende el
+  // motor (`remove`); aquí, con el foco en la página de la app (después de tocar la barra) y sin hojas abiertas.
+  const quitarConTecla = useRef<() => void>(() => undefined);
+  useEffect(() => {
+    quitarConTecla.current = () => {
+      if (seleccionada && forma !== 'book') quitar(seleccionada);
+    };
+  });
+  useEffect(() => {
+    if (Platform.OS !== 'web') return;
+    const alTeclear = (e: KeyboardEvent) => {
+      if (e.key !== 'Backspace' && e.key !== 'Delete') return;
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      // Solo con el foco en ningún lado en particular: dentro de una hoja o un campo, la tecla es de ellos.
+      const destino = e.target as HTMLElement | null;
+      if (destino && destino !== document.body && destino.tagName !== 'IFRAME' && !destino.closest?.('[role="toolbar"]')) return;
+      e.preventDefault();
+      quitarConTecla.current();
+    };
+    window.addEventListener('keydown', alTeclear);
+    return () => window.removeEventListener('keydown', alTeclear);
+  }, []);
 
   /** Subrayar lo seleccionado con un color, en el estilo elegido (RF-BH7). */
   const subrayar = (color: string) => {
@@ -721,7 +752,7 @@ function Lector({ id }: { id: string }) {
               onFrente={alFrente}
               onAtras={alFondo}
               onBloquear={() => seleccionada && cambiar(seleccionada, { locked: !seleccionada.locked })}
-              onQuitar={quitar}
+              onQuitar={() => quitar()}
               onListo={() => elegir(null)}
             />
           ) : null}

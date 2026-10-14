@@ -109,6 +109,9 @@ describe('posición que llega del motor (spec 13 §5)', () => {
 
   it('EPUB: CFI con su x, ancho y avance', () => {
     expect(localizadorPegado({ cfi: 'epubcfi(/6/4!/4/2:10)', x: 0.5, w: 0.24, fraction: 0.31 })).toEqual({ cfi: 'epubcfi(/6/4!/4/2:10)', x: 0.5, w: 0.24, fraction: 0.31 });
+    // La separación de su renglón (en tamaños de letra): se queda donde se soltó, aunque sea en un margen.
+    expect(localizadorPegado({ cfi: 'epubcfi(/6/4!/4/2:10)', x: 0.5, w: 0.24, dy: -2.5 })).toEqual({ cfi: 'epubcfi(/6/4!/4/2:10)', x: 0.5, w: 0.24, dy: -2.5 });
+    expect(localizadorPegado({ cfi: 'epubcfi(/6/4!/4/2:10)', x: 0.5, w: 0.24, dy: 9999 })).toEqual({ cfi: 'epubcfi(/6/4!/4/2:10)', x: 0.5, w: 0.24 });
   });
 
   it('un post-it estirado guarda su proporción (alto entre ancho, T329); fuera de rango se ignora', () => {

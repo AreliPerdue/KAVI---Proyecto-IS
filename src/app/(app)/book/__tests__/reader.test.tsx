@@ -914,6 +914,17 @@ describe('stickers con charola de quitados (spec 13c, RF-BH13; T290)', () => {
     expect(mockBorrar).toHaveBeenCalledWith(expect.objectContaining({ id: 's1' }));
   });
 
+  it('Supr o Retroceso en el libro (el motor avisa "remove"): un sticker va a Quitados, lo demás se borra', async () => {
+    const nota = { ...sticker('p1'), kind: 'postit', content: { color: '#F1D35D', text: 'hola' } };
+    mockLista = [sticker('s1'), nota];
+    await render(<Lector />);
+    await responder({ type: 'opened', total: 12 });
+    await responder({ type: 'remove', id: 's1' });
+    expect(mockCambiar).toHaveBeenLastCalledWith(expect.objectContaining({ id: 's1' }), expect.objectContaining({ removed: true }));
+    await responder({ type: 'remove', id: 'p1' });
+    expect(mockBorrar).toHaveBeenCalledWith(expect.objectContaining({ id: 'p1' }));
+  });
+
   it('la charola vacía explica para qué es', async () => {
     await render(<Lector />);
     await responder({ type: 'opened', total: 12 });

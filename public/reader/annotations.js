@@ -129,7 +129,8 @@ export function crearCapa(ctx, enviar) {
       const src = sticker ? fuenteDeSticker(a.content?.sticker) : a.content?.src;
       if (src) img.src = src;
       Object.assign(img.style, { width: '100%', height: '100%', objectFit: 'contain', display: 'block', pointerEvents: 'none' });
-      if (sticker) img.style.filter = 'drop-shadow(0 1px 2px rgb(0 0 0 / 0.22))';
+      // Un sticker estirado se estira con su caja; una imagen se ve entera.
+      if (sticker) Object.assign(img.style, { objectFit: 'fill', filter: 'drop-shadow(0 1px 2px rgb(0 0 0 / 0.22))' });
       el.append(img);
     } else {
       const caja = document.createElement('div');
@@ -382,19 +383,18 @@ export function crearCapa(ctx, enviar) {
   // ─── Cambiar el tamaño (T329) ────────────────────────────────────────────────
 
   const LADOS = ['n', 's', 'e', 'w', 'ne', 'nw', 'se', 'sw'];
-  const ESQUINAS = ['ne', 'nw', 'se', 'sw'];
 
   /**
    * Las 8 asas de algo pegado y elegido (T329, pedido de Areli): una "L" en cada esquina y una rayita en medio
    * de cada lado, en tinta, cada una con área de sobra para tomarla (así estirar nunca arrastra la nota).
    * Jalar una cambia el ancho y el alto sin mover la orilla de enfrente; las de los lados, solo uno de los dos.
-   * Las imágenes y los stickers llevan además un asa arriba para girarlas. Un sticker solo tiene las de las
-   * esquinas y crece o se encoge sin deformarse.
+   * Las imágenes y los stickers llevan además un asa arriba para girarlas. En un sticker las esquinas lo
+   * agrandan o achican sin deformarlo y las de los lados lo estiran (pedido de Areli, 14 oct).
    */
   function ponerAsas(el, a) {
     if (esImagen(a)) ponerGiro(el, a);
-    const proporcional = a.kind === 'sticker';
-    for (const lado of proporcional ? ESQUINAS : LADOS) {
+    for (const lado of LADOS) {
+      const proporcional = a.kind === 'sticker' && lado.length === 2;
       const asa = document.createElement('div');
       asa.className = `asa asa-${lado}`;
       asa.dataset.lado = lado;
@@ -810,22 +810,35 @@ export function crearCapa(ctx, enviar) {
 
   /** El CFI del renglón en un punto (px de la ventana del motor), si cae sobre un capítulo. */
   function cfiEn(x, y) {
-    const view = ctx.epub()?.view;
-    for (const c of capitulos()) {
-      const m = c.marco.getBoundingClientRect();
-      if (x < m.left || x > m.right || y < m.top || y > m.bottom) continue;
-      const area = areaEpub();
-      // Si el punto cae en el margen, se busca el renglón a esa altura por el centro de la columna.
-      const rango = caretEn(c.doc, x - m.left, y - m.top) ?? caretEn(c.doc, area.left + area.width / 2 - m.left, y - m.top);
-      if (!rango) return null;
-      try {
-        return view.getCFI(c.index, rango);
-      } catch {
-        return null;
-      }
-    }
-    return null;
+    return anclaEn(x, y)?.cfi ?? null;
   }
+
+  /**
+   * El renglón más cercano a un punto (px de la ventana del motor): su CFI, su rango y su capítulo. Si el
+   * punto no cae sobre un capítulo (un margen, el hueco entre capítulos), se busca en el más cercano.
+   */
+  function anclaEn(x, y) {
+    const view = ctx.epub()?.view;
+    const area = areaEpub();
+    const cargados = capitulos();
+    if (!view || !area || !cargados.length) return null;
+    const distancia = (m) => (y < m.top ? m.top - y : y > m.bottom ? y - m.bottom : 0);
+    const c = [...cargados].sort((a, b) => distancia(a.marco.getBoundingClientRect()) - distancia(b.marco.getBoundingClientRect()))[0];
+    const m = c.marco.getBoundingClientRect();
+    const py = entre(y, m.top + 1, m.bottom - 1) - m.top;
+    const px = entre(x, m.left + 1, m.right - 1) - m.left;
+    // Si el punto cae en el margen, se busca el renglón a esa altura por el centro de la columna.
+    const rango = caretEn(c.doc, px, py) ?? caretEn(c.doc, area.left + area.width / 2 - m.left, py);
+    if (!rango) return null;
+    try {
+      return { cfi: view.getCFI(c.index, rango), rango, capitulo: c };
+    } catch {
+      return null;
+    }
+  }
+
+  /** El tamaño de la letra de un capítulo: la separación del renglón se guarda en esa medida. */
+  const letraDe = (doc) => parseFloat(doc.defaultView?.getComputedStyle(doc.body ?? doc.documentElement).fontSize) || 16;
 
   function caretEn(doc, x, y) {
     if (doc.caretRangeFromPoint) return doc.caretRangeFromPoint(x, y);
@@ -837,14 +850,28 @@ export function crearCapa(ctx, enviar) {
     return r;
   }
 
+  /**
+   * La posición en un EPUB: el renglón que queda bajo el centro de lo pegado y cuánto se separa su orilla de
+   * arriba de ese renglón (`dy`, en tamaños de letra). Así se queda donde se soltó aunque caiga en un margen o
+   * en un hueco sin texto, y si cambia la letra se mueve con su renglón.
+   */
   function enEpub(izquierda, arriba, anchoPx, w, ar = 1) {
     const area = areaEpub();
     if (!area) return null;
-    // El renglón a la altura de la orilla de arriba del post-it.
-    const cfi = cfiEn(izquierda + anchoPx / 2, arriba + 4);
-    if (!cfi) return null;
+    const ancla = anclaEn(izquierda + anchoPx / 2, arriba + (anchoPx * ar) / 2);
+    if (!ancla) return null;
+    const m = ancla.capitulo.marco.getBoundingClientRect();
+    const renglon = m.top + rectDe(ancla.rango).top;
+    const dy = redondear((arriba - renglon) / letraDe(ancla.capitulo.doc));
     const x = entre((izquierda - area.left) / area.width, 0, 1 - anchoPx / area.width);
-    return { cfi, x: redondear(Math.max(0, x)), w, fraction: redondear(ctx.epub().fraccion ?? 0), ...(Math.abs(ar - 1) > 0.001 ? { ar: redondear(ar) } : {}) };
+    return {
+      cfi: ancla.cfi,
+      x: redondear(Math.max(0, x)),
+      w,
+      fraction: redondear(ctx.epub().fraccion ?? 0),
+      ...(Math.abs(ar - 1) > 0.001 ? { ar: redondear(ar) } : {}),
+      ...(Math.abs(dy) > 0.01 ? { dy } : {}),
+    };
   }
 
   function lugarEnEpub(e, doc) {
@@ -942,11 +969,12 @@ export function crearCapa(ctx, enviar) {
     }
     const m = capitulo.marco.getBoundingClientRect();
     const r = rectDe(guardado.rango);
-    const top = m.top + r.top;
     const left = m.left + r.left;
-    // En páginas de lado, las otras columnas del capítulo están a los lados, fuera de la vista.
-    if (top < area.top - 2 || top > area.bottom - 16 || left < area.left - 2 || left > area.right) return null;
     const ancho = anchoEpub(a.locator.w, area);
+    const top = m.top + r.top + (Number.isFinite(a.locator.dy) ? a.locator.dy * letraDe(capitulo.doc) : 0);
+    const alto = ancho * proporcionDe(a);
+    // En páginas de lado, las otras columnas del capítulo están a los lados, fuera de la vista.
+    if (top + alto < area.top || top > area.bottom - 16 || left < area.left - 2 || left > area.right) return null;
     return { left: entre(area.left + a.locator.x * area.width, area.left, area.right - ancho), top };
   }
 
@@ -1023,7 +1051,8 @@ export function crearCapa(ctx, enviar) {
       const px = entre(a.locator.w * ancho, LADO_MIN_PX, ancho);
       const el = pegado(a, { ancho: px, enLibro: true });
       el.style.left = `${entre(a.locator.x * ancho, 0, ancho - px)}px`;
-      el.style.top = `${u.y}px`;
+      const letra = parseFloat(getComputedStyle(sombra.host ?? document.body).fontSize) || 16;
+      el.style.top = `${u.y + (Number.isFinite(a.locator.dy) ? a.locator.dy * letra : 0)}px`;
       capa.append(el);
     }
     if (capa.childElementCount) sombra.append(capa);
@@ -1044,7 +1073,22 @@ export function crearCapa(ctx, enviar) {
     if (porEditar) editar(porEditar);
   }
 
+  /**
+   * Supr o Retroceso con algo pegado elegido (y sin estar escribiendo): quitarlo, como el botón (pedido de
+   * Areli, 14 oct). Devuelve si lo atendió.
+   */
+  function alTeclear(e) {
+    if (e.key !== 'Backspace' && e.key !== 'Delete') return false;
+    if (!seleccion || editando || !interactiva() || e.metaKey || e.ctrlKey || e.altKey) return false;
+    if (e.target?.closest?.('input, textarea, [contenteditable="true"], [contenteditable="plaintext-only"]')) return false;
+    if (!pegados().some((a) => a.id === seleccion)) return false;
+    e.preventDefault();
+    enviar({ type: 'remove', id: seleccion });
+    return true;
+  }
+
   return {
+    alTeclear,
     actualizar(items) {
       lista = Array.isArray(items) ? [...items].sort((a, b) => a.z - b.z) : [];
       if (seleccion && !lista.some((a) => a.id === seleccion)) seleccion = null;

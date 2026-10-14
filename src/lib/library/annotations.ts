@@ -214,7 +214,8 @@ export function localizadorPegado(crudo: unknown): LibraryLocator | null {
     return fraccion(l.y) ? { page: l.page, x: l.x, y: l.y, w: l.w, ...ar } : null;
   }
   if (typeof l.cfi === 'string' && l.cfi.startsWith('epubcfi(')) {
-    return { cfi: l.cfi, x: l.x, w: l.w, ...(fraccion(l.fraction) ? { fraction: l.fraction } : {}), ...ar };
+    const dy = typeof l.dy === 'number' && Number.isFinite(l.dy) && Math.abs(l.dy) <= 200 ? { dy: l.dy } : {};
+    return { cfi: l.cfi, x: l.x, w: l.w, ...(fraccion(l.fraction) ? { fraction: l.fraction } : {}), ...ar, ...dy };
   }
   return null;
 }

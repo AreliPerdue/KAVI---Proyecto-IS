@@ -369,7 +369,7 @@ export const library: Dictionary['library'] = {
     title: 'Stickers',
     collection: 'Collection',
     removed: (n: number) => (n ? `Removed (${n})` : 'Removed'),
-    pack: { 'nobi-pink': 'Pink Nobi' },
+    pack: { 'nobi-pink': 'First Bounce · Cotton candy pink' },
     pick: (nombre: string) => `Add the ${nombre.toLowerCase()} sticker`,
     putBack: (nombre: string) => `Put back ${nombre.toLowerCase()}`,
     discard: (nombre: string) => `Throw away ${nombre.toLowerCase()}`,
