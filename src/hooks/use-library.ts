@@ -11,6 +11,7 @@ import { cambioDeColor, COLUMNAS_DE_PARTE, type ParteDeTapa } from '@/lib/librar
 import {
   addLink,
   addToShelf,
+  applyOrder,
   clearCoverPart,
   createShelf,
   ensureSeries,
@@ -20,12 +21,15 @@ import {
   libraryFileUrl,
   type LibraryItem,
   type LibraryItemPatch,
+  type LibraryLayout,
+  type LibraryLayoutView,
   type LibraryLink,
   type LibrarySeries,
   type LibraryShelf,
   type LibraryShelfItem,
   libraryUsage,
   listLibraryItems,
+  listLayouts,
   listLinks,
   listSeries,
   listShelfItems,
@@ -33,10 +37,12 @@ import {
   moveInShelf,
   removeFromShelf,
   removeLibraryItem,
+  removeLayout,
   removeLink,
   removeSeries,
   removeShelf,
   renameSeries,
+  saveLayout,
   saveLibraryCover,
   setCoverPart,
   updateLibraryItem,
@@ -55,6 +61,7 @@ export const libraryKeys = {
   series: (userId: string | null) => ['library', 'series', userId] as const,
   links: (userId: string | null) => ['library', 'links', userId] as const,
   annotations: (itemId: string) => ['library', 'annotations', itemId] as const,
+  layouts: (userId: string | null) => ['library', 'layouts', userId] as const,
 };
 
 /** Las piezas de la persona, de la más nueva a la más vieja. */
@@ -329,9 +336,12 @@ export function useShelfMutations() {
     }),
     /** Mover una pieza dentro de su librero (RF-BL7): solo cambia su orden. */
     mover: useMutation({
-      mutationFn: ({ shelfId, itemId, orden }: { shelfId: string; itemId: string; orden: number }) => moveInShelf(shelfId, itemId, orden),
-      onMutate: ({ shelfId, itemId, orden }) =>
-        cambiarEnLibreros((l) => l.map((s) => (s.shelf_id === shelfId && s.item_id === itemId ? { ...s, sort_order: orden } : s))),
+      mutationFn: ({ shelfId, itemId, orden, vista = 'covers' }: { shelfId: string; itemId: string; orden: number; vista?: LibraryLayoutView }) =>
+        moveInShelf(shelfId, itemId, orden, vista),
+      onMutate: ({ shelfId, itemId, orden, vista = 'covers' }) =>
+        cambiarEnLibreros((l) =>
+          l.map((s) => (s.shelf_id === shelfId && s.item_id === itemId ? { ...s, ...(vista === 'spines' ? { spine_order: orden } : { sort_order: orden }) } : s)),
+        ),
       onSettled: refrescar,
     }),
   };
@@ -392,6 +402,33 @@ export function useLinkMutations() {
     quitar: useMutation({
       mutationFn: (id: string) => removeLink(id),
       onMutate: (id) => queryClient.setQueryData<LibraryLink[]>(clave, (l) => l?.filter((k) => k.id !== id)),
+      onSettled: refrescar,
+    }),
+  };
+}
+
+/** Los acomodos guardados de la persona (RF-BL7b, T331). */
+export function useLayouts() {
+  const { userId } = useAuth();
+  return useQuery<LibraryLayout[]>({ queryKey: libraryKeys.layouts(userId), queryFn: () => listLayouts(userId as string), enabled: !!userId });
+}
+
+/**
+ * Guardar el acomodo de ahora con un nombre, borrar uno, o aplicarlo: aplicar reescribe el orden de su lugar
+ * (las piezas del acomodo primero, en su orden; las que llegaron después, detrás en el orden que tenían).
+ */
+export function useLayoutMutations() {
+  const { userId } = useAuth();
+  const queryClient = useQueryClient();
+  const refrescar = () => queryClient.invalidateQueries({ queryKey: libraryKeys.all });
+  return {
+    guardar: useMutation({
+      mutationFn: (input: Pick<LibraryLayout, 'name' | 'view' | 'shelf_id' | 'item_ids'>) => saveLayout(userId as string, input),
+      onSettled: refrescar,
+    }),
+    quitar: useMutation({ mutationFn: (id: string) => removeLayout(id), onSettled: refrescar }),
+    aplicar: useMutation({
+      mutationFn: ({ vista, libreroId, ids }: { vista: LibraryLayoutView; libreroId: string | null; ids: readonly string[] }) => applyOrder(vista, libreroId, ids),
       onSettled: refrescar,
     }),
   };

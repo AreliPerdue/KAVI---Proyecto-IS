@@ -322,6 +322,27 @@ export const library = {
     modePagedHint: 'Una página a la vez. Toca los bordes o desliza para pasar de página, y toca el centro para ver u ocultar los controles.',
     modePagedHintWeb: 'Una página a la vez. Usa ← →, desliza dos dedos en el trackpad o haz clic en los bordes; un clic en el centro muestra u oculta los controles.',
   },
+  /** Acomodos guardados (spec 13a, RF-BL7b; T331). */
+  layouts: {
+    title: (vista: string, lugar: string) => `Acomodos guardados · ${vista} en ${lugar}`,
+    covers: 'Portadas',
+    spines: 'Librero',
+    all: 'Todos',
+    empty: 'Aún no guardas ninguno. Acomoda como quieras y guárdalo con un nombre.',
+    count: (n: number) => `${n} ${n === 1 ? 'libro' : 'libros'}`,
+    use: 'Usar',
+    useA11y: (nombre: string) => `Usar el acomodo «${nombre}»`,
+    remove: (nombre: string) => `Borrar el acomodo «${nombre}»`,
+    removeTitle: (nombre: string) => `Borrar «${nombre}»`,
+    removeMessage: 'Tus libros se quedan como están; solo se olvida este acomodo.',
+    removeConfirm: 'Borrar',
+    nameLabel: 'Nombre del acomodo',
+    namePlaceholder: 'Por colores, por tamaño…',
+    save: 'Guardar el acomodo de ahora',
+    hint: 'Portadas y librero se acomodan por separado: arrastra en cada vista. Lo que agregues después de guardarlo queda al final al usarlo.',
+    saved: (nombre: string) => `Acomodo «${nombre}» guardado.`,
+    applied: (nombre: string) => `Acomodado como «${nombre}».`,
+  },
   /** Lo anotado sobre la página (spec 13c, T286). */
   annotations: {
     panel: 'Anotaciones',

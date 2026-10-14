@@ -111,3 +111,33 @@ export function anchoDeSaga(anchos: readonly number[]): number {
   const lomos = anchos.slice(0, LOMOS_DE_SAGA).reduce<number>((suma, a) => suma + a, 0);
   return anchos.length > LOMOS_DE_SAGA ? lomos + ANCHO_RESTO : lomos;
 }
+
+/** Dónde quedó cada lomo al pintarse: su repisa y su orilla y ancho dentro de ella. */
+export type LomoMedido = { fila: number; x: number; w: number };
+/** Dónde quedó cada repisa: su altura y su alto, dentro del librero. */
+export type RepisaMedida = { y: number; h: number };
+
+/**
+ * A dónde va un lomo arrastrado en el librero (RF-BL7b, T331), con la regla de `acomodar`: el lugar en la
+ * lista sin él. La repisa es la que tiene el punto donde se soltó (o la más cercana); dentro de ella, antes del
+ * primer lomo cuyo centro quede a la derecha del punto.
+ */
+export function destinoEnRepisas(opciones: {
+  desde: number;
+  /** El centro del lomo al soltarlo, en px del librero. */
+  punto: { x: number; y: number };
+  lomos: readonly (LomoMedido | undefined)[];
+  repisas: readonly (RepisaMedida | undefined)[];
+}): number {
+  const { desde, punto, lomos, repisas } = opciones;
+  const medidas = repisas.map((r, i) => ({ i, r })).filter((x): x is { i: number; r: RepisaMedida } => !!x.r);
+  if (!medidas.length || !lomos[desde]) return desde;
+  const dentro = medidas.find(({ r }) => punto.y >= r.y && punto.y <= r.y + r.h);
+  const fila = (dentro ?? medidas.reduce((a, b) => (Math.abs(b.r.y + b.r.h / 2 - punto.y) < Math.abs(a.r.y + a.r.h / 2 - punto.y) ? b : a))).i;
+  let antes = 0;
+  lomos.forEach((l, i) => {
+    if (!l || i === desde) return;
+    if (l.fila < fila || (l.fila === fila && l.x + l.w / 2 < punto.x)) antes++;
+  });
+  return antes;
+}

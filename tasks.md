@@ -982,6 +982,11 @@ Decisiones B1–B9 aprobadas el 12 oct 2026 (T274); ver la tabla de la spec 13 �
   **Hecho (13 oct 2026):** `altoDeLomo`/`anchoDeLomo`/`medidaDeLomo` en `lib/library/spines.ts`; la
   proporción de cada imagen la avisa el lomo al cargar (`store/spine-ratios-store.ts`) y el librero reparte
   las repisas con ese ancho. Preferencia `librarySpineHeights` en el dispositivo.
+- [x] T331 Acomodar lomos aparte de las portadas (arrastrar en el librero) y acomodos guardados con nombre,
+  por vista y por lugar. (RF-BL7b, enmienda del 13 oct 2026, pedido de Areli) Dep: T280, T282
+  **Hecho (14 oct 2026):** migración `20261014100000_library_layouts.sql` (probada con PGlite: 15 casos),
+  `DraggableShelf` con `destinoEnRepisas`, `spine_order` en el orden manual (`ordenManualDe`), sección
+  "Acomodos guardados" en Ordenar y filtrar; Supabase y demo.
 - [x] T310 Más datos del libro (editorial, lugar, edición, capítulos, sinopsis): columnas nuevas, "Más datos" al
   importar y al editar, y lo que proponga el OPF. (RF-BL19, de KAVI Reader) Dep: T278, T281
   **Hecho (13 oct 2026):** cinco columnas opcionales con topes (migración probada con PGlite); sección plegable

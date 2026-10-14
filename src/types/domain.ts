@@ -600,6 +600,8 @@ export type LibraryItem = {
   back_cover_color: string | null;
   /** Su lugar en la librería cuando se acomoda arrastrando (RF-BL7); lo nuevo, primero. */
   sort_order: number;
+  /** Su lugar en el librero de lomos (RF-BL7b, T331); vacío = el de las portadas. */
+  spine_order: number | null;
   /** Saga a la que pertenece y su número en ella (RF-BL24); el número admite decimales (#1.5). */
   series_id: string | null;
   series_index: number | null;
@@ -673,7 +675,22 @@ export type LibraryShelf = {
   updated_at: string;
 };
 
-export type LibraryShelfItem = { shelf_id: string; item_id: string; sort_order: number; added_at: string };
+export type LibraryShelfItem = { shelf_id: string; item_id: string; sort_order: number; spine_order?: number | null; added_at: string };
+
+/** Qué se acomoda: las portadas (también la lista) o los lomos del librero (RF-BL7b). */
+export type LibraryLayoutView = 'covers' | 'spines';
+
+/** Un acomodo guardado con nombre (RF-BL7b, T331): la lista de piezas en su orden, en Todos o en un librero. */
+export type LibraryLayout = {
+  id: string;
+  owner_id: string;
+  name: string;
+  view: LibraryLayoutView;
+  shelf_id: string | null;
+  item_ids: string[];
+  created_at: string;
+  updated_at: string;
+};
 
 export type LibraryAnnotationKind = 'highlight' | 'note' | 'textbox' | 'ink' | 'sticker' | 'postit' | 'bookmark' | 'image';
 

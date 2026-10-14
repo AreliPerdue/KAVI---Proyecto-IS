@@ -18,6 +18,8 @@ export type {
   LibraryKind,
   LibraryPage,
   LibraryShelf,
+  LibraryLayout,
+  LibraryLayoutView,
   LibraryLink,
   LibraryLinkKind,
   LibrarySeries,
@@ -48,6 +50,10 @@ export const listShelfItems = libraryApi.listShelfItems;
 export const addToShelf = libraryApi.addToShelf;
 export const removeFromShelf = libraryApi.removeFromShelf;
 export const moveInShelf = libraryApi.moveInShelf;
+export const listLayouts = libraryApi.listLayouts;
+export const saveLayout = libraryApi.saveLayout;
+export const removeLayout = libraryApi.removeLayout;
+export const applyOrder = libraryApi.applyOrder;
 export const listAnnotations = libraryApi.listAnnotations;
 export const saveAnnotations = libraryApi.saveAnnotations;
 export const removeAnnotations = libraryApi.removeAnnotations;

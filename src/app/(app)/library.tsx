@@ -23,6 +23,8 @@ import { AddToShelfSheet, ShelvesManageSheet } from '@/components/library/shelve
 import { SortFilterSheet } from '@/components/library/sort-filter-sheet';
 import { arrastreReciente } from '@/components/lists/drag-guard';
 import { DraggableGrid } from '@/components/lists/draggable-grid';
+import { DraggableShelf } from '@/components/library/draggable-shelf';
+import { LayoutsSection } from '@/components/library/layouts-section';
 import { DraggableRows } from '@/components/lists/draggable-rows';
 import { LibraryCoverCard, LibraryRow } from '@/components/library/library-item';
 import { AppText, Banner, EmptyState, ErrorState, Fab, IconButton, LoadingState, Screen, Segmented } from '@/components/ui';
@@ -36,6 +38,8 @@ import {
   useShelfItems,
   useShelfMutations,
   useAssignSeries,
+  useLayoutMutations,
+  useLayouts,
   useSeries,
   useShelves,
   useUpdateLibraryItem,
@@ -45,14 +49,23 @@ import { useLanguage, useT } from '@/i18n';
 import { uuidv4 } from '@/lib/gym/ids';
 import { formatBytes } from '@/lib/library/files';
 import type { LibroLeido } from '@/lib/library/import';
-import { cuantosFiltros, type FiltrosBiblioteca, opcionesDeFiltro, ordenEntre, piezasVisibles, SIN_FILTROS } from '@/lib/library/filters';
+import {
+  cuantosFiltros,
+  type FiltrosBiblioteca,
+  opcionesDeFiltro,
+  ordenEnLibreroDe,
+  ordenEntre,
+  ordenManualDe,
+  piezasVisibles,
+  SIN_FILTROS,
+} from '@/lib/library/filters';
 import { agruparSagas, type EntradaDeLibreria, etiquetaDeSaga, porNumero } from '@/lib/library/series';
 import { columnasPara, type LibraryView } from '@/lib/library/shelf';
 import { anchoDeSaga, medidaDeLomo, repartirEnRepisas } from '@/lib/library/spines';
 import { useConfirm, useSnackbar } from '@/providers';
 import { usePreferencesStore } from '@/store/preferences-store';
 import { useSpineRatiosStore } from '@/store/spine-ratios-store';
-import type { LibraryItem, LibraryShelf } from '@/types/domain';
+import type { LibraryItem, LibraryLayout, LibraryLayoutView, LibraryShelf } from '@/types/domain';
 
 /**
  * KAVI Library, laboratorio (spec 13 §4, T276).
@@ -89,6 +102,8 @@ export default function LibraryScreen() {
   const casiLlena = proporcion >= LIBRARY_WARN_RATIO;
 
   const vista = usePreferencesStore((s) => s.libraryView);
+  // El orden manual que se ve: el de las portadas (también la lista) o el de los lomos (RF-BL7b).
+  const vistaOrden: LibraryLayoutView = vista === 'shelf' ? 'spines' : 'covers';
   const setVista = usePreferencesStore((s) => s.setLibraryView);
   const [ancho, setAncho] = useState(0);
   const columnas = vista === 'covers' ? columnasPara(ancho) : 1;
@@ -142,10 +157,10 @@ export default function LibraryScreen() {
   const enLibrerosDatos = useMemo(() => enLibreros.data ?? [], [enLibreros.data]);
   const sagaAbierta = sagas.find((x) => x.id === sagaAbiertaId) ?? null;
   const visibles = useMemo(() => {
-    const lista = piezasVisibles(piezas.data ?? [], { busqueda, orden, filtros, libreroId: libreroActual?.id ?? null, enLibreros: enLibrerosDatos, nombresDeSagas });
+    const lista = piezasVisibles(piezas.data ?? [], { busqueda, orden, filtros, libreroId: libreroActual?.id ?? null, enLibreros: enLibrerosDatos, nombresDeSagas, vista: vistaOrden });
     // Una saga abierta muestra solo sus libros, siempre por número (RF-BL25).
     return sagaAbierta ? lista.filter((p) => p.series_id === sagaAbierta.id).sort(porNumero) : lista;
-  }, [piezas.data, busqueda, orden, filtros, libreroActual, enLibrerosDatos, nombresDeSagas, sagaAbierta]);
+  }, [piezas.data, busqueda, orden, filtros, libreroActual, enLibrerosDatos, nombresDeSagas, sagaAbierta, vistaOrden]);
   // Apiladas: cada saga es una pila en el lugar de su primer libro (RF-BL25).
   const apilando = vistaSagas === 'stacked' && !sagaAbierta;
   const entradas: EntradaDeLibreria[] = useMemo(
@@ -243,16 +258,51 @@ export default function LibraryScreen() {
     const sin = visibles.filter((_, i) => i !== from);
     const antes = sin[to - 1];
     const despues = sin[to];
+    // Portadas y lista comparten un orden; los lomos del librero llevan el suyo (RF-BL7b).
     if (libreroActual) {
-      const ordenDe = (id: string) => Number(enLibrerosDatos.find((e) => e.shelf_id === libreroActual.id && e.item_id === id)?.sort_order ?? 0);
+      const ordenDe = (id: string) => {
+        const fila = enLibrerosDatos.find((e) => e.shelf_id === libreroActual.id && e.item_id === id);
+        return fila ? ordenEnLibreroDe(fila, vistaOrden) : 0;
+      };
       librerosMut.mover.mutate({
         shelfId: libreroActual.id,
         itemId: movida.id,
         orden: ordenEntre(antes ? ordenDe(antes.id) : undefined, despues ? ordenDe(despues.id) : undefined),
+        vista: vistaOrden,
       });
       return;
     }
-    actualizar.mutate({ id: movida.id, patch: { sort_order: ordenEntre(antes?.sort_order, despues?.sort_order) } });
+    const nuevo = ordenEntre(antes ? ordenManualDe(antes, vistaOrden) : undefined, despues ? ordenManualDe(despues, vistaOrden) : undefined);
+    actualizar.mutate({ id: movida.id, patch: vistaOrden === 'spines' ? { spine_order: nuevo } : { sort_order: nuevo } });
+  };
+
+  // Acomodos guardados (RF-BL7b, T331): de la vista y del lugar donde se está.
+  const acomodos = useLayouts();
+  const acomodosMut = useLayoutMutations();
+  const acomodosAqui = useMemo(
+    () => (acomodos.data ?? []).filter((x) => x.view === vistaOrden && x.shelf_id === (libreroActual?.id ?? null)),
+    [acomodos.data, vistaOrden, libreroActual],
+  );
+  /** Todo el lugar en su orden manual de ahora, sin búsqueda ni filtros. */
+  const ordenDelLugar = () =>
+    piezasVisibles(piezas.data ?? [], { busqueda: '', orden: 'manual', filtros: SIN_FILTROS, libreroId: libreroActual?.id ?? null, enLibreros: enLibrerosDatos, vista: vistaOrden }).map((p) => p.id);
+  const guardarAcomodo = (nombre: string) =>
+    acomodosMut.guardar.mutate(
+      { name: nombre, view: vistaOrden, shelf_id: libreroActual?.id ?? null, item_ids: ordenDelLugar() },
+      { onSuccess: () => showSnackbar({ message: l.layouts.saved(nombre) }) },
+    );
+  const usarAcomodo = (acomodo: LibraryLayout) => {
+    const ahora = ordenDelLugar();
+    const hay = new Set(ahora);
+    const enAcomodo = acomodo.item_ids.filter((id) => hay.has(id));
+    const guardados = new Set(enAcomodo);
+    // Lo del acomodo primero, en su orden; lo que llegó después, detrás en el orden que tenía.
+    const ids = [...enAcomodo, ...ahora.filter((id) => !guardados.has(id))];
+    acomodosMut.aplicar.mutate({ vista: vistaOrden, libreroId: libreroActual?.id ?? null, ids }, { onSuccess: () => showSnackbar({ message: l.layouts.applied(acomodo.name) }) });
+  };
+  const borrarAcomodo = async (acomodo: LibraryLayout) => {
+    const ok = await confirm({ title: l.layouts.removeTitle(acomodo.name), message: l.layouts.removeMessage, confirmLabel: l.layouts.removeConfirm, destructive: true });
+    if (ok) acomodosMut.quitar.mutate(acomodo.id);
   };
 
   // Menú, edición y selección (T281).
@@ -266,9 +316,8 @@ export default function LibraryScreen() {
   // Arrastrar para acomodar (RF-BL7): en "Como los acomodé" y viendo todo —sin búsqueda ni filtros, que
   // esconderían a los vecinos—, en Todos o en un librero.
   // Con las sagas apiladas o una saga abierta (que va por número) no se arrastra: las pilas no tienen un
-  // solo lugar.
-  // En el librero tampoco: los lomos se acomodan en Portadas o Lista y el librero sigue ese orden.
-  const acomodando = orden === 'manual' && !busqueda.trim() && nFiltros === 0 && !seleccionando && !apilando && !sagaAbierta && vista !== 'shelf';
+  // solo lugar. En el librero se arrastran los lomos, con su propio orden (RF-BL7b, T331).
+  const acomodando = orden === 'manual' && !busqueda.trim() && nFiltros === 0 && !seleccionando && !apilando && !sagaAbierta;
   const salirDeSeleccion = () => setSeleccion(new Set());
   const alternar = (id: string) =>
     setSeleccion((previa) => {
@@ -598,7 +647,24 @@ export default function LibraryScreen() {
         ListFooterComponent={
           <>
             {acomodando && visibles.length > 0 ? (
-              vista === 'covers' ? (
+              vista === 'shelf' ? (
+                <DraggableShelf
+                  repisas={repisas.map((r) => r.entradas.flatMap((x) => (x.tipo === 'pieza' ? [x.pieza] : x.piezas)))}
+                  keyOf={(p) => p.id}
+                  onReorder={acomodar}
+                  renderItem={(p) => (
+                    <LibrarySpine
+                      {...propsDe(p)}
+                      onLongPress={undefined}
+                      sacado={sacandoId === p.id}
+                      onPress={() => {
+                        if (arrastreReciente()) return;
+                        if (!sacandoId) sacar(p);
+                      }}
+                    />
+                  )}
+                />
+              ) : vista === 'covers' ? (
                 <DraggableGrid
                   items={visibles}
                   columns={columnas}
@@ -701,6 +767,17 @@ export default function LibraryScreen() {
         onVistaSagas={setVistaSagas}
         altoDeLomos={altoDeLomos}
         onAltoDeLomos={setAltoDeLomos}
+        acomodos={
+          <LayoutsSection
+            vista={vistaOrden}
+            lugar={libreroActual?.name ?? l.layouts.all}
+            acomodos={acomodosAqui}
+            guardando={acomodosMut.guardar.isPending}
+            onGuardar={guardarAcomodo}
+            onUsar={usarAcomodo}
+            onBorrar={(x) => void borrarAcomodo(x)}
+          />
+        }
       />
       {hayPiezas ? <PdfCoverWorker items={piezas.data} /> : null}
     </Screen>

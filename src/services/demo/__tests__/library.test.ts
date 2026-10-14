@@ -151,3 +151,41 @@ describe('enlaces (T316)', () => {
     expect(await api.listLinks('u1')).toHaveLength(0);
   });
 });
+
+describe('acomodos (T331)', () => {
+  it('portadas y lomos se acomodan aparte, en Todos y en un librero', async () => {
+    const api = fresh();
+    const [a, b, c] = [await api.createItem(ANA, { family: 'book', kind: 'pdf', title: 'A' }), await api.createItem(ANA, { family: 'book', kind: 'pdf', title: 'B' }), await api.createItem(ANA, { family: 'book', kind: 'pdf', title: 'C' })];
+    expect(a.spine_order).toBeNull();
+    await api.applyOrder('spines', null, [c.id, a.id, b.id]);
+    await api.applyOrder('covers', null, [b.id, c.id, a.id]);
+    const items = await api.listItems(ANA);
+    const por = (campo: 'sort_order' | 'spine_order') => [...items].sort((x, y) => Number(x[campo]) - Number(y[campo])).map((x) => x.title);
+    expect(por('spine_order')).toEqual(['C', 'A', 'B']);
+    expect(por('sort_order')).toEqual(['B', 'C', 'A']);
+
+    const librero = await api.createShelf(ANA, { name: 'Por leer' });
+    await api.addToShelf(ANA, librero.id, a.id);
+    await api.addToShelf(ANA, librero.id, b.id);
+    await api.moveInShelf(librero.id, b.id, 1, 'spines');
+    const filas = await api.listShelfItems(ANA);
+    expect(filas.find((f) => f.item_id === b.id)?.spine_order).toBe(1);
+    expect(filas.find((f) => f.item_id === b.id)?.sort_order).toBe(2048);
+  });
+
+  it('guardar, listar y borrar; borrar el librero se lleva sus acomodos', async () => {
+    const api = fresh();
+    const librero = await api.createShelf(ANA, { name: 'Por leer' });
+    await api.saveLayout(ANA, { name: ' Por colores ', view: 'covers', shelf_id: null, item_ids: ['x', 'y'] });
+    await api.saveLayout(ANA, { name: 'Por tamaño', view: 'spines', shelf_id: librero.id, item_ids: [] });
+    await api.saveLayout('otra', { name: 'Ajeno', view: 'covers', shelf_id: null, item_ids: [] });
+    expect((await api.listLayouts(ANA)).map((x) => x.name)).toEqual(['Por colores', 'Por tamaño']);
+    await expect(api.saveLayout(ANA, { name: '  ', view: 'covers', shelf_id: null, item_ids: [] })).rejects.toThrow();
+    await expect(api.saveLayout('otra', { name: 'x', view: 'covers', shelf_id: librero.id, item_ids: [] })).rejects.toThrow();
+    await api.removeShelf(librero.id);
+    const quedan = await api.listLayouts(ANA);
+    expect(quedan.map((x) => x.name)).toEqual(['Por colores']);
+    await api.removeLayout(quedan[0].id);
+    expect(await api.listLayouts(ANA)).toEqual([]);
+  });
+});

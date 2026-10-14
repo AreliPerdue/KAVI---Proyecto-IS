@@ -8,6 +8,7 @@ import type { LibraryApi } from '@/services/contracts';
 import { toError, unwrap } from '@/services/supabase/errors';
 import type {
   LibraryAnnotation,
+  LibraryLayout,
   LibraryCard,
   LibraryCardTemplate,
   LibraryFileBody,
@@ -192,7 +193,7 @@ export const supabaseLibrary: LibraryApi = {
   },
 
   async listShelfItems(userId) {
-    return unwrap(await db().from('library_shelf_items').select('shelf_id, item_id, sort_order, added_at').eq('owner_id', userId)) as LibraryShelfItem[];
+    return unwrap(await db().from('library_shelf_items').select('shelf_id, item_id, sort_order, spine_order, added_at').eq('owner_id', userId)) as LibraryShelfItem[];
   },
 
   async addToShelf(userId, shelfId, itemId) {
@@ -211,8 +212,31 @@ export const supabaseLibrary: LibraryApi = {
     sinError(await db().from('library_shelf_items').delete().eq('shelf_id', shelfId).eq('item_id', itemId));
   },
 
-  async moveInShelf(shelfId, itemId, sortOrder) {
-    sinError(await db().from('library_shelf_items').update({ sort_order: sortOrder }).eq('shelf_id', shelfId).eq('item_id', itemId));
+  async moveInShelf(shelfId, itemId, sortOrder, view = 'covers') {
+    const cambio = view === 'spines' ? { spine_order: sortOrder } : { sort_order: sortOrder };
+    sinError(await db().from('library_shelf_items').update(cambio).eq('shelf_id', shelfId).eq('item_id', itemId));
+  },
+
+  async listLayouts(userId) {
+    return unwrap(await db().from('library_layouts').select('*').eq('owner_id', userId).order('created_at')) as LibraryLayout[];
+  },
+
+  async saveLayout(userId, input) {
+    return unwrap(
+      await db()
+        .from('library_layouts')
+        .insert({ ...input, name: input.name.trim(), owner_id: userId })
+        .select()
+        .single(),
+    ) as LibraryLayout;
+  },
+
+  async removeLayout(layoutId) {
+    sinError(await db().from('library_layouts').delete().eq('id', layoutId));
+  },
+
+  async applyOrder(view, shelfId, itemIds) {
+    sinError(await db().rpc('library_apply_order', { p_view: view, p_shelf: shelfId, p_ids: [...itemIds] }));
   },
 
   async listAnnotations(itemId) {

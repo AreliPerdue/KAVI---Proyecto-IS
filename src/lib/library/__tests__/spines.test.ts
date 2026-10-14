@@ -5,6 +5,7 @@ import {
   anchoDeLomo,
   anchoDeSaga,
   ANCHO_RESTO,
+  destinoEnRepisas,
   grosorDeLomo,
   LOMO_ALTO_IGUAL,
   LOMO_ALTO_MAX,
@@ -97,5 +98,35 @@ describe('lomo con imagen (RF-BL20)', () => {
     expect(uno.alto).toBe(dos.alto);
     expect(uno.ancho).toBe(Math.round(uno.alto * 0.2));
     expect(dos.ancho).toBe(Math.round(dos.alto * 0.3));
+  });
+});
+
+describe('soltar un lomo en el librero (RF-BL7b, T331)', () => {
+  // Dos repisas: la primera con A, B, C; la segunda con D.
+  const repisas = [
+    { y: 0, h: 220 },
+    { y: 240, h: 220 },
+  ];
+  const lomos = [
+    { fila: 0, x: 0, w: 40 },
+    { fila: 0, x: 43, w: 40 },
+    { fila: 0, x: 86, w: 40 },
+    { fila: 1, x: 0, w: 40 },
+  ];
+  it('dentro de su repisa, antes del primer lomo cuyo centro queda a la derecha', () => {
+    // A hasta después de B (centro en 70): sin A, B queda antes → lugar 1.
+    expect(destinoEnRepisas({ desde: 0, punto: { x: 70, y: 100 }, lomos, repisas })).toBe(1);
+    // C al principio.
+    expect(destinoEnRepisas({ desde: 2, punto: { x: 5, y: 100 }, lomos, repisas })).toBe(0);
+  });
+
+  it('a otra repisa: cuenta los de las repisas de arriba', () => {
+    expect(destinoEnRepisas({ desde: 0, punto: { x: 50, y: 300 }, lomos, repisas })).toBe(3);
+    expect(destinoEnRepisas({ desde: 3, punto: { x: 50, y: 100 }, lomos, repisas })).toBe(1);
+  });
+
+  it('fuera de todas, la repisa más cercana; sin medidas, no se mueve', () => {
+    expect(destinoEnRepisas({ desde: 0, punto: { x: 500, y: 900 }, lomos, repisas })).toBe(3);
+    expect(destinoEnRepisas({ desde: 0, punto: { x: 0, y: 0 }, lomos: [], repisas })).toBe(0);
   });
 });

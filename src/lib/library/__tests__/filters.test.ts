@@ -5,6 +5,7 @@ import {
   limitesDe,
   opcionesDeFiltro,
   ordenEntre,
+  ordenManualDe,
   ordenValido,
   piezasVisibles,
   SIN_FILTROS,
@@ -43,6 +44,15 @@ describe('orden (RF-BL8)', () => {
     expect(piezasVisibles(acomodados, consulta({ orden: 'manual' })).map((p) => p.id)).toEqual(['b', 'd', 'a', 'c']);
   });
   it('un orden guardado que ya no existe vuelve al de omisión, que es "como los acomodé"', () => expect(ordenValido('raro')).toBe('manual'));
+  it('"como los acomodé" en el librero de lomos sigue su propio orden (RF-BL7b, T331)', () => {
+    const acomodados = libros.map((l, i) => ({ ...l, sort_order: [30, 10, 40, 20][i], spine_order: [2, null, 1, null][i] }));
+    // Sin orden de lomo, b (10) y d (20) van por el de portadas, que es menor que 1 y 2 aquí.
+    expect(piezasVisibles(acomodados, consulta({ orden: 'manual', vista: 'spines' })).map((p) => p.id)).toEqual(['c', 'a', 'b', 'd']);
+    expect(piezasVisibles(acomodados, consulta({ orden: 'manual', vista: 'covers' })).map((p) => p.id)).toEqual(['b', 'd', 'a', 'c']);
+    expect(ordenManualDe({ sort_order: 5, spine_order: null }, 'spines')).toBe(5);
+    expect(ordenManualDe({ sort_order: 5, spine_order: 7 }, 'spines')).toBe(7);
+    expect(ordenManualDe({ sort_order: 5, spine_order: 7 }, 'covers')).toBe(5);
+  });
 });
 
 describe('libreros (RF-BL5 – RF-BL7)', () => {
@@ -54,6 +64,14 @@ describe('libreros (RF-BL5 – RF-BL7)', () => {
   it('solo las piezas del librero, y "como los acomodé" respeta su orden', () => {
     expect(ids({ libreroId: 's1', enLibreros, orden: 'manual' })).toEqual(['b', 'd']);
     expect(ids({ libreroId: 's1', enLibreros, orden: 'title' })).toEqual(['d', 'b']);
+  });
+  it('los lomos llevan su propio orden dentro del librero; sin él, el de las portadas (RF-BL7b)', () => {
+    const conLomos = [
+      { shelf_id: 's1', item_id: 'd', sort_order: 2048, spine_order: 1, added_at: '' },
+      { shelf_id: 's1', item_id: 'b', sort_order: 1024, added_at: '' },
+    ];
+    expect(ids({ libreroId: 's1', enLibreros: conLomos, orden: 'manual', vista: 'spines' })).toEqual(['d', 'b']);
+    expect(ids({ libreroId: 's1', enLibreros: conLomos, orden: 'manual', vista: 'covers' })).toEqual(['b', 'd']);
   });
   it('el punto medio entre vecinos al mover', () => {
     expect(ordenEntre(1024, 2048)).toBe(1536);

@@ -32,8 +32,8 @@ arriba, un buscador, y los controles de orden y filtros. Abajo, el botón **+** 
     una hoja con su portada, autor y avance, con **"Leer"** y **"Más acciones"** (el menú, RF-BL16).
   - Mantener presionado selecciona, como en las otras vistas. Una saga apilada (RF-BL25) se ve como
     colección: sus primeros cinco lomos juntos y "+n" si son más; tocarla la abre.
-  - En el librero no se arrastra: se acomoda en Portadas o Lista (RF-BL7) y el librero sigue ese orden.
-    (T282, 13 oct 2026)
+  - En el librero también se arrastra, con su propio orden (RF-BL7b; enmienda del 13 oct 2026, T331: antes
+    seguía el de Portadas).
 - **RF-BL3. Lista.** Una fila por pieza: portada chica a la izquierda, título, autor y avance ("p. 120 de
   340") a la derecha.
 - **RF-BL4.** La vista elegida se recuerda en el dispositivo, como la del calendario.
@@ -49,6 +49,21 @@ arriba, un buscador, y los controles de orden y filtros. Abajo, el botón **+** 
   moverse selecciona; moverse arrastra). Cada librero guarda su propio orden y "Todos", el suyo. Se
   arrastra en "Como los acomodé" y viendo todo —sin búsqueda ni filtros, que esconderían a los vecinos—.
   Lo nuevo entra al principio. (T280, 13 oct 2026)
+- **RF-BL7b. Lomos aparte y acomodos guardados** (13 oct 2026, pedido de Areli; T331).
+  - **Los lomos llevan su propio orden**, distinto del de las portadas (que comparten Portadas y Lista): por
+    ejemplo, portadas por colores y lomos por tamaño. En el Librero, con "Como los acomodé" y sin búsqueda ni
+    filtros, un lomo se mantiene presionado y se lleva a otro lugar, en su repisa o en otra; tocarlo sigue
+    sacándolo. Un libro que nunca se acomodó en el librero sigue el orden de su portada. Vale en Todos y en
+    cada librero.
+  - **Acomodos guardados:** en "Ordenar y filtrar", con "Como los acomodé", se guarda el acomodo de ahora con
+    un nombre ("Por colores", "Por tamaño") y después se vuelve a él con **Usar**, sin acomodar todo otra
+    vez. Cada acomodo es de su vista (portadas o lomos) y de su lugar (Todos o un librero); se puede borrar
+    (con confirmación; los libros se quedan como están). Al usarlo, lo que se agregó después de guardarlo
+    queda al final, en el orden que tenía; lo que ya no existe se ignora.
+  - Datos: `spine_order` en `library_items` y en `library_shelf_items` (vacío = el de la portada), la tabla
+    `library_layouts` (nombre, vista, librero o Todos, lista de piezas; RLS por dueño) y la función
+    `library_apply_order`, que reescribe el orden de un lugar en una sola llamada
+    (`20261014100000_library_layouts.sql`).
 
 ## 4. Orden y filtros (RF-BL8 – RF-BL10)
 

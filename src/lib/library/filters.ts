@@ -2,7 +2,7 @@ import { colorDePortada } from './shelf';
 
 import { porNumero } from './series';
 
-import type { LibraryItem, LibraryShelfItem } from '@/types/domain';
+import type { LibraryItem, LibraryLayoutView, LibraryShelfItem } from '@/types/domain';
 
 /**
  * Buscar, filtrar y ordenar la librería (spec 13a, RF-BL8, RF-BL10, RF-BL18; T280). Sin React: la
@@ -112,8 +112,23 @@ export type Consulta = {
   enLibreros: readonly LibraryShelfItem[];
   /** Nombre de cada saga, para ordenar por saga (RF-BL25). */
   nombresDeSagas?: ReadonlyMap<string, string>;
+  /**
+   * Qué orden manual se sigue (RF-BL7b): el de las portadas (también la lista) o el de los lomos del
+   * librero, que se acomodan aparte. Sin orden propio de lomos, un libro sigue el de su portada.
+   */
+  vista?: LibraryLayoutView;
   hoy?: Date;
 };
+
+/** El lugar de una pieza en "Todos" para una vista: los lomos, con el suyo si lo tienen. */
+export function ordenManualDe(item: Pick<LibraryItem, 'sort_order' | 'spine_order'>, vista: LibraryLayoutView = 'covers'): number {
+  return Number((vista === 'spines' ? (item.spine_order ?? item.sort_order) : item.sort_order) ?? 0);
+}
+
+/** El lugar de una pieza dentro de un librero para una vista. */
+export function ordenEnLibreroDe(fila: Pick<LibraryShelfItem, 'sort_order' | 'spine_order'>, vista: LibraryLayoutView = 'covers'): number {
+  return Number((vista === 'spines' ? (fila.spine_order ?? fila.sort_order) : fila.sort_order) ?? 0);
+}
 
 /**
  * Las piezas que se ven y en qué orden. Primero el librero, luego la búsqueda (todas las palabras,
@@ -122,7 +137,7 @@ export type Consulta = {
  */
 export function piezasVisibles(items: readonly LibraryItem[], c: Consulta): LibraryItem[] {
   const ordenEnLibrero = new Map<string, number>();
-  if (c.libreroId) for (const s of c.enLibreros) if (s.shelf_id === c.libreroId) ordenEnLibrero.set(s.item_id, Number(s.sort_order));
+  if (c.libreroId) for (const s of c.enLibreros) if (s.shelf_id === c.libreroId) ordenEnLibrero.set(s.item_id, ordenEnLibreroDe(s, c.vista));
 
   let lista = c.libreroId ? items.filter((i) => ordenEnLibrero.has(i.id)) : [...items];
 
@@ -172,7 +187,7 @@ export function piezasVisibles(items: readonly LibraryItem[], c: Consulta): Libr
       case 'manual':
         return c.libreroId
           ? (ordenEnLibrero.get(a.id) ?? 0) - (ordenEnLibrero.get(b.id) ?? 0)
-          : Number(a.sort_order ?? 0) - Number(b.sort_order ?? 0) || b.created_at.localeCompare(a.created_at);
+          : ordenManualDe(a, c.vista) - ordenManualDe(b, c.vista) || b.created_at.localeCompare(a.created_at);
       default:
         return b.created_at.localeCompare(a.created_at) || porTitulo(a, b);
     }

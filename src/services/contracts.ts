@@ -46,6 +46,8 @@ import type {
   LibraryItem,
   LibraryItemInput,
   LibraryItemPatch,
+  LibraryLayout,
+  LibraryLayoutView,
   LibraryLink,
   LibraryLinkKind,
   LibrarySeries,
@@ -514,7 +516,15 @@ export interface LibraryApi {
   listShelfItems(userId: string): Promise<LibraryShelfItem[]>;
   addToShelf(userId: string, shelfId: string, itemId: string): Promise<void>;
   removeFromShelf(shelfId: string, itemId: string): Promise<void>;
-  moveInShelf(shelfId: string, itemId: string, sortOrder: number): Promise<void>;
+  /** `view`: cambia el orden de las portadas (`sort_order`) o el de los lomos (`spine_order`, RF-BL7b). */
+  moveInShelf(shelfId: string, itemId: string, sortOrder: number, view?: LibraryLayoutView): Promise<void>;
+
+  /** Acomodos guardados (RF-BL7b, T331). */
+  listLayouts(userId: string): Promise<LibraryLayout[]>;
+  saveLayout(userId: string, input: Pick<LibraryLayout, 'name' | 'view' | 'shelf_id' | 'item_ids'>): Promise<LibraryLayout>;
+  removeLayout(layoutId: string): Promise<void>;
+  /** Reescribe el orden de un lugar (Todos si `shelfId` es nulo) con la lista dada, en una sola llamada. */
+  applyOrder(view: LibraryLayoutView, shelfId: string | null, itemIds: readonly string[]): Promise<void>;
 
   listAnnotations(itemId: string): Promise<LibraryAnnotation[]>;
   /** Guarda (crea o reemplaza) por id: las anotaciones llevan id del cliente (RF-BR3). */

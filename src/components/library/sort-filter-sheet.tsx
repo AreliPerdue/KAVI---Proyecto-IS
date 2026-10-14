@@ -1,6 +1,6 @@
 import { format } from 'date-fns';
 import { Check } from 'lucide-react-native';
-import { useState } from 'react';
+import { type ReactNode, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import { AppText, Button, Chip, ColorSwatch, DatePickerSheet, Segmented, Sheet } from '@/components/ui';
@@ -28,6 +28,8 @@ export type SortFilterSheetProps = {
   sagas: readonly LibrarySeries[];
   vistaSagas: VistaDeSagas;
   onVistaSagas: (vista: VistaDeSagas) => void;
+  /** Los acomodos guardados (RF-BL7b): se ven con "Como los acomodé". */
+  acomodos?: ReactNode;
   /** El alto de los lomos en el librero (RF-BL2b). */
   altoDeLomos: AltoDeLomos;
   onAltoDeLomos: (modo: AltoDeLomos) => void;
@@ -44,7 +46,7 @@ const deIso = (iso: string) => {
  * Ordenar y filtrar la librería (RF-BL8, RF-BL10). El orden se recuerda en el dispositivo; los filtros
  * se combinan y se ven como chips en la librería.
  */
-export function SortFilterSheet({ visible, onClose, orden, onOrden, filtros, onFiltros, opciones, enLibrero, sagas, vistaSagas, onVistaSagas, altoDeLomos, onAltoDeLomos }: SortFilterSheetProps) {
+export function SortFilterSheet({ visible, onClose, orden, onOrden, filtros, onFiltros, opciones, enLibrero, sagas, vistaSagas, onVistaSagas, altoDeLomos, onAltoDeLomos, acomodos }: SortFilterSheetProps) {
   const theme = useTheme();
   const tx = useT();
   const lang = useLanguage();
@@ -92,6 +94,8 @@ export function SortFilterSheet({ visible, onClose, orden, onOrden, filtros, onF
             {enLibrero ? f.sortManualShelfHint : f.sortManualHint}
           </AppText>
         </View>
+
+        {orden === 'manual' && acomodos ? acomodos : null}
 
         <View style={styles.seccion}>
           <AppText variant="label" color="textSecondary">

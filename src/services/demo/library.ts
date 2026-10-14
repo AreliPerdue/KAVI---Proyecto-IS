@@ -9,6 +9,7 @@ import { nombreSeguro } from '@/lib/library/files';
 import type {
   LibraryAnnotation,
   LibraryCard,
+  LibraryLayout,
   LibraryCardTemplate,
   LibraryFileBody,
   LibraryFont,
@@ -36,6 +37,7 @@ const templates: LibraryCardTemplate[] = [];
 const cards: LibraryCard[] = [];
 const pages: LibraryPage[] = [];
 const fonts: LibraryFont[] = [];
+const layouts: LibraryLayout[] = [];
 const archivos = new Map<string, { body: LibraryFileBody; type: string }>();
 
 const ahora = () => new Date().toISOString();
@@ -104,6 +106,7 @@ export const demoLibrary: LibraryApi = {
       back_cover_color: null,
       // Como la base: lo nuevo entra al principio.
       sort_order: -Date.now() / 1000,
+      spine_order: null,
       series_id: input.series_id ?? null,
       series_index: input.series_index ?? null,
       publisher: input.publisher ?? null,
@@ -286,6 +289,7 @@ export const demoLibrary: LibraryApi = {
     await delay();
     quitarDe(shelves, (s) => s.id === shelfId);
     quitarDe(shelfItems, (s) => s.shelf_id === shelfId);
+    quitarDe(layouts, (x) => x.shelf_id === shelfId);
     emitDataChange();
   },
 
@@ -314,10 +318,51 @@ export const demoLibrary: LibraryApi = {
     emitDataChange();
   },
 
-  async moveInShelf(shelfId, itemId, sortOrder) {
+  async moveInShelf(shelfId, itemId, sortOrder, view = 'covers') {
     await delay();
     const fila = shelfItems.find((s) => s.shelf_id === shelfId && s.item_id === itemId);
-    if (fila) fila.sort_order = sortOrder;
+    if (fila && view === 'spines') fila.spine_order = sortOrder;
+    else if (fila) fila.sort_order = sortOrder;
+    emitDataChange();
+  },
+
+  async listLayouts(userId) {
+    await delay();
+    return copia(layouts.filter((x) => x.owner_id === userId).sort((a, b) => a.created_at.localeCompare(b.created_at)));
+  },
+
+  async saveLayout(userId, input) {
+    await delay();
+    const nombre = input.name.trim();
+    if (!nombre || nombre.length > 60) throw new AuthUiError(t().errors.noPermission);
+    if (input.shelf_id && !shelves.some((s) => s.id === input.shelf_id && s.owner_id === userId)) throw new AuthUiError(t().errors.noPermission);
+    const t0 = ahora();
+    const nuevo: LibraryLayout = { id: nextId('acomodo'), owner_id: userId, name: nombre, view: input.view, shelf_id: input.shelf_id, item_ids: [...input.item_ids], created_at: t0, updated_at: t0 };
+    layouts.push(nuevo);
+    emitDataChange();
+    return copia(nuevo);
+  },
+
+  async removeLayout(layoutId) {
+    await delay();
+    quitarDe(layouts, (x) => x.id === layoutId);
+    emitDataChange();
+  },
+
+  async applyOrder(view, shelfId, itemIds) {
+    await delay();
+    itemIds.forEach((id, i) => {
+      const orden = (i + 1) * 1024;
+      if (shelfId) {
+        const fila = shelfItems.find((s) => s.shelf_id === shelfId && s.item_id === id);
+        if (fila && view === 'spines') fila.spine_order = orden;
+        else if (fila) fila.sort_order = orden;
+      } else {
+        const item = items.find((x) => x.id === id);
+        if (item && view === 'spines') item.spine_order = orden;
+        else if (item) item.sort_order = orden;
+      }
+    });
     emitDataChange();
   },
 

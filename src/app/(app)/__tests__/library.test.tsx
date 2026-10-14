@@ -35,6 +35,9 @@ const mockLibrerosMut = {
 };
 /** Lo último que pintó la rejilla o las filas que se arrastran, para simular un acomodo. */
 let mockArrastrable: { items: { id: string }[]; onReorder: (from: number, to: number) => void } | null = null;
+let mockLomosArrastrables: { repisas: { id: string }[][]; onReorder: (from: number, to: number) => void } | null = null;
+let mockAcomodos: Record<string, unknown>[] = [];
+const mockAcomodosMut = { guardar: { mutate: jest.fn(), isPending: false }, quitar: { mutate: jest.fn() }, aplicar: { mutate: jest.fn() } };
 const mockElegir = jest.fn();
 const mockLeer = jest.fn();
 
@@ -53,6 +56,15 @@ jest.mock('@/hooks/use-library', () => ({
   useLinks: () => ({ data: mockEnlaces }),
   useLinkMutations: () => mockEnlacesMut,
   useAssignSeries: () => mockAsignarSaga,
+  useLayouts: () => ({ data: mockAcomodos }),
+  useLayoutMutations: () => mockAcomodosMut,
+}));
+// El librero acomodable (T331): el doble pinta las repisas y guarda `onReorder`.
+jest.mock('@/components/library/draggable-shelf', () => ({
+  DraggableShelf: (props: { repisas: { id: string }[][]; renderItem: (i: unknown) => unknown; onReorder: (a: number, b: number) => void }) => {
+    mockLomosArrastrables = props;
+    return props.repisas.flat().map((i) => props.renderItem(i));
+  },
 }));
 // Arrastrar no se puede simular con gestos en Jest: los dobles pintan las piezas y guardan `onReorder`.
 jest.mock('@/components/lists/draggable-grid', () => ({
@@ -116,6 +128,9 @@ beforeEach(() => {
   mockEnlacesMut.enlazar.mutate.mockReset();
   mockEnlacesMut.quitar.mutate.mockReset();
   mockArrastrable = null;
+  mockLomosArrastrables = null;
+  mockAcomodos = [];
+  for (const m of Object.values(mockAcomodosMut)) m.mutate.mockReset();
   for (const m of Object.values(mockLibrerosMut)) m.mutate.mockReset();
   mockPiezas = ok([]);
   mockEspacio = ok({ usedBytes: 0, limitBytes: 500 * MB });
@@ -515,7 +530,65 @@ describe('organizar', () => {
     await fireEvent.press(screen.getByRole('button', { name: 'Por leer' }));
     expect(mockArrastrable?.items.map((i) => i.id)).toEqual(['l3', 'l1']);
     mockArrastrable?.onReorder(1, 0);
-    expect(mockLibrerosMut.mover.mutate).toHaveBeenCalledWith({ shelfId: 's1', itemId: 'l1', orden: 0 });
+    expect(mockLibrerosMut.mover.mutate).toHaveBeenCalledWith({ shelfId: 's1', itemId: 'l1', orden: 0, vista: 'covers' });
+  });
+
+  it('en el librero los lomos se arrastran con su propio orden (RF-BL7b, T331)', async () => {
+    mockPiezas = ok([
+      { ...libros()[0], spine_order: 3 },
+      { ...libros()[1], spine_order: 1 },
+      { ...libros()[2], spine_order: null },
+    ]);
+    usePreferencesStore.setState({ libraryView: 'shelf', libraryOrder: 'manual' });
+    await render(<Pantalla />);
+    await fireEvent(screen.getByTestId('library-list'), 'layout', { nativeEvent: { layout: { width: 360, height: 800, x: 0, y: 0 } } });
+    // Ficciones (1), Rayuela (3) y Aura, que no tiene orden de lomo, por el de su portada (30).
+    expect(mockLomosArrastrables?.repisas.flat().map((i) => i.id)).toEqual(['l2', 'l1', 'l3']);
+    // Rayuela al principio: antes de Ficciones, en el orden de los lomos.
+    mockLomosArrastrables?.onReorder(1, 0);
+    expect(mockActualizar.mutate).toHaveBeenCalledWith({ id: 'l1', patch: { spine_order: -1023 } });
+  });
+
+  it('dentro de un librero, los lomos llevan el orden de ese librero', async () => {
+    mockEnLibreros = [
+      { shelf_id: 's1', item_id: 'l3', sort_order: 1024, spine_order: 5000, added_at: '' },
+      { shelf_id: 's1', item_id: 'l1', sort_order: 2048, added_at: '' },
+    ];
+    usePreferencesStore.setState({ libraryView: 'shelf', libraryOrder: 'manual' });
+    await render(<Pantalla />);
+    await fireEvent(screen.getByTestId('library-list'), 'layout', { nativeEvent: { layout: { width: 360, height: 800, x: 0, y: 0 } } });
+    await fireEvent.press(screen.getByRole('button', { name: 'Por leer' }));
+    expect(mockLomosArrastrables?.repisas.flat().map((i) => i.id)).toEqual(['l1', 'l3']);
+    mockLomosArrastrables?.onReorder(1, 0);
+    expect(mockLibrerosMut.mover.mutate).toHaveBeenCalledWith({ shelfId: 's1', itemId: 'l3', orden: 1024, vista: 'spines' });
+  });
+
+  it('guardar el acomodo de ahora y volver a usarlo (RF-BL7b, T331)', async () => {
+    usePreferencesStore.setState({ libraryView: 'covers', libraryOrder: 'manual' });
+    mockAcomodos = [
+      { id: 'a1', owner_id: 'u1', name: 'Por colores', view: 'covers', shelf_id: null, item_ids: ['l3', 'borrado', 'l1'], created_at: '', updated_at: '' },
+      { id: 'a2', owner_id: 'u1', name: 'De lomos', view: 'spines', shelf_id: null, item_ids: [], created_at: '', updated_at: '' },
+    ];
+    await render(<Pantalla />);
+    await fireEvent.press(screen.getByRole('button', { name: L.find.filterCount(0) }));
+    expect(screen.getByText(L.layouts.title(L.layouts.covers, L.layouts.all))).toBeTruthy();
+    // Solo los de esta vista y este lugar.
+    expect(screen.getByText('Por colores')).toBeTruthy();
+    expect(screen.queryByText('De lomos')).toBeNull();
+
+    await fireEvent.changeText(screen.getByLabelText(L.layouts.nameLabel), ' Por tamaño ');
+    await fireEvent.press(screen.getByRole('button', { name: L.layouts.save }));
+    expect(mockAcomodosMut.guardar.mutate).toHaveBeenCalledWith(
+      { name: 'Por tamaño', view: 'covers', shelf_id: null, item_ids: ['l1', 'l2', 'l3'] },
+      expect.anything(),
+    );
+
+    // Usarlo: lo del acomodo primero (sin lo que ya no existe) y lo que llegó después, detrás.
+    await fireEvent.press(screen.getByRole('button', { name: L.layouts.useA11y('Por colores') }));
+    expect(mockAcomodosMut.aplicar.mutate).toHaveBeenCalledWith({ vista: 'covers', libreroId: null, ids: ['l3', 'l1', 'l2'] }, expect.anything());
+
+    await fireEvent.press(screen.getByRole('button', { name: L.layouts.remove('Por colores') }));
+    expect(mockAcomodosMut.quitar.mutate).toHaveBeenCalledWith('a1');
   });
 
   it('agregar a un librero desde el menú, y quitarlo estando en él', async () => {
