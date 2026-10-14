@@ -13,20 +13,55 @@ export const LOMO_MAX = 72;
 /** Alto de los lomos: varían un poco, como en un librero de verdad. */
 export const LOMO_ALTO_MIN = 156;
 export const LOMO_ALTO_MAX = 196;
-
-/** Lo más alto que puede ser un lomo con imagen: más, y ya no parece libro junto a los demás. */
-export const LOMO_ALTO_IMAGEN_MAX = 260;
+/** Con "todos iguales", el alto de todos: el más alto de los variados, así la repisa no cambia de tamaño. */
+export const LOMO_ALTO_IGUAL = LOMO_ALTO_MAX;
+/** Lo más ancho que puede ser un lomo con imagen (una imagen de un libro muy grueso). */
+export const LOMO_MAX_IMAGEN = 96;
 
 /**
- * El alto de un lomo con imagen (RF-BL20): el que pide la imagen a ese grosor, para que se vea completa
- * y no recortada. Entre el mínimo de los lomos y `LOMO_ALTO_IMAGEN_MAX`; si la imagen pide más o menos,
- * se queda en el tope y la imagen se ve entera dentro (con el color del lomo en lo que sobre).
+ * Cómo se reparte el alto en el librero (RF-BL2b): variado, como un librero de verdad, o todos iguales. En
+ * los dos, los libros de una misma saga miden lo mismo, como una colección.
  */
-export function altoConImagen(grosor: number, anchoImagen: number, altoImagen: number): { alto: number; ajustada: boolean } {
-  if (anchoImagen <= 0 || altoImagen <= 0) return { alto: LOMO_ALTO_MIN, ajustada: false };
-  const pedido = Math.round((grosor * altoImagen) / anchoImagen);
-  const alto = Math.min(LOMO_ALTO_IMAGEN_MAX, Math.max(LOMO_ALTO_MIN, pedido));
-  return { alto, ajustada: alto === pedido };
+export type AltoDeLomos = 'varied' | 'equal';
+export const ALTO_DE_LOMOS_POR_OMISION: AltoDeLomos = 'varied';
+
+export function altoDeLomosValido(valor: unknown): AltoDeLomos {
+  return valor === 'equal' || valor === 'varied' ? valor : ALTO_DE_LOMOS_POR_OMISION;
+}
+
+/**
+ * El alto de un lomo. Variado sale de la saga (si tiene) o del libro: siempre el mismo para cada uno y en
+ * todos los dispositivos, y el mismo para todos los tomos de una saga.
+ */
+export function altoDeLomo(pieza: { id: string; series_id?: string | null }, modo: AltoDeLomos = ALTO_DE_LOMOS_POR_OMISION): number {
+  if (modo === 'equal') return LOMO_ALTO_IGUAL;
+  return LOMO_ALTO_MIN + (huella(pieza.series_id ?? pieza.id) % (LOMO_ALTO_MAX - LOMO_ALTO_MIN + 1));
+}
+
+/**
+ * El ancho de un lomo (RF-BL2, RF-BL20). Sin imagen, sale de las páginas. Con imagen, el que pide la imagen
+ * a ese alto (`proporcion` = ancho / alto de la imagen), así se ve completa y sin recortar; si pide menos que
+ * el mínimo o más que el tope, se queda ahí y la imagen se ve entera dentro (`ajustada` es falso).
+ */
+export function anchoDeLomo(paginas: number | null | undefined, alto: number, proporcion?: number | null): { ancho: number; ajustada: boolean } {
+  if (!proporcion || !Number.isFinite(proporcion) || proporcion <= 0) return { ancho: grosorDeLomo(paginas), ajustada: false };
+  const pedido = Math.round(alto * proporcion);
+  const ancho = Math.min(LOMO_MAX_IMAGEN, Math.max(LOMO_MIN, pedido));
+  return { ancho, ajustada: ancho === pedido };
+}
+
+/**
+ * Cuánto mide el lomo de una pieza en el librero: su alto (por el modo y su saga) y su ancho (por su imagen
+ * de lomo, si ya se conoce su proporción, o por sus páginas). `proporciones` va por ruta de la imagen.
+ */
+export function medidaDeLomo(
+  pieza: { id: string; series_id?: string | null; page_count?: number | null; spine_path?: string | null },
+  modo: AltoDeLomos,
+  proporciones: Readonly<Record<string, number>>,
+): { alto: number; ancho: number; ajustada: boolean } {
+  const alto = altoDeLomo(pieza, modo);
+  const proporcion = pieza.spine_path ? proporciones[pieza.spine_path] : undefined;
+  return { alto, ...anchoDeLomo(pieza.page_count, alto, proporcion) };
 }
 
 /** Separación entre lomos de una repisa. */
@@ -39,11 +74,6 @@ export const ENTRE_LOMOS = 3;
 export function grosorDeLomo(paginas: number | null | undefined): number {
   if (!paginas || paginas <= 0) return LOMO_SIN_PAGINAS;
   return Math.round(Math.min(LOMO_MAX, Math.max(LOMO_MIN, 30 + paginas * 0.06)));
-}
-
-/** El alto de un lomo sale de su id: el mismo libro mide lo mismo siempre y en todos los dispositivos. */
-export function altoDeLomo(id: string): number {
-  return LOMO_ALTO_MIN + (huella(id) % (LOMO_ALTO_MAX - LOMO_ALTO_MIN + 1));
 }
 
 /**
@@ -77,7 +107,7 @@ export const LOMOS_DE_SAGA = 5;
 export const ANCHO_RESTO = 24;
 
 /** El ancho de una saga en el librero: sus primeros lomos, pegados como una colección, y el "+n" si son más. */
-export function anchoDeSaga(paginas: readonly (number | null | undefined)[]): number {
-  const lomos = paginas.slice(0, LOMOS_DE_SAGA).reduce<number>((suma, p) => suma + grosorDeLomo(p), 0);
-  return paginas.length > LOMOS_DE_SAGA ? lomos + ANCHO_RESTO : lomos;
+export function anchoDeSaga(anchos: readonly number[]): number {
+  const lomos = anchos.slice(0, LOMOS_DE_SAGA).reduce<number>((suma, a) => suma + a, 0);
+  return anchos.length > LOMOS_DE_SAGA ? lomos + ANCHO_RESTO : lomos;
 }

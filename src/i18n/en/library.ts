@@ -20,6 +20,10 @@ export const library: Dictionary['library'] = {
   viewCovers: 'Covers',
   viewShelf: 'Shelf',
   spine: {
+    heightTitle: 'Spine height',
+    heightVaried: 'Varied',
+    heightEqual: 'All the same',
+    heightHint: 'For the shelf. Books in the same series are always the same height.',
     takeOut: (title) => `Take “${title}” off the shelf`,
     read: 'Read',
     more: 'More actions',

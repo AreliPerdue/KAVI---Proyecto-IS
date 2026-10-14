@@ -20,6 +20,10 @@ export const library = {
   viewCovers: 'Portadas',
   viewShelf: 'Librero',
   spine: {
+    heightTitle: 'Alto de los lomos',
+    heightVaried: 'Variado',
+    heightEqual: 'Todos iguales',
+    heightHint: 'Para el librero. Los libros de una misma saga siempre miden lo mismo.',
     takeOut: (titulo: string) => `Sacar «${titulo}» del librero`,
     read: 'Leer',
     more: 'Más acciones',

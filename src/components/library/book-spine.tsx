@@ -14,34 +14,37 @@ import { useT } from '@/i18n';
 import { tap } from '@/lib/haptics';
 import { colorDeParte } from '@/lib/library/cover/parts';
 import { textoSobre } from '@/lib/library/shelf';
-import { ANCHO_RESTO, altoConImagen, altoDeLomo, grosorDeLomo, LOMOS_DE_SAGA } from '@/lib/library/spines';
+import { ANCHO_RESTO, anchoDeLomo, altoDeLomo, LOMOS_DE_SAGA } from '@/lib/library/spines';
+import { usePreferencesStore } from '@/store/preferences-store';
+import { useSpineRatiosStore } from '@/store/spine-ratios-store';
 import type { LibraryItem, LibrarySeries } from '@/types/domain';
 
 /** Cuánto sube un lomo al sacarlo del librero (RF-BL2). */
 export const SALIDA = 18;
 
 type PiezaDeLomo = Pick<LibraryItem, 'id' | 'title' | 'cover_path' | 'cover_color' | 'page_count'> &
-  Partial<Pick<LibraryItem, 'custom_cover_path' | 'custom_cover_color' | 'spine_path' | 'spine_color'>>;
+  Partial<Pick<LibraryItem, 'custom_cover_path' | 'custom_cover_color' | 'spine_path' | 'spine_color' | 'series_id'>>;
 
 /**
- * El lomo de un libro (RF-BL2, RF-BL20): la imagen del lomo si la tiene, completa (el lomo toma el alto que
- * pide la imagen); si no, su color con el título en vertical, de abajo hacia arriba como en los libros en
- * español, en uno o dos renglones. Es decorativo: quien lo usa pone la
- * etiqueta de accesibilidad.
+ * El lomo de un libro (RF-BL2, RF-BL2b, RF-BL20): la imagen del lomo si la tiene, completa (el lomo toma el
+ * ancho que pide la imagen a su alto); si no, su color con el título en vertical, de abajo hacia arriba como
+ * en los libros en español, en uno o dos renglones. El alto sale del ajuste (variado o igual) y es el mismo
+ * para los tomos de una saga. Es decorativo: quien lo usa pone la etiqueta de accesibilidad.
  */
 export function BookSpine({ item }: { item: PiezaDeLomo }) {
   const theme = useTheme();
-  const grosor = grosorDeLomo(item.page_count);
-  // Con imagen, el alto lo pone la imagen (para que no se recorte); sin ella, el de cada libro.
-  const [medida, setMedida] = useState<{ ancho: number; alto: number } | null>(null);
+  const modo = usePreferencesStore((s) => s.librarySpineHeights);
+  const alto = altoDeLomo(item, modo);
+  const ruta = item.spine_path ?? null;
+  const proporcion = useSpineRatiosStore((s) => (ruta ? s.porRuta[ruta] : undefined));
+  const ponerProporcion = useSpineRatiosStore((s) => s.poner);
   const fondo = colorDeParte(item, 'spine');
   const tinta = textoSobre(fondo);
   const firmada = useLibraryFileUrl(item.spine_path ?? null);
   // Si la imagen no carga, se queda el lomo de color con su título.
   const [fallo, setFallo] = useState<string | null>(null);
   const imagen = firmada.data && firmada.data !== fallo ? firmada.data : null;
-  const conImagen = imagen && medida ? altoConImagen(grosor, medida.ancho, medida.alto) : null;
-  const alto = conImagen?.alto ?? altoDeLomo(item.id);
+  const { ancho: grosor, ajustada } = anchoDeLomo(item.page_count, alto, imagen ? proporcion : null);
   // El título en uno o dos renglones, con la letra que quepa en el grosor.
   const letra = Math.min(14, Math.max(10, Math.round(grosor * 0.3)));
   // El texto girado ocupa el alto del lomo como su ancho, menos las bandas de arriba y abajo.
@@ -59,10 +62,10 @@ export function BookSpine({ item }: { item: PiezaDeLomo }) {
           testID="lomo-imagen"
           source={{ uri: imagen }}
           style={StyleSheet.absoluteFill}
-          // Ya con su alto, cubre justo; si se topó, se ve entera dentro: nunca se recorta.
-          contentFit={conImagen && !conImagen.ajustada ? 'contain' : 'cover'}
+          // Con su ancho cubre justo; si se topó, se ve entera dentro: nunca se recorta.
+          contentFit={proporcion && !ajustada ? 'contain' : 'cover'}
           transition={150}
-          onLoad={(e) => setMedida({ ancho: e.source.width, alto: e.source.height })}
+          onLoad={(e) => ruta && e.source.height > 0 && ponerProporcion(ruta, e.source.width / e.source.height)}
           onError={() => setFallo(imagen)}
         />
       ) : (

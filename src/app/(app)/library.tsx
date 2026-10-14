@@ -48,9 +48,10 @@ import type { LibroLeido } from '@/lib/library/import';
 import { cuantosFiltros, type FiltrosBiblioteca, opcionesDeFiltro, ordenEntre, piezasVisibles, SIN_FILTROS } from '@/lib/library/filters';
 import { agruparSagas, type EntradaDeLibreria, etiquetaDeSaga, porNumero } from '@/lib/library/series';
 import { columnasPara, type LibraryView } from '@/lib/library/shelf';
-import { anchoDeSaga, grosorDeLomo, repartirEnRepisas } from '@/lib/library/spines';
+import { anchoDeSaga, medidaDeLomo, repartirEnRepisas } from '@/lib/library/spines';
 import { useConfirm, useSnackbar } from '@/providers';
 import { usePreferencesStore } from '@/store/preferences-store';
+import { useSpineRatiosStore } from '@/store/spine-ratios-store';
 import type { LibraryItem, LibraryShelf } from '@/types/domain';
 
 /**
@@ -130,6 +131,9 @@ export default function LibraryScreen() {
   const nombresDeSagas = useMemo(() => new Map(sagas.map((x) => [x.id, x.name])), [sagas]);
   const vistaSagas = usePreferencesStore((s) => s.librarySeriesView);
   const setVistaSagas = usePreferencesStore((s) => s.setLibrarySeriesView);
+  const altoDeLomos = usePreferencesStore((s) => s.librarySpineHeights);
+  const setAltoDeLomos = usePreferencesStore((s) => s.setLibrarySpineHeights);
+  const proporciones = useSpineRatiosStore((s) => s.porRuta);
   const [sagaAbiertaId, setSagaAbiertaId] = useState<string | null>(null);
   const [sagaVarias, setSagaVarias] = useState(false);
 
@@ -151,9 +155,11 @@ export default function LibraryScreen() {
   // El librero (RF-BL2): las mismas entradas, de lomo, en las repisas que quepan en el ancho.
   const repisas: RepisaDelLibrero[] = useMemo(() => {
     if (vista !== 'shelf' || ancho === 0) return [];
-    const anchoDe = (e: EntradaDeLibreria) => (e.tipo === 'saga' ? anchoDeSaga(e.piezas.map((p) => p.page_count)) : grosorDeLomo(e.pieza.page_count));
+    // Cada lomo con su ancho de verdad (el de su imagen, si ya se conoce), para que la repisa no se pase.
+    const lomo = (p: LibraryItem) => medidaDeLomo(p, altoDeLomos, proporciones).ancho;
+    const anchoDe = (e: EntradaDeLibreria) => (e.tipo === 'saga' ? anchoDeSaga(e.piezas.map(lomo)) : lomo(e.pieza));
     return repartirEnRepisas(entradas, anchoDe, ancho - Spacing.xs * 2).map((fila, i) => ({ tipo: 'repisa' as const, numero: i + 1, entradas: fila }));
-  }, [vista, ancho, entradas]);
+  }, [vista, ancho, entradas, altoDeLomos, proporciones]);
   // Tocar un lomo primero lo sube y, ya afuera, se abre su portada; con movimiento reducido, de una vez.
   const [sacada, setSacada] = useState<LibraryItem | null>(null);
   const [sacandoId, setSacandoId] = useState<string | null>(null);
@@ -693,6 +699,8 @@ export default function LibraryScreen() {
         sagas={sagas}
         vistaSagas={vistaSagas}
         onVistaSagas={setVistaSagas}
+        altoDeLomos={altoDeLomos}
+        onAltoDeLomos={setAltoDeLomos}
       />
       {hayPiezas ? <PdfCoverWorker items={piezas.data} /> : null}
     </Screen>

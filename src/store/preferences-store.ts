@@ -8,6 +8,7 @@ import { type FormaDeLeer, formasValidas, recordarForma } from '@/lib/library/re
 import { type PreferenciaDeTema, TEMA_POR_OMISION, temaValido } from '@/lib/library/reader-theme';
 import { type VistaDeSagas, VISTA_DE_SAGAS_POR_OMISION, vistaDeSagasValida } from '@/lib/library/series';
 import { DEFAULT_LIBRARY_VIEW, type LibraryView, libraryViewValida } from '@/lib/library/shelf';
+import { ALTO_DE_LOMOS_POR_OMISION, type AltoDeLomos, altoDeLomosValido } from '@/lib/library/spines';
 import { getJson, setJson } from '@/lib/storage';
 
 const PREFS_KEY = 'kavi.preferences';
@@ -57,6 +58,7 @@ type Prefs = {
   libraryView: LibraryView;
   libraryOrder: OrdenBiblioteca;
   librarySeriesView: VistaDeSagas;
+  librarySpineHeights: AltoDeLomos;
   readingModes: Record<string, FormaDeLeer>;
   readerTheme: PreferenciaDeTema;
 };
@@ -105,6 +107,8 @@ type PreferencesState = {
   libraryOrder: OrdenBiblioteca;
   /** Sagas apiladas o sueltas (RF-BL25), recordado como la vista. */
   librarySeriesView: VistaDeSagas;
+  /** Alto de los lomos en el librero: variado o todos iguales (RF-BL2b). */
+  librarySpineHeights: AltoDeLomos;
   /**
    * La forma de leer de cada libro (RF-BR8, T283), por id. Va en el dispositivo: en el teléfono se puede
    * preferir el scroll y en la web las páginas de lado. Sin entrada, scroll.
@@ -127,6 +131,7 @@ type PreferencesState = {
   setLibraryView: (vista: LibraryView) => void;
   setLibraryOrder: (orden: OrdenBiblioteca) => void;
   setLibrarySeriesView: (vista: VistaDeSagas) => void;
+  setLibrarySpineHeights: (modo: AltoDeLomos) => void;
   setReadingMode: (itemId: string, forma: FormaDeLeer) => void;
   setReaderTheme: (tema: PreferenciaDeTema) => void;
   hydrate: () => Promise<void>;
@@ -167,6 +172,7 @@ export const usePreferencesStore = create<PreferencesState>((set, get) => ({
   libraryView: DEFAULT_LIBRARY_VIEW,
   libraryOrder: ORDEN_POR_OMISION,
   librarySeriesView: VISTA_DE_SAGAS_POR_OMISION,
+  librarySpineHeights: ALTO_DE_LOMOS_POR_OMISION,
   readingModes: {},
   readerTheme: TEMA_POR_OMISION,
   hydrated: false,
@@ -276,6 +282,12 @@ export const usePreferencesStore = create<PreferencesState>((set, get) => ({
     persistir({ ...get(), librarySeriesView: vista });
   },
 
+  setLibrarySpineHeights: (modo) => {
+    elegidoEnEstaSesion.add('librarySpineHeights');
+    set({ librarySpineHeights: modo });
+    persistir({ ...get(), librarySpineHeights: modo });
+  },
+
   setReadingMode: (itemId, forma) => {
     elegidoEnEstaSesion.add('readingModes');
     const siguiente = recordarForma(get().readingModes, itemId, forma);
@@ -331,6 +343,7 @@ export const usePreferencesStore = create<PreferencesState>((set, get) => ({
       libraryView: guardado('libraryView', libraryViewValida(prefs?.libraryView)),
       libraryOrder: guardado('libraryOrder', ordenValido(prefs?.libraryOrder)),
       librarySeriesView: guardado('librarySeriesView', vistaDeSagasValida(prefs?.librarySeriesView)),
+      librarySpineHeights: guardado('librarySpineHeights', altoDeLomosValido(prefs?.librarySpineHeights)),
       readingModes: guardado('readingModes', formasValidas(prefs?.readingModes)),
       readerTheme: guardado('readerTheme', temaValido(prefs?.readerTheme)),
       hydrated: true,
@@ -343,7 +356,7 @@ export const usePreferencesStore = create<PreferencesState>((set, get) => ({
 
 /** Se guarda el conjunto entero: son dos claves y así no pueden desincronizarse. */
 function persistir(
-  estado: Pick<PreferencesState, 'timeFormat' | 'timeFormatChosen' | 'language' | 'lastWorkoutTitle' | 'showWorkouts' | 'showBirthdays' | 'visto' | 'appearance' | 'selfColor' | 'pinnedViews' | 'accesos' | 'overlayRecientes' | 'libraryView' | 'libraryOrder' | 'librarySeriesView' | 'readingModes' | 'readerTheme'>,
+  estado: Pick<PreferencesState, 'timeFormat' | 'timeFormatChosen' | 'language' | 'lastWorkoutTitle' | 'showWorkouts' | 'showBirthdays' | 'visto' | 'appearance' | 'selfColor' | 'pinnedViews' | 'accesos' | 'overlayRecientes' | 'libraryView' | 'libraryOrder' | 'librarySeriesView' | 'librarySpineHeights' | 'readingModes' | 'readerTheme'>,
 ): void {
   void setJson(PREFS_KEY, {
     timeFormat: estado.timeFormat,
@@ -361,6 +374,7 @@ function persistir(
     libraryView: estado.libraryView,
     libraryOrder: estado.libraryOrder,
     librarySeriesView: estado.librarySeriesView,
+    librarySpineHeights: estado.librarySpineHeights,
     readingModes: estado.readingModes,
     readerTheme: estado.readerTheme,
   } satisfies Prefs);

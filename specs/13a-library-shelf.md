@@ -18,11 +18,16 @@ arriba, un buscador, y los controles de orden y filtros. Abajo, el botón **+** 
   - Es la vista **Librero**, entre Portadas y Lista. Las repisas se llenan en orden hasta donde quepan en el
     ancho, así que en web caben más libros por repisa.
   - **Grosor:** 32 a 72 px, más o menos 100 páginas ≈ 36 px y 300 ≈ 48 px; un libro sin páginas conocidas
-    (EPUB) mide 40. El alto varía un poco entre libros (156 – 196 px), siempre el mismo para cada uno.
+    (EPUB) mide 40. El alto lo decide RF-BL2b.
   - El título va de abajo hacia arriba, como en los libros en español, en tinta o papel según se lea mejor;
     si no cabe en un renglón pasa a dos. Con imagen de lomo (RF-BL20) se ve la imagen **completa**, sin
-    recortar: el lomo toma el alto que pide la imagen a su grosor (hasta 260 px; si pide más, se ve entera
-    dentro con el color del lomo alrededor) y no se le escribe encima.
+    recortar: el lomo toma el **ancho** que pide la imagen a su alto (32 a 96 px; si pide más o menos, se ve
+    entera dentro con el color del lomo alrededor) y no se le escribe encima. (Enmienda del 13 oct 2026, T328:
+    antes la imagen ponía el alto, hasta 260 px, y los tomos de una saga salían de alturas distintas.)
+- **RF-BL2b. Alto de los lomos** (13 oct 2026, T328). Un ajuste en "Ordenar y filtrar", recordado en el
+  dispositivo: **Variado** (por omisión: cada libro entre 156 y 196 px, siempre el mismo para cada uno, como
+  un librero de verdad) o **Todos iguales** (196 px). En los dos, **los libros de una misma saga miden lo
+  mismo**, como una colección: en Variado el alto sale de la saga y no del libro.
   - Al tocar un lomo, el libro **sube** (200 ms; con movimiento reducido, sin animación) y luego aparece
     una hoja con su portada, autor y avance, con **"Leer"** y **"Más acciones"** (el menú, RF-BL16).
   - Mantener presionado selecciona, como en las otras vistas. Una saga apilada (RF-BL25) se ve como

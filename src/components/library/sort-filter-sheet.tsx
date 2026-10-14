@@ -11,6 +11,7 @@ import { useLanguage, useT } from '@/i18n';
 import { formatShortDate } from '@/lib/dates';
 import { type FiltrosBiblioteca, type OrdenBiblioteca, ORDENES, type RangoDeFecha, SIN_FILTROS } from '@/lib/library/filters';
 import type { VistaDeSagas } from '@/lib/library/series';
+import type { AltoDeLomos } from '@/lib/library/spines';
 import type { LibrarySeries } from '@/types/domain';
 
 export type SortFilterSheetProps = {
@@ -27,6 +28,9 @@ export type SortFilterSheetProps = {
   sagas: readonly LibrarySeries[];
   vistaSagas: VistaDeSagas;
   onVistaSagas: (vista: VistaDeSagas) => void;
+  /** El alto de los lomos en el librero (RF-BL2b). */
+  altoDeLomos: AltoDeLomos;
+  onAltoDeLomos: (modo: AltoDeLomos) => void;
 };
 
 const alternar = (lista: readonly string[], valor: string) => (lista.includes(valor) ? lista.filter((v) => v !== valor) : [...lista, valor]);
@@ -40,7 +44,7 @@ const deIso = (iso: string) => {
  * Ordenar y filtrar la librería (RF-BL8, RF-BL10). El orden se recuerda en el dispositivo; los filtros
  * se combinan y se ven como chips en la librería.
  */
-export function SortFilterSheet({ visible, onClose, orden, onOrden, filtros, onFiltros, opciones, enLibrero, sagas, vistaSagas, onVistaSagas }: SortFilterSheetProps) {
+export function SortFilterSheet({ visible, onClose, orden, onOrden, filtros, onFiltros, opciones, enLibrero, sagas, vistaSagas, onVistaSagas, altoDeLomos, onAltoDeLomos }: SortFilterSheetProps) {
   const theme = useTheme();
   const tx = useT();
   const lang = useLanguage();
@@ -86,6 +90,25 @@ export function SortFilterSheet({ visible, onClose, orden, onOrden, filtros, onF
           ))}
           <AppText variant="caption" color="textTertiary">
             {enLibrero ? f.sortManualShelfHint : f.sortManualHint}
+          </AppText>
+        </View>
+
+        <View style={styles.seccion}>
+          <AppText variant="label" color="textSecondary">
+            {tx.library.spine.heightTitle}
+          </AppText>
+          <Segmented<AltoDeLomos>
+            fullWidth
+            label={tx.library.spine.heightTitle}
+            options={[
+              { value: 'varied', label: tx.library.spine.heightVaried },
+              { value: 'equal', label: tx.library.spine.heightEqual },
+            ]}
+            value={altoDeLomos}
+            onChange={onAltoDeLomos}
+          />
+          <AppText variant="caption" color="textTertiary">
+            {tx.library.spine.heightHint}
           </AppText>
         </View>
 

@@ -976,6 +976,12 @@ Decisiones B1–B9 aprobadas el 12 oct 2026 (T274); ver la tabla de la spec 13 �
   migración probada con PGlite (7 casos) y aplicada en producción; "Detalles" en el menú de cada libro con sus
   datos, "Leer" y los libros enlazados leídos desde los dos lados; enlazar en dos pasos con búsqueda; quitar
   un enlace; una pareja enlazada no se vuelve a ofrecer.
+- [x] T328 Alto de los lomos: ajuste "Variado / Todos iguales" en "Ordenar y filtrar"; los tomos de una saga
+  siempre miden lo mismo; con imagen de lomo, el ancho sale de la imagen a ese alto (ya no el alto del
+  grosor). (RF-BL2b, enmienda a RF-BL2 y RF-BL20; pedido de Areli del 13 oct 2026) Dep: T282, T311, T315
+  **Hecho (13 oct 2026):** `altoDeLomo`/`anchoDeLomo`/`medidaDeLomo` en `lib/library/spines.ts`; la
+  proporción de cada imagen la avisa el lomo al cargar (`store/spine-ratios-store.ts`) y el librero reparte
+  las repisas con ese ancho. Preferencia `librarySpineHeights` en el dispositivo.
 - [x] T310 Más datos del libro (editorial, lugar, edición, capítulos, sinopsis): columnas nuevas, "Más datos" al
   importar y al editar, y lo que proponga el OPF. (RF-BL19, de KAVI Reader) Dep: T278, T281
   **Hecho (13 oct 2026):** cinco columnas opcionales con topes (migración probada con PGlite); sección plegable
