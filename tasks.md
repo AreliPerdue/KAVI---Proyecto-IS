@@ -1080,6 +1080,11 @@ Decisiones B1–B9 aprobadas el 12 oct 2026 (T274); ver la tabla de la spec 13 �
 - [ ] T290 Stickers con charola de quitados, post-its que se doblan, separadores en el borde elegido.
   (RF-BH13 – RF-BH15) Dep: T286 — El post-it básico (pegar, mover, escribir, color) ya está desde T286;
   aquí falta girarlo un poco, doblarlo y el post-it con trazo.
+- [x] T333 Borrar el archivo de una imagen quitada una hora después, si no se deshizo. (RF-BH12, pedido de
+  Areli del 14 oct 2026) Dep: T289
+  **Hecho (14 oct 2026):** acción `deleteFile` en `api/library-files.ts` (solo `<uid>/<pieza>/anotaciones/<id>.jpg`
+  de una pieza propia), `removeAnnotationImage` en los servicios, entrada `imageCleanup` con `due` en la cola
+  (guardar otra vez la anotación la cancela) y `use-library-sync` la procesa al vencer.
 - [ ] T291 Lápiz y dedo con Skia; presión del Apple Pencil; modo "solo lápiz". (RF-BH11) Dep: T286
 - [ ] T292 Escuchar en voz alta con la frase resaltada. (RF-BH6) Dep: T279
 - [ ] T317 Recortes de texto ("Recortar" al seleccionar) y de imagen (rectángulo sobre la página), `library_clips`

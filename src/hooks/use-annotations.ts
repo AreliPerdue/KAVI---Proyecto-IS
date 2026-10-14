@@ -7,7 +7,7 @@ import { libraryKeys } from '@/hooks/use-library';
 import { subirPendientes } from '@/hooks/use-library-sync';
 import { isOfflineError } from '@/lib/auth-errors';
 import { aEntrada, rutaDeImagen } from '@/lib/library/annotations';
-import { aplicarAnotacionesPendientes, encolar, pendientes } from '@/lib/library/offline/outbox';
+import { aplicarAnotacionesPendientes, encolar, ESPERA_PARA_BORRAR_IMAGEN_MS, pendientes } from '@/lib/library/offline/outbox';
 import { anotacionesGuardadas, guardarAnotaciones } from '@/lib/library/offline/snapshot';
 import { useAuth } from '@/providers';
 import { libraryFileUrl, listAnnotations, uploadAnnotationImage } from '@/services/library';
@@ -59,12 +59,15 @@ function useEscritor(itemId: string) {
   );
 
   const quitar = useCallback(
-    (a: Pick<LibraryAnnotation, 'id'>) => {
+    (a: Pick<LibraryAnnotation, 'id' | 'kind'>) => {
       queryClient.setQueryData<LibraryAnnotation[]>(clave, (lista = []) => lista.filter((x) => x.id !== a.id));
-      void encolar({ op: 'annotationRemove', itemId, id: a.id, at: Date.now() }).then(subirPendientes);
+      const ahora = Date.now();
+      // El archivo de una imagen se queda una hora, por si se deshace; luego se borra (T333).
+      const imagen = a.kind === 'image' ? encolar({ op: 'imageCleanup', itemId, userId: userId as string, id: a.id, due: ahora + ESPERA_PARA_BORRAR_IMAGEN_MS, at: ahora }) : null;
+      void Promise.all([encolar({ op: 'annotationRemove', itemId, id: a.id, at: ahora }), imagen]).then(subirPendientes);
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [queryClient, itemId],
+    [queryClient, itemId, userId],
   );
 
   return { guardar, quitar };

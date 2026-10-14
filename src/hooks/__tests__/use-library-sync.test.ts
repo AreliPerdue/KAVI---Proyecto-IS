@@ -5,6 +5,8 @@ const mockActualizar = jest.fn();
 const mockGuardarNotas = jest.fn();
 const mockQuitarNotas = jest.fn();
 const mockGuardarSesion = jest.fn();
+const mockListarNotas = jest.fn();
+const mockBorrarImagen = jest.fn();
 jest.mock('@/lib/library/offline/outbox', () => ({
   pendientes: () => mockPendientes(),
   confirmar: (e: unknown[]) => mockConfirmar(e),
@@ -14,6 +16,8 @@ jest.mock('@/services/library', () => ({
   saveAnnotations: (...a: unknown[]) => mockGuardarNotas(...a),
   removeAnnotations: (...a: unknown[]) => mockQuitarNotas(...a),
   saveReadingSession: (...a: unknown[]) => mockGuardarSesion(...a),
+  listAnnotations: (...a: unknown[]) => mockListarNotas(...a),
+  removeAnnotationImage: (...a: unknown[]) => mockBorrarImagen(...a),
 }));
 
 /* eslint-disable-next-line @typescript-eslint/no-require-imports -- tras los mocks */
@@ -23,7 +27,7 @@ const entrada = (itemId: string) => ({ op: 'position', itemId, patch: { progress
 
 beforeEach(() => {
   jest.useFakeTimers();
-  for (const m of [mockPendientes, mockConfirmar, mockActualizar, mockGuardarNotas, mockQuitarNotas, mockGuardarSesion]) m.mockReset();
+  for (const m of [mockPendientes, mockConfirmar, mockActualizar, mockGuardarNotas, mockQuitarNotas, mockGuardarSesion, mockListarNotas, mockBorrarImagen]) m.mockReset();
 });
 afterEach(() => jest.useRealTimers());
 
@@ -74,4 +78,48 @@ it('sube las sesiones de lectura con su dueño (T318)', async () => {
   await subirPendientes();
   expect(mockGuardarSesion).toHaveBeenCalledWith('u1', sesion);
   expect(mockConfirmar).toHaveBeenCalledWith([entrada]);
+});
+
+describe('la imagen de una anotación quitada (T333)', () => {
+  const HORA = 60 * 60 * 1000;
+  const limpieza = (due: number) => ({ op: 'imageCleanup', itemId: 'l1', userId: 'u1', id: 'img1', due, at: 1 });
+
+  it('antes de su hora no se borra: se queda en la cola y se intenta al vencer', async () => {
+    const e = limpieza(Date.now() + HORA);
+    mockPendientes.mockResolvedValue([e]);
+    mockListarNotas.mockResolvedValue([]);
+    mockBorrarImagen.mockResolvedValue(undefined);
+    await subirPendientes();
+    expect(mockBorrarImagen).not.toHaveBeenCalled();
+    expect(mockConfirmar).not.toHaveBeenCalled();
+    await jest.advanceTimersByTimeAsync(HORA);
+    expect(mockBorrarImagen).toHaveBeenCalledWith('u1', 'l1', 'img1');
+    expect(mockConfirmar).toHaveBeenCalledWith([e]);
+  });
+
+  it('pasada la hora, si nadie la deshizo, se borra el archivo', async () => {
+    const e = limpieza(Date.now() - 1);
+    mockPendientes.mockResolvedValue([e]);
+    mockListarNotas.mockResolvedValue([{ id: 'otra' }]);
+    mockBorrarImagen.mockResolvedValue(undefined);
+    await subirPendientes();
+    expect(mockBorrarImagen).toHaveBeenCalledWith('u1', 'l1', 'img1');
+    expect(mockConfirmar).toHaveBeenCalledWith([e]);
+  });
+
+  it('si la anotación volvió a existir, no se borra y sale de la cola', async () => {
+    const e = limpieza(Date.now() - 1);
+    mockPendientes.mockResolvedValue([e]);
+    mockListarNotas.mockResolvedValue([{ id: 'img1' }]);
+    await subirPendientes();
+    expect(mockBorrarImagen).not.toHaveBeenCalled();
+    expect(mockConfirmar).toHaveBeenCalledWith([e]);
+  });
+
+  it('sin red se queda para después', async () => {
+    mockPendientes.mockResolvedValue([limpieza(Date.now() - 1)]);
+    mockListarNotas.mockRejectedValue(new TypeError('Network request failed'));
+    await subirPendientes();
+    expect(mockConfirmar).not.toHaveBeenCalled();
+  });
 });

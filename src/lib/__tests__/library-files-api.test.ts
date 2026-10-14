@@ -243,6 +243,17 @@ describe('borrar', () => {
     expect(mockR2).not.toHaveBeenCalled();
   });
 
+  it('una imagen pegada que ya no se usa (T333): solo de su carpeta de anotaciones y de una pieza propia', async () => {
+    const IMG = 'dddddddd-0000-4000-8000-000000000004';
+    mockR2.mockResolvedValue(new Response(null, { status: 204 }));
+    const r = await pedir({ action: 'deleteFile', path: `${UID}/${ITEM}/anotaciones/${IMG}.jpg` });
+    expect(r).toEqual({ status: 200, body: { removed: 1 } });
+    expect((mockR2.mock.calls.at(-1)?.[0] as Request).url).toContain(`anotaciones/${IMG}.jpg`);
+    expect((await pedir({ action: 'deleteFile', path: `${UID}/${ITEM}/rayuela.pdf` })).status).toBe(403);
+    mockPiezas = [];
+    expect((await pedir({ action: 'deleteFile', path: `${UID}/${ITEM}/anotaciones/${IMG}.jpg` })).status).toBe(403);
+  });
+
   it('si R2 falla, avisa y no dice que se borró', async () => {
     mockR2.mockResolvedValue(new Response('error', { status: 500 }));
     expect(await pedir({ action: 'delete', itemId: ITEM })).toEqual({ status: 502, body: expect.objectContaining({ code: 'failed' }) });

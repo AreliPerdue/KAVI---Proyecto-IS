@@ -20,6 +20,8 @@
  * - `read` `{ path }` → dirección para leer con `GET`, válida una hora.
  * - `delete` `{ itemId | fontId }` → borra la carpeta de la pieza o el archivo de la fuente (antes de
  *   borrar su fila).
+ * - `deleteFile` `{ path }` → borra una imagen pegada que ya no se usa (T333: una hora después de quitarla,
+ *   si no se deshizo). Solo rutas `<uid>/<pieza>/anotaciones/<id>.jpg` de una pieza propia.
  * - `deleteAll` → borra la carpeta de la persona (al eliminar la cuenta, RF-A12).
  *
  * Cada error lleva un `code` (`unavailable`, `signIn`, `forbidden`, `tooBig`, `badRequest`, `failed`)
@@ -240,6 +242,15 @@ export async function POST(request: Request): Promise<Response> {
         const item = await pieza(supabase, { id: texto(cuerpo.itemId) });
         if (!item) return responder(403, { code: 'forbidden', error: 'No tienes permiso para borrar esa pieza.' });
         return responder(200, { removed: await borrarPrefijo(r2, `${uid}/${item.id}/`) });
+      }
+      case 'deleteFile': {
+        const ruta = texto(cuerpo.path);
+        const deImagen = piezaDeImagenPegada(ruta, uid);
+        const item = deImagen && suya(ruta) ? await pieza(supabase, { id: deImagen }) : null;
+        if (!item) return responder(403, { code: 'forbidden', error: 'No tienes permiso para borrar ese archivo.' });
+        const r = await cliente(r2).fetch(direccion(r2, ruta).toString(), { method: 'DELETE' });
+        if (!r.ok && r.status !== 404) throw new Error(`delete ${r.status}`);
+        return responder(200, { removed: 1 });
       }
       case 'deleteAll':
         return responder(200, { removed: await borrarPrefijo(r2, `${uid}/`) });

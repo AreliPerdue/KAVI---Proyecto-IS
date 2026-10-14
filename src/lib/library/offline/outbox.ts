@@ -4,7 +4,8 @@ import type { LibraryAnnotation, LibraryAnnotationInput, LibraryItem, LibraryIte
 /**
  * Cola local de KAVI Library (spec 13b, RF-BR3; T285): lo que se cambió leyendo sin red se guarda primero
  * aquí y sube al volver, como la cola de series del gym (RF-F17). Lleva el avance de lectura (dónde voy y
- * cuánto llevo), las anotaciones (T286): guardar una o quitarla, y las sesiones de lectura (T318).
+ * cuánto llevo), las anotaciones (T286): guardar una o quitarla, las sesiones de lectura (T318) y el
+ * archivo de una imagen pegada que se quitó (T333): se borra una hora después si no se deshizo.
  *
  * Una entrada por libro en el avance y una por anotación: el último cambio gana. Guardar y quitar la misma
  * anotación comparten lugar, así quitar lo que aún no subía no deja una creación pendiente.
@@ -19,7 +20,12 @@ export type EntradaDeLibreria =
   | { op: 'annotation'; itemId: string; userId: string; annotation: LibraryAnnotationInput; at: number }
   | { op: 'annotationRemove'; itemId: string; id: string; at: number }
   /** Una sesión de lectura: se reescribe mientras dura, así que la última versión gana. */
-  | { op: 'session'; itemId: string; userId: string; session: LibraryReadingSessionInput; at: number };
+  | { op: 'session'; itemId: string; userId: string; session: LibraryReadingSessionInput; at: number }
+  /** El archivo de una imagen quitada: no se borra antes de `due` (ms), por si se deshace. */
+  | { op: 'imageCleanup'; itemId: string; userId: string; id: string; due: number; at: number };
+
+/** Una hora para deshacer antes de borrar el archivo de una imagen quitada (T333). */
+export const ESPERA_PARA_BORRAR_IMAGEN_MS = 60 * 60 * 1000;
 
 const claveDe = (e: EntradaDeLibreria) => {
   switch (e.op) {
@@ -31,6 +37,8 @@ const claveDe = (e: EntradaDeLibreria) => {
       return `annotation:${e.annotation.id}`;
     case 'annotationRemove':
       return `annotation:${e.id}`;
+    case 'imageCleanup':
+      return `imageCleanup:${e.id}`;
   }
 };
 
@@ -46,11 +54,15 @@ export function pendientes(): Promise<EntradaDeLibreria[]> {
   return enCadena(async () => (await getJson<EntradaDeLibreria[]>(KEY)) ?? []);
 }
 
-/** Agrega un cambio y reemplaza lo pendiente de ese mismo libro (o de esa misma anotación). */
+/**
+ * Agrega un cambio y reemplaza lo pendiente de ese mismo libro (o de esa misma anotación). Guardar otra vez
+ * una anotación (deshacer el quitarla) cancela el borrado pendiente de su imagen.
+ */
 export function encolar(entrada: EntradaDeLibreria): Promise<void> {
   return enCadena(async () => {
     const actuales = (await getJson<EntradaDeLibreria[]>(KEY)) ?? [];
-    await setJson(KEY, [...actuales.filter((e) => claveDe(e) !== claveDe(entrada)), entrada]);
+    const cancela = entrada.op === 'annotation' ? `imageCleanup:${entrada.annotation.id}` : null;
+    await setJson(KEY, [...actuales.filter((e) => claveDe(e) !== claveDe(entrada) && claveDe(e) !== cancela), entrada]);
   });
 }
 

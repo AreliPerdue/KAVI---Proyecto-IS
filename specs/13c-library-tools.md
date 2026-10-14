@@ -91,7 +91,12 @@
     se toca dónde va, ya con su proporción. Se ve al instante y sube a R2 en la carpeta del libro
     (`<persona>/<libro>/anotaciones/<id>.jpg`, hasta 5 MB; la función de archivos lo permite). Sin conexión no
     se puede pegar (se dice y se quita). Se gira con el asa de arriba (se queda en los ángulos rectos cerca de
-    ellos) o 90° con **Girar**. Quitarla no borra el archivo, así deshacer la trae de vuelta.
+    ellos) o 90° con **Girar**. Quitarla no borra el archivo al momento, así deshacer la trae de vuelta.
+  - **El archivo de una imagen quitada se borra a la hora (T333, 14 oct 2026, pedido de Areli),** para que no
+    ocupe espacio. La fila se va al quitarla; el archivo espera una hora en la cola del dispositivo por si se
+    deshace (deshacer cancela el borrado). Pasada la hora se borra en la siguiente sincronización (o en ese
+    momento, si la app sigue abierta), salvo que la imagen haya vuelto a existir. La función de archivos solo
+    deja borrar así rutas `anotaciones/<id>.jpg` de un libro propio.
   - Los dos tienen las 8 asas, capa, candado, deshacer y panel, en PDF y EPUB, y se ven en el libro real.
 
 ## 4. Pegar cosas, como en papel (RF-BH13 – RF-BH16)

@@ -107,6 +107,15 @@ it('una sesión de lectura ocupa un solo lugar en la cola: la última versión g
   expect(hay[0].op === 'session' && hay[0].session.seconds).toBe(120);
 });
 
+it('deshacer el quitar una imagen (guardarla otra vez) cancela el borrado de su archivo (T333)', async () => {
+  const fila = { id: 'img1', item_id: 'l1', kind: 'image', locator: { page: 1, x: 0, y: 0, w: 0.4 }, content: { path: 'u1/l1/anotaciones/img1.jpg' }, z: 1, removed: false, locked: false } as const;
+  await cola.encolar({ op: 'annotationRemove', itemId: 'l1', id: 'img1', at: 1 });
+  await cola.encolar({ op: 'imageCleanup', itemId: 'l1', userId: 'u1', id: 'img1', due: 1 + cola.ESPERA_PARA_BORRAR_IMAGEN_MS, at: 1 });
+  expect((await cola.pendientes()).map((e) => e.op)).toEqual(['annotationRemove', 'imageCleanup']);
+  await cola.encolar({ op: 'annotation', itemId: 'l1', userId: 'u1', annotation: fila, at: 2 });
+  expect((await cola.pendientes()).map((e) => e.op)).toEqual(['annotation']);
+});
+
 describe('lista guardada', () => {
   it('es de quien la guardó: otra cuenta en el mismo teléfono no la ve', async () => {
     await lista.guardarLista('u1', [{ id: 'l1' } as never]);

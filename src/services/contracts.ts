@@ -526,6 +526,8 @@ export interface LibraryApi {
    * `<uid>/<pieza>/anotaciones/<id>.jpg`. Devuelve la ruta.
    */
   uploadAnnotationImage(userId: string, itemId: string, annotationId: string, jpeg: LibraryFileBody): Promise<string>;
+  /** Borra el archivo de una imagen pegada que se quitó (T333): una hora después, si no se deshizo. */
+  removeAnnotationImage(userId: string, itemId: string, annotationId: string): Promise<void>;
 
   /** Tiempo de lectura (RF-BR11 – RF-BR13, T318): las sesiones de la persona, la más nueva primero. */
   listReadingSessions(userId: string): Promise<LibraryReadingSession[]>;

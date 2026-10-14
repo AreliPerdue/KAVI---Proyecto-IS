@@ -224,6 +224,10 @@ export const supabaseLibrary: LibraryApi = {
     return ruta;
   },
 
+  async removeAnnotationImage(userId, itemId, annotationId) {
+    await archivos({ action: 'deleteFile', path: `${userId}/${itemId}/anotaciones/${annotationId}.jpg` });
+  },
+
   async listReadingSessions(userId) {
     return unwrap(
       await db().from('library_reading_sessions').select('*').eq('owner_id', userId).order('started_at', { ascending: false }).limit(2000),
