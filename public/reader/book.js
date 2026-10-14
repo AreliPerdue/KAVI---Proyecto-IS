@@ -23,10 +23,16 @@ const CERCA = 3; // páginas que se arman a cada lado de la actual
 
 const sinMovimiento = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+/** Lo que tapan los controles arriba y abajo (T286b): el libro se acomoda en el espacio que queda. */
+let reserva = { arriba: 0, abajo: 0 };
+export function fijarReserva(r) {
+  reserva = { arriba: r?.arriba ?? 0, abajo: r?.abajo ?? 0 };
+}
+
 /** El tamaño de la hoja y si van dos: dos si caben sin que cada una quede chica. */
 export function medidas(proporcion) {
   const W = window.innerWidth - MARGEN * 2;
-  const H = window.innerHeight - MARGEN * 2;
+  const H = Math.max(120, window.innerHeight - MARGEN * 2 - reserva.arriba - reserva.abajo);
   const dos = W >= 1.8 * H * proporcion;
   let alto = H;
   let ancho = alto * proporcion;

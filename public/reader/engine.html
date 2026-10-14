@@ -61,6 +61,9 @@
         height: 100%;
         display: flex;
         overflow: hidden;
+        /* Lo que tapan los controles (T286b): la página se acomoda entre las barras. */
+        box-sizing: border-box;
+        padding: var(--reserva-arriba, 0px) 0 var(--reserva-abajo, 0px);
       }
       /* Centrada con márgenes automáticos: acercada y más grande que la hoja, se recorre desde la orilla. */
       #pdf.paginado .pagina {
@@ -141,6 +144,8 @@
       #libro {
         position: absolute;
         inset: 0;
+        box-sizing: border-box;
+        padding: var(--reserva-arriba, 0px) 0 var(--reserva-abajo, 0px);
         display: flex;
         align-items: center;
         justify-content: center;

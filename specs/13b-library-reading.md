@@ -73,6 +73,9 @@
     de las herramientas, no cambia el tamaño de la página, así un EPUB no se vuelve a acomodar ni lo
     pegado se recorre (corrección del 13 oct 2026, T286). En scroll los controles siempre se ven y van en
     su lugar, arriba y abajo.
+    Y la página **siempre se ve completa**: se acomoda en el espacio que queda entre las barras, estén a la
+    vista o no (en PDF la hoja entera, en EPUB el margen de arriba y abajo, en el libro real el libro
+    entero). (Corrección del 14 oct 2026: las barras encimadas tapaban el principio y el final.)
   - **Deslizar** el dedo de derecha a izquierda (siguiente) o al revés (anterior).
   - **Web:** deslizar con dos dedos en el *trackpad* hacia los lados, las flechas **→ / ←** del teclado
     (también Re Pág / Av Pág y la barra espaciadora para avanzar) y el clic en los bordes. Un deslizamiento

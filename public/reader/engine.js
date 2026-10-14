@@ -130,6 +130,8 @@ async function atender(m) {
       return cambiarTexto(m.size, m.font);
     case 'zoom':
       return fijarZoom(typeof m.level === 'number' ? m.level : 1);
+    case 'insets':
+      return cambiarReserva(m.top, m.bottom);
   }
 }
 
@@ -268,7 +270,8 @@ async function bytesDeFuente(fuente) {
 function escalaDe(base) {
   const ancho = Math.min(window.innerWidth - 16, 900) / base.width;
   if (forma !== 'paged') return ancho * zoom;
-  return Math.min((window.innerWidth - 16) / base.width, (window.innerHeight - 16) / base.height) * zoom;
+  const alto = window.innerHeight - 16 - reserva.arriba - reserva.abajo;
+  return Math.min((window.innerWidth - 16) / base.width, Math.max(80, alto) / base.height) * zoom;
 }
 
 /** Medida provisional de cada página mientras no se pinta: la de la primera. */
@@ -487,7 +490,7 @@ async function abrirEpub(fuente, posicion) {
   view.addEventListener('create-overlay', () => anotaciones.recargarEpub());
 
   await view.open(archivo);
-  view.renderer.setAttribute('margin', '32px');
+  margenEpub(view);
   view.renderer.setAttribute('max-inline-size', '720px');
   formaEpub(view);
   await cargandoTexto;
@@ -512,8 +515,37 @@ async function abrirEpub(fuente, posicion) {
   anotaciones.repintar();
 }
 
+/**
+ * Lo que tapan los controles del lector fuera del scroll (T286b): van encima del libro, así que la página se
+ * acomoda en el espacio que queda entre las barras, con o sin ellas a la vista. La app lo dice una vez
+ * (`insets`) y casi no cambia: mostrar u ocultar los controles no vuelve a acomodar nada.
+ */
+let reserva = { arriba: 0, abajo: 0 };
+
+function cambiarReserva(arriba, abajo) {
+  const limpiar = (v) => (Number.isFinite(v) ? Math.min(300, Math.max(0, Math.round(v))) : 0);
+  const nueva = { arriba: limpiar(arriba), abajo: limpiar(abajo) };
+  if (nueva.arriba === reserva.arriba && nueva.abajo === reserva.abajo) return;
+  reserva = nueva;
+  const raiz = document.documentElement.style;
+  raiz.setProperty('--reserva-arriba', `${reserva.arriba}px`);
+  raiz.setProperty('--reserva-abajo', `${reserva.abajo}px`);
+  if (epub) margenEpub(epub.view);
+  if (forma === 'book' && (libro || creandoLibro)) {
+    const donde = pdf ? (libro?.pagina?.() ?? pdf.pagina) : (libro?.cfi?.() ?? epub?.ultimo);
+    void entrarAlLibro(donde);
+  } else if (pdf) reacomodarPdf();
+}
+
+/** El margen de arriba y abajo de un EPUB: el suyo de siempre, o lo que tapen los controles si es más. */
+function margenEpub(view) {
+  const margen = forma === 'paged' ? Math.max(32, Math.max(reserva.arriba, reserva.abajo) + 8) : 32;
+  view.renderer.setAttribute('margin', `${margen}px`);
+}
+
 /** En páginas de lado, una columna a la vez (como Kindle), con la animación de foliate salvo con movimiento reducido. */
 function formaEpub(view) {
+  margenEpub(view);
   const r = view.renderer;
   r.setAttribute('flow', forma === 'paged' ? 'paginated' : 'scrolled');
   r.setAttribute('max-column-count', '1');
@@ -611,7 +643,8 @@ let creandoLibro = null;
 
 /** Abre el libro real donde va (la página del PDF o el CFI del EPUB) y esconde la otra vista. */
 async function entrarAlLibro(donde) {
-  const { libroPdf, libroEpub } = await import('./book.js');
+  const { libroPdf, libroEpub, fijarReserva } = await import('./book.js');
+  fijarReserva(reserva);
   salirDelLibro();
   zoom = 1;
   panLibro = { x: 0, y: 0 };

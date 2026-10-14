@@ -713,3 +713,13 @@ describe('tiempo de lectura (spec 13b, RF-BR11; T318)', () => {
     expect(screen.getByText(es.library.progressPage(4, 12))).toBeTruthy();
   });
 });
+
+it('fuera del scroll, la página se acomoda entre las barras (insets); en scroll, nada (T286b)', async () => {
+  usePreferencesStore.setState({ readingModes: { l1: 'paged' } });
+  await render(<Lector />);
+  expect(mockEnviados).toContainEqual({ type: 'insets', top: 52, bottom: 116 });
+  usePreferencesStore.setState({ readingModes: {} });
+  mockEnviados.length = 0;
+  await render(<Lector />);
+  expect(mockEnviados).toContainEqual({ type: 'insets', top: 0, bottom: 0 });
+});

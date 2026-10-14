@@ -213,6 +213,19 @@ function Lector({ id }: { id: string }) {
   // Cuánto está acercado el PDF o el libro real (RF-BH1): con más de 100 %, la pastilla para ajustar.
   const [zoom, setZoom] = useState(1);
 
+  // Lo que miden las barras que van encima del libro. Hasta medirlas, lo que suelen medir: así el libro
+  // real (que arranca sin controles) ya deja su lugar.
+  const [barras, setBarras] = useState({ arriba: 52, abajo: 116 });
+  const medirBarra = (lado: 'arriba' | 'abajo', alto: number) =>
+    setBarras((b) => (Math.abs(b[lado] - alto) < 6 ? b : { ...b, [lado]: Math.round(alto) }));
+  // La página se acomoda entre las barras (con o sin ellas a la vista), así nunca quedan encima del texto.
+  // Antes que la forma: así el motor acomoda una sola vez, ya con el lugar de las barras.
+  const reservaArriba = forma !== 'scroll' ? barras.arriba : 0;
+  const reservaAbajo = forma !== 'scroll' ? barras.abajo : 0;
+  useEffect(() => {
+    motor.current?.send({ type: 'insets', top: reservaArriba, bottom: reservaAbajo });
+  }, [reservaArriba, reservaAbajo]);
+
   // Cambiar de forma con el libro abierto: el motor se queda en el mismo lugar (RF-BR8).
   const formaEnMotor = useRef(forma);
   useEffect(() => {
@@ -646,9 +659,18 @@ function Lector({ id }: { id: string }) {
           </View>
         ) : null}
         {pastillaZoom}
-        {superpuestos && barraArriba ? <View style={[styles.arriba, { backgroundColor: theme.background }]}>{barraArriba}</View> : null}
+        {superpuestos && barraArriba ? (
+          <View style={[styles.arriba, { backgroundColor: theme.background }]} onLayout={(e) => medirBarra('arriba', e.nativeEvent.layout.height)}>
+            {barraArriba}
+          </View>
+        ) : null}
         {superpuestos ? (
-          <View style={styles.abajoEncima} onLayout={(e) => setAltoAbajo(e.nativeEvent.layout.height)}>
+          <View
+            style={styles.abajoEncima}
+            onLayout={(e) => {
+              setAltoAbajo(e.nativeEvent.layout.height);
+              if (e.nativeEvent.layout.height > 0) medirBarra('abajo', e.nativeEvent.layout.height);
+            }}>
             {barraAbajo}
           </View>
         ) : null}

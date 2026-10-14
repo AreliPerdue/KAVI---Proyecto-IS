@@ -63,7 +63,9 @@ export type MensajeAlMotor =
   /** Tamaño (%) y letra del texto de un EPUB (RF-BH2, RF-BH3; T288). */
   | { type: 'text'; size: number; font: LetraDeLectura }
   /** Volver a ver la página entera ("Ajustar", RF-BH1). */
-  | { type: 'zoom'; level: number };
+  | { type: 'zoom'; level: number }
+  /** Cuánto tapan arriba y abajo los controles que van encima del libro: la página se acomoda entre ellos. */
+  | { type: 'insets'; top: number; bottom: number };
 
 export type CodigoDeError = 'password' | 'damaged' | 'network' | 'unknown';
 
