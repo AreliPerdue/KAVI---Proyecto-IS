@@ -254,7 +254,8 @@ function imagenesListas(raiz) {
 /**
  * El libro real de un EPUB. `view` es el foliate-view abierto (su libro, sus CFI); `cfi`, dónde abrir.
  * `avisar` recibe { cfi, pagina, total, fraccion }. `capa(i, sombra, ancho, ubicar)` pone lo pegado en la
- * hoja i; `ubicar(cfi)` dice en qué hoja y a qué altura cae un CFI.
+ * hoja i; `ubicar(cfi)` dice en qué hoja y a qué altura cae un CFI y `ubicarRango(cfi)`, los renglones de un
+ * subrayado.
  */
 export async function libroEpub({ raiz, view, cfi, capa, avisar }) {
   // La proporción de una página de libro de bolsillo; el texto se acomoda a lo que quepa.
@@ -333,6 +334,38 @@ export async function libroEpub({ raiz, view, cfi, capa, avisar }) {
   };
   /** La página de un CFI: dónde cae su punto en el capítulo acomodado. */
   const paginaDe = (valor) => ubicarCfi(valor).pagina;
+  /**
+   * Los renglones de un CFI de rango (un subrayado) en el capítulo acomodado: cada uno en la hoja donde cae,
+   * con su posición en px dentro de ella.
+   */
+  const ubicarRangoCfi = (valor) => {
+    try {
+      const { index, anchor } = view.resolveCFI(valor);
+      const c = capitulos.find((x) => x.indice === index);
+      if (!c || !anchor) return [];
+      const rango = anchor(c.doc);
+      const inicio = seguir(c.contenido, camino(c.doc.body, rango.startContainer));
+      const fin = seguir(c.contenido, camino(c.doc.body, rango.endContainer));
+      if (!inicio || !fin) return [];
+      const r = document.createRange();
+      r.setStart(inicio, Math.min(rango.startOffset, inicio.length ?? inicio.childNodes.length));
+      r.setEnd(fin, Math.min(rango.endOffset, fin.length ?? fin.childNodes.length));
+      const base = c.contenido.getBoundingClientRect();
+      return [...r.getClientRects()]
+        .filter((q) => q.width > 0.5 && q.height > 0.5)
+        .map((q) => {
+          const columna = Math.max(0, Math.min(c.n - 1, columnaDe(c, q)));
+          return { pagina: c.inicio + columna, x: q.left - base.left - columna * ancho, y: q.top - base.top, w: q.width, h: q.height };
+        });
+    } catch {
+      return [];
+    }
+  };
+  const rangos = new Map();
+  const ubicarRango = (valor) => {
+    if (!rangos.has(valor)) rangos.set(valor, ubicarRangoCfi(valor));
+    return rangos.get(valor);
+  };
   // El acomodo no cambia mientras dure este libro: cada CFI se ubica una vez.
   const ubicados = new Map();
   const ubicar = (valor) => {
@@ -367,7 +400,7 @@ export async function libroEpub({ raiz, view, cfi, capa, avisar }) {
         const contenido = copiaDelCuerpo(c.doc);
         contenido.style.transform = `translateX(${-(i - c.inicio) * ancho}px)`;
         sombra.replaceChildren(estilo, contenido);
-        capa?.(i, sombra, ancho, ubicar);
+        capa?.(i, sombra, ancho, { ubicar, ubicarRango });
       } else if (!cerca && armadas.has(i)) {
         armadas.delete(i);
         paginas[i].shadowRoot?.replaceChildren();
@@ -401,7 +434,7 @@ export async function libroEpub({ raiz, view, cfi, capa, avisar }) {
     },
     cfi: () => cfiDe(actual),
     recapar: () => {
-      for (const i of armadas) if (paginas[i].shadowRoot) capa?.(i, paginas[i].shadowRoot, ancho, ubicar);
+      for (const i of armadas) if (paginas[i].shadowRoot) capa?.(i, paginas[i].shadowRoot, ancho, { ubicar, ubicarRango });
     },
     cerrar: () => {
       pf.destroy();

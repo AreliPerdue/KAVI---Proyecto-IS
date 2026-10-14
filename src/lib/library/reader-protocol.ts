@@ -1,7 +1,7 @@
 import { Platform } from 'react-native';
 
 import { SITIO } from '@/lib/api';
-import { localizadorPegado } from '@/lib/library/annotations';
+import { localizadorDeTexto, localizadorPegado, TEXTO_MAXIMO_DE_SUBRAYADO } from '@/lib/library/annotations';
 import type { FormaDeLeer } from '@/lib/library/reading-mode';
 import type { LibraryAnnotationKind, LibraryItem, LibraryLocator } from '@/types/domain';
 
@@ -26,7 +26,7 @@ export type AnotacionEnMotor = {
   locator: LibraryLocator;
   z: number;
   locked: boolean;
-  content: { color?: string; text?: string };
+  content: { color?: string; text?: string; style?: 'highlight' | 'underline' | 'strike' };
 };
 
 /** Con qué se está anotando: nada (leer y mover lo pegado) o pegar un post-it donde se toque. */
@@ -56,13 +56,16 @@ export type MensajeAlMotor =
   | { type: 'annotations'; items: AnotacionEnMotor[] }
   | { type: 'tool'; tool: Herramienta }
   /** La app elige o suelta (al borrar, al cerrar la barra de lo seleccionado). */
-  | { type: 'select'; id: string | null };
+  | { type: 'select'; id: string | null }
+  /** Quitar la selección de texto (al subrayar o cerrar la barra). */
+  | { type: 'clearSelection' };
 
 export type CodigoDeError = 'password' | 'damaged' | 'network' | 'unknown';
 
 export type MensajeDelMotor =
   | { type: 'ready' }
-  | { type: 'opened'; total: number | null }
+  /** `copiable`: si el libro deja copiar su texto (un PDF puede prohibirlo, RF-BH9). */
+  | { type: 'opened'; total: number | null; copiable?: boolean }
   /** `pageEnd`: en el libro real con dos páginas, la de la derecha ("pp. 2–3", RF-BR5). */
   | { type: 'position'; page?: number; pageEnd?: number; total?: number; cfi?: string; fraction: number }
   | { type: 'search'; count: number; index: number; searching?: boolean }
@@ -77,6 +80,8 @@ export type MensajeDelMotor =
   | { type: 'move'; id: string; locator: LibraryLocator }
   /** Doble toque en algo pegado: abrirlo para escribir. */
   | { type: 'edit'; id: string }
+  /** Texto seleccionado (RF-BH7): qué dice y dónde está. Vacío, se soltó la selección. */
+  | { type: 'selection'; text: string; locator: LibraryLocator | null }
   | { type: 'error'; code: CodigoDeError; message?: string };
 
 const CODIGOS: readonly CodigoDeError[] = ['password', 'damaged', 'network', 'unknown'];
@@ -99,7 +104,7 @@ export function leerMensaje(crudo: unknown): MensajeDelMotor | null {
     case 'ready':
       return { type: 'ready' };
     case 'opened':
-      return { type: 'opened', total: numero(m.total) ? m.total : null };
+      return { type: 'opened', total: numero(m.total) ? m.total : null, copiable: m.copiable !== false };
     case 'position':
       if (!numero(m.fraction)) return null;
       return {
@@ -126,6 +131,13 @@ export function leerMensaje(crudo: unknown): MensajeDelMotor | null {
     }
     case 'edit':
       return esId(m.id) ? { type: 'edit', id: m.id } : null;
+    case 'selection': {
+      // Los renglones del PDF llegan con saltos: se guarda como se lee, con espacios sencillos.
+      const texto = typeof m.text === 'string' ? m.text.replace(/\s+/g, ' ').trim().slice(0, TEXTO_MAXIMO_DE_SUBRAYADO) : '';
+      if (!texto) return { type: 'selection', text: '', locator: null };
+      const locator = localizadorDeTexto(m.locator);
+      return locator ? { type: 'selection', text: texto, locator } : null;
+    }
     case 'cover':
       return typeof m.dataUrl === 'string' && m.dataUrl.startsWith('data:image/') ? { type: 'cover', dataUrl: m.dataUrl } : null;
     case 'error':

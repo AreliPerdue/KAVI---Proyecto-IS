@@ -4,8 +4,9 @@ import { cambioDePosicion, ColaDelMotor, leerMensaje, posicionGuardada } from '@
 describe('leerMensaje', () => {
   it.each([
     ['{"type":"ready"}', { type: 'ready' }],
-    [{ type: 'opened', total: 12 }, { type: 'opened', total: 12 }],
-    [{ type: 'opened', total: null }, { type: 'opened', total: null }],
+    [{ type: 'opened', total: 12 }, { type: 'opened', total: 12, copiable: true }],
+    [{ type: 'opened', total: 12, copiable: false }, { type: 'opened', total: 12, copiable: false }],
+    [{ type: 'opened', total: null }, { type: 'opened', total: null, copiable: true }],
     [{ type: 'position', page: 3, total: 12, fraction: 0.25 }, { type: 'position', page: 3, total: 12, fraction: 0.25, cfi: undefined }],
     [{ type: 'position', cfi: 'epubcfi(/6/2!/4)', fraction: 1.4 }, { type: 'position', cfi: 'epubcfi(/6/2!/4)', fraction: 1, page: undefined, total: undefined }],
     [{ type: 'search', count: 3, index: 0, searching: true }, { type: 'search', count: 3, index: 0, searching: true }],
@@ -37,6 +38,15 @@ describe('leerMensaje · capa de anotaciones (T286)', () => {
     [{ type: 'select', id: null }, { type: 'select', id: null }],
     [{ type: 'move', id: 'a1', locator: { cfi: 'epubcfi(/6/4)', x: 0.3, w: 0.24, fraction: 0.5 } }, { type: 'move', id: 'a1', locator: { cfi: 'epubcfi(/6/4)', x: 0.3, w: 0.24, fraction: 0.5 } }],
     [{ type: 'edit', id: 'a1' }, { type: 'edit', id: 'a1' }],
+    [{ type: 'selection', text: '' }, { type: 'selection', text: '', locator: null }],
+    [
+      { type: 'selection', text: '  la\nciudad ', locator: { rects: [{ page: 3, x: 0.1, y: 0.4, w: 0.5, h: 0.02 }] } },
+      { type: 'selection', text: 'la ciudad', locator: { page: 3, y: 0.4, rects: [{ page: 3, x: 0.1, y: 0.4, w: 0.5, h: 0.02 }] } },
+    ],
+    [
+      { type: 'selection', text: 'mapa', locator: { cfi: 'epubcfi(/6/4!/4/2,/1:3,/1:7)', fraction: 0.2 } },
+      { type: 'selection', text: 'mapa', locator: { cfi: 'epubcfi(/6/4!/4/2,/1:3,/1:7)', fraction: 0.2 } },
+    ],
   ])('%j', (crudo, esperado) => {
     expect(leerMensaje(crudo)).toEqual(esperado);
   });
@@ -49,6 +59,8 @@ describe('leerMensaje · capa de anotaciones (T286)', () => {
     { type: 'move', id: 'a1', locator: { page: 1 } },
     { type: 'move', locator: { page: 1, x: 0, y: 0, w: 0.2 } },
     { type: 'edit', id: '' },
+    { type: 'selection', text: 'hola', locator: { rects: [{ page: 0, x: 0, y: 0, w: 1, h: 1 }] } },
+    { type: 'selection', text: 'hola', locator: { rects: [] } },
   ])('ignora %j', (crudo) => {
     expect(leerMensaje(crudo)).toBeNull();
   });

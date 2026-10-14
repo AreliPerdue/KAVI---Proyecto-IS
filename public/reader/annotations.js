@@ -13,8 +13,13 @@
  *   en cada cuadro mientras haya algo que mostrar.
  * - **Libro real:** se ve en su página, pero no se toca: ahí arrastrar dobla la hoja.
  *
- * Por ahora el motor pinta post-its (T286); los subrayados, cuadros, stickers y el lápiz llegan con sus
- * tareas (T287 – T291) sobre esta misma capa.
+ * Pinta post-its (T286) y subrayados (T287); los cuadros, stickers y el lápiz llegan con sus tareas (T289 –
+ * T291) sobre esta misma capa.
+ *
+ * Subrayados (13c, RF-BH7): al seleccionar texto el motor avisa `selection` con lo que dice y dónde está (en
+ * PDF, un rectángulo por renglón en 0–1 de su página; en EPUB, el CFI del rango). La app crea el subrayado y
+ * lo manda de vuelta en la lista. En PDF se pinta en la capa de cada página (resaltado, subrayado o tachado);
+ * en EPUB lo dibuja foliate con su capa de dibujo. Tocar uno lo elige.
  */
 
 /** El ancho de un post-it nuevo, relativo a la página (igual que `ANCHO_DE_POSTIT` en la app). */
@@ -44,6 +49,7 @@ const CANDADO =
  */
 export function crearCapa(ctx, enviar) {
   let lista = []; // en orden de capa: la primera, hasta atrás
+  let seleccionEnviada = false;
   let herramienta = null;
   let seleccion = null;
   let arrastre = null; // { id, el, x0, y0, movido }
@@ -51,6 +57,9 @@ export function crearCapa(ctx, enviar) {
   let ultimoToque = { id: null, t: 0 };
 
   const pegados = () => lista.filter((a) => a.kind === 'postit');
+  const subrayados = () => lista.filter((a) => a.kind === 'highlight');
+  const colorDe = (a) => (/^#[0-9a-fA-F]{6}$/.test(a.content?.color ?? '') ? a.content.color : '#F1D35D');
+  const estiloDe = (a) => (a.content?.style === 'underline' || a.content?.style === 'strike' ? a.content.style : 'highlight');
   const interactiva = () => ctx.forma() !== 'book';
 
   // ─── El post-it ────────────────────────────────────────────────────────────
@@ -224,11 +233,173 @@ export function crearCapa(ctx, enviar) {
       if (locator) enviar({ type: 'place', locator });
       return true;
     }
+    // Tocar un subrayado lo elige (para cambiarlo, anotarle o quitarlo).
+    const marcado = doc === document ? subrayadoEnPdf(e) : subrayadoEnEpub(e, doc);
+    if (marcado) {
+      elegir(marcado.id);
+      return true;
+    }
     if (seleccion) {
       elegir(null);
       return true;
     }
     return false;
+  }
+
+  function subrayadoEnPdf(e) {
+    const pagina = document.elementsFromPoint(e.clientX, e.clientY).find((x) => x.classList?.contains('pagina'));
+    if (!pagina) return null;
+    const n = Number(pagina.dataset.pagina);
+    const r = pagina.getBoundingClientRect();
+    const px = (e.clientX - r.left) / r.width;
+    const py = (e.clientY - r.top) / r.height;
+    // El de más arriba en la capa gana.
+    return [...subrayados()].reverse().find((a) => (a.locator.rects ?? []).some((q) => q.page === n && px >= q.x && px <= q.x + q.w && py >= q.y && py <= q.y + q.h)) ?? null;
+  }
+
+  function subrayadoEnEpub(e, doc) {
+    const c = capitulos().find((x) => x.doc === doc);
+    const [valor] = c?.overlayer?.hitTest?.({ x: e.clientX, y: e.clientY }) ?? [];
+    return valor ? (subrayados().find((a) => a.locator.cfi === valor) ?? null) : null;
+  }
+
+  // ─── Selección de texto (RF-BH7) ─────────────────────────────────────────────
+
+  /**
+   * La selección cambió en `doc` (el del motor, o el de un capítulo del EPUB). Con texto, se avisa qué dice y
+   * dónde está; si se soltó, se avisa vacía. En el libro real no se selecciona.
+   */
+  function alCambiarSeleccion(doc) {
+    if (!interactiva()) return;
+    const sel = doc.getSelection?.();
+    const texto = sel && !sel.isCollapsed ? sel.toString().trim() : '';
+    if (!texto || !sel.rangeCount) {
+      if (seleccionEnviada) {
+        seleccionEnviada = false;
+        enviar({ type: 'selection', text: '' });
+      }
+      return;
+    }
+    const rango = sel.getRangeAt(0);
+    const locator = doc === document ? textoEnPdf(rango) : textoEnEpub(rango, doc);
+    if (!locator) return;
+    seleccionEnviada = true;
+    enviar({ type: 'selection', text: texto.slice(0, 2000), locator });
+  }
+
+  /** Los renglones de un rango del PDF, en 0–1 de su página: un rectángulo por renglón. */
+  function textoEnPdf(rango) {
+    const pdf = ctx.pdf();
+    if (!pdf) return null;
+    const paginas = [...pdf.renderizadas.keys()].map((n) => ({ n, r: pdf.paginas[n - 1].getBoundingClientRect() }));
+    const sueltos = [];
+    for (const q of rango.getClientRects()) {
+      if (q.width < 1 || q.height < 1) continue;
+      const cx = q.left + q.width / 2;
+      const cy = q.top + q.height / 2;
+      const p = paginas.find(({ r }) => cx >= r.left && cx <= r.right && cy >= r.top && cy <= r.bottom);
+      if (p) sueltos.push({ page: p.n, left: q.left - p.r.left, top: q.top - p.r.top, right: q.right - p.r.left, bottom: q.bottom - p.r.top, ancho: p.r.width, alto: p.r.height });
+    }
+    if (!sueltos.length) return null;
+    // Juntar los pedazos de un mismo renglón (pdf.js parte el texto en muchos).
+    sueltos.sort((a, b) => a.page - b.page || a.top - b.top || a.left - b.left);
+    const renglones = [];
+    for (const q of sueltos) {
+      const ultimo = renglones[renglones.length - 1];
+      const mismo = ultimo && ultimo.page === q.page && Math.min(ultimo.bottom, q.bottom) - Math.max(ultimo.top, q.top) > Math.min(ultimo.bottom - ultimo.top, q.bottom - q.top) * 0.5;
+      if (mismo) {
+        ultimo.left = Math.min(ultimo.left, q.left);
+        ultimo.right = Math.max(ultimo.right, q.right);
+        ultimo.top = Math.min(ultimo.top, q.top);
+        ultimo.bottom = Math.max(ultimo.bottom, q.bottom);
+      } else renglones.push({ ...q });
+    }
+    const rects = renglones.slice(0, 400).map((q) => ({
+      page: q.page,
+      x: redondear(entre(q.left / q.ancho, 0, 1)),
+      y: redondear(entre(q.top / q.alto, 0, 1)),
+      w: redondear(entre((q.right - q.left) / q.ancho, 0, 1)),
+      h: redondear(entre((q.bottom - q.top) / q.alto, 0, 1)),
+    }));
+    return { rects };
+  }
+
+  function textoEnEpub(rango, doc) {
+    const c = capitulos().find((x) => x.doc === doc);
+    if (!c) return null;
+    try {
+      return { cfi: ctx.epub().view.getCFI(c.index, rango), fraction: redondear(ctx.epub().fraccion ?? 0) };
+    } catch {
+      return null;
+    }
+  }
+
+  function soltarSeleccion() {
+    seleccionEnviada = false;
+    document.getSelection?.()?.removeAllRanges();
+    for (const c of capitulos()) c.doc.getSelection?.()?.removeAllRanges();
+  }
+
+  // ─── Marcas de texto ─────────────────────────────────────────────────────────
+
+  /** Un renglón marcado, en % de su página (PDF y libro real de PDF). */
+  function marcaDeTexto(a, q) {
+    const el = document.createElement('div');
+    el.className = 'subrayado';
+    el.dataset.id = a.id;
+    const color = colorDe(a);
+    Object.assign(el.style, { position: 'absolute', left: `${q.x * 100}%`, top: `${q.y * 100}%`, width: `${q.w * 100}%`, height: `${q.h * 100}%`, pointerEvents: 'none' });
+    pintarEstilo(el, estiloDe(a), color);
+    return el;
+  }
+
+  /** Resaltado como marcatextos; subrayado, una raya abajo; tachado, una raya en medio. */
+  function pintarEstilo(el, estilo, color) {
+    if (estilo === 'underline') el.style.boxShadow = `inset 0 -2px 0 ${color}`;
+    else if (estilo === 'strike') el.style.background = `linear-gradient(transparent calc(50% - 1px), ${color} calc(50% - 1px) calc(50% + 1px), transparent calc(50% + 1px))`;
+    else {
+      el.style.background = color;
+      el.style.opacity = '0.42';
+      // Sobre página blanca se mezcla como tinta; con tema oscuro, encima.
+      el.style.mixBlendMode = ctx.paginaBlanca?.() === false ? 'normal' : 'multiply';
+      el.style.borderRadius = '2px';
+    }
+  }
+
+  /** EPUB: foliate dibuja los subrayados con su capa; aquí se lleva la cuenta de cuáles van. */
+  const enFoliate = new Map(); // cfi → clave (color + estilo)
+
+  function sincronizarEpub() {
+    const view = ctx.epub()?.view;
+    if (!view) {
+      enFoliate.clear();
+      return;
+    }
+    const deseados = new Map();
+    for (const a of subrayados()) if (a.locator.cfi) deseados.set(a.locator.cfi, `${colorDe(a)}|${estiloDe(a)}`);
+    for (const [cfi, clave] of enFoliate) {
+      if (deseados.get(cfi) === clave) continue;
+      enFoliate.delete(cfi);
+      void view.deleteAnnotation({ value: cfi })?.catch?.(() => undefined);
+    }
+    for (const [cfi, clave] of deseados) {
+      if (enFoliate.get(cfi) === clave) continue;
+      enFoliate.set(cfi, clave);
+      void view.addAnnotation({ value: cfi })?.catch?.(() => undefined);
+    }
+  }
+
+  /** Un capítulo se volvió a cargar con su capa vacía: se le vuelven a poner. */
+  function recargarEpub() {
+    const view = ctx.epub()?.view;
+    if (!view) return;
+    for (const cfi of enFoliate.keys()) void view.addAnnotation({ value: cfi })?.catch?.(() => undefined);
+  }
+
+  /** Cómo dibujar en foliate el subrayado de un CFI (lo pide `draw-annotation`). */
+  function dibujoEpub(cfi) {
+    const a = subrayados().find((x) => x.locator.cfi === cfi);
+    return a ? { color: colorDe(a), estilo: estiloDe(a) } : null;
   }
 
   function lugarEnPdf(e) {
@@ -414,6 +585,8 @@ export function crearCapa(ctx, enviar) {
   /** La capa de una página del PDF (scroll o de lado), con lo que va en ella. */
   function pintarPaginaPdf(n, div) {
     div.querySelector(':scope > .capa-anotaciones')?.remove();
+    div.querySelector(':scope > .capa-subrayados')?.remove();
+    pintarSubrayadosPdf(n, div);
     const enPaginaN = pegados().filter((a) => a.locator.page === n);
     if (!enPaginaN.length) return;
     const capa = document.createElement('div');
@@ -427,9 +600,23 @@ export function crearCapa(ctx, enviar) {
     div.append(capa);
   }
 
+  /** Los subrayados de una página del PDF, en su propia capa debajo de lo pegado. */
+  function pintarSubrayadosPdf(n, div, rect = null) {
+    const marcas = [];
+    for (const a of subrayados()) for (const q of a.locator.rects ?? []) if (q.page === n) marcas.push(marcaDeTexto(a, q));
+    if (!marcas.length) return;
+    const capa = document.createElement('div');
+    capa.className = 'capa-subrayados';
+    if (rect) Object.assign(capa.style, { left: `${rect.left}px`, top: `${rect.top}px`, width: `${rect.width}px`, height: `${rect.height}px`, inset: 'auto' });
+    capa.append(...marcas);
+    div.append(capa);
+  }
+
   /** En el libro real: lo de la página n del PDF, sobre el rectángulo donde quedó pintada. */
   function capaLibroPdf(n, div, rect) {
     div.querySelector(':scope > .capa-anotaciones')?.remove();
+    div.querySelector(':scope > .capa-subrayados')?.remove();
+    pintarSubrayadosPdf(n, div, rect);
     const enPaginaN = pegados().filter((a) => a.locator.page === n);
     if (!enPaginaN.length) return;
     const capa = document.createElement('div');
@@ -448,11 +635,22 @@ export function crearCapa(ctx, enviar) {
    * En el libro real de un EPUB: lo de la hoja `i`. `ubicar(cfi)` dice en qué hoja y a qué altura cae un CFI
    * (lo calcula `book.js` con el capítulo ya acomodado en columnas).
    */
-  function capaLibroEpub(i, sombra, ancho, ubicar) {
+  function capaLibroEpub(i, sombra, ancho, { ubicar, ubicarRango }) {
     sombra.querySelector('.capa-anotaciones')?.remove();
     const capa = document.createElement('div');
     capa.className = 'capa-anotaciones';
     Object.assign(capa.style, { position: 'absolute', inset: '0', pointerEvents: 'none' });
+    // Los subrayados primero, debajo de lo pegado: cada renglón en la hoja donde cayó.
+    for (const a of subrayados()) {
+      if (!a.locator.cfi) continue;
+      for (const q of ubicarRango(a.locator.cfi) ?? []) {
+        if (q.pagina !== i) continue;
+        const el = document.createElement('div');
+        Object.assign(el.style, { position: 'absolute', left: `${q.x}px`, top: `${q.y}px`, width: `${q.w}px`, height: `${q.h}px`, pointerEvents: 'none' });
+        pintarEstilo(el, estiloDe(a), colorDe(a));
+        capa.append(el);
+      }
+    }
     for (const a of pegados()) {
       if (!a.locator.cfi) continue;
       const u = ubicar(a.locator.cfi);
@@ -477,6 +675,7 @@ export function crearCapa(ctx, enviar) {
     if (pdf) for (const n of pdf.renderizadas.keys()) pintarPaginaPdf(n, pdf.paginas[n - 1]);
     ctx.libro()?.recapar?.();
     pintarEpub();
+    sincronizarEpub();
   }
 
   return {
@@ -492,6 +691,10 @@ export function crearCapa(ctx, enviar) {
     },
     elegir: (id) => elegir(typeof id === 'string' ? id : null, false),
     alTocar,
+    alCambiarSeleccion,
+    soltarSeleccion,
+    dibujoEpub,
+    recargarEpub,
     pintarPaginaPdf,
     capaLibroPdf,
     capaLibroEpub,
@@ -499,6 +702,8 @@ export function crearCapa(ctx, enviar) {
     repintar,
     cerrar() {
       detenerCuadros();
+      enFoliate.clear();
+      seleccionEnviada = false;
       capaEpub?.remove();
       capaEpub = null;
       rangos = new Map();

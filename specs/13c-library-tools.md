@@ -32,6 +32,20 @@
 - **RF-BH8. Definir:** al seleccionar una palabra, el menú ofrece **Definir** (decisión B5), que muestra el
   significado sin salir del libro (fuente según decisión B4).
 - **RF-BH9. Copiar** el texto seleccionado (solo de libros sin restricción).
+- **Hecho (T287, 13 oct 2026).** Al seleccionar texto (scroll o páginas de lado), la barra de abajo cambia
+  a la de lo seleccionado: cuatro colores a la mano (el último usado primero; amarillo, verde lima, azul
+  cielo y rosa), el **estilo** (un toque pasa de resaltado a subrayado a tachado), **Definir** (solo si es
+  una palabra) y **Copiar**. Tocar un color subraya y suelta la selección. Tocar un subrayado abre su hoja:
+  estilo, la paleta completa de los Nobi, una **nota** (hasta 1000 letras) y **Quitar subrayado**. Todo entra
+  al deshacer y al panel (con su nota).
+  - Se guarda el texto subrayado con espacios sencillos (hasta 2000 letras). En PDF, un rectángulo por renglón
+    en 0–1 de su página; en EPUB, el CFI del rango, que foliate vuelve a dibujar sobre las mismas palabras
+    aunque cambie la letra o la forma de leer. En el libro real se ven, no se crean.
+  - **Definir (B4):** en inglés, Free Dictionary API (se corta a los 8 s y lo dice); una palabra con letras
+    del español (acentos, ñ) no se busca ahí. Siempre está **Buscar en la RAE**. El diccionario del sistema
+    del iPhone necesita un módulo nativo: queda pendiente para cuando haya cuenta de Apple Developer.
+  - **Copiar:** un PDF que prohíbe copiar (permisos del archivo) deja subrayar pero el botón dice "Este libro
+    no deja copiar su texto". La web permite `api.dictionaryapi.dev` en su CSP.
 
 ## 3. Escribir (RF-BH10 – RF-BH12)
 

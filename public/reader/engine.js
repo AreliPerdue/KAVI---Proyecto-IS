@@ -116,6 +116,8 @@ async function atender(m) {
       return anotaciones.herramienta(m.tool);
     case 'select':
       return anotaciones.elegir(m.id);
+    case 'clearSelection':
+      return anotaciones.soltarSeleccion();
   }
 }
 
@@ -143,7 +145,20 @@ let epub = null; // { view, raiz, ultimo, fraccion }
 let busqueda = { consulta: '', resultados: [], actual: -1 };
 
 /** Lo pegado encima de las páginas (13c, T286). */
-const anotaciones = crearCapa({ forma: () => forma, pdf: () => pdf, epub: () => epub, libro: () => libro }, enviar);
+const anotaciones = crearCapa(
+  { forma: () => forma, pdf: () => pdf, epub: () => epub, libro: () => libro, paginaBlanca: () => tema.pagina.toUpperCase() === '#FFFFFF' },
+  enviar,
+);
+
+/** Al terminar de seleccionar (la selección deja de cambiar), la capa avisa qué quedó seleccionado (T287). */
+function escucharSeleccion(doc) {
+  let espera = null;
+  doc.addEventListener('selectionchange', () => {
+    clearTimeout(espera);
+    espera = setTimeout(() => anotaciones.alCambiarSeleccion(doc), 250);
+  });
+}
+escucharSeleccion(document);
 
 function cerrar() {
   limpiarBusqueda();
@@ -300,7 +315,10 @@ async function abrirPdf(fuente, posicion) {
   gestosDePaginas(raiz);
 
   raiz.addEventListener('scroll', () => requestAnimationFrame(avisarPosicion), { passive: true });
-  enviar({ type: 'opened', total });
+  // Un PDF puede prohibir copiar su texto (RF-BH9): se sigue pudiendo subrayar, no copiar.
+  const permisos = await doc.getPermissions().catch(() => null);
+  const lib = await pdfjs();
+  enviar({ type: 'opened', total, copiable: !permisos || permisos.includes(lib.PermissionFlag.COPY) });
 
   const inicio = Math.min(Math.max(1, posicion?.page ?? 1), total);
   if (forma === 'book') await entrarAlLibro(inicio);
@@ -425,11 +443,17 @@ async function abrirEpub(fuente, posicion) {
       total: location?.total,
     });
   });
-  // Las marcas de la búsqueda las pinta foliate con su capa de dibujo.
+  // Los subrayados (T287) los dibuja foliate con su capa, con el color y el estilo de cada uno.
   view.addEventListener('draw-annotation', (e) => {
-    const { draw } = e.detail;
-    draw(Overlayer.highlight, { color: 'rgb(255 196 0)' });
+    const { draw, annotation } = e.detail;
+    const dibujo = anotaciones.dibujoEpub(annotation?.value);
+    if (!dibujo) return;
+    if (dibujo.estilo === 'underline') draw(Overlayer.underline, { color: dibujo.color, width: 2, padding: 1 });
+    else if (dibujo.estilo === 'strike') draw(Overlayer.strikethrough, { color: dibujo.color, width: 2 });
+    else draw(Overlayer.highlight, { color: dibujo.color });
   });
+  // Un capítulo que se vuelve a cargar trae su capa de dibujo vacía.
+  view.addEventListener('create-overlay', () => anotaciones.recargarEpub());
 
   await view.open(archivo);
   view.renderer.setAttribute('margin', '32px');
@@ -438,9 +462,12 @@ async function abrirEpub(fuente, posicion) {
   view.renderer.setStyles?.(estilosDeTema());
   // Los toques en los bordes y el centro, el teclado y el trackpad van dentro de cada capítulo (otro
   // documento); el deslizar con el dedo ya lo hace foliate.
-  view.addEventListener('load', (e) => gestosDePaginas(e.detail.doc, true));
+  view.addEventListener('load', (e) => {
+    gestosDePaginas(e.detail.doc, true);
+    escucharSeleccion(e.detail.doc);
+  });
   gestosDePaginas(raiz, true);
-  enviar({ type: 'opened', total: null });
+  enviar({ type: 'opened', total: null, copiable: true });
   if (posicion?.cfi) await view.init({ lastLocation: posicion.cfi });
   else if (posicion?.fraction) await view.goToFraction(posicion.fraction);
   else await view.init({ showTextStart: false });

@@ -1,6 +1,12 @@
 /** La capa de anotaciones (spec 13c, RF-BH16 – RF-BH17; T286): capas, panel y posiciones que llegan del motor. */
 import {
   aEntrada,
+  coloresRapidos,
+  COLORES_RAPIDOS,
+  estiloDe,
+  localizadorDeTexto,
+  notaDe,
+  palabraParaDefinir,
   destinoDe,
   filtrarAnotaciones,
   localizadorPegado,
@@ -123,5 +129,57 @@ it('a la cola va la fila completa, sin dueño ni fechas (los pone la base)', () 
     z: 1,
     removed: false,
     locked: false,
+  });
+});
+
+describe('subrayados (RF-BH7 – RF-BH8, T287)', () => {
+  it('el último color usado va primero, sin repetirse y sin crecer', () => {
+    expect(coloresRapidos(null)).toEqual(COLORES_RAPIDOS);
+    expect(coloresRapidos('#e24947')).toEqual(['#E24947', ...COLORES_RAPIDOS.slice(0, 3)]);
+    const amarillo = COLORES_RAPIDOS[0];
+    expect(coloresRapidos(amarillo)).toEqual(COLORES_RAPIDOS);
+  });
+
+  it('estilo y nota con valores por omisión', () => {
+    expect(estiloDe(nota('a', { content: {} }))).toBe('highlight');
+    expect(estiloDe(nota('a', { content: { style: 'strike' } }))).toBe('strike');
+    expect(estiloDe(nota('a', { content: { style: 'raro' } }))).toBe('highlight');
+    expect(notaDe(nota('a', { content: { note: 'hola' } }))).toBe('hola');
+    expect(notaDe(nota('a', { content: {} }))).toBe('');
+  });
+
+  it('se define una sola palabra, sin la puntuación que la rodea', () => {
+    expect(palabraParaDefinir('«ciudad»,')).toBe('ciudad');
+    expect(palabraParaDefinir(' serendipity ')).toBe('serendipity');
+    expect(palabraParaDefinir("don't")).toBe("don't");
+    expect(palabraParaDefinir('la ciudad')).toBeNull();
+    expect(palabraParaDefinir('1984')).toBeNull();
+    expect(palabraParaDefinir('a'.repeat(41))).toBeNull();
+  });
+
+  it('el texto seleccionado en PDF: sus renglones, la página y la altura donde empieza', () => {
+    expect(
+      localizadorDeTexto({ rects: [{ page: 4, x: 0.1, y: 0.05, w: 0.3, h: 0.02 }, { page: 3, x: 0.1, y: 0.9, w: 0.5, h: 0.02 }, { page: 3, x: 0.1, y: 0.95, w: 0.2, h: 0.02 }] }),
+    ).toEqual({
+      page: 3,
+      y: 0.9,
+      rects: [
+        { page: 4, x: 0.1, y: 0.05, w: 0.3, h: 0.02 },
+        { page: 3, x: 0.1, y: 0.9, w: 0.5, h: 0.02 },
+        { page: 3, x: 0.1, y: 0.95, w: 0.2, h: 0.02 },
+      ],
+    });
+  });
+
+  it('en EPUB, el CFI del rango y el avance', () => {
+    expect(localizadorDeTexto({ cfi: 'epubcfi(/6/4!/4/2,/1:3,/1:9)', fraction: 0.4 })).toEqual({ cfi: 'epubcfi(/6/4!/4/2,/1:3,/1:9)', fraction: 0.4 });
+  });
+
+  it('rechaza lo que no tiene esa forma', () => {
+    expect(localizadorDeTexto(null)).toBeNull();
+    expect(localizadorDeTexto({ rects: [] })).toBeNull();
+    expect(localizadorDeTexto({ rects: [{ page: 1, x: 2, y: 0, w: 0.1, h: 0.1 }] })).toBeNull();
+    expect(localizadorDeTexto({ rects: Array(401).fill({ page: 1, x: 0, y: 0, w: 0.1, h: 0.1 }) })).toBeNull();
+    expect(localizadorDeTexto({ cfi: 'otra-cosa' })).toBeNull();
   });
 });

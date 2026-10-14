@@ -1035,7 +1035,12 @@ Decisiones B1–B9 aprobadas el 12 oct 2026 (T274); ver la tabla de la spec 13 �
   rehacer; con algo elegido: escribir, al frente, atrás, bloquear, quitar) y panel con filtros por tipo y color.
   Por decisión de Areli (13 oct) se adelantó el **post-it básico** de T290: pegar, mover, escribir y color.
   Sin migración: `library_annotations` ya existía (T275). Falta probar el arrastre con el dedo en el teléfono.
-- [ ] T287 Subrayar con colores y estilos, definir, copiar. (RF-BH7 – RF-BH9) Dep: T286
+- [x] T287 Subrayar con colores y estilos, definir, copiar. (RF-BH7 – RF-BH9) Dep: T286
+  **Hecho (13 oct 2026):** el motor avisa `selection` (PDF: renglones en 0–1; EPUB: CFI de rango) y pinta los
+  subrayados (PDF en `.capa-subrayados`; EPUB con la capa de foliate; libro real en su hoja). Barra de lo
+  seleccionado (`selection-bar.tsx`), hoja del subrayado con nota (`highlight-sheet.tsx`), Definir
+  (`services/dictionary.ts`, Free Dictionary API con tope de 8 s y enlace a la RAE) y Copiar (`expo-clipboard`,
+  respeta el permiso de copiar del PDF). Pendiente: diccionario del sistema en iPhone (módulo nativo).
 - [ ] T288 Zoom, tamaño y tipo de letra incluidos. (RF-BH1 – RF-BH3) Dep: T279
 - [x] T288b Tema del lector: claro, oscuro (fondo negro, letra blanca), sepia y propio, con aviso de poco
   contraste; en PDF, filtro de dos tonos. Adelantada el 13 oct a pedido de Areli. (RF-BH5) Dep: T279

@@ -54,6 +54,11 @@ jest.mock('@/hooks/use-library', () => ({
   useSeries: () => ({ data: mockSagas }),
 }));
 
+const mockAvisar = jest.fn();
+jest.mock('@/providers', () => ({ useSnackbar: () => mockAvisar }));
+jest.mock('@/hooks/use-dictionary', () => ({ useDefinition: () => ({ isLoading: false, isError: false, data: null }) }));
+const mockCopiar = jest.fn(async (_t: string) => true);
+jest.mock('expo-clipboard', () => ({ setStringAsync: (t: string) => mockCopiar(t) }));
 // Lo anotado (T286): la lista la pone cada prueba; el editor anota lo que se le pide.
 let mockLista: Record<string, unknown>[] | undefined;
 let mockPuedeDeshacer = false;
@@ -477,5 +482,108 @@ describe('anotaciones (spec 13c, T286)', () => {
     await responder({ type: 'tap' });
     expect(screen.getByRole('button', { name: A.postit })).toBeDisabled();
     expect(screen.getByText(A.postitBook)).toBeTruthy();
+  });
+});
+
+describe('subrayar, definir y copiar (spec 13c, T287)', () => {
+  const pdfRects = { page: 3, y: 0.4, rects: [{ page: 3, x: 0.1, y: 0.4, w: 0.5, h: 0.02 }] };
+  const seleccionar = (text: string, locator: Record<string, unknown> = pdfRects) => responder({ type: 'selection', text, locator });
+
+  it('al seleccionar aparecen los colores; tocar uno subraya con el estilo elegido y suelta la selección', async () => {
+    await render(<Lector />);
+    await responder({ type: 'opened', total: 12, copiable: true });
+    await seleccionar('la ciudad era un mapa');
+    expect(screen.getByLabelText(A.selectionBar)).toBeTruthy();
+    // Cambiar a subrayado y elegir azul cielo.
+    await fireEvent.press(screen.getByRole('button', { name: A.styleNext(A.styles.highlight) }));
+    await fireEvent.press(screen.getByRole('button', { name: A.highlightWith('Azul cielo', A.styles.underline) }));
+    expect(mockCrear).toHaveBeenCalledWith(
+      expect.objectContaining({ kind: 'highlight', locator: pdfRects, content: { color: '#86CBF3', style: 'underline', text: 'la ciudad era un mapa' } }),
+    );
+    expect(mockEnviados.at(-1)).toEqual({ type: 'clearSelection' });
+    expect(screen.queryByLabelText(A.selectionBar)).toBeNull();
+  });
+
+  it('el último color usado va primero la siguiente vez', async () => {
+    await render(<Lector />);
+    await responder({ type: 'opened', total: 12 });
+    await seleccionar('uno');
+    await fireEvent.press(screen.getByRole('button', { name: A.highlightWith('Rosa', A.styles.highlight) }));
+    await seleccionar('dos');
+    const colores = screen.getAllByRole('button', { name: /^Resaltado en/ }).map((b) => b.props.accessibilityLabel);
+    expect(colores[0]).toBe(A.highlightWith('Rosa', A.styles.highlight));
+  });
+
+  it('copiar pone el texto en el portapapeles y lo avisa (RF-BH9)', async () => {
+    await render(<Lector />);
+    await responder({ type: 'opened', total: 12, copiable: true });
+    await seleccionar('la ciudad');
+    await fireEvent.press(screen.getByRole('button', { name: A.copy }));
+    expect(mockCopiar).toHaveBeenCalledWith('la ciudad');
+    expect(mockAvisar).toHaveBeenCalledWith({ message: A.copied });
+  });
+
+  it('un libro que prohíbe copiar deja subrayar pero no copiar', async () => {
+    await render(<Lector />);
+    await responder({ type: 'opened', total: 12, copiable: false });
+    await seleccionar('la ciudad');
+    expect(screen.getByRole('button', { name: A.copyBlocked })).toBeDisabled();
+    expect(screen.getByRole('button', { name: A.highlightWith('Amarillo', A.styles.highlight) })).toBeEnabled();
+  });
+
+  it('definir aparece solo con una palabra y abre su hoja (RF-BH8)', async () => {
+    await render(<Lector />);
+    await responder({ type: 'opened', total: 12 });
+    await seleccionar('la ciudad');
+    expect(screen.queryByRole('button', { name: A.define })).toBeNull();
+    await seleccionar('«ciudad»,', { cfi: 'epubcfi(/6/4!/4/2,/1:3,/1:9)', fraction: 0.1 });
+    await fireEvent.press(screen.getByRole('button', { name: A.define }));
+    expect(screen.getByText(A.defineTitle('ciudad'))).toBeTruthy();
+    expect(screen.getByRole('button', { name: A.defineRae })).toBeTruthy();
+  });
+
+  it('tocar un subrayado abre su hoja: cambiar color, estilo y nota, o quitarlo (RF-BH7)', async () => {
+    const marcado = {
+      id: 'h1',
+      item_id: 'l1',
+      owner_id: 'u1',
+      kind: 'highlight',
+      locator: pdfRects,
+      content: { color: '#F1D35D', style: 'highlight', text: 'la ciudad era un mapa' },
+      z: 1,
+      removed: false,
+      locked: false,
+      created_at: 'c',
+      updated_at: 'u',
+    };
+    mockLista = [marcado];
+    await render(<Lector />);
+    await responder({ type: 'opened', total: 12 });
+    await responder({ type: 'select', id: 'h1' });
+    expect(screen.getByText('la ciudad era un mapa')).toBeTruthy();
+    await fireEvent.press(screen.getByRole('tab', { name: A.styles.strike }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Coral' }));
+    await fireEvent.changeText(screen.getByLabelText(A.note), ' Volver aquí ');
+    await fireEvent.press(screen.getByRole('button', { name: A.save }));
+    expect(mockCambiar).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 'h1' }),
+      expect.objectContaining({ content: { color: '#F68675', style: 'strike', text: 'la ciudad era un mapa', note: 'Volver aquí' } }),
+    );
+    expect(mockEnviados.at(-1)).toEqual({ type: 'select', id: null });
+
+    await responder({ type: 'select', id: 'h1' });
+    await fireEvent.press(screen.getByRole('button', { name: A.removeHighlight }));
+    expect(mockBorrar).toHaveBeenCalledWith(expect.objectContaining({ id: 'h1' }));
+  });
+
+  it('el subrayado se manda al motor con su estilo', async () => {
+    mockLista = [
+      { id: 'h1', item_id: 'l1', owner_id: 'u1', kind: 'highlight', locator: pdfRects, content: { color: '#F1D35D', style: 'strike', text: 'x' }, z: 1, removed: false, locked: false, created_at: 'c', updated_at: 'u' },
+    ];
+    await render(<Lector />);
+    expect(mockEnviados).toContainEqual({
+      type: 'annotations',
+      items: [{ id: 'h1', kind: 'highlight', locator: pdfRects, z: 1, locked: false, content: { color: '#F1D35D', text: 'x', style: 'strike' } }],
+    });
   });
 });

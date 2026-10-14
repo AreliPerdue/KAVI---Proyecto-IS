@@ -1,3 +1,4 @@
+import * as Clipboard from 'expo-clipboard';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { BookOpen, ChevronDown, ChevronLeft, ChevronUp, GalleryHorizontal, NotebookText, Rows3, Search, X } from 'lucide-react-native';
@@ -7,10 +8,13 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AnnotationToolbar } from '@/components/library/annotation-toolbar';
 import { AnnotationsSheet } from '@/components/library/annotations-sheet';
+import { DefineSheet } from '@/components/library/define-sheet';
+import { HighlightSheet, type CambioDeSubrayado } from '@/components/library/highlight-sheet';
 import { PostitSheet } from '@/components/library/postit-sheet';
 import { ReaderEngine, type ReaderEngineHandle } from '@/components/library/reader-engine';
 import { ReaderProgress } from '@/components/library/reader-progress';
 import { ReaderThemePicker } from '@/components/library/reader-theme-picker';
+import { SelectionBar } from '@/components/library/selection-bar';
 import { AppText, Button, IconButton, Segmented, Sheet } from '@/components/ui';
 import { Fonts, IconSize, IconStroke, Radius, Spacing, Typography } from '@/constants/theme';
 import { useAnnotationEditor, useAnnotations } from '@/hooks/use-annotations';
@@ -21,7 +25,22 @@ import { useLibraryFileUrl, useLibraryItem, useLibraryItems, useSaveReadingPosit
 import { useTheme } from '@/hooks/use-theme';
 import { useT } from '@/i18n';
 import { uuidv4 } from '@/lib/gym/ids';
-import { ANCHO_DE_POSTIT, colorDe, COLOR_DE_POSTIT, destinoDe, SE_PINTAN, textoDe, zAlFondo, zAlFrente, zNueva } from '@/lib/library/annotations';
+import {
+  ANCHO_DE_POSTIT,
+  colorDe,
+  coloresRapidos,
+  COLOR_DE_POSTIT,
+  destinoDe,
+  esPegado,
+  type EstiloDeSubrayado,
+  estiloDe,
+  palabraParaDefinir,
+  SE_PINTAN,
+  textoDe,
+  zAlFondo,
+  zAlFrente,
+  zNueva,
+} from '@/lib/library/annotations';
 import {
   type AnotacionEnMotor,
   cambioDePosicion,
@@ -33,8 +52,9 @@ import {
 import { FORMA_POR_OMISION, type FormaDeLeer } from '@/lib/library/reading-mode';
 import { coloresDe } from '@/lib/library/reader-theme';
 import { etiquetaDeSaga, siguienteDeSaga } from '@/lib/library/series';
+import { useSnackbar } from '@/providers';
 import { usePreferencesStore } from '@/store/preferences-store';
-import type { LibraryAnnotation } from '@/types/domain';
+import type { LibraryAnnotation, LibraryLocator } from '@/types/domain';
 
 /** Cuánto se espera sin moverse antes de guardar la posición: así no se escribe en cada página. */
 const GUARDAR_MS = 1200;
@@ -110,8 +130,19 @@ function Lector({ id }: { id: string }) {
   // El color del último post-it guardado: el siguiente sale de ese color.
   const ultimoColor = useRef(COLOR_DE_POSTIT);
   const lista = anotaciones.data;
-  const seleccionada = lista?.find((a) => a.id === seleccionId) ?? null;
+  // La barra de lo elegido es para lo pegado; un subrayado tocado abre su hoja.
+  const elegida = lista?.find((a) => a.id === seleccionId) ?? null;
+  const seleccionada = elegida && esPegado(elegida) ? elegida : null;
+  const subrayado = elegida?.kind === 'highlight' ? elegida : null;
   const editando = lista?.find((a) => a.id === editandoId) ?? null;
+
+  // Texto seleccionado (RF-BH7 – RF-BH9): qué dice y dónde está, para subrayar, definir o copiar.
+  const [seleccionTexto, setSeleccionTexto] = useState<{ text: string; locator: LibraryLocator } | null>(null);
+  const [copiable, setCopiable] = useState(true);
+  const [estiloSubrayado, setEstiloSubrayado] = useState<EstiloDeSubrayado>('highlight');
+  const [ultimoSubrayado, setUltimoSubrayado] = useState<string | null>(null);
+  const [definiendo, setDefiniendo] = useState<string | null>(null);
+  const avisar = useSnackbar();
 
   // Abrir una sola vez por dirección firmada, en el lugar donde se quedó (RF-BL17).
   const abiertoCon = useRef<string | null>(null);
@@ -146,7 +177,14 @@ function Lector({ id }: { id: string }) {
     if (!lista) return;
     const items: AnotacionEnMotor[] = lista
       .filter((a) => !a.removed && SE_PINTAN.includes(a.kind))
-      .map((a) => ({ id: a.id, kind: a.kind, locator: a.locator, z: a.z, locked: a.locked, content: { color: colorDe(a) ?? undefined, text: textoDe(a) } }));
+      .map((a) => ({
+        id: a.id,
+        kind: a.kind,
+        locator: a.locator,
+        z: a.z,
+        locked: a.locked,
+        content: { color: colorDe(a) ?? undefined, text: textoDe(a), ...(a.kind === 'highlight' ? { style: estiloDe(a) } : {}) },
+      }));
     motor.current?.send({ type: 'annotations', items });
   }, [lista]);
 
@@ -206,6 +244,7 @@ function Lector({ id }: { id: string }) {
       case 'opened':
         setAbierto(true);
         setError(null);
+        setCopiable(m.copiable !== false);
         return;
       case 'position': {
         setPosicion(m);
@@ -229,6 +268,9 @@ function Lector({ id }: { id: string }) {
         return;
       case 'select':
         setSeleccionId(m.id);
+        return;
+      case 'selection':
+        setSeleccionTexto(m.text && m.locator ? { text: m.text, locator: m.locator } : null);
         return;
       case 'move': {
         const a = lista?.find((x) => x.id === m.id);
@@ -296,12 +338,61 @@ function Lector({ id }: { id: string }) {
     elegir(null);
   };
 
+  /** Subrayar lo seleccionado con un color, en el estilo elegido (RF-BH7). */
+  const subrayar = (color: string) => {
+    if (!seleccionTexto) return;
+    const t = ahora();
+    editor.crear({
+      id: uuidv4(),
+      item_id: id,
+      owner_id: '',
+      kind: 'highlight',
+      locator: seleccionTexto.locator,
+      content: { color, style: estiloSubrayado, text: seleccionTexto.text },
+      z: zNueva(lista ?? []),
+      removed: false,
+      locked: false,
+      created_at: t,
+      updated_at: t,
+    });
+    setUltimoSubrayado(color);
+    soltarSeleccion();
+  };
+
+  const soltarSeleccion = () => {
+    setSeleccionTexto(null);
+    motor.current?.send({ type: 'clearSelection' });
+  };
+
+  const copiar = async () => {
+    if (!seleccionTexto || !copiable) return;
+    await Clipboard.setStringAsync(seleccionTexto.text);
+    avisar({ message: tx.library.annotations.copied });
+    soltarSeleccion();
+  };
+
+  const guardarSubrayado = (cambio: CambioDeSubrayado) => {
+    const a = subrayado;
+    elegir(null);
+    if (!a) return;
+    if (cambio.color !== colorDe(a) || cambio.style !== estiloDe(a) || cambio.note !== (typeof a.content.note === 'string' ? a.content.note : '')) {
+      cambiar(a, { content: { ...a.content, color: cambio.color, style: cambio.style, note: cambio.note } });
+      setUltimoSubrayado(cambio.color);
+    }
+  };
+
+  const quitarSubrayado = () => {
+    if (!subrayado) return;
+    editor.borrar(subrayado);
+    elegir(null);
+  };
+
   /** Desde el panel: ir a donde está y dejarlo elegido. */
   const irAAnotacion = (a: LibraryAnnotation) => {
     const destino = destinoDe(a.locator);
     setVerPanel(false);
     if (destino) motor.current?.send({ type: 'goTo', ...destino });
-    if (forma !== 'book' && SE_PINTAN.includes(a.kind)) elegir(a.id);
+    if (forma !== 'book' && SE_PINTAN.includes(a.kind) && esPegado(a)) elegir(a.id);
   };
 
   const reintentar = () => {
@@ -356,7 +447,7 @@ function Lector({ id }: { id: string }) {
   // En scroll los controles siempre se ven: no hay centro que tocar para traerlos. Mientras abre o si
   // falla, tampoco se esconden: tiene que quedar cómo salir.
   // Con algo elegido o pegando, también: las herramientas tienen que estar a la mano.
-  const controles = forma === 'scroll' || !ocultos || buscando || !abierto || !!mensajeError || !!seleccionada || !!herramienta;
+  const controles = forma === 'scroll' || !ocultos || buscando || !abierto || !!mensajeError || !!seleccionada || !!herramienta || !!seleccionTexto;
   const pantallaCompleta = forma === 'book' && abierto && !mensajeError;
   usePantallaCompleta(pantallaCompleta);
   // Fuera del scroll, los controles van encima del libro y no lo empujan: mostrarlos u ocultarlos (o que
@@ -424,7 +515,22 @@ function Lector({ id }: { id: string }) {
 
   const barraAbajo = abierto && controles ? (
         <View style={[styles.abajo, superpuestos ? { backgroundColor: theme.background } : null, { paddingBottom: (superpuestos ? 0 : insets.bottom) + Spacing.xs }]}>
-          {!mensajeError ? (
+          {!mensajeError && seleccionTexto ? (
+            <SelectionBar
+              colores={coloresRapidos(ultimoSubrayado)}
+              estilo={estiloSubrayado}
+              onEstilo={setEstiloSubrayado}
+              onColor={subrayar}
+              puedeDefinir={!!palabraParaDefinir(seleccionTexto.text)}
+              onDefinir={() => {
+                setDefiniendo(palabraParaDefinir(seleccionTexto.text));
+                soltarSeleccion();
+              }}
+              copiable={copiable}
+              onCopiar={() => void copiar()}
+              onCerrar={soltarSeleccion}
+            />
+          ) : !mensajeError ? (
             <AnnotationToolbar
               seleccionada={seleccionada}
               herramienta={herramienta}
@@ -531,6 +637,8 @@ function Lector({ id }: { id: string }) {
         onIr={irAAnotacion}
       />
       <PostitSheet anotacion={editando} onClose={() => setEditandoId(null)} onGuardar={guardarPostit} />
+      <HighlightSheet anotacion={subrayado} onClose={() => elegir(null)} onGuardar={guardarSubrayado} onQuitar={quitarSubrayado} />
+      <DefineSheet palabra={definiendo} onClose={() => setDefiniendo(null)} />
     </View>
   );
 }

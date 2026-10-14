@@ -6,7 +6,7 @@ import { AppText, Button, Chip, ColorDot, ColorSwatch, Sheet } from '@/component
 import { IconSize, IconStroke, Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useT } from '@/i18n';
-import { COLORES_DE_ANOTACION, colorDe, type FiltroDeAnotaciones, filtrarAnotaciones, opcionesDeFiltro, ordenarAnotaciones, textoDe } from '@/lib/library/annotations';
+import { COLORES_DE_ANOTACION, colorDe, type FiltroDeAnotaciones, filtrarAnotaciones, notaDe, opcionesDeFiltro, ordenarAnotaciones, textoDe } from '@/lib/library/annotations';
 import type { LibraryAnnotation, LibraryAnnotationKind } from '@/types/domain';
 
 const ICONOS: Record<LibraryAnnotationKind, typeof StickyNote> = {
@@ -133,12 +133,13 @@ const Fila = memo(function Fila({ anotacion, onPress }: { anotacion: LibraryAnno
   const Icono = ICONOS[anotacion.kind];
   const color = colorDe(anotacion);
   const texto = textoDe(anotacion);
+  const nota = notaDe(anotacion);
   const l = anotacion.locator;
   const lugar = l.page != null ? a.page(l.page) : a.percent(Math.round((l.fraction ?? 0) * 100));
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={a.rowA11y(a.kindOne[anotacion.kind], texto || a.emptyText, lugar)}
+      accessibilityLabel={a.rowA11y(a.kindOne[anotacion.kind], nota ? `${texto || a.emptyText}. ${a.note}: ${nota}` : texto || a.emptyText, lugar)}
       onPress={() => onPress(anotacion)}
       style={({ pressed }) => [styles.fila, pressed ? { backgroundColor: theme.surfaceAlt } : null]}>
       <Icono size={IconSize.inline} strokeWidth={IconStroke} color={theme.textSecondary} />
@@ -150,6 +151,11 @@ const Fila = memo(function Fila({ anotacion, onPress }: { anotacion: LibraryAnno
         <AppText variant="body" numberOfLines={2} color={texto ? 'text' : 'textTertiary'}>
           {texto || a.emptyText}
         </AppText>
+        {nota ? (
+          <AppText variant="label" color="textSecondary" numberOfLines={2}>
+            {a.note}: {nota}
+          </AppText>
+        ) : null}
       </View>
       <AppText variant="label" color="textSecondary" tabular>
         {lugar}

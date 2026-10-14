@@ -1,5 +1,5 @@
 import { PEOPLE_COLORS_DISPLAY } from '@/constants/people-colors';
-import type { LibraryAnnotation, LibraryAnnotationInput, LibraryAnnotationKind, LibraryLocator } from '@/types/domain';
+import type { LibraryAnnotation, LibraryAnnotationInput, LibraryAnnotationKind, LibraryLocator, LibraryTextRect } from '@/types/domain';
 
 /**
  * La capa de anotaciones de KAVI Library (spec 13c, RF-BH16 – RF-BH18; T286). Lo que no depende de React ni
@@ -12,8 +12,41 @@ export const COLOR_DE_POSTIT = PEOPLE_COLORS_DISPLAY.find((c) => c.id === 'yello
 
 /** Lo que va pegado encima de la página: se mueve, tiene capa y se bloquea (RF-BH16). */
 export const PEGADOS: readonly LibraryAnnotationKind[] = ['postit', 'sticker', 'textbox', 'image'];
-/** Lo que el motor ya sabe pintar. Cada tarea de L3 agrega el suyo (T287 subrayados, T289 cuadros…). */
-export const SE_PINTAN: readonly LibraryAnnotationKind[] = ['postit'];
+/** Lo que el motor ya sabe pintar. Cada tarea de L3 agrega el suyo (T289 cuadros, T290 stickers…). */
+export const SE_PINTAN: readonly LibraryAnnotationKind[] = ['postit', 'highlight'];
+
+// ─── Subrayados (RF-BH7) ─────────────────────────────────────────────────────
+
+/** Cómo se marca el texto: resaltado (marcatextos), subrayado o tachado. */
+export type EstiloDeSubrayado = 'highlight' | 'underline' | 'strike';
+export const ESTILOS_DE_SUBRAYADO: readonly EstiloDeSubrayado[] = ['highlight', 'underline', 'strike'];
+/** Los colores a la mano al seleccionar; el último que se usó va primero. */
+const RAPIDOS = ['yellow', 'lime_green', 'baby_blue', 'pink'];
+export const COLORES_RAPIDOS = RAPIDOS.map((id) => PEOPLE_COLORS_DISPLAY.find((c) => c.id === id)?.hex ?? '#F1D35D');
+export const TEXTO_MAXIMO_DE_SUBRAYADO = 2000;
+export const NOTA_MAXIMA = 1000;
+
+export function estiloDe(a: Pick<LibraryAnnotation, 'content'>): EstiloDeSubrayado {
+  const e = a.content.style;
+  return e === 'underline' || e === 'strike' ? e : 'highlight';
+}
+
+export function notaDe(a: Pick<LibraryAnnotation, 'content'>): string {
+  return typeof a.content.note === 'string' ? a.content.note : '';
+}
+
+/** Los colores rápidos con el último usado al frente, sin repetir. */
+export function coloresRapidos(ultimo: string | null): string[] {
+  if (!ultimo) return [...COLORES_RAPIDOS];
+  const u = ultimo.toUpperCase();
+  return [u, ...COLORES_RAPIDOS.filter((c) => c.toUpperCase() !== u)].slice(0, COLORES_RAPIDOS.length);
+}
+
+/** Lo seleccionado es una palabra que se puede definir (RF-BH8): sin espacios y no muy larga. */
+export function palabraParaDefinir(texto: string): string | null {
+  const limpia = texto.trim().replace(/^[^\p{L}]+|[^\p{L}]+$/gu, '');
+  return limpia && limpia.length <= 40 && !/\s/.test(limpia) && /^[\p{L}'’-]+$/u.test(limpia) ? limpia : null;
+}
 
 /** El ancho de un post-it nuevo, relativo al de la página. */
 export const ANCHO_DE_POSTIT = 0.24;
@@ -116,6 +149,26 @@ export function destinoDe(l: LibraryLocator): { page: number } | { cfi: string }
 // ─── Posición (spec 13 §5) ───────────────────────────────────────────────────
 
 const fraccion = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v) && v >= 0 && v <= 1;
+
+/**
+ * Dónde está un texto seleccionado (RF-BH7), revisado: en PDF, sus rectángulos por renglón y la página donde
+ * empieza; en EPUB, su CFI de rango y el avance. Llega del motor por mensajes.
+ */
+export function localizadorDeTexto(crudo: unknown): LibraryLocator | null {
+  if (!crudo || typeof crudo !== 'object') return null;
+  const l = crudo as Record<string, unknown>;
+  if (typeof l.cfi === 'string' && l.cfi.startsWith('epubcfi(')) return { cfi: l.cfi, ...(fraccion(l.fraction) ? { fraction: l.fraction } : {}) };
+  if (!Array.isArray(l.rects) || l.rects.length === 0 || l.rects.length > 400) return null;
+  const rects: LibraryTextRect[] = [];
+  for (const r of l.rects as Record<string, unknown>[]) {
+    if (!r || typeof r.page !== 'number' || !Number.isInteger(r.page) || r.page < 1) return null;
+    if (![r.x, r.y, r.w, r.h].every(fraccion)) return null;
+    rects.push({ page: r.page, x: r.x as number, y: r.y as number, w: r.w as number, h: r.h as number });
+  }
+  const page = Math.min(...rects.map((r) => r.page));
+  const y = Math.min(...rects.filter((r) => r.page === page).map((r) => r.y));
+  return { page, y, rects };
+}
 
 /**
  * Una posición de algo pegado, revisada: en PDF página y esquina (0–1) con su ancho; en EPUB, CFI con la
