@@ -392,6 +392,7 @@ export const library = {
     defineError: 'El diccionario no respondió. Inténtalo de nuevo en un momento o búscala en la RAE.',
     defineRae: 'Buscar en la RAE',
     defineSource: 'Definiciones de Free Dictionary API (inglés).',
+    defineSourceWiktionary: 'Definiciones de Wiktionary en inglés (CC BY-SA).',
     page: (n: number) => `p. ${n}`,
     percent: (n: number) => `${n} %`,
     rowA11y: (tipo: string, texto: string, lugar: string) => `${tipo}, ${texto}, ${lugar}. Toca para ir ahí.`,

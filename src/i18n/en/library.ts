@@ -388,6 +388,7 @@ export const library: Dictionary['library'] = {
     defineError: 'The dictionary didn’t respond. Try again in a moment or look it up in the RAE.',
     defineRae: 'Search the RAE',
     defineSource: 'Definitions from Free Dictionary API (English).',
+    defineSourceWiktionary: 'Definitions from English Wiktionary (CC BY-SA).',
     page: (n) => `p. ${n}`,
     percent: (n) => `${n}%`,
     rowA11y: (tipo, texto, lugar) => `${tipo}, ${texto}, ${lugar}. Tap to go there.`,

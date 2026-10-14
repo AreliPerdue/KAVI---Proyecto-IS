@@ -6,6 +6,8 @@ describe('leerMensaje', () => {
     ['{"type":"ready"}', { type: 'ready' }],
     [{ type: 'opened', total: 12 }, { type: 'opened', total: 12, copiable: true }],
     [{ type: 'opened', total: 12, copiable: false }, { type: 'opened', total: 12, copiable: false }],
+    [{ type: 'opened', total: null, lang: 'es-MX' }, { type: 'opened', total: null, copiable: true, lang: 'es-MX' }],
+    [{ type: 'opened', total: null, lang: '<script>' }, { type: 'opened', total: null, copiable: true }],
     [{ type: 'opened', total: null }, { type: 'opened', total: null, copiable: true }],
     [{ type: 'position', page: 3, total: 12, fraction: 0.25 }, { type: 'position', page: 3, total: 12, fraction: 0.25, cfi: undefined }],
     [{ type: 'position', cfi: 'epubcfi(/6/2!/4)', fraction: 1.4 }, { type: 'position', cfi: 'epubcfi(/6/2!/4)', fraction: 1, page: undefined, total: undefined }],

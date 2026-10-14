@@ -485,7 +485,9 @@ async function abrirEpub(fuente, posicion) {
   });
   gestosDePaginas(raiz, true);
   letraConGestos(raiz);
-  enviar({ type: 'opened', total: null, copiable: true });
+  // El idioma del libro: con él, "Definir" sabe si va al diccionario de inglés o a la RAE (T287).
+  const idioma = view.language?.canonical ?? [].concat(view.book?.metadata?.language ?? [])[0] ?? null;
+  enviar({ type: 'opened', total: null, copiable: true, lang: typeof idioma === 'string' ? idioma : null });
   if (posicion?.cfi) await view.init({ lastLocation: posicion.cfi });
   else if (posicion?.fraction) await view.goToFraction(posicion.fraction);
   else await view.init({ showTextStart: false });

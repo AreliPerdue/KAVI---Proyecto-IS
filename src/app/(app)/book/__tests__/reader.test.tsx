@@ -542,6 +542,15 @@ describe('subrayar, definir y copiar (spec 13c, T287)', () => {
     expect(screen.getByRole('button', { name: A.defineRae })).toBeTruthy();
   });
 
+  it('en un libro en español, definir manda a la RAE sin buscar en inglés', async () => {
+    mockPieza = { ...pdf, kind: 'epub', last_position: null };
+    await render(<Lector />);
+    await responder({ type: 'opened', total: null, lang: 'es-MX' });
+    await seleccionar('ciudad', { cfi: 'epubcfi(/6/4!/4/2,/1:3,/1:9)', fraction: 0.1 });
+    await fireEvent.press(screen.getByRole('button', { name: A.define }));
+    expect(screen.getByText(A.defineSpanish)).toBeTruthy();
+  });
+
   it('tocar un subrayado abre su hoja: cambiar color, estilo y nota, o quitarlo (RF-BH7)', async () => {
     const marcado = {
       id: 'h1',

@@ -57,11 +57,14 @@
   - Se guarda el texto subrayado con espacios sencillos (hasta 2000 letras). En PDF, un rectángulo por renglón
     en 0–1 de su página; en EPUB, el CFI del rango, que foliate vuelve a dibujar sobre las mismas palabras
     aunque cambie la letra o la forma de leer. En el libro real se ven, no se crean.
-  - **Definir (B4):** en inglés, Free Dictionary API (se corta a los 8 s y lo dice); una palabra con letras
-    del español (acentos, ñ) no se busca ahí. Siempre está **Buscar en la RAE**. El diccionario del sistema
+  - **Definir (B4):** en inglés, **Wiktionary** (hasta seis acepciones con su ejemplo, sin HTML; cita la
+    fuente) y, si no responde, la Free Dictionary API; cada uno se corta a los 8 s y lo dice. No se busca en
+    inglés si el libro está en español (el EPUB dice su idioma), si la palabra tiene letras del español
+    (acentos, ñ) o si Wiktionary solo la tiene en español: entonces se ofrece la RAE. Siempre está **Buscar
+    en la RAE**. (Enmienda del 13 oct 2026: a la Free Dictionary API le faltaban palabras comunes.) El diccionario del sistema
     del iPhone necesita un módulo nativo: queda pendiente para cuando haya cuenta de Apple Developer.
   - **Copiar:** un PDF que prohíbe copiar (permisos del archivo) deja subrayar pero el botón dice "Este libro
-    no deja copiar su texto". La web permite `api.dictionaryapi.dev` en su CSP.
+    no deja copiar su texto". La web permite `en.wiktionary.org` y `api.dictionaryapi.dev` en su CSP.
 
 ## 3. Escribir (RF-BH10 – RF-BH12)
 

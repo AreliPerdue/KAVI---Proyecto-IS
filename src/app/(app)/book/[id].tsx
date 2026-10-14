@@ -141,6 +141,7 @@ function Lector({ id }: { id: string }) {
   // Texto seleccionado (RF-BH7 – RF-BH9): qué dice y dónde está, para subrayar, definir o copiar.
   const [seleccionTexto, setSeleccionTexto] = useState<{ text: string; locator: LibraryLocator } | null>(null);
   const [copiable, setCopiable] = useState(true);
+  const [idiomaLibro, setIdiomaLibro] = useState<string | null>(null);
   const [estiloSubrayado, setEstiloSubrayado] = useState<EstiloDeSubrayado>('highlight');
   const [ultimoSubrayado, setUltimoSubrayado] = useState<string | null>(null);
   const [definiendo, setDefiniendo] = useState<string | null>(null);
@@ -256,6 +257,7 @@ function Lector({ id }: { id: string }) {
         setAbierto(true);
         setError(null);
         setCopiable(m.copiable !== false);
+        setIdiomaLibro(m.lang ?? null);
         return;
       case 'position': {
         setPosicion(m);
@@ -674,7 +676,7 @@ function Lector({ id }: { id: string }) {
       />
       <PostitSheet anotacion={editando} colorPortada={item.data ? colorDeParte(item.data, 'front') : null} onClose={() => setEditandoId(null)} onGuardar={guardarPostit} />
       <HighlightSheet anotacion={subrayado} onClose={() => elegir(null)} onGuardar={guardarSubrayado} onQuitar={quitarSubrayado} />
-      <DefineSheet palabra={definiendo} onClose={() => setDefiniendo(null)} />
+      <DefineSheet palabra={definiendo} idioma={idiomaLibro} onClose={() => setDefiniendo(null)} />
     </View>
   );
 }

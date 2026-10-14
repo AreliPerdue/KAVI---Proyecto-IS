@@ -70,7 +70,7 @@ export type CodigoDeError = 'password' | 'damaged' | 'network' | 'unknown';
 export type MensajeDelMotor =
   | { type: 'ready' }
   /** `copiable`: si el libro deja copiar su texto (un PDF puede prohibirlo, RF-BH9). */
-  | { type: 'opened'; total: number | null; copiable?: boolean }
+  | { type: 'opened'; total: number | null; copiable?: boolean; lang?: string | null }
   /** `pageEnd`: en el libro real con dos páginas, la de la derecha ("pp. 2–3", RF-BR5). */
   | { type: 'position'; page?: number; pageEnd?: number; total?: number; cfi?: string; fraction: number }
   | { type: 'search'; count: number; index: number; searching?: boolean }
@@ -113,7 +113,12 @@ export function leerMensaje(crudo: unknown): MensajeDelMotor | null {
     case 'ready':
       return { type: 'ready' };
     case 'opened':
-      return { type: 'opened', total: numero(m.total) ? m.total : null, copiable: m.copiable !== false };
+      return {
+        type: 'opened',
+        total: numero(m.total) ? m.total : null,
+        copiable: m.copiable !== false,
+        ...(typeof m.lang === 'string' && /^[a-z]{2,3}(-[a-z0-9]{2,8})*$/i.test(m.lang) ? { lang: m.lang } : {}),
+      };
     case 'position':
       if (!numero(m.fraction)) return null;
       return {
