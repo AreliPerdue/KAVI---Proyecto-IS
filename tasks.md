@@ -1063,7 +1063,11 @@ Decisiones B1–B9 aprobadas el 12 oct 2026 (T274); ver la tabla de la spec 13 �
   "Ajustar a la página". Falta probar el pellizco real en el teléfono.
 - [x] T288b Tema del lector: claro, oscuro (fondo negro, letra blanca), sepia y propio, con aviso de poco
   contraste; en PDF, filtro de dos tonos. Adelantada el 13 oct a pedido de Areli. (RF-BH5) Dep: T279
-- [ ] T289 Cuadros de texto e imágenes. (RF-BH10, RF-BH12) Dep: T286
+- [x] T289 Cuadros de texto e imágenes. (RF-BH10, RF-BH12) Dep: T286
+  **Hecho (14 oct 2026):** el motor pinta post-it, cuadro de texto e imagen con un solo constructor; se escribe
+  directo (contenteditable) en post-its y cuadros; imágenes con giro, subidas a R2 por la función de archivos
+  (`anotaciones/<id>.jpg`) y vistas con su dirección firmada. Con pedidos de Areli del mismo día al post-it
+  (T329): 8 asas en "L" y rayitas, la nota ya no se mueve al estirarla, color desde la barra.
 - [x] T329 Post-it: cambiar su tamaño jalando esquinas y orillas (puede quedar rectangular) y el color de la
   portada del libro como opción. (RF-BH14, enmienda del 13 oct 2026, pedido de Areli) Dep: T286
   **Hecho (13 oct 2026):** asas en `public/reader/annotations.js` (esquinas visibles, orillas en su franja),

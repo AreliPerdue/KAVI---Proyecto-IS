@@ -42,6 +42,9 @@ describe('leerMensaje · capa de anotaciones (T286)', () => {
     [{ type: 'edit', id: 'a1' }, { type: 'edit', id: 'a1' }],
     [{ type: 'selection', text: '' }, { type: 'selection', text: '', locator: null }],
     [{ type: 'zoom', level: 1.5 }, { type: 'zoom', level: 1.5 }],
+    [{ type: 'text', id: 'a1', text: 'Hola' }, { type: 'text', id: 'a1', text: 'Hola' }],
+    [{ type: 'rotate', id: 'a1', rot: 370.4 }, { type: 'rotate', id: 'a1', rot: 10 }],
+    [{ type: 'rotate', id: 'a1', rot: -90 }, { type: 'rotate', id: 'a1', rot: 270 }],
     [{ type: 'zoom', level: 9 }, { type: 'zoom', level: 4 }],
     [{ type: 'textSize', size: 133 }, { type: 'textSize', size: 130 }],
     [
@@ -67,6 +70,8 @@ describe('leerMensaje · capa de anotaciones (T286)', () => {
     { type: 'selection', text: 'hola', locator: { rects: [{ page: 0, x: 0, y: 0, w: 1, h: 1 }] } },
     { type: 'selection', text: 'hola', locator: { rects: [] } },
     { type: 'zoom' },
+    { type: 'text', id: 'a1' },
+    { type: 'rotate', id: 'a1', rot: 'mucho' },
     { type: 'textSize', size: 'grande' },
   ])('ignora %j', (crudo) => {
     expect(leerMensaje(crudo)).toBeNull();

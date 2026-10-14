@@ -218,6 +218,12 @@ export const supabaseLibrary: LibraryApi = {
     sinError(await db().from('library_shelf_items').update(cambio).eq('shelf_id', shelfId).eq('item_id', itemId));
   },
 
+  async uploadAnnotationImage(userId, itemId, annotationId, jpeg) {
+    const ruta = `${userId}/${itemId}/anotaciones/${annotationId}.jpg`;
+    await subir(archivos, { itemId, path: ruta, contentType: 'image/jpeg', size: tamanoDe(jpeg) }, jpeg);
+    return ruta;
+  },
+
   async listReadingSessions(userId) {
     return unwrap(
       await db().from('library_reading_sessions').select('*').eq('owner_id', userId).order('started_at', { ascending: false }).limit(2000),

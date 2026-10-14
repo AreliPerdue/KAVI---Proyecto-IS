@@ -1,15 +1,16 @@
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useCallback } from 'react';
+import { useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useCallback, useMemo } from 'react';
 
 import { useEditHistory } from '@/hooks/use-edit-history';
+import { LIBRARY_URL_SECONDS } from '@/constants/library';
 import { libraryKeys } from '@/hooks/use-library';
 import { subirPendientes } from '@/hooks/use-library-sync';
 import { isOfflineError } from '@/lib/auth-errors';
-import { aEntrada } from '@/lib/library/annotations';
+import { aEntrada, rutaDeImagen } from '@/lib/library/annotations';
 import { aplicarAnotacionesPendientes, encolar, pendientes } from '@/lib/library/offline/outbox';
 import { anotacionesGuardadas, guardarAnotaciones } from '@/lib/library/offline/snapshot';
 import { useAuth } from '@/providers';
-import { listAnnotations } from '@/services/library';
+import { libraryFileUrl, listAnnotations, uploadAnnotationImage } from '@/services/library';
 import type { LibraryAnnotation } from '@/types/domain';
 
 /**
@@ -103,5 +104,34 @@ export function useAnnotationEditor(itemId: string) {
     [guardar, quitar, record],
   );
 
-  return { crear, cambiar, borrar, deshacer: historia.undo, rehacer: historia.redo, puedeDeshacer: historia.canUndo, puedeRehacer: historia.canRedo };
+  /** Quitar sin dejar paso para deshacer: algo que no llegó a existir (una imagen que no subió). */
+  const descartar = quitar;
+
+  return { crear, cambiar, borrar, descartar, deshacer: historia.undo, rehacer: historia.redo, puedeDeshacer: historia.canUndo, puedeRehacer: historia.canRedo };
+}
+
+/** Subir la imagen de una anotación (RF-BH12, T289) a la carpeta de la pieza. */
+export function useUploadAnnotationImage() {
+  const { userId } = useAuth();
+  return (itemId: string, annotationId: string, jpeg: Uint8Array) => uploadAnnotationImage(userId as string, itemId, annotationId, jpeg);
+}
+
+/**
+ * Las direcciones para ver las imágenes pegadas (T289): una firmada por imagen, renovada antes de que caduque,
+ * como las portadas. Devuelve ruta → dirección.
+ */
+export function useAnnotationImageUrls(anotaciones: readonly LibraryAnnotation[] | undefined): ReadonlyMap<string, string> {
+  const rutas = [...new Set((anotaciones ?? []).filter((a) => a.kind === 'image' && !a.removed).map(rutaDeImagen).filter((r): r is string => !!r))];
+  const urls = useQueries({
+    queries: rutas.map((ruta) => ({
+      queryKey: libraryKeys.url(ruta),
+      queryFn: () => libraryFileUrl(ruta),
+      staleTime: (LIBRARY_URL_SECONDS - 300) * 1000,
+      gcTime: (LIBRARY_URL_SECONDS - 300) * 1000,
+      retry: 1,
+    })),
+  });
+  // El mismo mapa mientras no cambie ninguna dirección: así el lector no le vuelve a mandar todo al motor.
+  const clave = JSON.stringify(rutas.flatMap((ruta, i) => (urls[i]?.data ? [[ruta, urls[i].data as string]] : [])));
+  return useMemo(() => new Map(JSON.parse(clave) as [string, string][]), [clave]);
 }

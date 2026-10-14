@@ -35,3 +35,22 @@ export async function prepararPortada(uri: string): Promise<PortadaLista> {
   const jpeg = base64ToBytes(base64);
   return { jpeg, color: await colorDeImagen(jpeg, 'image/jpeg'), vistaPrevia: `data:image/jpeg;base64,${base64}` };
 }
+
+export type ImagenLista = { jpeg: Uint8Array; ancho: number; alto: number; vistaPrevia: string };
+
+/**
+ * Deja lista una imagen para pegarla sobre la página (13c, RF-BH12; T289): como la portada, reducida a
+ * `ANCHO_PORTADA` y en JPEG, y con su tamaño para saber su proporción.
+ */
+export async function prepararImagenPegada(uri: string): Promise<ImagenLista> {
+  let guardada: { base64?: string; width: number; height: number };
+  try {
+    const original = await ImageManipulator.manipulate(uri).renderAsync();
+    const imagen = original.width > ANCHO_PORTADA ? await ImageManipulator.manipulate(uri).resize({ width: ANCHO_PORTADA }).renderAsync() : original;
+    guardada = await imagen.saveAsync({ format: SaveFormat.JPEG, compress: 0.82, base64: true });
+  } catch (e) {
+    throw new AuthUiError(t().library.cover.unreadable, e);
+  }
+  if (!guardada.base64 || !guardada.width || !guardada.height) throw new AuthUiError(t().library.cover.unreadable);
+  return { jpeg: base64ToBytes(guardada.base64), ancho: guardada.width, alto: guardada.height, vistaPrevia: `data:image/jpeg;base64,${guardada.base64}` };
+}

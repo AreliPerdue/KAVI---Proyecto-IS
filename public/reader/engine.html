@@ -218,89 +218,96 @@
         overflow: hidden;
       }
       .anotacion.seleccionada {
-        outline: 2px solid #131313;
-        outline-offset: 2px;
-        box-shadow:
-          0 0 0 5px #f2f2f2,
-          0 4px 14px rgb(0 0 0 / 0.35) !important;
+        outline: 1.5px solid #131313;
+        outline-offset: 3px;
+        box-shadow: 0 4px 14px rgb(0 0 0 / 0.35) !important;
       }
-      /* Asas para cambiar el tamaño de un post-it elegido (T329): esquinas visibles, orillas en su franja. */
+      /*
+       * Asas de lo pegado y elegido (T329, al estilo KAVI): una "L" en cada esquina y una rayita en medio de
+       * cada lado, en tinta con un halo claro (se ven sobre cualquier color). Cada una con 32 px para tomarla.
+       */
       .anotacion .asa {
         position: absolute;
-        z-index: 2;
+        z-index: 3;
+        width: 32px;
+        height: 32px;
         touch-action: none;
       }
-      .anotacion .asa-n,
-      .anotacion .asa-s {
-        left: 12px;
-        right: 12px;
-        height: 16px;
-        cursor: ns-resize;
-      }
-      .anotacion .asa-n {
-        top: -8px;
-      }
-      .anotacion .asa-s {
-        bottom: -8px;
-      }
-      .anotacion .asa-e,
-      .anotacion .asa-w {
-        top: 12px;
-        bottom: 12px;
-        width: 16px;
-        cursor: ew-resize;
-      }
-      .anotacion .asa-e {
-        right: -8px;
-      }
-      .anotacion .asa-w {
-        left: -8px;
-      }
-      .anotacion .asa-ne,
-      .anotacion .asa-nw,
-      .anotacion .asa-se,
-      .anotacion .asa-sw {
-        width: 24px;
-        height: 24px;
-      }
-      .anotacion .asa-ne,
-      .anotacion .asa-nw,
-      .anotacion .asa-se,
-      .anotacion .asa-sw {
-        display: grid;
-        place-items: center;
-      }
-      .anotacion .asa-ne::after,
-      .anotacion .asa-nw::after,
-      .anotacion .asa-se::after,
-      .anotacion .asa-sw::after {
+      .anotacion .asa::after {
         content: '';
-        width: 12px;
-        height: 12px;
-        border-radius: 6px;
-        background: #f2f2f2;
-        border: 2px solid #131313;
+        position: absolute;
         box-sizing: border-box;
+        border-color: #131313;
+        border-style: solid;
+        border-width: 0;
+        filter: drop-shadow(0 0 1px #f2f2f2) drop-shadow(0 0 1px #f2f2f2);
       }
-      .anotacion .asa-nw {
-        left: -12px;
-        top: -12px;
-        cursor: nwse-resize;
+      .anotacion .asa-nw { left: -18px; top: -18px; cursor: nwse-resize; }
+      .anotacion .asa-ne { right: -18px; top: -18px; cursor: nesw-resize; }
+      .anotacion .asa-sw { left: -18px; bottom: -18px; cursor: nesw-resize; }
+      .anotacion .asa-se { right: -18px; bottom: -18px; cursor: nwse-resize; }
+      .anotacion .asa-nw::after,
+      .anotacion .asa-ne::after,
+      .anotacion .asa-sw::after,
+      .anotacion .asa-se::after {
+        width: 14px;
+        height: 14px;
       }
-      .anotacion .asa-se {
-        right: -12px;
-        bottom: -12px;
-        cursor: nwse-resize;
+      .anotacion .asa-nw::after { left: 13px; top: 13px; border-top-width: 3px; border-left-width: 3px; border-top-left-radius: 4px; }
+      .anotacion .asa-ne::after { right: 13px; top: 13px; border-top-width: 3px; border-right-width: 3px; border-top-right-radius: 4px; }
+      .anotacion .asa-sw::after { left: 13px; bottom: 13px; border-bottom-width: 3px; border-left-width: 3px; border-bottom-left-radius: 4px; }
+      .anotacion .asa-se::after { right: 13px; bottom: 13px; border-bottom-width: 3px; border-right-width: 3px; border-bottom-right-radius: 4px; }
+      .anotacion .asa-n { left: calc(50% - 16px); top: -18px; cursor: ns-resize; }
+      .anotacion .asa-s { left: calc(50% - 16px); bottom: -18px; cursor: ns-resize; }
+      .anotacion .asa-e { top: calc(50% - 16px); right: -18px; cursor: ew-resize; }
+      .anotacion .asa-w { top: calc(50% - 16px); left: -18px; cursor: ew-resize; }
+      .anotacion .asa-n::after,
+      .anotacion .asa-s::after {
+        left: 8px;
+        width: 16px;
+        height: 3px;
+        border-radius: 2px;
+        background: #131313;
       }
-      .anotacion .asa-ne {
-        right: -12px;
-        top: -12px;
-        cursor: nesw-resize;
+      .anotacion .asa-n::after { top: 16px; }
+      .anotacion .asa-s::after { bottom: 16px; }
+      .anotacion .asa-e::after,
+      .anotacion .asa-w::after {
+        top: 8px;
+        width: 3px;
+        height: 16px;
+        border-radius: 2px;
+        background: #131313;
       }
-      .anotacion .asa-sw {
-        left: -12px;
-        bottom: -12px;
-        cursor: nesw-resize;
+      .anotacion .asa-e::after { right: 16px; }
+      .anotacion .asa-w::after { left: 16px; }
+      /* Girar una imagen: un arco con su flecha, arriba al centro. */
+      .anotacion .asa-giro {
+        left: calc(50% - 16px);
+        top: -52px;
+        cursor: grab;
+      }
+      .anotacion .asa-giro::after {
+        left: 8px;
+        top: 8px;
+        width: 16px;
+        height: 16px;
+        border-width: 3px;
+        border-radius: 50%;
+        border-right-color: transparent;
+      }
+      /* El cuadro de texto: sin fondo; se ve su orilla al elegirlo, al escribir o si está vacío. */
+      .anotacion.textbox.seleccionada,
+      .anotacion.textbox.editando,
+      .anotacion.textbox.vacio {
+        outline: 1.5px dashed currentColor;
+        outline-offset: 2px;
+      }
+      .anotacion.textbox.seleccionada {
+        box-shadow: none !important;
+      }
+      .anotacion.editando {
+        cursor: text !important;
       }
       .anotacion .candado {
         position: absolute;

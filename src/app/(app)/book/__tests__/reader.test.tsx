@@ -55,7 +55,13 @@ jest.mock('@/hooks/use-library', () => ({
 }));
 
 const mockAvisar = jest.fn();
-jest.mock('@/providers', () => ({ useSnackbar: () => mockAvisar }));
+jest.mock('@/providers', () => ({ useSnackbar: () => mockAvisar, useAuth: () => ({ userId: 'u1' }) }));
+// Elegir la imagen: el doble da una lista para pegar.
+const mockElegirFoto = jest.fn(async () => 'file://foto.jpg');
+jest.mock('@/lib/library/cover/sources', () => ({ PUEDE_TOMAR_FOTO: true, desdeGaleria: () => mockElegirFoto(), desdeCamara: () => mockElegirFoto() }));
+jest.mock('@/lib/library/cover/prepare', () => ({
+  prepararImagenPegada: async () => ({ jpeg: new Uint8Array([1, 2]), ancho: 800, alto: 400, vistaPrevia: 'data:image/jpeg;base64,AA' }),
+}));
 // Tiempo de lectura (T318): el doble cuenta las señales y deja poner lo ya leído.
 let mockSesiones: Record<string, unknown>[] = [];
 let mockSegundosEnVivo = 0;
@@ -75,12 +81,18 @@ const mockCrear = jest.fn();
 const mockCambiar = jest.fn();
 const mockBorrar = jest.fn();
 const mockDeshacer = jest.fn();
+const mockDescartar = jest.fn();
+const mockSubirImagen = jest.fn();
+const mockUrlsDeImagenes = new Map([['u1/l1/anotaciones/img1.jpg', 'https://r2/img1']]);
 jest.mock('@/hooks/use-annotations', () => ({
   useAnnotations: () => ({ data: mockLista, isLoading: false, isError: false, refetch: jest.fn() }),
+  useAnnotationImageUrls: () => mockUrlsDeImagenes,
+  useUploadAnnotationImage: () => mockSubirImagen,
   useAnnotationEditor: () => ({
     crear: mockCrear,
     cambiar: mockCambiar,
     borrar: mockBorrar,
+    descartar: mockDescartar,
     deshacer: mockDeshacer,
     rehacer: jest.fn(),
     puedeDeshacer: mockPuedeDeshacer,
@@ -391,7 +403,7 @@ describe('anotaciones (spec 13c, T286)', () => {
     });
   });
 
-  it('pegar un post-it: la herramienta, el toque en la página y escribirle', async () => {
+  it('pegar un post-it: la herramienta, el toque en la página y escribir ahí mismo', async () => {
     mockLista = [postit('a1', { z: 4 })];
     const { rerender } = await render(<Lector />);
     await responder({ type: 'opened', total: 12 });
@@ -404,20 +416,36 @@ describe('anotaciones (spec 13c, T286)', () => {
       expect.objectContaining({ kind: 'postit', item_id: 'l1', locator: { page: 5, x: 0.3, y: 0.4, w: 0.24 }, z: 5, content: { color: '#F1D35D', text: '' } }),
     );
     const nuevo = mockCrear.mock.calls[0][0] as { id: string };
-    // Queda elegido, la herramienta se apaga y se abre para escribir.
+    // Queda elegido, la herramienta se apaga y el motor lo pone a escribir ahí mismo (T289).
     expect(mockEnviados).toContainEqual({ type: 'select', id: nuevo.id });
+    expect(mockEnviados).toContainEqual({ type: 'write', id: nuevo.id });
     expect(mockEnviados.at(-1)).toEqual({ type: 'tool', tool: null });
 
-    // Como la caché optimista: lo nuevo ya está en la lista y la hoja para escribir se abre.
+    // Como la caché optimista: lo nuevo ya está en la lista.
     mockLista = [...mockLista, { ...postit(nuevo.id), ...mockCrear.mock.calls[0][0] }];
     await rerender(<Lector />);
-    await fireEvent.changeText(screen.getByLabelText(A.editLabel), '  Releer este capítulo ');
+    await responder({ type: 'text', id: nuevo.id, text: 'Releer este capítulo' });
+    expect(mockCambiar).toHaveBeenLastCalledWith(expect.objectContaining({ id: nuevo.id }), expect.objectContaining({ content: { color: '#F1D35D', text: 'Releer este capítulo' } }));
+  });
+
+  it('el color de un post-it se elige desde la barra (y el siguiente sale de ese color)', async () => {
+    mockLista = [postit('a1')];
+    await render(<Lector />);
+    await responder({ type: 'opened', total: 12 });
+    await responder({ type: 'select', id: 'a1' });
+    await fireEvent.press(screen.getByRole('button', { name: A.styleColor }));
     await fireEvent.press(screen.getByRole('button', { name: 'Rosa' }));
     await fireEvent.press(screen.getByRole('button', { name: A.save }));
-    expect(mockCambiar).toHaveBeenLastCalledWith(
-      expect.objectContaining({ id: nuevo.id }),
-      expect.objectContaining({ content: { text: 'Releer este capítulo', color: '#F6A9CD' } }),
-    );
+    expect(mockCambiar).toHaveBeenLastCalledWith(expect.objectContaining({ id: 'a1' }), expect.objectContaining({ content: { color: '#F6A9CD', text: 'nota a1' } }));
+  });
+
+  it('"Escribir" pone a escribir ahí mismo; con candado no se puede', async () => {
+    mockLista = [postit('a1')];
+    await render(<Lector />);
+    await responder({ type: 'opened', total: 12 });
+    await responder({ type: 'select', id: 'a1' });
+    await fireEvent.press(screen.getByRole('button', { name: A.write }));
+    expect(mockEnviados.at(-1)).toEqual({ type: 'write', id: 'a1' });
   });
 
   it('con algo elegido: traer al frente, mandar atrás, bloquear y quitar (RF-BH16)', async () => {
@@ -666,7 +694,9 @@ describe('post-it estirable y del color de la portada (T329)', () => {
       { id: 'p1', item_id: 'l1', owner_id: 'u1', kind: 'postit', locator: { page: 1, x: 0, y: 0, w: 0.2 }, content: { color: '#F1D35D', text: 'hola' }, z: 1, removed: false, locked: false, created_at: 'c', updated_at: 'u' },
     ];
     await render(<Lector />);
-    await responder({ type: 'edit', id: 'p1' });
+    await responder({ type: 'opened', total: 12 });
+    await responder({ type: 'select', id: 'p1' });
+    await fireEvent.press(screen.getByRole('button', { name: A.styleColor }));
     await fireEvent.press(screen.getByRole('button', { name: A.coverColor('#1E2761') }));
     await fireEvent.press(screen.getByRole('button', { name: A.save }));
     expect(mockCambiar).toHaveBeenCalledWith(expect.objectContaining({ id: 'p1' }), expect.objectContaining({ content: { color: '#1E2761', text: 'hola' } }));
@@ -722,4 +752,91 @@ it('fuera del scroll, la página se acomoda entre las barras (insets); en scroll
   mockEnviados.length = 0;
   await render(<Lector />);
   expect(mockEnviados).toContainEqual({ type: 'insets', top: 0, bottom: 0 });
+});
+
+describe('cuadros de texto e imágenes (spec 13c, RF-BH10, RF-BH12; T289)', () => {
+  const pegado = (id: string, kind: string, content: Record<string, unknown>) => ({
+    id,
+    item_id: 'l1',
+    owner_id: 'u1',
+    kind,
+    locator: { page: 2, x: 0.1, y: 0.1, w: 0.4, ar: 0.3 },
+    content,
+    z: 1,
+    removed: false,
+    locked: false,
+    created_at: 'c',
+    updated_at: 'u',
+  });
+
+  it('un cuadro de texto: se pega, se escribe ahí mismo con la letra del tema, y vacío se quita', async () => {
+    usePreferencesStore.setState({ readerTheme: { tema: 'light', propio: { pagina: '#F4ECD8', letra: '#5B4636' } } });
+    const { rerender } = await render(<Lector />);
+    await responder({ type: 'opened', total: 12 });
+    await fireEvent.press(screen.getByRole('button', { name: A.textbox }));
+    expect(mockEnviados.at(-1)).toEqual({ type: 'tool', tool: 'textbox' });
+    await responder({ type: 'place', locator: { page: 2, x: 0.1, y: 0.1, w: 0.42, ar: 0.3 } });
+    expect(mockCrear).toHaveBeenCalledWith(expect.objectContaining({ kind: 'textbox', content: { text: '', color: '#1A1A1A', size: 1 } }));
+    const nuevo = mockCrear.mock.calls[0][0] as { id: string };
+    expect(mockEnviados).toContainEqual({ type: 'write', id: nuevo.id });
+    mockLista = [pegado(nuevo.id, 'textbox', { text: '', color: '#1A1A1A', size: 1 })];
+    await rerender(<Lector />);
+    await responder({ type: 'text', id: nuevo.id, text: '   ' });
+    expect(mockBorrar).toHaveBeenCalledWith(expect.objectContaining({ id: nuevo.id }));
+  });
+
+  it('el cuadro de texto se manda al motor con su tamaño; el color y el tamaño se cambian desde la barra', async () => {
+    mockLista = [pegado('t1', 'textbox', { text: 'Ojo aquí', color: '#1A1A1A', size: 1.5 })];
+    await render(<Lector />);
+    expect(mockEnviados).toContainEqual(expect.objectContaining({ type: 'annotations', items: [expect.objectContaining({ id: 't1', content: { color: '#1A1A1A', text: 'Ojo aquí', size: 1.5 } })] }));
+    await responder({ type: 'opened', total: 12 });
+    await responder({ type: 'select', id: 't1' });
+    await fireEvent.press(screen.getByRole('button', { name: A.styleColor }));
+    await fireEvent.press(screen.getByRole('button', { name: A.textBigger }));
+    await fireEvent.press(screen.getByRole('button', { name: A.inks.paper }));
+    await fireEvent.press(screen.getByRole('button', { name: A.save }));
+    expect(mockCambiar).toHaveBeenLastCalledWith(expect.objectContaining({ id: 't1' }), expect.objectContaining({ content: { text: 'Ojo aquí', color: '#F2F2F2', size: 1.75 } }));
+  });
+
+  it('una imagen: elegirla, tocar dónde va, se ve con su copia mientras sube', async () => {
+    mockSubirImagen.mockResolvedValue('ruta');
+    await render(<Lector />);
+    await responder({ type: 'opened', total: 12 });
+    await fireEvent.press(screen.getByRole('button', { name: A.image }));
+    await fireEvent.press(screen.getByRole('button', { name: A.imageGallery }));
+    // Con la proporción de la imagen (400 / 800), para pegarla del tamaño justo.
+    expect(mockEnviados).toContainEqual({ type: 'tool', tool: 'image', ar: 0.5 });
+    await responder({ type: 'place', locator: { page: 2, x: 0.1, y: 0.1, w: 0.4, ar: 0.5 } });
+    const nueva = mockCrear.mock.calls[0][0] as { id: string; content: Record<string, unknown> };
+    expect(nueva).toMatchObject({ kind: 'image', content: { path: `u1/l1/anotaciones/${nueva.id}.jpg`, rot: 0 } });
+    expect(mockSubirImagen).toHaveBeenCalledWith('l1', nueva.id, new Uint8Array([1, 2]));
+    mockLista = [pegado(nueva.id, 'image', nueva.content)];
+    await act(async () => mockResponder({ type: 'tap' }));
+    expect(mockEnviados.filter((m) => m.type === 'annotations').at(-1)).toEqual(
+      expect.objectContaining({ items: [expect.objectContaining({ id: nueva.id, content: expect.objectContaining({ src: 'data:image/jpeg;base64,AA', rot: 0 }) })] }),
+    );
+  });
+
+  it('si la imagen no sube, se quita sin paso de deshacer y se dice', async () => {
+    mockSubirImagen.mockRejectedValue(new Error('sin red'));
+    await render(<Lector />);
+    await responder({ type: 'opened', total: 12 });
+    await fireEvent.press(screen.getByRole('button', { name: A.image }));
+    await fireEvent.press(screen.getByRole('button', { name: A.imageGallery }));
+    await responder({ type: 'place', locator: { page: 2, x: 0.1, y: 0.1, w: 0.4, ar: 0.5 } });
+    expect(mockDescartar).toHaveBeenCalled();
+    expect(mockAvisar).toHaveBeenCalledWith({ message: A.imageFailed });
+  });
+
+  it('una imagen guardada se ve con su dirección firmada; girar suma 90° y el asa manda el ángulo', async () => {
+    mockLista = [pegado('i1', 'image', { path: 'u1/l1/anotaciones/img1.jpg', rot: 0 })];
+    await render(<Lector />);
+    expect(mockEnviados).toContainEqual(expect.objectContaining({ type: 'annotations', items: [expect.objectContaining({ content: expect.objectContaining({ src: 'https://r2/img1' }) })] }));
+    await responder({ type: 'opened', total: 12 });
+    await responder({ type: 'select', id: 'i1' });
+    await fireEvent.press(screen.getByRole('button', { name: A.rotate }));
+    expect(mockCambiar).toHaveBeenLastCalledWith(expect.objectContaining({ id: 'i1' }), expect.objectContaining({ content: { path: 'u1/l1/anotaciones/img1.jpg', rot: 90 } }));
+    await responder({ type: 'rotate', id: 'i1', rot: 45 });
+    expect(mockCambiar).toHaveBeenLastCalledWith(expect.objectContaining({ id: 'i1' }), expect.objectContaining({ content: { path: 'u1/l1/anotaciones/img1.jpg', rot: 45 } }));
+  });
 });

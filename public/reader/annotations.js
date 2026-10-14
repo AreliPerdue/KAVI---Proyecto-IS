@@ -63,58 +63,163 @@ export function crearCapa(ctx, enviar) {
   let repintarAlSoltar = false;
   let ultimoToque = { id: null, t: 0 };
 
-  const pegados = () => lista.filter((a) => a.kind === 'postit');
+  const pegados = () => lista.filter((a) => a.kind === 'postit' || a.kind === 'textbox' || a.kind === 'image');
+  let editando = null; // { id, el, caja }
+  let proporcionNueva = 1; // la de la imagen que se va a pegar
+  let porEditar = null; // un id que pidió escribirse antes de pintarse
   const subrayados = () => lista.filter((a) => a.kind === 'highlight');
   const colorDe = (a) => (/^#[0-9a-fA-F]{6}$/.test(a.content?.color ?? '') ? a.content.color : '#F1D35D');
   const estiloDe = (a) => (a.content?.style === 'underline' || a.content?.style === 'strike' ? a.content.style : 'highlight');
   const interactiva = () => ctx.forma() !== 'book';
 
-  // ─── El post-it ────────────────────────────────────────────────────────────
+  // ─── Lo pegado: post-it, cuadro de texto e imagen ────────────────────────────
+
+  /** Cuánto puede escribirse en cada uno. */
+  const MAX_TEXTO = { postit: 280, textbox: 1000 };
 
   /**
-   * Un post-it. Los estilos van en línea para que se vean igual dentro de la sombra de las páginas del libro
-   * real, donde no llega la hoja de estilos del motor. `ancho`: en PDF, el porcentaje de la página; en EPUB y
-   * en el libro real, en px.
+   * Algo pegado (T286, T289). Los estilos van en línea para que se vean igual dentro de la sombra de las hojas
+   * del libro real, donde no llega la hoja de estilos del motor. `ancho`: en PDF, el porcentaje de la página;
+   * en EPUB y en el libro real, en px.
+   * - **Post-it:** cuadro de color con su texto; la letra crece con el ancho.
+   * - **Cuadro de texto:** solo el texto, del color y tamaño elegidos, sin fondo (RF-BH10).
+   * - **Imagen:** la imagen entera en su caja, que se puede girar (RF-BH12).
    */
-  function postit(a, { ancho, enLibro = false }) {
-    const color = /^#[0-9a-fA-F]{6}$/.test(a.content?.color ?? '') ? a.content.color : '#F1D35D';
+  function pegado(a, { ancho, enLibro = false }) {
     const el = document.createElement('div');
-    el.className = 'anotacion postit';
+    el.className = `anotacion ${a.kind}`;
     el.dataset.id = a.id;
-    el.setAttribute('role', 'note');
-    const texto = a.content?.text ?? '';
-    el.setAttribute('aria-label', texto ? `Post-it: ${texto}` : 'Post-it');
     const px = typeof ancho === 'number';
+    const texto = a.content?.text ?? '';
     Object.assign(el.style, {
       position: 'absolute',
       boxSizing: 'border-box',
       width: px ? `${ancho}px` : ancho,
       aspectRatio: `1 / ${proporcionDe(a)}`,
-      background: color,
-      color: letraSobre(color),
-      padding: px ? `${Math.round(ancho * 0.08)}px` : '0.6em',
-      fontFamily: '-apple-system, system-ui, "Segoe UI", Roboto, sans-serif',
-      fontSize: px ? `${Math.max(10, Math.round(ancho * 0.085))}px` : `calc(${a.locator.w} * 8.5cqw)`,
-      lineHeight: '1.3',
-      borderRadius: '2px',
-      boxShadow: '0 2px 6px rgb(0 0 0 / 0.28)',
       pointerEvents: enLibro ? 'none' : 'auto',
       touchAction: 'none',
       userSelect: 'none',
       webkitUserSelect: 'none',
       cursor: a.locked ? 'pointer' : 'grab',
+      rotate: Number.isFinite(a.content?.rot) && a.content.rot ? `${a.content.rot}deg` : '',
     });
-    // El texto va en su caja (que recorta); el post-it no recorta, para que las asas asomen por fuera.
-    const caja = document.createElement('div');
-    Object.assign(caja.style, { height: '100%', overflow: 'hidden', whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' });
-    caja.textContent = texto;
-    el.append(caja);
+    if (a.kind === 'image') {
+      el.setAttribute('role', 'img');
+      el.setAttribute('aria-label', 'Imagen');
+      const img = document.createElement('img');
+      img.alt = '';
+      img.draggable = false;
+      if (a.content?.src) img.src = a.content.src;
+      Object.assign(img.style, { width: '100%', height: '100%', objectFit: 'contain', display: 'block', pointerEvents: 'none' });
+      el.append(img);
+    } else {
+      const caja = document.createElement('div');
+      caja.className = 'texto';
+      Object.assign(caja.style, { height: '100%', overflow: 'hidden', whiteSpace: 'pre-wrap', overflowWrap: 'anywhere', outline: 'none' });
+      caja.textContent = texto;
+      el.append(caja);
+      el.setAttribute('role', 'note');
+      if (a.kind === 'postit') {
+        const color = colorDe(a);
+        el.setAttribute('aria-label', texto ? `Post-it: ${texto}` : 'Post-it');
+        Object.assign(el.style, {
+          background: color,
+          color: letraSobre(color),
+          // La letra sigue al lado más corto: estirarla solo a lo ancho (o a lo alto) no la agranda.
+          padding: px ? `${Math.round(Math.min(ancho, ancho * proporcionDe(a)) * 0.08)}px` : '0.6em',
+          fontFamily: '-apple-system, system-ui, "Segoe UI", Roboto, sans-serif',
+          fontSize: px ? `${Math.max(10, Math.round(Math.min(ancho, ancho * proporcionDe(a)) * 0.085))}px` : `calc(${a.locator.w * Math.min(1, proporcionDe(a))} * 8.5cqw)`,
+          lineHeight: '1.3',
+          borderRadius: '2px',
+          boxShadow: '0 2px 6px rgb(0 0 0 / 0.28)',
+        });
+      } else {
+        // Cuadro de texto: la letra no depende del ancho (estirarlo reacomoda los renglones).
+        const escala = Number.isFinite(a.content?.size) ? Math.min(3, Math.max(0.5, a.content.size)) : 1;
+        el.setAttribute('aria-label', texto ? `Cuadro de texto: ${texto}` : 'Cuadro de texto');
+        Object.assign(el.style, {
+          color: /^#[0-9a-fA-F]{6}$/.test(a.content?.color ?? '') ? a.content.color : '#1A1A1A',
+          padding: '0.25em 0.35em',
+          fontFamily: '-apple-system, system-ui, "Segoe UI", Roboto, sans-serif',
+          fontSize: px ? `${Math.round(16 * escala)}px` : `calc(${escala} * 2.1cqw)`,
+          lineHeight: '1.35',
+        });
+        if (!texto) el.classList.add('vacio');
+      }
+    }
     if (a.locked) el.dataset.bloqueado = '';
     if (!enLibro) {
       if (a.id === seleccion) marcarSeleccion(el, a);
       escucharArrastre(el, a);
     }
     return el;
+  }
+
+  // ─── Escribir directo (T289, pedido de Areli) ─────────────────────────────────
+
+  /** Escribir en un post-it o un cuadro de texto, ahí mismo; al salir, la app guarda lo escrito. */
+  function editar(id) {
+    const a = lista.find((x) => x.id === id);
+    const el = document.querySelector(`.anotacion[data-id="${CSS.escape(id)}"]`);
+    // Recién pegado, la lista con él llega justo después: se escribe en cuanto se pinte.
+    if (!a || !el) {
+      porEditar = id;
+      return;
+    }
+    if (a.kind === 'image' || a.locked || !interactiva()) {
+      porEditar = null;
+      return;
+    }
+    porEditar = null;
+    if (editando?.id === id) return;
+    if (editando) editando.caja.blur();
+    const caja = el.querySelector('.texto');
+    if (!caja) return;
+    try {
+      caja.contentEditable = 'plaintext-only';
+    } catch {
+      caja.contentEditable = 'true';
+    }
+    if (caja.contentEditable !== 'plaintext-only') caja.contentEditable = 'true';
+    Object.assign(caja.style, { userSelect: 'text', webkitUserSelect: 'text', cursor: 'text' });
+    el.classList.add('editando');
+    editando = { id, el, caja };
+    caja.focus();
+    // El cursor, al final de lo escrito.
+    const rango = document.createRange();
+    rango.selectNodeContents(caja);
+    rango.collapse(false);
+    const sel = document.getSelection();
+    sel?.removeAllRanges();
+    sel?.addRange(rango);
+    const maximo = MAX_TEXTO[a.kind] ?? 280;
+    const alEscribir = () => {
+      if (caja.innerText.length > maximo) caja.innerText = caja.innerText.slice(0, maximo);
+    };
+    const alTeclear = (e) => {
+      e.stopPropagation();
+      if (e.key === 'Escape') caja.blur();
+    };
+    caja.addEventListener('input', alEscribir);
+    caja.addEventListener('keydown', alTeclear);
+    caja.addEventListener(
+      'blur',
+      () => {
+        caja.removeEventListener('input', alEscribir);
+        caja.removeEventListener('keydown', alTeclear);
+        caja.contentEditable = 'false';
+        Object.assign(caja.style, { userSelect: 'none', webkitUserSelect: 'none', cursor: '' });
+        el.classList.remove('editando');
+        editando = null;
+        const texto = caja.innerText.replace(/\n+$/, '').slice(0, maximo);
+        enviar({ type: 'text', id, text: texto });
+        if (repintarAlSoltar) {
+          repintarAlSoltar = false;
+          repintar();
+        }
+      },
+      { once: true },
+    );
   }
 
   function marcarSeleccion(el, a) {
@@ -151,12 +256,15 @@ export function crearCapa(ctx, enviar) {
     el.addEventListener('pointerdown', (e) => {
       if (!interactiva() || !e.isPrimary) return;
       e.stopPropagation();
+      // Escribiendo, el dedo pone el cursor: no arrastra.
+      if (editando?.el === el) return;
       e.preventDefault();
       arrastre = { id: a.id, el, x0: e.clientX, y0: e.clientY, movido: false };
       el.setPointerCapture?.(e.pointerId);
     });
     el.addEventListener('pointermove', (e) => {
-      if (arrastre?.el !== el) return;
+      // Jalando un asa (tamaño o giro), la nota no se mueve: ese movimiento es del asa.
+      if (arrastre?.el !== el || arrastre.tamano || arrastre.giro) return;
       const dx = e.clientX - arrastre.x0;
       const dy = e.clientY - arrastre.y0;
       if (!arrastre.movido && Math.hypot(dx, dy) < 6) return;
@@ -179,17 +287,23 @@ export function crearCapa(ctx, enviar) {
         repintar();
       }
     };
-    el.addEventListener('pointerup', (e) => soltar(e, false));
+    el.addEventListener('pointerup', (e) => {
+      if (editando?.el === el) {
+        e.stopPropagation();
+        return;
+      }
+      soltar(e, false);
+    });
     el.addEventListener('pointercancel', (e) => soltar(e, true));
   }
 
-  /** Un toque elige; dos seguidos abren para escribir. */
+  /** Un toque elige; dos seguidos, en un post-it o un cuadro de texto, ponen a escribir ahí mismo. */
   function tocar(a) {
     const ahora = performance.now();
     const doble = ultimoToque.id === a.id && ahora - ultimoToque.t < DOBLE_TOQUE_MS;
     ultimoToque = { id: doble ? null : a.id, t: ahora };
     if (seleccion !== a.id) elegir(a.id);
-    if (doble) enviar({ type: 'edit', id: a.id });
+    if (doble) editar(a.id);
   }
 
   /** Al soltar: la nueva posición, en la página (PDF) o el renglón (EPUB) donde quedó. */
@@ -238,11 +352,13 @@ export function crearCapa(ctx, enviar) {
   const LADOS = ['n', 's', 'e', 'w', 'ne', 'nw', 'se', 'sw'];
 
   /**
-   * Las asas de un post-it elegido: las esquinas se ven (un circulito) y las orillas se toman en toda su
-   * franja. Arrastrar una cambia el ancho y el alto (ya no tiene que ser cuadrado) sin mover la orilla de
-   * enfrente.
+   * Las 8 asas de algo pegado y elegido (T329, pedido de Areli): una "L" en cada esquina y una rayita en medio
+   * de cada lado, en tinta, cada una con área de sobra para tomarla (así estirar nunca arrastra la nota).
+   * Jalar una cambia el ancho y el alto sin mover la orilla de enfrente; las de los lados, solo uno de los dos.
+   * Las imágenes llevan además un asa arriba para girarlas.
    */
   function ponerAsas(el, a) {
+    if (a.kind === 'image') ponerGiro(el, a);
     for (const lado of LADOS) {
       const asa = document.createElement('div');
       asa.className = `asa asa-${lado}`;
@@ -259,7 +375,14 @@ export function crearCapa(ctx, enviar) {
       });
       asa.addEventListener('pointermove', (e) => {
         if (!inicio) return;
-        const caja = cajaNueva(inicio, lado, e.clientX - inicio.x, e.clientY - inicio.y, el.offsetParent);
+        e.stopPropagation();
+        // Con la pieza girada, el jalón se mide en sus propios ejes.
+        const grados = Number.isFinite(a.content?.rot) ? a.content.rot : 0;
+        const rad = (-grados * Math.PI) / 180;
+        const [gx, gy] = [e.clientX - inicio.x, e.clientY - inicio.y];
+        const dx = gx * Math.cos(rad) - gy * Math.sin(rad);
+        const dy = gx * Math.sin(rad) + gy * Math.cos(rad);
+        const caja = cajaNueva(inicio, lado, dx, dy, el.offsetParent);
         Object.assign(el.style, { left: `${caja.l}px`, top: `${caja.t}px`, width: `${caja.w}px`, height: `${caja.h}px`, aspectRatio: 'auto' });
         arrastre.movido = true;
       });
@@ -280,6 +403,52 @@ export function crearCapa(ctx, enviar) {
       asa.addEventListener('pointercancel', (e) => soltar(e, true));
       el.append(asa);
     }
+  }
+
+  /**
+   * El asa de giro de una imagen (RF-BH12): arriba al centro; se gira alrededor del centro y se queda en el
+   * ángulo recto más cercano si pasa a menos de 4°.
+   */
+  function ponerGiro(el, a) {
+    const asa = document.createElement('div');
+    asa.className = 'asa asa-giro';
+    asa.setAttribute('aria-hidden', 'true');
+    let centro = null;
+    let grados = Number.isFinite(a.content?.rot) ? a.content.rot : 0;
+    asa.addEventListener('pointerdown', (e) => {
+      if (!e.isPrimary) return;
+      e.stopPropagation();
+      e.preventDefault();
+      const r = el.getBoundingClientRect();
+      centro = { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+      arrastre = { id: a.id, el, x0: e.clientX, y0: e.clientY, movido: false, giro: true };
+      asa.setPointerCapture?.(e.pointerId);
+    });
+    asa.addEventListener('pointermove', (e) => {
+      if (!centro) return;
+      e.stopPropagation();
+      let g = (Math.atan2(e.clientY - centro.y, e.clientX - centro.x) * 180) / Math.PI + 90;
+      const recto = Math.round(g / 90) * 90;
+      if (Math.abs(g - recto) < 4) g = recto;
+      grados = Math.round(((g % 360) + 360) % 360);
+      el.style.rotate = `${grados}deg`;
+      arrastre.movido = true;
+    });
+    const soltar = (e) => {
+      if (!centro) return;
+      e.stopPropagation();
+      centro = null;
+      const movido = arrastre?.movido;
+      arrastre = null;
+      if (movido) enviar({ type: 'rotate', id: a.id, rot: grados });
+      if (repintarAlSoltar) {
+        repintarAlSoltar = false;
+        repintar();
+      }
+    };
+    asa.addEventListener('pointerup', soltar);
+    asa.addEventListener('pointercancel', soltar);
+    el.append(asa);
   }
 
   /** La caja nueva al jalar `lado` (px dentro de su capa), sin bajar del mínimo ni salirse de la capa. */
@@ -333,7 +502,7 @@ export function crearCapa(ctx, enviar) {
       if (marcado) elegir(marcado.id);
       return !!marcado;
     }
-    if (herramienta === 'postit') {
+    if (herramienta) {
       const locator = doc === document ? lugarEnPdf(e) : lugarEnEpub(e, doc);
       if (locator) enviar({ type: 'place', locator });
       return true;
@@ -548,13 +717,22 @@ export function crearCapa(ctx, enviar) {
     return a ? { color: colorDe(a), estilo: estiloDe(a) } : null;
   }
 
+  /** El tamaño de lo que se va a pegar: ancho (parte de la página) y proporción, según la herramienta. */
+  function medidaNueva() {
+    if (herramienta === 'textbox') return { w: 0.42, ar: 0.3 };
+    if (herramienta === 'image') return { w: 0.4, ar: entre(proporcionNueva, 0.25, 4) };
+    return { w: ANCHO, ar: 1 };
+  }
+
   function lugarEnPdf(e) {
     const pagina = e.target?.closest?.('.pagina') ?? document.elementsFromPoint(e.clientX, e.clientY).find((x) => x.classList?.contains('pagina'));
     if (!pagina) return null;
     const r = pagina.getBoundingClientRect();
-    const ancho = ANCHO * r.width;
-    return enPagina(pagina, e.clientX - ancho / 2, e.clientY - ancho / 2, ANCHO);
+    const { w, ar } = medidaNueva();
+    const ancho = w * r.width;
+    return enPagina(pagina, e.clientX - ancho / 2, e.clientY - (ancho * ar) / 2, w, ar);
   }
+
 
   // ─── EPUB ────────────────────────────────────────────────────────────────────
 
@@ -623,8 +801,9 @@ export function crearCapa(ctx, enviar) {
     const marco = doc.defaultView?.frameElement;
     if (!area || !marco) return null;
     const m = marco.getBoundingClientRect();
-    const anchoPx = anchoNuevoEpub(area);
-    return enEpub(e.clientX + m.left - anchoPx / 2, e.clientY + m.top - anchoPx / 4, anchoPx, redondear(anchoPx / area.width));
+    const { w, ar } = medidaNueva();
+    const anchoPx = herramienta === 'postit' ? anchoNuevoEpub(area) : entre(w * Math.min(area.width, 760), 120, area.width);
+    return enEpub(e.clientX + m.left - anchoPx / 2, e.clientY + m.top - anchoPx / 4, anchoPx, redondear(anchoPx / area.width), ar);
   }
 
   /** Un rango que mida algo: uno colapsado no siempre tiene rectángulo (WebKit). */
@@ -663,7 +842,7 @@ export function crearCapa(ctx, enviar) {
     const area = areaEpub();
     for (const a of pegados()) {
       if (!a.locator.cfi) continue;
-      const el = postit(a, { ancho: anchoEpub(a.locator.w, area) });
+      const el = pegado(a, { ancho: anchoEpub(a.locator.w, area) });
       el.style.display = 'none';
       capa.append(el);
     }
@@ -741,7 +920,7 @@ export function crearCapa(ctx, enviar) {
     const capa = document.createElement('div');
     capa.className = 'capa-anotaciones';
     for (const a of enPaginaN) {
-      const el = postit(a, { ancho: `${a.locator.w * 100}%`, enLibro });
+      const el = pegado(a, { ancho: `${a.locator.w * 100}%`, enLibro });
       el.style.left = `${a.locator.x * 100}%`;
       el.style.top = `${a.locator.y * 100}%`;
       capa.append(el);
@@ -786,7 +965,7 @@ export function crearCapa(ctx, enviar) {
       const u = ubicar(a.locator.cfi);
       if (!u || u.pagina !== i) continue;
       const px = entre(a.locator.w * ancho, LADO_MIN_PX, ancho);
-      const el = postit(a, { ancho: px, enLibro: true });
+      const el = pegado(a, { ancho: px, enLibro: true });
       el.style.left = `${entre(a.locator.x * ancho, 0, ancho - px)}px`;
       el.style.top = `${u.y}px`;
       capa.append(el);
@@ -797,7 +976,7 @@ export function crearCapa(ctx, enviar) {
   // ─── Lo que pide la app ──────────────────────────────────────────────────────
 
   function repintar() {
-    if (arrastre) {
+    if (arrastre || editando) {
       repintarAlSoltar = true;
       return;
     }
@@ -806,6 +985,7 @@ export function crearCapa(ctx, enviar) {
     ctx.libro()?.recapar?.();
     pintarEpub();
     sincronizarEpub();
+    if (porEditar) editar(porEditar);
   }
 
   return {
@@ -814,12 +994,14 @@ export function crearCapa(ctx, enviar) {
       if (seleccion && !lista.some((a) => a.id === seleccion)) seleccion = null;
       repintar();
     },
-    herramienta(valor) {
-      herramienta = valor === 'postit' ? 'postit' : null;
+    herramienta(valor, proporcion) {
+      herramienta = valor === 'postit' || valor === 'textbox' || valor === 'image' ? valor : null;
+      proporcionNueva = Number.isFinite(proporcion) && proporcion > 0 ? proporcion : 1;
       document.body.classList.toggle('pegando', !!herramienta);
       if (herramienta && seleccion) elegir(null, false);
     },
     elegir: (id) => elegir(typeof id === 'string' ? id : null, false),
+    escribir: (id) => typeof id === 'string' && editar(id),
     alTocar,
     alCambiarSeleccion,
     soltarSeleccion,

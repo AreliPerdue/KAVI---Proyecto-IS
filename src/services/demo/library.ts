@@ -329,6 +329,15 @@ export const demoLibrary: LibraryApi = {
     emitDataChange();
   },
 
+  async uploadAnnotationImage(userId, itemId, annotationId, jpeg) {
+    await delay();
+    if (!items.some((i) => i.id === itemId && i.owner_id === userId)) throw new AuthUiError(t().errors.noPermission);
+    if (tamanoDe(jpeg) > 5 * 1024 * 1024) throw new AuthUiError(t().errors.libraryFileTooBig);
+    const ruta = `${userId}/${itemId}/anotaciones/${annotationId}.jpg`;
+    archivos.set(ruta, { body: jpeg, type: 'image/jpeg' });
+    return ruta;
+  },
+
   async listReadingSessions(userId) {
     await delay();
     return copia(sesiones.filter((x) => x.owner_id === userId).sort((a, b) => b.started_at.localeCompare(a.started_at)));

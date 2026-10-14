@@ -27,11 +27,20 @@ export type AnotacionEnMotor = {
   locator: LibraryLocator;
   z: number;
   locked: boolean;
-  content: { color?: string; text?: string; style?: 'highlight' | 'underline' | 'strike' };
+  content: {
+    color?: string;
+    text?: string;
+    style?: 'highlight' | 'underline' | 'strike';
+    /** Cuadro de texto: el tamaño de la letra (1 = normal). */
+    size?: number;
+    /** Imagen: la dirección para verla y cuánto está girada (grados). */
+    src?: string;
+    rot?: number;
+  };
 };
 
-/** Con qué se está anotando: nada (leer y mover lo pegado) o pegar un post-it donde se toque. */
-export type Herramienta = 'postit' | null;
+/** Con qué se está anotando: nada (leer y mover lo pegado) o pegar algo donde se toque (T286, T289). */
+export type Herramienta = 'postit' | 'textbox' | 'image' | null;
 
 export type MensajeAlMotor =
   | { type: 'open'; format: 'pdf' | 'epub'; url: string; position?: Posicion; mode?: FormaDeLeer }
@@ -55,7 +64,10 @@ export type MensajeAlMotor =
   | { type: 'cover'; url: string; width?: number }
   /** Todo lo que se pinta encima de las páginas, ya en orden de capa (13c, RF-BH16; T286). */
   | { type: 'annotations'; items: AnotacionEnMotor[] }
-  | { type: 'tool'; tool: Herramienta }
+  /** `ar`: la proporción (alto entre ancho) de la imagen que se va a pegar. */
+  | { type: 'tool'; tool: Herramienta; ar?: number }
+  /** Escribir ahí mismo en un post-it o un cuadro de texto (T289). */
+  | { type: 'write'; id: string }
   /** La app elige o suelta (al borrar, al cerrar la barra de lo seleccionado). */
   | { type: 'select'; id: string | null }
   /** Quitar la selección de texto (al subrayar o cerrar la barra). */
@@ -87,6 +99,10 @@ export type MensajeDelMotor =
   | { type: 'move'; id: string; locator: LibraryLocator }
   /** Doble toque en algo pegado: abrirlo para escribir. */
   | { type: 'edit'; id: string }
+  /** Se terminó de escribir directo en un post-it o un cuadro de texto (T289). */
+  | { type: 'text'; id: string; text: string }
+  /** Se giró una imagen (grados, 0 – 359). */
+  | { type: 'rotate'; id: string; rot: number }
   /** Texto seleccionado (RF-BH7): qué dice y dónde está. Vacío, se soltó la selección. */
   | { type: 'selection'; text: string; locator: LibraryLocator | null }
   /** Cuánto está acercado el PDF o el libro real (1 = la página entera). */
@@ -151,6 +167,10 @@ export function leerMensaje(crudo: unknown): MensajeDelMotor | null {
     }
     case 'edit':
       return esId(m.id) ? { type: 'edit', id: m.id } : null;
+    case 'text':
+      return esId(m.id) && typeof m.text === 'string' ? { type: 'text', id: m.id, text: m.text.slice(0, 1000) } : null;
+    case 'rotate':
+      return esId(m.id) && numero(m.rot) ? { type: 'rotate', id: m.id, rot: ((Math.round(m.rot) % 360) + 360) % 360 } : null;
     case 'zoom':
       return numero(m.level) ? { type: 'zoom', level: Math.min(4, Math.max(1, m.level)) } : null;
     case 'textSize':

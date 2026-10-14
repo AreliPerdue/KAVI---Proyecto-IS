@@ -82,6 +82,17 @@
   evita que la palma o el dedo dibujen sin querer.
   - Excepción de plataforma (P5): en web se dibuja con mouse o lápiz de tableta, sin presión.
 - **RF-BH12. Imágenes:** se insertan desde la galería o la cámara, se mueven, rotan y cambian de tamaño.
+- **Hecho (T289, 14 oct 2026).**
+  - **Cuadro de texto:** herramienta en la barra; se toca dónde va y se escribe **ahí mismo** sobre la página
+    (sin hoja aparte). Sin fondo, con la letra del color del tema del lector; desde **Color** se elige otro
+    (tinta, papel, la portada o los Nobi) y el tamaño de la letra (50 – 300 %). Estirarlo reacomoda sus
+    renglones; vacío, se quita.
+  - **Imagen:** en el teléfono, de la galería o la cámara; en la web, un archivo. Se reduce a JPEG (1200 px) y
+    se toca dónde va, ya con su proporción. Se ve al instante y sube a R2 en la carpeta del libro
+    (`<persona>/<libro>/anotaciones/<id>.jpg`, hasta 5 MB; la función de archivos lo permite). Sin conexión no
+    se puede pegar (se dice y se quita). Se gira con el asa de arriba (se queda en los ángulos rectos cerca de
+    ellos) o 90° con **Girar**. Quitarla no borra el archivo, así deshacer la trae de vuelta.
+  - Los dos tienen las 8 asas, capa, candado, deshacer y panel, en PDF y EPUB, y se ven en el libro real.
 
 ## 4. Pegar cosas, como en papel (RF-BH13 – RF-BH16)
 
@@ -106,7 +117,10 @@
   elegir su color de la paleta de los Nobi. El siguiente sale del último color usado. Se arrastra a otro
   lugar o, en scroll, a otra página. Girarlo, doblarlo y el trazo siguen en T290.
 - **Post-it estirable y del color de la portada (T329, 13 oct 2026, pedido de Areli).** Elegido y sin
-  candado, lleva asas: las cuatro esquinas (un circulito) y las cuatro orillas (toda su franja). Jalar una
+  candado, lleva **8 asas al estilo KAVI**: una "L" en cada esquina y una rayita en medio de cada lado, en
+  tinta con un halo claro, cada una con 32 px para tomarla (14 oct: antes eran circulitos y franjas, y jalar
+  una también arrastraba la nota; ya no se mueve al estirarla). Se escribe **directo en el post-it** (doble
+  toque o **Escribir**), sin hoja aparte; el color se elige desde **Color**. La letra sigue al lado más corto. Jalar una
   cambia el ancho y el alto sin mover la orilla de enfrente; ya no tiene que ser cuadrado (la posición guarda
   su proporción, `ar` = alto entre ancho, entre 0.25 y 4; mínimo 48 px por lado y sin salirse de la página).
   La letra crece con el ancho. En la hoja del post-it, el **color de la portada** del libro sale primero en la

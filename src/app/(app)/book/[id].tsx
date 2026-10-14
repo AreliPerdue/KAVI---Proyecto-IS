@@ -10,7 +10,7 @@ import { AnnotationToolbar } from '@/components/library/annotation-toolbar';
 import { AnnotationsSheet } from '@/components/library/annotations-sheet';
 import { DefineSheet } from '@/components/library/define-sheet';
 import { HighlightSheet, type CambioDeSubrayado } from '@/components/library/highlight-sheet';
-import { PostitSheet } from '@/components/library/postit-sheet';
+import { type CambioDeEstilo, PegadoStyleSheet } from '@/components/library/pegado-style-sheet';
 import { ReaderEngine, type ReaderEngineHandle } from '@/components/library/reader-engine';
 import { ReaderProgress } from '@/components/library/reader-progress';
 import { useDuracion } from '@/components/library/reading-summary';
@@ -19,7 +19,7 @@ import { ReaderThemePicker } from '@/components/library/reader-theme-picker';
 import { SelectionBar } from '@/components/library/selection-bar';
 import { AppText, Button, IconButton, Segmented, Sheet } from '@/components/ui';
 import { Fonts, IconSize, IconStroke, Radius, Spacing, Typography } from '@/constants/theme';
-import { useAnnotationEditor, useAnnotations } from '@/hooks/use-annotations';
+import { useAnnotationEditor, useAnnotationImageUrls, useAnnotations, useUploadAnnotationImage } from '@/hooks/use-annotations';
 import { useReadingSessions, useReadingTimer } from '@/hooks/use-reading-sessions';
 import { usePantallaCompleta } from '@/hooks/use-full-screen';
 import { useLibrarySync } from '@/hooks/use-library-sync';
@@ -29,16 +29,21 @@ import { useTheme } from '@/hooks/use-theme';
 import { useT } from '@/i18n';
 import { uuidv4 } from '@/lib/gym/ids';
 import { colorDeParte } from '@/lib/library/cover/parts';
+import { prepararImagenPegada } from '@/lib/library/cover/prepare';
+import { desdeCamara, desdeGaleria, PUEDE_TOMAR_FOTO } from '@/lib/library/cover/sources';
 import {
   ANCHO_DE_POSTIT,
   colorDe,
   coloresRapidos,
   COLOR_DE_POSTIT,
   destinoDe,
+  escalaDe,
   esPegado,
   type EstiloDeSubrayado,
   estiloDe,
+  giroDe,
   palabraParaDefinir,
+  rutaDeImagen,
   SE_PINTAN,
   textoDe,
   zAlFondo,
@@ -56,7 +61,7 @@ import {
 import { FORMA_POR_OMISION, type FormaDeLeer } from '@/lib/library/reading-mode';
 import { coloresDe } from '@/lib/library/reader-theme';
 import { etiquetaDeSaga, siguienteDeSaga } from '@/lib/library/series';
-import { useSnackbar } from '@/providers';
+import { useAuth, useSnackbar } from '@/providers';
 import { usePreferencesStore } from '@/store/preferences-store';
 import type { LibraryAnnotation, LibraryLocator } from '@/types/domain';
 
@@ -136,7 +141,15 @@ function Lector({ id }: { id: string }) {
   const editor = useAnnotationEditor(id);
   const [herramienta, setHerramienta] = useState<Herramienta>(null);
   const [seleccionId, setSeleccionId] = useState<string | null>(null);
-  const [editandoId, setEditandoId] = useState<string | null>(null);
+  // De qué pegado se elige el color (T289); y la imagen lista para pegar, que espera el toque en la página.
+  const [estiloDeId, setEstiloDeId] = useState<string | null>(null);
+  const [imagenPorPegar, setImagenPorPegar] = useState<{ jpeg: Uint8Array; ar: number; vistaPrevia: string } | null>(null);
+  const [eligiendoImagen, setEligiendoImagen] = useState(false);
+  // Mientras una imagen recién pegada sube, se ve con su copia local.
+  const [vistasPrevias, setVistasPrevias] = useState<ReadonlyMap<string, string>>(new Map());
+  const subirImagen = useUploadAnnotationImage();
+  const { userId } = useAuth();
+  const avisarError = useSnackbar();
   const [verPanel, setVerPanel] = useState(false);
   // El color del último post-it guardado: el siguiente sale de ese color.
   const ultimoColor = useRef(COLOR_DE_POSTIT);
@@ -145,7 +158,8 @@ function Lector({ id }: { id: string }) {
   const elegida = lista?.find((a) => a.id === seleccionId) ?? null;
   const seleccionada = elegida && esPegado(elegida) ? elegida : null;
   const subrayado = elegida?.kind === 'highlight' ? elegida : null;
-  const editando = lista?.find((a) => a.id === editandoId) ?? null;
+  const deEstilo = lista?.find((a) => a.id === estiloDeId) ?? null;
+  const urlsDeImagenes = useAnnotationImageUrls(lista);
 
   // Texto seleccionado (RF-BH7 – RF-BH9): qué dice y dónde está, para subrayar, definir o copiar.
   const [seleccionTexto, setSeleccionTexto] = useState<{ text: string; locator: LibraryLocator } | null>(null);
@@ -195,14 +209,20 @@ function Lector({ id }: { id: string }) {
         locator: a.locator,
         z: a.z,
         locked: a.locked,
-        content: { color: colorDe(a) ?? undefined, text: textoDe(a), ...(a.kind === 'highlight' ? { style: estiloDe(a) } : {}) },
+        content: {
+          color: colorDe(a) ?? undefined,
+          text: textoDe(a),
+          ...(a.kind === 'highlight' ? { style: estiloDe(a) } : {}),
+          ...(a.kind === 'textbox' ? { size: escalaDe(a) } : {}),
+          ...(a.kind === 'image' ? { src: vistasPrevias.get(a.id) ?? urlsDeImagenes.get(rutaDeImagen(a) ?? '') ?? undefined, rot: giroDe(a) } : {}),
+        },
       }));
     motor.current?.send({ type: 'annotations', items });
-  }, [lista]);
+  }, [lista, vistasPrevias, urlsDeImagenes]);
 
   useEffect(() => {
-    motor.current?.send({ type: 'tool', tool: herramienta });
-  }, [herramienta]);
+    motor.current?.send({ type: 'tool', tool: herramienta, ...(herramienta === 'image' && imagenPorPegar ? { ar: imagenPorPegar.ar } : {}) });
+  }, [herramienta, imagenPorPegar]);
 
   // Letra y tamaño de un EPUB (RF-BH2, RF-BH3): al abrir y cada vez que cambian.
   const textoLectura = usePreferencesStore((s) => s.readerText);
@@ -303,8 +323,21 @@ function Lector({ id }: { id: string }) {
         setOcultos((o) => !o);
         return;
       case 'place':
-        pegarPostit(m.locator);
+        pegar(m.locator);
         return;
+      case 'text': {
+        // Lo escrito ahí mismo (T289): un cuadro de texto que se queda vacío se quita.
+        const a = lista?.find((x) => x.id === m.id);
+        if (!a) return;
+        if (a.kind === 'textbox' && !m.text.trim()) editor.borrar(a);
+        else if (m.text !== textoDe(a)) cambiar(a, { content: { ...a.content, text: m.text } });
+        return;
+      }
+      case 'rotate': {
+        const a = lista?.find((x) => x.id === m.id);
+        if (a && !a.locked) cambiar(a, { content: { ...a.content, rot: m.rot } });
+        return;
+      }
       case 'select':
         setSeleccionId(m.id);
         return;
@@ -324,7 +357,7 @@ function Lector({ id }: { id: string }) {
       }
       case 'edit':
         setSeleccionId(m.id);
-        setEditandoId(m.id);
+        motor.current?.send({ type: 'write', id: m.id });
         return;
       case 'error':
         setError(m.code);
@@ -339,34 +372,63 @@ function Lector({ id }: { id: string }) {
     motor.current?.send({ type: 'select', id: idElegido });
   };
 
-  /** Un post-it nuevo donde se tocó, elegido y abierto para escribir. La herramienta se apaga. */
-  const pegarPostit = (locator: LibraryAnnotation['locator']) => {
+  /**
+   * Pegar donde se tocó, según la herramienta (T286, T289): un post-it o un cuadro de texto quedan elegidos y
+   * listos para escribir ahí mismo; una imagen se ve al instante con su copia local mientras sube. La
+   * herramienta se apaga.
+   */
+  const pegar = (locator: LibraryAnnotation['locator']) => {
     const t = ahora();
-    const nuevo: LibraryAnnotation = {
-      id: uuidv4(),
-      item_id: id,
-      owner_id: '',
-      kind: 'postit',
-      locator: { ...locator, w: locator.w ?? ANCHO_DE_POSTIT },
-      content: { color: ultimoColor.current, text: '' },
-      z: zNueva(lista ?? []),
-      removed: false,
-      locked: false,
-      created_at: t,
-      updated_at: t,
-    };
-    editor.crear(nuevo);
+    const nuevoId = uuidv4();
+    const tipo = herramienta ?? 'postit';
+    const base = { id: nuevoId, item_id: id, owner_id: '', z: zNueva(lista ?? []), removed: false, locked: false, created_at: t, updated_at: t };
     setHerramienta(null);
-    elegir(nuevo.id);
-    setEditandoId(nuevo.id);
+    if (tipo === 'image') {
+      const imagen = imagenPorPegar;
+      setImagenPorPegar(null);
+      if (!imagen || !userId) return;
+      const nueva: LibraryAnnotation = { ...base, kind: 'image', locator, content: { path: `${userId}/${id}/anotaciones/${nuevoId}.jpg`, rot: 0 } };
+      setVistasPrevias((v) => new Map(v).set(nuevoId, imagen.vistaPrevia));
+      editor.crear(nueva);
+      elegir(nuevoId);
+      subirImagen(id, nuevoId, imagen.jpeg).catch(() => {
+        // Sin subir no hay imagen: se quita (sin paso de deshacer) y se dice por qué.
+        editor.descartar(nueva);
+        avisarError({ message: tx.library.annotations.imageFailed });
+      });
+      return;
+    }
+    const nuevo: LibraryAnnotation =
+      tipo === 'textbox'
+        ? { ...base, kind: 'textbox', locator, content: { text: '', color: colorLetra.toUpperCase(), size: 1 } }
+        : { ...base, kind: 'postit', locator: { ...locator, w: locator.w ?? ANCHO_DE_POSTIT }, content: { color: ultimoColor.current, text: '' } };
+    editor.crear(nuevo);
+    elegir(nuevoId);
+    motor.current?.send({ type: 'write', id: nuevoId });
   };
 
-  const guardarPostit = (texto: string, color: string) => {
-    const a = editando;
-    setEditandoId(null);
+  /** Elegir la imagen para pegar (RF-BH12): en el teléfono, de la galería o la cámara; en la web, un archivo. */
+  const elegirImagen = async (origen: 'galeria' | 'camara') => {
+    setEligiendoImagen(false);
+    try {
+      const uri = origen === 'camara' ? await desdeCamara() : await desdeGaleria();
+      if (!uri) return;
+      const lista_ = await prepararImagenPegada(uri);
+      setImagenPorPegar({ jpeg: lista_.jpeg, ar: lista_.alto / lista_.ancho, vistaPrevia: lista_.vistaPrevia });
+      if (seleccionada) elegir(null);
+      setHerramienta('image');
+    } catch (e) {
+      avisarError({ message: e instanceof Error ? e.message : tx.library.annotations.imageFailed });
+    }
+  };
+
+  /** Color (y tamaño de letra en un cuadro de texto) de lo elegido. El color de un post-it se recuerda. */
+  const guardarEstilo = ({ color, size }: CambioDeEstilo) => {
+    const a = deEstilo;
+    setEstiloDeId(null);
     if (!a) return;
-    ultimoColor.current = color;
-    if (texto !== textoDe(a) || color !== colorDe(a)) cambiar(a, { content: { ...a.content, text: texto, color } });
+    if (a.kind === 'postit') ultimoColor.current = color;
+    if (color !== colorDe(a) || (size !== undefined && size !== escalaDe(a))) cambiar(a, { content: { ...a.content, color, ...(size !== undefined ? { size } : {}) } });
   };
 
   const alFrente = () => {
@@ -605,7 +667,10 @@ function Lector({ id }: { id: string }) {
               }}
               onDeshacer={editor.deshacer}
               onRehacer={editor.rehacer}
-              onEscribir={() => setEditandoId(seleccionada?.id ?? null)}
+              onEscribir={() => seleccionada && motor.current?.send({ type: 'write', id: seleccionada.id })}
+              onEstilo={() => setEstiloDeId(seleccionada?.id ?? null)}
+              onGirar={() => seleccionada && cambiar(seleccionada, { content: { ...seleccionada.content, rot: (giroDe(seleccionada) + 90) % 360 } })}
+              onImagen={() => (PUEDE_TOMAR_FOTO ? setEligiendoImagen(true) : void elegirImagen('galeria'))}
               onFrente={alFrente}
               onAtras={alFondo}
               onBloquear={() => seleccionada && cambiar(seleccionada, { locked: !seleccionada.locked })}
@@ -710,7 +775,13 @@ function Lector({ id }: { id: string }) {
         onReintentar={() => void anotaciones.refetch()}
         onIr={irAAnotacion}
       />
-      <PostitSheet anotacion={editando} colorPortada={item.data ? colorDeParte(item.data, 'front') : null} onClose={() => setEditandoId(null)} onGuardar={guardarPostit} />
+      <PegadoStyleSheet anotacion={deEstilo} colorPortada={item.data ? colorDeParte(item.data, 'front') : null} onClose={() => setEstiloDeId(null)} onGuardar={guardarEstilo} />
+      <Sheet visible={eligiendoImagen} onClose={() => setEligiendoImagen(false)} title={tx.library.annotations.imageFrom}>
+        <View style={styles.formas}>
+          <Button title={tx.library.annotations.imageGallery} variant="secondary" onPress={() => void elegirImagen('galeria')} />
+          <Button title={tx.library.annotations.imageCamera} variant="secondary" onPress={() => void elegirImagen('camara')} />
+        </View>
+      </Sheet>
       <HighlightSheet anotacion={subrayado} onClose={() => elegir(null)} onGuardar={guardarSubrayado} onQuitar={quitarSubrayado} />
       <DefineSheet palabra={definiendo} idioma={idiomaLibro} onClose={() => setDefiniendo(null)} />
     </View>

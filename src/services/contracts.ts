@@ -521,6 +521,12 @@ export interface LibraryApi {
   /** `view`: cambia el orden de las portadas (`sort_order`) o el de los lomos (`spine_order`, RF-BL7b). */
   moveInShelf(shelfId: string, itemId: string, sortOrder: number, view?: LibraryLayoutView): Promise<void>;
 
+  /**
+   * Sube la imagen de una anotación (13c, RF-BH12; T289), ya en JPEG, a la carpeta de la pieza:
+   * `<uid>/<pieza>/anotaciones/<id>.jpg`. Devuelve la ruta.
+   */
+  uploadAnnotationImage(userId: string, itemId: string, annotationId: string, jpeg: LibraryFileBody): Promise<string>;
+
   /** Tiempo de lectura (RF-BR11 – RF-BR13, T318): las sesiones de la persona, la más nueva primero. */
   listReadingSessions(userId: string): Promise<LibraryReadingSession[]>;
   /** Crea o reescribe (por id) una sesión: se guarda cada minuto mientras dura y al terminar. */

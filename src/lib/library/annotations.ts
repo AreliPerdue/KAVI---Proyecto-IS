@@ -13,7 +13,27 @@ export const COLOR_DE_POSTIT = PEOPLE_COLORS_DISPLAY.find((c) => c.id === 'yello
 /** Lo que va pegado encima de la página: se mueve, tiene capa y se bloquea (RF-BH16). */
 export const PEGADOS: readonly LibraryAnnotationKind[] = ['postit', 'sticker', 'textbox', 'image'];
 /** Lo que el motor ya sabe pintar. Cada tarea de L3 agrega el suyo (T289 cuadros, T290 stickers…). */
-export const SE_PINTAN: readonly LibraryAnnotationKind[] = ['postit', 'highlight'];
+export const SE_PINTAN: readonly LibraryAnnotationKind[] = ['postit', 'highlight', 'textbox', 'image'];
+
+/** Cuánto se escribe en cada uno (T289). */
+export const TEXTO_MAXIMO: Partial<Record<LibraryAnnotationKind, number>> = { postit: 280, textbox: 1000 };
+/** El tamaño de letra de un cuadro de texto: 1 es normal (RF-BH10). */
+export const ESCALA_DE_TEXTO = { min: 0.5, max: 3, paso: 0.25 } as const;
+
+export function escalaDe(a: Pick<LibraryAnnotation, 'content'>): number {
+  const e = a.content.size;
+  return typeof e === 'number' && Number.isFinite(e) ? Math.min(ESCALA_DE_TEXTO.max, Math.max(ESCALA_DE_TEXTO.min, e)) : 1;
+}
+
+export function giroDe(a: Pick<LibraryAnnotation, 'content'>): number {
+  const g = a.content.rot;
+  return typeof g === 'number' && Number.isFinite(g) ? ((Math.round(g) % 360) + 360) % 360 : 0;
+}
+
+/** Ruta de la imagen de una anotación (la misma que arma el servicio al subirla). */
+export function rutaDeImagen(a: Pick<LibraryAnnotation, 'content'>): string | null {
+  return typeof a.content.path === 'string' ? a.content.path : null;
+}
 
 // ─── Subrayados (RF-BH7) ─────────────────────────────────────────────────────
 

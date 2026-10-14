@@ -12,10 +12,11 @@
  *
  * Acciones (POST, JSON):
  * - `upload` `{ itemId | fontId, path, contentType, size }` → dirección para subir con `PUT`. La ruta
- *   debe ser el archivo, el PDF o una portada de esa pieza (la del archivo o la propia), o el archivo
- *   de esa fuente. El tamaño queda
+ *   debe ser el archivo, el PDF o una portada de esa pieza (la del archivo o la propia), una imagen pegada
+ *   en ella (`<uid>/<pieza>/anotaciones/<id>.jpg`, 13c RF-BH12, T289), o el archivo de esa fuente. El
+ *   tamaño queda
  *   firmado: el archivo debe medir lo que dice su fila (la base cuida el tope de 500 MB con ese número),
- *   una portada 5 MB o menos y una fuente 10 MB o menos.
+ *   una portada o una imagen pegada 5 MB o menos y una fuente 10 MB o menos.
  * - `read` `{ path }` → dirección para leer con `GET`, válida una hora.
  * - `delete` `{ itemId | fontId }` → borra la carpeta de la pieza o el archivo de la fuente (antes de
  *   borrar su fila).
@@ -126,6 +127,13 @@ function entidades(texto: string): string {
 
 const texto = (v: unknown) => (typeof v === 'string' ? v : '');
 
+/** Una imagen pegada en una pieza (T289): `<uid>/<pieza>/anotaciones/<uuid>.jpg`. Devuelve la pieza. */
+const IMAGEN_PEGADA = /^([0-9a-f-]{36})\/([0-9a-f-]{36})\/anotaciones\/([0-9a-f-]{36})\.jpg$/i;
+function piezaDeImagenPegada(ruta: string, uid: string): string | null {
+  const m = ruta.match(IMAGEN_PEGADA);
+  return m && m[1] === uid ? m[2] : null;
+}
+
 async function pieza(supabase: SupabaseClient, filtro: { id?: string; ruta?: string }): Promise<Pieza | null> {
   let consulta = supabase.from('library_items').select('id, owner_id, file_path, pdf_path, cover_path, custom_cover_path, spine_path, back_cover_path, file_size');
   if (filtro.id) consulta = consulta.eq('id', filtro.id);
@@ -200,7 +208,9 @@ export async function POST(request: Request): Promise<Response> {
         if (!item || !ruta.startsWith(`${uid}/${item.id}/`)) return responder(403, { code: 'forbidden', error: 'No tienes permiso para guardar ese archivo.' });
         // Las imágenes de las caras del libro (RF-BL20, RF-BL23): la portada del archivo o la propia, el lomo
         // y la contraportada. Todas son chicas.
-        const esPortada = [item.cover_path, item.custom_cover_path, item.spine_path, item.back_cover_path].includes(ruta);
+        // Y las imágenes pegadas sobre la página (T289): chicas también, y en la carpeta de esa pieza.
+        const esPortada =
+          [item.cover_path, item.custom_cover_path, item.spine_path, item.back_cover_path].includes(ruta) || piezaDeImagenPegada(ruta, uid) === item.id;
         const esArchivo = ruta === item.file_path || ruta === item.pdf_path;
         if (!esPortada && !esArchivo) return responder(403, { code: 'forbidden', error: 'No tienes permiso para guardar ese archivo.' });
         const tope = esPortada ? MAX_PORTADA : MAX_ARCHIVO;
@@ -213,7 +223,9 @@ export async function POST(request: Request): Promise<Response> {
       }
       case 'read': {
         const ruta = texto(cuerpo.path);
-        const permitido = suya(ruta) && ((await pieza(supabase, { ruta })) || (await fuente(supabase, { ruta })));
+        const deImagen = piezaDeImagenPegada(ruta, uid);
+        const permitido =
+          suya(ruta) && (deImagen ? await pieza(supabase, { id: deImagen }) : (await pieza(supabase, { ruta })) || (await fuente(supabase, { ruta })));
         if (!permitido) return responder(403, { code: 'forbidden', error: 'No tienes permiso para ver ese archivo.' });
         return responder(200, { url: await firmar(r2, 'GET', ruta, SEGUNDOS_LECTURA) });
       }

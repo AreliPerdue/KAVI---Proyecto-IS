@@ -206,3 +206,12 @@ describe('sesiones de lectura (T318)', () => {
     expect(await api.listReadingSessions(ANA)).toEqual([]);
   });
 });
+
+it('una imagen pegada se sube a la carpeta de su pieza y se puede ver (T289)', async () => {
+  const api = fresh();
+  const libro = await api.createItem(ANA, { family: 'book', kind: 'pdf', title: 'A' });
+  const ruta = await api.uploadAnnotationImage(ANA, libro.id, 'img1', new Uint8Array([1, 2, 3]));
+  expect(ruta).toBe(`${ANA}/${libro.id}/anotaciones/img1.jpg`);
+  expect(await api.fileUrl(ruta)).toBeTruthy();
+  await expect(api.uploadAnnotationImage('otra', libro.id, 'img2', new Uint8Array([1]))).rejects.toThrow();
+});

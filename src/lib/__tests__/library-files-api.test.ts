@@ -143,6 +143,20 @@ describe('subir', () => {
     }
   });
 
+  it('una imagen pegada en la página (T289): en la carpeta de la pieza, hasta 5 MB, y se lee', async () => {
+    const IMG = 'dddddddd-0000-4000-8000-000000000004';
+    const ruta = `${UID}/${ITEM}/anotaciones/${IMG}.jpg`;
+    expect((await pedir({ action: 'upload', itemId: ITEM, path: ruta, contentType: 'image/jpeg', size: 300_000 })).status).toBe(200);
+    expect((await pedir({ action: 'read', path: ruta })).status).toBe(200);
+    expect((await pedir({ action: 'upload', itemId: ITEM, path: ruta, contentType: 'image/jpeg', size: 5 * 1024 * 1024 + 1 })).status).toBe(413);
+    // Otro nombre o la carpeta de otra pieza, no.
+    expect((await pedir({ action: 'upload', itemId: ITEM, path: `${UID}/${ITEM}/anotaciones/no-es-un-id.jpg`, contentType: 'image/jpeg', size: 100 })).status).toBe(403);
+    expect((await pedir({ action: 'upload', itemId: ITEM, path: `${UID}/eeeeeeee-0000-4000-8000-000000000005/anotaciones/${IMG}.jpg`, contentType: 'image/jpeg', size: 100 })).status).toBe(403);
+    // De una pieza que la RLS no deja ver, ni se lee.
+    mockPiezas = [];
+    expect((await pedir({ action: 'read', path: ruta })).status).toBe(403);
+  });
+
   it('una portada puede pesar hasta 5 MB', async () => {
     const ok = await pedir({ action: 'upload', itemId: ITEM, path: `${UID}/${ITEM}/cover.png`, contentType: 'image/png', size: 5 * 1024 * 1024 });
     expect(ok.status).toBe(200);
