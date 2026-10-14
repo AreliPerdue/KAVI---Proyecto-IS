@@ -12,6 +12,9 @@
 > | `13d-library-score-cards.md` | Fichas de calificación y su resumen | RF-BF |
 > | `13e-library-creations.md` | Cuadernos, diarios y álbumes; plantillas por capas | RF-BP |
 > | `13f-library-book-club.md` | Club de lectura: leer un PDF o EPUB con contactos, juntos y en vivo | RF-BC |
+> | `13g-library-reading-plus.md` | Más para leer (**propuesta**) | RF-BX |
+> | `13h-library-creative-canvas.md` | Lienzo creativo: Recortes de un libro y Journal del lector (**propuesta**, reemplazaría 13e) | RF-CC |
+> | `13i-library-journal-covers.md` | Portadas del Journal: A5, encuadernación, material y tratamientos (**propuesta**) | RF-JC |
 
 ## 1. Qué es
 

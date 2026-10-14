@@ -1132,6 +1132,26 @@ Decisiones B1–B9 aprobadas el 12 oct 2026 (T274); ver la tabla de la spec 13 �
 - [ ] T294 Fichas pegadas en la pieza y ofrecer llenarla al terminar. (RF-BF4, RF-BF6, RF-BF7) Dep: T293, T279
 - [ ] T295 Mis reseñas: todas las fichas, orden, filtros y totales. (RF-BF8 – RF-BF10) Dep: T294
 
+### LK · Lienzo creativo: Recortes y Journal (specs 13h y 13i, propuesta del 14 oct 2026; falta aprobarla)
+Si se aprueban, reemplazan L5 (13e) y T317 pasa a llamarse "Fragmentos".
+- [ ] T341 C1 · Lienzo base: motor `canvas` A5 vertical/horizontal sin reacomodo, elementos con asas, giro, capas,
+  agrupar, deshacer y cola sin red; módulos texto, imagen, forma y sticker. (RF-CC4 – RF-CC10) Dep: T334
+- [ ] T342 C2 · Recortes: Mi libreta en el libro, lista con miniaturas, lienzo en blanco, + Agregar, selector de
+  color (HEX, recientes, mis colores), opacidad/borde/sombra, exportar imagen; `library_canvases` con RLS.
+  (RF-CC1, RF-CC11 – RF-CC13, RF-CC19, RF-CC23, RF-CC25) Dep: T341
+- [ ] T343 C3 · Polaroids, quote, rating y libro; primer pack de assets en grises recolorables (papeles, cintas,
+  doodles) en la tienda. (RF-CC14 – RF-CC17) Dep: T342, T337
+- [ ] T344 C4 · Plantillas de Recortes (Book Review, Character Collage, Favorite Quotes, Reading Experience, DNF
+  Graveyard), Guardar como plantilla y Mis plantillas. (RF-CC18 – RF-CC21) Dep: T343
+- [ ] T345 J1 · Journal como objeto: A5, 4 encuadernaciones, 6 materiales recolorables, lomo por páginas, cantos y
+  contraportada; en el librero y en libro real. (RF-JC1 – RF-JC9) Dep: T341
+- [ ] T346 J2 · Decorar la portada, lomo y contraportada con el lienzo; tratamiento impreso. (RF-JC10, RF-JC11) Dep: T345
+- [ ] T347 C5 · Páginas del Journal y Get to Know the Reader. (RF-CC2, RF-CC22) Dep: T344, T345
+- [ ] T348 J3 · Tratamientos hundido y recortado. (RF-JC11, RF-JC12) Dep: T346
+- [ ] T349 C6 · Módulos y plantillas avanzados, Journal con datos de Library, fragmentos pegados. (RF-CC14, RF-CC22,
+  RF-CC24) Dep: T347, T317
+- [ ] T350 J4 · Primera colección de motivos Fantasy / Dragon en la tienda. (RF-JC10) Dep: T346
+
 ### L5 · Creaciones y plantillas por capas
 - [ ] T296 Sistema de plantillas por capas: formato JSON + SVG, render, cambios guardados como diferencias.
   (RF-BP7, spec 13e §5) Dep: T275
