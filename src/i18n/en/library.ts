@@ -340,6 +340,7 @@ export const library: Dictionary['library'] = {
     editPlaceholder: 'Write something…',
     editLabel: 'Sticky note text',
     color: 'Color',
+    coverColor: (hex) => `Cover color (${hex})`,
     save: 'Save',
     all: 'All',
     allColors: 'All colors',

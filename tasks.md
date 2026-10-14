@@ -1050,6 +1050,10 @@ Decisiones B1–B9 aprobadas el 12 oct 2026 (T274); ver la tabla de la spec 13 �
 - [x] T288b Tema del lector: claro, oscuro (fondo negro, letra blanca), sepia y propio, con aviso de poco
   contraste; en PDF, filtro de dos tonos. Adelantada el 13 oct a pedido de Areli. (RF-BH5) Dep: T279
 - [ ] T289 Cuadros de texto e imágenes. (RF-BH10, RF-BH12) Dep: T286
+- [x] T329 Post-it: cambiar su tamaño jalando esquinas y orillas (puede quedar rectangular) y el color de la
+  portada del libro como opción. (RF-BH14, enmienda del 13 oct 2026, pedido de Areli) Dep: T286
+  **Hecho (13 oct 2026):** asas en `public/reader/annotations.js` (esquinas visibles, orillas en su franja),
+  `ar` en la posición (PDF y EPUB, también en el libro real) y el color de la portada en `postit-sheet.tsx`.
 - [ ] T290 Stickers con charola de quitados, post-its que se doblan, separadores en el borde elegido.
   (RF-BH13 – RF-BH15) Dep: T286 — El post-it básico (pegar, mover, escribir, color) ya está desde T286;
   aquí falta girarlo un poco, doblarlo y el post-it con trazo.

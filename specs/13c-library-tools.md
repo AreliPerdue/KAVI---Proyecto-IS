@@ -95,6 +95,12 @@
   barra; el siguiente toque en la página lo pega ahí, elegido y abierto para escribir (hasta 280 letras) y
   elegir su color de la paleta de los Nobi. El siguiente sale del último color usado. Se arrastra a otro
   lugar o, en scroll, a otra página. Girarlo, doblarlo y el trazo siguen en T290.
+- **Post-it estirable y del color de la portada (T329, 13 oct 2026, pedido de Areli).** Elegido y sin
+  candado, lleva asas: las cuatro esquinas (un circulito) y las cuatro orillas (toda su franja). Jalar una
+  cambia el ancho y el alto sin mover la orilla de enfrente; ya no tiene que ser cuadrado (la posición guarda
+  su proporción, `ar` = alto entre ancho, entre 0.25 y 4; mínimo 48 px por lado y sin salirse de la página).
+  La letra crece con el ancho. En la hoja del post-it, el **color de la portada** del libro sale primero en la
+  paleta, con su hex.
 
 ## 5. Encontrar lo anotado (RF-BH17 – RF-BH18)
 

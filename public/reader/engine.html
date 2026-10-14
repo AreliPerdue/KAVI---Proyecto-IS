@@ -210,6 +210,84 @@
           0 0 0 5px #f2f2f2,
           0 4px 14px rgb(0 0 0 / 0.35) !important;
       }
+      /* Asas para cambiar el tamaño de un post-it elegido (T329): esquinas visibles, orillas en su franja. */
+      .anotacion .asa {
+        position: absolute;
+        z-index: 2;
+        touch-action: none;
+      }
+      .anotacion .asa-n,
+      .anotacion .asa-s {
+        left: 12px;
+        right: 12px;
+        height: 16px;
+        cursor: ns-resize;
+      }
+      .anotacion .asa-n {
+        top: -8px;
+      }
+      .anotacion .asa-s {
+        bottom: -8px;
+      }
+      .anotacion .asa-e,
+      .anotacion .asa-w {
+        top: 12px;
+        bottom: 12px;
+        width: 16px;
+        cursor: ew-resize;
+      }
+      .anotacion .asa-e {
+        right: -8px;
+      }
+      .anotacion .asa-w {
+        left: -8px;
+      }
+      .anotacion .asa-ne,
+      .anotacion .asa-nw,
+      .anotacion .asa-se,
+      .anotacion .asa-sw {
+        width: 24px;
+        height: 24px;
+      }
+      .anotacion .asa-ne,
+      .anotacion .asa-nw,
+      .anotacion .asa-se,
+      .anotacion .asa-sw {
+        display: grid;
+        place-items: center;
+      }
+      .anotacion .asa-ne::after,
+      .anotacion .asa-nw::after,
+      .anotacion .asa-se::after,
+      .anotacion .asa-sw::after {
+        content: '';
+        width: 12px;
+        height: 12px;
+        border-radius: 6px;
+        background: #f2f2f2;
+        border: 2px solid #131313;
+        box-sizing: border-box;
+      }
+      .anotacion .asa-nw {
+        left: -12px;
+        top: -12px;
+        cursor: nwse-resize;
+      }
+      .anotacion .asa-se {
+        right: -12px;
+        bottom: -12px;
+        cursor: nwse-resize;
+      }
+      .anotacion .asa-ne {
+        right: -12px;
+        top: -12px;
+        cursor: nesw-resize;
+      }
+      .anotacion .asa-sw {
+        left: -12px;
+        bottom: -12px;
+        cursor: nesw-resize;
+      }
       .anotacion .candado {
         position: absolute;
         right: 4px;

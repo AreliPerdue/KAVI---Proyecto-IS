@@ -636,3 +636,26 @@ describe('zoom, tamaño y letra (spec 13c, T288)', () => {
     expect(screen.queryByRole('button', { name: R.textBigger })).toBeNull();
   });
 });
+
+describe('post-it estirable y del color de la portada (T329)', () => {
+  it('ofrece el color de la portada primero y lo guarda', async () => {
+    mockPieza = { ...pdf, cover_color: '#1E2761' };
+    mockLista = [
+      { id: 'p1', item_id: 'l1', owner_id: 'u1', kind: 'postit', locator: { page: 1, x: 0, y: 0, w: 0.2 }, content: { color: '#F1D35D', text: 'hola' }, z: 1, removed: false, locked: false, created_at: 'c', updated_at: 'u' },
+    ];
+    await render(<Lector />);
+    await responder({ type: 'edit', id: 'p1' });
+    await fireEvent.press(screen.getByRole('button', { name: A.coverColor('#1E2761') }));
+    await fireEvent.press(screen.getByRole('button', { name: A.save }));
+    expect(mockCambiar).toHaveBeenCalledWith(expect.objectContaining({ id: 'p1' }), expect.objectContaining({ content: { color: '#1E2761', text: 'hola' } }));
+  });
+
+  it('estirarlo guarda el ancho y la proporción nuevos', async () => {
+    mockLista = [
+      { id: 'p1', item_id: 'l1', owner_id: 'u1', kind: 'postit', locator: { page: 1, x: 0, y: 0, w: 0.2 }, content: {}, z: 1, removed: false, locked: false, created_at: 'c', updated_at: 'u' },
+    ];
+    await render(<Lector />);
+    await responder({ type: 'move', id: 'p1', locator: { page: 1, x: 0, y: 0, w: 0.35, ar: 0.6 } });
+    expect(mockCambiar).toHaveBeenCalledWith(expect.objectContaining({ id: 'p1' }), expect.objectContaining({ locator: { page: 1, x: 0, y: 0, w: 0.35, ar: 0.6 } }));
+  });
+});

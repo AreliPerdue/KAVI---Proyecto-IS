@@ -344,6 +344,7 @@ export const library = {
     editPlaceholder: 'Escribe algo…',
     editLabel: 'Texto del post-it',
     color: 'Color',
+    coverColor: (hex: string) => `Color de la portada (${hex})`,
     save: 'Guardar',
     all: 'Todas',
     allColors: 'Todos los colores',

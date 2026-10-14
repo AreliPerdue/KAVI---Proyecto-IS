@@ -13,10 +13,13 @@ import type { LibraryAnnotation } from '@/types/domain';
  */
 export function PostitSheet({
   anotacion,
+  colorPortada,
   onClose,
   onGuardar,
 }: {
   anotacion: LibraryAnnotation | null;
+  /** El color de la portada del libro, que se ofrece primero (T329). */
+  colorPortada?: string | null;
   onClose: () => void;
   onGuardar: (texto: string, color: string) => void;
 }) {
@@ -24,12 +27,12 @@ export function PostitSheet({
   return (
     <Sheet visible={!!anotacion} onClose={onClose} title={a.editTitle}>
       {/* Una hoja nueva por post-it: el borrador arranca de lo que tiene. */}
-      {anotacion ? <Editor key={anotacion.id} anotacion={anotacion} onGuardar={onGuardar} /> : null}
+      {anotacion ? <Editor key={anotacion.id} anotacion={anotacion} colorPortada={colorPortada ?? null} onGuardar={onGuardar} /> : null}
     </Sheet>
   );
 }
 
-function Editor({ anotacion, onGuardar }: { anotacion: LibraryAnnotation; onGuardar: (texto: string, color: string) => void }) {
+function Editor({ anotacion, colorPortada, onGuardar }: { anotacion: LibraryAnnotation; colorPortada: string | null; onGuardar: (texto: string, color: string) => void }) {
   const tx = useT();
   const a = tx.library.annotations;
   const [texto, setTexto] = useState(textoDe(anotacion));
@@ -51,6 +54,15 @@ function Editor({ anotacion, onGuardar }: { anotacion: LibraryAnnotation; onGuar
         {a.color}
       </AppText>
       <View style={styles.paleta}>
+        {colorPortada ? (
+          <ColorSwatch
+            hex={colorPortada}
+            label={a.coverColor(colorPortada.toUpperCase())}
+            selected={color.toUpperCase() === colorPortada.toUpperCase()}
+            onPress={() => setColor(colorPortada)}
+            size={32}
+          />
+        ) : null}
         {COLORES_DE_ANOTACION.map((c) => (
           <ColorSwatch
             key={c.id}

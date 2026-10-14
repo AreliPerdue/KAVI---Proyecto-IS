@@ -21,6 +21,7 @@
  * lo manda de vuelta en la lista. En PDF se pinta en la capa de cada página (resaltado, subrayado o tachado);
  * en EPUB lo dibuja foliate con su capa de dibujo. Tocar uno lo elige.
  */
+import { pellizcando as pellizcandoAhora } from './zoom.js';
 
 /** El ancho de un post-it nuevo, relativo a la página (igual que `ANCHO_DE_POSTIT` en la app). */
 const ANCHO = 0.24;
@@ -29,6 +30,10 @@ const ANCHO_MAX_PX = 220;
 const DOBLE_TOQUE_MS = 350;
 
 const redondear = (v) => Math.round(v * 10000) / 10000;
+/** Lo más chico que puede quedar un post-it al cambiarle el tamaño (T329). */
+const LADO_MIN_PX = 48;
+/** Alto entre ancho del post-it: 1 es cuadrado. */
+const proporcionDe = (a) => (Number.isFinite(a.locator?.ar) && a.locator.ar >= 0.25 && a.locator.ar <= 4 ? a.locator.ar : 1);
 const entre = (v, min, max) => Math.min(Math.max(v, min), max);
 
 /** Letra clara u oscura según el color del post-it: que se lea siempre. */
@@ -82,7 +87,7 @@ export function crearCapa(ctx, enviar) {
       position: 'absolute',
       boxSizing: 'border-box',
       width: px ? `${ancho}px` : ancho,
-      aspectRatio: '1',
+      aspectRatio: `1 / ${proporcionDe(a)}`,
       background: color,
       color: letraSobre(color),
       padding: px ? `${Math.round(ancho * 0.08)}px` : '0.6em',
@@ -91,16 +96,17 @@ export function crearCapa(ctx, enviar) {
       lineHeight: '1.3',
       borderRadius: '2px',
       boxShadow: '0 2px 6px rgb(0 0 0 / 0.28)',
-      overflow: 'hidden',
-      whiteSpace: 'pre-wrap',
-      overflowWrap: 'anywhere',
       pointerEvents: enLibro ? 'none' : 'auto',
       touchAction: 'none',
       userSelect: 'none',
       webkitUserSelect: 'none',
       cursor: a.locked ? 'pointer' : 'grab',
     });
-    el.textContent = texto;
+    // El texto va en su caja (que recorta); el post-it no recorta, para que las asas asomen por fuera.
+    const caja = document.createElement('div');
+    Object.assign(caja.style, { height: '100%', overflow: 'hidden', whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' });
+    caja.textContent = texto;
+    el.append(caja);
     if (a.locked) el.dataset.bloqueado = '';
     if (!enLibro) {
       if (a.id === seleccion) marcarSeleccion(el, a);
@@ -117,12 +123,15 @@ export function crearCapa(ctx, enviar) {
       candado.innerHTML = CANDADO;
       el.append(candado);
     }
+    // Elegido y sin candado: asas en las esquinas y orillas para cambiarle el tamaño (T329).
+    if (!a.locked && interactiva() && !el.querySelector('.asa')) ponerAsas(el, a);
   }
 
   function remarcar() {
     for (const el of document.querySelectorAll('.anotacion')) {
       el.classList.remove('seleccionada');
       el.querySelector('.candado')?.remove();
+      for (const asa of el.querySelectorAll('.asa')) asa.remove();
       const a = lista.find((x) => x.id === el.dataset.id);
       if (a && a.id === seleccion) marcarSeleccion(el, a);
     }
@@ -188,9 +197,9 @@ export function crearCapa(ctx, enviar) {
     if (ctx.pdf()) {
       const centro = [caja.left + caja.width / 2, caja.top + caja.height / 2];
       const pagina = document.elementsFromPoint(...centro).find((x) => x.classList?.contains('pagina')) ?? el.closest('.pagina');
-      if (pagina) locator = enPagina(pagina, caja.left, caja.top, a.locator.w);
+      if (pagina) locator = enPagina(pagina, caja.left, caja.top, a.locator.w, proporcionDe(a));
     } else if (ctx.epub()) {
-      locator = enEpub(caja.left, caja.top, caja.width, a.locator.w);
+      locator = enEpub(caja.left, caja.top, caja.width, a.locator.w, proporcionDe(a));
     }
     if (!locator) {
       el.style.translate = '';
@@ -210,15 +219,104 @@ export function crearCapa(ctx, enviar) {
   }
 
   /** La esquina (izquierda, arriba) en px de la ventana → posición en la página, sin salirse. */
-  function enPagina(pagina, izquierda, arriba, w) {
+  function enPagina(pagina, izquierda, arriba, w, ar = 1) {
     const r = pagina.getBoundingClientRect();
-    const alto = (w * r.width) / r.height;
+    const alto = (w * r.width * ar) / r.height;
     return {
       page: Number(pagina.dataset.pagina),
       x: redondear(entre((izquierda - r.left) / r.width, 0, 1 - w)),
       y: redondear(entre((arriba - r.top) / r.height, 0, Math.max(0, 1 - alto))),
       w,
+      ...(Math.abs(ar - 1) > 0.001 ? { ar: redondear(ar) } : {}),
     };
+  }
+
+  // ─── Cambiar el tamaño (T329) ────────────────────────────────────────────────
+
+  const LADOS = ['n', 's', 'e', 'w', 'ne', 'nw', 'se', 'sw'];
+
+  /**
+   * Las asas de un post-it elegido: las esquinas se ven (un circulito) y las orillas se toman en toda su
+   * franja. Arrastrar una cambia el ancho y el alto (ya no tiene que ser cuadrado) sin mover la orilla de
+   * enfrente.
+   */
+  function ponerAsas(el, a) {
+    for (const lado of LADOS) {
+      const asa = document.createElement('div');
+      asa.className = `asa asa-${lado}`;
+      asa.dataset.lado = lado;
+      asa.setAttribute('aria-hidden', 'true');
+      let inicio = null;
+      asa.addEventListener('pointerdown', (e) => {
+        if (!e.isPrimary || pellizcandoAhora()) return;
+        e.stopPropagation();
+        e.preventDefault();
+        inicio = { x: e.clientX, y: e.clientY, l: el.offsetLeft, t: el.offsetTop, w: el.offsetWidth, h: el.offsetHeight };
+        arrastre = { id: a.id, el, x0: e.clientX, y0: e.clientY, movido: false, tamano: true };
+        asa.setPointerCapture?.(e.pointerId);
+      });
+      asa.addEventListener('pointermove', (e) => {
+        if (!inicio) return;
+        const caja = cajaNueva(inicio, lado, e.clientX - inicio.x, e.clientY - inicio.y, el.offsetParent);
+        Object.assign(el.style, { left: `${caja.l}px`, top: `${caja.t}px`, width: `${caja.w}px`, height: `${caja.h}px`, aspectRatio: 'auto' });
+        arrastre.movido = true;
+      });
+      const soltar = (e, cancelado) => {
+        if (!inicio) return;
+        e.stopPropagation();
+        inicio = null;
+        const movido = arrastre?.movido;
+        arrastre = null;
+        if (!cancelado && movido) redimensionado(el, a);
+        else repintar();
+        if (repintarAlSoltar) {
+          repintarAlSoltar = false;
+          repintar();
+        }
+      };
+      asa.addEventListener('pointerup', (e) => soltar(e, false));
+      asa.addEventListener('pointercancel', (e) => soltar(e, true));
+      el.append(asa);
+    }
+  }
+
+  /** La caja nueva al jalar `lado` (px dentro de su capa), sin bajar del mínimo ni salirse de la capa. */
+  function cajaNueva(inicio, lado, dx, dy, capa) {
+    let { l, t, w, h } = inicio;
+    const maxW = capa?.clientWidth || Infinity;
+    const maxH = capa?.clientHeight || Infinity;
+    if (lado.includes('e')) w = entre(w + dx, LADO_MIN_PX, maxW - l);
+    if (lado.includes('s')) h = entre(h + dy, LADO_MIN_PX, maxH - t);
+    if (lado.includes('w')) {
+      const nw = entre(w - dx, LADO_MIN_PX, l + w);
+      l += w - nw;
+      w = nw;
+    }
+    if (lado.includes('n')) {
+      const nh = entre(h - dy, LADO_MIN_PX, t + h);
+      t += h - nh;
+      h = nh;
+    }
+    return { l, t, w, h };
+  }
+
+  /** Al soltar un asa: la caja nueva como posición, ancho y proporción. */
+  function redimensionado(el, a) {
+    const caja = el.getBoundingClientRect();
+    const ar = entre(caja.height / caja.width, 0.25, 4);
+    let locator = null;
+    if (ctx.pdf()) {
+      const pagina = el.closest('.pagina');
+      if (pagina) {
+        const r = pagina.getBoundingClientRect();
+        locator = enPagina(pagina, caja.left, caja.top, redondear(entre(caja.width / r.width, 0.02, 1)), ar);
+      }
+    } else if (ctx.epub()) {
+      const area = areaEpub();
+      if (area) locator = enEpub(caja.left, caja.top, caja.width, redondear(entre(caja.width / area.width, 0.02, 1)), ar);
+    }
+    if (!locator) return repintar();
+    enviar({ type: 'move', id: a.id, locator });
   }
 
   /**
@@ -414,7 +512,10 @@ export function crearCapa(ctx, enviar) {
 
   /** El área a la vista del EPUB, en px de la ventana del motor. */
   const areaEpub = () => ctx.epub()?.raiz.getBoundingClientRect();
-  const anchoEpub = (w, area) => entre(w * area.width, ANCHO_MIN_PX, ANCHO_MAX_PX);
+  /** El ancho en px de un post-it de EPUB: su parte del área, sin bajar del mínimo para tomarlo. */
+  const anchoEpub = (w, area) => entre(w * area.width, LADO_MIN_PX, area.width);
+  /** Uno nuevo: un cuarto del área, pero ni diminuto en el teléfono ni enorme en una ventana ancha. */
+  const anchoNuevoEpub = (area) => entre(ANCHO * area.width, ANCHO_MIN_PX, ANCHO_MAX_PX);
 
   /** Los capítulos cargados por foliate, con su iframe. */
   function capitulos() {
@@ -459,14 +560,14 @@ export function crearCapa(ctx, enviar) {
     return r;
   }
 
-  function enEpub(izquierda, arriba, anchoPx, w) {
+  function enEpub(izquierda, arriba, anchoPx, w, ar = 1) {
     const area = areaEpub();
     if (!area) return null;
     // El renglón a la altura de la orilla de arriba del post-it.
     const cfi = cfiEn(izquierda + anchoPx / 2, arriba + 4);
     if (!cfi) return null;
     const x = entre((izquierda - area.left) / area.width, 0, 1 - anchoPx / area.width);
-    return { cfi, x: redondear(Math.max(0, x)), w, fraction: redondear(ctx.epub().fraccion ?? 0) };
+    return { cfi, x: redondear(Math.max(0, x)), w, fraction: redondear(ctx.epub().fraccion ?? 0), ...(Math.abs(ar - 1) > 0.001 ? { ar: redondear(ar) } : {}) };
   }
 
   function lugarEnEpub(e, doc) {
@@ -474,8 +575,8 @@ export function crearCapa(ctx, enviar) {
     const marco = doc.defaultView?.frameElement;
     if (!area || !marco) return null;
     const m = marco.getBoundingClientRect();
-    const anchoPx = anchoEpub(ANCHO, area);
-    return enEpub(e.clientX + m.left - anchoPx / 2, e.clientY + m.top - anchoPx / 4, anchoPx, ANCHO);
+    const anchoPx = anchoNuevoEpub(area);
+    return enEpub(e.clientX + m.left - anchoPx / 2, e.clientY + m.top - anchoPx / 4, anchoPx, redondear(anchoPx / area.width));
   }
 
   /** Un rango que mida algo: uno colapsado no siempre tiene rectángulo (WebKit). */
@@ -655,7 +756,7 @@ export function crearCapa(ctx, enviar) {
       if (!a.locator.cfi) continue;
       const u = ubicar(a.locator.cfi);
       if (!u || u.pagina !== i) continue;
-      const px = entre(a.locator.w * ancho, 72, ANCHO_MAX_PX);
+      const px = entre(a.locator.w * ancho, LADO_MIN_PX, ancho);
       const el = postit(a, { ancho: px, enLibro: true });
       el.style.left = `${entre(a.locator.x * ancho, 0, ancho - px)}px`;
       el.style.top = `${u.y}px`;

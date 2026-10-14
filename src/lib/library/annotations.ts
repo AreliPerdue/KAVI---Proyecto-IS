@@ -178,11 +178,13 @@ export function localizadorPegado(crudo: unknown): LibraryLocator | null {
   if (!crudo || typeof crudo !== 'object') return null;
   const l = crudo as Record<string, unknown>;
   if (!fraccion(l.x) || !fraccion(l.w) || l.w === 0) return null;
+  // La proporción (alto entre ancho) de algo estirado; fuera de rango, cuadrado.
+  const ar = typeof l.ar === 'number' && Number.isFinite(l.ar) && l.ar >= 0.25 && l.ar <= 4 ? { ar: l.ar } : {};
   if (typeof l.page === 'number' && Number.isInteger(l.page) && l.page >= 1) {
-    return fraccion(l.y) ? { page: l.page, x: l.x, y: l.y, w: l.w } : null;
+    return fraccion(l.y) ? { page: l.page, x: l.x, y: l.y, w: l.w, ...ar } : null;
   }
   if (typeof l.cfi === 'string' && l.cfi.startsWith('epubcfi(')) {
-    return { cfi: l.cfi, x: l.x, w: l.w, ...(fraccion(l.fraction) ? { fraction: l.fraction } : {}) };
+    return { cfi: l.cfi, x: l.x, w: l.w, ...(fraccion(l.fraction) ? { fraction: l.fraction } : {}), ...ar };
   }
   return null;
 }

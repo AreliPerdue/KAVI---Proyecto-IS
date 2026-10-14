@@ -573,6 +573,8 @@ export type LibraryLocator = {
   h?: number;
   fraction?: number;
   rects?: LibraryTextRect[];
+  /** Alto entre ancho de algo pegado que se estiró (T329); sin él, cuadrado. */
+  ar?: number;
 };
 
 /** Una pieza de la librería: un libro importado o una creación (spec 13 §2). */

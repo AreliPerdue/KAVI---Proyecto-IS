@@ -26,6 +26,7 @@ import { useLibraryFileUrl, useLibraryItem, useLibraryItems, useSaveReadingPosit
 import { useTheme } from '@/hooks/use-theme';
 import { useT } from '@/i18n';
 import { uuidv4 } from '@/lib/gym/ids';
+import { colorDeParte } from '@/lib/library/cover/parts';
 import {
   ANCHO_DE_POSTIT,
   colorDe,
@@ -671,7 +672,7 @@ function Lector({ id }: { id: string }) {
         onReintentar={() => void anotaciones.refetch()}
         onIr={irAAnotacion}
       />
-      <PostitSheet anotacion={editando} onClose={() => setEditandoId(null)} onGuardar={guardarPostit} />
+      <PostitSheet anotacion={editando} colorPortada={item.data ? colorDeParte(item.data, 'front') : null} onClose={() => setEditandoId(null)} onGuardar={guardarPostit} />
       <HighlightSheet anotacion={subrayado} onClose={() => elegir(null)} onGuardar={guardarSubrayado} onQuitar={quitarSubrayado} />
       <DefineSheet palabra={definiendo} onClose={() => setDefiniendo(null)} />
     </View>
