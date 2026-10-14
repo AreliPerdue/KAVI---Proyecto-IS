@@ -5,6 +5,9 @@ allowBuilds:
   # porque pnpm 11 convierte en error un script de build sin decision tomada,
   # mientras que pnpm 10 solo avisa.
   '@parcel/watcher': false
+  # El motor del lector se empaqueta con esbuild (scripts/build-reader-bundle.mjs): su postinstall revisa que
+  # el binario de la plataforma esté bien.
+  esbuild: true
 
 minimumReleaseAgeExclude:
   - '@expo/cli@57.0.21'
