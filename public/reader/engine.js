@@ -9,7 +9,7 @@
  * `searchStep`, `searchClear`, `cover`, y de la capa de anotaciones (T286) `annotations`, `tool`, `select`,
  * `clearSelection`; de la letra y el zoom (T288) `text` y `zoom`.
  * Motor → app: `ready`, `opened`, `position`, `search`, `tap`, `cover`, `error`; `place`, `select`,
- * `move`, `edit`, `selection` (ver `annotations.js`); `zoom` y `textSize` (T288).
+ * `move`, `edit`, `selection` (ver `annotations.js`); `zoom` y `textSize` (T288); `activity` (T318).
  *
  * Zoom y letra (13c, RF-BH1 – RF-BH3; T288): en PDF se acerca con pellizco o Ctrl/⌘ y la rueda (la página se
  * vuelve a pintar a ese tamaño, nítida); doble toque o "Ajustar" vuelve a la página entera. En EPUB el
@@ -171,6 +171,22 @@ function escucharSeleccion(doc) {
   });
 }
 escucharSeleccion(document);
+
+/**
+ * Señales de vida para el tiempo de lectura (13b, RF-BR11; T318): tocar, la rueda, el teclado o el scroll
+ * avisan `activity`, a lo más una vez cada 20 s. Sin ellas, 5 minutos quietos no cuentan como leídos.
+ */
+let ultimaActividad = 0;
+function avisarActividad() {
+  const ahora = Date.now();
+  if (ahora - ultimaActividad < 20_000) return;
+  ultimaActividad = ahora;
+  enviar({ type: 'activity' });
+}
+function escucharActividad(objetivo) {
+  for (const tipo of ['pointerdown', 'wheel', 'keydown', 'scroll']) objetivo.addEventListener(tipo, avisarActividad, { capture: true, passive: true });
+}
+escucharActividad(document);
 
 function cerrar() {
   limpiarBusqueda();
@@ -482,6 +498,7 @@ async function abrirEpub(fuente, posicion) {
     gestosDePaginas(e.detail.doc, true);
     escucharSeleccion(e.detail.doc);
     letraConGestos(e.detail.doc);
+    escucharActividad(e.detail.doc);
   });
   gestosDePaginas(raiz, true);
   letraConGestos(raiz);

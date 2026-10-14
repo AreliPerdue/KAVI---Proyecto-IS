@@ -9,6 +9,7 @@ import { toError, unwrap } from '@/services/supabase/errors';
 import type {
   LibraryAnnotation,
   LibraryLayout,
+  LibraryReadingSession,
   LibraryCard,
   LibraryCardTemplate,
   LibraryFileBody,
@@ -215,6 +216,16 @@ export const supabaseLibrary: LibraryApi = {
   async moveInShelf(shelfId, itemId, sortOrder, view = 'covers') {
     const cambio = view === 'spines' ? { spine_order: sortOrder } : { sort_order: sortOrder };
     sinError(await db().from('library_shelf_items').update(cambio).eq('shelf_id', shelfId).eq('item_id', itemId));
+  },
+
+  async listReadingSessions(userId) {
+    return unwrap(
+      await db().from('library_reading_sessions').select('*').eq('owner_id', userId).order('started_at', { ascending: false }).limit(2000),
+    ) as LibraryReadingSession[];
+  },
+
+  async saveReadingSession(userId, session) {
+    sinError(await db().from('library_reading_sessions').upsert({ ...session, owner_id: userId }));
   },
 
   async listLayouts(userId) {

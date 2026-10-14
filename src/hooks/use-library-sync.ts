@@ -3,7 +3,7 @@ import { AppState } from 'react-native';
 
 import { isOfflineError } from '@/lib/auth-errors';
 import { confirmar, type EntradaDeLibreria, pendientes } from '@/lib/library/offline/outbox';
-import { removeAnnotations, saveAnnotations, updateLibraryItem } from '@/services/library';
+import { removeAnnotations, saveAnnotations, saveReadingSession, updateLibraryItem } from '@/services/library';
 
 /**
  * Sube lo que quedó en la cola de la librería (RF-BR3, T285): el avance y las anotaciones (T286). Lo que
@@ -23,6 +23,8 @@ function subir(e: EntradaDeLibreria): Promise<unknown> {
       return saveAnnotations(e.userId, [e.annotation]);
     case 'annotationRemove':
       return removeAnnotations([e.id]);
+    case 'session':
+      return saveReadingSession(e.userId, e.session);
   }
 }
 

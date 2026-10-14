@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { BookOpen, ChevronLeft, FolderMinus, FolderPlus, FlaskConical, Library, Search, SlidersHorizontal, Tag, Trash2, X } from 'lucide-react-native';
+import { BookOpen, ChevronLeft, FolderMinus, FolderPlus, FlaskConical, Library, Search, SlidersHorizontal, Tag, Timer, Trash2, X } from 'lucide-react-native';
 import { useEffect, useMemo, useState } from 'react';
 import { BackHandler, FlatList, type LayoutChangeEvent, StyleSheet, TextInput, View } from 'react-native';
 import { useReducedMotion } from 'react-native-reanimated';
@@ -25,6 +25,7 @@ import { arrastreReciente } from '@/components/lists/drag-guard';
 import { DraggableGrid } from '@/components/lists/draggable-grid';
 import { DraggableShelf } from '@/components/library/draggable-shelf';
 import { LayoutsSection } from '@/components/library/layouts-section';
+import { ReadingTimeSheet } from '@/components/library/reading-time-sheet';
 import { DraggableRows } from '@/components/lists/draggable-rows';
 import { LibraryCoverCard, LibraryRow } from '@/components/library/library-item';
 import { AppText, Banner, EmptyState, ErrorState, Fab, IconButton, LoadingState, Screen, Segmented } from '@/components/ui';
@@ -275,6 +276,9 @@ export default function LibraryScreen() {
     const nuevo = ordenEntre(antes ? ordenManualDe(antes, vistaOrden) : undefined, despues ? ordenManualDe(despues, vistaOrden) : undefined);
     actualizar.mutate({ id: movida.id, patch: vistaOrden === 'spines' ? { spine_order: nuevo } : { sort_order: nuevo } });
   };
+
+  // El tiempo de lectura de toda la biblioteca (RF-BR13, T318).
+  const [viendoTiempo, setViendoTiempo] = useState(false);
 
   // Acomodos guardados (RF-BL7b, T331): de la vista y del lugar donde se está.
   const acomodos = useLayouts();
@@ -535,6 +539,9 @@ export default function LibraryScreen() {
                 </IconButton>
               ) : null}
             </View>
+            <IconButton label={l.time.open} onPress={() => setViendoTiempo(true)}>
+              <Timer size={IconSize.action} strokeWidth={IconStroke} color={theme.text} />
+            </IconButton>
             <View>
               <IconButton label={f.filterCount(nFiltros)} onPress={() => setFiltrando(true)}>
                 <SlidersHorizontal size={IconSize.action} strokeWidth={IconStroke} color={nFiltros ? theme.today : theme.text} />
@@ -753,6 +760,7 @@ export default function LibraryScreen() {
         onReorder={(ids) => librerosMut.reordenar.mutate(ids)}
         onEdit={setLibreroEditando}
       />
+      <ReadingTimeSheet visible={viendoTiempo} onClose={() => setViendoTiempo(false)} piezas={piezas.data ?? []} />
       <SortFilterSheet
         visible={filtrando}
         onClose={() => setFiltrando(false)}

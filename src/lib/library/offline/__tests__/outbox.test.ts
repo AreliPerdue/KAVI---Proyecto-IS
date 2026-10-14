@@ -97,6 +97,16 @@ describe('anotaciones en la cola (T286)', () => {
   });
 });
 
+it('una sesión de lectura ocupa un solo lugar en la cola: la última versión gana (T318)', async () => {
+  const sesion = (seconds: number) =>
+    ({ op: 'session', itemId: 'l1', userId: 'u1', session: { id: 's1', item_id: 'l1', started_at: 'a', ended_at: 'b', seconds, start_locator: null, end_locator: null, start_progress: null, end_progress: null }, at: seconds }) as const;
+  await cola.encolar(sesion(60));
+  await cola.encolar(sesion(120));
+  const hay = await cola.pendientes();
+  expect(hay).toHaveLength(1);
+  expect(hay[0].op === 'session' && hay[0].session.seconds).toBe(120);
+});
+
 describe('lista guardada', () => {
   it('es de quien la guardó: otra cuenta en el mismo teléfono no la ve', async () => {
     await lista.guardarLista('u1', [{ id: 'l1' } as never]);

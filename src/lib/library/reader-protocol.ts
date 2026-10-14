@@ -89,6 +89,8 @@ export type MensajeDelMotor =
   | { type: 'selection'; text: string; locator: LibraryLocator | null }
   /** Cuánto está acercado el PDF o el libro real (1 = la página entera). */
   | { type: 'zoom'; level: number }
+  /** Hubo actividad (tocar, rueda, teclado, scroll): se está leyendo (tiempo de lectura, RF-BR11). */
+  | { type: 'activity' }
   /** En EPUB, el pellizco pidió otro tamaño de letra; la app lo guarda y lo manda de vuelta. */
   | { type: 'textSize'; size: number }
   | { type: 'error'; code: CodigoDeError; message?: string };
@@ -133,6 +135,8 @@ export function leerMensaje(crudo: unknown): MensajeDelMotor | null {
       return numero(m.count) && numero(m.index) ? { type: 'search', count: m.count, index: m.index, searching: m.searching === true } : null;
     case 'tap':
       return { type: 'tap' };
+    case 'activity':
+      return { type: 'activity' };
     case 'place': {
       const locator = localizadorPegado(m.locator);
       return locator ? { type: 'place', locator } : null;

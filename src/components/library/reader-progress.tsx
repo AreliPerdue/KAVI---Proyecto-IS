@@ -17,13 +17,15 @@ type Props = {
   a11yLabel: string;
   /** Un paso de las acciones de accesibilidad (una página, o 2 % en EPUB). */
   paso: number;
+  /** Algo más junto a la etiqueta, discreto: el tiempo leído (RF-BR11). */
+  nota?: string;
 };
 
 /**
  * La barra delgada de abajo del lector (RF-BR10): dice dónde va la lectura y deja saltar tocando o
  * arrastrando. Mientras se arrastra, el texto muestra a dónde se va a ir; al soltar, se va.
  */
-export function ReaderProgress({ fraction, etiqueta, onJump, a11yLabel, paso }: Props) {
+export function ReaderProgress({ fraction, etiqueta, onJump, a11yLabel, paso, nota }: Props) {
   const theme = useTheme();
   const [ancho, setAncho] = useState(0);
   const [arrastre, setArrastre] = useState<number | null>(null);
@@ -48,7 +50,7 @@ export function ReaderProgress({ fraction, etiqueta, onJump, a11yLabel, paso }: 
   return (
     <View style={styles.contenedor}>
       <AppText variant="caption" color={arrastre === null ? 'textSecondary' : 'text'} tabular style={styles.texto}>
-        {etiqueta(visible)}
+        {arrastre === null && nota ? `${etiqueta(visible)} · ${nota}` : etiqueta(visible)}
       </AppText>
       <GestureDetector gesture={gesto}>
         <View

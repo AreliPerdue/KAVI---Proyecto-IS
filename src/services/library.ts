@@ -21,6 +21,8 @@ export type {
   LibraryLayout,
   LibraryLayoutView,
   LibraryLink,
+  LibraryReadingSession,
+  LibraryReadingSessionInput,
   LibraryLinkKind,
   LibrarySeries,
   LibraryShelfItem,
@@ -51,6 +53,8 @@ export const addToShelf = libraryApi.addToShelf;
 export const removeFromShelf = libraryApi.removeFromShelf;
 export const moveInShelf = libraryApi.moveInShelf;
 export const listLayouts = libraryApi.listLayouts;
+export const listReadingSessions = libraryApi.listReadingSessions;
+export const saveReadingSession = libraryApi.saveReadingSession;
 export const saveLayout = libraryApi.saveLayout;
 export const removeLayout = libraryApi.removeLayout;
 export const applyOrder = libraryApi.applyOrder;

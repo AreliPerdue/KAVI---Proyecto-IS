@@ -111,6 +111,20 @@
   promedio por sesión, los días en que se leyó y a qué horas suele leer la persona. Sin gráficas complicadas
   en esta versión: totales, una lista de sesiones y una franja por día de la semana. Al conectar Library con
   el calendario (L7), una sesión se puede ver como actividad de Lectura.
+- **Hecho (T318, 14 oct 2026).**
+  - El cronómetro suma el tiempo entre señales de lectura (pasar página, tocar, rueda, teclado, scroll: el
+    motor avisa `activity` a lo más cada 20 s); un hueco de 5 min o más no cuenta, y en segundo plano (o con la
+    pantalla bloqueada) se pausa. En el lector, junto a la página: "p. 4 de 12 · 45 min leídos" (desde el
+    primer minuto).
+  - La sesión se guarda cada minuto y al salir (mismo id: se reescribe), primero en la cola del dispositivo;
+    con su inicio y fin, los segundos leídos y de qué página (o porcentaje) a cuál. Menos de un minuto no se
+    guarda.
+  - **Resumen:** en los Detalles de cada libro ("Tu lectura de este libro") y, para toda la biblioteca, con el
+    botón del cronómetro junto a "Ordenar y filtrar": en total, sesiones, promedio, días que se leyó, a qué
+    hora suele leer (mañana, tarde, noche o madrugada), una franja por día de la semana, los libros más
+    leídos y las 30 sesiones más nuevas.
+  - Datos: `library_reading_sessions` con RLS (`20261014110000_library_reading_sessions.sql`); el total de un
+    libro se calcula de sus sesiones.
 
 ## 4. Lo técnico
 

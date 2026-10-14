@@ -1,10 +1,10 @@
 import { getJson, setJson, storage } from '@/lib/storage';
-import type { LibraryAnnotation, LibraryAnnotationInput, LibraryItem, LibraryItemPatch } from '@/types/domain';
+import type { LibraryAnnotation, LibraryAnnotationInput, LibraryItem, LibraryItemPatch, LibraryReadingSessionInput } from '@/types/domain';
 
 /**
  * Cola local de KAVI Library (spec 13b, RF-BR3; T285): lo que se cambió leyendo sin red se guarda primero
  * aquí y sube al volver, como la cola de series del gym (RF-F17). Lleva el avance de lectura (dónde voy y
- * cuánto llevo) y las anotaciones (T286): guardar una o quitarla.
+ * cuánto llevo), las anotaciones (T286): guardar una o quitarla, y las sesiones de lectura (T318).
  *
  * Una entrada por libro en el avance y una por anotación: el último cambio gana. Guardar y quitar la misma
  * anotación comparten lugar, así quitar lo que aún no subía no deja una creación pendiente.
@@ -17,10 +17,22 @@ export type EntradaDeLibreria =
   | { op: 'position'; itemId: string; patch: PatchDeAvance; at: number }
   /** La anotación completa: subirla dos veces da lo mismo (se guarda por id). */
   | { op: 'annotation'; itemId: string; userId: string; annotation: LibraryAnnotationInput; at: number }
-  | { op: 'annotationRemove'; itemId: string; id: string; at: number };
+  | { op: 'annotationRemove'; itemId: string; id: string; at: number }
+  /** Una sesión de lectura: se reescribe mientras dura, así que la última versión gana. */
+  | { op: 'session'; itemId: string; userId: string; session: LibraryReadingSessionInput; at: number };
 
-const claveDe = (e: EntradaDeLibreria) =>
-  e.op === 'position' ? `position:${e.itemId}` : `annotation:${e.op === 'annotation' ? e.annotation.id : e.id}`;
+const claveDe = (e: EntradaDeLibreria) => {
+  switch (e.op) {
+    case 'position':
+      return `position:${e.itemId}`;
+    case 'session':
+      return `session:${e.session.id}`;
+    case 'annotation':
+      return `annotation:${e.annotation.id}`;
+    case 'annotationRemove':
+      return `annotation:${e.id}`;
+  }
+};
 
 /** Las escrituras van en fila para que dos cambios seguidos no se pisen al guardar. */
 let cadena: Promise<unknown> = Promise.resolve();

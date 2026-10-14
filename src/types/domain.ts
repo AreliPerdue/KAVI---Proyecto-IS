@@ -677,6 +677,27 @@ export type LibraryShelf = {
 
 export type LibraryShelfItem = { shelf_id: string; item_id: string; sort_order: number; spine_order?: number | null; added_at: string };
 
+/**
+ * Una sesión de lectura (spec 13b, RF-BR12; T318): cuándo empezó y terminó, cuánto se leyó de verdad (sin
+ * pausas) y de dónde a dónde. El id lo pone el cliente: la sesión se reescribe mientras dura.
+ */
+export type LibraryReadingSession = {
+  id: string;
+  item_id: string;
+  owner_id: string;
+  started_at: string;
+  ended_at: string;
+  seconds: number;
+  start_locator: LibraryLocator | null;
+  end_locator: LibraryLocator | null;
+  start_progress: number | null;
+  end_progress: number | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type LibraryReadingSessionInput = Omit<LibraryReadingSession, 'owner_id' | 'created_at' | 'updated_at'>;
+
 /** Qué se acomoda: las portadas (también la lista) o los lomos del librero (RF-BL7b). */
 export type LibraryLayoutView = 'covers' | 'spines';
 

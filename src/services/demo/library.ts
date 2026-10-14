@@ -10,6 +10,7 @@ import type {
   LibraryAnnotation,
   LibraryCard,
   LibraryLayout,
+  LibraryReadingSession,
   LibraryCardTemplate,
   LibraryFileBody,
   LibraryFont,
@@ -38,6 +39,7 @@ const cards: LibraryCard[] = [];
 const pages: LibraryPage[] = [];
 const fonts: LibraryFont[] = [];
 const layouts: LibraryLayout[] = [];
+const sesiones: LibraryReadingSession[] = [];
 const archivos = new Map<string, { body: LibraryFileBody; type: string }>();
 
 const ahora = () => new Date().toISOString();
@@ -148,6 +150,7 @@ export const demoLibrary: LibraryApi = {
     quitarDe(links, (k) => k.from_item === itemId || k.to_item === itemId);
     quitarDe(shelfItems, (s) => s.item_id === itemId);
     quitarDe(annotations, (a) => a.item_id === itemId);
+    quitarDe(sesiones, (x) => x.item_id === itemId);
     quitarDe(cards, (c) => c.item_id === itemId);
     quitarDe(pages, (p) => p.item_id === itemId);
     emitDataChange();
@@ -323,6 +326,24 @@ export const demoLibrary: LibraryApi = {
     const fila = shelfItems.find((s) => s.shelf_id === shelfId && s.item_id === itemId);
     if (fila && view === 'spines') fila.spine_order = sortOrder;
     else if (fila) fila.sort_order = sortOrder;
+    emitDataChange();
+  },
+
+  async listReadingSessions(userId) {
+    await delay();
+    return copia(sesiones.filter((x) => x.owner_id === userId).sort((a, b) => b.started_at.localeCompare(a.started_at)));
+  },
+
+  async saveReadingSession(userId, session) {
+    await delay();
+    // Las mismas reglas que la base: de 1 min a 24 h, nunca más que lo que duró, y en un libro propio.
+    const duro = (Date.parse(session.ended_at) - Date.parse(session.started_at)) / 1000;
+    const pieza = items.find((i) => i.id === session.item_id && i.owner_id === userId);
+    if (!pieza || session.seconds < 60 || session.seconds > 86400 || duro < 0 || session.seconds > duro + 60) throw new AuthUiError(t().errors.noPermission);
+    const t0 = ahora();
+    const previa = sesiones.find((x) => x.id === session.id);
+    if (previa) Object.assign(previa, session, { updated_at: t0 });
+    else sesiones.push({ ...session, owner_id: userId, created_at: t0, updated_at: t0 });
     emitDataChange();
   },
 

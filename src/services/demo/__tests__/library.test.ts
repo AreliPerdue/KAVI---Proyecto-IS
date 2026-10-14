@@ -189,3 +189,20 @@ describe('acomodos (T331)', () => {
     expect(await api.listLayouts(ANA)).toEqual([]);
   });
 });
+
+describe('sesiones de lectura (T318)', () => {
+  it('se guardan y se reescriben por id; las mismas reglas que la base; borrar el libro las borra', async () => {
+    const api = fresh();
+    const libro = await api.createItem(ANA, { family: 'book', kind: 'pdf', title: 'A' });
+    const base = { id: 's1', item_id: libro.id, started_at: '2026-10-14T10:00:00.000Z', ended_at: '2026-10-14T10:20:00.000Z', start_locator: { page: 1 }, end_locator: { page: 5 }, start_progress: 0.1, end_progress: 0.5 };
+    await api.saveReadingSession(ANA, { ...base, seconds: 300 });
+    await api.saveReadingSession(ANA, { ...base, seconds: 900 });
+    expect((await api.listReadingSessions(ANA)).map((s) => s.seconds)).toEqual([900]);
+    await expect(api.saveReadingSession(ANA, { ...base, id: 's2', seconds: 30 })).rejects.toThrow();
+    await expect(api.saveReadingSession(ANA, { ...base, id: 's3', seconds: 5000 })).rejects.toThrow();
+    await expect(api.saveReadingSession('otra', { ...base, id: 's4', seconds: 300 })).rejects.toThrow();
+    expect(await api.listReadingSessions('otra')).toEqual([]);
+    await api.removeItem(libro.id);
+    expect(await api.listReadingSessions(ANA)).toEqual([]);
+  });
+});

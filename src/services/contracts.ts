@@ -48,6 +48,8 @@ import type {
   LibraryItemPatch,
   LibraryLayout,
   LibraryLayoutView,
+  LibraryReadingSession,
+  LibraryReadingSessionInput,
   LibraryLink,
   LibraryLinkKind,
   LibrarySeries,
@@ -518,6 +520,11 @@ export interface LibraryApi {
   removeFromShelf(shelfId: string, itemId: string): Promise<void>;
   /** `view`: cambia el orden de las portadas (`sort_order`) o el de los lomos (`spine_order`, RF-BL7b). */
   moveInShelf(shelfId: string, itemId: string, sortOrder: number, view?: LibraryLayoutView): Promise<void>;
+
+  /** Tiempo de lectura (RF-BR11 – RF-BR13, T318): las sesiones de la persona, la más nueva primero. */
+  listReadingSessions(userId: string): Promise<LibraryReadingSession[]>;
+  /** Crea o reescribe (por id) una sesión: se guarda cada minuto mientras dura y al terminar. */
+  saveReadingSession(userId: string, session: LibraryReadingSessionInput): Promise<void>;
 
   /** Acomodos guardados (RF-BL7b, T331). */
   listLayouts(userId: string): Promise<LibraryLayout[]>;

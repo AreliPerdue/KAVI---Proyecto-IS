@@ -56,6 +56,15 @@ jest.mock('@/hooks/use-library', () => ({
 
 const mockAvisar = jest.fn();
 jest.mock('@/providers', () => ({ useSnackbar: () => mockAvisar }));
+// Tiempo de lectura (T318): el doble cuenta las señales y deja poner lo ya leído.
+let mockSesiones: Record<string, unknown>[] = [];
+let mockSegundosEnVivo = 0;
+const mockActividad = jest.fn();
+const mockAlMoverse = jest.fn();
+jest.mock('@/hooks/use-reading-sessions', () => ({
+  useReadingSessions: () => ({ data: mockSesiones }),
+  useReadingTimer: () => ({ segundos: mockSegundosEnVivo, actividad: mockActividad, alMoverse: mockAlMoverse, sesionId: 'actual' }),
+}));
 jest.mock('@/hooks/use-dictionary', () => ({ useDefinition: () => ({ isLoading: false, isError: false, data: null }) }));
 const mockCopiar = jest.fn(async (_t: string) => true);
 jest.mock('expo-clipboard', () => ({ setStringAsync: (t: string) => mockCopiar(t) }));
@@ -89,6 +98,10 @@ const responder = async (m: MensajeDelMotor) => {
 
 beforeEach(() => {
   globalThis.setParametrosDeRuta({ id: 'l1' });
+  mockSesiones = [];
+  mockSegundosEnVivo = 0;
+  mockActividad.mockReset();
+  mockAlMoverse.mockReset();
   mockLista = [];
   mockPuedeDeshacer = false;
   for (const m of [mockCrear, mockCambiar, mockBorrar, mockDeshacer]) m.mockReset();
@@ -666,5 +679,37 @@ describe('post-it estirable y del color de la portada (T329)', () => {
     await render(<Lector />);
     await responder({ type: 'move', id: 'p1', locator: { page: 1, x: 0, y: 0, w: 0.35, ar: 0.6 } });
     expect(mockCambiar).toHaveBeenCalledWith(expect.objectContaining({ id: 'p1' }), expect.objectContaining({ locator: { page: 1, x: 0, y: 0, w: 0.35, ar: 0.6 } }));
+  });
+});
+
+describe('tiempo de lectura (spec 13b, RF-BR11; T318)', () => {
+  it('cada mensaje del motor es señal de lectura y la posición dice de dónde a dónde', async () => {
+    await render(<Lector />);
+    await responder({ type: 'activity' });
+    expect(mockActividad).toHaveBeenCalled();
+    await responder({ type: 'position', page: 7, total: 10, fraction: 0.7 });
+    expect(mockAlMoverse).toHaveBeenCalledWith({ locator: { page: 7 }, progress: 0.7 });
+  });
+
+  it('junto a la página dice cuánto se ha leído el libro: las sesiones guardadas más la de ahora', async () => {
+    mockSesiones = [
+      { id: 'vieja', item_id: 'l1', seconds: 600 },
+      { id: 'otra', item_id: 'otro-libro', seconds: 9999 },
+      // La de ahora ya guardada una vez: no se cuenta dos veces.
+      { id: 'actual', item_id: 'l1', seconds: 120 },
+    ];
+    mockSegundosEnVivo = 35 * 60;
+    await render(<Lector />);
+    await responder({ type: 'opened', total: 12 });
+    await responder({ type: 'position', page: 4, total: 12, fraction: 4 / 12 });
+    expect(screen.getByText(`${es.library.progressPage(4, 12)} · ${es.library.time.read('45 min')}`)).toBeTruthy();
+  });
+
+  it('menos de un minuto no se muestra', async () => {
+    mockSegundosEnVivo = 20;
+    await render(<Lector />);
+    await responder({ type: 'opened', total: 12 });
+    await responder({ type: 'position', page: 4, total: 12, fraction: 4 / 12 });
+    expect(screen.getByText(es.library.progressPage(4, 12))).toBeTruthy();
   });
 });

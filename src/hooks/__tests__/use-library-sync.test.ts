@@ -4,6 +4,7 @@ const mockConfirmar = jest.fn(async (_e: unknown[]) => undefined);
 const mockActualizar = jest.fn();
 const mockGuardarNotas = jest.fn();
 const mockQuitarNotas = jest.fn();
+const mockGuardarSesion = jest.fn();
 jest.mock('@/lib/library/offline/outbox', () => ({
   pendientes: () => mockPendientes(),
   confirmar: (e: unknown[]) => mockConfirmar(e),
@@ -12,6 +13,7 @@ jest.mock('@/services/library', () => ({
   updateLibraryItem: (...a: unknown[]) => mockActualizar(...a),
   saveAnnotations: (...a: unknown[]) => mockGuardarNotas(...a),
   removeAnnotations: (...a: unknown[]) => mockQuitarNotas(...a),
+  saveReadingSession: (...a: unknown[]) => mockGuardarSesion(...a),
 }));
 
 /* eslint-disable-next-line @typescript-eslint/no-require-imports -- tras los mocks */
@@ -21,7 +23,7 @@ const entrada = (itemId: string) => ({ op: 'position', itemId, patch: { progress
 
 beforeEach(() => {
   jest.useFakeTimers();
-  for (const m of [mockPendientes, mockConfirmar, mockActualizar, mockGuardarNotas, mockQuitarNotas]) m.mockReset();
+  for (const m of [mockPendientes, mockConfirmar, mockActualizar, mockGuardarNotas, mockQuitarNotas, mockGuardarSesion]) m.mockReset();
 });
 afterEach(() => jest.useRealTimers());
 
@@ -62,4 +64,14 @@ it('sube las anotaciones: guarda la fila completa con su dueño y quita por id (
   expect(mockQuitarNotas).toHaveBeenCalledWith(['a2']);
   // Lo que no subió por la red se queda para el reintento.
   expect(mockConfirmar).toHaveBeenCalledWith([guardar]);
+});
+
+it('sube las sesiones de lectura con su dueño (T318)', async () => {
+  const sesion = { id: 's1', item_id: 'l1', started_at: 'a', ended_at: 'b', seconds: 120, start_locator: null, end_locator: null, start_progress: null, end_progress: null };
+  const entrada = { op: 'session', itemId: 'l1', userId: 'u1', session: sesion, at: 1 };
+  mockPendientes.mockResolvedValue([entrada]);
+  mockGuardarSesion.mockResolvedValue(undefined);
+  await subirPendientes();
+  expect(mockGuardarSesion).toHaveBeenCalledWith('u1', sesion);
+  expect(mockConfirmar).toHaveBeenCalledWith([entrada]);
 });

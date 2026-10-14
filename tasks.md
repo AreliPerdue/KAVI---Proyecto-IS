@@ -1018,9 +1018,12 @@ Decisiones B1–B9 aprobadas el 12 oct 2026 (T274); ver la tabla de la spec 13 �
   `public/reader/engine.js`); falta probar el deslizar con el dedo en un teléfono.
 - [x] T285 Sin conexión: archivo guardado en el dispositivo y cola local de anotaciones; empaquetar el motor de
   lectura dentro de la app (hoy el teléfono lo carga de la web). (RF-BR3) Dep: T279
-- [ ] T318 Tiempo de lectura: cronómetro que suma por libro (pausa en segundo plano o tras 5 min sin tocar
+- [x] T318 Tiempo de lectura: cronómetro que suma por libro (pausa en segundo plano o tras 5 min sin tocar
   nada), sesiones guardadas (`library_reading_sessions` con RLS) y resumen por libro y de la biblioteca:
   sesiones, tiempo total, promedio, días y horas. (RF-BR11 – RF-BR13, idea de Areli del 13 oct 2026) Dep: T279
+  **Hecho (14 oct 2026):** migración probada con PGlite (9 casos) y aplicada; `lib/library/reading-time.ts`
+  (cronómetro y resumen), `hooks/use-reading-sessions.ts` (sesión con guardado cada minuto por la cola),
+  señal `activity` del motor, nota en la barra del lector, resumen en Detalles y hoja "Tiempo de lectura".
 
 ### L2b · Más para leer (spec 13g, propuesta del 13 oct 2026; falta aprobarla)
 - [ ] T319 Kindle sin candado (MOBI, AZW3), FB2 y CBZ con foliate; DRM rechazado con su motivo. (RF-BX1, RF-BX2) Dep: T278

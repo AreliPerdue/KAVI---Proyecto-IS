@@ -59,6 +59,8 @@ jest.mock('@/hooks/use-library', () => ({
   useLayouts: () => ({ data: mockAcomodos }),
   useLayoutMutations: () => mockAcomodosMut,
 }));
+jest.mock('@/hooks/use-reading-sessions', () => ({ useReadingSessions: () => ({ data: mockSesiones }) }));
+let mockSesiones: Record<string, unknown>[] = [];
 // El librero acomodable (T331): el doble pinta las repisas y guarda `onReorder`.
 jest.mock('@/components/library/draggable-shelf', () => ({
   DraggableShelf: (props: { repisas: { id: string }[][]; renderItem: (i: unknown) => unknown; onReorder: (a: number, b: number) => void }) => {
@@ -754,5 +756,31 @@ describe('encabezado', () => {
     await render(<Pantalla />);
     await fireEvent.press(screen.getByRole('button', { name: es.common.back }));
     expect(globalThis.mockRouter.back).toHaveBeenCalled();
+  });
+});
+
+describe('tiempo de lectura de la biblioteca (spec 13b, RF-BR13; T318)', () => {
+  it('el botón abre el resumen: totales, libros más leídos y sesiones con su libro', async () => {
+    mockPiezas = ok([pieza('l1', { title: 'Rayuela' }), pieza('l2', { title: 'Aura' })]);
+    mockSesiones = [
+      { id: 's1', item_id: 'l1', seconds: 1800, started_at: '2026-10-13T15:00:00', ended_at: '2026-10-13T15:40:00', start_locator: { page: 10 }, end_locator: { page: 30 }, start_progress: 0.1, end_progress: 0.3 },
+      { id: 's2', item_id: 'l2', seconds: 900, started_at: '2026-10-12T21:00:00', ended_at: '2026-10-12T21:20:00', start_locator: null, end_locator: null, start_progress: 0.2, end_progress: 0.25 },
+      { id: 'borrado', item_id: 'ya-no-existe', seconds: 9000, started_at: '2026-10-11T09:00:00', ended_at: '2026-10-11T12:00:00' },
+    ];
+    await render(<Pantalla />);
+    await fireEvent.press(screen.getByRole('button', { name: L.time.open }));
+    expect(screen.getByLabelText(`${L.time.total}: 45 min`)).toBeTruthy();
+    expect(screen.getByLabelText(`${L.time.sessions}: 2`)).toBeTruthy();
+    expect(screen.getByText(L.time.perBook)).toBeTruthy();
+    expect(screen.getByText(L.time.pages(10, 30))).toBeTruthy();
+    expect(screen.getByText(L.time.percents(20, 25))).toBeTruthy();
+  });
+
+  it('sin sesiones lo dice', async () => {
+    mockPiezas = ok([pieza('l1', { title: 'Rayuela' })]);
+    mockSesiones = [];
+    await render(<Pantalla />);
+    await fireEvent.press(screen.getByRole('button', { name: L.time.open }));
+    expect(screen.getByText(L.time.empty)).toBeTruthy();
   });
 });

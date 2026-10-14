@@ -3,10 +3,12 @@ import { useMemo, useState } from 'react';
 import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 
 import { BookCover } from './book-cover';
+import { ReadingSummary } from './reading-summary';
 
 import { AppText, Banner, Button, IconButton, Sheet } from '@/components/ui';
 import { Fonts, IconSize, IconStroke, Radius, Spacing, Typography } from '@/constants/theme';
 import { useLinkMutations, useLinks } from '@/hooks/use-library';
+import { useReadingSessions } from '@/hooks/use-reading-sessions';
 import { useTheme } from '@/hooks/use-theme';
 import { useLanguage, useT } from '@/i18n';
 import { formatShortDate } from '@/lib/dates';
@@ -54,6 +56,7 @@ function Contenido({ item, items, sagas, libreros, membresia, onShow, onRead }: 
   const d = tx.library.details;
   const k = tx.library.links;
   const enlaces = useLinks();
+  const sesiones = useReadingSessions();
   const { quitar } = useLinkMutations();
   const [enlazando, setEnlazando] = useState(false);
 
@@ -108,6 +111,14 @@ function Contenido({ item, items, sagas, libreros, membresia, onShow, onRead }: 
             </AppText>
           </View>
         ))}
+      </View>
+
+      {/* Tiempo de lectura del libro (RF-BR13, T318). */}
+      <View style={styles.seccion}>
+        <AppText variant="label" color="textSecondary">
+          {tx.library.time.titleBook}
+        </AppText>
+        <ReadingSummary sesiones={(sesiones.data ?? []).filter((x) => x.item_id === item.id)} vacio={tx.library.time.emptyBook} />
       </View>
 
       {item.synopsis ? (

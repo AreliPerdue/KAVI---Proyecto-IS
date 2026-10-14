@@ -13,12 +13,14 @@ import { HighlightSheet, type CambioDeSubrayado } from '@/components/library/hig
 import { PostitSheet } from '@/components/library/postit-sheet';
 import { ReaderEngine, type ReaderEngineHandle } from '@/components/library/reader-engine';
 import { ReaderProgress } from '@/components/library/reader-progress';
+import { useDuracion } from '@/components/library/reading-summary';
 import { ReaderTextPicker } from '@/components/library/reader-text-picker';
 import { ReaderThemePicker } from '@/components/library/reader-theme-picker';
 import { SelectionBar } from '@/components/library/selection-bar';
 import { AppText, Button, IconButton, Segmented, Sheet } from '@/components/ui';
 import { Fonts, IconSize, IconStroke, Radius, Spacing, Typography } from '@/constants/theme';
 import { useAnnotationEditor, useAnnotations } from '@/hooks/use-annotations';
+import { useReadingSessions, useReadingTimer } from '@/hooks/use-reading-sessions';
 import { usePantallaCompleta } from '@/hooks/use-full-screen';
 import { useLibrarySync } from '@/hooks/use-library-sync';
 import { useAbrirCopiaLocal } from '@/hooks/use-local-book';
@@ -122,6 +124,13 @@ function Lector({ id }: { id: string }) {
   // Reintentar en el teléfono vuelve a intentar bajar la copia (el efecto de abrir corre de nuevo).
   const [intento, setIntento] = useState(0);
   const [ocultos, setOcultos] = useState(forma === 'book');
+
+  // Tiempo de lectura (RF-BR11): una sesión desde que abre el libro; el total suma las guardadas.
+  const tiempo = useReadingTimer(id, abierto);
+  const sesiones = useReadingSessions();
+  const duracion = useDuracion();
+  const segundosLeidos =
+    (sesiones.data ?? []).filter((x) => x.item_id === id && x.id !== tiempo.sesionId).reduce((suma, x) => suma + x.seconds, 0) + tiempo.segundos;
 
   const anotaciones = useAnnotations(id);
   const editor = useAnnotationEditor(id);
@@ -252,6 +261,8 @@ function Lector({ id }: { id: string }) {
   );
 
   const alMensaje = (m: MensajeDelMotor) => {
+    // Todo lo que llega del motor mientras se lee es señal de que se está leyendo (RF-BR11).
+    if (m.type !== 'ready' && m.type !== 'error') tiempo.actividad();
     switch (m.type) {
       case 'opened':
         setAbierto(true);
@@ -261,6 +272,8 @@ function Lector({ id }: { id: string }) {
         return;
       case 'position': {
         setPosicion(m);
+        const lugar = cambioDePosicion(m);
+        tiempo.alMoverse({ locator: lugar.last_position, progress: lugar.progress });
         if (pendiente.current) clearTimeout(pendiente.current.timer);
         const hacer = () => {
           pendiente.current = null;
@@ -593,6 +606,7 @@ function Lector({ id }: { id: string }) {
             onJump={saltar}
             a11yLabel={r.progressA11y(etiqueta(fraccion))}
             paso={porPagina ? 1 / (total - 1) : 0.02}
+            nota={segundosLeidos >= 60 ? l.time.read(duracion(segundosLeidos)) : undefined}
           />
         </View>
       ) : null;
