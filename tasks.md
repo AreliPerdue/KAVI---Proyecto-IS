@@ -1123,8 +1123,9 @@ Decisiones B1–B9 aprobadas el 12 oct 2026 (T274); ver la tabla de la spec 13 �
   (guardar otra vez la anotación la cancela) y `use-library-sync` la procesa al vencer.
 - [ ] T291 Lápiz y dedo con Skia; presión del Apple Pencil; modo "solo lápiz". (RF-BH11) Dep: T286
 - [ ] T292 Escuchar en voz alta con la frase resaltada. (RF-BH6) Dep: T279
-- [ ] T317 Recortes de texto ("Recortar" al seleccionar) y de imagen (rectángulo sobre la página), `library_clips`
-  con RLS e imágenes en R2, sección "Mis recortes" con filtros y nota; pegar en creaciones cuando existan.
+- [ ] T317 Fragmentos (antes "Recortes", renombrado el 14 oct 2026) de texto ("Guardar fragmento" al seleccionar) y de
+  imagen (rectángulo sobre la página), `library_clips` con RLS e imágenes en R2, sección "Mis fragmentos" con
+  filtros y nota; pegar en recortes (13h).
   (RF-BH19 – RF-BH21, 13 oct 2026) Dep: T286 (pegar en creaciones, T297)
 
 ### L4 · Fichas de calificación
@@ -1132,35 +1133,40 @@ Decisiones B1–B9 aprobadas el 12 oct 2026 (T274); ver la tabla de la spec 13 �
 - [ ] T294 Fichas pegadas en la pieza y ofrecer llenarla al terminar. (RF-BF4, RF-BF6, RF-BF7) Dep: T293, T279
 - [ ] T295 Mis reseñas: todas las fichas, orden, filtros y totales. (RF-BF8 – RF-BF10) Dep: T294
 
-### LK · Lienzo creativo: Recortes y Journal (specs 13h y 13i, propuesta del 14 oct 2026; falta aprobarla)
-Si se aprueban, reemplazan L5 (13e) y T317 pasa a llamarse "Fragmentos".
-- [ ] T341 C1 · Lienzo base: motor `canvas` A5 vertical/horizontal sin reacomodo, elementos con asas, giro, capas,
-  agrupar, deshacer y cola sin red; módulos texto, imagen, forma y sticker. (RF-CC4 – RF-CC10) Dep: T334
+### LK · Lienzo creativo: Recortes y Journal (specs 13h y 13i, aprobadas el 14 oct 2026)
+Reemplazan L5 (13e). Un recorte es una página 1 : √2 del visor de PDF (decisión 3 de Areli).
+- [x] T341 Specs 13h y 13i: propuesta, decisiones de Areli (Fragmentos, reemplazo de 13e, página del visor de PDF,
+  emboss y deboss, texturas del muestrario, varios Journals, plantillas en dos idiomas) y aprobación. (14 oct 2026)
+- [ ] T351 C1 · Lienzo base: el recorte como página 1 : √2 en el motor del lector (vertical/horizontal, sin reacomodo),
+  elementos con asas, giro, capas, agrupar, deshacer y cola sin red; módulos texto, imagen, forma y sticker.
+  (RF-CC4 – RF-CC10) Dep: T334
 - [ ] T342 C2 · Recortes: Mi libreta en el libro, lista con miniaturas, lienzo en blanco, + Agregar, selector de
   color (HEX, recientes, mis colores), opacidad/borde/sombra, exportar imagen; `library_canvases` con RLS.
-  (RF-CC1, RF-CC11 – RF-CC13, RF-CC19, RF-CC23, RF-CC25) Dep: T341
+  (RF-CC1, RF-CC11 – RF-CC13, RF-CC19, RF-CC23, RF-CC25) Dep: T351
 - [ ] T343 C3 · Polaroids, quote, rating y libro; primer pack de assets en grises recolorables (papeles, cintas,
   doodles) en la tienda. (RF-CC14 – RF-CC17) Dep: T342, T337
 - [ ] T344 C4 · Plantillas de Recortes (Book Review, Character Collage, Favorite Quotes, Reading Experience, DNF
   Graveyard), Guardar como plantilla y Mis plantillas. (RF-CC18 – RF-CC21) Dep: T343
-- [ ] T345 J1 · Journal como objeto: A5, 4 encuadernaciones, 6 materiales recolorables, lomo por páginas, cantos y
-  contraportada; en el librero y en libro real. (RF-JC1 – RF-JC9) Dep: T341
+- [ ] T352 Texturas de los 6 materiales: limpiar el muestrario de Areli, pasarlas a grises y hacerlas repetibles
+  sin costuras; probarlas en un A5 completo. (RF-JC8) Dep: —
+- [ ] T345 J1 · Journal como objeto (varios por persona): A5, 4 encuadernaciones, 6 materiales recolorables, lomo por páginas, cantos y
+  contraportada; en el librero y en libro real. (RF-JC1 – RF-JC9) Dep: T351, T352
 - [ ] T346 J2 · Decorar la portada, lomo y contraportada con el lienzo; tratamiento impreso. (RF-JC10, RF-JC11) Dep: T345
 - [ ] T347 C5 · Páginas del Journal y Get to Know the Reader. (RF-CC2, RF-CC22) Dep: T344, T345
-- [ ] T348 J3 · Tratamientos hundido y recortado. (RF-JC11, RF-JC12) Dep: T346
+- [ ] T348 J3 · Tratamientos hundido, relieve y recortado. (RF-JC11, RF-JC12) Dep: T346
 - [ ] T349 C6 · Módulos y plantillas avanzados, Journal con datos de Library, fragmentos pegados. (RF-CC14, RF-CC22,
   RF-CC24) Dep: T347, T317
 - [ ] T350 J4 · Primera colección de motivos Fantasy / Dragon en la tienda. (RF-JC10) Dep: T346
 
-### L5 · Creaciones y plantillas por capas
-- [ ] T296 Sistema de plantillas por capas: formato JSON + SVG, render, cambios guardados como diferencias.
+### L5 · Creaciones y plantillas por capas — reemplazada por LK (14 oct 2026)
+- [-] T296 Sistema de plantillas por capas: formato JSON + SVG, render, cambios guardados como diferencias.
   (RF-BP7, spec 13e §5) Dep: T275
-- [ ] T297 Cuadernos, diarios y álbumes con sus páginas. (RF-BP1 – RF-BP3) Dep: T296
-- [ ] T298 Estilo Moderno/luxury completo en los colores de los Nobi: portada de ciudad con edificios por ciudad,
+- [-] T297 Cuadernos, diarios y álbumes con sus páginas. (RF-BP1 – RF-BP3) Dep: T296
+- [-] T298 Estilo Moderno/luxury completo en los colores de los Nobi: portada de ciudad con edificios por ciudad,
   cielo y nubes intercambiables; páginas, plantillas y stickers. (RF-BP4 – RF-BP6) Dep: T296
-- [ ] T298b Estilo Cottagecore con dragones completo en los colores de los Nobi: bosque, flores, cabaña y
+- [-] T298b Estilo Cottagecore con dragones completo en los colores de los Nobi: bosque, flores, cabaña y
   dragones bebé por capas; páginas, plantillas y stickers. (RF-BP4 – RF-BP6) Dep: T296
-- [ ] T299 Trackers interactivos y acomodos de fotos. (RF-BP8, RF-BP9) Dep: T297
+- [-] T299 Trackers interactivos y acomodos de fotos. (RF-BP8, RF-BP9) Dep: T297
 
 ### L6 · Formatos de oficina y fuentes propias
 - [ ] T300 Word/Pages, PowerPoint/Keynote y Excel/Numbers se convierten a PDF al importarlos y se leen y anotan

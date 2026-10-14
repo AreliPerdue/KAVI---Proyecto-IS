@@ -1,6 +1,10 @@
 # Spec 13e · KAVI Library — Creaciones y plantillas por capas
 
-> **Aprobada (12 oct 2026).** Parte de la spec 13. Es la pieza más pesada de diseño: aquí se decide cómo
+> **Reemplazada (14 oct 2026) por las specs 13h (Lienzo creativo: Recortes y Journal) y 13i (Portadas del
+> Journal)**, por decisión de Areli. Se conserva como historia; lo que sigue ya no manda. Los estilos de abajo
+> pasan a ser colecciones de assets recolorables (13h §11).
+>
+> ~~**Aprobada (12 oct 2026).**~~ Parte de la spec 13. Es la pieza más pesada de diseño: aquí se decide cómo
 > se construye cada plantilla para que todo se pueda personalizar.
 
 ## 1. Qué se crea (RF-BP1 – RF-BP3)

@@ -10,11 +10,11 @@
 > | `13b-library-reading.md` | Formatos y formas de leer (libro real, scroll, páginas de lado) | RF-BR |
 > | `13c-library-tools.md` | Herramientas sobre la página: subrayar, notas, lápiz, stickers, voz… | RF-BH |
 > | `13d-library-score-cards.md` | Fichas de calificación y su resumen | RF-BF |
-> | `13e-library-creations.md` | Cuadernos, diarios y álbumes; plantillas por capas | RF-BP |
+> | `13e-library-creations.md` | ~~Cuadernos, diarios y álbumes; plantillas por capas~~ (**reemplazada** por 13h y 13i, 14 oct 2026) | RF-BP |
 > | `13f-library-book-club.md` | Club de lectura: leer un PDF o EPUB con contactos, juntos y en vivo | RF-BC |
 > | `13g-library-reading-plus.md` | Más para leer (**propuesta**) | RF-BX |
-> | `13h-library-creative-canvas.md` | Lienzo creativo: Recortes de un libro y Journal del lector (**propuesta**, reemplazaría 13e) | RF-CC |
-> | `13i-library-journal-covers.md` | Portadas del Journal: A5, encuadernación, material y tratamientos (**propuesta**) | RF-JC |
+> | `13h-library-creative-canvas.md` | Lienzo creativo: Recortes de un libro y Journal del lector (aprobada 14 oct 2026) | RF-CC |
+> | `13i-library-journal-covers.md` | Portadas del Journal: A5, encuadernación, material y tratamientos (aprobada 14 oct 2026) | RF-JC |
 
 ## 1. Qué es
 
@@ -107,7 +107,7 @@ Es grande a propósito, y por eso se construye **por capas** (§8): primero un n
 | `library_series` | Las sagas de cada persona (nombre, único sin importar mayúsculas); cada libro guarda su saga y su número (`series_id`, `series_index`). Un disparador impide colgar un libro de una saga ajena. Aplicado el 13 oct 2026 (`20261013120000_library_series.sql`, T315) (13a, RF-BL24). |
 | `library_links` | Enlaces entre piezas, leídos de `from_item` a `to_item`: `prequel`, `spinoff`, `universe`, `related`, `notes` ("secuela de" se guarda como precuela al revés). Un solo enlace por pareja en cualquier sentido; las dos piezas deben ser de quien enlaza. Aplicado el 13 oct 2026 (`20261013130000_library_links.sql`, T316) (13a, RF-BL27). |
 | `library_reading_sessions` | Cada sesión de lectura: pieza, inicio, fin, duración en segundos y posición inicial y final (13b, RF-BR11 – RF-BR13). |
-| `library_clips` | Los recortes: pieza (se queda en nulo si se borra, con el título guardado), tipo (texto o imagen), texto o ruta de la imagen en R2, posición, nota y fecha (13c, RF-BH19 – RF-BH21). |
+| `library_clips` | Los fragmentos (antes "recortes"): pieza (se queda en nulo si se borra, con el título guardado), tipo (texto o imagen), texto o ruta de la imagen en R2, posición, nota y fecha (13c, RF-BH19 – RF-BH21). |
 | `library_clubs` / `library_club_members` | Los clubes de lectura, sus miembros y la copia de cada quien (13f §5). Las anotaciones del club son filas de `library_annotations` con `club_id`. |
 
 El catálogo de plantillas, estilos, stickers y fuentes incluidas vive en el cliente
@@ -140,7 +140,7 @@ reescribe) · colaboración en tiempo real en una creación.
 | **L2b** | Más para leer (propuesta, spec 13g): MOBI/AZW3/FB2/CBZ/TXT, interlineado y márgenes, brillo y luz cálida, índice, exportar notas, recortar márgenes y partir escaneos de PDF. | 13g |
 | **L3** | Herramientas: subrayar, notas, separadores, post-its, stickers, zoom, letra, tema; luego lápiz, voz y diccionario. | 13c |
 | **L4** | Fichas de calificación y su resumen. | 13d |
-| **L5** | Creaciones: cuadernos, diarios y álbumes con plantillas por capas; trackers. | 13e |
+| **L5** | ~~Creaciones por capas (13e)~~ → **LK**: lienzo creativo, Recortes, Journal y sus portadas. | 13h, 13i |
 | **L6** | Formatos de oficina (conversión a PDF) y fuentes propias. | 13b, 13c |
 | **LC** | Club de lectura: copia para cada miembro, anotar juntos, avance de cada quien y sesión en vivo. | 13f |
 | **L7** | Conectar: Library visible en Más y en la barra, y ligada a actividades de Lectura. | 13 |

@@ -1,6 +1,6 @@
 # Spec 13i · KAVI Library — Portadas del Journal
 
-> **Propuesta (14 oct 2026), falta aprobarla.** Parte de la spec 13; va con la 13h (Lienzo creativo). Sale de
+> **Aprobada (14 oct 2026)** con las decisiones de §9. Parte de la spec 13; va con la 13h (Lienzo creativo). Sale de
 > "KAVI Journal Cover System — Fase 1: Foundation" del documento de Areli (v8), con su decisión final de
 > formato único A5 y la regla universal de encuadernaciones.
 >
@@ -60,14 +60,14 @@
 - **RF-JC10. Decorar = el lienzo de 13h** sobre la portada, el lomo y la contraportada: texto, formas,
   marcos, esquinas, placas, motivos (dragones, flores, lazos, estrellas…), stickers e imágenes, con todo lo
   de RF-CC9.
-- **RF-JC11. Tratamiento:** cada motivo, forma o texto puede verse **impreso**, **hundido** (deboss) o
-  **recortado** (cutout: deja ver la página de abajo) — los tres del MVP. Después: relieve (emboss), grabado,
-  foil, metal, costura, pintado.
+- **RF-JC11. Tratamiento:** cada motivo, forma o texto puede verse **impreso**, **hundido** (deboss),
+  **en relieve** (emboss) o **recortado** (cutout: deja ver la página de abajo) — los cuatro del MVP.
+  Después: grabado, foil, metal, costura, pintado.
 - **RF-JC12. Cómo se dibuja un tratamiento** (para desarrollo): el motivo es una silueta (SVG o PNG en
   grises) y el tratamiento es un estilo que se le aplica, igual para todas: *impreso* = color encima;
   *hundido* = la silueta oscurece el material con sombra interior y luz en el borde de abajo; *recortado* =
-  máscara que hace un hueco y muestra la primera página con su sombra. Un solo código para los tres y para
-  cualquier silueta.
+  *relieve* = lo contrario: luz arriba y sombra abajo, como si sobresaliera; *recortado* = máscara que hace un
+  hueco y muestra la primera página con su sombra. Un solo código para los cuatro y para cualquier silueta.
 
 ## 6. Cómo se construye (para desarrollo)
 
@@ -77,8 +77,9 @@
   contexto `journal`.
 - Se pinta con el mismo motor que el libro real (StPageFlip ya hojea y da grosor); las texturas viven
   incluidas en la app (6 materiales, unos pocos cientos de KB en total) para que el Journal se vea sin red.
-- Las texturas finales salen del muestrario aprobado: se limpian, se pasan a grises, se hacen tileables y se
-  prueban sobre un A5 completo antes de incluirlas.
+- Las texturas finales salen del muestrario de Areli: Claude las limpia, las pasa a grises, las hace tileables
+  (sin costuras ni repetición evidente) y las prueba sobre un A5 completo antes de incluirlas.
+- Una persona puede tener **varios Journals**; cada uno es su propia pieza con su portada.
 
 ## 7. Fases propuestas
 
@@ -86,7 +87,7 @@
 |---|---|
 | **J1 · Objeto** | Crear Journal A5 vertical/horizontal, 4 encuadernaciones, 6 materiales recolorables, lomo por páginas, cantos, contraportada; se ve en el librero y en libro real. |
 | **J2 · Decorar** | Lienzo sobre portada, lomo y contraportada con tratamiento impreso. |
-| **J3 · Tratamientos** | Hundido y recortado; después relieve, foil y los demás. |
+| **J3 · Tratamientos** | Hundido, relieve y recortado; después foil y los demás. |
 | **J4 · Colecciones** | La primera colección de motivos (Fantasy / Dragon) como pack de assets en la tienda. |
 
 ## 8. Criterios de aceptación
@@ -102,9 +103,8 @@
 - *Dado* un Journal en espiral, *cuando* lo abro en libro real, *entonces* se ve el espiral en el borde y no
   hay lomo de tela.
 
-## 9. Por decidir con Areli
+## 9. Decisiones de Areli (14 oct 2026)
 
-1. La lista del documento decía "Deboss" dos veces: ¿la segunda era **Emboss / Relieve** para el MVP?
-2. ¿Las texturas de producción salen del muestrario que generaste (yo las limpio y hago tileables) o las
-   consigues con licencia aparte?
-3. ¿Un Journal puede tener **varios** (uno por año, por ejemplo) o es uno solo por persona?
+1. Relieve (emboss) **y** hundido (deboss) entran al MVP, junto con impreso y recortado.
+2. Las texturas salen del muestrario de Areli; Claude las limpia y las hace repetibles.
+3. Se pueden tener varios Journals, a criterio de la persona.

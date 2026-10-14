@@ -1,8 +1,8 @@
 # Spec 13h · KAVI Library — Lienzo creativo: Recortes y Journal
 
-> **Propuesta (14 oct 2026), falta aprobarla.** Parte de la spec 13. Sale del documento conceptual de Areli
-> "KAVI Library — Recortes / Journal" (v8). Si se aprueba, **reemplaza la spec 13e** (ver §11) y cambia el
-> nombre de los recortes del lector de la 13c (RF-BH19 – RF-BH21, ver §11).
+> **Aprobada (14 oct 2026)** con las decisiones de §14. Parte de la spec 13. Sale del documento conceptual de
+> Areli "KAVI Library — Recortes / Journal" (v8). **Reemplaza la spec 13e** (ver §11) y los recortes del lector
+> de la 13c (RF-BH19 – RF-BH21) ahora se llaman **Fragmentos**.
 >
 > Principio: **"KAVI gives you the canvas. You give it the color."** KAVI pone el lienzo, la estructura y
 > las piezas; la persona pone el color, la personalidad y el whimsy.
@@ -12,7 +12,8 @@
 - **RF-CC1. Recortes = "yo con este libro".** Viven dentro de un libro: Library → libro → **Mi libreta** →
   Recortes. Guardan la experiencia de esa lectura: personajes, fan art, quotes, teorías, momentos, playlists,
   moodboards, reseña, DNF. Un libro puede tener muchos recortes; cada recorte es de un solo libro.
-- **RF-CC2. Journal = "yo como lector".** Vive a nivel de toda la biblioteca (una entrada propia en Library).
+- **RF-CC2. Journal = "yo como lector".** Vive a nivel de toda la biblioteca. La persona puede tener **los
+  Journals que quiera** (uno por año, uno de fantasía…); se ven en el librero como piezas.
   Habla de la persona: Get to Know the Reader, su año lector, estadísticas, premios, eras, metas. Es un
   **cuaderno**: tiene portada (spec 13i) y páginas, y cada página es un lienzo.
 - **RF-CC3. Un solo editor.** Recortes y páginas del Journal usan el mismo **Lienzo creativo**: las mismas
@@ -22,10 +23,13 @@
 **ficha** (13d) evalúa el libro con campos; un **recorte** es composición visual y memoria. Un recorte puede
 llevar texto, pero nunca debe sentirse como un formulario ni como una nota grande.
 
-## 2. El lienzo es un objeto, no una página web (RF-CC4 – RF-CC7)
+## 2. El lienzo es una página del lector, no una página web (RF-CC4 – RF-CC7)
 
-- **RF-CC4. Formato A5** (148 × 210 mm), **vertical u horizontal**, para Recortes y para páginas del
-  Journal. Se elige al crear; la proporción nunca cambia.
+- **RF-CC4. Un recorte es una página como las del visor de PDF** (decisión de Areli del 14 oct 2026: misma
+  medida estándar para compartir el zoom, los stickers, los post-its, las asas y las formas de leer que ya
+  existen). La proporción es la de la serie ISO A, **1 : √2** (la de A4 y **A5**, la misma del Journal),
+  **vertical u horizontal**. Se elige al crear; la proporción nunca cambia. Un recorte y una página del
+  Journal se abren en el mismo visor que un PDF: scroll, páginas de lado o libro real.
 - **RF-CC5. Sin reacomodo.** Todo se guarda en coordenadas relativas al lienzo (x, y, ancho de 0 a 1, más
   proporción y giro). En computadora, tableta y teléfono se ve **idéntico**, solo más grande o más chico.
   La interfaz alrededor sí se adapta (paneles a los lados en web, hojas abajo en el teléfono); el lienzo no.
@@ -85,7 +89,8 @@ llevar texto, pero nunca debe sentirse como un formulario ni como una nota grand
   - **Journal:** Get to Know the Reader.
   - Después: Moodboard, Character Analysis, Theory Board, Predictions, Soundtrack, Book DNA, Book Passport,
     Emotional Damage Report, Would I Survive?, Reading Year, Reading Stats, Reading Awards, Reading Eras…
-    Los nombres se muestran traducidos en español (spec 12).
+    Cada plantilla tiene su nombre **en español y en inglés** (spec 12): "Reseña del libro" / "Book Review",
+    "Collage de personaje" / "Character Collage", "Cementerio DNF" / "DNF Graveyard", etc.
 
 ## 7. Journal usa los datos de Library (RF-CC22)
 
@@ -110,9 +115,11 @@ llevar texto, pero nunca debe sentirse como un formulario ni como una nota grand
 - **Un lienzo = un documento JSON** con su formato y su lista de elementos en orden de capa; cada elemento:
   `id`, `type` (módulo o asset), `x`, `y`, `w`, `ar`, `rot`, `z`, `locked`, `group`, `style` (color, opacidad,
   borde, sombra, letra) y `content` (texto, imagen, referencia…). Coordenadas de 0 a 1 respecto al lienzo.
-- **Se dibuja en el motor web** que ya usa el lector (WebView en el teléfono): una página `canvas` que
-  reutiliza lo de `annotations.js` (asas, giro, arrastre, escribir directo, capas) y sus pruebas. Así el
-  lienzo se ve igual en web e iOS/Android y exportar a imagen es dibujarlo en un `<canvas>`.
+- **Se dibuja en el motor del lector**: el recorte es una página en blanco de proporción 1 : √2 (un "PDF" de
+  una o más páginas que arma el motor) y sus elementos van en la misma capa que lo pegado (`annotations.js`:
+  asas, giro, arrastre, escribir directo, capas, stickers de la tienda). Los módulos nuevos (polaroid, quote,
+  papel…) son tipos nuevos de esa capa. Así se reutilizan zoom, pellizco, Supr, deshacer, cola sin red y libro
+  real, se ve igual en web e iOS/Android, y exportar a imagen es dibujar la página en un `<canvas>`.
 - **Recolorear** una pieza en grises: `mix-blend-mode`/filtro en el motor (multiplicar el color sobre la
   textura) y lo mismo al exportar.
 - **Datos (spec 02):** `library_canvases` (dueño, contexto `book` o `journal`, `item_id` o `journal_id`,
@@ -159,11 +166,13 @@ llevar texto, pero nunca debe sentirse como un formulario ni como una nota grand
 - *Dado* un recorte, *cuando* elijo **Exportar**, *entonces* obtengo una imagen igual a lo que veo.
 - *Dado* una plantilla de KAVI, *cuando* la abro, *entonces* no trae colores ni Nobi puestos.
 
-## 14. Por decidir con Areli
+## 14. Decisiones de Areli (14 oct 2026)
 
-1. ¿Aprobar el cambio de nombre de los recortes del lector (T317) a **Fragmentos**?
-2. ¿Los Recortes también en **A5** (como el Journal), o un lienzo más libre (cuadrado, alto de historia)?
-3. ¿Se aprueba **reemplazar 13e** como dice §11?
-4. ¿Quién produce los primeros assets (papeles, cintas, doodles)? Con un muestrario en grises yo los preparo
-   para que se repitan sin cortes y se recoloreen; las ilustraciones nuevas son tuyas o con licencia.
-5. ¿Nombres de las plantillas en inglés (como en el documento) o traducidos en la app en español?
+1. Los recortes del lector (13c, T317) se llaman **Fragmentos**.
+2. Se aprueba **reemplazar la 13e** como dice §11.
+3. Los Recortes usan **la medida de página del visor de PDF** (1 : √2, como A5), para compartir zoom,
+   stickers y todo lo que ya existe (RF-CC4).
+4. Tratamientos del MVP: impreso, hundido (deboss), **relieve (emboss)** y recortado (13i).
+5. Los primeros assets/texturas salen del **muestrario de Areli, limpiado y hecho repetible por Claude**.
+6. Se pueden tener **varios Journals**, los que la persona quiera.
+7. Las plantillas tienen nombre **en los dos idiomas**.
