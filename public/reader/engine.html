@@ -172,6 +172,15 @@
         width: 100%;
         height: 100%;
       }
+      /* La página dentro de una hoja del libro real de un PDF (T330): su texto se selecciona. */
+      .hoja-pdf {
+        position: absolute;
+      }
+      #libro .textLayer,
+      #libro .textLayer :is(span, br) {
+        -webkit-user-select: text;
+        user-select: text;
+      }
       /* Donde se acomodan los capítulos de un EPUB para contar sus páginas: fuera de la vista. */
       .libro-medidor {
         position: fixed;

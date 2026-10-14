@@ -56,7 +56,12 @@
   al deshacer y al panel (con su nota).
   - Se guarda el texto subrayado con espacios sencillos (hasta 2000 letras). En PDF, un rectángulo por renglón
     en 0–1 de su página; en EPUB, el CFI del rango, que foliate vuelve a dibujar sobre las mismas palabras
-    aunque cambie la letra o la forma de leer. En el libro real se ven, no se crean.
+    aunque cambie la letra o la forma de leer.
+  - **También en el libro real (T330, 13 oct 2026, pedido de Areli).** Con mouse, arrastrar sobre el texto
+    selecciona; la hoja solo se dobla si el arrastre empieza en una esquina del libro. Con el dedo, mantener
+    presionado selecciona y deslizar pasa de hoja. Cada hoja de un PDF lleva su capa de texto; en EPUB, la
+    selección de la hoja se traduce al CFI del capítulo, así el subrayado es el mismo en las tres formas de
+    leer. Tocar un subrayado abre su hoja. (Lo pegado sigue sin tocarse ahí: arrastrar es doblar la hoja.)
   - **Definir (B4):** en inglés, **Wiktionary** (hasta seis acepciones con su ejemplo, sin HTML; cita la
     fuente) y, si no responde, la Free Dictionary API; cada uno se corta a los 8 s y lo dice. No se busca en
     inglés si el libro está en español (el EPUB dice su idioma), si la palabra tiene letras del español

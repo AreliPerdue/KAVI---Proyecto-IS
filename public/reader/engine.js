@@ -603,6 +603,7 @@ async function entrarAlLibro(donde) {
   document.body.append(libroRaiz);
   gestosDePaginas(libroRaiz, true);
   acercarLibroConGestos(libroRaiz);
+  seleccionarConMouse(libroRaiz);
   if (pdf) {
     pdf.raiz.style.display = 'none';
     libro = libroPdf({
@@ -612,7 +613,7 @@ async function entrarAlLibro(donde) {
       base: pdf.base,
       inicio: typeof donde === 'number' ? donde : 1,
       pintar: pintarEnCanvas,
-      capa: anotaciones.capaLibroPdf,
+      capa: capaDelLibroPdf,
       avisar: ({ pagina, hasta, total }) => {
         pdf.pagina = pagina;
         enviar({ type: 'position', page: pagina, pageEnd: hasta, total, fraction: pagina / total });
@@ -655,6 +656,57 @@ function salirDelLibro() {
   libroRaiz = null;
   if (pdf) pdf.raiz.style.display = '';
   if (epub) epub.raiz.style.display = '';
+}
+
+/**
+ * Lo de encima de una hoja del PDF en el libro real (T330): una caja del tamaño donde quedó la página, con su
+ * capa de texto (para seleccionar y subrayar) y lo anotado. Se arma una vez por hoja; si cambia lo anotado,
+ * solo se repintan sus capas.
+ */
+function capaDelLibroPdf(n, div, rect) {
+  let hoja = div.querySelector(':scope > .hoja-pdf');
+  if (!hoja) {
+    hoja = document.createElement('div');
+    hoja.className = 'hoja-pdf';
+    hoja.dataset.pagina = String(n);
+    Object.assign(hoja.style, { left: `${rect.left}px`, top: `${rect.top}px`, width: `${rect.width}px`, height: `${rect.height}px` });
+    div.append(hoja);
+    void textoDeHoja(n, hoja, rect);
+  }
+  anotaciones.pintarPaginaPdf(n, hoja, { enLibro: true });
+}
+
+async function textoDeHoja(n, hoja, rect) {
+  if (!pdf) return;
+  const pagina = await pdf.doc.getPage(n);
+  const base = pagina.getViewport({ scale: 1 });
+  const vista = pagina.getViewport({ scale: rect.width / base.width });
+  hoja.style.setProperty('--total-scale-factor', String(vista.scale));
+  const capa = document.createElement('div');
+  capa.className = 'textLayer';
+  hoja.prepend(capa);
+  const lib = await pdfjs();
+  await new lib.TextLayer({ textContentSource: pagina.streamTextContent(), container: capa, viewport: vista }).render().catch(() => undefined);
+}
+
+/**
+ * En el libro real con mouse, arrastrar sobre el texto selecciona (T330); solo desde las esquinas del libro
+ * se dobla la hoja, como antes. Con el dedo no cambia nada: mantener presionado selecciona y deslizar pasa.
+ */
+function seleccionarConMouse(raiz) {
+  raiz.addEventListener(
+    'mousedown',
+    (e) => {
+      const caja = raiz.querySelector('.libro-caja')?.getBoundingClientRect();
+      if (!caja || raiz.querySelector(':scope > .lupa')) return;
+      const radio = Math.min(90, caja.width * 0.15);
+      const cerca = (x, y) => Math.hypot(e.clientX - x, e.clientY - y) < radio;
+      const enEsquina = cerca(caja.left, caja.top) || cerca(caja.right, caja.top) || cerca(caja.left, caja.bottom) || cerca(caja.right, caja.bottom);
+      // Que el hojeador no se entere (él cancelaría la selección): la hoja no se dobla desde el texto.
+      if (!enEsquina) e.stopPropagation();
+    },
+    true,
+  );
 }
 
 /** Pinta una página del PDF en el canvas de una hoja del libro real. */

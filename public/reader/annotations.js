@@ -11,7 +11,9 @@
  * - **EPUB:** el CFI del renglón donde empieza, más la x (0–1) en la columna. Si cambia la letra o la
  *   pantalla, el post-it sigue junto al mismo texto. Se pinta en una capa encima del libro y se reacomoda
  *   en cada cuadro mientras haya algo que mostrar.
- * - **Libro real:** se ve en su página, pero no se toca: ahí arrastrar dobla la hoja.
+ * - **Libro real:** lo pegado se ve en su hoja, pero no se toca: ahí arrastrar dobla la hoja. El texto sí se
+ *   selecciona y se subraya (T330): en PDF cada hoja lleva su capa de texto (`.hoja-pdf`); en EPUB la
+ *   selección de la hoja se traduce a CFI del capítulo (`libro.seleccion()`, en `book.js`).
  *
  * Pinta post-its (T286) y subrayados (T287); los cuadros, stickers y el lápiz llegan con sus tareas (T289 –
  * T291) sobre esta misma capa.
@@ -325,7 +327,12 @@ export function crearCapa(ctx, enviar) {
    * `doc` es el documento donde ocurrió (el del capítulo, en EPUB).
    */
   function alTocar(e, doc) {
-    if (!interactiva()) return false;
+    // En el libro real solo se tocan los subrayados (para cambiarlos); lo demás es de la hoja.
+    if (!interactiva()) {
+      const marcado = subrayadoEnLibro(e);
+      if (marcado) elegir(marcado.id);
+      return !!marcado;
+    }
     if (herramienta === 'postit') {
       const locator = doc === document ? lugarEnPdf(e) : lugarEnEpub(e, doc);
       if (locator) enviar({ type: 'place', locator });
@@ -344,8 +351,17 @@ export function crearCapa(ctx, enviar) {
     return false;
   }
 
+  /** Las páginas del PDF a la vista que llevan texto: las del scroll o de lado, o las hojas del libro real. */
+  function paginasPdf() {
+    if (ctx.forma() === 'book') return [...document.querySelectorAll('#libro .hoja-pdf')].filter((el) => el.getClientRects().length > 0);
+    const pdf = ctx.pdf();
+    return pdf ? [...pdf.renderizadas.keys()].map((n) => pdf.paginas[n - 1]) : [];
+  }
+
+  const esPaginaPdf = (x) => x.classList?.contains('pagina') || x.classList?.contains('hoja-pdf');
+
   function subrayadoEnPdf(e) {
-    const pagina = document.elementsFromPoint(e.clientX, e.clientY).find((x) => x.classList?.contains('pagina'));
+    const pagina = document.elementsFromPoint(e.clientX, e.clientY).find(esPaginaPdf);
     if (!pagina) return null;
     const n = Number(pagina.dataset.pagina);
     const r = pagina.getBoundingClientRect();
@@ -353,6 +369,20 @@ export function crearCapa(ctx, enviar) {
     const py = (e.clientY - r.top) / r.height;
     // El de más arriba en la capa gana.
     return [...subrayados()].reverse().find((a) => (a.locator.rects ?? []).some((q) => q.page === n && px >= q.x && px <= q.x + q.w && py >= q.y && py <= q.y + q.h)) ?? null;
+  }
+
+  /** Un subrayado bajo el dedo en el libro real: en PDF, en la hoja; en EPUB, dentro de la sombra de la hoja. */
+  function subrayadoEnLibro(e) {
+    if (ctx.pdf()) return subrayadoEnPdf(e);
+    const hoja = document.elementsFromPoint(e.clientX, e.clientY).find((x) => x.classList?.contains('hoja-libro') && x.shadowRoot);
+    if (!hoja) return null;
+    for (const marca of [...hoja.shadowRoot.querySelectorAll('[data-subrayado]')].reverse()) {
+      const r = marca.getBoundingClientRect();
+      if (e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom) {
+        return subrayados().find((a) => a.id === marca.dataset.subrayado) ?? null;
+      }
+    }
+    return null;
   }
 
   function subrayadoEnEpub(e, doc) {
@@ -368,16 +398,23 @@ export function crearCapa(ctx, enviar) {
    * dónde está; si se soltó, se avisa vacía. En el libro real no se selecciona.
    */
   function alCambiarSeleccion(doc) {
-    if (!interactiva()) return;
-    const sel = doc.getSelection?.();
-    const texto = sel && !sel.isCollapsed ? sel.toString().trim() : '';
-    if (!texto || !sel.rangeCount) {
+    const sinSeleccion = () => {
       if (seleccionEnviada) {
         seleccionEnviada = false;
         enviar({ type: 'selection', text: '' });
       }
+    };
+    // En el libro real (T330): en PDF, la capa de texto de la hoja; en EPUB, lo que diga el libro.
+    if (!interactiva()) {
+      const enLibro = ctx.pdf() ? seleccionDelDocumento() : seleccionDelEpubEnLibro();
+      if (!enLibro) return sinSeleccion();
+      seleccionEnviada = true;
+      enviar({ type: 'selection', text: enLibro.texto.slice(0, 2000), locator: enLibro.locator });
       return;
     }
+    const sel = doc.getSelection?.();
+    const texto = sel && !sel.isCollapsed ? sel.toString().trim() : '';
+    if (!texto || !sel.rangeCount) return sinSeleccion();
     const rango = sel.getRangeAt(0);
     const locator = doc === document ? textoEnPdf(rango) : textoEnEpub(rango, doc);
     if (!locator) return;
@@ -385,11 +422,22 @@ export function crearCapa(ctx, enviar) {
     enviar({ type: 'selection', text: texto.slice(0, 2000), locator });
   }
 
+  function seleccionDelDocumento() {
+    const sel = document.getSelection();
+    const texto = sel && !sel.isCollapsed && sel.rangeCount ? sel.toString().trim() : '';
+    const locator = texto ? textoEnPdf(sel.getRangeAt(0)) : null;
+    return locator ? { texto, locator } : null;
+  }
+
+  function seleccionDelEpubEnLibro() {
+    const s = ctx.libro()?.seleccion?.();
+    return s ? { texto: s.texto, locator: { cfi: s.cfi, fraction: redondear(s.fraccion ?? 0) } } : null;
+  }
+
   /** Los renglones de un rango del PDF, en 0–1 de su página: un rectángulo por renglón. */
   function textoEnPdf(rango) {
-    const pdf = ctx.pdf();
-    if (!pdf) return null;
-    const paginas = [...pdf.renderizadas.keys()].map((n) => ({ n, r: pdf.paginas[n - 1].getBoundingClientRect() }));
+    if (!ctx.pdf()) return null;
+    const paginas = paginasPdf().map((el) => ({ n: Number(el.dataset.pagina), r: el.getBoundingClientRect() }));
     const sueltos = [];
     for (const q of rango.getClientRects()) {
       if (q.width < 1 || q.height < 1) continue;
@@ -684,7 +732,7 @@ export function crearCapa(ctx, enviar) {
   // ─── PDF ─────────────────────────────────────────────────────────────────────
 
   /** La capa de una página del PDF (scroll o de lado), con lo que va en ella. */
-  function pintarPaginaPdf(n, div) {
+  function pintarPaginaPdf(n, div, { enLibro = false } = {}) {
     div.querySelector(':scope > .capa-anotaciones')?.remove();
     div.querySelector(':scope > .capa-subrayados')?.remove();
     pintarSubrayadosPdf(n, div);
@@ -693,7 +741,7 @@ export function crearCapa(ctx, enviar) {
     const capa = document.createElement('div');
     capa.className = 'capa-anotaciones';
     for (const a of enPaginaN) {
-      const el = postit(a, { ancho: `${a.locator.w * 100}%` });
+      const el = postit(a, { ancho: `${a.locator.w * 100}%`, enLibro });
       el.style.left = `${a.locator.x * 100}%`;
       el.style.top = `${a.locator.y * 100}%`;
       capa.append(el);
@@ -702,33 +750,13 @@ export function crearCapa(ctx, enviar) {
   }
 
   /** Los subrayados de una página del PDF, en su propia capa debajo de lo pegado. */
-  function pintarSubrayadosPdf(n, div, rect = null) {
+  function pintarSubrayadosPdf(n, div) {
     const marcas = [];
     for (const a of subrayados()) for (const q of a.locator.rects ?? []) if (q.page === n) marcas.push(marcaDeTexto(a, q));
     if (!marcas.length) return;
     const capa = document.createElement('div');
     capa.className = 'capa-subrayados';
-    if (rect) Object.assign(capa.style, { left: `${rect.left}px`, top: `${rect.top}px`, width: `${rect.width}px`, height: `${rect.height}px`, inset: 'auto' });
     capa.append(...marcas);
-    div.append(capa);
-  }
-
-  /** En el libro real: lo de la página n del PDF, sobre el rectángulo donde quedó pintada. */
-  function capaLibroPdf(n, div, rect) {
-    div.querySelector(':scope > .capa-anotaciones')?.remove();
-    div.querySelector(':scope > .capa-subrayados')?.remove();
-    pintarSubrayadosPdf(n, div, rect);
-    const enPaginaN = pegados().filter((a) => a.locator.page === n);
-    if (!enPaginaN.length) return;
-    const capa = document.createElement('div');
-    capa.className = 'capa-anotaciones';
-    Object.assign(capa.style, { left: `${rect.left}px`, top: `${rect.top}px`, width: `${rect.width}px`, height: `${rect.height}px`, inset: 'auto' });
-    for (const a of enPaginaN) {
-      const el = postit(a, { ancho: a.locator.w * rect.width, enLibro: true });
-      el.style.left = `${a.locator.x * 100}%`;
-      el.style.top = `${a.locator.y * 100}%`;
-      capa.append(el);
-    }
     div.append(capa);
   }
 
@@ -747,6 +775,7 @@ export function crearCapa(ctx, enviar) {
       for (const q of ubicarRango(a.locator.cfi) ?? []) {
         if (q.pagina !== i) continue;
         const el = document.createElement('div');
+        el.dataset.subrayado = a.id;
         Object.assign(el.style, { position: 'absolute', left: `${q.x}px`, top: `${q.y}px`, width: `${q.w}px`, height: `${q.h}px`, pointerEvents: 'none' });
         pintarEstilo(el, estiloDe(a), colorDe(a));
         capa.append(el);
@@ -797,7 +826,6 @@ export function crearCapa(ctx, enviar) {
     dibujoEpub,
     recargarEpub,
     pintarPaginaPdf,
-    capaLibroPdf,
     capaLibroEpub,
     /** Cambió la forma de leer o se abrió otro libro. */
     repintar,

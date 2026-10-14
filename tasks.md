@@ -1054,6 +1054,11 @@ Decisiones B1–B9 aprobadas el 12 oct 2026 (T274); ver la tabla de la spec 13 �
   portada del libro como opción. (RF-BH14, enmienda del 13 oct 2026, pedido de Areli) Dep: T286
   **Hecho (13 oct 2026):** asas en `public/reader/annotations.js` (esquinas visibles, orillas en su franja),
   `ar` en la posición (PDF y EPUB, también en el libro real) y el color de la portada en `postit-sheet.tsx`.
+- [x] T330 Libro real: seleccionar texto para subrayar, definir y copiar, y tocar un subrayado para cambiarlo.
+  (RF-BH7 – RF-BH9 en RF-BR5, pedido de Areli del 13 oct 2026) Dep: T287, T284
+  **Hecho (13 oct 2026):** `.hoja-pdf` con capa de texto de pdf.js en cada hoja del PDF; en EPUB, `seleccion()`
+  de `book.js` traduce la selección de la sombra (`getComposedRanges` o `shadowRoot.getSelection`) a CFI; con
+  mouse, el arrastre fuera de las esquinas no le llega al hojeador. Falta probar con el dedo en el teléfono.
 - [ ] T290 Stickers con charola de quitados, post-its que se doblan, separadores en el borde elegido.
   (RF-BH13 – RF-BH15) Dep: T286 — El post-it básico (pegar, mover, escribir, color) ya está desde T286;
   aquí falta girarlo un poco, doblarlo y el post-it con trazo.

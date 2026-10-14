@@ -191,6 +191,8 @@ function estilosDePagina(ancho, alto, cssDelCapitulo) {
   column-width: ${columna}px; column-gap: ${MARGEN_TEXTO * 2}px; column-fill: auto;
   font-family: ${familia}; font-size: ${letra}px; line-height: 1.5; color: var(--tinta, #1a1a1a);
   text-align: start; hyphens: auto; overflow-wrap: break-word;
+  /* Se selecciona para subrayar, definir o copiar (T330). */
+  -webkit-user-select: text; user-select: text;
 }
 .contenido img, .contenido svg, .contenido video { max-width: 100%; max-height: ${alto - MARGEN_TEXTO * 2}px; object-fit: contain; break-inside: avoid; }
 .contenido script, .contenido style, .contenido link { display: none; }
@@ -239,6 +241,31 @@ function pagina(ancho, alto, capitulo) {
     sombra.append(contenido);
   }
   return { host, sombra };
+}
+
+/**
+ * La selección dentro de la sombra de una hoja, si la hay. Los navegadores la exponen distinto: Chrome con
+ * `shadowRoot.getSelection()`, Safari 17+ y Chrome 137+ con `getComposedRanges`.
+ */
+function rangoEnSombra(sombra) {
+  if (!sombra) return null;
+  const sel = document.getSelection();
+  if (sel?.getComposedRanges) {
+    let rangos = [];
+    try {
+      rangos = sel.getComposedRanges({ shadowRoots: [sombra] });
+    } catch {
+      rangos = sel.getComposedRanges(sombra);
+    }
+    const r = rangos[0];
+    if (r && !r.collapsed && sombra.contains(r.startContainer) && sombra.contains(r.endContainer)) return r;
+  }
+  const propia = sombra.getSelection?.();
+  if (propia && !propia.isCollapsed && propia.rangeCount) {
+    const r = propia.getRangeAt(0);
+    if (sombra.contains(r.startContainer)) return r;
+  }
+  return null;
 }
 
 /** El camino de índices desde la raíz hasta un nodo, y al revés. */
@@ -443,6 +470,32 @@ export async function libroEpub({ raiz, view, cfi, texto, capa, avisar }) {
       decir(i, pf.getOrientation() === 'landscape');
     },
     cfi: () => cfiDe(actual),
+    /**
+     * Lo seleccionado en una hoja (T330): su texto y su CFI, traducido de la copia de la hoja al capítulo
+     * original (el mismo árbol, ver `copiaDelCuerpo`). `null` si no hay nada seleccionado.
+     */
+    seleccion: () => {
+      for (const i of armadas) {
+        const sombra = paginas[i].shadowRoot;
+        const r = rangoEnSombra(sombra);
+        if (!r) continue;
+        const c = capituloDe(i);
+        const copia = sombra.querySelector('.contenido');
+        const inicio = seguir(c.doc.body, camino(copia, r.startContainer));
+        const fin = seguir(c.doc.body, camino(copia, r.endContainer));
+        if (!inicio || !fin) return null;
+        try {
+          const original = c.doc.createRange();
+          original.setStart(inicio, r.startOffset);
+          original.setEnd(fin, r.endOffset);
+          const texto = original.toString().trim();
+          return texto ? { texto, cfi: view.getCFI(c.indice, original), fraccion: total > 1 ? i / (total - 1) : 0 } : null;
+        } catch {
+          return null;
+        }
+      }
+      return null;
+    },
     recapar: () => {
       for (const i of armadas) if (paginas[i].shadowRoot) capa?.(i, paginas[i].shadowRoot, ancho, { ubicar, ubicarRango });
     },
