@@ -359,11 +359,13 @@ function Lector({ id }: { id: string }) {
   const controles = forma === 'scroll' || !ocultos || buscando || !abierto || !!mensajeError || !!seleccionada || !!herramienta;
   const pantallaCompleta = forma === 'book' && abierto && !mensajeError;
   usePantallaCompleta(pantallaCompleta);
+  // Fuera del scroll, los controles van encima del libro y no lo empujan: mostrarlos u ocultarlos (o que
+  // aparezca un aviso de las herramientas) no cambia el tamaño de la página, así el EPUB no se vuelve a
+  // acomodar ni el PDF se vuelve a pintar (T286).
+  const superpuestos = forma !== 'scroll';
+  const [altoAbajo, setAltoAbajo] = useState(0);
 
-  return (
-    <View style={[styles.pantalla, { backgroundColor: theme.background, paddingTop: insets.top }]}>
-      <StatusBar hidden={pantallaCompleta} />
-      {!controles ? null : buscando ? (
+  const barraArriba = !controles ? null : buscando ? (
         <View style={styles.barra}>
           <View style={[styles.campo, { backgroundColor: theme.surface, borderColor: theme.border }]}>
             <Search size={IconSize.inline} strokeWidth={IconStroke} color={theme.textTertiary} />
@@ -418,44 +420,11 @@ function Lector({ id }: { id: string }) {
             <Search size={IconSize.action} strokeWidth={IconStroke} color={abierto ? theme.text : theme.textTertiary} />
           </IconButton>
         </View>
-      )}
+      );
 
-      <View style={styles.libro}>
-        {!sinArchivo ? <ReaderEngine ref={motor} onMessage={alMensaje} /> : null}
-        {!abierto && !mensajeError ? (
-          <View style={[styles.capa, { backgroundColor: theme.background }]}>
-            <ActivityIndicator color={theme.textSecondary} />
-            <AppText variant="label" color="textSecondary">
-              {r.opening}
-            </AppText>
-          </View>
-        ) : null}
-        {mensajeError ? (
-          <View style={[styles.capa, { backgroundColor: theme.background }]} accessibilityRole="alert">
-            <AppText variant="body" style={styles.centrado}>
-              {mensajeError}
-            </AppText>
-            {!sinArchivo && error !== 'password' && error !== 'damaged' ? <Button title={r.retry} variant="secondary" onPress={reintentar} /> : null}
-          </View>
-        ) : null}
-      </View>
-
-      {siguiente && nombreSaga ? (
-        <View style={[styles.siguiente, { backgroundColor: theme.surface, borderColor: theme.border }]} accessibilityRole="alert">
-          <AppText variant="bodyStrong">{l.series.nextTitle}</AppText>
-          <AppText variant="body" color="textSecondary" numberOfLines={2}>
-            {l.series.nextBody(etiquetaDeSaga(nombreSaga, siguiente.series_index), siguiente.title)}
-          </AppText>
-          <View style={styles.siguienteBotones}>
-            <Button title={l.series.nextLater} variant="ghost" onPress={() => setOfrecerSiguiente('cerrado')} />
-            <Button title={l.series.nextOpen} onPress={() => router.replace({ pathname: '/(app)/book/[id]', params: { id: siguiente.id } })} />
-          </View>
-        </View>
-      ) : null}
-
-      {abierto && controles ? (
-        <View style={[styles.abajo, { paddingBottom: insets.bottom + Spacing.xs }]}>
-          {!mensajeError && !buscando ? (
+  const barraAbajo = abierto && controles ? (
+        <View style={[styles.abajo, superpuestos ? { backgroundColor: theme.background } : null, { paddingBottom: (superpuestos ? 0 : insets.bottom) + Spacing.xs }]}>
+          {!mensajeError ? (
             <AnnotationToolbar
               seleccionada={seleccionada}
               herramienta={herramienta}
@@ -484,8 +453,52 @@ function Lector({ id }: { id: string }) {
             paso={porPagina ? 1 / (total - 1) : 0.02}
           />
         </View>
-      ) : null}
-      {abierto && !controles ? <View style={{ height: insets.bottom }} /> : null}
+      ) : null;
+
+  return (
+    <View style={[styles.pantalla, { backgroundColor: theme.background, paddingTop: insets.top }]}>
+      <StatusBar hidden={pantallaCompleta} />
+      {superpuestos ? null : barraArriba}
+      <View style={styles.libro}>
+        {!sinArchivo ? <ReaderEngine ref={motor} onMessage={alMensaje} /> : null}
+        {!abierto && !mensajeError ? (
+          <View style={[styles.capa, { backgroundColor: theme.background }]}>
+            <ActivityIndicator color={theme.textSecondary} />
+            <AppText variant="label" color="textSecondary">
+              {r.opening}
+            </AppText>
+          </View>
+        ) : null}
+        {mensajeError ? (
+          <View style={[styles.capa, { backgroundColor: theme.background }]} accessibilityRole="alert">
+            <AppText variant="body" style={styles.centrado}>
+              {mensajeError}
+            </AppText>
+            {!sinArchivo && error !== 'password' && error !== 'damaged' ? <Button title={r.retry} variant="secondary" onPress={reintentar} /> : null}
+          </View>
+        ) : null}
+        {siguiente && nombreSaga ? (
+          <View style={[styles.siguiente, { bottom: (superpuestos && barraAbajo ? altoAbajo : 0) + Spacing.sm, backgroundColor: theme.surface, borderColor: theme.border }]} accessibilityRole="alert">
+            <AppText variant="bodyStrong">{l.series.nextTitle}</AppText>
+            <AppText variant="body" color="textSecondary" numberOfLines={2}>
+              {l.series.nextBody(etiquetaDeSaga(nombreSaga, siguiente.series_index), siguiente.title)}
+            </AppText>
+            <View style={styles.siguienteBotones}>
+              <Button title={l.series.nextLater} variant="ghost" onPress={() => setOfrecerSiguiente('cerrado')} />
+              <Button title={l.series.nextOpen} onPress={() => router.replace({ pathname: '/(app)/book/[id]', params: { id: siguiente.id } })} />
+            </View>
+          </View>
+        ) : null}
+        {superpuestos && barraArriba ? <View style={[styles.arriba, { backgroundColor: theme.background }]}>{barraArriba}</View> : null}
+        {superpuestos ? (
+          <View style={styles.abajoEncima} onLayout={(e) => setAltoAbajo(e.nativeEvent.layout.height)}>
+            {barraAbajo}
+          </View>
+        ) : null}
+      </View>
+      {superpuestos ? <View style={{ height: abierto ? insets.bottom : 0 }} /> : barraAbajo}
+
+
 
       <Sheet visible={eligiendoForma} onClose={() => setEligiendoForma(false)} title={r.readingSettings}>
         <View style={styles.formas}>
@@ -541,9 +554,12 @@ const styles = StyleSheet.create({
   libro: { flex: 1 },
   capa: { ...StyleSheet.absoluteFill, alignItems: 'center', justifyContent: 'center', gap: Spacing.md, padding: Spacing.xl },
   centrado: { textAlign: 'center' },
+  arriba: { position: 'absolute', top: 0, left: 0, right: 0 },
+  abajoEncima: { position: 'absolute', bottom: 0, left: 0, right: 0 },
   siguiente: {
-    marginHorizontal: Spacing.lg,
-    marginBottom: Spacing.sm,
+    position: 'absolute',
+    left: Spacing.lg,
+    right: Spacing.lg,
     padding: Spacing.lg,
     gap: Spacing.xs,
     borderWidth: 1,

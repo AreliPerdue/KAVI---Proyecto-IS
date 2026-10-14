@@ -40,11 +40,7 @@ export function AnnotationToolbar(p: Props) {
     const bloqueada = p.seleccionada.locked;
     return (
       <View style={styles.contenedor}>
-        {bloqueada ? (
-          <AppText variant="caption" color="textSecondary" style={styles.aviso}>
-            {a.lockedHint}
-          </AppText>
-        ) : null}
+        {bloqueada ? <Aviso texto={a.lockedHint} /> : null}
         <View style={styles.fila} accessibilityRole="toolbar">
           <IconButton label={a.write} onPress={p.onEscribir}>
             <Pencil {...icono()} />
@@ -72,11 +68,7 @@ export function AnnotationToolbar(p: Props) {
   const pegando = p.herramienta === 'postit';
   return (
     <View style={styles.contenedor}>
-      {pegando || p.enLibro ? (
-        <AppText variant="caption" color="textSecondary" style={styles.aviso}>
-          {p.enLibro ? a.postitBook : a.postitOn}
-        </AppText>
-      ) : null}
+      {pegando || p.enLibro ? <Aviso texto={p.enLibro ? a.postitBook : a.postitOn} /> : null}
       <View style={styles.fila} accessibilityRole="toolbar">
         <IconButton
           label={pegando ? a.cancelTool : a.postit}
@@ -97,9 +89,33 @@ export function AnnotationToolbar(p: Props) {
   );
 }
 
+/**
+ * Un aviso que flota encima de la barra: no ocupa lugar, así aparecer o irse no cambia el tamaño de la
+ * página (un EPUB se volvería a acomodar).
+ */
+function Aviso({ texto }: { texto: string }) {
+  const theme = useTheme();
+  return (
+    <View style={styles.avisoCaja} pointerEvents="none" accessibilityLiveRegion="polite">
+      <AppText variant="caption" color="textSecondary" style={[styles.aviso, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+        {texto}
+      </AppText>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
-  contenedor: { alignItems: 'center', gap: Spacing.xs, paddingHorizontal: Spacing.lg },
+  contenedor: { alignItems: 'center', paddingHorizontal: Spacing.lg },
   fila: { flexDirection: 'row', alignItems: 'center', gap: Spacing.xs, borderRadius: Radius.full, borderCurve: 'continuous' },
   separador: { width: 1, height: 24, marginHorizontal: Spacing.xs },
-  aviso: { textAlign: 'center' },
+  avisoCaja: { position: 'absolute', bottom: '100%', left: Spacing.lg, right: Spacing.lg, alignItems: 'center', paddingBottom: Spacing.xs },
+  aviso: {
+    textAlign: 'center',
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.xs,
+    borderWidth: 1,
+    borderRadius: Radius.lg,
+    borderCurve: 'continuous',
+    overflow: 'hidden',
+  },
 });

@@ -69,6 +69,10 @@
   - **Tocar o hacer clic en el 20 % de cada borde:** derecho, siguiente; izquierdo, anterior.
   - **Tocar o hacer clic en el centro** muestra u oculta los controles del lector (salir, forma de leer,
     herramientas, barra de avance), para que la pantalla completa quede limpia mientras se lee.
+    Los controles van **encima** del libro, no lo empujan: mostrarlos u ocultarlos, o que aparezca un aviso
+    de las herramientas, no cambia el tamaño de la página, así un EPUB no se vuelve a acomodar ni lo
+    pegado se recorre (corrección del 13 oct 2026, T286). En scroll los controles siempre se ven y van en
+    su lugar, arriba y abajo.
   - **Deslizar** el dedo de derecha a izquierda (siguiente) o al revés (anterior).
   - **Web:** deslizar con dos dedos en el *trackpad* hacia los lados, las flechas **→ / ←** del teclado
     (también Re Pág / Av Pág y la barra espaciadora para avanzar) y el clic en los bordes. Un deslizamiento
