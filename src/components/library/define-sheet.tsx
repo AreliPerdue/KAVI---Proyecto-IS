@@ -5,13 +5,13 @@ import { AppText, Button, Sheet } from '@/components/ui';
 import { IconSize, IconStroke, Spacing } from '@/constants/theme';
 import { useDefinition } from '@/hooks/use-dictionary';
 import { useTheme } from '@/hooks/use-theme';
-import { useT } from '@/i18n';
+import { useLanguage, useT } from '@/i18n';
 import { isOfflineError } from '@/lib/auth-errors';
-import { enlaceRae, idiomaEspanol, pareceEspanol } from '@/services/dictionary';
+import { enlaceExterno, idiomaEspanol, pareceEspanol } from '@/services/dictionary';
 
 /**
  * El significado de una palabra sin salir del libro (spec 13c, RF-BH8; decisión B4). En inglés, la
- * definición; en español (o si no aparece), el enlace a la RAE.
+ * definición; además, un enlace afuera según el idioma de la app (ver `enlaceExterno`).
  */
 export function DefineSheet({ palabra, idioma = null, onClose }: { palabra: string | null; idioma?: string | null; onClose: () => void }) {
   const a = useT().library.annotations;
@@ -25,10 +25,13 @@ export function DefineSheet({ palabra, idioma = null, onClose }: { palabra: stri
 function Contenido({ palabra, idioma }: { palabra: string; idioma: string | null }) {
   const theme = useTheme();
   const a = useT().library.annotations;
+  const lang = useLanguage();
   const busqueda = useDefinition(palabra, idioma);
   // Del español: por el idioma del libro, por sus letras o porque Wiktionary solo la tiene en español.
   const espanol = pareceEspanol(palabra) || idiomaEspanol(idioma) || !!busqueda.data?.espanol;
   const definicion = busqueda.data?.definicion ?? null;
+  // Fuera de la app: la RAE en español; en inglés, Merriam-Webster o la traducción en WordReference.
+  const externo = enlaceExterno(palabra, lang, espanol);
 
   return (
     <View style={styles.cuerpo}>
@@ -79,10 +82,10 @@ function Contenido({ palabra, idioma }: { palabra: string; idioma: string | null
         </AppText>
       )}
       <Button
-        title={a.defineRae}
+        title={externo.sitio === 'rae' ? a.defineRae : externo.sitio === 'merriam' ? a.defineMerriam : a.defineWordReference}
         variant="secondary"
         icon={<ExternalLink size={IconSize.inline} strokeWidth={IconStroke} color={theme.text} />}
-        onPress={() => void Linking.openURL(enlaceRae(palabra))}
+        onPress={() => void Linking.openURL(externo.url)}
       />
     </View>
   );

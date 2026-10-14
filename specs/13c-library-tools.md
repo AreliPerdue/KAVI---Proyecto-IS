@@ -65,8 +65,10 @@
   - **Definir (B4):** en inglés, **Wiktionary** (hasta seis acepciones con su ejemplo, sin HTML; cita la
     fuente) y, si no responde, la Free Dictionary API; cada uno se corta a los 8 s y lo dice. No se busca en
     inglés si el libro está en español (el EPUB dice su idioma), si la palabra tiene letras del español
-    (acentos, ñ) o si Wiktionary solo la tiene en español: entonces se ofrece la RAE. Siempre está **Buscar
-    en la RAE**. (Enmienda del 13 oct 2026: a la Free Dictionary API le faltaban palabras comunes.) El diccionario del sistema
+    (acentos, ñ) o si Wiktionary solo la tiene en español. Abajo, un enlace para seguir afuera según el
+    idioma de la app: en español, **Buscar en la RAE**; en inglés, **Merriam-Webster** para una palabra en
+    inglés y **WordReference** (su traducción) para una en español —la RAE no sirve a quien lee la app en
+    inglés— (14 oct 2026, pedido de Areli). (Enmienda del 13 oct 2026: a la Free Dictionary API le faltaban palabras comunes.) El diccionario del sistema
     del iPhone necesita un módulo nativo: queda pendiente para cuando haya cuenta de Apple Developer.
   - **Copiar:** un PDF que prohíbe copiar (permisos del archivo) deja subrayar pero el botón dice "Este libro
     no deja copiar su texto". La web permite `en.wiktionary.org` y `api.dictionaryapi.dev` en su CSP.

@@ -439,6 +439,8 @@ export const library = {
     defineOffline: 'Sin conexión: no se puede buscar ahora.',
     defineError: 'El diccionario no respondió. Inténtalo de nuevo en un momento o búscala en la RAE.',
     defineRae: 'Buscar en la RAE',
+    defineMerriam: 'Buscar en Merriam-Webster',
+    defineWordReference: 'Traducir en WordReference',
     defineSource: 'Definiciones de Free Dictionary API (inglés).',
     defineSourceWiktionary: 'Definiciones de Wiktionary en inglés (CC BY-SA).',
     page: (n: number) => `p. ${n}`,

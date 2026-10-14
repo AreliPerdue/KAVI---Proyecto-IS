@@ -24,6 +24,26 @@ export function enlaceRae(palabra: string): string {
   return `https://dle.rae.es/${encodeURIComponent(palabra.toLowerCase())}`;
 }
 
+/** Una palabra en inglés en Merriam-Webster: el enlace para quien usa la app en inglés. */
+export function enlaceMerriamWebster(palabra: string): string {
+  return `https://www.merriam-webster.com/dictionary/${encodeURIComponent(palabra.toLowerCase())}`;
+}
+
+/** Una palabra en español traducida al inglés en WordReference: para quien usa la app en inglés. */
+export function enlaceWordReference(palabra: string): string {
+  return `https://www.wordreference.com/es/en/translation.asp?spen=${encodeURIComponent(palabra.toLowerCase())}`;
+}
+
+/**
+ * A dónde mandar la palabra fuera de la app, según el idioma de la app y el de la palabra (RF-BH8): en
+ * español, siempre la RAE; en inglés, Merriam-Webster si la palabra es inglesa y WordReference (su traducción)
+ * si es española. La RAE no tiene sentido para quien lee la app en inglés.
+ */
+export function enlaceExterno(palabra: string, idiomaApp: 'es' | 'en', palabraEspanola: boolean): { sitio: 'rae' | 'merriam' | 'wordreference'; url: string } {
+  if (idiomaApp === 'es') return { sitio: 'rae', url: enlaceRae(palabra) };
+  return palabraEspanola ? { sitio: 'wordreference', url: enlaceWordReference(palabra) } : { sitio: 'merriam', url: enlaceMerriamWebster(palabra) };
+}
+
 /** Una palabra con letras del español (acentos, ñ, ü) no se busca en el diccionario de inglés. */
 export function pareceEspanol(palabra: string): boolean {
   return /[áéíóúñü¿¡]/i.test(palabra);

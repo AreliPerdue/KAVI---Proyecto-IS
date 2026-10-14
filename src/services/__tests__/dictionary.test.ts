@@ -2,7 +2,7 @@
  * Definir una palabra (spec 13c, RF-BH8; decisión B4 enmendada): inglés con Wiktionary y, si no responde, la
  * Free Dictionary API; español con la RAE.
  */
-import { definirEnIngles, enlaceRae, idiomaEspanol, pareceEspanol, sinHtml } from '@/services/dictionary';
+import { definirEnIngles, enlaceExterno, enlaceRae, idiomaEspanol, pareceEspanol, sinHtml } from '@/services/dictionary';
 
 const respuesta = (status: number, cuerpo?: unknown) => ({ ok: status >= 200 && status < 300, status, json: async () => cuerpo }) as Response;
 
@@ -106,4 +106,11 @@ it('los símbolos no salen como acepción', async () => {
   );
   const { definicion } = await definirEnIngles('the');
   expect(definicion?.acepciones).toEqual([{ categoria: 'article', definicion: 'The definite article.' }]);
+});
+
+it('el enlace de afuera según el idioma de la app: en español la RAE; en inglés, nunca la RAE', () => {
+  expect(enlaceExterno('libro', 'es', true)).toEqual({ sitio: 'rae', url: 'https://dle.rae.es/libro' });
+  expect(enlaceExterno('book', 'es', false).sitio).toBe('rae');
+  expect(enlaceExterno('Book', 'en', false)).toEqual({ sitio: 'merriam', url: 'https://www.merriam-webster.com/dictionary/book' });
+  expect(enlaceExterno('ciudad', 'en', true)).toEqual({ sitio: 'wordreference', url: 'https://www.wordreference.com/es/en/translation.asp?spen=ciudad' });
 });
