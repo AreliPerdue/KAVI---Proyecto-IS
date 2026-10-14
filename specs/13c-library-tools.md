@@ -10,6 +10,22 @@
 - **RF-BH2. Tamaño de letra** (EPUB y creaciones; en PDF el equivalente es el zoom).
 - **RF-BH3. Tipo de letra:** una selección incluida (con serifas, sin serifas, para dislexia, manuscrita) y
   las que suba la persona (RF-BH4).
+- **Hecho (T288, 13 oct 2026).**
+  - **Zoom en PDF:** pellizco (o Ctrl/⌘ y la rueda, o pellizcar en el trackpad) hasta 400 %; al soltar, la
+    página se vuelve a pintar a ese tamaño, nítida, dejando quieto lo que estaba bajo los dedos. Acercada, se
+    recorre con el dedo o la rueda y no pasa de hoja (el centro sigue mostrando los controles). Una pastilla
+    "150 % · Ajustar a la página" (y el doble toque) vuelve a la página entera. Cambiar de forma de leer
+    también la ajusta.
+  - **Libro real:** el pellizco acerca la hoja; acercada, arrastrar la mueve (no la dobla) y el doble toque o
+    la pastilla la ajustan.
+  - **EPUB:** el pellizco y Ctrl/⌘ + rueda cambian el **tamaño de letra** (en pasos de 10 %, 70 – 200 %),
+    que es lo que cuenta en un libro que se reacomoda; también en la hoja "Lectura" con **A− / A+**. El libro
+    real se vuelve a acomodar en el mismo lugar.
+  - **Letras incluidas** (OFL, Fontsource): Original (la del libro), **Con serifas** (Literata), **Sin
+    serifas** (Atkinson Hyperlegible), **Para dislexia** (OpenDyslexic) y **Manuscrita** (Patrick Hand); solo
+    alfabeto latino, normal y negrita. Viajan dentro del motor (en el teléfono, sin red) y su licencia va
+    junto a los archivos en `/reader/vendor/fonts/`. Tamaño y letra son uno para todos los libros y se
+    recuerdan en el dispositivo.
 - **RF-BH4. Fuentes propias.** Se suben archivos `.ttf`/`.otf`/`.woff2`. Antes de la primera, un aviso que
   hay que aceptar: *"Tú eres responsable de tener la licencia de las fuentes que subas. Usa fuentes libres o
   que te pertenezcan."* Se guardan en R2, como los libros, y se usan en todos los dispositivos de la persona.

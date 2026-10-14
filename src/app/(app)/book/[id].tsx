@@ -1,9 +1,9 @@
 import * as Clipboard from 'expo-clipboard';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { BookOpen, ChevronDown, ChevronLeft, ChevronUp, GalleryHorizontal, NotebookText, Rows3, Search, X } from 'lucide-react-native';
+import { BookOpen, ChevronDown, ChevronLeft, ChevronUp, GalleryHorizontal, NotebookText, Rows3, Search, Shrink, X } from 'lucide-react-native';
 import { useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Platform, StyleSheet, TextInput, View } from 'react-native';
+import { ActivityIndicator, Platform, Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AnnotationToolbar } from '@/components/library/annotation-toolbar';
@@ -13,6 +13,7 @@ import { HighlightSheet, type CambioDeSubrayado } from '@/components/library/hig
 import { PostitSheet } from '@/components/library/postit-sheet';
 import { ReaderEngine, type ReaderEngineHandle } from '@/components/library/reader-engine';
 import { ReaderProgress } from '@/components/library/reader-progress';
+import { ReaderTextPicker } from '@/components/library/reader-text-picker';
 import { ReaderThemePicker } from '@/components/library/reader-theme-picker';
 import { SelectionBar } from '@/components/library/selection-bar';
 import { AppText, Button, IconButton, Segmented, Sheet } from '@/components/ui';
@@ -192,6 +193,15 @@ function Lector({ id }: { id: string }) {
     motor.current?.send({ type: 'tool', tool: herramienta });
   }, [herramienta]);
 
+  // Letra y tamaño de un EPUB (RF-BH2, RF-BH3): al abrir y cada vez que cambian.
+  const textoLectura = usePreferencesStore((s) => s.readerText);
+  const setTextoLectura = usePreferencesStore((s) => s.setReaderText);
+  useEffect(() => {
+    motor.current?.send({ type: 'text', size: textoLectura.tamano, font: textoLectura.letra });
+  }, [textoLectura.tamano, textoLectura.letra]);
+  // Cuánto está acercado el PDF o el libro real (RF-BH1): con más de 100 %, la pastilla para ajustar.
+  const [zoom, setZoom] = useState(1);
+
   // Cambiar de forma con el libro abierto: el motor se queda en el mismo lugar (RF-BR8).
   const formaEnMotor = useRef(forma);
   useEffect(() => {
@@ -271,6 +281,12 @@ function Lector({ id }: { id: string }) {
         return;
       case 'selection':
         setSeleccionTexto(m.text && m.locator ? { text: m.text, locator: m.locator } : null);
+        return;
+      case 'zoom':
+        setZoom(m.level);
+        return;
+      case 'textSize':
+        setTextoLectura({ ...textoLectura, tamano: m.size });
         return;
       case 'move': {
         const a = lista?.find((x) => x.id === m.id);
@@ -513,6 +529,23 @@ function Lector({ id }: { id: string }) {
         </View>
       );
 
+  const pastillaZoom =
+    zoom > 1.001 ? (
+      <View style={[styles.zoomCaja, { bottom: (superpuestos && controles && abierto ? altoAbajo : 0) + Spacing.sm }]} pointerEvents="box-none">
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={`${r.zoomLevel(Math.round(zoom * 100))}. ${r.zoomFit}`}
+          onPress={() => motor.current?.send({ type: 'zoom', level: 1 })}
+          style={({ pressed }) => [styles.zoom, { backgroundColor: theme.surface, borderColor: theme.border }, pressed ? styles.presionado : null]}>
+          <AppText variant="label" tabular>
+            {r.zoomLevel(Math.round(zoom * 100))}
+          </AppText>
+          <Shrink size={IconSize.inline} strokeWidth={IconStroke} color={theme.text} />
+          <AppText variant="label">{r.zoomFit}</AppText>
+        </Pressable>
+      </View>
+    ) : null;
+
   const barraAbajo = abierto && controles ? (
         <View style={[styles.abajo, superpuestos ? { backgroundColor: theme.background } : null, { paddingBottom: (superpuestos ? 0 : insets.bottom) + Spacing.xs }]}>
           {!mensajeError && seleccionTexto ? (
@@ -595,6 +628,7 @@ function Lector({ id }: { id: string }) {
             </View>
           </View>
         ) : null}
+        {pastillaZoom}
         {superpuestos && barraArriba ? <View style={[styles.arriba, { backgroundColor: theme.background }]}>{barraArriba}</View> : null}
         {superpuestos ? (
           <View style={styles.abajoEncima} onLayout={(e) => setAltoAbajo(e.nativeEvent.layout.height)}>
@@ -623,6 +657,7 @@ function Lector({ id }: { id: string }) {
           <AppText variant="caption" color="textSecondary">
             {forma === 'scroll' ? r.modeScrollHint : forma === 'book' ? r.modeBookHint : Platform.OS === 'web' ? r.modePagedHintWeb : r.modePagedHint}
           </AppText>
+          <ReaderTextPicker esPdf={!esEpub} />
           <ReaderThemePicker />
         </View>
       </Sheet>
@@ -677,5 +712,18 @@ const styles = StyleSheet.create({
   },
   formas: { gap: Spacing.md },
   abajo: { gap: Spacing.xs },
+  zoomCaja: { position: 'absolute', left: 0, right: 0, alignItems: 'center' },
+  zoom: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    minHeight: 44,
+    paddingHorizontal: Spacing.lg,
+    borderWidth: 1,
+    borderRadius: Radius.full,
+    borderCurve: 'continuous',
+    boxShadow: '0 4px 16px rgba(22,23,26,0.08)',
+  },
+  presionado: { opacity: 0.85 },
   siguienteBotones: { flexDirection: 'row', justifyContent: 'flex-end', gap: Spacing.sm, marginTop: Spacing.sm },
 });

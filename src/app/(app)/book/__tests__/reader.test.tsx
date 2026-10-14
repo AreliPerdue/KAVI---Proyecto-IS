@@ -587,3 +587,52 @@ describe('subrayar, definir y copiar (spec 13c, T287)', () => {
     });
   });
 });
+
+describe('zoom, tamaño y letra (spec 13c, T288)', () => {
+  beforeEach(() => usePreferencesStore.setState({ readerText: { tamano: 100, letra: 'original' } }));
+
+  it('manda al motor el tamaño y la letra al abrir y cuando cambian', async () => {
+    usePreferencesStore.setState({ readerText: { tamano: 120, letra: 'serif' } });
+    await render(<Lector />);
+    expect(mockEnviados).toContainEqual({ type: 'text', size: 120, font: 'serif' });
+    await act(async () => usePreferencesStore.setState({ readerText: { tamano: 130, letra: 'dyslexic' } }));
+    expect(mockEnviados.at(-1)).toEqual({ type: 'text', size: 130, font: 'dyslexic' });
+  });
+
+  it('el pellizco en un EPUB pide otro tamaño y se guarda (RF-BH2)', async () => {
+    await render(<Lector />);
+    await responder({ type: 'textSize', size: 150 });
+    expect(usePreferencesStore.getState().readerText).toEqual({ tamano: 150, letra: 'original' });
+    expect(mockEnviados.at(-1)).toEqual({ type: 'text', size: 150, font: 'original' });
+  });
+
+  it('acercado, una pastilla dice cuánto y "Ajustar a la página" vuelve a la página entera (RF-BH1)', async () => {
+    await render(<Lector />);
+    await responder({ type: 'opened', total: 12 });
+    expect(screen.queryByText(R.zoomFit)).toBeNull();
+    await responder({ type: 'zoom', level: 1.5 });
+    await fireEvent.press(screen.getByRole('button', { name: `${R.zoomLevel(150)}. ${R.zoomFit}` }));
+    expect(mockEnviados.at(-1)).toEqual({ type: 'zoom', level: 1 });
+    await responder({ type: 'zoom', level: 1 });
+    expect(screen.queryByText(R.zoomFit)).toBeNull();
+  });
+
+  it('en la hoja Lectura de un EPUB, tamaño y letra (RF-BH2, RF-BH3)', async () => {
+    mockPieza = { ...pdf, kind: 'epub', last_position: null };
+    await render(<Lector />);
+    await responder({ type: 'opened', total: null });
+    await fireEvent.press(screen.getByRole('button', { name: R.mode }));
+    await fireEvent.press(screen.getByRole('button', { name: R.textBigger }));
+    expect(usePreferencesStore.getState().readerText.tamano).toBe(110);
+    await fireEvent.press(screen.getByRole('button', { name: R.fonts.dyslexic }));
+    expect(usePreferencesStore.getState().readerText.letra).toBe('dyslexic');
+  });
+
+  it('en la hoja Lectura de un PDF, el aviso del zoom en lugar de tamaño y letra', async () => {
+    await render(<Lector />);
+    await responder({ type: 'opened', total: 12 });
+    await fireEvent.press(screen.getByRole('button', { name: R.mode }));
+    expect(screen.getByText(R.zoomPdfHint)).toBeTruthy();
+    expect(screen.queryByRole('button', { name: R.textBigger })).toBeNull();
+  });
+});

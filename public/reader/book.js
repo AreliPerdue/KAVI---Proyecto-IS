@@ -172,8 +172,16 @@ export function libroPdf({ raiz, doc, total, base, inicio, pintar, capa, avisar 
 
 // ─── EPUB ────────────────────────────────────────────────────────────────────
 
+/**
+ * La letra del libro real (T288): tamaño en % del de base (17 px) y familia (`null` = la de siempre). La pone
+ * `libroEpub` al armarse; sus `@font-face` viven en el documento del motor.
+ */
+let textoDelLibro = { tamano: 100, familia: null };
+
 /** Los estilos de la página de un EPUB: los del capítulo más los nuestros, que acomodan en columnas. */
 function estilosDePagina(ancho, alto, cssDelCapitulo) {
+  const letra = Math.round(17 * (textoDelLibro.tamano / 100) * 10) / 10;
+  const familia = textoDelLibro.familia ?? `Georgia, 'Times New Roman', serif`;
   const columna = ancho - MARGEN_TEXTO * 2;
   return `${cssDelCapitulo}
 /* La hoja recorta: el contenido se corre de lado y solo se ve su columna. */
@@ -181,14 +189,15 @@ function estilosDePagina(ancho, alto, cssDelCapitulo) {
 .contenido {
   box-sizing: content-box; width: ${columna}px; height: ${alto - MARGEN_TEXTO * 2}px; padding: ${MARGEN_TEXTO}px;
   column-width: ${columna}px; column-gap: ${MARGEN_TEXTO * 2}px; column-fill: auto;
-  font-family: Georgia, 'Times New Roman', serif; font-size: 17px; line-height: 1.5; color: var(--tinta, #1a1a1a);
+  font-family: ${familia}; font-size: ${letra}px; line-height: 1.5; color: var(--tinta, #1a1a1a);
   text-align: start; hyphens: auto; overflow-wrap: break-word;
 }
 .contenido img, .contenido svg, .contenido video { max-width: 100%; max-height: ${alto - MARGEN_TEXTO * 2}px; object-fit: contain; break-inside: avoid; }
 .contenido script, .contenido style, .contenido link { display: none; }
 .contenido a { color: inherit; }
 /* Tema del lector (RF-BH5): la letra y el fondo del tema, aunque el capítulo traiga otros. */
-.contenido *:not(img):not(svg):not(video) { color: inherit !important; background-color: transparent !important; }`;
+.contenido *:not(img):not(svg):not(video) { color: inherit !important; background-color: transparent !important; }
+${textoDelLibro.familia ? `.contenido *:not(code):not(pre):not(kbd):not(samp) { font-family: ${familia} !important; }` : ''}`;
 }
 
 /** Lee un capítulo ya preparado por foliate (sus recursos son direcciones `blob:`) y su CSS. */
@@ -253,11 +262,12 @@ function imagenesListas(raiz) {
 
 /**
  * El libro real de un EPUB. `view` es el foliate-view abierto (su libro, sus CFI); `cfi`, dónde abrir.
- * `avisar` recibe { cfi, pagina, total, fraccion }. `capa(i, sombra, ancho, ubicar)` pone lo pegado en la
+ * `avisar` recibe { cfi, pagina, total, fraccion }; `texto`, la letra (T288). `capa(i, sombra, ancho, ubicar)` pone lo pegado en la
  * hoja i; `ubicar(cfi)` dice en qué hoja y a qué altura cae un CFI y `ubicarRango(cfi)`, los renglones de un
  * subrayado.
  */
-export async function libroEpub({ raiz, view, cfi, capa, avisar }) {
+export async function libroEpub({ raiz, view, cfi, texto, capa, avisar }) {
+  textoDelLibro = { tamano: texto?.tamano ?? 100, familia: texto?.familia ?? null };
   // La proporción de una página de libro de bolsillo; el texto se acomoda a lo que quepa.
   const { ancho, alto, dos } = medidas(2 / 3);
   const libro = view.book;

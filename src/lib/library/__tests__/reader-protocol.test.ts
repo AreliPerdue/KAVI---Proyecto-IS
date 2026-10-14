@@ -39,6 +39,9 @@ describe('leerMensaje · capa de anotaciones (T286)', () => {
     [{ type: 'move', id: 'a1', locator: { cfi: 'epubcfi(/6/4)', x: 0.3, w: 0.24, fraction: 0.5 } }, { type: 'move', id: 'a1', locator: { cfi: 'epubcfi(/6/4)', x: 0.3, w: 0.24, fraction: 0.5 } }],
     [{ type: 'edit', id: 'a1' }, { type: 'edit', id: 'a1' }],
     [{ type: 'selection', text: '' }, { type: 'selection', text: '', locator: null }],
+    [{ type: 'zoom', level: 1.5 }, { type: 'zoom', level: 1.5 }],
+    [{ type: 'zoom', level: 9 }, { type: 'zoom', level: 4 }],
+    [{ type: 'textSize', size: 133 }, { type: 'textSize', size: 130 }],
     [
       { type: 'selection', text: '  la\nciudad ', locator: { rects: [{ page: 3, x: 0.1, y: 0.4, w: 0.5, h: 0.02 }] } },
       { type: 'selection', text: 'la ciudad', locator: { page: 3, y: 0.4, rects: [{ page: 3, x: 0.1, y: 0.4, w: 0.5, h: 0.02 }] } },
@@ -61,6 +64,8 @@ describe('leerMensaje · capa de anotaciones (T286)', () => {
     { type: 'edit', id: '' },
     { type: 'selection', text: 'hola', locator: { rects: [{ page: 0, x: 0, y: 0, w: 1, h: 1 }] } },
     { type: 'selection', text: 'hola', locator: { rects: [] } },
+    { type: 'zoom' },
+    { type: 'textSize', size: 'grande' },
   ])('ignora %j', (crudo) => {
     expect(leerMensaje(crudo)).toBeNull();
   });

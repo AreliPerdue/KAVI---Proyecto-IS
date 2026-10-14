@@ -3,6 +3,7 @@ import { Platform } from 'react-native';
 import { SITIO } from '@/lib/api';
 import { localizadorDeTexto, localizadorPegado, TEXTO_MAXIMO_DE_SUBRAYADO } from '@/lib/library/annotations';
 import type { FormaDeLeer } from '@/lib/library/reading-mode';
+import { type LetraDeLectura, tamanoValido } from '@/lib/library/reader-text';
 import type { LibraryAnnotationKind, LibraryItem, LibraryLocator } from '@/types/domain';
 
 /**
@@ -58,7 +59,11 @@ export type MensajeAlMotor =
   /** La app elige o suelta (al borrar, al cerrar la barra de lo seleccionado). */
   | { type: 'select'; id: string | null }
   /** Quitar la selección de texto (al subrayar o cerrar la barra). */
-  | { type: 'clearSelection' };
+  | { type: 'clearSelection' }
+  /** Tamaño (%) y letra del texto de un EPUB (RF-BH2, RF-BH3; T288). */
+  | { type: 'text'; size: number; font: LetraDeLectura }
+  /** Volver a ver la página entera ("Ajustar", RF-BH1). */
+  | { type: 'zoom'; level: number };
 
 export type CodigoDeError = 'password' | 'damaged' | 'network' | 'unknown';
 
@@ -82,6 +87,10 @@ export type MensajeDelMotor =
   | { type: 'edit'; id: string }
   /** Texto seleccionado (RF-BH7): qué dice y dónde está. Vacío, se soltó la selección. */
   | { type: 'selection'; text: string; locator: LibraryLocator | null }
+  /** Cuánto está acercado el PDF o el libro real (1 = la página entera). */
+  | { type: 'zoom'; level: number }
+  /** En EPUB, el pellizco pidió otro tamaño de letra; la app lo guarda y lo manda de vuelta. */
+  | { type: 'textSize'; size: number }
   | { type: 'error'; code: CodigoDeError; message?: string };
 
 const CODIGOS: readonly CodigoDeError[] = ['password', 'damaged', 'network', 'unknown'];
@@ -131,6 +140,10 @@ export function leerMensaje(crudo: unknown): MensajeDelMotor | null {
     }
     case 'edit':
       return esId(m.id) ? { type: 'edit', id: m.id } : null;
+    case 'zoom':
+      return numero(m.level) ? { type: 'zoom', level: Math.min(4, Math.max(1, m.level)) } : null;
+    case 'textSize':
+      return numero(m.size) ? { type: 'textSize', size: tamanoValido(m.size) } : null;
     case 'selection': {
       // Los renglones del PDF llegan con saltos: se guarda como se lee, con espacios sencillos.
       const texto = typeof m.text === 'string' ? m.text.replace(/\s+/g, ' ').trim().slice(0, TEXTO_MAXIMO_DE_SUBRAYADO) : '';

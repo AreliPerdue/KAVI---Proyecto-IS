@@ -6,9 +6,15 @@
  * viven del lado de la app en `src/lib/library/reader-protocol.ts`.
  *
  * App → motor: `open`, `openBegin` / `openChunk` / `openEnd`, `goTo`, `mode`, `turn`, `theme`, `search`,
- * `searchStep`, `searchClear`, `cover`, y de la capa de anotaciones (T286) `annotations`, `tool`, `select`.
- * Motor → app: `ready`, `opened`, `position`, `search`, `tap`, `cover`, `error`, y `place`, `select`,
- * `move`, `edit` (ver `annotations.js`).
+ * `searchStep`, `searchClear`, `cover`, y de la capa de anotaciones (T286) `annotations`, `tool`, `select`,
+ * `clearSelection`; de la letra y el zoom (T288) `text` y `zoom`.
+ * Motor → app: `ready`, `opened`, `position`, `search`, `tap`, `cover`, `error`; `place`, `select`,
+ * `move`, `edit`, `selection` (ver `annotations.js`); `zoom` y `textSize` (T288).
+ *
+ * Zoom y letra (13c, RF-BH1 – RF-BH3; T288): en PDF se acerca con pellizco o Ctrl/⌘ y la rueda (la página se
+ * vuelve a pintar a ese tamaño, nítida); doble toque o "Ajustar" vuelve a la página entera. En EPUB el
+ * pellizco cambia el tamaño de letra, que es lo que cuenta en un libro que se reacomoda. En el libro real se
+ * acerca la hoja y se mueve arrastrando; mientras está acercada no se pasa de hoja.
  *
  * PDF con pdf.js (página fija, con capa de texto para buscar); EPUB con foliate-js (texto que se
  * reacomoda, posición por CFI). En la web el archivo se descarga directo de R2 con la dirección firmada que
@@ -23,6 +29,8 @@
  */
 import { crearCapa } from './annotations.js';
 import { buscarEnPedazos } from './text-search.js';
+import { caraDeLetra, estilosDeTexto, familiaDe, letraValida, tamanoValido } from './text.js';
+import { escucharPellizco, escucharRuedaConCtrl, pellizcando } from './zoom.js';
 
 // Las librerías van junto al motor. Empaquetado en la app (T285), la página no tiene dirección propia: los
 // archivos de apoyo de pdf.js (mapas de caracteres, fuentes) se piden a la web, si hay red.
@@ -118,6 +126,10 @@ async function atender(m) {
       return anotaciones.elegir(m.id);
     case 'clearSelection':
       return anotaciones.soltarSeleccion();
+    case 'text':
+      return cambiarTexto(m.size, m.font);
+    case 'zoom':
+      return fijarZoom(typeof m.level === 'number' ? m.level : 1);
   }
 }
 
@@ -163,6 +175,7 @@ escucharSeleccion(document);
 function cerrar() {
   limpiarBusqueda();
   anotaciones.cerrar();
+  zoom = 1;
   salirDelLibro();
   if (pdf) {
     pdf.observador.disconnect();
@@ -238,8 +251,8 @@ async function bytesDeFuente(fuente) {
  */
 function escalaDe(base) {
   const ancho = Math.min(window.innerWidth - 16, 900) / base.width;
-  if (forma !== 'paged') return ancho;
-  return Math.min((window.innerWidth - 16) / base.width, (window.innerHeight - 16) / base.height);
+  if (forma !== 'paged') return ancho * zoom;
+  return Math.min((window.innerWidth - 16) / base.width, (window.innerHeight - 16) / base.height) * zoom;
 }
 
 /** Medida provisional de cada página mientras no se pinta: la de la primera. */
@@ -275,6 +288,7 @@ function reacomodarPdf() {
   if (!pdf) return;
   const pagina = pdf.pagina || 1;
   pdf.raiz.classList.toggle('paginado', forma === 'paged');
+  pdf.raiz.classList.toggle('acercado', acercado());
   for (const n of [...pdf.renderizadas.keys()]) despintar(n);
   medirProvisionales();
   observar();
@@ -313,6 +327,7 @@ async function abrirPdf(fuente, posicion) {
   medirProvisionales();
   observar();
   gestosDePaginas(raiz);
+  acercarConGestos(raiz);
 
   raiz.addEventListener('scroll', () => requestAnimationFrame(avisarPosicion), { passive: true });
   // Un PDF puede prohibir copiar su texto (RF-BH9): se sigue pudiendo subrayar, no copiar.
@@ -459,14 +474,17 @@ async function abrirEpub(fuente, posicion) {
   view.renderer.setAttribute('margin', '32px');
   view.renderer.setAttribute('max-inline-size', '720px');
   formaEpub(view);
-  view.renderer.setStyles?.(estilosDeTema());
+  await cargandoTexto;
+  view.renderer.setStyles?.(estilosEpub());
   // Los toques en los bordes y el centro, el teclado y el trackpad van dentro de cada capítulo (otro
   // documento); el deslizar con el dedo ya lo hace foliate.
   view.addEventListener('load', (e) => {
     gestosDePaginas(e.detail.doc, true);
     escucharSeleccion(e.detail.doc);
+    letraConGestos(e.detail.doc);
   });
   gestosDePaginas(raiz, true);
+  letraConGestos(raiz);
   enviar({ type: 'opened', total: null, copiable: true });
   if (posicion?.cfi) await view.init({ lastLocation: posicion.cfi });
   else if (posicion?.fraction) await view.goToFraction(posicion.fraction);
@@ -497,6 +515,8 @@ async function cambiarForma(nueva) {
   const pagina = libro?.pagina?.() ?? pdf?.pagina ?? 1;
   const cfi = libro?.cfi?.() ?? epub?.ultimo ?? null;
   forma = nueva;
+  if (acercado()) enviar({ type: 'zoom', level: 1 });
+  zoom = 1;
   if (antes === 'book') salirDelLibro();
   if (nueva === 'book') {
     await entrarAlLibro(pdf ? pagina : cfi);
@@ -536,7 +556,7 @@ function aplicarTema() {
   const blanca = tema.pagina.toUpperCase() === '#FFFFFF';
   filtroDeDosTonos(tema.pagina, tema.letra);
   raiz.setProperty('--filtro-pdf', blanca ? 'none' : 'url(#kavi-tema)');
-  if (epub) epub.view.renderer.setStyles?.(estilosDeTema());
+  if (epub) epub.view.renderer.setStyles?.(estilosEpub());
 }
 
 /** Lo que se le pone a cada capítulo de un EPUB (foliate lee el fondo de `--theme-bg-color`). */
@@ -574,10 +594,13 @@ let creandoLibro = null;
 async function entrarAlLibro(donde) {
   const { libroPdf, libroEpub } = await import('./book.js');
   salirDelLibro();
+  zoom = 1;
+  panLibro = { x: 0, y: 0 };
   libroRaiz = document.createElement('div');
   libroRaiz.id = 'libro';
   document.body.append(libroRaiz);
   gestosDePaginas(libroRaiz, true);
+  acercarLibroConGestos(libroRaiz);
   if (pdf) {
     pdf.raiz.style.display = 'none';
     libro = libroPdf({
@@ -602,6 +625,7 @@ async function entrarAlLibro(donde) {
       raiz,
       view: epub.view,
       cfi: typeof donde === 'string' ? donde : epub.ultimo,
+      texto: { tamano: texto.tamano, familia: familiaDe(texto.letra) },
       capa: anotaciones.capaLibroEpub,
       avisar: ({ cfi, pagina, total, fraccion }) => {
         if (epub) epub.ultimo = cfi;
@@ -682,17 +706,33 @@ function gestosDePaginas(objetivo, esEpub = false) {
   objetivo.addEventListener('pointerdown', (e) => {
     inicio = e.isPrimary ? { x: e.clientX, y: e.clientY, t: e.timeStamp, toque: e.pointerType === 'touch' } : null;
   });
+  let ultimoToque = 0;
   objetivo.addEventListener('pointerup', (e) => {
     const i = inicio;
     inicio = null;
-    if (!i || haySeleccion()) return;
+    // Soltar los dedos de un pellizco no es deslizar ni tocar.
+    if (!i || haySeleccion() || pellizcando()) return;
     const dx = e.clientX - i.x;
     const dy = e.clientY - i.y;
     const dt = e.timeStamp - i.t;
+    // Doble toque con la página acercada: vuelve a verse entera (RF-BH1).
+    if (i.toque && Math.hypot(dx, dy) <= 8 && dt <= 500 && acercado() && forma !== 'book') {
+      const doble = e.timeStamp - ultimoToque < 320;
+      ultimoToque = e.timeStamp;
+      if (doble) {
+        fijarZoom(1);
+        return;
+      }
+    }
     // Un toque quieto es primero de la capa de anotaciones: pegar ahí o soltar lo elegido (T286), en
     // cualquier forma de leer.
     if (Math.hypot(dx, dy) <= 8 && dt <= 500 && anotaciones.alTocar(e, doc)) return;
     if (!porPaginas()) return;
+    // Acercada, la página se recorre con el dedo: no se pasa de hoja (los controles siguen en el centro).
+    if (acercado()) {
+      if (Math.hypot(dx, dy) <= 8 && dt <= 500) enviar({ type: 'tap' });
+      return;
+    }
     // Deslizar el dedo (en EPUB lo hace foliate).
     if (i.toque && !esEpub && Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy) * 1.5 && dt < 700) {
       void pasar(dx < 0 ? 1 : -1);
@@ -716,7 +756,8 @@ function gestosDePaginas(objetivo, esEpub = false) {
   objetivo.addEventListener(
     'wheel',
     (e) => {
-      if (!porPaginas() || e.ctrlKey) return; // Ctrl + rueda es el zoom (13c)
+      // Ctrl/⌘ + rueda es el zoom (13c); acercada, la rueda recorre la página.
+      if (!porPaginas() || e.ctrlKey || e.metaKey || acercado()) return;
       e.preventDefault();
       const delta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
       clearTimeout(pausa);
@@ -748,6 +789,223 @@ function teclas(e) {
 }
 
 document.addEventListener('keydown', teclas);
+
+// ─── Zoom (RF-BH1, T288) ─────────────────────────────────────────────────────
+
+const ZOOM_MAX = 4;
+let zoom = 1; // del PDF (scroll y de lado) y del libro real
+let panLibro = { x: 0, y: 0 };
+let vistaPrevia = null;
+const acercado = () => zoom > 1.001;
+const limitarZoom = (z) => Math.min(ZOOM_MAX, Math.max(1, Math.round(z * 20) / 20));
+
+/** Mientras se pellizca, la página bajo los dedos crece sola (barato); al soltar se pinta a su tamaño. */
+function mostrarVistaPrevia(escala, centro) {
+  if (!pdf) return;
+  const pagina = vistaPrevia ?? document.elementsFromPoint(centro.x, centro.y).find((x) => x.classList?.contains('pagina')) ?? pdf.paginas[(pdf.pagina || 1) - 1];
+  if (!pagina) return;
+  if (!vistaPrevia) {
+    const r = pagina.getBoundingClientRect();
+    pagina.style.transformOrigin = `${centro.x - r.left}px ${centro.y - r.top}px`;
+    vistaPrevia = pagina;
+  }
+  pagina.style.scale = String(limitarZoom(zoom * escala) / zoom);
+}
+
+function quitarVistaPrevia() {
+  if (!vistaPrevia) return;
+  vistaPrevia.style.scale = '';
+  vistaPrevia.style.transformOrigin = '';
+  vistaPrevia = null;
+}
+
+/** Acercar o alejar el PDF (o el libro real) a `nuevo`, dejando quieto lo que está bajo `centro`. */
+function fijarZoom(nuevo, centro = null) {
+  const z = limitarZoom(nuevo);
+  quitarVistaPrevia();
+  if (forma === 'book') return zoomDelLibro(z);
+  if (!pdf || Math.abs(z - zoom) < 0.01) return;
+  const f = z / zoom;
+  const raiz = pdf.raiz;
+  const r = raiz.getBoundingClientRect();
+  const c = centro ? { x: centro.x - r.left, y: centro.y - r.top } : { x: raiz.clientWidth / 2, y: raiz.clientHeight / 2 };
+  zoom = z;
+  if (forma === 'paged') {
+    const hoja = () => pdf.paginas[(pdf.pagina || 1) - 1]?.parentElement;
+    const antes = hoja();
+    const x = (antes?.scrollLeft ?? 0) + c.x;
+    const y = (antes?.scrollTop ?? 0) + c.y;
+    reacomodarPdf();
+    const despues = hoja();
+    if (despues) {
+      despues.scrollLeft = x * f - c.x;
+      despues.scrollTop = y * f - c.y;
+    }
+  } else {
+    const x = raiz.scrollLeft + c.x;
+    const y = raiz.scrollTop + c.y;
+    raiz.classList.toggle('acercado', acercado());
+    for (const n of [...pdf.renderizadas.keys()]) despintar(n);
+    medirProvisionales();
+    observar();
+    raiz.scrollLeft = x * f - c.x;
+    raiz.scrollTop = y * f - c.y;
+  }
+  enviar({ type: 'zoom', level: zoom });
+}
+
+/** Pellizco y Ctrl/⌘ + rueda sobre el PDF. */
+function acercarConGestos(raiz) {
+  const opciones = {
+    activo: () => forma !== 'book',
+    alMover: (escala, centro) => mostrarVistaPrevia(escala, centro),
+    alTerminar: (escala, centro) => fijarZoom(zoom * escala, centro),
+  };
+  escucharPellizco(raiz, opciones);
+  escucharRuedaConCtrl(raiz, opciones);
+}
+
+/** El libro real acercado: la caja crece desde el centro y se mueve con `panLibro`. */
+function zoomDelLibro(z) {
+  zoom = z;
+  if (!acercado()) panLibro = { x: 0, y: 0 };
+  aplicarZoomDelLibro();
+  enviar({ type: 'zoom', level: zoom });
+}
+
+function aplicarZoomDelLibro(escalaEnVivo = null) {
+  const caja = libroRaiz?.querySelector('.libro-caja');
+  if (!caja) return;
+  const z = escalaEnVivo ?? zoom;
+  panLibro = limitarPan(caja, panLibro, z);
+  caja.style.scale = z > 1.001 ? String(z) : '';
+  caja.style.translate = z > 1.001 ? `${panLibro.x}px ${panLibro.y}px` : '';
+  lupa(z > 1.001);
+}
+
+/** Que la hoja acercada no se salga de la pantalla al moverla. */
+function limitarPan(caja, pan, z) {
+  const ancho = caja.offsetWidth;
+  const alto = caja.offsetHeight;
+  const mx = Math.max(0, (ancho * z - window.innerWidth) / 2 + 16);
+  const my = Math.max(0, (alto * z - window.innerHeight) / 2 + 16);
+  return { x: Math.min(mx, Math.max(-mx, pan.x)), y: Math.min(my, Math.max(-my, pan.y)) };
+}
+
+/**
+ * Con el libro real acercado, una capa encima recibe los dedos: arrastrar mueve la hoja (no la dobla) y el
+ * doble toque vuelve a verla entera.
+ */
+function lupa(activa) {
+  let capa = libroRaiz?.querySelector(':scope > .lupa');
+  if (!activa || !libroRaiz) {
+    capa?.remove();
+    return;
+  }
+  if (capa) return;
+  capa = document.createElement('div');
+  capa.className = 'lupa';
+  let arrastre = null;
+  let ultimo = 0;
+  capa.addEventListener('pointerdown', (e) => {
+    e.stopPropagation();
+    if (!e.isPrimary) return;
+    arrastre = { x: e.clientX - panLibro.x, y: e.clientY - panLibro.y, x0: e.clientX, y0: e.clientY };
+    capa.setPointerCapture?.(e.pointerId);
+  });
+  capa.addEventListener('pointermove', (e) => {
+    if (!arrastre || pellizcando()) return;
+    panLibro = { x: e.clientX - arrastre.x, y: e.clientY - arrastre.y };
+    aplicarZoomDelLibro();
+  });
+  capa.addEventListener('pointerup', (e) => {
+    e.stopPropagation();
+    const quieto = arrastre && Math.hypot(e.clientX - arrastre.x0, e.clientY - arrastre.y0) < 8;
+    arrastre = null;
+    if (!quieto || pellizcando()) return;
+    if (e.timeStamp - ultimo < 320) fijarZoom(1);
+    ultimo = e.timeStamp;
+  });
+  libroRaiz.append(capa);
+}
+
+function acercarLibroConGestos(raiz) {
+  let base = null;
+  const opciones = {
+    alMover: (escala) => {
+      base ??= zoom;
+      aplicarZoomDelLibro(limitarZoom(base * escala));
+    },
+    alTerminar: (escala) => {
+      const desde = base ?? zoom;
+      base = null;
+      zoomDelLibro(limitarZoom(desde * escala));
+    },
+  };
+  escucharPellizco(raiz, opciones);
+  escucharRuedaConCtrl(raiz, opciones);
+  // Con dos dedos, la hoja no se empieza a doblar: el segundo dedo no le llega al hojeador.
+  raiz.addEventListener('touchstart', (e) => e.touches.length > 1 && e.stopPropagation(), true);
+}
+
+// ─── Letra y tamaño de un EPUB (RF-BH2, RF-BH3; T288) ─────────────────────────
+
+let texto = { tamano: 100, letra: 'original' };
+let cssTexto = estilosDeTexto(texto, '');
+let cargandoTexto = Promise.resolve();
+
+/** Tema y texto juntos: lo que foliate le pone a cada capítulo. */
+function estilosEpub() {
+  return `${estilosDeTema()}\n${cssTexto}`;
+}
+
+function cambiarTexto(tamano, letra) {
+  const nuevo = { tamano: tamanoValido(tamano), letra: letraValida(letra) };
+  if (nuevo.tamano === texto.tamano && nuevo.letra === texto.letra) return cargandoTexto;
+  const antes = texto;
+  texto = nuevo;
+  cargandoTexto = (async () => {
+    const caras = await caraDeLetra(texto.letra, VENDOR).catch(() => '');
+    cssTexto = estilosDeTexto(texto, caras);
+    letrasDelDocumento(caras);
+    if (!epub) return;
+    epub.view.renderer.setStyles?.(estilosEpub());
+    // En el libro real las hojas se acomodaron con la letra de antes: se vuelven a hacer en el mismo lugar.
+    if (forma === 'book' && (antes.tamano !== texto.tamano || antes.letra !== texto.letra)) await entrarAlLibro(libro?.cfi?.() ?? epub.ultimo);
+  })();
+  return cargandoTexto;
+}
+
+/** Las letras en el documento del motor, para las hojas del libro real (viven en su sombra). */
+function letrasDelDocumento(caras) {
+  let estilo = document.getElementById('kavi-letras');
+  if (!estilo) {
+    estilo = document.createElement('style');
+    estilo.id = 'kavi-letras';
+    document.head.append(estilo);
+  }
+  estilo.textContent = caras;
+}
+
+/** En EPUB, pellizcar o Ctrl/⌘ + rueda cambia el tamaño de letra; la app lo guarda y lo manda de vuelta. */
+function letraConGestos(objetivo) {
+  const vista = () => epub?.raiz;
+  const opciones = {
+    activo: () => forma !== 'book',
+    alMover: (escala) => {
+      const v = vista();
+      if (v) v.style.scale = String(Math.min(2, Math.max(0.5, escala)));
+    },
+    alTerminar: (escala) => {
+      const v = vista();
+      if (v) v.style.scale = '';
+      const tamano = tamanoValido(Math.round((texto.tamano * escala) / 10) * 10);
+      if (tamano !== texto.tamano) enviar({ type: 'textSize', size: tamano });
+    },
+  };
+  escucharPellizco(objetivo, opciones);
+  escucharRuedaConCtrl(objetivo, opciones);
+}
 
 // ─── Ir a ────────────────────────────────────────────────────────────────────
 

@@ -6,6 +6,7 @@ import { type CalendarView, setTimeFormat, type TimeFormat } from '@/lib/dates';
 import { type OrdenBiblioteca, ORDEN_POR_OMISION, ordenValido } from '@/lib/library/filters';
 import { type FormaDeLeer, formasValidas, recordarForma } from '@/lib/library/reading-mode';
 import { type PreferenciaDeTema, TEMA_POR_OMISION, temaValido } from '@/lib/library/reader-theme';
+import { type PreferenciaDeTexto, TEXTO_POR_OMISION, textoValido } from '@/lib/library/reader-text';
 import { type VistaDeSagas, VISTA_DE_SAGAS_POR_OMISION, vistaDeSagasValida } from '@/lib/library/series';
 import { DEFAULT_LIBRARY_VIEW, type LibraryView, libraryViewValida } from '@/lib/library/shelf';
 import { ALTO_DE_LOMOS_POR_OMISION, type AltoDeLomos, altoDeLomosValido } from '@/lib/library/spines';
@@ -61,6 +62,7 @@ type Prefs = {
   librarySpineHeights: AltoDeLomos;
   readingModes: Record<string, FormaDeLeer>;
   readerTheme: PreferenciaDeTema;
+  readerText: PreferenciaDeTexto;
 };
 
 type PreferencesState = {
@@ -116,6 +118,7 @@ type PreferencesState = {
   readingModes: Record<string, FormaDeLeer>;
   /** Tema del lector (RF-BH5): el mismo para todos los libros, aparte del tema de la app. */
   readerTheme: PreferenciaDeTema;
+  readerText: PreferenciaDeTexto;
   hydrated: boolean;
   setTimeFormat: (formato: TimeFormat) => void;
   setLanguage: (idioma: LanguagePreference) => void;
@@ -134,6 +137,7 @@ type PreferencesState = {
   setLibrarySpineHeights: (modo: AltoDeLomos) => void;
   setReadingMode: (itemId: string, forma: FormaDeLeer) => void;
   setReaderTheme: (tema: PreferenciaDeTema) => void;
+  setReaderText: (texto: PreferenciaDeTexto) => void;
   hydrate: () => Promise<void>;
 };
 
@@ -175,6 +179,7 @@ export const usePreferencesStore = create<PreferencesState>((set, get) => ({
   librarySpineHeights: ALTO_DE_LOMOS_POR_OMISION,
   readingModes: {},
   readerTheme: TEMA_POR_OMISION,
+  readerText: TEXTO_POR_OMISION,
   hydrated: false,
 
   setTimeFormat: (formato) => {
@@ -301,6 +306,12 @@ export const usePreferencesStore = create<PreferencesState>((set, get) => ({
     persistir({ ...get(), readerTheme: tema });
   },
 
+  setReaderText: (texto) => {
+    elegidoEnEstaSesion.add('readerText');
+    set({ readerText: texto });
+    persistir({ ...get(), readerText: texto });
+  },
+
   marcarVisto: () => {
     if (get().visto) return;
     elegidoEnEstaSesion.add('visto');
@@ -346,6 +357,7 @@ export const usePreferencesStore = create<PreferencesState>((set, get) => ({
       librarySpineHeights: guardado('librarySpineHeights', altoDeLomosValido(prefs?.librarySpineHeights)),
       readingModes: guardado('readingModes', formasValidas(prefs?.readingModes)),
       readerTheme: guardado('readerTheme', temaValido(prefs?.readerTheme)),
+      readerText: guardado('readerText', textoValido(prefs?.readerText)),
       hydrated: true,
     });
     // Lo elegido antes de hidratar se guardo con el resto de valores por omision;
@@ -356,7 +368,7 @@ export const usePreferencesStore = create<PreferencesState>((set, get) => ({
 
 /** Se guarda el conjunto entero: son dos claves y así no pueden desincronizarse. */
 function persistir(
-  estado: Pick<PreferencesState, 'timeFormat' | 'timeFormatChosen' | 'language' | 'lastWorkoutTitle' | 'showWorkouts' | 'showBirthdays' | 'visto' | 'appearance' | 'selfColor' | 'pinnedViews' | 'accesos' | 'overlayRecientes' | 'libraryView' | 'libraryOrder' | 'librarySeriesView' | 'librarySpineHeights' | 'readingModes' | 'readerTheme'>,
+  estado: Pick<PreferencesState, 'timeFormat' | 'timeFormatChosen' | 'language' | 'lastWorkoutTitle' | 'showWorkouts' | 'showBirthdays' | 'visto' | 'appearance' | 'selfColor' | 'pinnedViews' | 'accesos' | 'overlayRecientes' | 'libraryView' | 'libraryOrder' | 'librarySeriesView' | 'librarySpineHeights' | 'readingModes' | 'readerTheme' | 'readerText'>,
 ): void {
   void setJson(PREFS_KEY, {
     timeFormat: estado.timeFormat,
@@ -377,5 +389,6 @@ function persistir(
     librarySpineHeights: estado.librarySpineHeights,
     readingModes: estado.readingModes,
     readerTheme: estado.readerTheme,
+    readerText: estado.readerText,
   } satisfies Prefs);
 }

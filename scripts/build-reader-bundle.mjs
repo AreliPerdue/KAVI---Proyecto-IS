@@ -10,7 +10,7 @@
  * Corre en `postinstall`, después de `vendor-reader.mjs` (necesita `public/reader/vendor/`). El resultado
  * no se sube al repo.
  */
-import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -51,6 +51,13 @@ const seguro = (texto) => texto.replace(/<\/(script)/gi, '<\\/$1');
 const html = readFileSync(join(motor, 'engine.html'), 'utf8');
 const estilos = html.match(/<style>([\s\S]*?)<\/style>/)?.[1] ?? '';
 const worker = readFileSync(join(motor, 'vendor', 'pdfjs', 'pdf.worker.min.mjs'), 'utf8');
+// Las letras para leer (T288) van dentro, en base64: sin red también se puede cambiar de letra.
+const carpetaLetras = join(motor, 'vendor', 'fonts');
+const letras = Object.fromEntries(
+  readdirSync(carpetaLetras)
+    .filter((f) => f.endsWith('.woff2'))
+    .map((f) => [f.replace(/\.woff2$/, ''), readFileSync(join(carpetaLetras, f)).toString('base64')]),
+);
 
 const pagina = `<!doctype html>
 <html lang="es">
@@ -60,7 +67,7 @@ const pagina = `<!doctype html>
 <meta name="color-scheme" content="dark light" />
 <title>KAVI Library</title>
 <style>${estilos}</style>
-<script>globalThis.KAVI_BASE = document.baseURI; globalThis.KAVI_PDF_WORKER = ${seguro(JSON.stringify(worker))};</script>
+<script>globalThis.KAVI_BASE = document.baseURI; globalThis.KAVI_PDF_WORKER = ${seguro(JSON.stringify(worker))}; globalThis.KAVI_FONTS = ${JSON.stringify(letras)};</script>
 </head>
 <body>
 <script>${seguro(outputFiles[0].text)}</script>

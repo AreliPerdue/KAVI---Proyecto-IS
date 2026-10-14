@@ -1041,7 +1041,12 @@ Decisiones B1–B9 aprobadas el 12 oct 2026 (T274); ver la tabla de la spec 13 �
   seleccionado (`selection-bar.tsx`), hoja del subrayado con nota (`highlight-sheet.tsx`), Definir
   (`services/dictionary.ts`, Free Dictionary API con tope de 8 s y enlace a la RAE) y Copiar (`expo-clipboard`,
   respeta el permiso de copiar del PDF). Pendiente: diccionario del sistema en iPhone (módulo nativo).
-- [ ] T288 Zoom, tamaño y tipo de letra incluidos. (RF-BH1 – RF-BH3) Dep: T279
+- [x] T288 Zoom, tamaño y tipo de letra incluidos. (RF-BH1 – RF-BH3) Dep: T279
+  **Hecho (13 oct 2026):** `public/reader/zoom.js` (pellizco y Ctrl/⌘ + rueda) y `public/reader/text.js`
+  (letras en `data:`); PDF se repinta al zoom (hasta 400 %), libro real acercado con capa para moverlo,
+  EPUB cambia el tamaño de letra. Letras OFL de Fontsource copiadas por `vendor-reader.mjs` y metidas en el
+  motor empaquetado (≈ 450 KB). Preferencia `readerText` (tamaño y letra) en el dispositivo; pastilla
+  "Ajustar a la página". Falta probar el pellizco real en el teléfono.
 - [x] T288b Tema del lector: claro, oscuro (fondo negro, letra blanca), sepia y propio, con aviso de poco
   contraste; en PDF, filtro de dos tonos. Adelantada el 13 oct a pedido de Areli. (RF-BH5) Dep: T279
 - [ ] T289 Cuadros de texto e imágenes. (RF-BH10, RF-BH12) Dep: T286

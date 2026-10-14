@@ -35,12 +35,18 @@
         -webkit-overflow-scrolling: touch;
         padding: 12px 0 96px;
         box-sizing: border-box;
+        /* El pellizco lo atiende el motor (zoom, T288): el navegador no acerca la página entera. */
+        touch-action: pan-x pan-y;
+      }
+      /* Acercado en scroll, la página puede ser más ancha que la pantalla. */
+      #pdf.acercado {
+        overflow-x: auto;
       }
       /* Páginas de lado (RF-BR7, T283): una a la vez, centrada; la pista se corre hacia los lados. */
       #pdf.paginado {
         overflow: hidden;
         padding: 0;
-        touch-action: pinch-zoom;
+        touch-action: none;
       }
       #pdf.paginado .pista {
         display: flex;
@@ -54,12 +60,16 @@
         flex: 0 0 100%;
         height: 100%;
         display: flex;
-        align-items: center;
-        justify-content: center;
+        overflow: hidden;
       }
+      /* Centrada con márgenes automáticos: acercada y más grande que la hoja, se recorre desde la orilla. */
       #pdf.paginado .pagina {
-        margin: 0;
+        margin: auto;
         flex: none;
+      }
+      #pdf.paginado.acercado .hoja {
+        overflow: auto;
+        touch-action: pan-x pan-y;
       }
       @media (prefers-reduced-motion: reduce) {
         #pdf.paginado .pista {
@@ -140,6 +150,17 @@
       }
       .libro-caja {
         max-width: 100%;
+      }
+      #libro {
+        touch-action: none;
+      }
+      /* Libro real acercado (T288): encima, para mover la hoja sin doblarla. */
+      #libro .lupa {
+        position: absolute;
+        inset: 0;
+        z-index: 5;
+        cursor: grab;
+        touch-action: none;
       }
       .hoja-libro {
         background: var(--papel);
