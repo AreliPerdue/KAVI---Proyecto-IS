@@ -313,6 +313,7 @@ function reacomodarPdf() {
   for (const n of [...pdf.renderizadas.keys()]) despintar(n);
   medirProvisionales();
   observar();
+  pdf.pantalla = null;
   irAPaginaPdf(pagina, false);
 }
 
@@ -343,14 +344,19 @@ async function abrirPdf(fuente, posicion) {
     paginas.push(div);
   }
 
-  pdf = { doc, tarea, raiz, pista, paginas, base, renderizadas: new Map(), observador: null, total, pagina: 0 };
+  pdf = { doc, tarea, raiz, pista, paginas, base, renderizadas: new Map(), observador: null, total, pagina: 0, pantalla: null };
+  // La letra grande (T340): un PDF se abre acercado al tamaño de letra elegido.
+  zoom = zoomDeLetra();
   raiz.classList.toggle('paginado', forma === 'paged');
+  raiz.classList.toggle('acercado', acercado());
   medirProvisionales();
   observar();
   gestosDePaginas(raiz);
   acercarConGestos(raiz);
 
   raiz.addEventListener('scroll', () => requestAnimationFrame(avisarPosicion), { passive: true });
+  // Al recorrer con el dedo una hoja acercada, la pantalla en que se va (T340).
+  raiz.addEventListener('scroll', (e) => e.target !== raiz && requestAnimationFrame(avisarPantalla), { passive: true, capture: true });
   // Un PDF puede prohibir copiar su texto (RF-BH9): se sigue pudiendo subrayar, no copiar.
   const permisos = await doc.getPermissions().catch(() => null);
   const lib = await pdfjs();
@@ -359,20 +365,30 @@ async function abrirPdf(fuente, posicion) {
   const inicio = Math.min(Math.max(1, posicion?.page ?? 1), total);
   if (forma === 'book') await entrarAlLibro(inicio);
   else irAPaginaPdf(inicio, false);
+  if (acercado() && forma !== 'book') enviar({ type: 'zoom', level: zoom });
 }
 
-/** Ir a una página del PDF: en scroll se desplaza hasta ella; en páginas de lado, la pista se corre. */
-function irAPaginaPdf(n, animar = true) {
+/**
+ * Ir a una página del PDF: en scroll se desplaza hasta ella; en páginas de lado, la pista se corre. Acercada,
+ * `desde` dice en qué pantalla de la página se empieza: la primera al avanzar, la última al regresar (T340).
+ */
+function irAPaginaPdf(n, animar = true, desde = 'inicio') {
   if (!pdf) return;
   const pagina = Math.min(Math.max(1, n), pdf.total);
   if (forma === 'paged') {
     pdf.raiz.scrollTop = 0;
     pdf.pista.classList.toggle('sin-animar', !animar);
     pdf.pista.style.transform = `translateX(${-(pagina - 1) * 100}%)`;
+    const hoja = pdf.paginas[pagina - 1]?.parentElement;
+    if (hoja && pagina !== pdf.pagina) {
+      hoja.scrollTop = desde === 'final' ? hoja.scrollHeight : 0;
+      hoja.scrollLeft = desde === 'final' ? hoja.scrollWidth : 0;
+    }
     if (pagina !== pdf.pagina) {
       pdf.pagina = pagina;
-      enviar({ type: 'position', page: pagina, total: pdf.total, fraction: pagina / pdf.total });
+      pdf.pantalla = null;
     }
+    avisarPantalla();
     return;
   }
   pdf.pista.style.transform = '';
@@ -432,6 +448,63 @@ function despintar(n) {
   pdf.paginas[n - 1].replaceChildren();
 }
 
+// ─── Leer acercado por pantallas (T340) ─────────────────────────────────────────
+// Con letra grande (el PDF acercado), una página real ocupa varias pantallas: pasar de página recorre primero
+// la página de arriba a abajo y luego la columna de la derecha, y solo entonces va a la siguiente. La cuenta de
+// páginas del libro no cambia; la barra dice "p. 12 · 2/3".
+
+/** Lo que se repite de una pantalla a la siguiente, para no perder el renglón. */
+const TRASLAPE = 0.08;
+
+function hojaActual() {
+  return pdf && forma === 'paged' ? pdf.paginas[(pdf.pagina || 1) - 1]?.parentElement : null;
+}
+
+/** Las pantallas de una hoja acercada: filas, columnas, el paso de cada una y en cuál se está. */
+function pantallasDe(hoja) {
+  const estilo = getComputedStyle(hoja);
+  const util = hoja.clientHeight - parseFloat(estilo.paddingTop || '0') - parseFloat(estilo.paddingBottom || '0');
+  const pasoY = Math.max(40, util * (1 - TRASLAPE));
+  const pasoX = Math.max(40, hoja.clientWidth * (1 - TRASLAPE));
+  const maxY = Math.max(0, hoja.scrollHeight - hoja.clientHeight);
+  const maxX = Math.max(0, hoja.scrollWidth - hoja.clientWidth);
+  const filas = maxY > 2 ? Math.ceil(maxY / pasoY) + 1 : 1;
+  const columnas = maxX > 2 ? Math.ceil(maxX / pasoX) + 1 : 1;
+  const en = (valor, max, paso, n) => (n === 1 ? 0 : valor >= max - 2 ? n - 1 : Math.min(n - 1, Math.round(valor / paso)));
+  return { filas, columnas, pasoY, pasoX, maxY, maxX, fila: en(hoja.scrollTop, maxY, pasoY, filas), columna: en(hoja.scrollLeft, maxX, pasoX, columnas) };
+}
+
+/** Una pantalla más (o menos) dentro de la página. Devuelve si se movió; si no, toca cambiar de página. */
+function pasarPantalla(paso) {
+  const hoja = hojaActual();
+  if (!hoja || !acercado()) return false;
+  const p = pantallasDe(hoja);
+  const i = p.columna * p.filas + p.fila + paso;
+  if (i < 0 || i >= p.filas * p.columnas) return false;
+  const columna = Math.floor(i / p.filas);
+  const fila = i % p.filas;
+  const suave = !matchMedia('(prefers-reduced-motion: reduce)').matches;
+  hoja.scrollTo({
+    top: fila === p.filas - 1 ? p.maxY : fila * p.pasoY,
+    left: columna === p.columnas - 1 ? p.maxX : columna * p.pasoX,
+    behavior: suave ? 'smooth' : 'auto',
+  });
+  return true;
+}
+
+/** La posición con su pantalla: "p. 12 · 2/3" cuando la página no cabe entera. */
+function avisarPantalla() {
+  if (!pdf || forma !== 'paged') return;
+  const hoja = hojaActual();
+  const p = hoja && acercado() ? pantallasDe(hoja) : null;
+  const total = p ? p.filas * p.columnas : 1;
+  const actual = p ? p.columna * p.filas + p.fila + 1 : 1;
+  const clave = `${pdf.pagina}:${actual}/${total}`;
+  if (clave === pdf.pantalla) return;
+  pdf.pantalla = clave;
+  enviar({ type: 'position', page: pdf.pagina, total: pdf.total, fraction: pdf.pagina / pdf.total, ...(total > 1 ? { screen: actual, screens: total } : {}) });
+}
+
 /** La página que ocupa el tercio de arriba de la pantalla es "donde voy" (RF-BR9). */
 function avisarPosicion() {
   if (!pdf || forma !== 'scroll') return;
@@ -466,6 +539,8 @@ async function abrirEpub(fuente, posicion) {
   view.addEventListener('relocate', (e) => {
     const { fraction, cfi, location } = e.detail ?? {};
     if (epub && typeof fraction === 'number' && forma !== 'book') epub.fraccion = fraction;
+    // Las "páginas" de foliate se cuentan por cantidad de texto, no por pantallas: no cambian con la letra.
+    if (epub && location?.total) epub.paginas = location.total;
     // foliate avisa varias veces por el mismo lugar (al pintar, al acomodar): solo cuenta si cambió.
     // En el libro real la posición la dice el hojeador; foliate queda escondido detrás.
     if (!cfi || cfi === ultimo || forma === 'book') return;
@@ -568,8 +643,10 @@ async function cambiarForma(nueva) {
   const pagina = libro?.pagina?.() ?? pdf?.pagina ?? 1;
   const cfi = libro?.cfi?.() ?? epub?.ultimo ?? null;
   forma = nueva;
-  if (acercado()) enviar({ type: 'zoom', level: 1 });
-  zoom = 1;
+  // Fuera del libro real, un PDF vuelve al acercamiento de su tamaño de letra (T340).
+  const nuevoZoom = pdf && nueva !== 'book' ? zoomDeLetra() : 1;
+  if (Math.abs(nuevoZoom - zoom) > 0.01) enviar({ type: 'zoom', level: nuevoZoom });
+  zoom = nuevoZoom;
   if (antes === 'book') salirDelLibro();
   if (nueva === 'book') {
     await entrarAlLibro(pdf ? pagina : cfi);
@@ -682,9 +759,13 @@ async function entrarAlLibro(donde) {
       cfi: typeof donde === 'string' ? donde : epub.ultimo,
       texto: { tamano: texto.tamano, familia: familiaDe(texto.letra) },
       capa: anotaciones.capaLibroEpub,
+      // Las hojas del libro real dependen del tamaño de letra; la cuenta de páginas es la de foliate, que no
+      // cambia (T340): con letra grande, varias hojas comparten página.
       avisar: ({ cfi, pagina, total, fraccion }) => {
         if (epub) epub.ultimo = cfi;
-        enviar({ type: 'position', cfi, page: pagina, total, fraction: fraccion });
+        const paginas = epub?.paginas;
+        if (paginas) enviar({ type: 'position', cfi, page: Math.min(paginas, Math.floor(fraccion * paginas) + 1), total: paginas, fraction: fraccion });
+        else enviar({ type: 'position', cfi, page: pagina, total, fraction: fraccion });
       },
     });
     creandoLibro = tarea;
@@ -778,7 +859,11 @@ async function pintarEnCanvas(n, canvas, ancho, alto) {
 async function pasar(paso) {
   if (!porPaginas()) return;
   if (forma === 'book') return libro?.pasar(paso);
-  if (pdf) return irAPaginaPdf((pdf.pagina || 1) + paso);
+  if (pdf) {
+    // Acercada, primero las pantallas de esta página (T340).
+    if (forma === 'paged' && pasarPantalla(paso)) return;
+    return irAPaginaPdf((pdf.pagina || 1) + paso, true, paso < 0 ? 'final' : 'inicio');
+  }
   if (epub) await (paso > 0 ? epub.view.next() : epub.view.prev());
 }
 
@@ -834,9 +919,13 @@ function gestosDePaginas(objetivo, esEpub = false) {
     // cualquier forma de leer.
     if (Math.hypot(dx, dy) <= 8 && dt <= 500 && anotaciones.alTocar(e, doc)) return;
     if (!porPaginas()) return;
-    // Acercada, la página se recorre con el dedo: no se pasa de hoja (los controles siguen en el centro).
+    // Acercada, la página se recorre con el dedo (no se desliza de hoja). En páginas de lado, tocar las
+    // orillas lee por pantallas (T340); el centro sigue mostrando los controles.
     if (acercado()) {
-      if (Math.hypot(dx, dy) <= 8 && dt <= 500) enviar({ type: 'tap' });
+      if (Math.hypot(dx, dy) > 8 || dt > 500) return;
+      const x = xEnPantalla(e) / window.innerWidth;
+      if (forma === 'paged' && pdf && (x < 0.2 || x > 0.8)) void pasar(x < 0.2 ? -1 : 1);
+      else enviar({ type: 'tap' });
       return;
     }
     // Deslizar el dedo (en EPUB lo hace foliate).
@@ -905,6 +994,8 @@ let panLibro = { x: 0, y: 0 };
 let vistaPrevia = null;
 const acercado = () => zoom > 1.001;
 const limitarZoom = (z) => Math.min(ZOOM_MAX, Math.max(1, Math.round(z * 20) / 20));
+/** El acercamiento de un PDF para el tamaño de letra elegido: 100 % o menos es la página entera. */
+const zoomDeLetra = () => limitarZoom(Math.max(100, texto.tamano) / 100);
 
 /** Mientras se pellizca, la página bajo los dedos crece sola (barato); al soltar se pinta a su tamaño. */
 function mostrarVistaPrevia(escala, centro) {
@@ -948,6 +1039,8 @@ function fijarZoom(nuevo, centro = null) {
       despues.scrollLeft = x * f - c.x;
       despues.scrollTop = y * f - c.y;
     }
+    pdf.pantalla = null;
+    requestAnimationFrame(avisarPantalla);
   } else {
     const x = raiz.scrollLeft + c.x;
     const y = raiz.scrollTop + c.y;
@@ -1075,6 +1168,12 @@ function cambiarTexto(tamano, letra) {
     const caras = await caraDeLetra(texto.letra, VENDOR).catch(() => '');
     cssTexto = estilosDeTexto(texto, caras);
     letrasDelDocumento(caras);
+    // En un PDF el tamaño de letra es el acercamiento (T340): se lee por pantallas sin cambiar las páginas.
+    // Se acerca desde la orilla de arriba a la izquierda: se sigue leyendo desde el principio de lo que se veía.
+    if (pdf && antes.tamano !== texto.tamano && forma !== 'book') {
+      const r = pdf.raiz.getBoundingClientRect();
+      fijarZoom(zoomDeLetra(), { x: r.left, y: r.top });
+    }
     if (!epub) return;
     epub.view.renderer.setStyles?.(estilosEpub());
     // En el libro real las hojas se acomodaron con la letra de antes: se vuelven a hacer en el mismo lugar.

@@ -708,12 +708,28 @@ describe('zoom, tamaño y letra (spec 13c, T288)', () => {
     expect(usePreferencesStore.getState().readerText.letra).toBe('dyslexic');
   });
 
-  it('en la hoja Lectura de un PDF, el aviso del zoom en lugar de tamaño y letra', async () => {
+  it('en la hoja Lectura de un PDF, el tamaño de letra (acercar, desde 100 %) sin elegir letra (T340)', async () => {
+    usePreferencesStore.setState({ readerText: { tamano: 80, letra: 'serif' } });
     await render(<Lector />);
     await responder({ type: 'opened', total: 12 });
     await fireEvent.press(screen.getByRole('button', { name: R.mode }));
-    expect(screen.getByText(R.zoomPdfHint)).toBeTruthy();
-    expect(screen.queryByRole('button', { name: R.textBigger })).toBeNull();
+    expect(screen.getByText(R.textPdfHint)).toBeTruthy();
+    expect(screen.queryByText(R.fonts.serif)).toBeNull();
+    // 80 % de un EPUB es la página entera en un PDF: no baja de 100 %.
+    expect(screen.getByText(R.textSizeValue(100))).toBeTruthy();
+    expect(screen.getByRole('button', { name: R.textSmaller })).toBeDisabled();
+    await fireEvent.press(screen.getByRole('button', { name: R.textBigger }));
+    expect(usePreferencesStore.getState().readerText.tamano).toBe(110);
+    expect(mockEnviados.at(-1)).toEqual({ type: 'text', size: 110, font: 'serif' });
+  });
+
+  it('con letra grande, la barra dice la pantalla de la página sin cambiar el total (T340)', async () => {
+    await render(<Lector />);
+    await responder({ type: 'opened', total: 340 });
+    await responder({ type: 'position', page: 12, total: 340, fraction: 12 / 340, screen: 2, screens: 3 });
+    expect(screen.getByText(`${es.library.progressPage(12, 340)} · 2/3`)).toBeTruthy();
+    await responder({ type: 'position', page: 13, total: 340, fraction: 13 / 340 });
+    expect(screen.getByText(es.library.progressPage(13, 340))).toBeTruthy();
   });
 });
 

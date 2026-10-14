@@ -19,7 +19,7 @@ export const LETRAS = {
 };
 
 export const TAMANO_MIN = 70;
-export const TAMANO_MAX = 200;
+export const TAMANO_MAX = 300; // como `reader-text.ts` (T340)
 
 export const letraValida = (valor) => (Object.prototype.hasOwnProperty.call(LETRAS, valor) ? valor : 'original');
 export const tamanoValido = (valor) => (Number.isFinite(valor) ? Math.min(TAMANO_MAX, Math.max(TAMANO_MIN, Math.round(valor))) : 100);

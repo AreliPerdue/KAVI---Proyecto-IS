@@ -34,6 +34,9 @@ export const library = {
   },
   viewList: 'Lista',
   progressPage: (pagina: number, total: number) => `p. ${pagina} de ${total}`,
+  /** Con letra grande, una página ocupa varias pantallas (T340). */
+  progressScreen: (pantalla: number, pantallas: number) => `${pantalla}/${pantallas}`,
+  progressScreenA11y: (pantalla: number, pantallas: number) => `pantalla ${pantalla} de ${pantallas}`,
   progressPercent: (porcentaje: number) => `${porcentaje} % leído`,
   progressPages: (desde: number, hasta: number, total: number) => `pp. ${desde}–${hasta} de ${total}`,
   unread: 'Sin abrir',
@@ -316,6 +319,8 @@ export const library = {
     >,
     textHint: 'Para todos los libros EPUB. También puedes pellizcar la página para cambiar el tamaño.',
     zoomPdfHint: 'En PDF, pellizca la página o usa Ctrl (⌘ en Mac) y la rueda para acercar. Doble toque la vuelve a ajustar.',
+    textPdfHint:
+      'En un PDF, la letra grande acerca la página: en páginas de lado se lee por pantallas (de arriba a abajo) y el libro conserva su número de páginas. Para todos tus libros.',
     zoomLevel: (n: number) => `${n} %`,
     zoomFit: 'Ajustar a la página',
     themeLowContrast: 'Con estos colores cuesta leer. Prueba una letra más clara o una página más oscura (o al revés).',

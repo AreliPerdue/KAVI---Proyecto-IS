@@ -92,7 +92,11 @@ export type MensajeDelMotor =
   /** `copiable`: si el libro deja copiar su texto (un PDF puede prohibirlo, RF-BH9). */
   | { type: 'opened'; total: number | null; copiable?: boolean; lang?: string | null }
   /** `pageEnd`: en el libro real con dos páginas, la de la derecha ("pp. 2–3", RF-BR5). */
-  | { type: 'position'; page?: number; pageEnd?: number; total?: number; cfi?: string; fraction: number }
+  /**
+   * `screen`/`screens`: con letra grande en un PDF, en qué pantalla de la página se va ("p. 12 · 2/3", T340); la
+   * cuenta de páginas no cambia.
+   */
+  | { type: 'position'; page?: number; pageEnd?: number; total?: number; cfi?: string; fraction: number; screen?: number; screens?: number }
   | { type: 'search'; count: number; index: number; searching?: boolean }
   | { type: 'cover'; dataUrl: string }
   /** Toque o clic en el centro de la página: mostrar u ocultar los controles (RF-BR7b). */
@@ -156,6 +160,9 @@ export function leerMensaje(crudo: unknown): MensajeDelMotor | null {
         ...(numero(m.pageEnd) && numero(m.page) && m.pageEnd > m.page ? { pageEnd: m.pageEnd } : {}),
         total: numero(m.total) ? m.total : undefined,
         cfi: typeof m.cfi === 'string' ? m.cfi : undefined,
+        ...(numero(m.screen) && numero(m.screens) && m.screens > 1 && m.screen >= 1 && m.screen <= m.screens
+          ? { screen: Math.round(m.screen), screens: Math.round(m.screens) }
+          : {}),
       };
     case 'search':
       return numero(m.count) && numero(m.index) ? { type: 'search', count: m.count, index: m.index, searching: m.searching === true } : null;

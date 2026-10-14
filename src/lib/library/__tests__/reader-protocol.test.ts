@@ -16,6 +16,9 @@ describe('leerMensaje', () => {
     [{ type: 'tap' }, { type: 'tap' }],
     [{ type: 'position', page: 2, pageEnd: 3, total: 340, fraction: 0.01 }, { type: 'position', page: 2, pageEnd: 3, total: 340, fraction: 0.01, cfi: undefined }],
     [{ type: 'position', page: 2, pageEnd: 2, total: 340, fraction: 0.01 }, { type: 'position', page: 2, total: 340, fraction: 0.01, cfi: undefined }],
+    // Con letra grande en un PDF, la pantalla de la página (T340); una sola pantalla o fuera de rango no se manda.
+    [{ type: 'position', page: 12, total: 340, fraction: 0.03, screen: 2, screens: 3 }, { type: 'position', page: 12, total: 340, fraction: 0.03, cfi: undefined, screen: 2, screens: 3 }],
+    [{ type: 'position', page: 12, total: 340, fraction: 0.03, screen: 4, screens: 3 }, { type: 'position', page: 12, total: 340, fraction: 0.03, cfi: undefined }],
     [{ type: 'error', code: 'password' }, { type: 'error', code: 'password', message: undefined }],
     [{ type: 'error', code: 'raro', message: 'x' }, { type: 'error', code: 'unknown', message: 'x' }],
   ])('%j', (crudo, esperado) => {

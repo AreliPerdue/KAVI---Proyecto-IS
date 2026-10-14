@@ -32,6 +32,8 @@ export const library: Dictionary['library'] = {
   },
   viewList: 'List',
   progressPage: (pagina, total) => `p. ${pagina} of ${total}`,
+  progressScreen: (pantalla, pantallas) => `${pantalla}/${pantallas}`,
+  progressScreenA11y: (pantalla, pantallas) => `screen ${pantalla} of ${pantallas}`,
   progressPercent: (porcentaje) => `${porcentaje}% read`,
   progressPages: (desde, hasta, total) => `pp. ${desde}–${hasta} of ${total}`,
   unread: 'Not opened',
@@ -311,6 +313,8 @@ export const library: Dictionary['library'] = {
     fonts: { original: 'Original', serif: 'Serif', sans: 'Sans serif', dyslexic: 'For dyslexia', hand: 'Handwritten' },
     textHint: 'For every EPUB book. You can also pinch the page to change the size.',
     zoomPdfHint: 'In PDFs, pinch the page or use Ctrl (⌘ on Mac) and the wheel to zoom in. Double tap fits it again.',
+    textPdfHint:
+      'In a PDF, bigger text zooms the page in: in side-by-side pages you read it screen by screen (top to bottom) and the book keeps its page count. For all your books.',
     zoomLevel: (n) => `${n}%`,
     zoomFit: 'Fit to page',
     themeLowContrast: 'These colors are hard to read. Try lighter text or a darker page (or the other way around).',

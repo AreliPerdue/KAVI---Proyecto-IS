@@ -9,9 +9,9 @@ import { LETRAS_DE_LECTURA, otroTamano, TAMANO_MAX, TAMANO_MIN } from '@/lib/lib
 import { usePreferencesStore } from '@/store/preferences-store';
 
 /**
- * Tamaño y letra del texto (spec 13c, RF-BH2 – RF-BH3; T288), en la hoja "Lectura". Solo para EPUB: un PDF
- * es una página fija y se acerca con el zoom (lo dice el aviso). Uno para todos los libros, en el
- * dispositivo; el libro se ve cambiar detrás de la hoja.
+ * Tamaño y letra del texto (spec 13c, RF-BH2 – RF-BH3; T288), en la hoja "Lectura". Uno para todos los
+ * libros, en el dispositivo; el libro se ve cambiar detrás de la hoja. En un PDF solo el tamaño (T340): es
+ * cuánto se acerca la página, desde 100 % (la página entera), y se lee por pantallas sin cambiar las páginas.
  */
 export function ReaderTextPicker({ esPdf }: { esPdf: boolean }) {
   const theme = useTheme();
@@ -19,40 +19,48 @@ export function ReaderTextPicker({ esPdf }: { esPdf: boolean }) {
   const texto = usePreferencesStore((s) => s.readerText);
   const setTexto = usePreferencesStore((s) => s.setReaderText);
 
-  if (esPdf) {
-    return (
-      <AppText variant="caption" color="textSecondary">
-        {r.zoomPdfHint}
-      </AppText>
-    );
-  }
-
   const icono = (activo: boolean) => ({ size: IconSize.action, strokeWidth: IconStroke, color: activo ? theme.text : theme.textTertiary });
-  const menos = texto.tamano > TAMANO_MIN;
+  // En PDF no hay letra más chica que la página entera.
+  const minimo = esPdf ? 100 : TAMANO_MIN;
+  const tamano = Math.max(minimo, texto.tamano);
+  const menos = tamano > minimo;
   const mas = texto.tamano < TAMANO_MAX;
   return (
     <View style={styles.seccion}>
       <AppText variant="label">{r.textSize}</AppText>
       <View style={styles.tamano}>
-        <IconButton label={r.textSmaller} onPress={() => setTexto({ ...texto, tamano: otroTamano(texto.tamano, -1) })} disabled={!menos}>
+        <IconButton label={r.textSmaller} onPress={() => setTexto({ ...texto, tamano: Math.max(minimo, otroTamano(tamano, -1)) })} disabled={!menos}>
           <AArrowDown {...icono(menos)} />
         </IconButton>
-        <AppText variant="bodyStrong" tabular style={styles.valor} accessibilityLabel={`${r.textSize}: ${r.textSizeValue(texto.tamano)}`}>
-          {r.textSizeValue(texto.tamano)}
+        <AppText variant="bodyStrong" tabular style={styles.valor} accessibilityLabel={`${r.textSize}: ${r.textSizeValue(tamano)}`}>
+          {r.textSizeValue(tamano)}
         </AppText>
-        <IconButton label={r.textBigger} onPress={() => setTexto({ ...texto, tamano: otroTamano(texto.tamano, 1) })} disabled={!mas}>
+        <IconButton label={r.textBigger} onPress={() => setTexto({ ...texto, tamano: otroTamano(tamano, 1) })} disabled={!mas}>
           <AArrowUp {...icono(mas)} />
         </IconButton>
       </View>
-      <AppText variant="label">{r.textFont}</AppText>
-      <View style={styles.letras} accessibilityRole="radiogroup" accessibilityLabel={r.textFont}>
-        {LETRAS_DE_LECTURA.map((l) => (
-          <Chip key={l} label={r.fonts[l]} selected={texto.letra === l} onPress={() => setTexto({ ...texto, letra: l })} compact />
-        ))}
-      </View>
-      <AppText variant="caption" color="textSecondary">
-        {r.textHint}
-      </AppText>
+      {esPdf ? (
+        <>
+          <AppText variant="caption" color="textSecondary">
+            {r.textPdfHint}
+          </AppText>
+          <AppText variant="caption" color="textSecondary">
+            {r.zoomPdfHint}
+          </AppText>
+        </>
+      ) : (
+        <>
+          <AppText variant="label">{r.textFont}</AppText>
+          <View style={styles.letras} accessibilityRole="radiogroup" accessibilityLabel={r.textFont}>
+            {LETRAS_DE_LECTURA.map((l) => (
+              <Chip key={l} label={r.fonts[l]} selected={texto.letra === l} onPress={() => setTexto({ ...texto, letra: l })} compact />
+            ))}
+          </View>
+          <AppText variant="caption" color="textSecondary">
+            {r.textHint}
+          </AppText>
+        </>
+      )}
     </View>
   );
 }

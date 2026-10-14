@@ -8,8 +8,15 @@
 - **RF-BH1. Zoom** con pellizco (o Ctrl/⌘ y rueda en web) en cualquier forma de leer; doble toque vuelve al
   ajuste de página.
 - **RF-BH2. Tamaño de letra** (EPUB y creaciones; en PDF el equivalente es el zoom).
-  - **Pendiente (T340, pedido de Areli del 14 oct 2026): letra grande sin cambiar el número de páginas**, para
-    quien batalla para ver. La cuenta de páginas es siempre la del original: con letra muy grande, una página
+  - **Hecho (T340, 14 oct 2026, pedido de Areli): letra grande sin cambiar el número de páginas**, para
+    quien batalla para ver. El tamaño de letra llega a **300 %** y es uno para todos los libros. En un **PDF** es
+    cuánto se acerca la página (desde 100 %, la página entera), elegible en la hoja **Lectura**; en páginas de
+    lado, pasar de página (orillas, flechas, teclado) recorre primero **las pantallas de la página** (de arriba a
+    abajo y luego a la derecha, repitiendo un poco para no perder el renglón) y la barra dice **"p. 12 de 340 ·
+    2/3"**; el total no cambia. En **EPUB** la cuenta ya era por cantidad de texto (foliate) y no cambia con la
+    letra; en el libro real ahora también se dice esa página y no la hoja. Pendiente: el texto reacomodado de un
+    PDF (RF-BX12, T327) para agrandar más allá del ancho de la página.
+  - Lo pedido originalmente: La cuenta de páginas es siempre la del original: con letra muy grande, una página
     real puede ocupar dos o más pantallas ("p. 12 · 2/3"), pero el libro sigue teniendo las mismas páginas. En
     EPUB, las páginas del propio libro (`page-list`) o páginas fijas por cantidad de texto; en PDF, con el texto
     reacomodado (RF-BX12, spec 13g) y la página original como referencia.

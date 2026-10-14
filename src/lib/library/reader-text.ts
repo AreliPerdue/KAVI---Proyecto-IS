@@ -1,6 +1,7 @@
 /**
  * Letra y tamaño del texto al leer un EPUB (spec 13c, RF-BH2 – RF-BH3; T288). Uno para todos los libros,
- * recordado en el dispositivo como el tema del lector. En PDF el equivalente es el zoom. Sin React.
+ * recordado en el dispositivo como el tema del lector. En PDF es el acercamiento: la página crece y se lee por
+ * pantallas, sin cambiar el número de páginas (T340). Sin React.
  *
  * Las letras incluidas (OFL) viajan con el motor de lectura (`public/reader/text.js`): Literata con
  * serifas, Atkinson Hyperlegible sin serifas, OpenDyslexic para dislexia y Patrick Hand manuscrita.
@@ -10,7 +11,8 @@ export type LetraDeLectura = 'original' | 'serif' | 'sans' | 'dyslexic' | 'hand'
 export const LETRAS_DE_LECTURA: readonly LetraDeLectura[] = ['original', 'serif', 'sans', 'dyslexic', 'hand'];
 
 export const TAMANO_MIN = 70;
-export const TAMANO_MAX = 200;
+/** Hasta 300 % para quien batalla para ver (T340); en un PDF, 300 % es acercar la página tres veces. */
+export const TAMANO_MAX = 300;
 export const PASO_DE_TAMANO = 10;
 
 export type PreferenciaDeTexto = { tamano: number; letra: LetraDeLectura };

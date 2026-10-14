@@ -622,7 +622,7 @@ function Lector({ id }: { id: string }) {
     porPagina && forma === 'book' && f === fraccion && posicion?.pageEnd
       ? l.progressPages(posicion.page ?? 1, posicion.pageEnd, total)
       : porPagina
-        ? l.progressPage(paginaEn(f), total)
+        ? l.progressPage(paginaEn(f), total) + (f === fraccion && posicion?.screens ? ` · ${l.progressScreen(posicion.screen ?? 1, posicion.screens)}` : '')
         : l.progressPercent(Math.round(f * 100));
   const saltar = (f: number) => motor.current?.send(porPagina ? { type: 'goTo', page: paginaEn(f) } : { type: 'goTo', fraction: f });
 
@@ -783,7 +783,9 @@ function Lector({ id }: { id: string }) {
             fraction={fraccion}
             etiqueta={etiqueta}
             onJump={saltar}
-            a11yLabel={r.progressA11y(etiqueta(fraccion))}
+            a11yLabel={r.progressA11y(
+              porPagina && posicion?.screens ? `${l.progressPage(paginaEn(fraccion), total)}, ${l.progressScreenA11y(posicion.screen ?? 1, posicion.screens)}` : etiqueta(fraccion),
+            )}
             paso={porPagina ? 1 / (total - 1) : 0.02}
             nota={segundosLeidos >= 60 ? l.time.read(duracion(segundosLeidos)) : undefined}
           />

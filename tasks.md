@@ -1106,9 +1106,12 @@ Decisiones B1–B9 aprobadas el 12 oct 2026 (T274); ver la tabla de la spec 13 �
   `lib/library/offline/sticker-packs.ts` (borradas al eliminar la cuenta), `sticker-sheet.tsx` con tarjetas,
   detalle del pack y Descargar/Quitar. El lector recibe `src` (copia como `data:` en el teléfono, la nube en la
   web) y la CSP del lector permite Supabase Storage. Falta probar la descarga sin red en el teléfono.
-- [ ] T340 Letra grande sin cambiar el número de páginas: la cuenta es la del original y una página real puede
+- [x] T340 Letra grande sin cambiar el número de páginas: la cuenta es la del original y una página real puede
   ocupar varias pantallas ("p. 12 · 2/3"); EPUB por `page-list` o páginas fijas por texto, PDF con texto
   reacomodado. (RF-BH2, pedido de Areli del 14 oct 2026) Dep: T288, T327
+  **Hecho (14 oct 2026):** tamaño hasta 300 %; en PDF el tamaño es el acercamiento (hoja Lectura) y en páginas de lado
+  se lee por pantallas con "p. 12 · 2/3" (`pasarPantalla`, `avisarPantalla` en `engine.js`); EPUB en libro real dice
+  la página de foliate. El texto reacomodado de PDF (T327) queda para agrandar más allá del ancho.
 - [ ] T339 Idiomas que la persona lee, en el perfil; Definir elige RAE para el español si lo lee aunque la app
   esté en inglés (WordReference solo para quien no). (RF-BH8, pedido de Areli del 14 oct 2026) Dep: T287
 - [x] T336 Post-it: la letra fija que se reduce si no cabe (como PowerPoint) y su tamaño elegible (50 – 300 %).
