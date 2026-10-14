@@ -1079,7 +1079,15 @@ Decisiones B1–B9 aprobadas el 12 oct 2026 (T274); ver la tabla de la spec 13 �
   mouse, el arrastre fuera de las esquinas no le llega al hojeador. Falta probar con el dedo en el teléfono.
 - [ ] T290 Stickers con charola de quitados, post-its que se doblan, separadores en el borde elegido.
   (RF-BH13 – RF-BH15) Dep: T286 — El post-it básico (pegar, mover, escribir, color) ya está desde T286;
-  aquí falta girarlo un poco, doblarlo y el post-it con trazo.
+  aquí falta girarlo un poco, doblarlo y el post-it con trazo. Los stickers (colección y charola) se hicieron
+  en T334; de aquí falta el sticker de una imagen propia y girar con dos dedos.
+- [x] T334 Stickers de los Nobi rosa con charola de "Quitados": pegar, mover, crecer sin deformarse, girar,
+  quitar a la charola, volver a pegar con su tamaño y giro, y tirar. (RF-BH13, pedido de Areli del 14 oct
+  2026) Dep: T289
+  **Hecho (14 oct 2026):** catálogo `src/constants/stickers.ts` (23 caras, nombres en es/en), imágenes en
+  `public/reader/stickers/nobi-pink/` (también dentro de `assets/reader/engine.html`, `KAVI_STICKERS`), tipo
+  `sticker` en `public/reader/annotations.js` (asas en las esquinas, proporción fija, giro; la caja sin giro al
+  soltar), `sticker-sheet.tsx` y la herramienta en la barra.
 - [x] T333 Borrar el archivo de una imagen quitada una hora después, si no se deshizo. (RF-BH12, pedido de
   Areli del 14 oct 2026) Dep: T289
   **Hecho (14 oct 2026):** acción `deleteFile` en `api/library-files.ts` (solo `<uid>/<pieza>/anotaciones/<id>.jpg`

@@ -16,7 +16,7 @@ export type ReaderEngineProps = {
 
 /**
  * La página del motor, empaquetada en la app (T285; la arma `scripts/build-reader-bundle.mjs`). Se lee
- * una vez y se reutiliza: pesa unos 2 MB.
+ * una vez y se reutiliza: pesa unos 4 MB (las letras y los stickers van dentro).
  */
 let pagina: Promise<string> | null = null;
 function paginaDelMotor(): Promise<string> {

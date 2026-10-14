@@ -840,3 +840,85 @@ describe('cuadros de texto e imágenes (spec 13c, RF-BH10, RF-BH12; T289)', () =
     expect(mockCambiar).toHaveBeenLastCalledWith(expect.objectContaining({ id: 'i1' }), expect.objectContaining({ content: { path: 'u1/l1/anotaciones/img1.jpg', rot: 45 } }));
   });
 });
+
+describe('stickers con charola de quitados (spec 13c, RF-BH13; T290)', () => {
+  const S = es.library.stickers;
+  const sticker = (id: string, cambio: Record<string, unknown> = {}) => ({
+    id,
+    item_id: 'l1',
+    owner_id: 'u1',
+    kind: 'sticker',
+    locator: { page: 2, x: 0.3, y: 0.4, w: 0.33, ar: 0.833 },
+    content: { sticker: 'nobi-pink/popcorn', rot: 30 },
+    z: 1,
+    removed: false,
+    locked: false,
+    created_at: 'c',
+    updated_at: 'u',
+    ...cambio,
+  });
+
+  it('elegir uno de la colección y tocar dónde va lo pega con su proporción, elegido', async () => {
+    await render(<Lector />);
+    await responder({ type: 'opened', total: 12 });
+    await fireEvent.press(screen.getByRole('button', { name: A.sticker }));
+    await fireEvent.press(screen.getByRole('button', { name: S.pick(S.names.popcorn) }));
+    expect(mockEnviados.at(-1)).toEqual({ type: 'tool', tool: 'sticker', ar: 0.833 });
+    expect(screen.getByText(A.stickerOn)).toBeTruthy();
+    await responder({ type: 'place', locator: { page: 2, x: 0.2, y: 0.2, w: 0.26, ar: 0.833 } });
+    const nuevo = mockCrear.mock.calls[0][0] as { id: string };
+    expect(nuevo).toMatchObject({ kind: 'sticker', locator: { page: 2, x: 0.2, y: 0.2, w: 0.26, ar: 0.833 }, content: { sticker: 'nobi-pink/popcorn', rot: 0 }, removed: false });
+    expect(mockEnviados).toContainEqual({ type: 'select', id: nuevo.id });
+  });
+
+  it('se manda al motor con cuál es, su giro y su nombre; lo quitado no', async () => {
+    mockLista = [sticker('s1'), sticker('s2', { removed: true })];
+    await render(<Lector />);
+    const items = (mockEnviados.filter((m) => m.type === 'annotations').at(-1) as { items: { id: string; content: unknown }[] }).items;
+    expect(items).toEqual([expect.objectContaining({ id: 's1', content: expect.objectContaining({ sticker: 'nobi-pink/popcorn', rot: 30, label: S.names.popcorn }) })]);
+  });
+
+  it('quitarlo no lo tira: se va a "Quitados" y lo dice; girar suma 90°', async () => {
+    mockLista = [sticker('s1')];
+    await render(<Lector />);
+    await responder({ type: 'opened', total: 12 });
+    await responder({ type: 'select', id: 's1' });
+    await fireEvent.press(screen.getByRole('button', { name: A.rotate }));
+    expect(mockCambiar).toHaveBeenLastCalledWith(expect.objectContaining({ id: 's1' }), expect.objectContaining({ content: { sticker: 'nobi-pink/popcorn', rot: 120 } }));
+    await fireEvent.press(screen.getByRole('button', { name: A.remove }));
+    expect(mockCambiar).toHaveBeenLastCalledWith(expect.objectContaining({ id: 's1' }), expect.objectContaining({ removed: true }));
+    expect(mockBorrar).not.toHaveBeenCalled();
+    expect(mockAvisar).toHaveBeenCalledWith({ message: S.savedToRemoved });
+  });
+
+  it('de la charola vuelve con su tamaño y su giro donde se toque; también se puede tirar', async () => {
+    mockLista = [sticker('s1', { removed: true, z: 2 }), sticker('s3', { z: 5 })];
+    await render(<Lector />);
+    await responder({ type: 'opened', total: 12 });
+    await fireEvent.press(screen.getByRole('button', { name: A.sticker }));
+    await fireEvent.press(screen.getByText(S.removed(1)));
+    await fireEvent.press(screen.getByRole('button', { name: S.putBack(S.names.popcorn) }));
+    expect(mockEnviados.at(-1)).toEqual({ type: 'tool', tool: 'sticker', ar: 0.833, w: 0.33 });
+    await responder({ type: 'place', locator: { page: 5, x: 0.6, y: 0.1, w: 0.33, ar: 0.833 } });
+    expect(mockCrear).not.toHaveBeenCalled();
+    expect(mockCambiar).toHaveBeenLastCalledWith(
+      expect.objectContaining({ id: 's1' }),
+      expect.objectContaining({ removed: false, locator: { page: 5, x: 0.6, y: 0.1, w: 0.33, ar: 0.833 }, content: { sticker: 'nobi-pink/popcorn', rot: 30 }, z: 6 }),
+    );
+    // Vuelve elegido; al soltarlo, la barra de herramientas regresa.
+    expect(mockEnviados).toContainEqual({ type: 'select', id: 's1' });
+    await fireEvent.press(screen.getByRole('button', { name: A.done }));
+    await fireEvent.press(screen.getByRole('button', { name: A.sticker }));
+    await fireEvent.press(screen.getByText(S.removed(1)));
+    await fireEvent.press(screen.getByRole('button', { name: S.discard(S.names.popcorn) }));
+    expect(mockBorrar).toHaveBeenCalledWith(expect.objectContaining({ id: 's1' }));
+  });
+
+  it('la charola vacía explica para qué es', async () => {
+    await render(<Lector />);
+    await responder({ type: 'opened', total: 12 });
+    await fireEvent.press(screen.getByRole('button', { name: A.sticker }));
+    await fireEvent.press(screen.getByText(S.removed(0)));
+    expect(screen.getByText(S.removedEmpty)).toBeTruthy();
+  });
+});

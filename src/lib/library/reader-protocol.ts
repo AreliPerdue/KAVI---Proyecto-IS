@@ -36,11 +36,14 @@ export type AnotacionEnMotor = {
     /** Imagen: la dirección para verla y cuánto está girada (grados). */
     src?: string;
     rot?: number;
+    /** Sticker (T290): cuál de la colección (`<paquete>/<nombre>`) y su nombre, para leerlo en voz alta. */
+    sticker?: string;
+    label?: string;
   };
 };
 
 /** Con qué se está anotando: nada (leer y mover lo pegado) o pegar algo donde se toque (T286, T289). */
-export type Herramienta = 'postit' | 'textbox' | 'image' | null;
+export type Herramienta = 'postit' | 'textbox' | 'image' | 'sticker' | null;
 
 export type MensajeAlMotor =
   | { type: 'open'; format: 'pdf' | 'epub'; url: string; position?: Posicion; mode?: FormaDeLeer }
@@ -64,8 +67,11 @@ export type MensajeAlMotor =
   | { type: 'cover'; url: string; width?: number }
   /** Todo lo que se pinta encima de las páginas, ya en orden de capa (13c, RF-BH16; T286). */
   | { type: 'annotations'; items: AnotacionEnMotor[] }
-  /** `ar`: la proporción (alto entre ancho) de la imagen que se va a pegar. */
-  | { type: 'tool'; tool: Herramienta; ar?: number }
+  /**
+   * `ar`: la proporción (alto entre ancho) de la imagen o el sticker que se va a pegar; `w`: el ancho de un
+   * sticker que vuelve de la charola (conserva su tamaño).
+   */
+  | { type: 'tool'; tool: Herramienta; ar?: number; w?: number }
   /** Escribir ahí mismo en un post-it o un cuadro de texto (T289). */
   | { type: 'write'; id: string }
   /** La app elige o suelta (al borrar, al cerrar la barra de lo seleccionado). */

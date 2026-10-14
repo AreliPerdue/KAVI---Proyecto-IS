@@ -1,4 +1,6 @@
 /** KAVI Library (spec 13). Biblioteca en español (decisión B8). */
+import type { NombreDeSticker, PaqueteDeStickers } from '@/constants/stickers';
+
 export const library = {
   title: 'Biblioteca',
   /** Nombre de marca del módulo en el wordmark (decisión B8): igual en los dos idiomas. */
@@ -371,6 +373,43 @@ export const library = {
     applied: (nombre: string) => `Acomodado como «${nombre}».`,
   },
   /** Lo anotado sobre la página (spec 13c, T286). */
+  stickers: {
+    title: 'Stickers',
+    collection: 'Colección',
+    removed: (n: number) => (n ? `Quitados (${n})` : 'Quitados'),
+    pack: { 'nobi-pink': 'Nobi rosa' } as Record<PaqueteDeStickers, string>,
+    pick: (nombre: string) => `Pegar el sticker ${nombre.toLowerCase()}`,
+    putBack: (nombre: string) => `Volver a pegar ${nombre.toLowerCase()}`,
+    discard: (nombre: string) => `Tirar ${nombre.toLowerCase()}`,
+    removedEmpty: 'Aquí quedan los stickers que quites de este libro. Tócalos para volver a pegarlos.',
+    removedHint: 'Toca uno para volver a pegarlo; conserva su tamaño y su giro.',
+    savedToRemoved: 'Quedó en Quitados: ahí lo puedes volver a pegar.',
+    names: {
+      'annoyed': 'Molestia',
+      'cheerie': 'Alegría',
+      'crying': 'Llanto',
+      'curious': 'Curiosidad',
+      'excited': 'Emoción',
+      'focused-note': 'Concentración',
+      'good-note': 'Buena nota',
+      'hiding': 'Escondite',
+      'holding-heart': 'Con corazón',
+      'hopeful': 'Ilusión',
+      'idea': 'Idea',
+      'love-tear-eyed': 'Amor con lágrimas',
+      'mischief': 'Travesura',
+      'pissed': 'Furia',
+      'popcorn': 'Palomitas',
+      'puddle-tears-tantrum': 'Berrinche',
+      'puddle-tears': 'Charco de lágrimas',
+      'sleeping': 'Sueño',
+      'smutty': 'Picante',
+      'speechless': 'Sin palabras',
+      'waving': 'Saludo',
+      'wink': 'Guiño',
+      'worried': 'Preocupación',
+    } as Record<NombreDeSticker, string>,
+  },
   annotations: {
     panel: 'Anotaciones',
     panelA11y: 'Ver todo lo anotado en este libro',
@@ -385,6 +424,8 @@ export const library = {
     imageCamera: 'Tomar foto',
     imageUploading: 'Subiendo la imagen…',
     imageFailed: 'No se pudo pegar la imagen. Revisa tu conexión e inténtalo de nuevo.',
+    sticker: 'Pegar un sticker',
+    stickerOn: 'Toca la página donde quieras pegarlo.',
     rotate: 'Girar 90°',
     styleColor: 'Color',
     textSize: 'Tamaño de letra',

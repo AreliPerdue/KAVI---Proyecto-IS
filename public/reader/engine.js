@@ -121,7 +121,7 @@ async function atender(m) {
     case 'annotations':
       return anotaciones.actualizar(m.items);
     case 'tool':
-      return anotaciones.herramienta(m.tool, m.ar);
+      return anotaciones.herramienta(m.tool, m.ar, m.w);
     case 'write':
       return anotaciones.escribir(m.id);
     case 'select':

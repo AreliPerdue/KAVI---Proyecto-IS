@@ -17,7 +17,9 @@ import { useDuracion } from '@/components/library/reading-summary';
 import { ReaderTextPicker } from '@/components/library/reader-text-picker';
 import { ReaderThemePicker } from '@/components/library/reader-theme-picker';
 import { SelectionBar } from '@/components/library/selection-bar';
+import { StickerSheet } from '@/components/library/sticker-sheet';
 import { AppText, Button, IconButton, Segmented, Sheet } from '@/components/ui';
+import { type NombreDeSticker, type Sticker, stickerPorId } from '@/constants/stickers';
 import { Fonts, IconSize, IconStroke, Radius, Spacing, Typography } from '@/constants/theme';
 import { useAnnotationEditor, useAnnotationImageUrls, useAnnotations, useUploadAnnotationImage } from '@/hooks/use-annotations';
 import { useReadingSessions, useReadingTimer } from '@/hooks/use-reading-sessions';
@@ -43,8 +45,10 @@ import {
   estiloDe,
   giroDe,
   palabraParaDefinir,
+  quitados,
   rutaDeImagen,
   SE_PINTAN,
+  stickerDe,
   textoDe,
   zAlFondo,
   zAlFrente,
@@ -86,6 +90,12 @@ type Posicion = Extract<MensajeDelMotor, { type: 'position' }>;
  * cola del dispositivo), se deshace y se rehace, y abajo están las herramientas: pegar un post-it y, con
  * algo elegido, escribir, traer al frente, mandar atrás, bloquear y quitar. Arriba, el panel de lo anotado.
  */
+/** El nombre de un sticker pegado, para leerlo en voz alta en la página. */
+function nombreDeSticker(a: LibraryAnnotation, nombres: Record<NombreDeSticker, string>): string | undefined {
+  const s = stickerPorId(stickerDe(a));
+  return s ? nombres[s.nombre] : undefined;
+}
+
 export default function ReaderScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   // Una pieza nueva arranca de cero (motor, posición, aviso del siguiente): al pasar al siguiente de
@@ -145,6 +155,9 @@ function Lector({ id }: { id: string }) {
   const [estiloDeId, setEstiloDeId] = useState<string | null>(null);
   const [imagenPorPegar, setImagenPorPegar] = useState<{ jpeg: Uint8Array; ar: number; vistaPrevia: string } | null>(null);
   const [eligiendoImagen, setEligiendoImagen] = useState(false);
+  // El sticker que espera el toque en la página (T290): uno nuevo de la colección o uno que vuelve de la charola.
+  const [eligiendoSticker, setEligiendoSticker] = useState(false);
+  const [stickerPorPegar, setStickerPorPegar] = useState<{ sticker: Sticker; devolver?: LibraryAnnotation } | null>(null);
   // Mientras una imagen recién pegada sube, se ve con su copia local.
   const [vistasPrevias, setVistasPrevias] = useState<ReadonlyMap<string, string>>(new Map());
   const subirImagen = useUploadAnnotationImage();
@@ -160,6 +173,7 @@ function Lector({ id }: { id: string }) {
   const subrayado = elegida?.kind === 'highlight' ? elegida : null;
   const deEstilo = lista?.find((a) => a.id === estiloDeId) ?? null;
   const urlsDeImagenes = useAnnotationImageUrls(lista);
+  const nombresDeStickers = tx.library.stickers.names;
 
   // Texto seleccionado (RF-BH7 – RF-BH9): qué dice y dónde está, para subrayar, definir o copiar.
   const [seleccionTexto, setSeleccionTexto] = useState<{ text: string; locator: LibraryLocator } | null>(null);
@@ -215,14 +229,23 @@ function Lector({ id }: { id: string }) {
           ...(a.kind === 'highlight' ? { style: estiloDe(a) } : {}),
           ...(a.kind === 'textbox' ? { size: escalaDe(a) } : {}),
           ...(a.kind === 'image' ? { src: vistasPrevias.get(a.id) ?? urlsDeImagenes.get(rutaDeImagen(a) ?? '') ?? undefined, rot: giroDe(a) } : {}),
+          ...(a.kind === 'sticker' ? { sticker: stickerDe(a) ?? undefined, rot: giroDe(a), label: nombreDeSticker(a, nombresDeStickers) } : {}),
         },
       }));
     motor.current?.send({ type: 'annotations', items });
-  }, [lista, vistasPrevias, urlsDeImagenes]);
+  }, [lista, vistasPrevias, urlsDeImagenes, nombresDeStickers]);
 
   useEffect(() => {
-    motor.current?.send({ type: 'tool', tool: herramienta, ...(herramienta === 'image' && imagenPorPegar ? { ar: imagenPorPegar.ar } : {}) });
-  }, [herramienta, imagenPorPegar]);
+    const medida =
+      herramienta === 'image' && imagenPorPegar
+        ? { ar: imagenPorPegar.ar }
+        : herramienta === 'sticker' && stickerPorPegar
+          ? stickerPorPegar.devolver
+            ? { ar: stickerPorPegar.devolver.locator.ar ?? stickerPorPegar.sticker.ar, w: stickerPorPegar.devolver.locator.w }
+            : { ar: stickerPorPegar.sticker.ar }
+          : {};
+    motor.current?.send({ type: 'tool', tool: herramienta, ...medida });
+  }, [herramienta, imagenPorPegar, stickerPorPegar]);
 
   // Letra y tamaño de un EPUB (RF-BH2, RF-BH3): al abrir y cada vez que cambian.
   const textoLectura = usePreferencesStore((s) => s.readerText);
@@ -383,6 +406,16 @@ function Lector({ id }: { id: string }) {
     const tipo = herramienta ?? 'postit';
     const base = { id: nuevoId, item_id: id, owner_id: '', z: zNueva(lista ?? []), removed: false, locked: false, created_at: t, updated_at: t };
     setHerramienta(null);
+    if (tipo === 'sticker') {
+      const elegido = stickerPorPegar;
+      setStickerPorPegar(null);
+      if (!elegido) return;
+      // De la charola vuelve el mismo, con su tamaño y su giro, donde se tocó y hasta arriba.
+      if (elegido.devolver) cambiar(elegido.devolver, { removed: false, locator, z: base.z });
+      else editor.crear({ ...base, kind: 'sticker', locator, content: { sticker: elegido.sticker.id, rot: 0 } });
+      elegir(elegido.devolver?.id ?? nuevoId);
+      return;
+    }
     if (tipo === 'image') {
       const imagen = imagenPorPegar;
       setImagenPorPegar(null);
@@ -439,11 +472,24 @@ function Lector({ id }: { id: string }) {
     const z = seleccionada && zAlFondo(lista ?? [], seleccionada.id);
     if (seleccionada && z != null) cambiar(seleccionada, { z });
   };
+  /** Quitar lo elegido. Un sticker no se tira: se va a la charola "Quitados" (RF-BH13). */
   const quitar = () => {
     if (!seleccionada) return;
-    editor.borrar(seleccionada);
+    if (seleccionada.kind === 'sticker') {
+      cambiar(seleccionada, { removed: true });
+      avisar({ message: tx.library.stickers.savedToRemoved });
+    } else editor.borrar(seleccionada);
     elegir(null);
   };
+
+  /** Elegir un sticker para pegar (T290): nuevo o de vuelta de la charola; luego se toca dónde va. */
+  const pegarSticker = (sticker: Sticker, devolver?: LibraryAnnotation) => {
+    setEligiendoSticker(false);
+    setStickerPorPegar({ sticker, devolver });
+    if (seleccionada) elegir(null);
+    setHerramienta('sticker');
+  };
+
 
   /** Subrayar lo seleccionado con un color, en el estilo elegido (RF-BH7). */
   const subrayar = (color: string) => {
@@ -671,6 +717,7 @@ function Lector({ id }: { id: string }) {
               onEstilo={() => setEstiloDeId(seleccionada?.id ?? null)}
               onGirar={() => seleccionada && cambiar(seleccionada, { content: { ...seleccionada.content, rot: (giroDe(seleccionada) + 90) % 360 } })}
               onImagen={() => (PUEDE_TOMAR_FOTO ? setEligiendoImagen(true) : void elegirImagen('galeria'))}
+              onSticker={() => setEligiendoSticker(true)}
               onFrente={alFrente}
               onAtras={alFondo}
               onBloquear={() => seleccionada && cambiar(seleccionada, { locked: !seleccionada.locked })}
@@ -774,6 +821,14 @@ function Lector({ id }: { id: string }) {
         error={anotaciones.isError}
         onReintentar={() => void anotaciones.refetch()}
         onIr={irAAnotacion}
+      />
+      <StickerSheet
+        visible={eligiendoSticker}
+        quitados={quitados(lista ?? [])}
+        onClose={() => setEligiendoSticker(false)}
+        onElegir={(s) => pegarSticker(s)}
+        onDevolver={(a, s) => pegarSticker(s, a)}
+        onTirar={(a) => editor.borrar(a)}
       />
       <PegadoStyleSheet anotacion={deEstilo} colorPortada={item.data ? colorDeParte(item.data, 'front') : null} onClose={() => setEstiloDeId(null)} onGuardar={guardarEstilo} />
       <Sheet visible={eligiendoImagen} onClose={() => setEligiendoImagen(false)} title={tx.library.annotations.imageFrom}>

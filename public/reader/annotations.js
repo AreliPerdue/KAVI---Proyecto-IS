@@ -15,8 +15,8 @@
  *   selecciona y se subraya (T330): en PDF cada hoja lleva su capa de texto (`.hoja-pdf`); en EPUB la
  *   selección de la hoja se traduce a CFI del capítulo (`libro.seleccion()`, en `book.js`).
  *
- * Pinta post-its (T286) y subrayados (T287); los cuadros, stickers y el lápiz llegan con sus tareas (T289 –
- * T291) sobre esta misma capa.
+ * Pinta post-its (T286), subrayados (T287), cuadros de texto e imágenes (T289) y stickers (T290); el lápiz
+ * llega con su tarea (T291) sobre esta misma capa.
  *
  * Subrayados (13c, RF-BH7): al seleccionar texto el motor avisa `selection` con lo que dice y dónde está (en
  * PDF, un rectángulo por renglón en 0–1 de su página; en EPUB, el CFI del rango). La app crea el subrayado y
@@ -37,6 +37,20 @@ const LADO_MIN_PX = 48;
 /** Alto entre ancho del post-it: 1 es cuadrado. */
 const proporcionDe = (a) => (Number.isFinite(a.locator?.ar) && a.locator.ar >= 0.25 && a.locator.ar <= 4 ? a.locator.ar : 1);
 const entre = (v, min, max) => Math.min(Math.max(v, min), max);
+
+/** Lo que se pega encima de la página (lo demás, como los subrayados, va en el texto). */
+const PEGABLES = ['postit', 'textbox', 'image', 'sticker'];
+/** Lo que es solo una imagen: se gira y no se escribe. */
+const esImagen = (a) => a.kind === 'image' || a.kind === 'sticker';
+
+/**
+ * La imagen de un sticker incluido (T290): en el teléfono viene dentro del motor (sin red también se ve); en
+ * la web, junto a él, en `stickers/<paquete>/<nombre>.png`.
+ */
+function fuenteDeSticker(id) {
+  if (typeof id !== 'string' || !/^[a-z0-9-]+\/[a-z0-9-]+$/.test(id)) return '';
+  return globalThis.KAVI_STICKERS?.[id] ?? new URL(`stickers/${id}.png`, globalThis.KAVI_BASE ?? document.baseURI).href;
+}
 
 /** Letra clara u oscura según el color del post-it: que se lea siempre. */
 function letraSobre(hex) {
@@ -63,16 +77,17 @@ export function crearCapa(ctx, enviar) {
   let repintarAlSoltar = false;
   let ultimoToque = { id: null, t: 0 };
 
-  const pegados = () => lista.filter((a) => a.kind === 'postit' || a.kind === 'textbox' || a.kind === 'image');
+  const pegados = () => lista.filter((a) => PEGABLES.includes(a.kind));
   let editando = null; // { id, el, caja }
-  let proporcionNueva = 1; // la de la imagen que se va a pegar
+  let proporcionNueva = 1; // la de la imagen o el sticker que se va a pegar
+  let anchoNuevo = null; // el de un sticker que vuelve de la charola: conserva su tamaño
   let porEditar = null; // un id que pidió escribirse antes de pintarse
   const subrayados = () => lista.filter((a) => a.kind === 'highlight');
   const colorDe = (a) => (/^#[0-9a-fA-F]{6}$/.test(a.content?.color ?? '') ? a.content.color : '#F1D35D');
   const estiloDe = (a) => (a.content?.style === 'underline' || a.content?.style === 'strike' ? a.content.style : 'highlight');
   const interactiva = () => ctx.forma() !== 'book';
 
-  // ─── Lo pegado: post-it, cuadro de texto e imagen ────────────────────────────
+  // ─── Lo pegado: post-it, cuadro de texto, imagen y sticker ────────────────────
 
   /** Cuánto puede escribirse en cada uno. */
   const MAX_TEXTO = { postit: 280, textbox: 1000 };
@@ -84,6 +99,7 @@ export function crearCapa(ctx, enviar) {
    * - **Post-it:** cuadro de color con su texto; la letra crece con el ancho.
    * - **Cuadro de texto:** solo el texto, del color y tamaño elegidos, sin fondo (RF-BH10).
    * - **Imagen:** la imagen entera en su caja, que se puede girar (RF-BH12).
+   * - **Sticker:** igual, de la colección incluida y con una sombrita de calcomanía (RF-BH13).
    */
   function pegado(a, { ancho, enLibro = false }) {
     const el = document.createElement('div');
@@ -103,14 +119,17 @@ export function crearCapa(ctx, enviar) {
       cursor: a.locked ? 'pointer' : 'grab',
       rotate: Number.isFinite(a.content?.rot) && a.content.rot ? `${a.content.rot}deg` : '',
     });
-    if (a.kind === 'image') {
+    if (esImagen(a)) {
+      const sticker = a.kind === 'sticker';
       el.setAttribute('role', 'img');
-      el.setAttribute('aria-label', 'Imagen');
+      el.setAttribute('aria-label', sticker ? (a.content?.label ?? 'Sticker') : 'Imagen');
       const img = document.createElement('img');
       img.alt = '';
       img.draggable = false;
-      if (a.content?.src) img.src = a.content.src;
+      const src = sticker ? fuenteDeSticker(a.content?.sticker) : a.content?.src;
+      if (src) img.src = src;
       Object.assign(img.style, { width: '100%', height: '100%', objectFit: 'contain', display: 'block', pointerEvents: 'none' });
+      if (sticker) img.style.filter = 'drop-shadow(0 1px 2px rgb(0 0 0 / 0.22))';
       el.append(img);
     } else {
       const caja = document.createElement('div');
@@ -166,7 +185,7 @@ export function crearCapa(ctx, enviar) {
       porEditar = id;
       return;
     }
-    if (a.kind === 'image' || a.locked || !interactiva()) {
+    if (esImagen(a) || a.locked || !interactiva()) {
       porEditar = null;
       return;
     }
@@ -308,7 +327,7 @@ export function crearCapa(ctx, enviar) {
 
   /** Al soltar: la nueva posición, en la página (PDF) o el renglón (EPUB) donde quedó. */
   function soltarEn(el, a) {
-    const caja = el.getBoundingClientRect();
+    const caja = cajaSinGiro(el);
     let locator = null;
     if (ctx.pdf()) {
       const centro = [caja.left + caja.width / 2, caja.top + caja.height / 2];
@@ -334,6 +353,19 @@ export function crearCapa(ctx, enviar) {
     enviar({ type: 'move', id: a.id, locator });
   }
 
+  /**
+   * La caja de algo pegado en px de la ventana, como si no estuviera girado (con lo que lleva arrastrado). La
+   * de `getBoundingClientRect` crece al girarlo y movería la pieza al soltarla.
+   */
+  function cajaSinGiro(el) {
+    const padre = el.offsetParent;
+    if (!padre || !padre.offsetWidth) return el.getBoundingClientRect();
+    const r = padre.getBoundingClientRect();
+    const k = r.width / padre.offsetWidth;
+    const [tx = 0, ty = 0] = (el.style.translate || '').split(' ').map((v) => parseFloat(v) || 0);
+    return { left: r.left + el.offsetLeft * k + tx, top: r.top + el.offsetTop * k + ty, width: el.offsetWidth * k, height: el.offsetHeight * k };
+  }
+
   /** La esquina (izquierda, arriba) en px de la ventana → posición en la página, sin salirse. */
   function enPagina(pagina, izquierda, arriba, w, ar = 1) {
     const r = pagina.getBoundingClientRect();
@@ -350,16 +382,19 @@ export function crearCapa(ctx, enviar) {
   // ─── Cambiar el tamaño (T329) ────────────────────────────────────────────────
 
   const LADOS = ['n', 's', 'e', 'w', 'ne', 'nw', 'se', 'sw'];
+  const ESQUINAS = ['ne', 'nw', 'se', 'sw'];
 
   /**
    * Las 8 asas de algo pegado y elegido (T329, pedido de Areli): una "L" en cada esquina y una rayita en medio
    * de cada lado, en tinta, cada una con área de sobra para tomarla (así estirar nunca arrastra la nota).
    * Jalar una cambia el ancho y el alto sin mover la orilla de enfrente; las de los lados, solo uno de los dos.
-   * Las imágenes llevan además un asa arriba para girarlas.
+   * Las imágenes y los stickers llevan además un asa arriba para girarlas. Un sticker solo tiene las de las
+   * esquinas y crece o se encoge sin deformarse.
    */
   function ponerAsas(el, a) {
-    if (a.kind === 'image') ponerGiro(el, a);
-    for (const lado of LADOS) {
+    if (esImagen(a)) ponerGiro(el, a);
+    const proporcional = a.kind === 'sticker';
+    for (const lado of proporcional ? ESQUINAS : LADOS) {
       const asa = document.createElement('div');
       asa.className = `asa asa-${lado}`;
       asa.dataset.lado = lado;
@@ -382,7 +417,7 @@ export function crearCapa(ctx, enviar) {
         const [gx, gy] = [e.clientX - inicio.x, e.clientY - inicio.y];
         const dx = gx * Math.cos(rad) - gy * Math.sin(rad);
         const dy = gx * Math.sin(rad) + gy * Math.cos(rad);
-        const caja = cajaNueva(inicio, lado, dx, dy, el.offsetParent);
+        const caja = (proporcional ? cajaProporcional : cajaNueva)(inicio, lado, dx, dy, el.offsetParent);
         Object.assign(el.style, { left: `${caja.l}px`, top: `${caja.t}px`, width: `${caja.w}px`, height: `${caja.h}px`, aspectRatio: 'auto' });
         arrastre.movido = true;
       });
@@ -471,9 +506,24 @@ export function crearCapa(ctx, enviar) {
     return { l, t, w, h };
   }
 
+  /** Jalando una esquina de un sticker: crece o se encoge entero, con la esquina de enfrente fija. */
+  function cajaProporcional(inicio, lado, dx, dy, capa) {
+    const maxW = capa?.clientWidth || Infinity;
+    const maxH = capa?.clientHeight || Infinity;
+    const sx = (inicio.w + (lado.includes('e') ? dx : -dx)) / inicio.w;
+    const sy = (inicio.h + (lado.includes('s') ? dy : -dy)) / inicio.h;
+    // Lo que hay hasta la orilla de la capa desde la esquina que no se mueve.
+    const libreW = lado.includes('e') ? maxW - inicio.l : inicio.l + inicio.w;
+    const libreH = lado.includes('s') ? maxH - inicio.t : inicio.t + inicio.h;
+    const s = entre(Math.max(sx, sy), LADO_MIN_PX / Math.min(inicio.w, inicio.h), Math.min(libreW / inicio.w, libreH / inicio.h));
+    const w = inicio.w * s;
+    const h = inicio.h * s;
+    return { l: lado.includes('w') ? inicio.l + inicio.w - w : inicio.l, t: lado.includes('n') ? inicio.t + inicio.h - h : inicio.t, w, h };
+  }
+
   /** Al soltar un asa: la caja nueva como posición, ancho y proporción. */
   function redimensionado(el, a) {
-    const caja = el.getBoundingClientRect();
+    const caja = cajaSinGiro(el);
     const ar = entre(caja.height / caja.width, 0.25, 4);
     let locator = null;
     if (ctx.pdf()) {
@@ -721,6 +771,7 @@ export function crearCapa(ctx, enviar) {
   function medidaNueva() {
     if (herramienta === 'textbox') return { w: 0.42, ar: 0.3 };
     if (herramienta === 'image') return { w: 0.4, ar: entre(proporcionNueva, 0.25, 4) };
+    if (herramienta === 'sticker') return { w: anchoNuevo ?? 0.3, ar: entre(proporcionNueva, 0.25, 4) };
     return { w: ANCHO, ar: 1 };
   }
 
@@ -802,7 +853,12 @@ export function crearCapa(ctx, enviar) {
     if (!area || !marco) return null;
     const m = marco.getBoundingClientRect();
     const { w, ar } = medidaNueva();
-    const anchoPx = herramienta === 'postit' ? anchoNuevoEpub(area) : entre(w * Math.min(area.width, 760), 120, area.width);
+    const anchoPx =
+      herramienta === 'postit'
+        ? anchoNuevoEpub(area)
+        : anchoNuevo
+          ? anchoEpub(anchoNuevo, area)
+          : entre(w * Math.min(area.width, 760), herramienta === 'sticker' ? ANCHO_MIN_PX : 120, area.width);
     return enEpub(e.clientX + m.left - anchoPx / 2, e.clientY + m.top - anchoPx / 4, anchoPx, redondear(anchoPx / area.width), ar);
   }
 
@@ -994,9 +1050,11 @@ export function crearCapa(ctx, enviar) {
       if (seleccion && !lista.some((a) => a.id === seleccion)) seleccion = null;
       repintar();
     },
-    herramienta(valor, proporcion) {
-      herramienta = valor === 'postit' || valor === 'textbox' || valor === 'image' ? valor : null;
+    /** `ancho`: el de un sticker que vuelve de la charola, para que conserve su tamaño. */
+    herramienta(valor, proporcion, ancho) {
+      herramienta = PEGABLES.includes(valor) ? valor : null;
       proporcionNueva = Number.isFinite(proporcion) && proporcion > 0 ? proporcion : 1;
+      anchoNuevo = herramienta === 'sticker' && Number.isFinite(ancho) && ancho > 0 && ancho <= 1 ? ancho : null;
       document.body.classList.toggle('pegando', !!herramienta);
       if (herramienta && seleccion) elegir(null, false);
     },

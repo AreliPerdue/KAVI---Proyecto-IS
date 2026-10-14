@@ -104,6 +104,19 @@
 - **RF-BH13. Stickers:** de una colección incluida (por estilo, spec 13e) o de una imagen propia. Se colocan
   en cualquier parte, se **rotan** con dos dedos, cambian de tamaño, se **quitan** y quedan en una charola
   ("Quitados") de donde se **vuelven a poner** —como un sticker reutilizable—.
+  - **Hecho la colección y la charola (T334, 14 oct 2026, pedido de Areli).** Primera colección: los **Nobi
+    rosa** de Areli (23 caras, de `Nobi/stickers/pink`), reducidas a 400 px y 256 colores (≈ 900 KB) en
+    `public/reader/stickers/nobi-pink/`; van dentro del motor del teléfono para verse sin red. El botón
+    **Pegar un sticker** abre la hoja con **Colección · Quitados (n)**; se elige uno y se toca dónde va, con su
+    proporción. Elegido: se mueve, crece o se encoge **sin deformarse** (solo las 4 esquinas), se gira con el
+    asa de arriba (o 90° con **Girar**), capa y candado. **Quitar** no lo tira: queda en "Quitados" (fila con
+    `removed`), se avisa, y se deshace. Desde la charola se toca uno y luego la página: vuelve **con su tamaño
+    y su giro** donde se tocó, hasta arriba; también se **tira** para siempre (con la ✕). La charola es de cada
+    libro.
+  - Cambio de forma: "arrastrarlo de vuelta" es **tocarlo en la charola y luego tocar la página**, porque la
+    hoja y la página no comparten el gesto (la charola es nativa y la página es el motor web).
+  - Falta: sticker de **una imagen propia**, girar **con dos dedos** en el teléfono y los demás colores o
+    estilos (13e).
 - **RF-BH14. Post-its:** cuadrados de color (paleta de los Nobi) con texto o trazo; se pegan, se mueven, se
   rotan un poco y se pueden **doblar** para que solo se vea una esquina. Tocar uno doblado lo abre.
 - **RF-BH15. Separadores:** las pestañitas que salen del borde. La persona elige **en qué borde** (arriba,
@@ -176,7 +189,8 @@ Como recortar de un libro o de una revista: se guarda un pedazo para después.
 - *Dado* un párrafo, *cuando* lo selecciono y elijo amarillo, *entonces* queda subrayado y aparece en el
   panel de anotaciones con su página.
 - *Dado* un sticker puesto, *cuando* lo quito, *entonces* desaparece de la página y aparece en "Quitados";
-  *cuando* lo arrastro de vuelta, *entonces* queda donde lo suelte, con su rotación.
+  *cuando* lo elijo en "Quitados" y toco la página, *entonces* queda donde toqué, con su tamaño y su rotación
+  (T334: antes decía "lo arrastro de vuelta"; ver RF-BH13).
 - *Dado* un separador rojo en el borde superior de la página 50, *cuando* cierro el libro y lo vuelvo a
   abrir, *entonces* lo veo en el canto y tocarlo me lleva a la página 50.
 - *Dado* que subo una fuente, *cuando* es la primera, *entonces* debo aceptar el aviso de licencias antes de

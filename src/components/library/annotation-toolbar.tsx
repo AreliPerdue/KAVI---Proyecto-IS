@@ -1,4 +1,4 @@
-import { BringToFront, Check, ImagePlus, Lock, LockOpen, Palette, Pencil, Redo2, RotateCw, SendToBack, StickyNote, Trash2, Type, Undo2 } from 'lucide-react-native';
+import { BringToFront, Check, ImagePlus, Lock, LockOpen, Palette, Pencil, Redo2, RotateCw, SendToBack, Sticker, StickyNote, Trash2, Type, Undo2 } from 'lucide-react-native';
 import type { ComponentType } from 'react';
 import { StyleSheet, View } from 'react-native';
 
@@ -19,6 +19,8 @@ type Props = {
   onHerramienta: (h: Herramienta) => void;
   /** Elegir una imagen para pegarla (T289): luego se toca dónde va. */
   onImagen: () => void;
+  /** Abrir la hoja de stickers (T290): la colección y los quitados de este libro. */
+  onSticker: () => void;
   onDeshacer: () => void;
   onRehacer: () => void;
   onEscribir: () => void;
@@ -33,9 +35,10 @@ type Props = {
 };
 
 /**
- * Las herramientas sobre la página (spec 13c; T286, T289), abajo del lector. Sin nada elegido: pegar un
- * post-it, un cuadro de texto o una imagen, deshacer y rehacer (RF-BH18). Con algo pegado elegido: escribir
- * (ahí mismo) y su color, o girar si es imagen; traer al frente, mandar atrás, bloquear (RF-BH16) y quitar.
+ * Las herramientas sobre la página (spec 13c; T286, T289, T290), abajo del lector. Sin nada elegido: pegar un
+ * post-it, un cuadro de texto, una imagen o un sticker, deshacer y rehacer (RF-BH18). Con algo pegado elegido:
+ * escribir (ahí mismo) y su color, o girar si es imagen o sticker; traer al frente, mandar atrás, bloquear
+ * (RF-BH16) y quitar (un sticker se va a la charola "Quitados").
  */
 export function AnnotationToolbar(p: Props) {
   const theme = useTheme();
@@ -44,7 +47,7 @@ export function AnnotationToolbar(p: Props) {
 
   if (p.seleccionada) {
     const bloqueada = p.seleccionada.locked;
-    const esImagen = p.seleccionada.kind === 'image';
+    const esImagen = p.seleccionada.kind === 'image' || p.seleccionada.kind === 'sticker';
     return (
       <View style={styles.contenedor}>
         {bloqueada ? <Aviso texto={a.lockedHint} /> : null}
@@ -83,7 +86,8 @@ export function AnnotationToolbar(p: Props) {
     );
   }
 
-  const aviso = p.enLibro ? a.postitBook : p.herramienta === 'postit' ? a.postitOn : p.herramienta === 'textbox' ? a.textboxOn : p.herramienta === 'image' ? a.imageOn : null;
+  const avisos = { postit: a.postitOn, textbox: a.textboxOn, image: a.imageOn, sticker: a.stickerOn };
+  const aviso = p.enLibro ? a.postitBook : p.herramienta ? avisos[p.herramienta] : null;
   const herr = (h: Exclude<Herramienta, null>, Icono: ComponentType<{ size: number; strokeWidth: number; color: string }>, etiqueta: string, onPress: () => void) => {
     const activa = p.herramienta === h;
     return (
@@ -99,6 +103,7 @@ export function AnnotationToolbar(p: Props) {
         {herr('postit', StickyNote, a.postit, () => p.onHerramienta('postit'))}
         {herr('textbox', Type, a.textbox, () => p.onHerramienta('textbox'))}
         {herr('image', ImagePlus, a.image, p.onImagen)}
+        {herr('sticker', Sticker, a.sticker, p.onSticker)}
         <View style={[styles.separador, { backgroundColor: theme.border }]} />
         <IconButton label={a.undo} onPress={p.onDeshacer} disabled={!p.puedeDeshacer}>
           <Undo2 {...icono(p.puedeDeshacer)} />

@@ -7,6 +7,8 @@ import {
   localizadorDeTexto,
   notaDe,
   palabraParaDefinir,
+  quitados,
+  stickerDe,
   destinoDe,
   filtrarAnotaciones,
   localizadorPegado,
@@ -187,5 +189,22 @@ describe('subrayados (RF-BH7 – RF-BH8, T287)', () => {
     expect(localizadorDeTexto({ rects: [{ page: 1, x: 2, y: 0, w: 0.1, h: 0.1 }] })).toBeNull();
     expect(localizadorDeTexto({ rects: Array(401).fill({ page: 1, x: 0, y: 0, w: 0.1, h: 0.1 }) })).toBeNull();
     expect(localizadorDeTexto({ cfi: 'otra-cosa' })).toBeNull();
+  });
+});
+
+describe('stickers (RF-BH13, T290)', () => {
+  it('cuál es: solo un texto', () => {
+    expect(stickerDe(nota('s', { kind: 'sticker', content: { sticker: 'nobi-pink/idea' } }))).toBe('nobi-pink/idea');
+    expect(stickerDe(nota('s', { kind: 'sticker', content: { sticker: 3 } }))).toBeNull();
+  });
+
+  it('la charola: solo stickers quitados, el último quitado primero', () => {
+    const lista = [
+      nota('viejo', { kind: 'sticker', removed: true, updated_at: '2026-10-14T08:00:00.000Z' }),
+      nota('puesto', { kind: 'sticker' }),
+      nota('nuevo', { kind: 'sticker', removed: true, updated_at: '2026-10-14T09:00:00.000Z' }),
+      nota('postit', { removed: true }),
+    ];
+    expect(quitados(lista).map((a) => a.id)).toEqual(['nuevo', 'viejo']);
   });
 });

@@ -13,7 +13,7 @@ export const COLOR_DE_POSTIT = PEOPLE_COLORS_DISPLAY.find((c) => c.id === 'yello
 /** Lo que va pegado encima de la página: se mueve, tiene capa y se bloquea (RF-BH16). */
 export const PEGADOS: readonly LibraryAnnotationKind[] = ['postit', 'sticker', 'textbox', 'image'];
 /** Lo que el motor ya sabe pintar. Cada tarea de L3 agrega el suyo (T289 cuadros, T290 stickers…). */
-export const SE_PINTAN: readonly LibraryAnnotationKind[] = ['postit', 'highlight', 'textbox', 'image'];
+export const SE_PINTAN: readonly LibraryAnnotationKind[] = ['postit', 'highlight', 'textbox', 'image', 'sticker'];
 
 /** Cuánto se escribe en cada uno (T289). */
 export const TEXTO_MAXIMO: Partial<Record<LibraryAnnotationKind, number>> = { postit: 280, textbox: 1000 };
@@ -28,6 +28,16 @@ export function escalaDe(a: Pick<LibraryAnnotation, 'content'>): number {
 export function giroDe(a: Pick<LibraryAnnotation, 'content'>): number {
   const g = a.content.rot;
   return typeof g === 'number' && Number.isFinite(g) ? ((Math.round(g) % 360) + 360) % 360 : 0;
+}
+
+/** Qué sticker incluido es (`<paquete>/<nombre>`, RF-BH13; T290). */
+export function stickerDe(a: Pick<LibraryAnnotation, 'content'>): string | null {
+  return typeof a.content.sticker === 'string' ? a.content.sticker : null;
+}
+
+/** Los stickers quitados de un libro (la charola "Quitados"), el último quitado primero. */
+export function quitados(lista: readonly LibraryAnnotation[]): LibraryAnnotation[] {
+  return lista.filter((a) => a.kind === 'sticker' && a.removed).sort((a, b) => b.updated_at.localeCompare(a.updated_at));
 }
 
 /** Ruta de la imagen de una anotación (la misma que arma el servicio al subirla). */
