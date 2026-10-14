@@ -1093,6 +1093,24 @@ Decisiones B1–B9 aprobadas el 12 oct 2026 (T274); ver la tabla de la spec 13 �
 - [ ] T335 Stickers propios: desde una imagen (galería, cámara o archivo), con margen blanco opcional alrededor
   de la silueta y su grosor ajustable; se guardan en la colección de la persona y se pegan como los incluidos.
   (RF-BH13, pedido de Areli del 14 oct 2026) Dep: T334
+- [x] T337 Tienda de stickers, datos y archivos: migración `sticker_packs` + `user_sticker_packs` con RLS, bucket
+  público `stickers`, script que optimiza los packs (400 px, 256 colores), arma su muestra y su fila del
+  catálogo, y los sube con el CLI. Primer Rebote en 24 colores. (RF-BH13b) Dep: T334
+  **Hecho (14 oct 2026):** `20261014120000_sticker_packs.sql` (tablas, RLS, bucket) y
+  `20261014130000_sticker_packs_primer_rebote.sql` (24 packs) aplicadas; RLS probada con PGlite (12 casos).
+  `scripts/stickers/preparar-packs.mjs` prepara cada temporada; 648 archivos subidos y verificados uno por uno.
+- [x] T338 Tienda de stickers en la app: servicios (Supabase y demo), hoja con Mis stickers · Tienda · Quitados,
+  descargar y quitar packs, copias en el teléfono para leer sin red y el motor pintando stickers de la nube.
+  (RF-BH13b) Dep: T337
+  **Hecho (14 oct 2026):** `use-sticker-packs.ts`, `lib/library/sticker-packs.ts`, copias en
+  `lib/library/offline/sticker-packs.ts` (borradas al eliminar la cuenta), `sticker-sheet.tsx` con tarjetas,
+  detalle del pack y Descargar/Quitar. El lector recibe `src` (copia como `data:` en el teléfono, la nube en la
+  web) y la CSP del lector permite Supabase Storage. Falta probar la descarga sin red en el teléfono.
+- [ ] T340 Letra grande sin cambiar el número de páginas: la cuenta es la del original y una página real puede
+  ocupar varias pantallas ("p. 12 · 2/3"); EPUB por `page-list` o páginas fijas por texto, PDF con texto
+  reacomodado. (RF-BH2, pedido de Areli del 14 oct 2026) Dep: T288, T327
+- [ ] T339 Idiomas que la persona lee, en el perfil; Definir elige RAE para el español si lo lee aunque la app
+  esté en inglés (WordReference solo para quien no). (RF-BH8, pedido de Areli del 14 oct 2026) Dep: T287
 - [x] T336 Post-it: la letra fija que se reduce si no cabe (como PowerPoint) y su tamaño elegible (50 – 300 %).
   (RF-BH14, pedido de Areli del 14 oct 2026) Dep: T329
   **Hecho (14 oct 2026):** `ajustarLetra` con un `ResizeObserver` en `public/reader/annotations.js` (busca la letra

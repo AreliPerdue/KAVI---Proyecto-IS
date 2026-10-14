@@ -23,6 +23,7 @@ export type {
   LibraryLink,
   LibraryReadingSession,
   LibraryReadingSessionInput,
+  StickerPack,
   LibraryLinkKind,
   LibrarySeries,
   LibraryShelfItem,
@@ -57,6 +58,10 @@ export const listReadingSessions = libraryApi.listReadingSessions;
 export const uploadAnnotationImage = libraryApi.uploadAnnotationImage;
 export const removeAnnotationImage = libraryApi.removeAnnotationImage;
 export const saveReadingSession = libraryApi.saveReadingSession;
+export const listStickerPacks = libraryApi.listStickerPacks;
+export const listMyStickerPacks = libraryApi.listMyStickerPacks;
+export const addStickerPack = libraryApi.addStickerPack;
+export const removeStickerPack = libraryApi.removeStickerPack;
 export const saveLayout = libraryApi.saveLayout;
 export const removeLayout = libraryApi.removeLayout;
 export const applyOrder = libraryApi.applyOrder;

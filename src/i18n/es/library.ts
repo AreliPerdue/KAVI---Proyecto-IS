@@ -376,6 +376,22 @@ export const library = {
   stickers: {
     title: 'Stickers',
     collection: 'Colección',
+    mine: 'Mis stickers',
+    store: 'Tienda',
+    storeOffline: 'La tienda necesita conexión. Tus stickers descargados siguen aquí.',
+    storeError: 'No se pudo cargar la tienda.',
+    retry: 'Reintentar',
+    download: 'Descargar',
+    downloaded: 'Descargado',
+    removePack: 'Quitar',
+    removePackA11y: (nombre: string) => `Quitar ${nombre} de mis stickers`,
+    downloadA11y: (nombre: string) => `Descargar ${nombre}`,
+    packName: (nombre: string, color: string) => `${nombre} · ${color}`,
+    packMeta: (n: number, peso: string) => `${n} stickers · ${peso}`,
+    openPack: (nombre: string) => `Ver los stickers de ${nombre}`,
+    backToStore: 'Volver a la tienda',
+    moreInStore: 'Descarga más colores de Nobi en la Tienda.',
+    downloadFailed: 'No se pudo descargar el pack. Revisa tu conexión e inténtalo de nuevo.',
     removed: (n: number) => (n ? `Quitados (${n})` : 'Quitados'),
     // El nombre del pack y el color de sus Nobi. "Primer Rebote": el de inicio (los Nobi son blobs que rebotan como
     // gelatina); vendrán los de cada temporada.

@@ -703,6 +703,23 @@ export type LibraryReadingSession = {
 
 export type LibraryReadingSessionInput = Omit<LibraryReadingSession, 'owner_id' | 'created_at' | 'updated_at'>;
 
+/**
+ * Un pack de la tienda de stickers (spec 13c, RF-BH13b; T338). Sus imágenes están en el bucket público
+ * `stickers`: `<id>/<name>.png` y `<id>/muestra.png`. `version` sube cuando cambian.
+ */
+export type StickerPack = {
+  id: string;
+  collection: string;
+  /** El color de sus Nobi (id de la paleta: `blue`, `navy_blue`…). */
+  color: string | null;
+  name_es: string;
+  name_en: string;
+  sort_order: number;
+  stickers: { name: string; ar: number }[];
+  bytes: number;
+  version: number;
+};
+
 /** Qué se acomoda: las portadas (también la lista) o los lomos del librero (RF-BL7b). */
 export type LibraryLayoutView = 'covers' | 'spines';
 

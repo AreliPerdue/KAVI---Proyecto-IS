@@ -100,6 +100,24 @@ jest.mock('@/hooks/use-annotations', () => ({
   }),
 }));
 
+// La tienda de stickers (T338): el doble trae un pack azul descargado y deja descargar.
+const mockPacks = [
+  { id: 'primer-rebote-blue', collection: 'primer-rebote', color: 'blue', name_es: 'Primer Rebote', name_en: 'First Bounce', sort_order: 1, stickers: [{ name: 'popcorn', ar: 0.833 }, { name: 'idea', ar: 0.81 }], bytes: 1150000, version: 1 },
+  { id: 'primer-rebote-red', collection: 'primer-rebote', color: 'red', name_es: 'Primer Rebote', name_en: 'First Bounce', sort_order: 2, stickers: [{ name: 'idea', ar: 0.81 }], bytes: 1000000, version: 1 },
+];
+const mockDescargar = jest.fn();
+const mockQuitarPack = jest.fn();
+jest.mock('@/hooks/use-sticker-packs', () => ({
+  useStickerPacks: () => ({ data: { packs: mockPacks, sinRed: false }, isLoading: false, isError: false, refetch: jest.fn() }),
+  useMyStickerPacks: () => ({ data: ['primer-rebote-blue'] }),
+  useStickerPackActions: () => ({
+    descargar: { mutate: mockDescargar, isPending: false, isError: false, variables: undefined },
+    quitar: { mutate: mockQuitarPack, isPending: false, isError: false, variables: undefined },
+  }),
+  useStickerSources: () => mockFuentes,
+}));
+const mockFuentes = new Map([['primer-rebote-blue/popcorn', 'data:image/png;base64,AZUL']]);
+
 /* eslint-disable-next-line @typescript-eslint/no-require-imports -- tras los mocks */
 const Lector = require('@/app/(app)/book/[id]').default as () => React.ReactElement;
 
@@ -874,7 +892,8 @@ describe('stickers con charola de quitados (spec 13c, RF-BH13; T290)', () => {
     await render(<Lector />);
     await responder({ type: 'opened', total: 12 });
     await fireEvent.press(screen.getByRole('button', { name: A.sticker }));
-    await fireEvent.press(screen.getByRole('button', { name: S.pick(S.names.popcorn) }));
+    // El primero es el rosa incluido; abajo, el del pack azul descargado.
+    await fireEvent.press(screen.getAllByRole('button', { name: S.pick(S.names.popcorn) })[0]);
     expect(mockEnviados.at(-1)).toEqual({ type: 'tool', tool: 'sticker', ar: 0.833 });
     expect(screen.getByText(A.stickerOn)).toBeTruthy();
     await responder({ type: 'place', locator: { page: 2, x: 0.2, y: 0.2, w: 0.26, ar: 0.833 } });
@@ -935,6 +954,42 @@ describe('stickers con charola de quitados (spec 13c, RF-BH13; T290)', () => {
     expect(mockCambiar).toHaveBeenLastCalledWith(expect.objectContaining({ id: 's1' }), expect.objectContaining({ removed: true }));
     await responder({ type: 'remove', id: 'p1' });
     expect(mockBorrar).toHaveBeenCalledWith(expect.objectContaining({ id: 'p1' }));
+  });
+
+  it('uno de un pack descargado se pega con su id de la tienda y el motor lo recibe con su imagen (T338)', async () => {
+    const { rerender } = await render(<Lector />);
+    await responder({ type: 'opened', total: 12 });
+    await fireEvent.press(screen.getByRole('button', { name: A.sticker }));
+    expect(screen.getByText(S.packName('Primer Rebote', es.colors.blue))).toBeTruthy();
+    await fireEvent.press(screen.getAllByRole('button', { name: S.pick(S.names.popcorn) })[1]);
+    await responder({ type: 'place', locator: { page: 2, x: 0.2, y: 0.2, w: 0.3, ar: 0.833 } });
+    const nuevo = mockCrear.mock.calls[0][0] as { id: string; content: Record<string, unknown> };
+    expect(nuevo.content).toEqual({ sticker: 'primer-rebote-blue/popcorn', rot: 0 });
+    mockLista = [sticker(nuevo.id, { content: nuevo.content })];
+    await rerender(<Lector />);
+    expect(mockEnviados.filter((m) => m.type === 'annotations').at(-1)).toEqual(
+      expect.objectContaining({ items: [expect.objectContaining({ content: expect.objectContaining({ sticker: 'primer-rebote-blue/popcorn', src: 'data:image/png;base64,AZUL', label: S.names.popcorn }) })] }),
+    );
+  });
+
+  it('la tienda: cada pack con su color y cuántos trae; se descarga y se quita (T338)', async () => {
+    await render(<Lector />);
+    await responder({ type: 'opened', total: 12 });
+    await fireEvent.press(screen.getByRole('button', { name: A.sticker }));
+    await fireEvent.press(screen.getByText(S.store));
+    const rojo = S.packName('Primer Rebote', es.colors.red);
+    const azul = S.packName('Primer Rebote', es.colors.blue);
+    expect(screen.getByText(S.packMeta(1, '977 KB'))).toBeTruthy();
+    await fireEvent.press(screen.getByRole('button', { name: S.downloadA11y(rojo) }));
+    expect(mockDescargar).toHaveBeenCalledWith(expect.objectContaining({ id: 'primer-rebote-red' }));
+    expect(screen.getByText(S.downloaded)).toBeTruthy();
+    await fireEvent.press(screen.getByRole('button', { name: S.removePackA11y(azul) }));
+    expect(mockQuitarPack).toHaveBeenCalledWith(expect.objectContaining({ id: 'primer-rebote-blue' }));
+    // Al tocar la tarjeta se ven todas sus caras.
+    await fireEvent.press(screen.getByRole('button', { name: S.openPack(azul) }));
+    expect(screen.getByLabelText(S.names.idea)).toBeTruthy();
+    await fireEvent.press(screen.getByRole('button', { name: S.backToStore }));
+    expect(screen.getByRole('button', { name: S.downloadA11y(rojo) })).toBeTruthy();
   });
 
   it('la charola vacía explica para qué es', async () => {

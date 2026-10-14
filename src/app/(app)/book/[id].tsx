@@ -17,12 +17,13 @@ import { useDuracion } from '@/components/library/reading-summary';
 import { ReaderTextPicker } from '@/components/library/reader-text-picker';
 import { ReaderThemePicker } from '@/components/library/reader-theme-picker';
 import { SelectionBar } from '@/components/library/selection-bar';
-import { StickerSheet } from '@/components/library/sticker-sheet';
+import { type StickerElegible, StickerSheet } from '@/components/library/sticker-sheet';
 import { AppText, Button, IconButton, Segmented, Sheet } from '@/components/ui';
-import { type NombreDeSticker, type Sticker, stickerPorId } from '@/constants/stickers';
+import { type NombreDeSticker } from '@/constants/stickers';
 import { Fonts, IconSize, IconStroke, Radius, Spacing, Typography } from '@/constants/theme';
 import { useAnnotationEditor, useAnnotationImageUrls, useAnnotations, useUploadAnnotationImage } from '@/hooks/use-annotations';
 import { useReadingSessions, useReadingTimer } from '@/hooks/use-reading-sessions';
+import { useStickerPacks, useStickerSources } from '@/hooks/use-sticker-packs';
 import { usePantallaCompleta } from '@/hooks/use-full-screen';
 import { useLibrarySync } from '@/hooks/use-library-sync';
 import { useAbrirCopiaLocal } from '@/hooks/use-local-book';
@@ -64,10 +65,11 @@ import {
 } from '@/lib/library/reader-protocol';
 import { FORMA_POR_OMISION, type FormaDeLeer } from '@/lib/library/reading-mode';
 import { coloresDe } from '@/lib/library/reader-theme';
+import { partesDeSticker, urlDeSticker } from '@/lib/library/sticker-packs';
 import { etiquetaDeSaga, siguienteDeSaga } from '@/lib/library/series';
 import { useAuth, useSnackbar } from '@/providers';
 import { usePreferencesStore } from '@/store/preferences-store';
-import type { LibraryAnnotation, LibraryLocator } from '@/types/domain';
+import type { LibraryAnnotation, LibraryLocator, StickerPack } from '@/types/domain';
 
 /** Cuánto se espera sin moverse antes de guardar la posición: así no se escribe en cada página. */
 const GUARDAR_MS = 1200;
@@ -90,10 +92,23 @@ type Posicion = Extract<MensajeDelMotor, { type: 'position' }>;
  * cola del dispositivo), se deshace y se rehace, y abajo están las herramientas: pegar un post-it y, con
  * algo elegido, escribir, traer al frente, mandar atrás, bloquear y quitar. Arriba, el panel de lo anotado.
  */
-/** El nombre de un sticker pegado, para leerlo en voz alta en la página. */
+/**
+ * La imagen de un sticker de la tienda para el lector: la copia del teléfono si ya se leyó; si no (o en la web),
+ * su dirección en la nube. Los incluidos no llevan: el lector los tiene.
+ */
+function fuenteDeSticker(id: string | null, fuentes: ReadonlyMap<string, string>, packs: readonly StickerPack[] | undefined): string | undefined {
+  if (!id || id.startsWith('nobi-pink/')) return undefined;
+  const lista = fuentes.get(id);
+  if (lista) return lista;
+  const partes = partesDeSticker(id);
+  const pack = partes && packs?.find((p) => p.id === partes.pack);
+  return pack && partes ? urlDeSticker(pack, partes.nombre) : undefined;
+}
+
+/** El nombre de un sticker pegado, para leerlo en voz alta en la página (la cara: igual en todos los packs). */
 function nombreDeSticker(a: LibraryAnnotation, nombres: Record<NombreDeSticker, string>): string | undefined {
-  const s = stickerPorId(stickerDe(a));
-  return s ? nombres[s.nombre] : undefined;
+  const cara = partesDeSticker(stickerDe(a) ?? '')?.nombre;
+  return cara ? (nombres as Record<string, string>)[cara] : undefined;
 }
 
 export default function ReaderScreen() {
@@ -157,7 +172,7 @@ function Lector({ id }: { id: string }) {
   const [eligiendoImagen, setEligiendoImagen] = useState(false);
   // El sticker que espera el toque en la página (T290): uno nuevo de la colección o uno que vuelve de la charola.
   const [eligiendoSticker, setEligiendoSticker] = useState(false);
-  const [stickerPorPegar, setStickerPorPegar] = useState<{ sticker: Sticker; devolver?: LibraryAnnotation } | null>(null);
+  const [stickerPorPegar, setStickerPorPegar] = useState<{ sticker: StickerElegible; devolver?: LibraryAnnotation } | null>(null);
   // Mientras una imagen recién pegada sube, se ve con su copia local.
   const [vistasPrevias, setVistasPrevias] = useState<ReadonlyMap<string, string>>(new Map());
   const subirImagen = useUploadAnnotationImage();
@@ -174,6 +189,12 @@ function Lector({ id }: { id: string }) {
   const deEstilo = lista?.find((a) => a.id === estiloDeId) ?? null;
   const urlsDeImagenes = useAnnotationImageUrls(lista);
   const nombresDeStickers = tx.library.stickers.names;
+  // Los stickers de la tienda pegados en este libro (T338): cómo los ve el lector (sin red, de su copia).
+  const packsDeStickers = useStickerPacks();
+  const fuentesDeStickers = useStickerSources(
+    (lista ?? []).filter((a) => a.kind === 'sticker' && !a.removed && !stickerDe(a)?.startsWith('nobi-pink/')).map((a) => stickerDe(a) ?? ''),
+    packsDeStickers.data?.packs,
+  );
 
   // Texto seleccionado (RF-BH7 – RF-BH9): qué dice y dónde está, para subrayar, definir o copiar.
   const [seleccionTexto, setSeleccionTexto] = useState<{ text: string; locator: LibraryLocator } | null>(null);
@@ -229,11 +250,13 @@ function Lector({ id }: { id: string }) {
           ...(a.kind === 'highlight' ? { style: estiloDe(a) } : {}),
           ...(a.kind === 'textbox' || a.kind === 'postit' ? { size: escalaDe(a) } : {}),
           ...(a.kind === 'image' ? { src: vistasPrevias.get(a.id) ?? urlsDeImagenes.get(rutaDeImagen(a) ?? '') ?? undefined, rot: giroDe(a) } : {}),
-          ...(a.kind === 'sticker' ? { sticker: stickerDe(a) ?? undefined, rot: giroDe(a), label: nombreDeSticker(a, nombresDeStickers) } : {}),
+          ...(a.kind === 'sticker'
+            ? { sticker: stickerDe(a) ?? undefined, rot: giroDe(a), label: nombreDeSticker(a, nombresDeStickers), src: fuenteDeSticker(stickerDe(a), fuentesDeStickers, packsDeStickers.data?.packs) }
+            : {}),
         },
       }));
     motor.current?.send({ type: 'annotations', items });
-  }, [lista, vistasPrevias, urlsDeImagenes, nombresDeStickers]);
+  }, [lista, vistasPrevias, urlsDeImagenes, nombresDeStickers, fuentesDeStickers]);
 
   useEffect(() => {
     const medida =
@@ -491,7 +514,7 @@ function Lector({ id }: { id: string }) {
   };
 
   /** Elegir un sticker para pegar (T290): nuevo o de vuelta de la charola; luego se toca dónde va. */
-  const pegarSticker = (sticker: Sticker, devolver?: LibraryAnnotation) => {
+  const pegarSticker = (sticker: StickerElegible, devolver?: LibraryAnnotation) => {
     setEligiendoSticker(false);
     setStickerPorPegar({ sticker, devolver });
     if (seleccionada) elegir(null);

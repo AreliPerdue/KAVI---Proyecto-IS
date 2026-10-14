@@ -84,7 +84,9 @@ const esImagen = (a) => a.kind === 'image' || a.kind === 'sticker';
  */
 function fuenteDeSticker(id) {
   if (typeof id !== 'string' || !/^[a-z0-9-]+\/[a-z0-9-]+$/.test(id)) return '';
-  return globalThis.KAVI_STICKERS?.[id] ?? new URL(`stickers/${id}.png`, globalThis.KAVI_BASE ?? document.baseURI).href;
+  if (globalThis.KAVI_STICKERS?.[id]) return globalThis.KAVI_STICKERS[id];
+  // Solo los incluidos viven junto al motor; los de la tienda llegan con su `src` (T338).
+  return id.startsWith('nobi-pink/') ? new URL(`stickers/${id}.png`, globalThis.KAVI_BASE ?? document.baseURI).href : '';
 }
 
 /** Letra clara u oscura según el color del post-it: que se lea siempre. */
@@ -161,7 +163,8 @@ export function crearCapa(ctx, enviar) {
       const img = document.createElement('img');
       img.alt = '';
       img.draggable = false;
-      const src = sticker ? fuenteDeSticker(a.content?.sticker) : a.content?.src;
+      // Un sticker de la tienda llega con su imagen (`src`); los incluidos se toman del motor.
+      const src = sticker ? (a.content?.src ?? fuenteDeSticker(a.content?.sticker)) : a.content?.src;
       if (src) img.src = src;
       Object.assign(img.style, { width: '100%', height: '100%', objectFit: 'contain', display: 'block', pointerEvents: 'none' });
       // Un sticker estirado se estira con su caja; una imagen se ve entera.

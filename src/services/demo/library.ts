@@ -11,6 +11,7 @@ import type {
   LibraryCard,
   LibraryLayout,
   LibraryReadingSession,
+  StickerPack,
   LibraryCardTemplate,
   LibraryFileBody,
   LibraryFont,
@@ -22,6 +23,7 @@ import type {
   LibraryShelfItem,
 } from '@/types/domain';
 import { t } from '@/i18n';
+import { STICKERS } from '@/constants/stickers';
 
 /**
  * KAVI Library en memoria, con las mismas reglas que la base (`20261012100000_library.sql`):
@@ -40,7 +42,25 @@ const pages: LibraryPage[] = [];
 const fonts: LibraryFont[] = [];
 const layouts: LibraryLayout[] = [];
 const sesiones: LibraryReadingSession[] = [];
+const misPacks: { owner_id: string; pack_id: string }[] = [];
 const archivos = new Map<string, { body: LibraryFileBody; type: string }>();
+
+/**
+ * El catálogo de la tienda en el demo (T338): el mismo que en la nube (Primer Rebote en 24 colores, las
+ * mismas caras que los rosas incluidos). Las imágenes se piden al bucket público, como en la app de verdad.
+ */
+const COLORES_DEMO = ['baby_blue', 'orange', 'lime_green', 'turquois', 'yellow', 'lilac', 'coral', 'gray', 'olive_green', 'white', 'magenta', 'light_purple', 'red', 'indigo', 'blue', 'deep_red', 'green', 'navy_blue', 'purple', 'black', 'gold', 'beige', 'brown', 'silver'];
+const PACKS_DEMO: StickerPack[] = COLORES_DEMO.map((color, i) => ({
+  id: `primer-rebote-${color.replace(/_/g, '-')}`,
+  collection: 'primer-rebote',
+  color,
+  name_es: 'Primer Rebote',
+  name_en: 'First Bounce',
+  sort_order: i + 1,
+  stickers: [...STICKERS].sort((a, b) => a.nombre.localeCompare(b.nombre)).map((s) => ({ name: s.nombre, ar: s.ar })),
+  bytes: 1_150_000,
+  version: 1,
+}));
 
 const ahora = () => new Date().toISOString();
 const copia = <T>(x: T): T => JSON.parse(JSON.stringify(x)) as T;
@@ -347,6 +367,30 @@ export const demoLibrary: LibraryApi = {
   async listReadingSessions(userId) {
     await delay();
     return copia(sesiones.filter((x) => x.owner_id === userId).sort((a, b) => b.started_at.localeCompare(a.started_at)));
+  },
+
+  async listStickerPacks() {
+    await delay();
+    return copia(PACKS_DEMO);
+  },
+
+  async listMyStickerPacks(userId) {
+    await delay();
+    return misPacks.filter((x) => x.owner_id === userId).map((x) => x.pack_id);
+  },
+
+  async addStickerPack(userId, packId) {
+    await delay();
+    if (!PACKS_DEMO.some((p) => p.id === packId)) throw new AuthUiError(t().errors.noPermission);
+    if (!misPacks.some((x) => x.owner_id === userId && x.pack_id === packId)) misPacks.push({ owner_id: userId, pack_id: packId });
+    emitDataChange();
+  },
+
+  async removeStickerPack(userId, packId) {
+    await delay();
+    const i = misPacks.findIndex((x) => x.owner_id === userId && x.pack_id === packId);
+    if (i >= 0) misPacks.splice(i, 1);
+    emitDataChange();
   },
 
   async saveReadingSession(userId, session) {

@@ -215,3 +215,25 @@ it('una imagen pegada se sube a la carpeta de su pieza y se puede ver (T289)', a
   expect(await api.fileUrl(ruta)).toBeTruthy();
   await expect(api.uploadAnnotationImage('otra', libro.id, 'img2', new Uint8Array([1]))).rejects.toThrow();
 });
+
+describe('tienda de stickers (13c, RF-BH13b; T338)', () => {
+  it('el catálogo trae Primer Rebote en los 24 colores, con las mismas caras que los incluidos', async () => {
+    const api = fresh();
+    const packs = await api.listStickerPacks();
+    expect(packs).toHaveLength(24);
+    expect(packs.every((p) => p.collection === 'primer-rebote' && p.stickers.length === 26)).toBe(true);
+    expect(packs.map((p) => p.id)).toContain('primer-rebote-navy-blue');
+  });
+
+  it('descargar y quitar son de cada quien; descargar dos veces no duplica', async () => {
+    const api = fresh();
+    await api.addStickerPack(ANA, 'primer-rebote-blue');
+    await api.addStickerPack(ANA, 'primer-rebote-blue');
+    await api.addStickerPack('otra', 'primer-rebote-red');
+    expect(await api.listMyStickerPacks(ANA)).toEqual(['primer-rebote-blue']);
+    await api.removeStickerPack(ANA, 'primer-rebote-blue');
+    expect(await api.listMyStickerPacks(ANA)).toEqual([]);
+    expect(await api.listMyStickerPacks('otra')).toEqual(['primer-rebote-red']);
+    await expect(api.addStickerPack(ANA, 'no-existe')).rejects.toThrow();
+  });
+});

@@ -33,7 +33,7 @@ export type AnotacionEnMotor = {
     style?: 'highlight' | 'underline' | 'strike';
     /** Cuadro de texto: el tamaño de la letra (1 = normal). */
     size?: number;
-    /** Imagen: la dirección para verla y cuánto está girada (grados). */
+    /** Imagen (y sticker de la tienda): la dirección para verla y cuánto está girada (grados). */
     src?: string;
     rot?: number;
     /** Sticker (T290): cuál de la colección (`<paquete>/<nombre>`) y su nombre, para leerlo en voz alta. */

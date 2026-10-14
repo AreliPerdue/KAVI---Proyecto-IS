@@ -10,6 +10,7 @@ import type {
   LibraryAnnotation,
   LibraryLayout,
   LibraryReadingSession,
+  StickerPack,
   LibraryCard,
   LibraryCardTemplate,
   LibraryFileBody,
@@ -232,6 +233,28 @@ export const supabaseLibrary: LibraryApi = {
     return unwrap(
       await db().from('library_reading_sessions').select('*').eq('owner_id', userId).order('started_at', { ascending: false }).limit(2000),
     ) as LibraryReadingSession[];
+  },
+
+  async listStickerPacks() {
+    return unwrap(
+      await db()
+        .from('sticker_packs')
+        .select('id, collection, color, name_es, name_en, sort_order, stickers, bytes, version')
+        .order('collection')
+        .order('sort_order'),
+    ) as StickerPack[];
+  },
+
+  async listMyStickerPacks(userId) {
+    return (unwrap(await db().from('user_sticker_packs').select('pack_id').eq('owner_id', userId)) as { pack_id: string }[]).map((r) => r.pack_id);
+  },
+
+  async addStickerPack(userId, packId) {
+    sinError(await db().from('user_sticker_packs').upsert({ owner_id: userId, pack_id: packId }, { ignoreDuplicates: true }));
+  },
+
+  async removeStickerPack(userId, packId) {
+    sinError(await db().from('user_sticker_packs').delete().eq('owner_id', userId).eq('pack_id', packId));
   },
 
   async saveReadingSession(userId, session) {

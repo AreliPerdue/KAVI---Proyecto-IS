@@ -50,6 +50,7 @@ import type {
   LibraryLayoutView,
   LibraryReadingSession,
   LibraryReadingSessionInput,
+  StickerPack,
   LibraryLink,
   LibraryLinkKind,
   LibrarySeries,
@@ -533,6 +534,13 @@ export interface LibraryApi {
   listReadingSessions(userId: string): Promise<LibraryReadingSession[]>;
   /** Crea o reescribe (por id) una sesión: se guarda cada minuto mientras dura y al terminar. */
   saveReadingSession(userId: string, session: LibraryReadingSessionInput): Promise<void>;
+
+  /** Tienda de stickers (13c, RF-BH13b; T338): el catálogo publicado, en su orden. */
+  listStickerPacks(): Promise<StickerPack[]>;
+  /** Los ids de los packs que la persona descargó. */
+  listMyStickerPacks(userId: string): Promise<string[]>;
+  addStickerPack(userId: string, packId: string): Promise<void>;
+  removeStickerPack(userId: string, packId: string): Promise<void>;
 
   /** Acomodos guardados (RF-BL7b, T331). */
   listLayouts(userId: string): Promise<LibraryLayout[]>;

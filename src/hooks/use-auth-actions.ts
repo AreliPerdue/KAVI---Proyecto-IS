@@ -3,6 +3,7 @@ import { type QueryClient, useMutation, useQueryClient } from '@tanstack/react-q
 import { clearOutbox } from '@/lib/gym/outbox';
 import { borrarTodas } from '@/lib/library/offline/copies';
 import { vaciarCola } from '@/lib/library/offline/outbox';
+import { borrarPacks } from '@/lib/library/offline/sticker-packs';
 import { olvidarLista } from '@/lib/library/offline/snapshot';
 import { syncNotifications } from '@/lib/notifications';
 import type { LoginValues, RegisterValues } from '@/lib/schemas/auth';
@@ -73,14 +74,14 @@ export function useSignOut() {
 /**
  * Lo que este dispositivo guardaba de la persona: la cola de series pendientes, el descanso en
  * curso, los avisos programados, la caché de datos y, de KAVI Library, los libros guardados en el
- * teléfono, su lista y la cola del avance (T285). Las preferencias del aparato (formato de
+ * teléfono, su lista, la cola del avance (T285) y los packs de stickers descargados (T338). Las preferencias del aparato (formato de
  * hora, tema) se quedan. Se usa al eliminar la cuenta (RF-A12, RF-A13).
  */
 export async function olvidarDatosDelDispositivo(queryClient: QueryClient): Promise<void> {
   useGymStore.getState().stopRest();
   useOutboxStore.getState().setEntries(() => []);
   borrarTodas();
-  await Promise.allSettled([clearOutbox(), syncNotifications([]), vaciarCola(), olvidarLista()]);
+  await Promise.allSettled([clearOutbox(), syncNotifications([]), vaciarCola(), olvidarLista(), borrarPacks()]);
   queryClient.clear();
 }
 

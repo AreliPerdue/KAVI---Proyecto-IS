@@ -8,6 +8,11 @@
 - **RF-BH1. Zoom** con pellizco (o Ctrl/⌘ y rueda en web) en cualquier forma de leer; doble toque vuelve al
   ajuste de página.
 - **RF-BH2. Tamaño de letra** (EPUB y creaciones; en PDF el equivalente es el zoom).
+  - **Pendiente (T340, pedido de Areli del 14 oct 2026): letra grande sin cambiar el número de páginas**, para
+    quien batalla para ver. La cuenta de páginas es siempre la del original: con letra muy grande, una página
+    real puede ocupar dos o más pantallas ("p. 12 · 2/3"), pero el libro sigue teniendo las mismas páginas. En
+    EPUB, las páginas del propio libro (`page-list`) o páginas fijas por cantidad de texto; en PDF, con el texto
+    reacomodado (RF-BX12, spec 13g) y la página original como referencia.
 - **RF-BH3. Tipo de letra:** una selección incluida (con serifas, sin serifas, para dislexia, manuscrita) y
   las que suba la persona (RF-BH4).
 - **Hecho (T288, 13 oct 2026).**
@@ -70,6 +75,9 @@
     inglés y **WordReference** (su traducción) para una en español —la RAE no sirve a quien lee la app en
     inglés— (14 oct 2026, pedido de Areli). (Enmienda del 13 oct 2026: a la Free Dictionary API le faltaban palabras comunes.) El diccionario del sistema
     del iPhone necesita un módulo nativo: queda pendiente para cuando haya cuenta de Apple Developer.
+    - **Pendiente (T339, pedido de Areli del 14 oct 2026): los idiomas que la persona sabe.** En el perfil se
+      marcan los idiomas que se leen (además del de la app). Si sabe español, una palabra en español lleva a la
+      **RAE** aunque la app esté en inglés; WordReference queda para quien solo lee inglés.
   - **Copiar:** un PDF que prohíbe copiar (permisos del archivo) deja subrayar pero el botón dice "Este libro
     no deja copiar su texto". La web permite `en.wiktionary.org` y `api.dictionaryapi.dev` en su CSP.
 
@@ -128,6 +136,26 @@
     archivo), con la opción de ponerle **margen blanco** alrededor de su silueta para que parezca sticker y
     **ajustar su grosor**. Se guardan en la colección de la persona y se pegan como los incluidos.
   - Falta: girar **con dos dedos** en el teléfono y los demás colores o estilos (13e).
+- **RF-BH13b. Tienda de stickers en la nube (T337 – T338, 14 oct 2026, pedido de Areli).** Los packs que no
+  vienen en la app viven en la nube y cada quien **descarga los que le gustan**; así la app no crece con cada
+  temporada y se agregan packs sin sacar otra versión.
+  - **Pack:** un juego de stickers con nombre (es/en), colección (p. ej. `primer-rebote`, el de inicio), color
+    de Nobi y orden. El primero: **Primer Rebote** en los 24 colores de Nobi además del rosa (26 caras cada uno,
+    recoloreadas de los originales de Areli). El rosa (**Rosa algodón**) sigue **incluido** en la app.
+  - **Datos (spec 02):** `sticker_packs` (catálogo; lo lee cualquiera con sesión, solo lo publicado; solo se
+    escribe con migraciones) y `user_sticker_packs` (qué descargó cada persona; RLS: solo lo suyo). Las imágenes
+    van en el bucket **público** `stickers` de Supabase Storage: `<pack>/<nombre>.png` (400 px, 256 colores) y
+    `<pack>/muestra.png`; nadie las sube desde la app (se suben con el CLI). El id de un sticker pegado es
+    `<pack>/<nombre>`, como los incluidos.
+  - **Hoja de stickers:** **Mis stickers · Tienda · Quitados (n)**. En Mis stickers, los incluidos y los packs
+    descargados, por pack. En la Tienda, cada pack es una tarjeta con su muestra (la "plancha" recortada), su
+    nombre, el punto y nombre de su color, cuántos trae y cuánto pesa, y **Descargar** / **Descargado ✓**; al
+    tocarla se ven todas sus caras. Quitar un pack de Mis stickers no quita los que ya están pegados.
+  - **Sin conexión:** en el teléfono, descargar guarda las imágenes en el dispositivo; lo pegado se ve con esas
+    copias (el lector recibe solo las de los stickers de ese libro). Sin red, Mis stickers muestra lo descargado
+    y la Tienda dice que hace falta conexión. En la web, las imágenes salen de la nube (con caché).
+  - **Hecho (T337 – T338, 14 oct 2026).** Catálogo y 24 packs de Primer Rebote en la nube; la hoja con las tres
+    pestañas, tarjetas con su muestra y el detalle del pack; descargar y quitar; copias en el teléfono.
 - **RF-BH14. Post-its:** cuadrados de color (paleta de los Nobi) con texto o trazo; se pegan, se mueven, se
   rotan un poco y se pueden **doblar** para que solo se vea una esquina. Tocar uno doblado lo abre.
 - **RF-BH15. Separadores:** las pestañitas que salen del borde. La persona elige **en qué borde** (arriba,
