@@ -1,8 +1,9 @@
 import { Platform } from 'react-native';
 
 import { SITIO } from '@/lib/api';
+import { localizadorPegado } from '@/lib/library/annotations';
 import type { FormaDeLeer } from '@/lib/library/reading-mode';
-import type { LibraryItem, LibraryLocator } from '@/types/domain';
+import type { LibraryAnnotationKind, LibraryItem, LibraryLocator } from '@/types/domain';
 
 /**
  * Lo que la app y el motor de lectura se dicen (spec 13b §4, T279). El motor es `public/reader/`:
@@ -17,6 +18,19 @@ import type { LibraryItem, LibraryLocator } from '@/types/domain';
 export const URL_MOTOR = Platform.OS === 'web' ? '/reader/engine.html' : `${SITIO}/reader/`;
 
 export type Posicion = { page?: number; cfi?: string; fraction?: number };
+
+/** Lo que el motor necesita de una anotación para pintarla (spec 13c, T286). */
+export type AnotacionEnMotor = {
+  id: string;
+  kind: LibraryAnnotationKind;
+  locator: LibraryLocator;
+  z: number;
+  locked: boolean;
+  content: { color?: string; text?: string };
+};
+
+/** Con qué se está anotando: nada (leer y mover lo pegado) o pegar un post-it donde se toque. */
+export type Herramienta = 'postit' | null;
 
 export type MensajeAlMotor =
   | { type: 'open'; format: 'pdf' | 'epub'; url: string; position?: Posicion; mode?: FormaDeLeer }
@@ -37,7 +51,12 @@ export type MensajeAlMotor =
   | { type: 'search'; query: string }
   | { type: 'searchStep'; step: 1 | -1 }
   | { type: 'searchClear' }
-  | { type: 'cover'; url: string; width?: number };
+  | { type: 'cover'; url: string; width?: number }
+  /** Todo lo que se pinta encima de las páginas, ya en orden de capa (13c, RF-BH16; T286). */
+  | { type: 'annotations'; items: AnotacionEnMotor[] }
+  | { type: 'tool'; tool: Herramienta }
+  /** La app elige o suelta (al borrar, al cerrar la barra de lo seleccionado). */
+  | { type: 'select'; id: string | null };
 
 export type CodigoDeError = 'password' | 'damaged' | 'network' | 'unknown';
 
@@ -50,10 +69,19 @@ export type MensajeDelMotor =
   | { type: 'cover'; dataUrl: string }
   /** Toque o clic en el centro de la página: mostrar u ocultar los controles (RF-BR7b). */
   | { type: 'tap' }
+  /** Con la herramienta de post-it, el toque en la página: dónde pegarlo (T286). */
+  | { type: 'place'; locator: LibraryLocator }
+  /** Se tocó algo pegado (o la página, para soltarlo). */
+  | { type: 'select'; id: string | null }
+  /** Se arrastró algo pegado: su nueva posición. */
+  | { type: 'move'; id: string; locator: LibraryLocator }
+  /** Doble toque en algo pegado: abrirlo para escribir. */
+  | { type: 'edit'; id: string }
   | { type: 'error'; code: CodigoDeError; message?: string };
 
 const CODIGOS: readonly CodigoDeError[] = ['password', 'damaged', 'network', 'unknown'];
 const numero = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v);
+const esId = (v: unknown): v is string => typeof v === 'string' && v.length > 0 && v.length <= 64;
 
 /**
  * Lee un mensaje del motor. Lo que no tenga la forma esperada se ignora: el motor es nuestro, pero
@@ -86,6 +114,18 @@ export function leerMensaje(crudo: unknown): MensajeDelMotor | null {
       return numero(m.count) && numero(m.index) ? { type: 'search', count: m.count, index: m.index, searching: m.searching === true } : null;
     case 'tap':
       return { type: 'tap' };
+    case 'place': {
+      const locator = localizadorPegado(m.locator);
+      return locator ? { type: 'place', locator } : null;
+    }
+    case 'select':
+      return m.id === null || esId(m.id) ? { type: 'select', id: m.id } : null;
+    case 'move': {
+      const locator = localizadorPegado(m.locator);
+      return locator && esId(m.id) ? { type: 'move', id: m.id, locator } : null;
+    }
+    case 'edit':
+      return esId(m.id) ? { type: 'edit', id: m.id } : null;
     case 'cover':
       return typeof m.dataUrl === 'string' && m.dataUrl.startsWith('data:image/') ? { type: 'cover', dataUrl: m.dataUrl } : null;
     case 'error':

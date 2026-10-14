@@ -6,8 +6,9 @@
  * viven del lado de la app en `src/lib/library/reader-protocol.ts`.
  *
  * App → motor: `open`, `openBegin` / `openChunk` / `openEnd`, `goTo`, `mode`, `turn`, `theme`, `search`,
- * `searchStep`, `searchClear`, `cover`.
- * Motor → app: `ready`, `opened`, `position`, `search`, `tap`, `cover`, `error`.
+ * `searchStep`, `searchClear`, `cover`, y de la capa de anotaciones (T286) `annotations`, `tool`, `select`.
+ * Motor → app: `ready`, `opened`, `position`, `search`, `tap`, `cover`, `error`, y `place`, `select`,
+ * `move`, `edit` (ver `annotations.js`).
  *
  * PDF con pdf.js (página fija, con capa de texto para buscar); EPUB con foliate-js (texto que se
  * reacomoda, posición por CFI). En la web el archivo se descarga directo de R2 con la dirección firmada que
@@ -20,6 +21,7 @@
  * deslizar el dedo, el trackpad hacia los lados, las flechas, Re Pág / Av Pág y la barra espaciadora. El
  * centro avisa `tap` para que la app muestre u oculte sus controles.
  */
+import { crearCapa } from './annotations.js';
 import { buscarEnPedazos } from './text-search.js';
 
 // Las librerías van junto al motor. Empaquetado en la app (T285), la página no tiene dirección propia: los
@@ -108,6 +110,12 @@ async function atender(m) {
       return limpiarBusqueda();
     case 'cover':
       return portada(m.url, m.width ?? 600);
+    case 'annotations':
+      return anotaciones.actualizar(m.items);
+    case 'tool':
+      return anotaciones.herramienta(m.tool);
+    case 'select':
+      return anotaciones.elegir(m.id);
   }
 }
 
@@ -131,11 +139,15 @@ let libroRaiz = null;
 const formaDe = (valor) => (valor === 'paged' || valor === 'book' ? valor : 'scroll');
 /** Páginas de lado y libro real se pasan igual: sin scroll, con bordes, teclado y trackpad. */
 const porPaginas = () => forma !== 'scroll';
-let epub = null; // { view }
+let epub = null; // { view, raiz, ultimo, fraccion }
 let busqueda = { consulta: '', resultados: [], actual: -1 };
+
+/** Lo pegado encima de las páginas (13c, T286). */
+const anotaciones = crearCapa({ forma: () => forma, pdf: () => pdf, epub: () => epub, libro: () => libro }, enviar);
 
 function cerrar() {
   limpiarBusqueda();
+  anotaciones.cerrar();
   salirDelLibro();
   if (pdf) {
     pdf.observador.disconnect();
@@ -333,6 +345,7 @@ async function pintar(n) {
   canvas.width = Math.floor(vista.width * ratio);
   canvas.height = Math.floor(vista.height * ratio);
   div.append(canvas);
+  anotaciones.pintarPaginaPdf(n, div);
   estado.tarea = pagina.render({
     canvasContext: canvas.getContext('2d'),
     canvas,
@@ -398,6 +411,7 @@ async function abrirEpub(fuente, posicion) {
   let ultimo = '';
   view.addEventListener('relocate', (e) => {
     const { fraction, cfi, location } = e.detail ?? {};
+    if (epub && typeof fraction === 'number' && forma !== 'book') epub.fraccion = fraction;
     // foliate avisa varias veces por el mismo lugar (al pintar, al acomodar): solo cuenta si cambió.
     // En el libro real la posición la dice el hojeador; foliate queda escondido detrás.
     if (!cfi || cfi === ultimo || forma === 'book') return;
@@ -431,6 +445,7 @@ async function abrirEpub(fuente, posicion) {
   else if (posicion?.fraction) await view.goToFraction(posicion.fraction);
   else await view.init({ showTextStart: false });
   if (forma === 'book') await entrarAlLibro(posicion?.cfi ?? null);
+  anotaciones.repintar();
 }
 
 /** En páginas de lado, una columna a la vez (como Kindle), con la animación de foliate salvo con movimiento reducido. */
@@ -456,15 +471,18 @@ async function cambiarForma(nueva) {
   const cfi = libro?.cfi?.() ?? epub?.ultimo ?? null;
   forma = nueva;
   if (antes === 'book') salirDelLibro();
-  if (nueva === 'book') return entrarAlLibro(pdf ? pagina : cfi);
+  if (nueva === 'book') {
+    await entrarAlLibro(pdf ? pagina : cfi);
+    return anotaciones.repintar();
+  }
   if (pdf) {
     pdf.pagina = pagina;
-    return reacomodarPdf();
-  }
-  if (epub) {
+    reacomodarPdf();
+  } else if (epub) {
     formaEpub(epub.view);
     if (cfi) await epub.view.goTo(cfi);
   }
+  anotaciones.repintar();
 }
 
 // ─── Tema del lector (13c, RF-BH5) ───────────────────────────────────────────
@@ -542,6 +560,7 @@ async function entrarAlLibro(donde) {
       base: pdf.base,
       inicio: typeof donde === 'number' ? donde : 1,
       pintar: pintarEnCanvas,
+      capa: anotaciones.capaLibroPdf,
       avisar: ({ pagina, hasta, total }) => {
         pdf.pagina = pagina;
         enviar({ type: 'position', page: pagina, pageEnd: hasta, total, fraction: pagina / total });
@@ -556,6 +575,7 @@ async function entrarAlLibro(donde) {
       raiz,
       view: epub.view,
       cfi: typeof donde === 'string' ? donde : epub.ultimo,
+      capa: anotaciones.capaLibroEpub,
       avisar: ({ cfi, pagina, total, fraccion }) => {
         if (epub) epub.ultimo = cfi;
         enviar({ type: 'position', cfi, page: pagina, total, fraction: fraccion });
@@ -633,15 +653,19 @@ function gestosDePaginas(objetivo, esEpub = false) {
   const haySeleccion = () => !!doc.getSelection?.()?.toString();
 
   objetivo.addEventListener('pointerdown', (e) => {
-    inicio = porPaginas() && e.isPrimary ? { x: e.clientX, y: e.clientY, t: e.timeStamp, toque: e.pointerType === 'touch' } : null;
+    inicio = e.isPrimary ? { x: e.clientX, y: e.clientY, t: e.timeStamp, toque: e.pointerType === 'touch' } : null;
   });
   objetivo.addEventListener('pointerup', (e) => {
     const i = inicio;
     inicio = null;
-    if (!i || !porPaginas() || haySeleccion()) return;
+    if (!i || haySeleccion()) return;
     const dx = e.clientX - i.x;
     const dy = e.clientY - i.y;
     const dt = e.timeStamp - i.t;
+    // Un toque quieto es primero de la capa de anotaciones: pegar ahí o soltar lo elegido (T286), en
+    // cualquier forma de leer.
+    if (Math.hypot(dx, dy) <= 8 && dt <= 500 && anotaciones.alTocar(e, doc)) return;
+    if (!porPaginas()) return;
     // Deslizar el dedo (en EPUB lo hace foliate).
     if (i.toque && !esEpub && Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy) * 1.5 && dt < 700) {
       void pasar(dx < 0 ? 1 : -1);

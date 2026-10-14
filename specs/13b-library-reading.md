@@ -121,6 +121,9 @@
   - **EPUB** con foliate-js: scroll (`flow="scrolled"`) o de lado (`flow="paginated"`, una columna),
     posición por CFI y búsqueda. El deslizar con el dedo lo hace foliate; los bordes, el centro, el
     teclado y el trackpad los pone el motor en cada capítulo.
+  - Mensajes de T286 (capa de anotaciones, 13c): `annotations` (la lista a pintar), `tool` y `select` (app →
+    motor); `place`, `select`, `move` y `edit` (motor → app). La posición que llega se revisa antes de
+    guardarse.
   - Mensajes de T283: `mode` y `turn` (app → motor; `open` lleva la forma) y `tap` (motor → app, el
     centro).
   - El libro **se descarga completo** al abrirlo: la dirección firmada de R2 vence en una hora y una

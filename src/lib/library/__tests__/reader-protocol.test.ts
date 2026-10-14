@@ -30,6 +30,30 @@ describe('leerMensaje', () => {
   });
 });
 
+describe('leerMensaje · capa de anotaciones (T286)', () => {
+  it.each([
+    [{ type: 'place', locator: { page: 2, x: 0.1, y: 0.2, w: 0.24 } }, { type: 'place', locator: { page: 2, x: 0.1, y: 0.2, w: 0.24 } }],
+    [{ type: 'select', id: 'a1' }, { type: 'select', id: 'a1' }],
+    [{ type: 'select', id: null }, { type: 'select', id: null }],
+    [{ type: 'move', id: 'a1', locator: { cfi: 'epubcfi(/6/4)', x: 0.3, w: 0.24, fraction: 0.5 } }, { type: 'move', id: 'a1', locator: { cfi: 'epubcfi(/6/4)', x: 0.3, w: 0.24, fraction: 0.5 } }],
+    [{ type: 'edit', id: 'a1' }, { type: 'edit', id: 'a1' }],
+  ])('%j', (crudo, esperado) => {
+    expect(leerMensaje(crudo)).toEqual(esperado);
+  });
+
+  it.each([
+    { type: 'place', locator: { page: 2, x: 3, y: 0.2, w: 0.24 } },
+    { type: 'place' },
+    { type: 'select', id: 5 },
+    { type: 'select' },
+    { type: 'move', id: 'a1', locator: { page: 1 } },
+    { type: 'move', locator: { page: 1, x: 0, y: 0, w: 0.2 } },
+    { type: 'edit', id: '' },
+  ])('ignora %j', (crudo) => {
+    expect(leerMensaje(crudo)).toBeNull();
+  });
+});
+
 describe('posicionGuardada (RF-BL17)', () => {
   it('PDF: la página donde se quedó', () => {
     expect(posicionGuardada({ kind: 'pdf', last_position: { page: 120 }, progress: 0.3 })).toEqual({ page: 120 });

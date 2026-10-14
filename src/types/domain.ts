@@ -556,8 +556,11 @@ export type LibraryCreationKind = 'notebook' | 'journal' | 'album';
 export type LibraryKind = LibraryBookKind | LibraryCreationKind;
 export type ReadingMode = 'book' | 'scroll' | 'paged';
 
-/** Dónde va uno dentro de una pieza: página (+ coordenadas 0–1) en PDF, CFI en EPUB. */
-export type LibraryLocator = { page?: number; cfi?: string; x?: number; y?: number; w?: number; h?: number };
+/**
+ * Dónde va uno dentro de una pieza: página (+ coordenadas 0–1) en PDF, CFI en EPUB. En una anotación de
+ * EPUB, `fraction` es cuánto del libro llevaba al pegarla: con eso el panel la ordena y dice "34 %".
+ */
+export type LibraryLocator = { page?: number; cfi?: string; x?: number; y?: number; w?: number; h?: number; fraction?: number };
 
 /** Una pieza de la librería: un libro importado o una creación (spec 13 §2). */
 export type LibraryItem = {

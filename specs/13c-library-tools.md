@@ -55,12 +55,28 @@
   el canto del libro, y tocar uno salta a su página.
 - **RF-BH16. Capas:** lo pegado lleva orden (traer al frente, mandar atrás) y se puede **bloquear** para no
   moverlo sin querer.
+  - **Hecho (T286, 13 oct 2026).** Tocar algo pegado lo elige (con un aro); abajo del lector aparecen
+    **Escribir · Traer al frente · Mandar atrás · Bloquear · Quitar · Listo**. Lo bloqueado lleva un candado
+    al elegirlo, avisa "Bloqueado: no se mueve hasta que lo desbloquees" y no se arrastra. Tocar la página
+    suelta lo elegido. Dos toques seguidos sobre un post-it lo abren para escribir.
+  - En el **libro real** lo pegado se ve en su hoja, pero se pega y se mueve en scroll o en páginas de lado:
+    ahí arrastrar es doblar la hoja (excepción de forma, no de plataforma).
+- **Post-it básico (adelantado de RF-BH14 en T286, a pedido de Areli):** el botón **Pegar post-it** de la
+  barra; el siguiente toque en la página lo pega ahí, elegido y abierto para escribir (hasta 280 letras) y
+  elegir su color de la paleta de los Nobi. El siguiente sale del último color usado. Se arrastra a otro
+  lugar o, en scroll, a otra página. Girarlo, doblarlo y el trazo siguen en T290.
 
 ## 5. Encontrar lo anotado (RF-BH17 – RF-BH18)
 
 - **RF-BH17.** Un panel lista todo lo anotado de la pieza —subrayados, notas, post-its, separadores— con su
   página; tocar uno salta ahí. Se filtra por tipo y color.
+  - **Hecho (T286).** Botón **Anotaciones** arriba del lector. En el orden del libro (PDF: página y altura;
+    EPUB: avance y luego el CFI), cada fila con su tipo, color, texto y "p. 12" o "34 %". Solo se ofrecen
+    filtros que encuentran algo. Tocar una fila lleva ahí y la deja elegida. Lo quitado (la charola de
+    stickers) no sale.
 - **RF-BH18.** Deshacer y rehacer en todo lo de esta spec (como el logger del gym, RF-F40).
+  - **Hecho (T286).** Deshacer y rehacer en la barra de abajo. Cada paso guarda la fila completa de antes;
+    la pila vive en el lector y se olvida al salir.
 
 ## 6. Recortes (RF-BH19 – RF-BH21) — 13 oct 2026
 
@@ -81,6 +97,12 @@ Como recortar de un libro o de una revista: se guarda un pedazo para después.
 
 - Las anotaciones se guardan en `library_annotations` con posición estable (spec 13 §5) y se pintan en una
   capa propia: en el motor web para subrayados y cuadros de texto; con Skia para el lápiz.
+  - **Capa del motor (T286):** `public/reader/annotations.js`. Lo pegado en PDF guarda `{ page, x, y, w }`
+    (esquina y ancho relativos a la página) y se pinta en una capa dentro de cada página; en EPUB guarda
+    `{ cfi, x, w, fraction }`: el CFI del renglón donde empieza, la x en la columna y cuánto del libro
+    llevaba (para el panel). Así sigue junto al mismo texto si cambia la letra o la pantalla.
+  - Se guarda primero en la cola del dispositivo (RF-BR3) y sube después; sin red, el libro se abre con la
+    última copia de sus anotaciones.
 - El lápiz usa `react-native-skia` con eventos de puntero (presión de Apple Pencil en iOS).
 - Escuchar: `expo-speech` en teléfono y la Web Speech API en web.
 

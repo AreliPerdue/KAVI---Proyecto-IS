@@ -11,6 +11,9 @@
  *
  * Los toques en los bordes y el centro, el teclado y el trackpad los pone `engine.js`; aquí, el arrastre de
  * la esquina y el deslizar con el dedo, que hace StPageFlip.
+ *
+ * Lo pegado (13c, T286) se ve en su hoja: `capa` lo dibuja al armar cada página y `recapar()` lo vuelve a
+ * dibujar cuando cambia. Aquí no se toca ni se arrastra: arrastrar es doblar la hoja.
  */
 import { PageFlip } from './vendor/page-flip/page-flip.module.js';
 
@@ -99,10 +102,15 @@ function aLaVista(indice, dos, total) {
 
 /**
  * El libro real de un PDF. `pintar(n, canvas, ancho, alto)` dibuja la página n en el canvas. `avisar`
- * recibe { pagina, hasta, total }.
+ * recibe { pagina, hasta, total }. `capa(n, div, rect)` pone lo pegado sobre el rectángulo de la hoja
+ * donde quedó la página (centrada, del tamaño que quepa).
  */
-export function libroPdf({ raiz, doc, total, base, inicio, pintar, avisar }) {
+export function libroPdf({ raiz, doc, total, base, inicio, pintar, capa, avisar }) {
   const { ancho, alto, dos } = medidas(base.width / base.height);
+  const escala = Math.min(ancho / base.width, alto / base.height);
+  const rect = { width: base.width * escala, height: base.height * escala };
+  rect.left = (ancho - rect.width) / 2;
+  rect.top = (alto - rect.height) / 2;
   const ratio = Math.min(window.devicePixelRatio || 1, 3);
   const paginas = [];
   const pintadas = new Set();
@@ -123,6 +131,7 @@ export function libroPdf({ raiz, doc, total, base, inicio, pintar, avisar }) {
         canvas.height = Math.floor(alto * ratio);
         paginas[i].append(canvas);
         void pintar(i + 1, canvas, ancho * ratio, alto * ratio);
+        capa?.(i + 1, paginas[i], rect);
       } else if (!cerca && pintadas.has(i)) {
         pintadas.delete(i);
         paginas[i].replaceChildren();
@@ -154,6 +163,9 @@ export function libroPdf({ raiz, doc, total, base, inicio, pintar, avisar }) {
       avisar({ ...aLaVista(i, pf.getOrientation() === 'landscape', total), total });
     },
     pagina: () => actual + 1,
+    recapar: () => {
+      for (const i of pintadas) capa?.(i + 1, paginas[i], rect);
+    },
     cerrar: () => pf.destroy(),
   };
 }
@@ -165,7 +177,7 @@ function estilosDePagina(ancho, alto, cssDelCapitulo) {
   const columna = ancho - MARGEN_TEXTO * 2;
   return `${cssDelCapitulo}
 /* La hoja recorta: el contenido se corre de lado y solo se ve su columna. */
-:host { all: initial; display: block; width: ${ancho}px; height: ${alto}px; overflow: hidden; background: var(--papel, #fff); }
+:host { all: initial; display: block; position: relative; width: ${ancho}px; height: ${alto}px; overflow: hidden; background: var(--papel, #fff); }
 .contenido {
   box-sizing: content-box; width: ${columna}px; height: ${alto - MARGEN_TEXTO * 2}px; padding: ${MARGEN_TEXTO}px;
   column-width: ${columna}px; column-gap: ${MARGEN_TEXTO * 2}px; column-fill: auto;
@@ -241,9 +253,10 @@ function imagenesListas(raiz) {
 
 /**
  * El libro real de un EPUB. `view` es el foliate-view abierto (su libro, sus CFI); `cfi`, dónde abrir.
- * `avisar` recibe { cfi, pagina, total, fraccion }.
+ * `avisar` recibe { cfi, pagina, total, fraccion }. `capa(i, sombra, ancho, ubicar)` pone lo pegado en la
+ * hoja i; `ubicar(cfi)` dice en qué hoja y a qué altura cae un CFI.
  */
-export async function libroEpub({ raiz, view, cfi, avisar }) {
+export async function libroEpub({ raiz, view, cfi, capa, avisar }) {
   // La proporción de una página de libro de bolsillo; el texto se acomoda a lo que quepa.
   const { ancho, alto, dos } = medidas(2 / 3);
   const libro = view.book;
@@ -290,23 +303,44 @@ export async function libroEpub({ raiz, view, cfi, avisar }) {
     return view.getCFI(c.indice);
   };
 
-  /** La página de un CFI: dónde cae su punto en el capítulo acomodado. */
-  const paginaDe = (valor) => {
+  /**
+   * Dónde cae un CFI en el capítulo acomodado: la hoja y la altura dentro de ella (para lo pegado). Si no
+   * se encuentra el punto exacto, la primera hoja de su capítulo.
+   */
+  const ubicarCfi = (valor) => {
     try {
       const { index, anchor } = view.resolveCFI(valor);
       const c = capitulos.find((x) => x.indice === index) ?? capitulos.findLast((x) => x.indice < index) ?? capitulos[0];
-      if (c.indice !== index || !anchor) return c.inicio;
+      if (c.indice !== index || !anchor) return { pagina: c.inicio, y: null };
       const rango = anchor(c.doc);
       const nodo = seguir(c.contenido, camino(c.doc.body, rango.startContainer));
-      if (!nodo) return c.inicio;
+      if (!nodo) return { pagina: c.inicio, y: null };
       const r = document.createRange();
-      if (nodo.nodeType === Node.TEXT_NODE) r.setStart(nodo, Math.min(rango.startOffset, nodo.length));
-      else r.selectNode(nodo);
+      if (nodo.nodeType === Node.TEXT_NODE) {
+        const desde = Math.min(rango.startOffset, nodo.length);
+        r.setStart(nodo, desde);
+        r.setEnd(nodo, Math.min(desde + 1, nodo.length));
+      } else r.selectNode(nodo);
       const rect = r.getClientRects()[0] ?? (nodo.nodeType === Node.ELEMENT_NODE ? nodo.getBoundingClientRect() : null);
-      return rect ? c.inicio + Math.min(c.n - 1, Math.max(0, columnaDe(c, rect))) : c.inicio;
+      if (!rect) return { pagina: c.inicio, y: null };
+      return {
+        pagina: c.inicio + Math.min(c.n - 1, Math.max(0, columnaDe(c, rect))),
+        y: rect.top - c.contenido.getBoundingClientRect().top,
+      };
     } catch {
-      return 0;
+      return { pagina: 0, y: null };
     }
+  };
+  /** La página de un CFI: dónde cae su punto en el capítulo acomodado. */
+  const paginaDe = (valor) => ubicarCfi(valor).pagina;
+  // El acomodo no cambia mientras dure este libro: cada CFI se ubica una vez.
+  const ubicados = new Map();
+  const ubicar = (valor) => {
+    if (!ubicados.has(valor)) {
+      const u = ubicarCfi(valor);
+      ubicados.set(valor, u.y == null ? null : u);
+    }
+    return ubicados.get(valor);
   };
 
   // Las páginas del hojeador: vacías hasta que se acercan.
@@ -333,6 +367,7 @@ export async function libroEpub({ raiz, view, cfi, avisar }) {
         const contenido = copiaDelCuerpo(c.doc);
         contenido.style.transform = `translateX(${-(i - c.inicio) * ancho}px)`;
         sombra.replaceChildren(estilo, contenido);
+        capa?.(i, sombra, ancho, ubicar);
       } else if (!cerca && armadas.has(i)) {
         armadas.delete(i);
         paginas[i].shadowRoot?.replaceChildren();
@@ -365,6 +400,9 @@ export async function libroEpub({ raiz, view, cfi, avisar }) {
       decir(i, pf.getOrientation() === 'landscape');
     },
     cfi: () => cfiDe(actual),
+    recapar: () => {
+      for (const i of armadas) if (paginas[i].shadowRoot) capa?.(i, paginas[i].shadowRoot, ancho, ubicar);
+    },
     cerrar: () => {
       pf.destroy();
       medidor.remove();

@@ -54,6 +54,7 @@ export const libraryKeys = {
   shelfItems: (userId: string | null) => ['library', 'shelf-items', userId] as const,
   series: (userId: string | null) => ['library', 'series', userId] as const,
   links: (userId: string | null) => ['library', 'links', userId] as const,
+  annotations: (itemId: string) => ['library', 'annotations', itemId] as const,
 };
 
 /** Las piezas de la persona, de la más nueva a la más vieja. */

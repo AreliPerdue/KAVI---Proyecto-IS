@@ -1019,15 +1019,24 @@ Decisiones B1–B9 aprobadas el 12 oct 2026 (T274); ver la tabla de la spec 13 �
 - [ ] T327 PDF con texto que se reacomoda (saca el texto y lo muestra como EPUB). (RF-BX12) Dep: T279, T288
 
 ### L3 · Herramientas sobre la página
-- [ ] T286 Capa de anotaciones con posición estable, panel de anotaciones, capas y bloqueo, deshacer.
+- [x] T286 Capa de anotaciones con posición estable, panel de anotaciones, capas y bloqueo, deshacer.
   (RF-BH16 – RF-BH18) Dep: T279
+  **Hecho (13 oct 2026):** capa del motor en `public/reader/annotations.js` (PDF: página y esquina 0–1 en una
+  capa dentro de cada página; EPUB: CFI del renglón + x, reacomodado en cada cuadro; libro real: se ve, no se
+  toca); mensajes `annotations`, `tool`, `select` ↔ `place`, `select`, `move`, `edit`. Cola sin conexión con
+  `annotation` y `annotationRemove` (`lib/library/offline/outbox.ts`), copia de las anotaciones por libro en el
+  dispositivo, `hooks/use-annotations.ts` con deshacer y rehacer. Barra abajo del lector (post-it, deshacer,
+  rehacer; con algo elegido: escribir, al frente, atrás, bloquear, quitar) y panel con filtros por tipo y color.
+  Por decisión de Areli (13 oct) se adelantó el **post-it básico** de T290: pegar, mover, escribir y color.
+  Sin migración: `library_annotations` ya existía (T275). Falta probar el arrastre con el dedo en el teléfono.
 - [ ] T287 Subrayar con colores y estilos, definir, copiar. (RF-BH7 – RF-BH9) Dep: T286
 - [ ] T288 Zoom, tamaño y tipo de letra incluidos. (RF-BH1 – RF-BH3) Dep: T279
 - [x] T288b Tema del lector: claro, oscuro (fondo negro, letra blanca), sepia y propio, con aviso de poco
   contraste; en PDF, filtro de dos tonos. Adelantada el 13 oct a pedido de Areli. (RF-BH5) Dep: T279
 - [ ] T289 Cuadros de texto e imágenes. (RF-BH10, RF-BH12) Dep: T286
 - [ ] T290 Stickers con charola de quitados, post-its que se doblan, separadores en el borde elegido.
-  (RF-BH13 – RF-BH15) Dep: T286
+  (RF-BH13 – RF-BH15) Dep: T286 — El post-it básico (pegar, mover, escribir, color) ya está desde T286;
+  aquí falta girarlo un poco, doblarlo y el post-it con trazo.
 - [ ] T291 Lápiz y dedo con Skia; presión del Apple Pencil; modo "solo lápiz". (RF-BH11) Dep: T286
 - [ ] T292 Escuchar en voz alta con la frase resaltada. (RF-BH6) Dep: T279
 - [ ] T317 Recortes de texto ("Recortar" al seleccionar) y de imagen (rectángulo sobre la página), `library_clips`

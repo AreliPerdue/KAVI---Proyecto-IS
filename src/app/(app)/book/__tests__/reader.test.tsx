@@ -10,6 +10,7 @@ import type { MensajeAlMotor, MensajeDelMotor } from '@/lib/library/reader-proto
 import { usePreferencesStore } from '@/store/preferences-store';
 
 const R = es.library.reader;
+const A = es.library.annotations;
 const mockEnviados: MensajeAlMotor[] = [];
 let mockResponder: (m: MensajeDelMotor) => void = () => undefined;
 let mockPieza: Record<string, unknown> | undefined;
@@ -53,6 +54,26 @@ jest.mock('@/hooks/use-library', () => ({
   useSeries: () => ({ data: mockSagas }),
 }));
 
+// Lo anotado (T286): la lista la pone cada prueba; el editor anota lo que se le pide.
+let mockLista: Record<string, unknown>[] | undefined;
+let mockPuedeDeshacer = false;
+const mockCrear = jest.fn();
+const mockCambiar = jest.fn();
+const mockBorrar = jest.fn();
+const mockDeshacer = jest.fn();
+jest.mock('@/hooks/use-annotations', () => ({
+  useAnnotations: () => ({ data: mockLista, isLoading: false, isError: false, refetch: jest.fn() }),
+  useAnnotationEditor: () => ({
+    crear: mockCrear,
+    cambiar: mockCambiar,
+    borrar: mockBorrar,
+    deshacer: mockDeshacer,
+    rehacer: jest.fn(),
+    puedeDeshacer: mockPuedeDeshacer,
+    puedeRehacer: false,
+  }),
+}));
+
 /* eslint-disable-next-line @typescript-eslint/no-require-imports -- tras los mocks */
 const Lector = require('@/app/(app)/book/[id]').default as () => React.ReactElement;
 
@@ -63,6 +84,9 @@ const responder = async (m: MensajeDelMotor) => {
 
 beforeEach(() => {
   globalThis.setParametrosDeRuta({ id: 'l1' });
+  mockLista = [];
+  mockPuedeDeshacer = false;
+  for (const m of [mockCrear, mockCambiar, mockBorrar, mockDeshacer]) m.mockReset();
   mockEnviados.length = 0;
   mockGuardar.mockReset();
   mockTodas = [];
@@ -321,5 +345,137 @@ describe('tema del lector', () => {
     await fireEvent.press(screen.getByRole('button', { name: R.themeColor(R.themeText, '#3B3B3B') }));
     expect(mockEnviados.at(-1)).toEqual({ type: 'theme', page: '#121212', text: '#3B3B3B' });
     expect(screen.getByText(R.themeLowContrast)).toBeTruthy();
+  });
+});
+
+describe('anotaciones (spec 13c, T286)', () => {
+  const postit = (id: string, cambio: Record<string, unknown> = {}) => ({
+    id,
+    item_id: 'l1',
+    owner_id: 'u1',
+    kind: 'postit',
+    locator: { page: 3, x: 0.1, y: 0.2, w: 0.24 },
+    content: { color: '#F1D35D', text: `nota ${id}` },
+    z: 1,
+    removed: false,
+    locked: false,
+    created_at: '2026-10-13T10:00:00.000Z',
+    updated_at: '2026-10-13T10:00:00.000Z',
+    ...cambio,
+  });
+
+  it('manda al motor lo pegado que sabe pintar, sin lo quitado', async () => {
+    mockLista = [postit('a1'), postit('quitado', { removed: true }), postit('trazo', { kind: 'ink' })];
+    await render(<Lector />);
+    expect(mockEnviados).toContainEqual({
+      type: 'annotations',
+      items: [{ id: 'a1', kind: 'postit', locator: { page: 3, x: 0.1, y: 0.2, w: 0.24 }, z: 1, locked: false, content: { color: '#F1D35D', text: 'nota a1' } }],
+    });
+  });
+
+  it('pegar un post-it: la herramienta, el toque en la página y escribirle', async () => {
+    mockLista = [postit('a1', { z: 4 })];
+    const { rerender } = await render(<Lector />);
+    await responder({ type: 'opened', total: 12 });
+    await fireEvent.press(screen.getByRole('button', { name: A.postit }));
+    expect(mockEnviados.at(-1)).toEqual({ type: 'tool', tool: 'postit' });
+    expect(screen.getByText(A.postitOn)).toBeTruthy();
+
+    await responder({ type: 'place', locator: { page: 5, x: 0.3, y: 0.4, w: 0.24 } });
+    expect(mockCrear).toHaveBeenCalledWith(
+      expect.objectContaining({ kind: 'postit', item_id: 'l1', locator: { page: 5, x: 0.3, y: 0.4, w: 0.24 }, z: 5, content: { color: '#F1D35D', text: '' } }),
+    );
+    const nuevo = mockCrear.mock.calls[0][0] as { id: string };
+    // Queda elegido, la herramienta se apaga y se abre para escribir.
+    expect(mockEnviados).toContainEqual({ type: 'select', id: nuevo.id });
+    expect(mockEnviados.at(-1)).toEqual({ type: 'tool', tool: null });
+
+    // Como la caché optimista: lo nuevo ya está en la lista y la hoja para escribir se abre.
+    mockLista = [...mockLista, { ...postit(nuevo.id), ...mockCrear.mock.calls[0][0] }];
+    await rerender(<Lector />);
+    await fireEvent.changeText(screen.getByLabelText(A.editLabel), '  Releer este capítulo ');
+    await fireEvent.press(screen.getByRole('button', { name: 'Rosa' }));
+    await fireEvent.press(screen.getByRole('button', { name: A.save }));
+    expect(mockCambiar).toHaveBeenLastCalledWith(
+      expect.objectContaining({ id: nuevo.id }),
+      expect.objectContaining({ content: { text: 'Releer este capítulo', color: '#F6A9CD' } }),
+    );
+  });
+
+  it('con algo elegido: traer al frente, mandar atrás, bloquear y quitar (RF-BH16)', async () => {
+    mockLista = [postit('a1', { z: 1 }), postit('a2', { z: 2 })];
+    await render(<Lector />);
+    await responder({ type: 'opened', total: 12 });
+    await responder({ type: 'select', id: 'a1' });
+
+    await fireEvent.press(screen.getByRole('button', { name: A.toFront }));
+    expect(mockCambiar).toHaveBeenLastCalledWith(expect.objectContaining({ id: 'a1', z: 1 }), expect.objectContaining({ id: 'a1', z: 3 }));
+    // Ya está hasta atrás: no se guarda nada.
+    mockCambiar.mockClear();
+    await fireEvent.press(screen.getByRole('button', { name: A.toBack }));
+    expect(mockCambiar).not.toHaveBeenCalled();
+
+    await fireEvent.press(screen.getByRole('button', { name: A.lock }));
+    expect(mockCambiar).toHaveBeenLastCalledWith(expect.objectContaining({ id: 'a1' }), expect.objectContaining({ locked: true }));
+
+    await fireEvent.press(screen.getByRole('button', { name: A.remove }));
+    expect(mockBorrar).toHaveBeenCalledWith(expect.objectContaining({ id: 'a1' }));
+    expect(mockEnviados.at(-1)).toEqual({ type: 'select', id: null });
+  });
+
+  it('lo bloqueado lo dice y no se mueve aunque el motor lo pida', async () => {
+    mockLista = [postit('a1', { locked: true })];
+    await render(<Lector />);
+    await responder({ type: 'opened', total: 12 });
+    await responder({ type: 'select', id: 'a1' });
+    expect(screen.getByText(A.lockedHint)).toBeTruthy();
+    expect(screen.getByRole('button', { name: A.unlock })).toBeTruthy();
+    await responder({ type: 'move', id: 'a1', locator: { page: 4, x: 0.5, y: 0.5, w: 0.24 } });
+    expect(mockCambiar).not.toHaveBeenCalled();
+  });
+
+  it('arrastrar guarda la nueva posición', async () => {
+    mockLista = [postit('a1')];
+    await render(<Lector />);
+    await responder({ type: 'move', id: 'a1', locator: { page: 4, x: 0.5, y: 0.5, w: 0.24 } });
+    expect(mockCambiar).toHaveBeenCalledWith(expect.objectContaining({ id: 'a1' }), expect.objectContaining({ locator: { page: 4, x: 0.5, y: 0.5, w: 0.24 } }));
+  });
+
+  it('deshacer (RF-BH18)', async () => {
+    mockPuedeDeshacer = true;
+    await render(<Lector />);
+    await responder({ type: 'opened', total: 12 });
+    await fireEvent.press(screen.getByRole('button', { name: A.undo }));
+    expect(mockDeshacer).toHaveBeenCalled();
+    expect(screen.getByRole('button', { name: A.redo })).toBeDisabled();
+  });
+
+  it('el panel lista lo anotado con su página y tocar uno lleva ahí (RF-BH17)', async () => {
+    mockLista = [postit('a1', { locator: { page: 9, x: 0, y: 0, w: 0.2 } }), postit('a2', { content: { color: '#E24947', text: '' } })];
+    await render(<Lector />);
+    await responder({ type: 'opened', total: 12 });
+    await fireEvent.press(screen.getByRole('button', { name: A.panelA11y }));
+    const filas = screen.getAllByRole('button', { name: /Toca para ir ahí/ });
+    // En el orden del libro: la de la página 3 antes que la de la 9.
+    expect(filas.map((f) => f.props.accessibilityLabel)).toEqual([A.rowA11y('Post-it', A.emptyText, 'p. 3'), A.rowA11y('Post-it', 'nota a1', 'p. 9')]);
+    await fireEvent.press(filas[1]);
+    expect(mockEnviados).toContainEqual({ type: 'goTo', page: 9 });
+    expect(mockEnviados.at(-1)).toEqual({ type: 'select', id: 'a1' });
+  });
+
+  it('el panel vacío invita a pegar algo', async () => {
+    await render(<Lector />);
+    await responder({ type: 'opened', total: 12 });
+    await fireEvent.press(screen.getByRole('button', { name: A.panelA11y }));
+    expect(screen.getByText(A.empty)).toBeTruthy();
+  });
+
+  it('en el libro real no se pega: el botón está apagado y lo explica', async () => {
+    usePreferencesStore.setState({ readingModes: { l1: 'book' } });
+    await render(<Lector />);
+    await responder({ type: 'opened', total: 12 });
+    await responder({ type: 'tap' });
+    expect(screen.getByRole('button', { name: A.postit })).toBeDisabled();
+    expect(screen.getByText(A.postitBook)).toBeTruthy();
   });
 });

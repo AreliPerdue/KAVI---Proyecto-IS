@@ -1,26 +1,40 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { BookOpen, ChevronDown, ChevronLeft, ChevronUp, GalleryHorizontal, Rows3, Search, X } from 'lucide-react-native';
+import { BookOpen, ChevronDown, ChevronLeft, ChevronUp, GalleryHorizontal, NotebookText, Rows3, Search, X } from 'lucide-react-native';
 import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Platform, StyleSheet, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { AnnotationToolbar } from '@/components/library/annotation-toolbar';
+import { AnnotationsSheet } from '@/components/library/annotations-sheet';
+import { PostitSheet } from '@/components/library/postit-sheet';
 import { ReaderEngine, type ReaderEngineHandle } from '@/components/library/reader-engine';
 import { ReaderProgress } from '@/components/library/reader-progress';
 import { ReaderThemePicker } from '@/components/library/reader-theme-picker';
 import { AppText, Button, IconButton, Segmented, Sheet } from '@/components/ui';
 import { Fonts, IconSize, IconStroke, Radius, Spacing, Typography } from '@/constants/theme';
+import { useAnnotationEditor, useAnnotations } from '@/hooks/use-annotations';
 import { usePantallaCompleta } from '@/hooks/use-full-screen';
 import { useLibrarySync } from '@/hooks/use-library-sync';
 import { useAbrirCopiaLocal } from '@/hooks/use-local-book';
 import { useLibraryFileUrl, useLibraryItem, useLibraryItems, useSaveReadingPosition, useSeries } from '@/hooks/use-library';
 import { useTheme } from '@/hooks/use-theme';
 import { useT } from '@/i18n';
-import { cambioDePosicion, type CodigoDeError, type MensajeDelMotor, posicionGuardada } from '@/lib/library/reader-protocol';
+import { uuidv4 } from '@/lib/gym/ids';
+import { ANCHO_DE_POSTIT, colorDe, COLOR_DE_POSTIT, destinoDe, SE_PINTAN, textoDe, zAlFondo, zAlFrente, zNueva } from '@/lib/library/annotations';
+import {
+  type AnotacionEnMotor,
+  cambioDePosicion,
+  type CodigoDeError,
+  type Herramienta,
+  type MensajeDelMotor,
+  posicionGuardada,
+} from '@/lib/library/reader-protocol';
 import { FORMA_POR_OMISION, type FormaDeLeer } from '@/lib/library/reading-mode';
 import { coloresDe } from '@/lib/library/reader-theme';
 import { etiquetaDeSaga, siguienteDeSaga } from '@/lib/library/series';
 import { usePreferencesStore } from '@/store/preferences-store';
+import type { LibraryAnnotation } from '@/types/domain';
 
 /** Cuánto se espera sin moverse antes de guardar la posición: así no se escribe en cada página. */
 const GUARDAR_MS = 1200;
@@ -38,6 +52,10 @@ type Posicion = Extract<MensajeDelMotor, { type: 'position' }>;
  * Formas de leer (T283, T284; RF-BR5 – RF-BR8): scroll, páginas de lado o libro real, recordada por libro
  * en el dispositivo. Cambiarla no mueve el lugar. Fuera del scroll, el toque en el centro muestra u oculta
  * los controles (RF-BR7b). El libro real va a pantalla completa y arranca sin controles: solo el libro.
+ *
+ * Anotaciones (spec 13c, T286): lo pegado se pinta en la capa del motor; aquí se guarda (primero en la
+ * cola del dispositivo), se deshace y se rehace, y abajo están las herramientas: pegar un post-it y, con
+ * algo elegido, escribir, traer al frente, mandar atrás, bloquear y quitar. Arriba, el panel de lo anotado.
  */
 export default function ReaderScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -83,6 +101,18 @@ function Lector({ id }: { id: string }) {
   const [intento, setIntento] = useState(0);
   const [ocultos, setOcultos] = useState(forma === 'book');
 
+  const anotaciones = useAnnotations(id);
+  const editor = useAnnotationEditor(id);
+  const [herramienta, setHerramienta] = useState<Herramienta>(null);
+  const [seleccionId, setSeleccionId] = useState<string | null>(null);
+  const [editandoId, setEditandoId] = useState<string | null>(null);
+  const [verPanel, setVerPanel] = useState(false);
+  // El color del último post-it guardado: el siguiente sale de ese color.
+  const ultimoColor = useRef(COLOR_DE_POSTIT);
+  const lista = anotaciones.data;
+  const seleccionada = lista?.find((a) => a.id === seleccionId) ?? null;
+  const editando = lista?.find((a) => a.id === editandoId) ?? null;
+
   // Abrir una sola vez por dirección firmada, en el lugar donde se quedó (RF-BL17).
   const abiertoCon = useRef<string | null>(null);
   useEffect(() => {
@@ -109,6 +139,20 @@ function Lector({ id }: { id: string }) {
   useEffect(() => {
     motor.current?.send({ type: 'theme', page: colorPagina, text: colorLetra });
   }, [colorPagina, colorLetra]);
+
+  // Lo pegado, cada vez que cambia (guardar, deshacer, lo que llegó del servidor). El motor pinta lo que ya
+  // sabe pintar; lo demás llega con su tarea (T287 – T291).
+  useEffect(() => {
+    if (!lista) return;
+    const items: AnotacionEnMotor[] = lista
+      .filter((a) => !a.removed && SE_PINTAN.includes(a.kind))
+      .map((a) => ({ id: a.id, kind: a.kind, locator: a.locator, z: a.z, locked: a.locked, content: { color: colorDe(a) ?? undefined, text: textoDe(a) } }));
+    motor.current?.send({ type: 'annotations', items });
+  }, [lista]);
+
+  useEffect(() => {
+    motor.current?.send({ type: 'tool', tool: herramienta });
+  }, [herramienta]);
 
   // Cambiar de forma con el libro abierto: el motor se queda en el mismo lugar (RF-BR8).
   const formaEnMotor = useRef(forma);
@@ -138,6 +182,11 @@ function Lector({ id }: { id: string }) {
   const elegirForma = (nueva: FormaDeLeer) => {
     setForma(id, nueva);
     setOcultos(nueva === 'book');
+    // En el libro real lo pegado solo se ve.
+    if (nueva === 'book') {
+      setHerramienta(null);
+      setSeleccionId(null);
+    }
     if (nueva === 'book') setEligiendoForma(false);
   };
 
@@ -175,10 +224,84 @@ function Lector({ id }: { id: string }) {
       case 'tap':
         setOcultos((o) => !o);
         return;
+      case 'place':
+        pegarPostit(m.locator);
+        return;
+      case 'select':
+        setSeleccionId(m.id);
+        return;
+      case 'move': {
+        const a = lista?.find((x) => x.id === m.id);
+        if (a && !a.locked) cambiar(a, { locator: m.locator });
+        return;
+      }
+      case 'edit':
+        setSeleccionId(m.id);
+        setEditandoId(m.id);
+        return;
       case 'error':
         setError(m.code);
         return;
     }
+  };
+
+  const ahora = () => new Date().toISOString();
+  const cambiar = (a: LibraryAnnotation, cambio: Partial<LibraryAnnotation>) => editor.cambiar(a, { ...a, ...cambio, updated_at: ahora() });
+  const elegir = (idElegido: string | null) => {
+    setSeleccionId(idElegido);
+    motor.current?.send({ type: 'select', id: idElegido });
+  };
+
+  /** Un post-it nuevo donde se tocó, elegido y abierto para escribir. La herramienta se apaga. */
+  const pegarPostit = (locator: LibraryAnnotation['locator']) => {
+    const t = ahora();
+    const nuevo: LibraryAnnotation = {
+      id: uuidv4(),
+      item_id: id,
+      owner_id: '',
+      kind: 'postit',
+      locator: { ...locator, w: locator.w ?? ANCHO_DE_POSTIT },
+      content: { color: ultimoColor.current, text: '' },
+      z: zNueva(lista ?? []),
+      removed: false,
+      locked: false,
+      created_at: t,
+      updated_at: t,
+    };
+    editor.crear(nuevo);
+    setHerramienta(null);
+    elegir(nuevo.id);
+    setEditandoId(nuevo.id);
+  };
+
+  const guardarPostit = (texto: string, color: string) => {
+    const a = editando;
+    setEditandoId(null);
+    if (!a) return;
+    ultimoColor.current = color;
+    if (texto !== textoDe(a) || color !== colorDe(a)) cambiar(a, { content: { ...a.content, text: texto, color } });
+  };
+
+  const alFrente = () => {
+    const z = seleccionada && zAlFrente(lista ?? [], seleccionada.id);
+    if (seleccionada && z != null) cambiar(seleccionada, { z });
+  };
+  const alFondo = () => {
+    const z = seleccionada && zAlFondo(lista ?? [], seleccionada.id);
+    if (seleccionada && z != null) cambiar(seleccionada, { z });
+  };
+  const quitar = () => {
+    if (!seleccionada) return;
+    editor.borrar(seleccionada);
+    elegir(null);
+  };
+
+  /** Desde el panel: ir a donde está y dejarlo elegido. */
+  const irAAnotacion = (a: LibraryAnnotation) => {
+    const destino = destinoDe(a.locator);
+    setVerPanel(false);
+    if (destino) motor.current?.send({ type: 'goTo', ...destino });
+    if (forma !== 'book' && SE_PINTAN.includes(a.kind)) elegir(a.id);
   };
 
   const reintentar = () => {
@@ -232,7 +355,8 @@ function Lector({ id }: { id: string }) {
 
   // En scroll los controles siempre se ven: no hay centro que tocar para traerlos. Mientras abre o si
   // falla, tampoco se esconden: tiene que quedar cómo salir.
-  const controles = forma === 'scroll' || !ocultos || buscando || !abierto || !!mensajeError;
+  // Con algo elegido o pegando, también: las herramientas tienen que estar a la mano.
+  const controles = forma === 'scroll' || !ocultos || buscando || !abierto || !!mensajeError || !!seleccionada || !!herramienta;
   const pantallaCompleta = forma === 'book' && abierto && !mensajeError;
   usePantallaCompleta(pantallaCompleta);
 
@@ -278,6 +402,9 @@ function Lector({ id }: { id: string }) {
           <AppText variant="bodyStrong" numberOfLines={1} style={styles.titulo}>
             {item.data?.title ?? ''}
           </AppText>
+          <IconButton label={tx.library.annotations.panelA11y} onPress={() => setVerPanel(true)} disabled={!abierto}>
+            <NotebookText size={IconSize.action} strokeWidth={IconStroke} color={abierto ? theme.text : theme.textTertiary} />
+          </IconButton>
           <IconButton label={r.mode} onPress={() => setEligiendoForma(true)} disabled={!abierto}>
             {forma === 'book' ? (
               <BookOpen size={IconSize.action} strokeWidth={IconStroke} color={abierto ? theme.text : theme.textTertiary} />
@@ -327,7 +454,28 @@ function Lector({ id }: { id: string }) {
       ) : null}
 
       {abierto && controles ? (
-        <View style={{ paddingBottom: insets.bottom + Spacing.xs }}>
+        <View style={[styles.abajo, { paddingBottom: insets.bottom + Spacing.xs }]}>
+          {!mensajeError && !buscando ? (
+            <AnnotationToolbar
+              seleccionada={seleccionada}
+              herramienta={herramienta}
+              enLibro={forma === 'book'}
+              puedeDeshacer={editor.puedeDeshacer}
+              puedeRehacer={editor.puedeRehacer}
+              onHerramienta={(h) => {
+                if (h && seleccionada) elegir(null);
+                setHerramienta(h);
+              }}
+              onDeshacer={editor.deshacer}
+              onRehacer={editor.rehacer}
+              onEscribir={() => setEditandoId(seleccionada?.id ?? null)}
+              onFrente={alFrente}
+              onAtras={alFondo}
+              onBloquear={() => seleccionada && cambiar(seleccionada, { locked: !seleccionada.locked })}
+              onQuitar={quitar}
+              onListo={() => elegir(null)}
+            />
+          ) : null}
           <ReaderProgress
             fraction={fraccion}
             etiqueta={etiqueta}
@@ -359,6 +507,17 @@ function Lector({ id }: { id: string }) {
           <ReaderThemePicker />
         </View>
       </Sheet>
+
+      <AnnotationsSheet
+        visible={verPanel}
+        onClose={() => setVerPanel(false)}
+        anotaciones={lista}
+        cargando={anotaciones.isLoading}
+        error={anotaciones.isError}
+        onReintentar={() => void anotaciones.refetch()}
+        onIr={irAAnotacion}
+      />
+      <PostitSheet anotacion={editando} onClose={() => setEditandoId(null)} onGuardar={guardarPostit} />
     </View>
   );
 }
@@ -393,5 +552,6 @@ const styles = StyleSheet.create({
     boxShadow: '0 4px 16px rgba(22,23,26,0.08)',
   },
   formas: { gap: Spacing.md },
+  abajo: { gap: Spacing.xs },
   siguienteBotones: { flexDirection: 'row', justifyContent: 'flex-end', gap: Spacing.sm, marginTop: Spacing.sm },
 });

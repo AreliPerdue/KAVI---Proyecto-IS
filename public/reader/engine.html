@@ -159,6 +159,50 @@
         visibility: hidden;
         pointer-events: none;
       }
+      /* Capa de anotaciones (13c, T286): encima de la página y de su capa de texto. Solo lo pegado recibe
+         toques; lo demás pasa a la página (seleccionar texto, pasar de hoja). */
+      .capa-anotaciones {
+        position: absolute;
+        inset: 0;
+        z-index: 2;
+        pointer-events: none;
+        container-type: size;
+      }
+      #capa-epub {
+        position: fixed;
+        inset: 0;
+        z-index: 2;
+        pointer-events: none;
+        overflow: hidden;
+      }
+      .anotacion.seleccionada {
+        outline: 2px solid #131313;
+        outline-offset: 2px;
+        box-shadow:
+          0 0 0 5px #f2f2f2,
+          0 4px 14px rgb(0 0 0 / 0.35) !important;
+      }
+      .anotacion .candado {
+        position: absolute;
+        right: 4px;
+        bottom: 4px;
+        display: grid;
+        place-items: center;
+        width: 22px;
+        height: 22px;
+        border-radius: 11px;
+        background: #131313;
+        color: #f2f2f2;
+      }
+      /* Con la herramienta de post-it, la página dice que se puede pegar. */
+      body.pegando .pagina,
+      body.pegando #epub {
+        cursor: copy;
+      }
+      /* Pegando, lo ya pegado deja pasar el toque: se puede pegar uno encima de otro. */
+      body.pegando .anotacion {
+        pointer-events: none !important;
+      }
       #epub {
         position: absolute;
         inset: 0;
