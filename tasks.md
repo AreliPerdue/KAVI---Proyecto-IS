@@ -1093,6 +1093,11 @@ Decisiones B1–B9 aprobadas el 12 oct 2026 (T274); ver la tabla de la spec 13 �
 - [ ] T335 Stickers propios: desde una imagen (galería, cámara o archivo), con margen blanco opcional alrededor
   de la silueta y su grosor ajustable; se guardan en la colección de la persona y se pegan como los incluidos.
   (RF-BH13, pedido de Areli del 14 oct 2026) Dep: T334
+- [x] T336 Post-it: la letra fija que se reduce si no cabe (como PowerPoint) y su tamaño elegible (50 – 300 %).
+  (RF-BH14, pedido de Areli del 14 oct 2026) Dep: T329
+  **Hecho (14 oct 2026):** `ajustarLetra` con un `ResizeObserver` en `public/reader/annotations.js` (busca la letra
+  más grande que cabe), `size` del post-it en `pegado-style-sheet.tsx` y en lo que se manda al motor. En EPUB,
+  escribir al pegar espera a que el post-it se vea.
 - [x] T333 Borrar el archivo de una imagen quitada una hora después, si no se deshizo. (RF-BH12, pedido de
   Areli del 14 oct 2026) Dep: T289
   **Hecho (14 oct 2026):** acción `deleteFile` en `api/library-files.ts` (solo `<uid>/<pieza>/anotaciones/<id>.jpg`

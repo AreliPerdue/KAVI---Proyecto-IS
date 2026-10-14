@@ -19,8 +19,8 @@ export type CambioDeEstilo = { color: string; size?: number };
 
 /**
  * El color de algo pegado (spec 13c; T286, T289): un post-it o la letra de un cuadro de texto, de la paleta
- * de los Nobi, con el color de la portada primero (T329). En un cuadro de texto, también el tamaño de la
- * letra. Lo que se escribe va directo sobre la página, no aquí.
+ * de los Nobi, con el color de la portada primero (T329). En los dos, también el tamaño de la letra (en el
+ * post-it, T336: si no cabe, el motor la reduce lo justo). Lo que se escribe va directo sobre la página.
  */
 export function PegadoStyleSheet({
   anotacion,
@@ -53,7 +53,8 @@ function Editor({ anotacion, colorPortada, onGuardar }: { anotacion: LibraryAnno
 
   return (
     <View style={styles.editor}>
-      {esTexto ? (
+      {/* El tamaño de la letra: en el cuadro de texto y en el post-it (T336, pedido de Areli). */}
+      {esTexto || anotacion.kind === 'postit' ? (
         <>
           <AppText variant="label" color="textSecondary">
             {a.textSize}
@@ -83,7 +84,7 @@ function Editor({ anotacion, colorPortada, onGuardar }: { anotacion: LibraryAnno
           <ColorSwatch key={c.id} hex={c.hex} label={tx.colors[c.id] ?? c.label} selected={igual(c.hex)} onPress={() => setColor(c.hex)} size={32} />
         ))}
       </View>
-      <Button title={a.save} onPress={() => onGuardar({ color: color.toUpperCase(), ...(esTexto ? { size: escala } : {}) })} />
+      <Button title={a.save} onPress={() => onGuardar({ color: color.toUpperCase(), size: escala })} />
     </View>
   );
 }

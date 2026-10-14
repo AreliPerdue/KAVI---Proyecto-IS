@@ -149,11 +149,17 @@
   candado, lleva **8 asas al estilo KAVI**: una "L" en cada esquina y una rayita en medio de cada lado, en
   tinta con un halo claro, cada una con 32 px para tomarla (14 oct: antes eran circulitos y franjas, y jalar
   una también arrastraba la nota; ya no se mueve al estirarla). Se escribe **directo en el post-it** (doble
-  toque o **Escribir**), sin hoja aparte; el color se elige desde **Color**. La letra sigue al lado más corto. Jalar una
+  toque o **Escribir**), sin hoja aparte; el color se elige desde **Color**. Jalar una
   cambia el ancho y el alto sin mover la orilla de enfrente; ya no tiene que ser cuadrado (la posición guarda
   su proporción, `ar` = alto entre ancho, entre 0.25 y 4; mínimo 48 px por lado y sin salirse de la página).
-  La letra crece con el ancho. En la hoja del post-it, el **color de la portada** del libro sale primero en la
-  paleta, con su hex.
+  En la hoja del post-it, el **color de la portada** del libro sale primero en la paleta, con su hex.
+- **La letra del post-it, como PowerPoint (T336, 14 oct 2026, pedido de Areli).** Antes seguía al lado más
+  corto y al achicarlo se volvía ilegible. Ahora tiene un tamaño fijo (el de un post-it nuevo, en la medida de
+  la página para que acompañe al zoom) que **no crece** al agrandarlo; si el texto ya no cabe, la letra **baja
+  lo justo** para que quepa todo (hasta 6 px), al escribir, al estirarlo y con el zoom. Desde **Color** se elige
+  además el **tamaño de la letra** (50 – 300 %), como en el cuadro de texto, para notas con letras grandes; si
+  no cabe, también se reduce. Arreglado de paso: en EPUB, pegar un post-it ya pone a escribir en él (antes se
+  intentaba antes de que se viera y no tomaba el foco).
 
 ## 5. Encontrar lo anotado (RF-BH17 – RF-BH18)
 

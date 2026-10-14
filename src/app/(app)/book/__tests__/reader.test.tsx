@@ -399,7 +399,7 @@ describe('anotaciones (spec 13c, T286)', () => {
     await render(<Lector />);
     expect(mockEnviados).toContainEqual({
       type: 'annotations',
-      items: [{ id: 'a1', kind: 'postit', locator: { page: 3, x: 0.1, y: 0.2, w: 0.24 }, z: 1, locked: false, content: { color: '#F1D35D', text: 'nota a1' } }],
+      items: [{ id: 'a1', kind: 'postit', locator: { page: 3, x: 0.1, y: 0.2, w: 0.24 }, z: 1, locked: false, content: { color: '#F1D35D', text: 'nota a1', size: 1 } }],
     });
   });
 
@@ -436,7 +436,19 @@ describe('anotaciones (spec 13c, T286)', () => {
     await fireEvent.press(screen.getByRole('button', { name: A.styleColor }));
     await fireEvent.press(screen.getByRole('button', { name: 'Rosa' }));
     await fireEvent.press(screen.getByRole('button', { name: A.save }));
-    expect(mockCambiar).toHaveBeenLastCalledWith(expect.objectContaining({ id: 'a1' }), expect.objectContaining({ content: { color: '#F6A9CD', text: 'nota a1' } }));
+    expect(mockCambiar).toHaveBeenLastCalledWith(expect.objectContaining({ id: 'a1' }), expect.objectContaining({ content: { color: '#F6A9CD', text: 'nota a1', size: 1 } }));
+  });
+
+  it('el tamaño de la letra de un post-it se elige en la misma hoja y llega al motor (T336)', async () => {
+    mockLista = [postit('a1', { content: { color: '#F1D35D', text: 'grande', size: 2 } })];
+    await render(<Lector />);
+    expect(mockEnviados).toContainEqual(expect.objectContaining({ type: 'annotations', items: [expect.objectContaining({ content: { color: '#F1D35D', text: 'grande', size: 2 } })] }));
+    await responder({ type: 'opened', total: 12 });
+    await responder({ type: 'select', id: 'a1' });
+    await fireEvent.press(screen.getByRole('button', { name: A.styleColor }));
+    await fireEvent.press(screen.getByRole('button', { name: A.textBigger }));
+    await fireEvent.press(screen.getByRole('button', { name: A.save }));
+    expect(mockCambiar).toHaveBeenLastCalledWith(expect.objectContaining({ id: 'a1' }), expect.objectContaining({ content: { color: '#F1D35D', text: 'grande', size: 2.25 } }));
   });
 
   it('"Escribir" pone a escribir ahí mismo; con candado no se puede', async () => {
@@ -699,7 +711,7 @@ describe('post-it estirable y del color de la portada (T329)', () => {
     await fireEvent.press(screen.getByRole('button', { name: A.styleColor }));
     await fireEvent.press(screen.getByRole('button', { name: A.coverColor('#1E2761') }));
     await fireEvent.press(screen.getByRole('button', { name: A.save }));
-    expect(mockCambiar).toHaveBeenCalledWith(expect.objectContaining({ id: 'p1' }), expect.objectContaining({ content: { color: '#1E2761', text: 'hola' } }));
+    expect(mockCambiar).toHaveBeenCalledWith(expect.objectContaining({ id: 'p1' }), expect.objectContaining({ content: { color: '#1E2761', text: 'hola', size: 1 } }));
   });
 
   it('estirarlo guarda el ancho y la proporción nuevos', async () => {

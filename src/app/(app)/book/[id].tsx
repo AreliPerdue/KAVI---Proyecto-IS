@@ -227,7 +227,7 @@ function Lector({ id }: { id: string }) {
           color: colorDe(a) ?? undefined,
           text: textoDe(a),
           ...(a.kind === 'highlight' ? { style: estiloDe(a) } : {}),
-          ...(a.kind === 'textbox' ? { size: escalaDe(a) } : {}),
+          ...(a.kind === 'textbox' || a.kind === 'postit' ? { size: escalaDe(a) } : {}),
           ...(a.kind === 'image' ? { src: vistasPrevias.get(a.id) ?? urlsDeImagenes.get(rutaDeImagen(a) ?? '') ?? undefined, rot: giroDe(a) } : {}),
           ...(a.kind === 'sticker' ? { sticker: stickerDe(a) ?? undefined, rot: giroDe(a), label: nombreDeSticker(a, nombresDeStickers) } : {}),
         },

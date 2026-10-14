@@ -38,6 +38,41 @@ const LADO_MIN_PX = 48;
 const proporcionDe = (a) => (Number.isFinite(a.locator?.ar) && a.locator.ar >= 0.25 && a.locator.ar <= 4 ? a.locator.ar : 1);
 const entre = (v, min, max) => Math.min(Math.max(v, min), max);
 
+/**
+ * La letra de un post-it (T336): la de uno nuevo, fija. En PDF va en la medida de la página (cqw: acompaña al
+ * zoom); en EPUB y el libro real, en px. Si el texto no cabe, baja hasta `LETRA_MINIMA_PX`.
+ */
+const LETRA_POSTIT_PAGINA = '2.05cqw';
+const LETRA_POSTIT_PX = 15;
+const LETRA_MINIMA_PX = 6;
+
+/** El tamaño de letra elegido (1 = normal), de 50 % a 300 %. */
+const escalaDe = (a) => (Number.isFinite(a.content?.size) ? Math.min(3, Math.max(0.5, a.content.size)) : 1);
+
+const desborda = (caja) => caja.scrollHeight > caja.clientHeight || caja.scrollWidth > caja.clientWidth;
+
+/** Que todo el texto quepa en el post-it: la letra de siempre, o la más grande con la que cabe. */
+function ajustarLetra(el) {
+  const caja = el.querySelector(':scope > .texto');
+  if (!caja || !caja.clientHeight) return;
+  caja.style.fontSize = '';
+  if (!desborda(caja)) return;
+  let chica = LETRA_MINIMA_PX;
+  let grande = parseFloat(getComputedStyle(caja).fontSize) || LETRA_POSTIT_PX;
+  for (let paso = 0; paso < 8; paso++) {
+    const medio = (chica + grande) / 2;
+    caja.style.fontSize = `${medio}px`;
+    if (desborda(caja)) grande = medio;
+    else chica = medio;
+  }
+  caja.style.fontSize = `${Math.floor(chica * 10) / 10}px`;
+}
+
+/** Cada vez que un post-it cambia de tamaño (al pintarlo, estirarlo o con el zoom), se vuelve a ajustar. */
+const ajusteDeLetra = new ResizeObserver((cambios) => {
+  for (const c of cambios) ajustarLetra(c.target);
+});
+
 /** Lo que se pega encima de la página (lo demás, como los subrayados, va en el texto). */
 const PEGABLES = ['postit', 'textbox', 'image', 'sticker'];
 /** Lo que es solo una imagen: se gira y no se escribe. */
@@ -145,17 +180,19 @@ export function crearCapa(ctx, enviar) {
         Object.assign(el.style, {
           background: color,
           color: letraSobre(color),
-          // La letra sigue al lado más corto: estirarla solo a lo ancho (o a lo alto) no la agranda.
-          padding: px ? `${Math.round(Math.min(ancho, ancho * proporcionDe(a)) * 0.08)}px` : '0.6em',
+          // La letra es la de siempre (la de un post-it nuevo) aunque se agrande; si se achica y el texto ya no
+          // cabe, se reduce lo justo para que quepa todo, como PowerPoint (`ajustarLetra`, pedido de Areli).
+          padding: px ? `${Math.max(4, Math.round(Math.min(ancho, ancho * proporcionDe(a)) * 0.07))}px` : '0.55em',
           fontFamily: '-apple-system, system-ui, "Segoe UI", Roboto, sans-serif',
-          fontSize: px ? `${Math.max(10, Math.round(Math.min(ancho, ancho * proporcionDe(a)) * 0.085))}px` : `calc(${a.locator.w * Math.min(1, proporcionDe(a))} * 8.5cqw)`,
+          fontSize: px ? `${Math.round(LETRA_POSTIT_PX * escalaDe(a))}px` : `calc(${escalaDe(a)} * ${LETRA_POSTIT_PAGINA})`,
           lineHeight: '1.3',
           borderRadius: '2px',
           boxShadow: '0 2px 6px rgb(0 0 0 / 0.28)',
         });
+        ajusteDeLetra.observe(el);
       } else {
         // Cuadro de texto: la letra no depende del ancho (estirarlo reacomoda los renglones).
-        const escala = Number.isFinite(a.content?.size) ? Math.min(3, Math.max(0.5, a.content.size)) : 1;
+        const escala = escalaDe(a);
         el.setAttribute('aria-label', texto ? `Cuadro de texto: ${texto}` : 'Cuadro de texto');
         Object.assign(el.style, {
           color: /^#[0-9a-fA-F]{6}$/.test(a.content?.color ?? '') ? a.content.color : '#1A1A1A',
@@ -190,6 +227,15 @@ export function crearCapa(ctx, enviar) {
       porEditar = null;
       return;
     }
+    // En EPUB nace escondido hasta que se acomoda junto a su renglón (al siguiente cuadro): algo escondido no
+    // recibe el foco, así que se espera a que se vea.
+    if (el.style.display === 'none' || !el.offsetWidth) {
+      porEditar = id;
+      requestAnimationFrame(() => {
+        if (porEditar === id) editar(id);
+      });
+      return;
+    }
     porEditar = null;
     if (editando?.id === id) return;
     if (editando) editando.caja.blur();
@@ -215,6 +261,7 @@ export function crearCapa(ctx, enviar) {
     const maximo = MAX_TEXTO[a.kind] ?? 280;
     const alEscribir = () => {
       if (caja.innerText.length > maximo) caja.innerText = caja.innerText.slice(0, maximo);
+      if (a.kind === 'postit') ajustarLetra(el);
     };
     const alTeclear = (e) => {
       e.stopPropagation();
