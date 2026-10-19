@@ -13,7 +13,7 @@ export const COLOR_DE_POSTIT = PEOPLE_COLORS_DISPLAY.find((c) => c.id === 'yello
 /** Lo que va pegado encima de la página: se mueve, tiene capa y se bloquea (RF-BH16). */
 export const PEGADOS: readonly LibraryAnnotationKind[] = ['postit', 'sticker', 'textbox', 'image'];
 /** Lo que el motor ya sabe pintar. Cada tarea de L3 agrega el suyo (T289 cuadros, T290 stickers…). */
-export const SE_PINTAN: readonly LibraryAnnotationKind[] = ['postit', 'highlight', 'textbox', 'image', 'sticker', 'bookmark'];
+export const SE_PINTAN: readonly LibraryAnnotationKind[] = ['postit', 'highlight', 'textbox', 'image', 'sticker', 'bookmark', 'ink'];
 
 /** Cuánto se escribe en cada uno (T289). */
 export const TEXTO_MAXIMO: Partial<Record<LibraryAnnotationKind, number>> = { postit: 280, textbox: 1000 };

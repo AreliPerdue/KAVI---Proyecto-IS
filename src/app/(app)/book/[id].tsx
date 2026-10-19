@@ -19,6 +19,8 @@ import { useDuracion } from '@/components/library/reading-summary';
 import { ReaderTextPicker } from '@/components/library/reader-text-picker';
 import { ReaderThemePicker } from '@/components/library/reader-theme-picker';
 import { SelectionBar } from '@/components/library/selection-bar';
+import { PenSheet } from '@/components/library/pen-sheet';
+import { PenToolbar } from '@/components/library/pen-toolbar';
 import { CreateStickerSheet, type StickerHecho } from '@/components/library/create-sticker-sheet';
 import { type StickerElegible, StickerSheet } from '@/components/library/sticker-sheet';
 import { AppText, Button, IconButton, Segmented, Sheet } from '@/components/ui';
@@ -73,6 +75,7 @@ import {
   posicionGuardada,
 } from '@/lib/library/reader-protocol';
 import { lugarDeImagen, lugarDeSeleccion, posicionDeRuta } from '@/lib/library/clips';
+import { lapizParaMotor, trazosDe } from '@/lib/library/ink';
 import { FORMA_POR_OMISION, type FormaDeLeer } from '@/lib/library/reading-mode';
 import { coloresDe } from '@/lib/library/reader-theme';
 import { partesDeSticker, urlDeSticker } from '@/lib/library/sticker-packs';
@@ -242,6 +245,11 @@ function Lector({ id, irA }: { id: string; irA?: LugarDeApertura }) {
   // Fragmentos (RF-BH19 – RF-BH21; T317): con la herramienta de imagen puesta, la página espera el rectángulo.
   const [recortando, setRecortando] = useState(false);
   const crearFragmento = useCreateClip();
+  // El lápiz (RF-BH11; T291): mientras se dibuja, su barra reemplaza a la de pegar. Lo elegido se recuerda.
+  const [dibujando, setDibujando] = useState(false);
+  const [ajustandoLapiz, setAjustandoLapiz] = useState(false);
+  const lapiz = usePreferencesStore((s) => s.readerPen);
+  const setLapiz = usePreferencesStore((s) => s.setReaderPen);
 
   // Abrir una sola vez por dirección firmada, en el lugar donde se quedó (RF-BL17).
   const abiertoCon = useRef<string | null>(null);
@@ -289,6 +297,7 @@ function Lector({ id, irA }: { id: string; irA?: LugarDeApertura }) {
           ...(a.kind === 'textbox' || a.kind === 'postit' ? { size: escalaDe(a) } : {}),
           ...(a.kind === 'postit' ? { rot: giroDe(a), ...(a.content.folded === true ? { folded: true } : {}) } : {}),
           ...(a.kind === 'bookmark' ? { ...separadorDe(a) } : {}),
+          ...(a.kind === 'ink' ? { strokes: trazosDe(a) } : {}),
           ...(a.kind === 'image' ? { src: vistasPrevias.get(a.id) ?? urlsDeImagenes.get(rutaDeImagen(a) ?? '') ?? undefined, rot: giroDe(a) } : {}),
           ...(a.kind === 'sticker'
             ? { sticker: stickerDe(a) ?? undefined, rot: giroDe(a), label: nombreDeSticker(a, nombresDeStickers), src: fuenteDeSticker(stickerDe(a), fuentesDeStickers, packsDeStickers.data?.packs, fuentesPropias) }
@@ -313,6 +322,16 @@ function Lector({ id, irA }: { id: string; irA?: LugarDeApertura }) {
   useEffect(() => {
     motor.current?.send({ type: 'clipTool', on: recortando });
   }, [recortando]);
+
+  // El lápiz en el motor: puesto con la herramienta, el color (la tinta del tema si no se eligió) y el grosor.
+  const lapizPuesto = dibujando && forma !== 'book';
+  const tinta = colorLetra.toUpperCase();
+  const lapizEnMotor = useRef(false);
+  useEffect(() => {
+    if (lapizPuesto) motor.current?.send({ type: 'pen', on: true, ...lapizParaMotor(lapiz, tinta) });
+    else if (lapizEnMotor.current) motor.current?.send({ type: 'pen', on: false });
+    lapizEnMotor.current = lapizPuesto;
+  }, [lapizPuesto, lapiz, tinta]);
 
   // Letra y tamaño de un EPUB (RF-BH2, RF-BH3): al abrir y cada vez que cambian.
   const textoLectura = usePreferencesStore((s) => s.readerText);
@@ -468,9 +487,24 @@ function Lector({ id, irA }: { id: string; irA?: LugarDeApertura }) {
         return;
       case 'remove': {
         const a = lista?.find((x) => x.id === m.id);
-        if (a && esPegado(a)) quitar(a);
+        if (a?.kind === 'ink') editor.borrar(a);
+        else if (a && esPegado(a)) quitar(a);
         return;
       }
+      case 'ink': {
+        // Un dibujo nuevo del lápiz (T291), hasta arriba de la capa.
+        const t = ahora();
+        editor.crear({ id: uuidv4(), item_id: id, owner_id: '', kind: 'ink', locator: m.locator, content: { strokes: m.strokes }, z: zNueva(lista ?? []), removed: false, locked: false, created_at: t, updated_at: t });
+        return;
+      }
+      case 'inkChange': {
+        const a = lista?.find((x) => x.id === m.id);
+        if (a?.kind === 'ink') cambiar(a, { content: { ...a.content, strokes: m.strokes } });
+        return;
+      }
+      case 'undo':
+        editor.deshacer();
+        return;
       case 'error':
         setError(m.code);
         return;
@@ -959,6 +993,19 @@ function Lector({ id, irA }: { id: string; irA?: LugarDeApertura }) {
               onFragmento={guardarFragmentoDeTexto}
               onCerrar={soltarSeleccion}
             />
+          ) : !mensajeError && lapizPuesto ? (
+            <PenToolbar
+              lapiz={lapiz}
+              tinta={tinta}
+              onHerramienta={(tool) => setLapiz({ ...lapiz, tool })}
+              onAjustes={() => setAjustandoLapiz(true)}
+              // Siempre se puede: el motor quita primero el trazo que aún no se guarda.
+              puedeDeshacer
+              puedeRehacer={editor.puedeRehacer}
+              onDeshacer={() => motor.current?.send({ type: 'penUndo' })}
+              onRehacer={editor.rehacer}
+              onListo={() => setDibujando(false)}
+            />
           ) : !mensajeError ? (
             <AnnotationToolbar
               seleccionada={seleccionada}
@@ -970,6 +1017,12 @@ function Lector({ id, irA }: { id: string; irA?: LugarDeApertura }) {
                 if (h && seleccionada) elegir(null);
                 if (h) setRecortando(false);
                 setHerramienta(h);
+              }}
+              onLapiz={() => {
+                if (seleccionada) elegir(null);
+                setHerramienta(null);
+                setRecortando(false);
+                setDibujando(true);
               }}
               recortando={recortando}
               onRecortar={() => {
@@ -1124,6 +1177,7 @@ function Lector({ id, irA }: { id: string; irA?: LugarDeApertura }) {
       <BookmarkSheet anotacion={separador} onClose={() => elegir(null)} onGuardar={guardarSeparador} onQuitar={quitarSeparador} />
       <HighlightSheet anotacion={subrayado} onClose={() => elegir(null)} onGuardar={guardarSubrayado} onQuitar={quitarSubrayado} />
       <DefineSheet palabra={definiendo} idioma={idiomaLibro} onClose={() => setDefiniendo(null)} />
+      <PenSheet visible={ajustandoLapiz && lapizPuesto} lapiz={lapiz} tinta={tinta} onClose={() => setAjustandoLapiz(false)} onCambiar={setLapiz} />
     </View>
   );
 }

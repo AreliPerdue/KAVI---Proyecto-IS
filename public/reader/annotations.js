@@ -15,14 +15,16 @@
  *   selecciona y se subraya (T330): en PDF cada hoja lleva su capa de texto (`.hoja-pdf`); en EPUB la
  *   selección de la hoja se traduce a CFI del capítulo (`libro.seleccion()`, en `book.js`).
  *
- * Pinta post-its (T286), subrayados (T287), cuadros de texto e imágenes (T289) y stickers (T290); el lápiz
- * llega con su tarea (T291) sobre esta misma capa.
+ * Pinta post-its (T286), subrayados (T287), cuadros de texto e imágenes (T289), stickers (T290) y lo dibujado
+ * con el lápiz (T291, ver `ink.js`): cada dibujo es una caja como lo pegado, que no se toca (el borrador lo
+ * cambia) para no tapar el texto de abajo.
  *
  * Subrayados (13c, RF-BH7): al seleccionar texto el motor avisa `selection` con lo que dice y dónde está (en
  * PDF, un rectángulo por renglón en 0–1 de su página; en EPUB, el CFI del rango). La app crea el subrayado y
  * lo manda de vuelta en la lista. En PDF se pinta en la capa de cada página (resaltado, subrayado o tachado);
  * en EPUB lo dibuja foliate con su capa de dibujo. Tocar uno lo elige.
  */
+import { pintarTrazos } from './ink.js';
 import { pellizcando as pellizcandoAhora } from './zoom.js';
 
 /** El ancho de un post-it nuevo, relativo a la página (igual que `ANCHO_DE_POSTIT` en la app). */
@@ -80,6 +82,17 @@ const GIRO_POSTIT = 15;
 
 /** Lo que se pega encima de la página (lo demás, como los subrayados, va en el texto). */
 const PEGABLES = ['postit', 'textbox', 'image', 'sticker'];
+/** Alto entre ancho de un dibujo (T291): una raya puede ser muy larga y delgada. */
+const proporcionDeDibujo = (a) => (Number.isFinite(a.locator?.ar) && a.locator.ar >= 0.005 && a.locator.ar <= 200 ? a.locator.ar : 1);
+/** Los trazos de cada dibujo pintado, para volver a pintarlos cuando cambia su tamaño (zoom, letra, pantalla). */
+const trazosDe = new WeakMap();
+const alMedirDibujo = new ResizeObserver((cambios) => {
+  for (const c of cambios) {
+    const lienzo = c.target.firstElementChild;
+    if (lienzo) pintarTrazos(lienzo, trazosDe.get(c.target), c.target.clientWidth, c.target.clientHeight);
+  }
+});
+
 /** Lo que es solo una imagen: se gira y no se escribe. */
 const esImagen = (a) => a.kind === 'image' || a.kind === 'sticker';
 
@@ -125,6 +138,14 @@ export function crearCapa(ctx, enviar) {
   let anchoNuevo = null; // el de un sticker que vuelve de la charola: conserva su tamaño
   let porEditar = null; // un id que pidió escribirse antes de pintarse
   const subrayados = () => lista.filter((a) => a.kind === 'highlight');
+  /** Lo que va encima de la página, en orden de capa: lo pegado y lo dibujado (T291). */
+  const encima = () => lista.filter((a) => PEGABLES.includes(a.kind) || a.kind === 'ink');
+  /** El ancho en px de algo en el EPUB: un dibujo mide lo que se dibujó; lo pegado no baja del mínimo. */
+  const anchoEnEpub = (a, area) => (a.kind === 'ink' ? a.locator.w * area.width : anchoEpub(a.locator.w, area));
+  const proporcionDeAlgo = (a) => (a.kind === 'ink' ? proporcionDeDibujo(a) : proporcionDe(a));
+  /** Pinta algo de lo de encima: un dibujo o algo pegado. */
+  const deEncima = (a, opciones) => (a.kind === 'ink' ? dibujo(a, opciones) : pegado(a, opciones));
+  let provisionales = 0;
   const separadores = () => lista.filter((a) => a.kind === 'bookmark');
   const colorDe = (a) => (/^#[0-9a-fA-F]{6}$/.test(a.content?.color ?? '') ? a.content.color : '#F1D35D');
   const estiloDe = (a) => (a.content?.style === 'underline' || a.content?.style === 'strike' ? a.content.style : 'highlight');
@@ -234,6 +255,87 @@ export function crearCapa(ctx, enviar) {
       escucharArrastre(el, a);
     }
     return el;
+  }
+
+  /**
+   * Un dibujo del lápiz (T291): su caja con un lienzo que se pinta a su tamaño. No recibe toques: el texto de
+   * abajo se sigue seleccionando y lo de encima se sigue moviendo.
+   */
+  function dibujo(a, { ancho }) {
+    const el = document.createElement('div');
+    el.className = 'anotacion ink';
+    el.dataset.id = a.id;
+    el.setAttribute('role', 'img');
+    el.setAttribute('aria-label', 'Dibujo');
+    Object.assign(el.style, {
+      position: 'absolute',
+      width: typeof ancho === 'number' ? `${ancho}px` : ancho,
+      aspectRatio: `1 / ${proporcionDeDibujo(a)}`,
+      pointerEvents: 'none',
+    });
+    const lienzo = document.createElement('canvas');
+    Object.assign(lienzo.style, { width: '100%', height: '100%', display: 'block' });
+    el.append(lienzo);
+    trazosDe.set(el, a.content?.strokes ?? []);
+    alMedirDibujo.observe(el);
+    return el;
+  }
+
+  /** Repintar un dibujo con otros trazos (el borrador), ya, sin esperar a la app. */
+  function cambiarTrazos(id, trazos) {
+    const a = lista.find((x) => x.id === id);
+    if (a) a.content = { ...a.content, strokes: trazos };
+    for (const el of document.querySelectorAll(`.anotacion.ink[data-id="${CSS.escape(id)}"]`)) {
+      trazosDe.set(el, trazos);
+      pintarTrazos(el.firstElementChild, trazos, el.clientWidth, el.clientHeight);
+    }
+  }
+
+  /**
+   * Dónde queda un dibujo nuevo (T291): su caja en px de la ventana → su lugar (en PDF, en `pagina` o la de su
+   * centro, recortada a ella; en EPUB, junto al renglón de su centro) y la caja que de verdad le tocó.
+   */
+  function lugarDeDibujo(caja, pagina) {
+    const pdf = ctx.pdf();
+    const dentro = (r) => {
+      const left = Math.max(caja.left, r.left);
+      const top = Math.max(caja.top, r.top);
+      const right = Math.min(caja.left + caja.width, r.right ?? r.left + r.width);
+      const bottom = Math.min(caja.top + caja.height, r.bottom ?? r.top + r.height);
+      return right - left >= 1 && bottom - top >= 1 ? { left, top, width: right - left, height: bottom - top } : null;
+    };
+    if (pdf) {
+      const el =
+        pagina?.isConnected ? pagina : document.elementsFromPoint(caja.left + caja.width / 2, caja.top + caja.height / 2).find((x) => x.matches?.('.pagina[data-pagina]'));
+      if (!el) return null;
+      const r = el.getBoundingClientRect();
+      const c = dentro(r);
+      if (!c) return null;
+      return {
+        caja: c,
+        locator: { page: Number(el.dataset.pagina), x: redondear((c.left - r.left) / r.width), y: redondear((c.top - r.top) / r.height), w: redondear(c.width / r.width), ar: redondear(c.height / c.width) },
+      };
+    }
+    const area = areaEpub();
+    const c = area && dentro(area);
+    if (!c) return null;
+    const ar = c.height / c.width;
+    const locator = enEpub(c.left, c.top, c.width, redondear(c.width / area.width), ar);
+    return locator ? { caja: c, locator: { ...locator, ar: redondear(ar) } } : null;
+  }
+
+  /** Un dibujo recién hecho se ve ya; la lista que manda la app lo reemplaza por el de verdad. */
+  function provisional(item) {
+    const z = lista.reduce((max, a) => Math.max(max, a.z ?? 0), 0) + 1;
+    lista.push({ ...item, id: `provisional-${++provisionales}`, z, locked: false, provisional: true });
+    repintar();
+  }
+
+  /** Los dibujos a la vista que el borrador puede tocar (no los provisionales: aún no tienen id). */
+  function dibujosVisibles() {
+    return [...document.querySelectorAll('.anotacion.ink')]
+      .map((el) => ({ el, a: lista.find((x) => x.id === el.dataset.id) }))
+      .filter((x) => x.a && !x.a.provisional && x.el.getClientRects().length > 0);
   }
 
   // ─── Escribir directo (T289, pedido de Areli) ─────────────────────────────────
@@ -1073,9 +1175,9 @@ export function crearCapa(ctx, enviar) {
     const capa = capaDelEpub();
     capa.replaceChildren();
     const area = areaEpub();
-    for (const a of pegados()) {
+    for (const a of encima()) {
       if (!a.locator.cfi) continue;
-      const el = pegado(a, { ancho: anchoEpub(a.locator.w, area) });
+      const el = deEncima(a, { ancho: anchoEnEpub(a, area) });
       el.style.display = 'none';
       capa.append(el);
     }
@@ -1137,9 +1239,9 @@ export function crearCapa(ctx, enviar) {
     const m = capitulo.marco.getBoundingClientRect();
     const r = rectDe(guardado.rango);
     const left = m.left + r.left;
-    const ancho = anchoEpub(a.locator.w, area);
+    const ancho = anchoEnEpub(a, area);
     const top = m.top + r.top + (Number.isFinite(a.locator.dy) ? a.locator.dy * letraDe(capitulo.doc) : 0);
-    const alto = ancho * proporcionDe(a);
+    const alto = ancho * proporcionDeAlgo(a);
     // En páginas de lado, las otras columnas del capítulo están a los lados, fuera de la vista.
     if (top + alto < area.top || top > area.bottom - 16 || left < area.left - 2 || left > area.right) return null;
     return { left: entre(area.left + a.locator.x * area.width, area.left, area.right - ancho), top };
@@ -1224,14 +1326,14 @@ export function crearCapa(ctx, enviar) {
     div.querySelector(':scope > .capa-anotaciones')?.remove();
     div.querySelector(':scope > .capa-subrayados')?.remove();
     pintarSubrayadosPdf(n, div);
-    const enPaginaN = pegados().filter((a) => a.locator.page === n);
+    const enPaginaN = encima().filter((a) => a.locator.page === n);
     const susSeparadores = separadores().filter((a) => a.locator.page === n);
     if (!enPaginaN.length && !susSeparadores.length) return;
     const capa = document.createElement('div');
     capa.className = 'capa-anotaciones';
     for (const a of susSeparadores) capa.append(pestana(a, { enLibro }));
     for (const a of enPaginaN) {
-      const el = pegado(a, { ancho: `${a.locator.w * 100}%`, enLibro });
+      const el = deEncima(a, { ancho: `${a.locator.w * 100}%`, enLibro });
       el.style.left = `${a.locator.x * 100}%`;
       el.style.top = `${a.locator.y * 100}%`;
       capa.append(el);
@@ -1271,12 +1373,12 @@ export function crearCapa(ctx, enviar) {
         capa.append(el);
       }
     }
-    for (const a of pegados()) {
+    for (const a of encima()) {
       if (!a.locator.cfi) continue;
       const u = ubicar(a.locator.cfi);
       if (!u || u.pagina !== i) continue;
-      const px = entre(a.locator.w * ancho, LADO_MIN_PX, ancho);
-      const el = pegado(a, { ancho: px, enLibro: true });
+      const px = a.kind === 'ink' ? Math.min(a.locator.w * ancho, ancho) : entre(a.locator.w * ancho, LADO_MIN_PX, ancho);
+      const el = deEncima(a, { ancho: px, enLibro: true });
       el.style.left = `${entre(a.locator.x * ancho, 0, ancho - px)}px`;
       const letra = parseFloat(getComputedStyle(sombra.host ?? document.body).fontSize) || 16;
       el.style.top = `${u.y + (Number.isFinite(a.locator.dy) ? a.locator.dy * letra : 0)}px`;
@@ -1340,6 +1442,11 @@ export function crearCapa(ctx, enviar) {
     recargarEpub,
     pintarPaginaPdf,
     capaLibroEpub,
+    // Para el lápiz (T291, `ink.js`).
+    lugarDeDibujo,
+    provisional,
+    dibujosVisibles,
+    cambiarTrazos,
     /** Cambió la forma de leer o se abrió otro libro. */
     repintar,
     cerrar() {

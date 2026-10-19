@@ -725,3 +725,15 @@ una imagen EPUB sale todo azul y del tamaño esperado.
 - [ ] (manual) Teléfono: tocar un fragmento en Mis fragmentos abre el libro (de su copia, sin red) en esa página o CFI.
 - [ ] (manual) Con Supabase: un fragmento hecho en el teléfono aparece en la web con su imagen; borrar el libro lo
   deja con su título.
+
+## Lápiz y dedo (T291)
+Automatizado: `lib/library/__tests__/ink.test.ts`, `lib/library/__tests__/reader-protocol.test.ts` y
+`app/(app)/book/__tests__/reader.test.tsx` (barra, hoja de color y grosor, solo lápiz, guardar, borrar y
+deshacer). Visto en el demo (web 1280 y 375 px): espiral y raya con el mouse, marcador, borrador, deshacer,
+presión simulada con eventos de lápiz, solo lápiz y EPUB que sigue al texto.
+- [ ] (manual) Android con el dedo: dibujar no mueve la página; con "Solo lápiz", el dedo desplaza y pasa de hoja.
+- [ ] (manual) Android con lápiz (si hay uno a la mano): la presión cambia el grosor.
+- [ ] (manual) iPad con Apple Pencil (cuando haya build): presión, inclinación del lápiz de color y "Solo lápiz"
+  (la palma no dibuja ni mueve la página mientras el lápiz está abajo).
+- [ ] (manual) Lo dibujado en el teléfono se ve en la web en el mismo lugar (PDF y EPUB), y al cambiar el tamaño
+  de letra de un EPUB el dibujo sigue junto a su renglón.

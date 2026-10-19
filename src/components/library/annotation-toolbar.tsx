@@ -1,6 +1,6 @@
-import { Bookmark, BringToFront, Check, Crop, FoldVertical, ImagePlus, Lock, LockOpen, Palette, Pencil, Redo2, RotateCw, SendToBack, Sticker, StickyNote, Trash2, Type, Undo2 } from 'lucide-react-native';
+import { Bookmark, BringToFront, Check, Crop, FoldVertical, ImagePlus, PenLine, Lock, LockOpen, Palette, Pencil, Redo2, RotateCw, SendToBack, Sticker, StickyNote, Trash2, Type, Undo2 } from 'lucide-react-native';
 import type { ComponentType } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { AppText, IconButton } from '@/components/ui';
 import { IconSize, IconStroke, Radius, Spacing } from '@/constants/theme';
@@ -26,6 +26,8 @@ type Props = {
   /** La herramienta de fragmento de imagen (RF-BH20, T317), puesta o no; también en el libro real. */
   recortando: boolean;
   onRecortar: () => void;
+  /** Dibujar con el lápiz o el dedo (RF-BH11, T291); no en el libro real. */
+  onLapiz: () => void;
   onDeshacer: () => void;
   onRehacer: () => void;
   onEscribir: () => void;
@@ -43,8 +45,9 @@ type Props = {
 
 /**
  * Las herramientas sobre la página (spec 13c; T286, T289, T290), abajo del lector. Sin nada elegido: pegar un
- * post-it, un cuadro de texto, una imagen o un sticker, poner un separador, recortar un fragmento de imagen
- * (T317), deshacer y rehacer (RF-BH18). Con algo pegado elegido:
+ * post-it, un cuadro de texto, una imagen o un sticker, dibujar (T291), poner un separador, recortar un
+ * fragmento de imagen (T317), deshacer y rehacer (RF-BH18). Si no caben, las herramientas se deslizan de lado y
+ * deshacer y rehacer se quedan a la vista. Con algo pegado elegido:
  * escribir (ahí mismo) y su color, o girar si es imagen o sticker; traer al frente, mandar atrás, bloquear
  * (RF-BH16) y quitar (un sticker se va a la charola "Quitados").
  */
@@ -114,16 +117,21 @@ export function AnnotationToolbar(p: Props) {
     <View style={styles.contenedor}>
       {aviso ? <Aviso texto={aviso} /> : null}
       <View style={styles.fila} accessibilityRole="toolbar">
-        {herr('postit', StickyNote, a.postit, () => p.onHerramienta('postit'))}
-        {herr('textbox', Type, a.textbox, () => p.onHerramienta('textbox'))}
-        {herr('image', ImagePlus, a.image, p.onImagen)}
-        {herr('sticker', Sticker, a.sticker, p.onSticker)}
-        <IconButton label={a.bookmark} onPress={p.onSeparador}>
-          <Bookmark {...icono()} />
-        </IconButton>
-        <IconButton label={p.recortando ? a.clipCancel : a.clipImage} onPress={p.onRecortar} style={p.recortando ? { backgroundColor: theme.ink } : null}>
-          <Crop size={IconSize.action} strokeWidth={IconStroke} color={p.recortando ? theme.onInk : theme.text} />
-        </IconButton>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.desliza} contentContainerStyle={styles.herramientas}>
+          <IconButton label={a.pen} onPress={p.onLapiz} disabled={p.enLibro}>
+            <PenLine {...icono(!p.enLibro)} />
+          </IconButton>
+          {herr('postit', StickyNote, a.postit, () => p.onHerramienta('postit'))}
+          {herr('textbox', Type, a.textbox, () => p.onHerramienta('textbox'))}
+          {herr('image', ImagePlus, a.image, p.onImagen)}
+          {herr('sticker', Sticker, a.sticker, p.onSticker)}
+          <IconButton label={a.bookmark} onPress={p.onSeparador}>
+            <Bookmark {...icono()} />
+          </IconButton>
+          <IconButton label={p.recortando ? a.clipCancel : a.clipImage} onPress={p.onRecortar} style={p.recortando ? { backgroundColor: theme.ink } : null}>
+            <Crop size={IconSize.action} strokeWidth={IconStroke} color={p.recortando ? theme.onInk : theme.text} />
+          </IconButton>
+        </ScrollView>
         <View style={[styles.separador, { backgroundColor: theme.border }]} />
         <IconButton label={a.undo} onPress={p.onDeshacer} disabled={!p.puedeDeshacer}>
           <Undo2 {...icono(p.puedeDeshacer)} />
@@ -153,8 +161,10 @@ function Aviso({ texto }: { texto: string }) {
 
 const styles = StyleSheet.create({
   contenedor: { alignItems: 'center', paddingHorizontal: Spacing.sm },
-  // Sin espacio entre botones: ocho de 44 caben en 375 px; en algo más angosto, la fila se parte.
-  fila: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', alignItems: 'center', borderRadius: Radius.full, borderCurve: 'continuous' },
+  // Sin espacio entre botones; lo que no quepa de las herramientas se desliza de lado.
+  fila: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', maxWidth: '100%', borderRadius: Radius.full, borderCurve: 'continuous' },
+  desliza: { flexGrow: 0, flexShrink: 1 },
+  herramientas: { flexDirection: 'row', alignItems: 'center' },
   separador: { width: 1, height: 24, marginHorizontal: 2 },
   avisoCaja: { position: 'absolute', bottom: '100%', left: Spacing.lg, right: Spacing.lg, alignItems: 'center', paddingBottom: Spacing.xs },
   aviso: {

@@ -451,7 +451,7 @@ describe('anotaciones (spec 13c, T286)', () => {
   });
 
   it('manda al motor lo pegado que sabe pintar, sin lo quitado', async () => {
-    mockLista = [postit('a1'), postit('quitado', { removed: true }), postit('trazo', { kind: 'ink' })];
+    mockLista = [postit('a1'), postit('quitado', { removed: true }), postit('nota', { kind: 'note' })];
     await render(<Lector />);
     expect(mockEnviados).toContainEqual({
       type: 'annotations',
@@ -1270,5 +1270,70 @@ describe('stickers propios (spec 13c, RF-BH13; T335)', () => {
     await fireEvent.press(screen.getByRole('button', { name: S.removeMine }));
     expect(mockConfirmar).toHaveBeenCalledWith(expect.objectContaining({ destructive: true }));
     expect(mockBorrarSticker).toHaveBeenCalledWith('p1');
+  });
+});
+
+describe('lápiz y dedo (spec 13c, RF-BH11; T291)', () => {
+  const { LAPIZ_POR_OMISION } = jest.requireActual<typeof import('@/lib/library/ink')>('@/lib/library/ink');
+  const strokes = [{ t: 'pen' as const, c: '#1A1A1A', s: 0.01, p: [0.1, 0.2, 1, 0.3, 0.4, 1] }];
+  const ultimoPen = () => [...mockEnviados].reverse().find((m) => m.type === 'pen');
+  beforeEach(() => usePreferencesStore.setState({ readerPen: LAPIZ_POR_OMISION, readerTheme: { tema: 'light', propio: { pagina: '#F4ECD8', letra: '#5B4636' } } }));
+
+  it('Dibujar pone el lápiz en el motor con la tinta del tema y cambia la barra; Listo lo quita', async () => {
+    await render(<Lector />);
+    await responder({ type: 'opened', total: 12 });
+    expect(ultimoPen()).toBeUndefined();
+    await fireEvent.press(screen.getByRole('button', { name: A.pen }));
+    expect(ultimoPen()).toMatchObject({ type: 'pen', on: true, tool: 'pen', size: 3, penOnly: false });
+    expect(screen.getByRole('button', { name: A.penTools.eraser })).toBeTruthy();
+    expect(screen.getByText(A.penOn)).toBeTruthy();
+    await fireEvent.press(screen.getByRole('button', { name: A.penTools.marker }));
+    expect(ultimoPen()).toMatchObject({ tool: 'marker', color: '#F1D35D', size: 16 });
+    expect(usePreferencesStore.getState().readerPen.tool).toBe('marker');
+    await fireEvent.press(screen.getByRole('button', { name: A.penDone }));
+    expect(ultimoPen()).toEqual({ type: 'pen', on: false });
+    expect(screen.getByRole('button', { name: A.postit })).toBeTruthy();
+  });
+
+  it('color, grosor y "solo lápiz" se eligen en su hoja y van al motor', async () => {
+    await render(<Lector />);
+    await responder({ type: 'opened', total: 12 });
+    await fireEvent.press(screen.getByRole('button', { name: A.pen }));
+    await fireEvent.press(screen.getByRole('button', { name: A.penSettings }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Coral' }));
+    await fireEvent.press(screen.getByRole('tab', { name: A.penSizes[2] }));
+    await fireEvent.press(screen.getByRole('switch', { name: A.penOnly }));
+    expect(ultimoPen()).toMatchObject({ tool: 'pen', color: '#F68675', size: 5, penOnly: true });
+    expect(screen.getByText(A.penOnlyOn)).toBeTruthy();
+  });
+
+  it('un dibujo del motor se guarda como anotación; el borrador lo cambia o lo quita; deshacer va primero al motor', async () => {
+    const dibujo = { id: 'd1', item_id: 'l1', owner_id: 'u1', kind: 'ink', locator: { page: 2, x: 0.1, y: 0.1, w: 0.5, ar: 0.4 }, content: { strokes }, z: 1, removed: false, locked: false, created_at: 'c', updated_at: 'u' };
+    mockLista = [dibujo];
+    await render(<Lector />);
+    await responder({ type: 'opened', total: 12 });
+    // Lo dibujado se manda al motor con sus trazos.
+    const pintados = [...mockEnviados].reverse().find((m) => m.type === 'annotations');
+    expect(pintados).toMatchObject({ items: [expect.objectContaining({ id: 'd1', kind: 'ink', content: expect.objectContaining({ strokes }) })] });
+    await responder({ type: 'ink', locator: { page: 3, x: 0.2, y: 0.3, w: 0.4, ar: 0.5 }, strokes });
+    expect(mockCrear).toHaveBeenCalledWith(expect.objectContaining({ kind: 'ink', item_id: 'l1', locator: { page: 3, x: 0.2, y: 0.3, w: 0.4, ar: 0.5 }, content: { strokes }, z: 2 }));
+    await responder({ type: 'inkChange', id: 'd1', strokes: [strokes[0]] });
+    expect(mockCambiar).toHaveBeenCalledWith(dibujo, expect.objectContaining({ content: { strokes: [strokes[0]] } }));
+    await responder({ type: 'remove', id: 'd1' });
+    expect(mockBorrar).toHaveBeenCalledWith(dibujo);
+    await fireEvent.press(screen.getByRole('button', { name: A.pen }));
+    await fireEvent.press(screen.getByRole('button', { name: A.undo }));
+    expect(mockEnviados).toContainEqual({ type: 'penUndo' });
+    expect(mockDeshacer).not.toHaveBeenCalled();
+    await responder({ type: 'undo' });
+    expect(mockDeshacer).toHaveBeenCalled();
+  });
+
+  it('en el libro real no se dibuja', async () => {
+    usePreferencesStore.setState({ readingModes: { l1: 'book' } });
+    await render(<Lector />);
+    await responder({ type: 'opened', total: 12 });
+    await responder({ type: 'tap' });
+    expect(screen.getByRole('button', { name: A.pen })).toBeDisabled();
   });
 });

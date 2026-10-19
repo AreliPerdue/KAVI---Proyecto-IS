@@ -9,19 +9,22 @@ export function IconButton({
   onPress,
   children,
   disabled,
+  selected,
   style,
 }: {
   label: string;
   onPress: () => void;
   children: ReactNode;
   disabled?: boolean;
+  /** Para una herramienta elegida entre varias: el lector de pantalla lo anuncia. */
+  selected?: boolean;
   style?: StyleProp<ViewStyle>;
 }) {
   return (
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={label}
-      accessibilityState={{ disabled: !!disabled }}
+      accessibilityState={{ disabled: !!disabled, ...(selected !== undefined ? { selected } : {}) }}
       disabled={disabled}
       hitSlop={4}
       onPress={onPress}

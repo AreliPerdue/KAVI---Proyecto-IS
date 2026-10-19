@@ -327,6 +327,31 @@
       body.pegando #epub {
         cursor: copy;
       }
+      /* Lápiz (T291): lo que se está dibujando se ve encima de todo; mientras, no se selecciona texto. */
+      #trazo-vivo {
+        position: fixed;
+        inset: 0;
+        width: 100vw;
+        height: 100vh;
+        z-index: 45;
+        pointer-events: none;
+      }
+      body.dibujando,
+      body.dibujando * {
+        -webkit-user-select: none;
+        user-select: none;
+        -webkit-touch-callout: none;
+      }
+      body.dibujando .pagina,
+      body.dibujando #epub {
+        cursor: crosshair;
+      }
+      /* Con el dedo dibujando, el dedo no mueve la página. */
+      body.dibujando-dedo #pdf,
+      body.dibujando-dedo .pagina,
+      body.dibujando-dedo #epub {
+        touch-action: none;
+      }
       /* Fragmento de imagen (T317): un velo que se lleva los toques y el rectángulo que se arrastra. */
       .recortando {
         position: fixed;

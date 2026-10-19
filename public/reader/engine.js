@@ -7,10 +7,11 @@
  *
  * App → motor: `open`, `openBegin` / `openChunk` / `openEnd`, `goTo`, `mode`, `turn`, `theme`, `search`,
  * `searchStep`, `searchClear`, `cover`, y de la capa de anotaciones (T286) `annotations`, `tool`, `select`,
- * `clearSelection`; de la letra y el zoom (T288) `text` y `zoom`; el fragmento de imagen (T317) `clipTool`.
+ * `clearSelection`; de la letra y el zoom (T288) `text` y `zoom`; el fragmento de imagen (T317) `clipTool`; el
+ * lápiz (T291) `pen`.
  * Motor → app: `ready`, `opened`, `position`, `search`, `tap`, `cover`, `error`; `place`, `select`,
  * `move`, `edit`, `selection` (ver `annotations.js`); `zoom` y `textSize` (T288); `activity` (T318); `clip`
- * (ver `clip.js`, T317).
+ * (ver `clip.js`, T317); `ink` e `inkChange` (ver `ink.js`, T291).
  *
  * Zoom y letra (13c, RF-BH1 – RF-BH3; T288): en PDF se acerca con pellizco o Ctrl/⌘ y la rueda (la página se
  * vuelve a pintar a ese tamaño, nítida); doble toque o "Ajustar" vuelve a la página entera. En EPUB el
@@ -30,6 +31,7 @@
  */
 import { crearCapa } from './annotations.js';
 import { crearRecortador } from './clip.js';
+import { crearLapiz } from './ink.js';
 import { buscarEnPedazos } from './text-search.js';
 import { caraDeLetra, estilosDeTexto, familiaDe, letraValida, tamanoValido } from './text.js';
 import { escucharPellizco, escucharRuedaConCtrl, pellizcando } from './zoom.js';
@@ -40,7 +42,11 @@ const VENDOR = new URL('./vendor/', globalThis.KAVI_BASE ?? import.meta.url).hre
 
 // ─── Mensajes ────────────────────────────────────────────────────────────────
 
+/** Al moverse en el libro, lo que el lápiz tenía pendiente se guarda donde se dibujó (T291). */
+let alMoverseElLibro = () => {};
+
 function enviar(mensaje) {
+  if (mensaje.type === 'position') alMoverseElLibro();
   const texto = JSON.stringify(mensaje);
   if (window.ReactNativeWebView) window.ReactNativeWebView.postMessage(texto);
   else if (window.parent !== window) window.parent.postMessage({ kaviReader: texto }, location.origin);
@@ -128,6 +134,10 @@ async function atender(m) {
       return anotaciones.herramienta(m.tool, m.ar, m.w);
     case 'clipTool':
       return recortador.activar(m.on === true);
+    case 'pen':
+      return lapiz.poner(m);
+    case 'penUndo':
+      return lapiz.deshacer();
     case 'write':
       return anotaciones.escribir(m.id);
     case 'select':
@@ -187,6 +197,21 @@ const anotaciones = crearCapa(
 /** El fragmento de imagen (13c, RF-BH20; T317). */
 const recortador = crearRecortador({ pdf: () => pdf, epub: () => epub }, enviar);
 
+/** El lápiz (13c, RF-BH11; T291): dibuja sobre la capa de anotaciones. */
+const lapiz = crearLapiz(
+  {
+    forma: () => forma,
+    pdf: () => pdf,
+    epub: () => epub,
+    lugarDeDibujo: anotaciones.lugarDeDibujo,
+    provisional: anotaciones.provisional,
+    dibujosVisibles: anotaciones.dibujosVisibles,
+    cambiarTrazos: anotaciones.cambiarTrazos,
+  },
+  enviar,
+);
+alMoverseElLibro = () => lapiz.alMoverse();
+
 /** Al terminar de seleccionar (la selección deja de cambiar), la capa avisa qué quedó seleccionado (T287). */
 function escucharSeleccion(doc) {
   let espera = null;
@@ -217,6 +242,7 @@ function cerrar() {
   limpiarBusqueda();
   anotaciones.cerrar();
   recortador.cerrar();
+  lapiz.cerrar();
   zoom = 1;
   salirDelLibro();
   if (pdf) {
@@ -601,6 +627,7 @@ async function abrirEpub(fuente, posicion) {
     escucharSeleccion(e.detail.doc);
     letraConGestos(e.detail.doc);
     escucharActividad(e.detail.doc);
+    lapiz.enganchar(e.detail.doc);
   });
   gestosDePaginas(raiz, true);
   letraConGestos(raiz);

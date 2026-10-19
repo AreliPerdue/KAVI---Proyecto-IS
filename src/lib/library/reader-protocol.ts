@@ -2,6 +2,7 @@ import { Platform } from 'react-native';
 
 import { SITIO } from '@/lib/api';
 import { localizadorDeTexto, localizadorPegado, TEXTO_MAXIMO_DE_SUBRAYADO } from '@/lib/library/annotations';
+import { type HerramientaDeLapiz, type Trazo, trazosValidos } from '@/lib/library/ink';
 import type { FormaDeLeer } from '@/lib/library/reading-mode';
 import { type LetraDeLectura, tamanoValido } from '@/lib/library/reader-text';
 import type { LibraryAnnotationKind, LibraryItem, LibraryLocator } from '@/types/domain';
@@ -41,6 +42,8 @@ export type AnotacionEnMotor = {
     /** Sticker (T290): cuál de la colección (`<paquete>/<nombre>`) y su nombre, para leerlo en voz alta. */
     sticker?: string;
     label?: string;
+    /** Dibujo del lápiz (T291): sus trazos, relativos a su caja. */
+    strokes?: Trazo[];
   };
 };
 
@@ -71,6 +74,11 @@ export type MensajeAlMotor =
   | { type: 'outline'; id: string; src: string; margin: number }
   /** Poner o quitar la herramienta de fragmento de imagen (13c, RF-BH20; T317). */
   | { type: 'clipTool'; on: boolean }
+  /** El lápiz (13c, RF-BH11; T291): puesto o no, con qué herramienta, color, grosor (px) y si solo dibuja el lápiz. */
+  | { type: 'pen'; on: false }
+  | { type: 'pen'; on: true; tool: HerramientaDeLapiz; color: string; size: number; penOnly: boolean }
+  /** Deshacer mientras se dibuja: el motor quita el último trazo aún sin guardar o, si no hay, pide `undo`. */
+  | { type: 'penUndo' }
   /** Todo lo que se pinta encima de las páginas, ya en orden de capa (13c, RF-BH16; T286). */
   | { type: 'annotations'; items: AnotacionEnMotor[] }
   /**
@@ -113,6 +121,12 @@ export type MensajeDelMotor =
    */
   | { type: 'clip'; dataUrl: string; width: number; height: number; page?: number; rect?: { x: number; y: number; w: number; h: number } }
   | { type: 'clip'; error: 'empty' | 'failed' }
+  /** Un dibujo nuevo del lápiz (T291): dónde va su caja y sus trazos. */
+  | { type: 'ink'; locator: LibraryLocator; strokes: Trazo[] }
+  /** El borrador le quitó trazos a un dibujo (si se los quitó todos, llega `remove`). */
+  | { type: 'inkChange'; id: string; strokes: Trazo[] }
+  /** El lápiz no tenía nada pendiente: deshacer lo último guardado. */
+  | { type: 'undo' }
   /** Toque o clic en el centro de la página: mostrar u ocultar los controles (RF-BR7b). */
   | { type: 'tap' }
   /** Con la herramienta de post-it, el toque en la página: dónde pegarlo (T286). */
@@ -237,11 +251,30 @@ export function leerMensaje(crudo: unknown): MensajeDelMotor | null {
       const page = numero(m.page) && Number.isInteger(m.page) && m.page >= 1 ? m.page : undefined;
       return { type: 'clip', dataUrl: m.dataUrl, width: m.width, height: m.height, ...(page ? { page } : {}), ...(rect ? { rect } : {}) };
     }
+    case 'ink': {
+      const locator = localizadorDeDibujo(m.locator);
+      const strokes = trazosValidos(m.strokes);
+      return locator && strokes?.length ? { type: 'ink', locator, strokes } : null;
+    }
+    case 'undo':
+      return { type: 'undo' };
+    case 'inkChange': {
+      const strokes = trazosValidos(m.strokes);
+      return esId(m.id) && strokes?.length ? { type: 'inkChange', id: m.id, strokes } : null;
+    }
     case 'error':
       return { type: 'error', code: CODIGOS.includes(m.code as CodigoDeError) ? (m.code as CodigoDeError) : 'unknown', message: typeof m.message === 'string' ? m.message : undefined };
     default:
       return null;
   }
+}
+
+/** El lugar de un dibujo: como lo pegado, pero su caja puede ser muy larga y delgada (una raya). */
+function localizadorDeDibujo(crudo: unknown): LibraryLocator | null {
+  const base = localizadorPegado(crudo);
+  if (!base) return null;
+  const ar = (crudo as Record<string, unknown>).ar;
+  return typeof ar === 'number' && Number.isFinite(ar) && ar >= 0.005 && ar <= 200 ? { ...base, ar } : base;
 }
 
 /** Dónde abrir una pieza (RF-BL17): donde se quedó. En EPUB manda el CFI; en PDF, la página. */

@@ -6,6 +6,7 @@ import { type CalendarView, setTimeFormat, type TimeFormat } from '@/lib/dates';
 import { type OrdenBiblioteca, ORDEN_POR_OMISION, ordenValido } from '@/lib/library/filters';
 import { type FormaDeLeer, formasValidas, recordarForma } from '@/lib/library/reading-mode';
 import { type PreferenciaDeTema, TEMA_POR_OMISION, temaValido } from '@/lib/library/reader-theme';
+import { LAPIZ_POR_OMISION, lapizValido, type PreferenciaDeLapiz } from '@/lib/library/ink';
 import { type PreferenciaDeTexto, TEXTO_POR_OMISION, textoValido } from '@/lib/library/reader-text';
 import { type VistaDeSagas, VISTA_DE_SAGAS_POR_OMISION, vistaDeSagasValida } from '@/lib/library/series';
 import { DEFAULT_LIBRARY_VIEW, type LibraryView, libraryViewValida } from '@/lib/library/shelf';
@@ -64,6 +65,7 @@ type Prefs = {
   readerTheme: PreferenciaDeTema;
   readerText: PreferenciaDeTexto;
   readingLanguages: Language[];
+  readerPen: PreferenciaDeLapiz;
 };
 
 type PreferencesState = {
@@ -126,6 +128,9 @@ type PreferencesState = {
    */
   readingLanguages: Language[];
   setReadingLanguages: (idiomas: Language[]) => void;
+  /** El lápiz del lector (T291): herramienta, color y grosor de cada una, y "solo lápiz". */
+  readerPen: PreferenciaDeLapiz;
+  setReaderPen: (lapiz: PreferenciaDeLapiz) => void;
   hydrated: boolean;
   setTimeFormat: (formato: TimeFormat) => void;
   setLanguage: (idioma: LanguagePreference) => void;
@@ -188,6 +193,7 @@ export const usePreferencesStore = create<PreferencesState>((set, get) => ({
   readerTheme: TEMA_POR_OMISION,
   readerText: TEXTO_POR_OMISION,
   readingLanguages: [],
+  readerPen: LAPIZ_POR_OMISION,
   hydrated: false,
 
   setTimeFormat: (formato) => {
@@ -320,6 +326,13 @@ export const usePreferencesStore = create<PreferencesState>((set, get) => ({
     persistir({ ...get(), readerText: texto });
   },
 
+  setReaderPen: (lapiz) => {
+    elegidoEnEstaSesion.add('readerPen');
+    const limpio = lapizValido(lapiz);
+    set({ readerPen: limpio });
+    persistir({ ...get(), readerPen: limpio });
+  },
+
   setReadingLanguages: (idiomas) => {
     elegidoEnEstaSesion.add('readingLanguages');
     const limpio = idiomasValidos(idiomas);
@@ -374,6 +387,7 @@ export const usePreferencesStore = create<PreferencesState>((set, get) => ({
       readerTheme: guardado('readerTheme', temaValido(prefs?.readerTheme)),
       readerText: guardado('readerText', textoValido(prefs?.readerText)),
       readingLanguages: guardado('readingLanguages', idiomasValidos(prefs?.readingLanguages)),
+      readerPen: guardado('readerPen', lapizValido(prefs?.readerPen)),
       hydrated: true,
     });
     // Lo elegido antes de hidratar se guardo con el resto de valores por omision;
@@ -384,7 +398,7 @@ export const usePreferencesStore = create<PreferencesState>((set, get) => ({
 
 /** Se guarda el conjunto entero: son dos claves y así no pueden desincronizarse. */
 function persistir(
-  estado: Pick<PreferencesState, 'timeFormat' | 'timeFormatChosen' | 'language' | 'lastWorkoutTitle' | 'showWorkouts' | 'showBirthdays' | 'visto' | 'appearance' | 'selfColor' | 'pinnedViews' | 'accesos' | 'overlayRecientes' | 'libraryView' | 'libraryOrder' | 'librarySeriesView' | 'librarySpineHeights' | 'readingModes' | 'readerTheme' | 'readerText' | 'readingLanguages'>,
+  estado: Pick<PreferencesState, 'timeFormat' | 'timeFormatChosen' | 'language' | 'lastWorkoutTitle' | 'showWorkouts' | 'showBirthdays' | 'visto' | 'appearance' | 'selfColor' | 'pinnedViews' | 'accesos' | 'overlayRecientes' | 'libraryView' | 'libraryOrder' | 'librarySeriesView' | 'librarySpineHeights' | 'readingModes' | 'readerTheme' | 'readerText' | 'readingLanguages' | 'readerPen'>,
 ): void {
   void setJson(PREFS_KEY, {
     timeFormat: estado.timeFormat,
@@ -407,6 +421,7 @@ function persistir(
     readerTheme: estado.readerTheme,
     readerText: estado.readerText,
     readingLanguages: estado.readingLanguages,
+    readerPen: estado.readerPen,
   } satisfies Prefs);
 }
 

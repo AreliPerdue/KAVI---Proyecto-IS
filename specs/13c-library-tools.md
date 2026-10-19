@@ -102,6 +102,23 @@
   color. Con **Apple Pencil**, presión e inclinación; con el dedo, trazo de grosor fijo. Un modo "solo lápiz"
   evita que la palma o el dedo dibujen sin querer.
   - Excepción de plataforma (P5): en web se dibuja con mouse o lápiz de tableta, sin presión.
+  - **Hecho (T291, 19 oct 2026).** Se dibuja **en el motor del lector**, no con Skia (decisión de Areli del
+    19 oct). Así lo dibujado vive en la página, sigue al scroll, al zoom y a las páginas de lado, en PDF y
+    EPUB, y en la web funciona igual que en el teléfono.
+    - **Barra:** "Dibujar" en las herramientas abre la barra del lápiz: pluma, marcador, lápiz de color y
+      borrador; el punto de color y grosor abre su hoja; deshacer, rehacer y ✓ para volver a leer.
+    - **Hoja de color y grosor:** la paleta de los Nobi más **Tinta** (la letra del tema del lector, que se
+      ve sobre página clara u oscura), grosor Fino / Medio / Grueso y **Solo lápiz**. Cada herramienta
+      recuerda su color y grosor (el marcador sale amarillo).
+    - **Presión e inclinación:** con Apple Pencil o un lápiz de Android o tableta, la presión engruesa el
+      trazo y la inclinación ensancha el lápiz de color. Con el dedo o el mouse, grosor fijo.
+    - **Solo lápiz:** dibuja solo el lápiz y el dedo mueve la página. Sin él, el dedo (o el mouse) dibuja y
+      la página no se mueve con el dedo mientras el lápiz está puesto.
+    - **Un dibujo** junta los trazos hechos seguidos: se guarda tras una pausa breve, al moverse en el libro
+      o al salir del lápiz. Se ve en las tres formas de leer; en el libro real no se dibuja.
+    - **Borrador:** quita trazos enteros. Deshacer quita primero el último trazo aún sin guardar.
+    - **Pendiente (T291b):** el post-it con trazo. Hoy un dibujo hecho sobre un post-it queda en la página y
+      no se mueve con él.
 - **RF-BH12. Imágenes:** se insertan desde la galería o la cámara, se mueven, rotan y cambian de tamaño.
 - **Hecho (T289, 14 oct 2026).**
   - **Cuadro de texto:** herramienta en la barra; se toca dónde va y se escribe **ahí mismo** sobre la página
@@ -275,7 +292,7 @@ Como recortar de un libro o de una revista: se guarda un pedazo para después.
 ## 7. Lo técnico
 
 - Las anotaciones se guardan en `library_annotations` con posición estable (spec 13 §5) y se pintan en una
-  capa propia: en el motor web para subrayados y cuadros de texto; con Skia para el lápiz.
+  capa propia del motor web: subrayados, cuadros de texto y también el lápiz (T291, ver abajo).
   - **Capa del motor (T286):** `public/reader/annotations.js`. Lo pegado en PDF guarda `{ page, x, y, w }`
     (esquina y ancho relativos a la página) y se pinta en una capa dentro de cada página; en EPUB guarda
     `{ cfi, x, w, fraction }`: el CFI del renglón donde empieza, la x en la columna y cuánto del libro
@@ -287,7 +304,15 @@ Como recortar de un libro o de una revista: se guarda un pedazo para después.
   `book_title`. La imagen va en R2 en `<persona>/clips/<id>.jpg`, fuera de la carpeta del libro; la sube y
   la lee la función de archivos (JPEG de hasta 2 MB). El motor la recorta en `public/reader/clip.js`
   (mensajes `clipTool` y `clip`).
-- El lápiz usa `react-native-skia` con eventos de puntero (presión de Apple Pencil en iOS).
+- El lápiz (T291) se dibuja en el motor con Pointer Events (`public/reader/ink.js`). Enmienda del 19 oct
+  2026: antes decía `react-native-skia`, pero una capa nativa encima del WebView tendría que seguir cada
+  scroll, zoom y vuelta de hoja, y no serviría en la web.
+  - Cada dibujo es una anotación `ink` con una caja como lo pegado: en PDF, página y rectángulo; en EPUB,
+    junto a su renglón. Su `content.strokes` guarda cada trazo `{ t, c, s, p }`: herramienta, color, grosor
+    (parte del ancho de la caja) y puntos `[x, y, w, …]`.
+  - Mensajes `pen` y `penUndo` (de la app al motor); `ink`, `inkChange` y `undo` (del motor a la app).
+  - En iOS el lápiz se distingue del dedo por `touchType: 'stylus'` y en Android por `pointerType: 'pen'`;
+    así "solo lápiz" deja que el dedo mueva la página.
 - Escuchar: `expo-speech` en teléfono y la Web Speech API en web.
 
 ## 8. Criterios de aceptación

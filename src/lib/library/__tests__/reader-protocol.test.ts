@@ -159,3 +159,29 @@ describe('fragmento de imagen (T317)', () => {
     expect(fuera).toEqual({ type: 'clip', dataUrl: 'data:image/jpeg;base64,AA', width: 1, height: 1 });
   });
 });
+
+describe('lápiz (T291)', () => {
+  const strokes = [{ t: 'marker', c: '#F1D35D', s: 0.05, p: [0, 0, 1, 1, 0.02, 1] }];
+  it('un dibujo nuevo con su caja: una raya larga y delgada conserva su proporción', () => {
+    expect(leerMensaje({ type: 'ink', locator: { page: 2, x: 0.1, y: 0.2, w: 0.6, ar: 0.02 }, strokes })).toEqual({
+      type: 'ink',
+      locator: { page: 2, x: 0.1, y: 0.2, w: 0.6, ar: 0.02 },
+      strokes,
+    });
+    expect(leerMensaje({ type: 'ink', locator: { cfi: 'epubcfi(/6/4!/4/2)', x: 0.1, w: 0.5, dy: -0.4, ar: 0.3 }, strokes })).toMatchObject({
+      locator: { cfi: 'epubcfi(/6/4!/4/2)', x: 0.1, w: 0.5, dy: -0.4, ar: 0.3 },
+    });
+  });
+
+  it('sin trazos, con trazos raros o sin lugar, se ignora', () => {
+    expect(leerMensaje({ type: 'ink', locator: { page: 2, x: 0.1, y: 0.2, w: 0.6 }, strokes: [] })).toBeNull();
+    expect(leerMensaje({ type: 'ink', locator: { page: 2, x: 0.1, y: 0.2, w: 0.6 }, strokes: [{ t: 'pen' }] })).toBeNull();
+    expect(leerMensaje({ type: 'ink', locator: { x: 0.1 }, strokes })).toBeNull();
+  });
+
+  it('el borrador manda los trazos que quedan; deshacer lo guardado llega como undo', () => {
+    expect(leerMensaje({ type: 'inkChange', id: 'a1', strokes })).toEqual({ type: 'inkChange', id: 'a1', strokes });
+    expect(leerMensaje({ type: 'inkChange', id: 'a1', strokes: [] })).toBeNull();
+    expect(leerMensaje({ type: 'undo' })).toEqual({ type: 'undo' });
+  });
+});

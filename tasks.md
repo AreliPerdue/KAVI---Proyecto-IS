@@ -1142,7 +1142,18 @@ Decisiones B1–B9 aprobadas el 12 oct 2026 (T274); ver la tabla de la spec 13 �
   **Hecho (14 oct 2026):** acción `deleteFile` en `api/library-files.ts` (solo `<uid>/<pieza>/anotaciones/<id>.jpg`
   de una pieza propia), `removeAnnotationImage` en los servicios, entrada `imageCleanup` con `due` en la cola
   (guardar otra vez la anotación la cancela) y `use-library-sync` la procesa al vencer.
-- [ ] T291 Lápiz y dedo con Skia; presión del Apple Pencil; modo "solo lápiz". (RF-BH11) Dep: T286
+- [x] T291 Lápiz y dedo con Skia; presión del Apple Pencil; modo "solo lápiz". (RF-BH11) Dep: T286
+  **Hecho (19 oct 2026), en el motor y no con Skia (decisión de Areli; spec 13c enmendada):**
+  - Motor: `public/reader/ink.js` (dibujar, pintar, borrar, presión e inclinación, solo lápiz). Los dibujos
+    se pintan en `annotations.js` como cajas: PDF, EPUB y libro real.
+  - App: protocolo `pen`/`penUndo`/`ink`/`inkChange`/`undo`; `lib/library/ink.ts` (preferencia y revisión de
+    trazos); `readerPen` en el store.
+  - Interfaz: `components/library/pen-toolbar.tsx` y `pen-sheet.tsx`. En la barra de pegar va "Dibujar", y
+    sus herramientas se deslizan si no caben en 375 px.
+  - Visto en el demo (web 1280 y 375 px): dibujar, marcador, borrar, deshacer, presión con eventos de lápiz,
+    solo lápiz con el mouse (no dibuja) y un dibujo en EPUB que sigue a su texto al desplazar.
+- [ ] T291b Post-it con trazo: dibujar dentro de un post-it y que el dibujo viaje con él (moverlo, girarlo,
+  doblarlo). (RF-BH14) Dep: T291
 - [x] T317 Fragmentos (antes "Recortes", renombrado el 14 oct 2026) de texto ("Guardar fragmento" al seleccionar) y de
   imagen (rectángulo sobre la página), `library_clips` con RLS e imágenes en R2, sección "Mis fragmentos" con
   filtros y nota; pegar en recortes (13h).
