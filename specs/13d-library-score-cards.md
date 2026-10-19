@@ -48,6 +48,23 @@ ven juntas en un resumen.
 - **RF-BF6.** Al terminar un libro (100 % leído) KAVI ofrece llenar su ficha, sin obligar.
 - **RF-BF7.** Una pieza puede tener una ficha por plantilla (por ejemplo, la "Reseña rápida" y la de
   "Romance" a la vez).
+- **Hecho (T294, 19 oct 2026):**
+  - **Fichas del libro:** en el menú de cada libro, **Fichas** lleva a sus fichas, ordenadas por dónde van
+    pegadas. "Agregar ficha" ofrece solo los diseños que aún no tiene.
+  - **Llenar:** arriba, la tarjeta como queda. Abajo, un control por campo:
+    - escala: tocar el símbolo; tocar el elegido lo borra;
+    - opciones: chips, una o varias;
+    - texto: campo de texto;
+    - fecha: el calendario;
+    - sí o no.
+
+    Después se elige dónde va pegada (por omisión, la contraportada), y también se puede quitar la ficha.
+    Los valores de campos que ya no están en el diseño se ven aparte y se borran a propósito (RF-BF5).
+  - **En el lector (RF-BF4):** la ficha pegada asoma como tarjetita ladeada, con su color y su primera
+    escala, y tocarla la abre. Las de la portada y la primera página asoman al empezar; las de la última
+    página y la contraportada, al terminar.
+  - **Al terminar (RF-BF6):** si el libro no tiene ficha, se ofrece una vez por apertura ("Terminaste… ¿Llenas
+    su ficha?"). Con un solo diseño lo abre directo; con varios, pregunta cuál.
 
 ## 4. Resumen de fichas (RF-BF8 – RF-BF10)
 

@@ -747,3 +747,10 @@ editar Romance con un campo nuevo, cuadrícula y sticker, y guardar.
 - [ ] (manual) Teléfono: arrastrar campos por el asa en el editor; las letras "Con serifa", "Máquina" y "Manuscrita"
   se ven distintas en Android (y en iOS cuando haya build).
 - [ ] (manual) Con Supabase: las tres incluidas se crean una sola vez aunque se abra Fichas en dos aparatos a la vez.
+
+## Fichas: llenarlas y verlas en el libro (T294)
+Automatizado: `app/(app)/__tests__/card-fill.test.tsx`, `lib/library/__tests__/cards.test.ts` y
+`app/(app)/book/__tests__/reader.test.tsx` (ofrecer al terminar, la ficha que asoma). Visto en el demo (web
+1280 y 375 px): llenar Romance desde el menú del libro y verla asomar en la última página.
+- [ ] (manual) Teléfono: al terminar un EPUB (no solo un PDF) aparece "Terminaste… ¿Llenas su ficha?".
+- [ ] (manual) Teléfono: la fecha de una ficha con el calendario; las estrellas se tocan bien con el dedo (escala de 10).

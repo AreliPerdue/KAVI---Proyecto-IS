@@ -4,7 +4,7 @@
  * 2026): la ficha es una tarjeta aparte, no un módulo del lienzo (13h §11).
  */
 import { COLORES_DE_ANOTACION } from '@/lib/library/annotations';
-import type { CardField, CardFieldType, LibraryCard, LibraryCardTemplate } from '@/types/domain';
+import type { CardField, CardFieldType, CardPlacement, LibraryCard, LibraryCardTemplate } from '@/types/domain';
 
 export const TIPOS_DE_CAMPO: readonly CardFieldType[] = ['scale', 'choice', 'text', 'date', 'boolean'];
 
@@ -205,4 +205,76 @@ export function plantillasVigentes(plantillas: readonly LibraryCardTemplate[]): 
 /** Si un diseño cambió (nombre, campos o aspecto) respecto al guardado. */
 export function cambioDeDiseno(antes: Pick<LibraryCardTemplate, 'name' | 'fields' | 'look'>, despues: Pick<LibraryCardTemplate, 'name' | 'fields' | 'look'>): boolean {
   return antes.name.trim() !== despues.name.trim() || JSON.stringify(camposDe(antes.fields)) !== JSON.stringify(camposDe(despues.fields)) || JSON.stringify(aspectoDe(antes.look)) !== JSON.stringify(aspectoDe(despues.look));
+}
+
+// ─── Llenar una ficha (RF-BF4, RF-BF6, RF-BF7; T294) ───────────────────────────
+
+export const LUGARES: readonly CardPlacement[] = ['front', 'first_page', 'last_page', 'back'];
+/** Se ve al abrir el libro (portada, primera página) o al terminarlo (última página, contraportada). */
+export const alInicio = (lugar: CardPlacement) => lugar === 'front' || lugar === 'first_page';
+export const alFinal = (lugar: CardPlacement) => lugar === 'back' || lugar === 'last_page';
+
+const FECHA = /^\d{4}-\d{2}-\d{2}$/;
+export const MAX_TEXTO_CORTO = 120;
+export const MAX_TEXTO_LARGO = 2000;
+
+/** El valor de un campo, revisado; `null` si está vacío o no tiene forma. */
+export function valorDe(campo: CardField, crudo: unknown): number | string | string[] | boolean | null {
+  if (campo.type === 'scale') {
+    const max = campo.max === 10 ? 10 : 5;
+    return typeof crudo === 'number' && Number.isFinite(crudo) && crudo >= 1 ? Math.min(max, Math.round(crudo)) : null;
+  }
+  if (campo.type === 'choice') {
+    const lista = (Array.isArray(crudo) ? crudo : typeof crudo === 'string' ? [crudo] : []).filter((o): o is string => typeof o === 'string' && !!o.trim());
+    const unicas = [...new Set(lista.map((o) => o.trim().slice(0, MAX_OPCION)))];
+    const elegidas = campo.multiple ? unicas : unicas.slice(0, 1);
+    return elegidas.length ? elegidas : null;
+  }
+  if (campo.type === 'text') {
+    const texto = typeof crudo === 'string' ? crudo.trim().slice(0, campo.long ? MAX_TEXTO_LARGO : MAX_TEXTO_CORTO) : '';
+    return texto || null;
+  }
+  if (campo.type === 'date') return typeof crudo === 'string' && FECHA.test(crudo) ? crudo : null;
+  return typeof crudo === 'boolean' ? crudo : null;
+}
+
+/**
+ * Lo que se guarda: cada campo revisado (los vacíos no se guardan) y, sin tocar, los valores de campos que ya
+ * no están en el diseño, que se conservan ocultos hasta que se borren a propósito (RF-BF5).
+ */
+export function valoresParaGuardar(campos: readonly CardField[], valores: Record<string, unknown>): Record<string, unknown> {
+  const ids = new Set(campos.map((c) => c.id));
+  const resultado: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(valores)) if (!ids.has(k)) resultado[k] = v;
+  for (const c of campos) {
+    const v = valorDe(c, valores[c.id]);
+    if (v !== null) resultado[c.id] = v;
+  }
+  return resultado;
+}
+
+/** Los valores guardados de campos que ya no están en el diseño (RF-BF5). */
+export function valoresOcultos(campos: readonly CardField[], valores: Record<string, unknown>): { id: string; valor: unknown }[] {
+  const ids = new Set(campos.map((c) => c.id));
+  return Object.entries(valores)
+    .filter(([k, v]) => !ids.has(k) && v !== null && v !== '' && !(Array.isArray(v) && !v.length))
+    .map(([id, valor]) => ({ id, valor }));
+}
+
+/** Un valor oculto como texto, para reconocerlo antes de borrarlo. */
+export function textoDeValor(valor: unknown, t: { yes: string; no: string }): string {
+  if (Array.isArray(valor)) return valor.join(', ');
+  if (typeof valor === 'boolean') return valor ? t.yes : t.no;
+  return String(valor);
+}
+
+/** Si la ficha tiene algo escrito o elegido. */
+export function fichaConAlgo(campos: readonly CardField[], valores: Record<string, unknown>): boolean {
+  return campos.some((c) => valorDe(c, valores[c.id]) !== null);
+}
+
+/** Las plantillas que se le pueden agregar a un libro: las vigentes que aún no tiene (una por plantilla, RF-BF7). */
+export function plantillasParaAgregar(plantillas: readonly LibraryCardTemplate[], fichasDelLibro: readonly Pick<LibraryCard, 'template_id'>[]): LibraryCardTemplate[] {
+  const usadas = new Set(fichasDelLibro.map((f) => f.template_id));
+  return plantillasVigentes(plantillas).filter((p) => !usadas.has(p.id));
 }

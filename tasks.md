@@ -1184,7 +1184,12 @@ Decisiones B1–B9 aprobadas el 12 oct 2026 (T274); ver la tabla de la spec 13 �
   - Migración `20261020100000_library_card_templates_archived.sql`.
   - `StickerSheet` sirve fuera del lector (sin charola ni crear). En las pruebas de hooks, las mutaciones ya
     no dejan un temporizador vivo (`gcTime: 0` en `query-wrapper`).
-- [ ] T294 Fichas pegadas en la pieza y ofrecer llenarla al terminar. (RF-BF4, RF-BF6, RF-BF7) Dep: T293, T279
+- [x] T294 Fichas pegadas en la pieza y ofrecer llenarla al terminar. (RF-BF4, RF-BF6, RF-BF7) Dep: T293, T279
+  **Hecho (19 oct 2026):**
+  - Pantallas `app/(app)/card/[itemId].tsx` (llenar) y `book-cards/[id].tsx` (fichas del libro).
+  - Componentes `card-chooser-sheet.tsx` y `card-peek.tsx`; "Fichas" en el menú del libro.
+  - Reglas `valorDe`, `valoresParaGuardar`, `valoresOcultos` y `plantillasParaAgregar` en `lib/library/cards.ts`.
+  - En el lector, la ficha asoma al empezar o al terminar y, si el libro no tiene ninguna, se ofrece al llegar al 100 %.
 - [ ] T295 Mis reseñas: todas las fichas, orden, filtros y totales. (RF-BF8 – RF-BF10) Dep: T294
 
 ### Modo daltonismo (spec 05 RF-T7 – RF-T11, propuesta del 19 oct 2026; falta aprobarla)

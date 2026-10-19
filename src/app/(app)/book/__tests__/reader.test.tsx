@@ -72,6 +72,13 @@ jest.mock('@/hooks/use-user-stickers', () => ({
   useCreateUserSticker: () => ({ mutate: mockCrearSticker, isPending: false }),
   useRemoveUserSticker: () => ({ mutate: mockBorrarSticker }),
 }));
+// Fichas (T294): la lista la pone cada prueba.
+let mockFichas: Record<string, unknown>[] = [];
+let mockPlantillasDeFicha: Record<string, unknown>[] = [];
+jest.mock('@/hooks/use-cards', () => ({
+  useCards: () => ({ data: mockFichas, isSuccess: true }),
+  useCardTemplates: () => ({ data: mockPlantillasDeFicha, isSuccess: true }),
+}));
 // Fragmentos (T317): el doble anota lo que se guarda.
 const mockCrearFragmento = jest.fn();
 jest.mock('@/hooks/use-clips', () => ({ useCreateClip: () => ({ mutate: mockCrearFragmento, isPending: false }) }));
@@ -170,6 +177,8 @@ beforeEach(() => {
   mockPantallaCompleta.mockReset();
   mockAbrirCopia.mockReset();
   mockCrearFragmento.mockReset();
+  mockFichas = [];
+  mockPlantillasDeFicha = [];
   mockAbrirCopia.mockImplementation(async (pieza: { kind: string }, _ruta: string, forma: string, enviar: (m: MensajeAlMotor) => void, posicion?: unknown) => {
     const { posicionGuardada } = jest.requireActual<typeof import('@/lib/library/reader-protocol')>('@/lib/library/reader-protocol');
     enviar({ type: 'openBegin', format: pieza.kind === 'epub' ? 'epub' : 'pdf', size: 1, position: (posicion as never) ?? posicionGuardada(pieza as never), mode: forma as never });
@@ -1358,5 +1367,56 @@ describe('lápiz y dedo (spec 13c, RF-BH11; T291)', () => {
     await responder({ type: 'opened', total: 12 });
     await responder({ type: 'tap' });
     expect(screen.getByRole('button', { name: A.pen })).toBeDisabled();
+  });
+});
+
+describe('fichas en el libro (spec 13d, RF-BF4, RF-BF6; T294)', () => {
+  const romance = { id: 'r', owner_id: 'u1', name: 'Romance', fields: [{ id: 'stars', type: 'scale', label: 'Estrellas', max: 5, symbol: 'heart' }], look: {}, created_at: 'c', updated_at: 'u' };
+  const rapida = { ...romance, id: 'q', name: 'Reseña rápida' };
+  const router = (globalThis as unknown as { mockRouter: { push: jest.Mock } }).mockRouter;
+  const O = es.library.cards.offer;
+
+  it('al terminar un libro sin ficha la ofrece; con un solo diseño, "Llenar ficha" lo abre', async () => {
+    mockPlantillasDeFicha = [romance];
+    await render(<Lector />);
+    await responder({ type: 'opened', total: 12 });
+    expect(screen.queryByText(O.body)).toBeNull();
+    await responder({ type: 'position', page: 12, total: 12, fraction: 1 });
+    expect(screen.getByText(O.title('Rayuela'))).toBeTruthy();
+    await fireEvent.press(screen.getByRole('button', { name: O.fill }));
+    expect(router.push).toHaveBeenCalledWith({ pathname: '/(app)/card/[itemId]', params: { itemId: 'l1', plantilla: 'r' } });
+    expect(screen.queryByText(O.body)).toBeNull();
+  });
+
+  it('con varios diseños pregunta cuál; "Ahora no" la cierra', async () => {
+    mockPlantillasDeFicha = [romance, rapida];
+    await render(<Lector />);
+    await responder({ type: 'opened', total: 12 });
+    await responder({ type: 'position', page: 12, total: 12, fraction: 1 });
+    await fireEvent.press(screen.getByRole('button', { name: O.fill }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Reseña rápida' }));
+    expect(router.push).toHaveBeenCalledWith({ pathname: '/(app)/card/[itemId]', params: { itemId: 'l1', plantilla: 'q' } });
+  });
+
+  it('una ficha en la contraportada asoma al terminar y tocarla la abre; no se ofrece otra', async () => {
+    mockPlantillasDeFicha = [romance];
+    mockFichas = [{ id: 'f1', item_id: 'l1', template_id: 'r', owner_id: 'u1', values: { stars: 4 }, placement: 'back', created_at: 'c', updated_at: 'u' }];
+    await render(<Lector />);
+    await responder({ type: 'opened', total: 12 });
+    await responder({ type: 'position', page: 5, total: 12, fraction: 5 / 12 });
+    expect(screen.queryByRole('button', { name: O.peek('Romance') })).toBeNull();
+    await responder({ type: 'position', page: 12, total: 12, fraction: 1 });
+    expect(screen.queryByText(O.body)).toBeNull();
+    await fireEvent.press(screen.getByRole('button', { name: O.peek('Romance') }));
+    expect(router.push).toHaveBeenCalledWith({ pathname: '/(app)/card/[itemId]', params: { itemId: 'l1', plantilla: 'r' } });
+  });
+
+  it('una en la portada asoma al empezar', async () => {
+    mockPlantillasDeFicha = [romance];
+    mockFichas = [{ id: 'f1', item_id: 'l1', template_id: 'r', owner_id: 'u1', values: {}, placement: 'front', created_at: 'c', updated_at: 'u' }];
+    await render(<Lector />);
+    await responder({ type: 'opened', total: 12 });
+    await responder({ type: 'position', page: 1, total: 12, fraction: 1 / 12 });
+    expect(screen.getByRole('button', { name: O.peek('Romance') })).toBeTruthy();
   });
 });

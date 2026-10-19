@@ -716,6 +716,7 @@ export default function LibraryScreen() {
         onEdit={setEditando}
         onDetails={setDetallesDe}
         onCover={setPortadaDe}
+        onCards={(p) => router.push({ pathname: '/(app)/book-cards/[id]', params: { id: p.id } })}
         onAddToShelf={(p) => setAgregandoA([p.id])}
         shelfName={libreroActual?.name}
         onRemoveFromShelf={libreroActual ? (p) => quitarDelLibrero([p.id]) : undefined}

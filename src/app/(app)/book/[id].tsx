@@ -20,6 +20,8 @@ import { ReaderTextPicker } from '@/components/library/reader-text-picker';
 import { ReaderThemePicker } from '@/components/library/reader-theme-picker';
 import { SelectionBar } from '@/components/library/selection-bar';
 import { PenSheet } from '@/components/library/pen-sheet';
+import { CardChooserSheet } from '@/components/library/card-chooser-sheet';
+import { CardPeek } from '@/components/library/card-peek';
 import { PenToolbar } from '@/components/library/pen-toolbar';
 import { CreateStickerSheet, type StickerHecho } from '@/components/library/create-sticker-sheet';
 import { type StickerElegible, StickerSheet } from '@/components/library/sticker-sheet';
@@ -34,6 +36,7 @@ import { usePantallaCompleta } from '@/hooks/use-full-screen';
 import { useLibrarySync } from '@/hooks/use-library-sync';
 import { useAbrirCopiaLocal } from '@/hooks/use-local-book';
 import { useCreateClip } from '@/hooks/use-clips';
+import { useCards, useCardTemplates } from '@/hooks/use-cards';
 import { useLibraryFileUrl, useLibraryItem, useLibraryItems, useSaveReadingPosition, useSeries } from '@/hooks/use-library';
 import { useTheme } from '@/hooks/use-theme';
 import { useT } from '@/i18n';
@@ -76,6 +79,7 @@ import {
 } from '@/lib/library/reader-protocol';
 import { lugarDeImagen, lugarDeSeleccion, posicionDeRuta } from '@/lib/library/clips';
 import { lapizParaMotor, trazosDe } from '@/lib/library/ink';
+import { alFinal, alInicio, plantillasVigentes } from '@/lib/library/cards';
 import { FORMA_POR_OMISION, type FormaDeLeer } from '@/lib/library/reading-mode';
 import { coloresDe } from '@/lib/library/reader-theme';
 import { partesDeSticker, urlDeSticker } from '@/lib/library/sticker-packs';
@@ -161,6 +165,11 @@ function Lector({ id, irA }: { id: string; irA?: LugarDeApertura }) {
   const sagas = useSeries();
   // Al terminar un libro de una saga, una vez por apertura, se ofrece el siguiente (RF-BL26).
   const [ofrecerSiguiente, setOfrecerSiguiente] = useState<'pendiente' | 'visible' | 'cerrado'>('pendiente');
+  // Al terminarlo, una vez por apertura, se ofrece llenar su ficha si aún no tiene (13d, RF-BF6; T294).
+  const [ofrecerFicha, setOfrecerFicha] = useState<'pendiente' | 'visible' | 'cerrado'>('pendiente');
+  const [eligiendoFicha, setEligiendoFicha] = useState(false);
+  const plantillasDeFicha = useCardTemplates();
+  const fichas = useCards();
 
   const motor = useRef<ReaderEngineHandle>(null);
   const [abierto, setAbierto] = useState(false);
@@ -425,6 +434,7 @@ function Lector({ id, irA }: { id: string; irA?: LugarDeApertura }) {
         };
         pendiente.current = { timer: setTimeout(hacer, GUARDAR_MS), guardar: hacer };
         if (cambioDePosicion(m).progress >= 1 && ofrecerSiguiente === 'pendiente') setOfrecerSiguiente('visible');
+        if (cambioDePosicion(m).progress >= 1 && ofrecerFicha === 'pendiente') setOfrecerFicha('visible');
         return;
       }
       case 'search':
@@ -876,6 +886,26 @@ function Lector({ id, irA }: { id: string; irA?: LugarDeApertura }) {
   };
 
   const siguiente = item.data && ofrecerSiguiente === 'visible' ? siguienteDeSaga(item.data, todas.data ?? []) : null;
+
+  // Las fichas del libro (RF-BF4): las de la portada y la primera página asoman al empezar; las de la última
+  // página y la contraportada, al terminar. Sin ninguna, al terminar se ofrece llenarla (RF-BF6).
+  const fichasDelLibro = (fichas.data ?? []).filter((f) => f.item_id === id);
+  const vigentesDeFicha = plantillasVigentes(plantillasDeFicha.data ?? []);
+  const alEmpezar = !!posicion && (posicion.page ? posicion.page <= 1 : posicion.fraction <= 0.01);
+  const alTerminarlo = !!posicion && cambioDePosicion(posicion).progress >= 1;
+  const asoman = abierto
+    ? fichasDelLibro.flatMap((f) => {
+        const p = plantillasDeFicha.data?.find((x) => x.id === f.template_id);
+        return p && ((alEmpezar && alInicio(f.placement)) || (alTerminarlo && alFinal(f.placement))) ? [{ f, p }] : [];
+      })
+    : [];
+  const ofrecerLlenar = abierto && ofrecerFicha === 'visible' && !fichasDelLibro.length && vigentesDeFicha.length > 0 && fichas.isSuccess;
+  const abrirFicha = (plantilla: string) => router.push({ pathname: '/(app)/card/[itemId]', params: { itemId: id, plantilla } });
+  const llenarFicha = () => {
+    setOfrecerFicha('cerrado');
+    if (vigentesDeFicha.length === 1) abrirFicha(vigentesDeFicha[0].id);
+    else setEligiendoFicha(true);
+  };
   const nombreSaga = siguiente?.series_id ? (sagas.data ?? []).find((x) => x.id === siguiente.series_id)?.name : undefined;
 
   const sinArchivo = item.isSuccess && !ruta;
@@ -1085,16 +1115,41 @@ function Lector({ id, irA }: { id: string; irA?: LugarDeApertura }) {
             {!sinArchivo && error !== 'password' && error !== 'damaged' ? <Button title={r.retry} variant="secondary" onPress={reintentar} /> : null}
           </View>
         ) : null}
-        {siguiente && nombreSaga ? (
-          <View style={[styles.siguiente, { bottom: (superpuestos && barraAbajo ? altoAbajo : 0) + Spacing.sm, backgroundColor: theme.surface, borderColor: theme.border }]} accessibilityRole="alert">
-            <AppText variant="bodyStrong">{l.series.nextTitle}</AppText>
-            <AppText variant="body" color="textSecondary" numberOfLines={2}>
-              {l.series.nextBody(etiquetaDeSaga(nombreSaga, siguiente.series_index), siguiente.title)}
-            </AppText>
-            <View style={styles.siguienteBotones}>
-              <Button title={l.series.nextLater} variant="ghost" onPress={() => setOfrecerSiguiente('cerrado')} />
-              <Button title={l.series.nextOpen} onPress={() => router.replace({ pathname: '/(app)/book/[id]', params: { id: siguiente.id } })} />
-            </View>
+        {asoman.length || ofrecerLlenar || (siguiente && nombreSaga) ? (
+          <View style={[styles.pila, { bottom: (superpuestos && barraAbajo ? altoAbajo : 0) + Spacing.sm }]} pointerEvents="box-none">
+            {asoman.length ? (
+              <View style={styles.asoman} pointerEvents="box-none">
+                {asoman.map(({ f, p }) => (
+                  <CardPeek key={f.id} ficha={f} plantilla={p} onPress={() => abrirFicha(p.id)} />
+                ))}
+              </View>
+            ) : null}
+            {ofrecerLlenar ? (
+              <View style={[styles.siguiente, { backgroundColor: theme.surface, borderColor: theme.border }]} accessibilityRole="alert">
+                <AppText variant="bodyStrong" numberOfLines={2}>
+                  {l.cards.offer.title(item.data?.title ?? '')}
+                </AppText>
+                <AppText variant="body" color="textSecondary">
+                  {l.cards.offer.body}
+                </AppText>
+                <View style={styles.siguienteBotones}>
+                  <Button title={l.cards.offer.later} variant="ghost" onPress={() => setOfrecerFicha('cerrado')} />
+                  <Button title={l.cards.offer.fill} onPress={llenarFicha} />
+                </View>
+              </View>
+            ) : null}
+            {siguiente && nombreSaga ? (
+              <View style={[styles.siguiente, { backgroundColor: theme.surface, borderColor: theme.border }]} accessibilityRole="alert">
+                <AppText variant="bodyStrong">{l.series.nextTitle}</AppText>
+                <AppText variant="body" color="textSecondary" numberOfLines={2}>
+                  {l.series.nextBody(etiquetaDeSaga(nombreSaga, siguiente.series_index), siguiente.title)}
+                </AppText>
+                <View style={styles.siguienteBotones}>
+                  <Button title={l.series.nextLater} variant="ghost" onPress={() => setOfrecerSiguiente('cerrado')} />
+                  <Button title={l.series.nextOpen} onPress={() => router.replace({ pathname: '/(app)/book/[id]', params: { id: siguiente.id } })} />
+                </View>
+              </View>
+            ) : null}
           </View>
         ) : null}
         {pastillaZoom}
@@ -1181,6 +1236,15 @@ function Lector({ id, irA }: { id: string; irA?: LugarDeApertura }) {
       <BookmarkSheet anotacion={separador} onClose={() => elegir(null)} onGuardar={guardarSeparador} onQuitar={quitarSeparador} />
       <HighlightSheet anotacion={subrayado} onClose={() => elegir(null)} onGuardar={guardarSubrayado} onQuitar={quitarSubrayado} />
       <DefineSheet palabra={definiendo} idioma={idiomaLibro} onClose={() => setDefiniendo(null)} />
+      <CardChooserSheet
+        visible={eligiendoFicha}
+        plantillas={vigentesDeFicha}
+        onClose={() => setEligiendoFicha(false)}
+        onElegir={(p) => {
+          setEligiendoFicha(false);
+          abrirFicha(p.id);
+        }}
+      />
       <PenSheet visible={ajustandoLapiz && lapizPuesto} lapiz={lapiz} tinta={tinta} onClose={() => setAjustandoLapiz(false)} onCambiar={setLapiz} />
     </View>
   );
@@ -1207,10 +1271,10 @@ const styles = StyleSheet.create({
   centrado: { textAlign: 'center' },
   arriba: { position: 'absolute', top: 0, left: 0, right: 0 },
   abajoEncima: { position: 'absolute', bottom: 0, left: 0, right: 0 },
+  // Lo que aparece abajo del libro: las fichas que asoman, la invitación a llenar una y el siguiente de la saga.
+  pila: { position: 'absolute', left: Spacing.lg, right: Spacing.lg, gap: Spacing.sm },
+  asoman: { flexDirection: 'row', justifyContent: 'flex-end', gap: Spacing.sm, paddingRight: Spacing.lg },
   siguiente: {
-    position: 'absolute',
-    left: Spacing.lg,
-    right: Spacing.lg,
     padding: Spacing.lg,
     gap: Spacing.xs,
     borderWidth: 1,

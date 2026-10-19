@@ -103,3 +103,48 @@ it('cuenta fichas por plantilla y deja fuera las archivadas', () => {
   const lista = [plantilla({ id: 'nueva', created_at: '2026-10-20' }), plantilla({ id: 'vieja', archived: true }), plantilla({ id: 'otra', created_at: '2026-10-01' })];
   expect(plantillasVigentes(lista).map((p) => p.id)).toEqual(['otra', 'nueva']);
 });
+
+describe('llenar una ficha (T294)', () => {
+  const { valorDe, valoresParaGuardar, valoresOcultos, plantillasParaAgregar, alInicio, alFinal, textoDeValor } =
+    jest.requireActual<typeof import('@/lib/library/cards')>('@/lib/library/cards');
+  const escala = campoNuevo('scale', 'stars', 'Estrellas');
+  const tropes = { ...campoNuevo('choice', 'tropes', 'Tropes'), options: ['a', 'b'], multiple: true };
+  const genero = { ...campoNuevo('choice', 'genre', 'Género'), options: ['x'], multiple: false };
+
+  it('cada valor se revisa según su campo', () => {
+    expect(valorDe(escala, 7)).toBe(5);
+    expect(valorDe(escala, 0)).toBeNull();
+    expect(valorDe(tropes, ['a', ' a ', 'b', ''])).toEqual(['a', 'b']);
+    expect(valorDe(genero, ['x', 'y'])).toEqual(['x']);
+    expect(valorDe(campoNuevo('text', 't', 'T'), '  hola  ')).toBe('hola');
+    expect(valorDe(campoNuevo('text', 't', 'T'), 'x'.repeat(500))).toHaveLength(120);
+    expect(valorDe(campoNuevo('date', 'd', 'D'), '2026-10-19')).toBe('2026-10-19');
+    expect(valorDe(campoNuevo('date', 'd', 'D'), 'ayer')).toBeNull();
+    expect(valorDe(campoNuevo('boolean', 'b', 'B'), false)).toBe(false);
+  });
+
+  it('se guarda lo lleno y se conservan los valores de campos quitados (RF-BF5)', () => {
+    const valores = { stars: 4, tropes: [], viejo: 'Escena del baile', genre: ['x'] };
+    expect(valoresParaGuardar([escala, tropes, genero], valores)).toEqual({ stars: 4, genre: ['x'], viejo: 'Escena del baile' });
+    expect(valoresOcultos([escala], valores)).toEqual([
+      { id: 'viejo', valor: 'Escena del baile' },
+      { id: 'genre', valor: ['x'] },
+    ]);
+    expect(textoDeValor(['a', 'b'], { yes: 'Sí', no: 'No' })).toBe('a, b');
+    expect(textoDeValor(true, { yes: 'Sí', no: 'No' })).toBe('Sí');
+  });
+
+  it('una por plantilla en cada libro: solo se ofrecen las vigentes que aún no tiene', () => {
+    const lista = [plantilla({ id: 'a' }), plantilla({ id: 'b' }), plantilla({ id: 'c', archived: true })];
+    expect(plantillasParaAgregar(lista, [{ template_id: 'a' }]).map((p) => p.id)).toEqual(['b']);
+  });
+
+  it('dónde asoma: portada y primera página al empezar; última página y contraportada al terminar', () => {
+    expect(['front', 'first_page', 'last_page', 'back'].map((l) => [alInicio(l as never), alFinal(l as never)])).toEqual([
+      [true, false],
+      [true, false],
+      [false, true],
+      [false, true],
+    ]);
+  });
+});

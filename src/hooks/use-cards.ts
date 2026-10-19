@@ -4,8 +4,8 @@ import { useEffect, useRef } from 'react';
 import { useT } from '@/i18n';
 import { plantillasIncluidas } from '@/lib/library/cards';
 import { useAuth } from '@/providers';
-import { listCards, listCardTemplates, removeCardTemplate, saveCardTemplate } from '@/services/library';
-import type { LibraryCard, LibraryCardTemplate } from '@/types/domain';
+import { listCards, listCardTemplates, removeCard, removeCardTemplate, saveCard, saveCardTemplate } from '@/services/library';
+import type { CardPlacement, LibraryCard, LibraryCardTemplate } from '@/types/domain';
 
 const claves = {
   plantillas: (userId: string | null) => ['library', 'card-templates', userId] as const,
@@ -77,5 +77,25 @@ export function useRemoveCardTemplate() {
       void queryClient.invalidateQueries({ queryKey: claves.plantillas(userId) });
       void queryClient.invalidateQueries({ queryKey: claves.fichas(userId) });
     },
+  });
+}
+
+/** Guardar una ficha llena (una por plantilla en cada libro, RF-BF7): la de antes se reemplaza. */
+export function useSaveCard() {
+  const { userId } = useAuth();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (ficha: { item_id: string; template_id: string; values: Record<string, unknown>; placement: CardPlacement }) => saveCard(userId as string, ficha),
+    onSuccess: (fila) => queryClient.setQueryData<LibraryCard[]>(claves.fichas(userId), (lista = []) => [fila, ...lista.filter((c) => c.id !== fila.id)]),
+    onSettled: () => queryClient.invalidateQueries({ queryKey: claves.fichas(userId) }),
+  });
+}
+
+export function useRemoveCard() {
+  const { userId } = useAuth();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => removeCard(id),
+    onSettled: () => queryClient.invalidateQueries({ queryKey: claves.fichas(userId) }),
   });
 }
