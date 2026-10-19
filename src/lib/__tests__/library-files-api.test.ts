@@ -284,3 +284,25 @@ describe('stickers propios (T335)', () => {
     expect((await pedir({ action: 'deleteFile', path: `${OTRA}/stickers/${ST}.png` })).status).toBe(403);
   });
 });
+
+describe('fragmentos de imagen (T317)', () => {
+  const FR = 'eeeeeeee-0000-4000-8000-000000000007';
+  const OTRA = 'ffffffff-0000-4000-8000-000000000006';
+  it('se suben como JPEG de hasta 2 MB en la carpeta de fragmentos, fuera de la del libro', async () => {
+    const ok = await pedir({ action: 'upload', path: `${UID}/clips/${FR}.jpg`, contentType: 'image/jpeg', size: 400_000 });
+    expect(ok.status).toBe(200);
+    expect(new URL(ok.body.url as string).pathname).toBe(`/kavi-library/${UID}/clips/${FR}.jpg`);
+    expect((await pedir({ action: 'upload', path: `${UID}/clips/${FR}.jpg`, contentType: 'image/png', size: 400_000 })).status).toBe(403);
+    expect((await pedir({ action: 'upload', path: `${UID}/clips/${FR}.png`, contentType: 'image/png', size: 400_000 })).status).toBe(403);
+    expect((await pedir({ action: 'upload', path: `${UID}/clips/${FR}.jpg`, contentType: 'image/jpeg', size: 3 * 1024 * 1024 })).status).toBe(413);
+    expect((await pedir({ action: 'upload', path: `${OTRA}/clips/${FR}.jpg`, contentType: 'image/jpeg', size: 400_000 })).status).toBe(403);
+  });
+
+  it('se leen y se borran solo los propios', async () => {
+    expect((await pedir({ action: 'read', path: `${UID}/clips/${FR}.jpg` })).status).toBe(200);
+    expect((await pedir({ action: 'read', path: `${OTRA}/clips/${FR}.jpg` })).status).toBe(403);
+    mockR2.mockResolvedValue(new Response(null, { status: 204 }));
+    expect(await pedir({ action: 'deleteFile', path: `${UID}/clips/${FR}.jpg` })).toEqual({ status: 200, body: { removed: 1 } });
+    expect((await pedir({ action: 'deleteFile', path: `${OTRA}/clips/${FR}.jpg` })).status).toBe(403);
+  });
+});

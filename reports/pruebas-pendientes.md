@@ -712,3 +712,16 @@ Automatizado: `app/(app)/book/__tests__/reader.test.tsx` (doblar, dos dedos, sep
 - [ ] (manual) Teléfono: doblar un post-it y abrirlo tocando la esquina.
 - [ ] (manual) Teléfono: crear un sticker desde la galería y desde la cámara; verlo y pegarlo sin red.
 - [ ] (manual) Con Supabase: un sticker hecho en el teléfono aparece en la web (y al revés).
+
+## Idiomas en que lees y Fragmentos (T339, T317)
+Automatizado: `app/(app)/(tabs)/__tests__/profile.test.tsx`, `services/__tests__/dictionary.test.ts`,
+`app/(app)/book/__tests__/reader.test.tsx` (Merriam-Webster según lo marcado; guardar fragmento de texto e imagen;
+abrir en un lugar), `app/(app)/__tests__/fragments.test.tsx`, `lib/library/__tests__/clips.test.ts`,
+`lib/library/__tests__/reader-protocol.test.ts`, `lib/__tests__/library-files-api.test.ts` y el demo. RLS de
+`library_clips` en PGlite. Visto en el demo (web 1280 y 375 px). Comprobado ahí: un recorte de la mitad azul de
+una imagen EPUB sale todo azul y del tamaño esperado.
+- [ ] (manual) Teléfono: en un PDF, "Fragmento de imagen" con el dedo; el recorte sale nítido en Mis fragmentos.
+- [ ] (manual) Teléfono: en el libro real (PDF) también se recorta; en un EPUB con ilustraciones, se recorta el dibujo.
+- [ ] (manual) Teléfono: tocar un fragmento en Mis fragmentos abre el libro (de su copia, sin red) en esa página o CFI.
+- [ ] (manual) Con Supabase: un fragmento hecho en el teléfono aparece en la web con su imagen; borrar el libro lo
+  deja con su título.

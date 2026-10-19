@@ -13,6 +13,7 @@ import type {
   LibraryReadingSession,
   StickerPack,
   UserSticker,
+  LibraryClip,
   LibraryCardTemplate,
   LibraryFileBody,
   LibraryFont,
@@ -45,6 +46,7 @@ const layouts: LibraryLayout[] = [];
 const sesiones: LibraryReadingSession[] = [];
 const misPacks: { owner_id: string; pack_id: string }[] = [];
 const stickersPropios: UserSticker[] = [];
+const fragmentos: LibraryClip[] = [];
 const archivos = new Map<string, { body: LibraryFileBody; type: string }>();
 
 /**
@@ -175,6 +177,8 @@ export const demoLibrary: LibraryApi = {
     quitarDe(sesiones, (x) => x.item_id === itemId);
     quitarDe(cards, (c) => c.item_id === itemId);
     quitarDe(pages, (p) => p.item_id === itemId);
+    // Los fragmentos se quedan, con su título (RF-BH21).
+    for (const f of fragmentos) if (f.item_id === itemId) f.item_id = null;
     emitDataChange();
   },
 
@@ -418,6 +422,59 @@ export const demoLibrary: LibraryApi = {
     if (i >= 0) {
       archivos.delete(stickersPropios[i].path);
       stickersPropios.splice(i, 1);
+    }
+    emitDataChange();
+  },
+
+  async listClips(userId) {
+    await delay();
+    return copia(fragmentos.filter((f) => f.owner_id === userId).sort((a, b) => b.created_at.localeCompare(a.created_at)));
+  },
+
+  async createClip(userId, clip, jpeg) {
+    await delay();
+    if (clip.item_id && !items.some((i) => i.id === clip.item_id && i.owner_id === userId)) throw new AuthUiError(t().errors.noPermission);
+    const titulo = clip.book_title.trim().slice(0, 300);
+    if (!titulo) throw new AuthUiError(t().errors.noPermission);
+    let path: string | null = null;
+    if (clip.kind === 'image') {
+      if (!jpeg || !(clip.ar !== null && clip.ar >= 0.05 && clip.ar <= 20)) throw new AuthUiError(t().errors.noPermission);
+      if (tamanoDe(jpeg) > 2 * 1024 * 1024) throw new AuthUiError(t().errors.libraryFileTooBig);
+      path = `${userId}/clips/${clip.id}.jpg`;
+      archivos.set(path, { body: jpeg, type: 'image/jpeg' });
+    }
+    const fila: LibraryClip = {
+      ...clip,
+      book_title: titulo,
+      text: clip.kind === 'text' ? (clip.text?.slice(0, 5000) ?? null) : null,
+      ar: path ? clip.ar : null,
+      owner_id: userId,
+      path,
+      note: null,
+      created_at: ahora(),
+      updated_at: ahora(),
+    };
+    fragmentos.push(fila);
+    emitDataChange();
+    return copia(fila);
+  },
+
+  async updateClipNote(userId, clipId, note) {
+    await delay();
+    const fila = fragmentos.find((f) => f.owner_id === userId && f.id === clipId);
+    if (!fila) throw new AuthUiError(t().errors.noPermission);
+    fila.note = note?.trim().slice(0, 2000) || null;
+    fila.updated_at = ahora();
+    emitDataChange();
+    return copia(fila);
+  },
+
+  async removeClip(userId, clipId) {
+    await delay();
+    const i = fragmentos.findIndex((f) => f.owner_id === userId && f.id === clipId);
+    if (i >= 0) {
+      if (fragmentos[i].path) archivos.delete(fragmentos[i].path as string);
+      fragmentos.splice(i, 1);
     }
     emitDataChange();
   },

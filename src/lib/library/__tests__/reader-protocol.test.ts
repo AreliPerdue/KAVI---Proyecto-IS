@@ -133,3 +133,29 @@ describe('ColaDelMotor', () => {
     expect(mandados).toHaveLength(1);
   });
 });
+
+describe('fragmento de imagen (T317)', () => {
+  it('lee el recorte con su página y rectángulo, o el aviso de que no se pudo', () => {
+    const jpeg = 'data:image/jpeg;base64,AAAA';
+    expect(leerMensaje({ type: 'clip', dataUrl: jpeg, width: 800, height: 400, page: 2, rect: { x: 0.1, y: 0.2, w: 0.5, h: 0.25 } })).toEqual({
+      type: 'clip',
+      dataUrl: jpeg,
+      width: 800,
+      height: 400,
+      page: 2,
+      rect: { x: 0.1, y: 0.2, w: 0.5, h: 0.25 },
+    });
+    // EPUB: sin página ni rectángulo.
+    expect(leerMensaje({ type: 'clip', dataUrl: jpeg, width: 10, height: 10 })).toEqual({ type: 'clip', dataUrl: jpeg, width: 10, height: 10 });
+    expect(leerMensaje({ type: 'clip', error: 'empty' })).toEqual({ type: 'clip', error: 'empty' });
+  });
+
+  it('descarta lo que no es un JPEG, una medida sin sentido o un rectángulo fuera de la página', () => {
+    expect(leerMensaje({ type: 'clip', dataUrl: 'data:image/png;base64,AA', width: 1, height: 1 })).toBeNull();
+    expect(leerMensaje({ type: 'clip', dataUrl: 'javascript:alert(1)', width: 1, height: 1 })).toBeNull();
+    expect(leerMensaje({ type: 'clip', dataUrl: 'data:image/jpeg;base64,AA', width: 0, height: 1 })).toBeNull();
+    expect(leerMensaje({ type: 'clip', error: 'otro' })).toBeNull();
+    const fuera = leerMensaje({ type: 'clip', dataUrl: 'data:image/jpeg;base64,AA', width: 1, height: 1, page: 0, rect: { x: 2, y: 0, w: 1, h: 1 } });
+    expect(fuera).toEqual({ type: 'clip', dataUrl: 'data:image/jpeg;base64,AA', width: 1, height: 1 });
+  });
+});

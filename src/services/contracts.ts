@@ -52,6 +52,8 @@ import type {
   LibraryReadingSessionInput,
   StickerPack,
   UserSticker,
+  LibraryClip,
+  NuevoFragmento,
   LibraryLink,
   LibraryLinkKind,
   LibrarySeries,
@@ -549,6 +551,15 @@ export interface LibraryApi {
   createUserSticker(userId: string, sticker: Pick<UserSticker, 'id' | 'ar' | 'margin'>, png: LibraryFileBody): Promise<UserSticker>;
   /** Lo quita de la colección y borra su imagen; lo ya pegado se queda sin imagen. */
   removeUserSticker(userId: string, stickerId: string): Promise<void>;
+
+  /** Fragmentos (13c, RF-BH19 – RF-BH21; T317): los de la persona, el más nuevo primero. */
+  listClips(userId: string): Promise<LibraryClip[]>;
+  /** Guarda uno; si es de imagen, sube antes su JPEG. */
+  createClip(userId: string, clip: NuevoFragmento, jpeg?: LibraryFileBody): Promise<LibraryClip>;
+  /** Lo único que cambia de uno guardado: su nota (vacía la quita). */
+  updateClipNote(userId: string, clipId: string, note: string | null): Promise<LibraryClip>;
+  /** Lo borra con su imagen. */
+  removeClip(userId: string, clipId: string): Promise<void>;
 
   /** Acomodos guardados (RF-BL7b, T331). */
   listLayouts(userId: string): Promise<LibraryLayout[]>;

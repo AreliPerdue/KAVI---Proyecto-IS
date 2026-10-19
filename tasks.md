@@ -1143,10 +1143,19 @@ Decisiones B1–B9 aprobadas el 12 oct 2026 (T274); ver la tabla de la spec 13 �
   de una pieza propia), `removeAnnotationImage` en los servicios, entrada `imageCleanup` con `due` en la cola
   (guardar otra vez la anotación la cancela) y `use-library-sync` la procesa al vencer.
 - [ ] T291 Lápiz y dedo con Skia; presión del Apple Pencil; modo "solo lápiz". (RF-BH11) Dep: T286
-- [ ] T317 Fragmentos (antes "Recortes", renombrado el 14 oct 2026) de texto ("Guardar fragmento" al seleccionar) y de
+- [x] T317 Fragmentos (antes "Recortes", renombrado el 14 oct 2026) de texto ("Guardar fragmento" al seleccionar) y de
   imagen (rectángulo sobre la página), `library_clips` con RLS e imágenes en R2, sección "Mis fragmentos" con
   filtros y nota; pegar en recortes (13h).
   (RF-BH19 – RF-BH21, 13 oct 2026) Dep: T286 (pegar en creaciones, T297)
+  **Hecho (19 oct 2026):**
+  - Base de datos: migración `20261019120000_library_clips.sql`. RLS probada en PGlite: solo lo propio, de un
+    libro propio, solo la nota cambia, y al borrar el libro quedan su título y `item_id` nulo.
+  - Archivos: `api/library-files.ts` acepta `<uid>/clips/<id>.jpg`.
+  - Servicios en Supabase y demo; hooks en `hooks/use-clips.ts`.
+  - Motor: `public/reader/clip.js`. PDF: vuelve a dibujar el pedazo. EPUB: recorta la imagen bajo el rectángulo.
+  - Lector: botón en la selección y herramienta "Fragmento de imagen". La ruta acepta `?ir=` para abrir en un lugar.
+  - Pantalla `app/(app)/fragments.tsx`, con `ClipSheet` y las reglas de `lib/library/clips.ts`.
+  - Pegar en recortes queda en T349 (RF-CC24).
 
 ### L4 · Fichas de calificación
 - [ ] T293 Plantillas de ficha incluidas y editor de campos y aspecto. (RF-BF1 – RF-BF3, RF-BF5) Dep: T275

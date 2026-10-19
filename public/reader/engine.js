@@ -7,9 +7,10 @@
  *
  * App → motor: `open`, `openBegin` / `openChunk` / `openEnd`, `goTo`, `mode`, `turn`, `theme`, `search`,
  * `searchStep`, `searchClear`, `cover`, y de la capa de anotaciones (T286) `annotations`, `tool`, `select`,
- * `clearSelection`; de la letra y el zoom (T288) `text` y `zoom`.
+ * `clearSelection`; de la letra y el zoom (T288) `text` y `zoom`; el fragmento de imagen (T317) `clipTool`.
  * Motor → app: `ready`, `opened`, `position`, `search`, `tap`, `cover`, `error`; `place`, `select`,
- * `move`, `edit`, `selection` (ver `annotations.js`); `zoom` y `textSize` (T288); `activity` (T318).
+ * `move`, `edit`, `selection` (ver `annotations.js`); `zoom` y `textSize` (T288); `activity` (T318); `clip`
+ * (ver `clip.js`, T317).
  *
  * Zoom y letra (13c, RF-BH1 – RF-BH3; T288): en PDF se acerca con pellizco o Ctrl/⌘ y la rueda (la página se
  * vuelve a pintar a ese tamaño, nítida); doble toque o "Ajustar" vuelve a la página entera. En EPUB el
@@ -28,6 +29,7 @@
  * centro avisa `tap` para que la app muestre u oculte sus controles.
  */
 import { crearCapa } from './annotations.js';
+import { crearRecortador } from './clip.js';
 import { buscarEnPedazos } from './text-search.js';
 import { caraDeLetra, estilosDeTexto, familiaDe, letraValida, tamanoValido } from './text.js';
 import { escucharPellizco, escucharRuedaConCtrl, pellizcando } from './zoom.js';
@@ -124,6 +126,8 @@ async function atender(m) {
       return anotaciones.actualizar(m.items);
     case 'tool':
       return anotaciones.herramienta(m.tool, m.ar, m.w);
+    case 'clipTool':
+      return recortador.activar(m.on === true);
     case 'write':
       return anotaciones.escribir(m.id);
     case 'select':
@@ -180,6 +184,9 @@ const anotaciones = crearCapa(
   enviar,
 );
 
+/** El fragmento de imagen (13c, RF-BH20; T317). */
+const recortador = crearRecortador({ pdf: () => pdf, epub: () => epub }, enviar);
+
 /** Al terminar de seleccionar (la selección deja de cambiar), la capa avisa qué quedó seleccionado (T287). */
 function escucharSeleccion(doc) {
   let espera = null;
@@ -209,6 +216,7 @@ escucharActividad(document);
 function cerrar() {
   limpiarBusqueda();
   anotaciones.cerrar();
+  recortador.cerrar();
   zoom = 1;
   salirDelLibro();
   if (pdf) {

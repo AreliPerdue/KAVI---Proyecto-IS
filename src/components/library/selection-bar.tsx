@@ -1,4 +1,4 @@
-import { BookA, Copy, Highlighter, Strikethrough, Underline, X } from 'lucide-react-native';
+import { BookA, Copy, Highlighter, Scissors, Strikethrough, Underline, X } from 'lucide-react-native';
 import { StyleSheet, View } from 'react-native';
 
 import { ColorSwatch, IconButton } from '@/components/ui';
@@ -19,13 +19,15 @@ type Props = {
   onDefinir: () => void;
   copiable: boolean;
   onCopiar: () => void;
+  /** Guardar lo seleccionado en Mis fragmentos (RF-BH19, T317). */
+  onFragmento: () => void;
   onCerrar: () => void;
 };
 
 /**
  * Lo que se hace con el texto seleccionado (spec 13c, RF-BH7 – RF-BH9; decisión B5), en el lugar de las
  * herramientas: subrayar con uno de los colores a la mano (el último primero) en el estilo elegido, definir
- * una palabra y copiar (si el libro lo deja).
+ * una palabra, copiar (si el libro lo deja) y guardarlo como fragmento.
  */
 export function SelectionBar(p: Props) {
   const theme = useTheme();
@@ -63,6 +65,9 @@ export function SelectionBar(p: Props) {
       ) : null}
       <IconButton label={p.copiable ? a.copy : a.copyBlocked} onPress={p.onCopiar} disabled={!p.copiable}>
         <Copy {...icono(p.copiable)} />
+      </IconButton>
+      <IconButton label={a.saveClip} onPress={p.onFragmento}>
+        <Scissors {...icono()} />
       </IconButton>
       <IconButton label={a.clearSelection} onPress={p.onCerrar}>
         <X {...icono()} />

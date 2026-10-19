@@ -250,6 +250,27 @@ Como recortar de un libro o de una revista: se guarda un pedazo para después.
   abre el libro en ese lugar. Un fragmento de imagen se puede **pegar** en un recorte o página del Journal (13h, RF-CC24)
   como imagen o sticker, y uno de texto, como cuadro de texto. Borrar el libro no borra sus fragmentos: se
   quedan con su título.
+- **Cómo quedó (T317, 19 oct 2026):**
+  - **Texto:** "Guardar fragmento" (tijeras) en la barra de la selección. Guarda el texto (hasta 5000
+    caracteres), el título del libro y su lugar: página en PDF, CFI en EPUB y la parte del libro.
+  - **Imagen:** "Fragmento de imagen" (recortar) en las herramientas, también en el libro real. Un velo
+    sobre la página deja arrastrar el rectángulo, y la página no se mueve mientras está puesto.
+    - En **PDF** se vuelve a dibujar solo ese pedazo de la página, a buena resolución (lado mayor hasta
+      1600 px, JPEG). No se copia lo que se ve, que puede estar chico o con el tema de dos tonos. Guarda
+      la página y el rectángulo.
+    - En **EPUB** el texto se reacomoda y no es una imagen: se recorta la imagen del libro (dibujo, foto,
+      mapa) que quede bajo el rectángulo. Si no hay ninguna, lo dice y sugiere "Guardar fragmento".
+  - **Mis fragmentos:** se entra desde la librería (tijeras, junto al tiempo de lectura). Filtros por tipo
+    (Todos, Texto, Imagen) y por libro. Tocar uno abre su libro en ese lugar (la ruta del lector lleva
+    `?ir=`); "Nota y más" escribe la nota, copia el texto y borra con confirmación.
+  - **Pegar** un fragmento en un recorte o una página del Journal llega con el lienzo (13h, RF-CC24; T349).
+  - **Criterios:**
+    - *Dado* un párrafo seleccionado en la p. 12 de un PDF, *cuando* toco "Guardar fragmento", *entonces*
+      aparece en Mis fragmentos con "Rayuela · p. 12", y tocarlo abre Rayuela en la p. 12.
+    - *Dado* un dibujo en la p. 3, *cuando* arrastro un rectángulo sobre él con "Fragmento de imagen",
+      *entonces* Mis fragmentos muestra ese pedazo como imagen.
+    - *Dado* un libro con fragmentos, *cuando* lo borro de la librería, *entonces* sus fragmentos siguen
+      con su título y avisan que el libro ya no está.
 
 ## 7. Lo técnico
 
@@ -261,6 +282,11 @@ Como recortar de un libro o de una revista: se guarda un pedazo para después.
     llevaba (para el panel). Así sigue junto al mismo texto si cambia la letra o la pantalla.
   - Se guarda primero en la cola del dispositivo (RF-BR3) y sube después; sin red, el libro se abre con la
     última copia de sus anotaciones.
+- Fragmentos (T317): tabla `library_clips` (RLS: solo lo propio; de lo guardado solo cambia la nota, por
+  permiso de columna). `item_id` queda vacío si se borra el libro (`on delete set null`) y se conserva
+  `book_title`. La imagen va en R2 en `<persona>/clips/<id>.jpg`, fuera de la carpeta del libro; la sube y
+  la lee la función de archivos (JPEG de hasta 2 MB). El motor la recorta en `public/reader/clip.js`
+  (mensajes `clipTool` y `clip`).
 - El lápiz usa `react-native-skia` con eventos de puntero (presión de Apple Pencil en iOS).
 - Escuchar: `expo-speech` en teléfono y la Web Speech API en web.
 

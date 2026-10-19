@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { BookOpen, ChevronLeft, FolderMinus, FolderPlus, FlaskConical, Library, Search, SlidersHorizontal, Tag, Timer, Trash2, X } from 'lucide-react-native';
+import { BookOpen, ChevronLeft, FolderMinus, FolderPlus, FlaskConical, Library, Scissors, Search, SlidersHorizontal, Tag, Timer, Trash2, X } from 'lucide-react-native';
 import { useEffect, useMemo, useState } from 'react';
 import { BackHandler, FlatList, type LayoutChangeEvent, StyleSheet, TextInput, View } from 'react-native';
 import { useReducedMotion } from 'react-native-reanimated';
@@ -541,6 +541,10 @@ export default function LibraryScreen() {
             </View>
             <IconButton label={l.time.open} onPress={() => setViendoTiempo(true)}>
               <Timer size={IconSize.action} strokeWidth={IconStroke} color={theme.text} />
+            </IconButton>
+            {/* Mis fragmentos (RF-BH21, T317). */}
+            <IconButton label={l.clips.title} onPress={() => router.push('/(app)/fragments')}>
+              <Scissors size={IconSize.action} strokeWidth={IconStroke} color={theme.text} />
             </IconButton>
             <View>
               <IconButton label={f.filterCount(nFiltros)} onPress={() => setFiltrando(true)}>

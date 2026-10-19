@@ -31,6 +31,7 @@ import { idPropio, PREFIJO_PROPIO, useCreateUserSticker, useRemoveUserSticker, u
 import { usePantallaCompleta } from '@/hooks/use-full-screen';
 import { useLibrarySync } from '@/hooks/use-library-sync';
 import { useAbrirCopiaLocal } from '@/hooks/use-local-book';
+import { useCreateClip } from '@/hooks/use-clips';
 import { useLibraryFileUrl, useLibraryItem, useLibraryItems, useSaveReadingPosition, useSeries } from '@/hooks/use-library';
 import { useTheme } from '@/hooks/use-theme';
 import { useT } from '@/i18n';
@@ -68,8 +69,10 @@ import {
   type CodigoDeError,
   type Herramienta,
   type MensajeDelMotor,
+  type Posicion as LugarDeApertura,
   posicionGuardada,
 } from '@/lib/library/reader-protocol';
+import { lugarDeImagen, lugarDeSeleccion, posicionDeRuta } from '@/lib/library/clips';
 import { FORMA_POR_OMISION, type FormaDeLeer } from '@/lib/library/reading-mode';
 import { coloresDe } from '@/lib/library/reader-theme';
 import { partesDeSticker, urlDeSticker } from '@/lib/library/sticker-packs';
@@ -128,13 +131,14 @@ function nombreDeSticker(a: LibraryAnnotation, nombres: Record<NombreDeSticker, 
 const COLORES_RAPIDOS_SEPARADOR = '#E24947';
 
 export default function ReaderScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, ir } = useLocalSearchParams<{ id: string; ir?: string }>();
   // Una pieza nueva arranca de cero (motor, posición, aviso del siguiente): al pasar al siguiente de
   // la saga se reemplaza la ruta y Expo Router puede reutilizar el componente.
-  return <Lector key={id} id={id} />;
+  // `ir`: abrir en un lugar y no donde se quedó (desde Mis fragmentos, RF-BH21).
+  return <Lector key={id} id={id} irA={posicionDeRuta(ir)} />;
 }
 
-function Lector({ id }: { id: string }) {
+function Lector({ id, irA }: { id: string; irA?: LugarDeApertura }) {
   const router = useRouter();
   const theme = useTheme();
   const insets = useSafeAreaInsets();
@@ -235,6 +239,9 @@ function Lector({ id }: { id: string }) {
   const [ultimoSubrayado, setUltimoSubrayado] = useState<string | null>(null);
   const [definiendo, setDefiniendo] = useState<string | null>(null);
   const avisar = useSnackbar();
+  // Fragmentos (RF-BH19 – RF-BH21; T317): con la herramienta de imagen puesta, la página espera el rectángulo.
+  const [recortando, setRecortando] = useState(false);
+  const crearFragmento = useCreateClip();
 
   // Abrir una sola vez por dirección firmada, en el lugar donde se quedó (RF-BL17).
   const abiertoCon = useRef<string | null>(null);
@@ -245,12 +252,12 @@ function Lector({ id }: { id: string }) {
       // Una vez por libro (y otra si se reintenta): de la copia, o bajándola si aún no está.
       if (abiertoCon.current === ruta) return;
       abiertoCon.current = ruta;
-      abrirCopia(pieza, ruta, forma, (m) => motor.current?.send(m)).catch(() => setError('offline'));
+      abrirCopia(pieza, ruta, forma, (m) => motor.current?.send(m), irA).catch(() => setError('offline'));
       return;
     }
     if (!url.data || abiertoCon.current === url.data) return;
     abiertoCon.current = url.data;
-    motor.current?.send({ type: 'open', format: pieza.kind === 'epub' ? 'epub' : 'pdf', url: url.data, position: posicionGuardada(pieza), mode: forma });
+    motor.current?.send({ type: 'open', format: pieza.kind === 'epub' ? 'epub' : 'pdf', url: url.data, position: irA ?? posicionGuardada(pieza), mode: forma });
     // La forma con que se abre es la de ese momento; los cambios después van por `mode` (abajo).
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [item.data, url.data, ruta, intento]);
@@ -302,6 +309,10 @@ function Lector({ id }: { id: string }) {
           : {};
     motor.current?.send({ type: 'tool', tool: herramienta, ...medida });
   }, [herramienta, imagenPorPegar, stickerPorPegar]);
+
+  useEffect(() => {
+    motor.current?.send({ type: 'clipTool', on: recortando });
+  }, [recortando]);
 
   // Letra y tamaño de un EPUB (RF-BH2, RF-BH3): al abrir y cada vez que cambian.
   const textoLectura = usePreferencesStore((s) => s.readerText);
@@ -450,6 +461,10 @@ function Lector({ id }: { id: string }) {
       case 'edit':
         setSeleccionId(m.id);
         motor.current?.send({ type: 'write', id: m.id });
+        return;
+      case 'clip':
+        if ('error' in m) avisar({ message: m.error === 'empty' ? tx.library.clips.emptyImage : tx.library.clips.failed });
+        else guardarFragmentoDeImagen(m);
         return;
       case 'remove': {
         const a = lista?.find((x) => x.id === m.id);
@@ -651,6 +666,54 @@ function Lector({ id }: { id: string }) {
     await Clipboard.setStringAsync(seleccionTexto.text);
     avisar({ message: tx.library.annotations.copied });
     soltarSeleccion();
+  };
+
+  /** Al terminar de guardar un fragmento: avisa, con un atajo a Mis fragmentos. */
+  const fragmentoGuardado = {
+    onSuccess: () =>
+      avisar({ message: tx.library.clips.saved, actionLabel: tx.library.clips.see, onAction: () => router.push('/(app)/fragments') }),
+    onError: (e: Error) => avisar({ message: e.message || tx.library.clips.failed }),
+  };
+
+  /** Guardar lo seleccionado como fragmento (RF-BH19). Si el libro no deja copiar, solo su lugar. */
+  const guardarFragmentoDeTexto = () => {
+    if (!seleccionTexto || !item.data) return;
+    crearFragmento.mutate(
+      {
+        clip: {
+          id: uuidv4(),
+          item_id: id,
+          book_title: item.data.title,
+          kind: 'text',
+          text: copiable ? seleccionTexto.text.slice(0, 5000) : null,
+          locator: lugarDeSeleccion(seleccionTexto.locator, posicion?.fraction),
+          ar: null,
+        },
+      },
+      fragmentoGuardado,
+    );
+    soltarSeleccion();
+  };
+
+  /** El rectángulo que llegó del motor (RF-BH20): se guarda y la herramienta se quita. */
+  const guardarFragmentoDeImagen = (m: Extract<MensajeDelMotor, { type: 'clip'; dataUrl: string }>) => {
+    setRecortando(false);
+    if (!item.data) return;
+    crearFragmento.mutate(
+      {
+        clip: {
+          id: uuidv4(),
+          item_id: id,
+          book_title: item.data.title,
+          kind: 'image',
+          text: null,
+          locator: lugarDeImagen(m, posicion),
+          ar: Math.round((m.height / m.width) * 10000) / 10000,
+        },
+        dataUrl: m.dataUrl,
+      },
+      fragmentoGuardado,
+    );
   };
 
   const guardarSubrayado = (cambio: CambioDeSubrayado) => {
@@ -893,6 +956,7 @@ function Lector({ id }: { id: string }) {
               }}
               copiable={copiable}
               onCopiar={() => void copiar()}
+              onFragmento={guardarFragmentoDeTexto}
               onCerrar={soltarSeleccion}
             />
           ) : !mensajeError ? (
@@ -904,7 +968,14 @@ function Lector({ id }: { id: string }) {
               puedeRehacer={editor.puedeRehacer}
               onHerramienta={(h) => {
                 if (h && seleccionada) elegir(null);
+                if (h) setRecortando(false);
                 setHerramienta(h);
+              }}
+              recortando={recortando}
+              onRecortar={() => {
+                if (seleccionada) elegir(null);
+                setHerramienta(null);
+                setRecortando((r) => !r);
               }}
               onDeshacer={editor.deshacer}
               onRehacer={editor.rehacer}

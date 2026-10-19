@@ -21,6 +21,8 @@
  * - `delete` `{ itemId | fontId }` → borra la carpeta de la pieza o el archivo de la fuente (antes de
  *   borrar su fila).
  * - Stickers propios (T335): `upload`, `read` y `deleteFile` de `<uid>/stickers/<id>.png` (PNG de hasta 2 MB).
+ * - Fragmentos de imagen (T317): lo mismo con `<uid>/clips/<id>.jpg` (JPEG de hasta 2 MB), fuera de la carpeta
+ *   del libro para que borrarlo no los borre.
  * - `deleteFile` `{ path }` → borra una imagen pegada que ya no se usa (T333: una hora después de quitarla,
  *   si no se deshizo). Solo rutas `<uid>/<pieza>/anotaciones/<id>.jpg` de una pieza propia.
  * - `deleteAll` → borra la carpeta de la persona (al eliminar la cuenta, RF-A12).
@@ -137,12 +139,17 @@ function piezaDeImagenPegada(ruta: string, uid: string): string | null {
   return m && m[1] === uid ? m[2] : null;
 }
 
-/** Un sticker propio (T335): `<uid>/stickers/<id>.png`, de la persona y de nadie más. */
-const STICKER_PROPIO = /^([0-9a-f-]{36})\/stickers\/([0-9a-f-]{36})\.png$/i;
-const MAX_STICKER = 2 * 1024 * 1024;
-function esStickerPropio(ruta: string, uid: string): boolean {
-  const m = ruta.match(STICKER_PROPIO);
-  return !!m && m[1] === uid;
+/**
+ * Una imagen suelta de la persona, fuera de la carpeta de un libro: un sticker propio (T335),
+ * `<uid>/stickers/<id>.png`, o un fragmento de imagen (T317), `<uid>/clips/<id>.jpg`. Devuelve el tipo que
+ * tiene que tener, o null si la ruta no es de esas o no es suya.
+ */
+const SUELTA_PROPIA = /^([0-9a-f-]{36})\/(stickers\/[0-9a-f-]{36}\.png|clips\/[0-9a-f-]{36}\.jpg)$/i;
+const MAX_SUELTA = 2 * 1024 * 1024;
+function tipoDeSueltaPropia(ruta: string, uid: string): 'image/png' | 'image/jpeg' | null {
+  const m = ruta.match(SUELTA_PROPIA);
+  if (!m || m[1] !== uid) return null;
+  return m[2].startsWith('stickers/') ? 'image/png' : 'image/jpeg';
 }
 
 async function pieza(supabase: SupabaseClient, filtro: { id?: string; ruta?: string }): Promise<Pieza | null> {
@@ -215,10 +222,11 @@ export async function POST(request: Request): Promise<Response> {
           const firmada = await firmar(r2, 'PUT', ruta, SEGUNDOS_SUBIDA, { 'content-type': tipo, 'content-length': String(tamano) });
           return responder(200, { url: firmada, headers: { 'content-type': tipo } });
         }
-        // Un sticker propio (T335): PNG chico en su carpeta de stickers.
-        if (esStickerPropio(ruta, uid)) {
-          if (tipo !== 'image/png') return responder(403, { code: 'forbidden', error: 'No tienes permiso para guardar ese archivo.' });
-          if (tamano <= 0 || tamano > MAX_STICKER) return responder(413, { code: 'tooBig', error: 'El archivo pesa más de lo permitido.' });
+        // Un sticker propio (T335, PNG) o un fragmento de imagen (T317, JPEG): chicos, en su carpeta.
+        const suelta = tipoDeSueltaPropia(ruta, uid);
+        if (suelta) {
+          if (tipo !== suelta) return responder(403, { code: 'forbidden', error: 'No tienes permiso para guardar ese archivo.' });
+          if (tamano <= 0 || tamano > MAX_SUELTA) return responder(413, { code: 'tooBig', error: 'El archivo pesa más de lo permitido.' });
           const firmada = await firmar(r2, 'PUT', ruta, SEGUNDOS_SUBIDA, { 'content-type': tipo, 'content-length': String(tamano) });
           return responder(200, { url: firmada, headers: { 'content-type': tipo } });
         }
@@ -243,7 +251,7 @@ export async function POST(request: Request): Promise<Response> {
         const ruta = texto(cuerpo.path);
         const deImagen = piezaDeImagenPegada(ruta, uid);
         const permitido =
-          esStickerPropio(ruta, uid) ||
+          !!tipoDeSueltaPropia(ruta, uid) ||
           (suya(ruta) && (deImagen ? await pieza(supabase, { id: deImagen }) : (await pieza(supabase, { ruta })) || (await fuente(supabase, { ruta }))));
         if (!permitido) return responder(403, { code: 'forbidden', error: 'No tienes permiso para ver ese archivo.' });
         return responder(200, { url: await firmar(r2, 'GET', ruta, SEGUNDOS_LECTURA) });
@@ -264,7 +272,7 @@ export async function POST(request: Request): Promise<Response> {
         const ruta = texto(cuerpo.path);
         const deImagen = piezaDeImagenPegada(ruta, uid);
         const item = deImagen && suya(ruta) ? await pieza(supabase, { id: deImagen }) : null;
-        if (!item && !esStickerPropio(ruta, uid)) return responder(403, { code: 'forbidden', error: 'No tienes permiso para borrar ese archivo.' });
+        if (!item && !tipoDeSueltaPropia(ruta, uid)) return responder(403, { code: 'forbidden', error: 'No tienes permiso para borrar ese archivo.' });
         const r = await cliente(r2).fetch(direccion(r2, ruta).toString(), { method: 'DELETE' });
         if (!r.ok && r.status !== 404) throw new Error(`delete ${r.status}`);
         return responder(200, { removed: 1 });

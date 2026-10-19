@@ -258,3 +258,41 @@ describe('stickers propios (13c, RF-BH13; T335)', () => {
     await expect(api.createUserSticker(ANA, { id: ID, ar: 9, margin: 0 }, new Uint8Array(10))).rejects.toThrow();
   });
 });
+
+describe('fragmentos (13c, RF-BH19 – RF-BH21; T317)', () => {
+  const T = '11111111-0000-4000-8000-000000000003';
+  const I = '11111111-0000-4000-8000-000000000004';
+  it('se guardan de texto y de imagen, el más nuevo primero, y solo se ven los propios', async () => {
+    const api = fresh();
+    const libro = await api.createItem(ANA, { family: 'book', kind: 'pdf', title: 'Rayuela' });
+    const texto = await api.createClip(ANA, { id: T, item_id: libro.id, book_title: 'Rayuela', kind: 'text', text: 'la ciudad', locator: { page: 3 }, ar: null });
+    expect(texto).toMatchObject({ kind: 'text', text: 'la ciudad', path: null, note: null, owner_id: ANA });
+    const imagen = await api.createClip(ANA, { id: I, item_id: libro.id, book_title: 'Rayuela', kind: 'image', text: null, locator: { page: 4, x: 0.1, y: 0.2, w: 0.5, h: 0.3 }, ar: 0.6 }, new Uint8Array([1, 2]));
+    expect(imagen.path).toBe(`${ANA}/clips/${I}.jpg`);
+    await expect(api.fileUrl(imagen.path as string)).resolves.toBeTruthy();
+    expect((await api.listClips(ANA)).map((c) => c.id).sort()).toEqual([T, I].sort());
+    expect(await api.listClips('otra')).toEqual([]);
+  });
+
+  it('la nota se escribe y se quita; borrar el libro los deja con su título', async () => {
+    const api = fresh();
+    const libro = await api.createItem(ANA, { family: 'book', kind: 'pdf', title: 'Rayuela' });
+    await api.createClip(ANA, { id: T, item_id: libro.id, book_title: 'Rayuela', kind: 'text', text: 'x', locator: { page: 1 }, ar: null });
+    expect((await api.updateClipNote(ANA, T, '  para el journal ')).note).toBe('para el journal');
+    expect((await api.updateClipNote(ANA, T, '   ')).note).toBeNull();
+    await expect(api.updateClipNote('otra', T, 'jaja')).rejects.toThrow();
+    await api.removeItem(libro.id);
+    expect((await api.listClips(ANA))[0]).toMatchObject({ item_id: null, book_title: 'Rayuela' });
+  });
+
+  it('no se guardan de un libro ajeno ni una imagen sin archivo; borrarlo se lleva su imagen', async () => {
+    const api = fresh();
+    const ajeno = await api.createItem('otra', { family: 'book', kind: 'pdf', title: 'Ajeno' });
+    await expect(api.createClip(ANA, { id: T, item_id: ajeno.id, book_title: 'Ajeno', kind: 'text', text: 'x', locator: {}, ar: null })).rejects.toThrow();
+    await expect(api.createClip(ANA, { id: I, item_id: null, book_title: 'X', kind: 'image', text: null, locator: {}, ar: 1 })).rejects.toThrow();
+    const fila = await api.createClip(ANA, { id: I, item_id: null, book_title: 'X', kind: 'image', text: null, locator: {}, ar: 1 }, new Uint8Array([1]));
+    await api.removeClip(ANA, I);
+    expect(await api.listClips(ANA)).toEqual([]);
+    await expect(api.fileUrl(fila.path as string)).rejects.toThrow();
+  });
+});

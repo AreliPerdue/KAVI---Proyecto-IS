@@ -12,6 +12,7 @@ import type {
   LibraryReadingSession,
   StickerPack,
   UserSticker,
+  LibraryClip,
   LibraryCard,
   LibraryCardTemplate,
   LibraryFileBody,
@@ -273,6 +274,33 @@ export const supabaseLibrary: LibraryApi = {
   async removeUserSticker(userId, stickerId) {
     sinError(await db().from('library_user_stickers').delete().eq('owner_id', userId).eq('id', stickerId));
     await archivos({ action: 'deleteFile', path: `${userId}/stickers/${stickerId}.png` });
+  },
+
+  async listClips(userId) {
+    return unwrap(await db().from('library_clips').select('*').eq('owner_id', userId).order('created_at', { ascending: false })) as LibraryClip[];
+  },
+
+  async createClip(userId, clip, jpeg) {
+    const path = clip.kind === 'image' ? `${userId}/clips/${clip.id}.jpg` : null;
+    if (path && jpeg) await subir(archivos, { path, contentType: 'image/jpeg', size: tamanoDe(jpeg) }, jpeg);
+    return unwrap(
+      await db()
+        .from('library_clips')
+        .insert({ ...clip, text: clip.kind === 'text' ? clip.text : null, ar: path ? clip.ar : null, owner_id: userId, path })
+        .select()
+        .single(),
+    ) as LibraryClip;
+  },
+
+  async updateClipNote(userId, clipId, note) {
+    const limpia = note?.trim() || null;
+    return unwrap(await db().from('library_clips').update({ note: limpia }).eq('owner_id', userId).eq('id', clipId).select().single()) as LibraryClip;
+  },
+
+  async removeClip(userId, clipId) {
+    const fila = unwrap(await db().from('library_clips').delete().eq('owner_id', userId).eq('id', clipId).select('path')) as { path: string | null }[];
+    const path = fila[0]?.path;
+    if (path) await archivos({ action: 'deleteFile', path });
   },
 
   async saveReadingSession(userId, session) {

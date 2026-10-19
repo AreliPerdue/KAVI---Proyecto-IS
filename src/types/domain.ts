@@ -715,6 +715,30 @@ export type UserSticker = {
 };
 
 /**
+ * Un fragmento (spec 13c, RF-BH19 – RF-BH21; T317): un pedazo de texto o de imagen guardado de un libro. Si el
+ * libro se borra, `item_id` queda vacío y se conserva su título.
+ */
+export type LibraryClip = {
+  id: string;
+  owner_id: string;
+  item_id: string | null;
+  book_title: string;
+  kind: 'text' | 'image';
+  /** Lo seleccionado; vacío en un libro que no deja copiar (solo la referencia). */
+  text: string | null;
+  /** Dónde está: página o CFI y la parte del libro; uno de imagen lleva también su rectángulo. */
+  locator: LibraryLocator;
+  /** `<persona>/clips/<id>.jpg` en R2, solo en uno de imagen. */
+  path: string | null;
+  ar: number | null;
+  note: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type NuevoFragmento = Pick<LibraryClip, 'id' | 'item_id' | 'book_title' | 'kind' | 'text' | 'locator' | 'ar'>;
+
+/**
  * Un pack de la tienda de stickers (spec 13c, RF-BH13b; T338). Sus imágenes están en el bucket público
  * `stickers`: `<id>/<name>.png` y `<id>/muestra.png`. `version` sube cuando cambian.
  */

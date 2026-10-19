@@ -327,6 +327,23 @@
       body.pegando #epub {
         cursor: copy;
       }
+      /* Fragmento de imagen (T317): un velo que se lleva los toques y el rectángulo que se arrastra. */
+      .recortando {
+        position: fixed;
+        inset: 0;
+        z-index: 50;
+        cursor: crosshair;
+        touch-action: none;
+        background: rgba(19, 19, 19, 0.12);
+      }
+      .marco-recorte {
+        display: none;
+        position: absolute;
+        border: 2px dashed #ffffff;
+        outline: 1px solid rgba(19, 19, 19, 0.7);
+        background: rgba(255, 255, 255, 0.14);
+        pointer-events: none;
+      }
       /* Pegando, lo ya pegado deja pasar el toque: se puede pegar uno encima de otro. */
       body.pegando .anotacion {
         pointer-events: none !important;

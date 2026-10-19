@@ -1,4 +1,4 @@
-import { Bookmark, BringToFront, Check, FoldVertical, ImagePlus, Lock, LockOpen, Palette, Pencil, Redo2, RotateCw, SendToBack, Sticker, StickyNote, Trash2, Type, Undo2 } from 'lucide-react-native';
+import { Bookmark, BringToFront, Check, Crop, FoldVertical, ImagePlus, Lock, LockOpen, Palette, Pencil, Redo2, RotateCw, SendToBack, Sticker, StickyNote, Trash2, Type, Undo2 } from 'lucide-react-native';
 import type { ComponentType } from 'react';
 import { StyleSheet, View } from 'react-native';
 
@@ -23,6 +23,9 @@ type Props = {
   onSticker: () => void;
   /** Poner un separador en la página que se lee (RF-BH15, T290); también en el libro real. */
   onSeparador: () => void;
+  /** La herramienta de fragmento de imagen (RF-BH20, T317), puesta o no; también en el libro real. */
+  recortando: boolean;
+  onRecortar: () => void;
   onDeshacer: () => void;
   onRehacer: () => void;
   onEscribir: () => void;
@@ -40,7 +43,8 @@ type Props = {
 
 /**
  * Las herramientas sobre la página (spec 13c; T286, T289, T290), abajo del lector. Sin nada elegido: pegar un
- * post-it, un cuadro de texto, una imagen o un sticker, deshacer y rehacer (RF-BH18). Con algo pegado elegido:
+ * post-it, un cuadro de texto, una imagen o un sticker, poner un separador, recortar un fragmento de imagen
+ * (T317), deshacer y rehacer (RF-BH18). Con algo pegado elegido:
  * escribir (ahí mismo) y su color, o girar si es imagen o sticker; traer al frente, mandar atrás, bloquear
  * (RF-BH16) y quitar (un sticker se va a la charola "Quitados").
  */
@@ -97,7 +101,7 @@ export function AnnotationToolbar(p: Props) {
   }
 
   const avisos = { postit: a.postitOn, textbox: a.textboxOn, image: a.imageOn, sticker: a.stickerOn };
-  const aviso = p.enLibro ? a.postitBook : p.herramienta ? avisos[p.herramienta] : null;
+  const aviso = p.recortando ? a.clipOn : p.enLibro ? a.postitBook : p.herramienta ? avisos[p.herramienta] : null;
   const herr = (h: Exclude<Herramienta, null>, Icono: ComponentType<{ size: number; strokeWidth: number; color: string }>, etiqueta: string, onPress: () => void) => {
     const activa = p.herramienta === h;
     return (
@@ -116,6 +120,9 @@ export function AnnotationToolbar(p: Props) {
         {herr('sticker', Sticker, a.sticker, p.onSticker)}
         <IconButton label={a.bookmark} onPress={p.onSeparador}>
           <Bookmark {...icono()} />
+        </IconButton>
+        <IconButton label={p.recortando ? a.clipCancel : a.clipImage} onPress={p.onRecortar} style={p.recortando ? { backgroundColor: theme.ink } : null}>
+          <Crop size={IconSize.action} strokeWidth={IconStroke} color={p.recortando ? theme.onInk : theme.text} />
         </IconButton>
         <View style={[styles.separador, { backgroundColor: theme.border }]} />
         <IconButton label={a.undo} onPress={p.onDeshacer} disabled={!p.puedeDeshacer}>
@@ -145,9 +152,10 @@ function Aviso({ texto }: { texto: string }) {
 }
 
 const styles = StyleSheet.create({
-  contenedor: { alignItems: 'center', paddingHorizontal: Spacing.lg },
-  fila: { flexDirection: 'row', alignItems: 'center', gap: Spacing.xs, borderRadius: Radius.full, borderCurve: 'continuous' },
-  separador: { width: 1, height: 24, marginHorizontal: Spacing.xs },
+  contenedor: { alignItems: 'center', paddingHorizontal: Spacing.sm },
+  // Sin espacio entre botones: ocho de 44 caben en 375 px; en algo más angosto, la fila se parte.
+  fila: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', alignItems: 'center', borderRadius: Radius.full, borderCurve: 'continuous' },
+  separador: { width: 1, height: 24, marginHorizontal: 2 },
   avisoCaja: { position: 'absolute', bottom: '100%', left: Spacing.lg, right: Spacing.lg, alignItems: 'center', paddingBottom: Spacing.xs },
   aviso: {
     textAlign: 'center',

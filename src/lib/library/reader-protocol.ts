@@ -69,6 +69,8 @@ export type MensajeAlMotor =
   | { type: 'cover'; url: string; width?: number }
   /** Hacer un sticker propio (T335): recortar lo transparente y ponerle margen blanco (px para 512). */
   | { type: 'outline'; id: string; src: string; margin: number }
+  /** Poner o quitar la herramienta de fragmento de imagen (13c, RF-BH20; T317). */
+  | { type: 'clipTool'; on: boolean }
   /** Todo lo que se pinta encima de las páginas, ya en orden de capa (13c, RF-BH16; T286). */
   | { type: 'annotations'; items: AnotacionEnMotor[] }
   /**
@@ -105,6 +107,12 @@ export type MensajeDelMotor =
   | { type: 'cover'; dataUrl: string }
   /** El sticker hecho (PNG) con su medida, o que no se pudo. */
   | { type: 'outline'; id: string; dataUrl?: string; width?: number; height?: number; error?: boolean }
+  /**
+   * El fragmento de imagen recortado (T317): JPEG con su medida y, en PDF, su página y su rectángulo (partes de
+   * la página). `empty`: en un EPUB no había imagen bajo el rectángulo.
+   */
+  | { type: 'clip'; dataUrl: string; width: number; height: number; page?: number; rect?: { x: number; y: number; w: number; h: number } }
+  | { type: 'clip'; error: 'empty' | 'failed' }
   /** Toque o clic en el centro de la página: mostrar u ocultar los controles (RF-BR7b). */
   | { type: 'tap' }
   /** Con la herramienta de post-it, el toque en la página: dónde pegarlo (T286). */
@@ -219,6 +227,16 @@ export function leerMensaje(crudo: unknown): MensajeDelMotor | null {
       return typeof m.dataUrl === 'string' && m.dataUrl.startsWith('data:image/png;base64,') && m.dataUrl.length < 4_000_000 && numero(m.width) && numero(m.height)
         ? { type: 'outline', id: m.id, dataUrl: m.dataUrl, width: m.width, height: m.height }
         : null;
+    case 'clip': {
+      if (m.error === 'empty' || m.error === 'failed') return { type: 'clip', error: m.error };
+      if (typeof m.dataUrl !== 'string' || !m.dataUrl.startsWith('data:image/jpeg;base64,') || m.dataUrl.length >= 4_000_000) return null;
+      if (!numero(m.width) || !numero(m.height) || m.width < 1 || m.height < 1) return null;
+      const r = m.rect as Record<string, unknown> | undefined;
+      const parte = (v: unknown) => numero(v) && v >= 0 && v <= 1;
+      const rect = r && typeof r === 'object' && parte(r.x) && parte(r.y) && parte(r.w) && parte(r.h) ? { x: r.x as number, y: r.y as number, w: r.w as number, h: r.h as number } : undefined;
+      const page = numero(m.page) && Number.isInteger(m.page) && m.page >= 1 ? m.page : undefined;
+      return { type: 'clip', dataUrl: m.dataUrl, width: m.width, height: m.height, ...(page ? { page } : {}), ...(rect ? { rect } : {}) };
+    }
     case 'error':
       return { type: 'error', code: CODIGOS.includes(m.code as CodigoDeError) ? (m.code as CodigoDeError) : 'unknown', message: typeof m.message === 'string' ? m.message : undefined };
     default:

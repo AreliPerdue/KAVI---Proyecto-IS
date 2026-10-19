@@ -72,6 +72,9 @@ jest.mock('@/hooks/use-user-stickers', () => ({
   useCreateUserSticker: () => ({ mutate: mockCrearSticker, isPending: false }),
   useRemoveUserSticker: () => ({ mutate: mockBorrarSticker }),
 }));
+// Fragmentos (T317): el doble anota lo que se guarda.
+const mockCrearFragmento = jest.fn();
+jest.mock('@/hooks/use-clips', () => ({ useCreateClip: () => ({ mutate: mockCrearFragmento, isPending: false }) }));
 jest.mock('@/lib/library/cover/prepare', () => ({
   prepararImagenPegada: async () => ({ jpeg: new Uint8Array([1, 2]), ancho: 800, alto: 400, vistaPrevia: 'data:image/jpeg;base64,AA' }),
   prepararSticker: async () => ({ dataUrl: 'data:image/png;base64,ORIGINAL', ancho: 400, alto: 300 }),
@@ -166,20 +169,33 @@ beforeEach(() => {
   usePreferencesStore.setState({ readingModes: {} });
   mockPantallaCompleta.mockReset();
   mockAbrirCopia.mockReset();
-  mockAbrirCopia.mockImplementation(async (pieza: { kind: string }, _ruta: string, forma: string, enviar: (m: MensajeAlMotor) => void) => {
+  mockCrearFragmento.mockReset();
+  mockAbrirCopia.mockImplementation(async (pieza: { kind: string }, _ruta: string, forma: string, enviar: (m: MensajeAlMotor) => void, posicion?: unknown) => {
     const { posicionGuardada } = jest.requireActual<typeof import('@/lib/library/reader-protocol')>('@/lib/library/reader-protocol');
-    enviar({ type: 'openBegin', format: pieza.kind === 'epub' ? 'epub' : 'pdf', size: 1, position: posicionGuardada(pieza as never), mode: forma as never });
+    enviar({ type: 'openBegin', format: pieza.kind === 'epub' ? 'epub' : 'pdf', size: 1, position: (posicion as never) ?? posicionGuardada(pieza as never), mode: forma as never });
   });
 });
 
 it('abre el PDF en la página donde se quedó y muestra que está abriendo', async () => {
   await render(<Lector />);
-  expect(mockAbrirCopia).toHaveBeenCalledWith(expect.objectContaining({ id: 'l1' }), 'u1/l1/rayuela.pdf', 'scroll', expect.any(Function));
+  expect(mockAbrirCopia).toHaveBeenCalledWith(expect.objectContaining({ id: 'l1' }), 'u1/l1/rayuela.pdf', 'scroll', expect.any(Function), undefined);
   expect(mockEnviados[0]).toEqual({ type: 'openBegin', format: 'pdf', size: 1, position: { page: 120 }, mode: 'scroll' });
   expect(screen.getByText(R.opening)).toBeTruthy();
   await responder({ type: 'opened', total: 340 });
   expect(screen.queryByText(R.opening)).toBeNull();
   expect(screen.getByText('Rayuela')).toBeTruthy();
+});
+
+it('desde Mis fragmentos se abre en el lugar del fragmento y no donde se quedó (RF-BH21)', async () => {
+  globalThis.setParametrosDeRuta({ id: 'l1', ir: JSON.stringify({ page: 7 }) });
+  await render(<Lector />);
+  expect(mockEnviados[0]).toEqual(expect.objectContaining({ type: 'openBegin', position: { page: 7 } }));
+});
+
+it('un lugar mal formado en la ruta se ignora', async () => {
+  globalThis.setParametrosDeRuta({ id: 'l1', ir: '{nada' });
+  await render(<Lector />);
+  expect(mockEnviados[0]).toEqual(expect.objectContaining({ position: { page: 120 } }));
 });
 
 it('un EPUB se abre con su CFI', async () => {
@@ -609,6 +625,57 @@ describe('anotaciones (spec 13c, T286)', () => {
 describe('subrayar, definir y copiar (spec 13c, T287)', () => {
   const pdfRects = { page: 3, y: 0.4, rects: [{ page: 3, x: 0.1, y: 0.4, w: 0.5, h: 0.02 }] };
   const seleccionar = (text: string, locator: Record<string, unknown> = pdfRects) => responder({ type: 'selection', text, locator });
+
+  it('guardar fragmento guarda el texto con su libro y su página, y suelta la selección (RF-BH19)', async () => {
+    await render(<Lector />);
+    await responder({ type: 'opened', total: 12, copiable: true });
+    await seleccionar('la ciudad era un mapa');
+    await fireEvent.press(screen.getByRole('button', { name: A.saveClip }));
+    expect(mockCrearFragmento).toHaveBeenCalledWith(
+      { clip: expect.objectContaining({ item_id: 'l1', book_title: 'Rayuela', kind: 'text', text: 'la ciudad era un mapa', locator: { page: 3 }, ar: null }) },
+      expect.anything(),
+    );
+    expect(mockEnviados).toContainEqual({ type: 'clearSelection' });
+    // Guardado: avisa con un atajo a Mis fragmentos.
+    mockCrearFragmento.mock.calls[0][1].onSuccess();
+    expect(mockAvisar).toHaveBeenCalledWith(expect.objectContaining({ message: es.library.clips.saved, actionLabel: es.library.clips.see }));
+  });
+
+  it('en un libro que no deja copiar, el fragmento guarda solo el lugar', async () => {
+    await render(<Lector />);
+    await responder({ type: 'opened', total: 12, copiable: false });
+    await seleccionar('la ciudad');
+    await fireEvent.press(screen.getByRole('button', { name: A.saveClip }));
+    expect(mockCrearFragmento.mock.calls[0][0].clip).toMatchObject({ kind: 'text', text: null, locator: { page: 3 } });
+  });
+
+  it('fragmento de imagen: pone la herramienta en el motor y guarda lo recortado con su página y rectángulo (RF-BH20)', async () => {
+    await render(<Lector />);
+    await responder({ type: 'opened', total: 12 });
+    await fireEvent.press(screen.getByRole('button', { name: A.clipImage }));
+    expect(mockEnviados).toContainEqual({ type: 'clipTool', on: true });
+    expect(screen.getByText(A.clipOn)).toBeTruthy();
+    await responder({ type: 'clip', dataUrl: 'data:image/jpeg;base64,AAAA', width: 800, height: 400, page: 2, rect: { x: 0.1, y: 0.2, w: 0.5, h: 0.25 } });
+    expect(mockCrearFragmento).toHaveBeenCalledWith(
+      {
+        clip: expect.objectContaining({ kind: 'image', text: null, ar: 0.5, locator: expect.objectContaining({ page: 2, x: 0.1, y: 0.2, w: 0.5, h: 0.25 }) }),
+        dataUrl: 'data:image/jpeg;base64,AAAA',
+      },
+      expect.anything(),
+    );
+    expect(mockEnviados).toContainEqual({ type: 'clipTool', on: false });
+    expect(screen.queryByText(A.clipOn)).toBeNull();
+  });
+
+  it('si en un EPUB no había imagen bajo el rectángulo, lo dice y la herramienta sigue puesta', async () => {
+    await render(<Lector />);
+    await responder({ type: 'opened', total: 12 });
+    await fireEvent.press(screen.getByRole('button', { name: A.clipImage }));
+    await responder({ type: 'clip', error: 'empty' });
+    expect(mockAvisar).toHaveBeenCalledWith({ message: es.library.clips.emptyImage });
+    expect(mockCrearFragmento).not.toHaveBeenCalled();
+    expect(screen.getByRole('button', { name: A.clipCancel })).toBeTruthy();
+  });
 
   it('al seleccionar aparecen los colores; tocar uno subraya con el estilo elegido y suelta la selección', async () => {
     await render(<Lector />);
