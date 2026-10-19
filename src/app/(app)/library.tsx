@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { BookOpen, ChevronLeft, FolderMinus, FolderPlus, FlaskConical, IdCard, Library, Scissors, Search, SlidersHorizontal, Tag, Timer, Trash2, X } from 'lucide-react-native';
+import { BookOpen, ChevronLeft, FolderMinus, FolderPlus, FlaskConical, Library, Scissors, Search, Star, SlidersHorizontal, Tag, Timer, Trash2, X } from 'lucide-react-native';
 import { useEffect, useMemo, useState } from 'react';
 import { BackHandler, FlatList, type LayoutChangeEvent, Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { useReducedMotion } from 'react-native-reanimated';
@@ -499,10 +499,10 @@ export default function LibraryScreen() {
         </Pressable>
         <Pressable
           accessibilityRole="button"
-          onPress={() => router.push('/(app)/card-templates')}
+          onPress={() => router.push('/(app)/reviews')}
           style={({ pressed }) => [styles.acceso, { borderColor: theme.border, backgroundColor: pressed ? theme.surfaceAlt : theme.surface }]}>
-          <IdCard size={IconSize.inline} strokeWidth={IconStroke} color={theme.text} />
-          <AppText variant="label">{l.cards.title}</AppText>
+          <Star size={IconSize.inline} strokeWidth={IconStroke} color={theme.text} />
+          <AppText variant="label">{l.cards.reviews.title}</AppText>
         </Pressable>
       </View>
 

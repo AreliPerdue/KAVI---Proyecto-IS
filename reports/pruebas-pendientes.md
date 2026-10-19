@@ -754,3 +754,9 @@ Automatizado: `app/(app)/__tests__/card-fill.test.tsx`, `lib/library/__tests__/c
 1280 y 375 px): llenar Romance desde el menú del libro y verla asomar en la última página.
 - [ ] (manual) Teléfono: al terminar un EPUB (no solo un PDF) aparece "Terminaste… ¿Llenas su ficha?".
 - [ ] (manual) Teléfono: la fecha de una ficha con el calendario; las estrellas se tocan bien con el dedo (escala de 10).
+
+## Mis reseñas (T295)
+Automatizado: `lib/library/__tests__/reviews.test.ts` y `app/(app)/__tests__/reviews.test.tsx`. Visto en el demo
+(375 px): dos fichas, totales y "Picante 4 o más".
+- [ ] (manual) Con 20 o más fichas reales: filtrar por género y por año, y ordenar por estrellas, se siente rápido en
+  el teléfono.

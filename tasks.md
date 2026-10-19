@@ -1190,7 +1190,10 @@ Decisiones B1–B9 aprobadas el 12 oct 2026 (T274); ver la tabla de la spec 13 �
   - Componentes `card-chooser-sheet.tsx` y `card-peek.tsx`; "Fichas" en el menú del libro.
   - Reglas `valorDe`, `valoresParaGuardar`, `valoresOcultos` y `plantillasParaAgregar` en `lib/library/cards.ts`.
   - En el lector, la ficha asoma al empezar o al terminar y, si el libro no tiene ninguna, se ofrece al llegar al 100 %.
-- [ ] T295 Mis reseñas: todas las fichas, orden, filtros y totales. (RF-BF8 – RF-BF10) Dep: T294
+- [x] T295 Mis reseñas: todas las fichas, orden, filtros y totales. (RF-BF8 – RF-BF10) Dep: T294
+  **Hecho (19 oct 2026):** reglas en `lib/library/reviews.ts`; pantalla `app/(app)/reviews.tsx` (totales, filtros
+  por escala, opción o año, orden y portada); en la librería, "Mis reseñas" en lugar de "Fichas" (los diseños,
+  desde su encabezado).
 
 ### Modo daltonismo (spec 05 RF-T7 – RF-T11, propuesta del 19 oct 2026; falta aprobarla)
 - [ ] T357 Interruptor "Colores para daltonismo" en Presentación; paleta de Paul Tol por dimensión en calendario,

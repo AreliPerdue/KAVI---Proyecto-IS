@@ -74,6 +74,23 @@ ven juntas en un resumen.
   los de picante 4 o más", "lo que leí en 2026".
 - **RF-BF10.** Totales sencillos arriba: libros calificados, promedio de estrellas, género más leído. Sin
   gráficas complicadas en esta versión.
+- **Hecho (T295, 19 oct 2026):**
+  - **Entrada:** en la librería, **Mis reseñas** junto a Mis fragmentos. Los diseños (Fichas) se abren desde
+    su encabezado y desde las fichas de cada libro.
+  - **Lista:** cada ficha como tarjeta con la portada de su libro y su título; tocarla la abre.
+  - **Totales** de lo que se ve, con los filtros puestos:
+    - libros distintos;
+    - promedio de estrellas: la escala `stars` o la primera de estrellas; una de 10 cuenta como la mitad;
+    - el género más elegido: el campo `genre` o uno de opciones llamado Género o Genre.
+  - **Filtros:** se elige un campo y luego qué buscar:
+    - en una escala, "N o más";
+    - en opciones, una opción;
+    - en una fecha, un año de los que hay.
+
+    Varios filtros se suman; cada uno se quita con su chip.
+  - **Orden:** más recientes, o por cualquier escala o fecha (lo más alto o lo más nuevo primero).
+  - **Mismo campo en varias plantillas:** los campos se juntan por su id. Las plantillas incluidas comparten
+    `stars`, así que "Estrellas 4 o más" busca en todas.
 
 ## 5. Datos
 
