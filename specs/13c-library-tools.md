@@ -176,6 +176,14 @@
 - **RF-BH15. Separadores:** las pestañitas que salen del borde. La persona elige **en qué borde** (arriba,
   abajo, izquierda o derecha) y **a qué altura**; llevan color y una palabra corta. Se ven desde fuera, en
   el canto del libro, y tocar uno salta a su página.
+  - **Hecho (T290, 19 oct 2026):** **Poner separador** en la barra (también en el libro real) lo deja en la página que
+    se lee —a la derecha y sin encimarse con otros de esa página— y abre su hoja: **palabra** (12 letras),
+    **borde** (arriba, derecha, abajo, izquierda), **altura** (0 – 100 % a lo largo del borde, de 10 en 10) y
+    **color** (de los Nobi; el siguiente sale del último). Se ve como una **pestaña** que sale del borde de su
+    página (en EPUB, del borde del área de lectura mientras su renglón está a la vista); tocarla abre su hoja para
+    cambiarlo o quitarlo. El **canto**: en el borde derecho de la pantalla asoman todos los separadores del libro a
+    la altura de su lugar (por página en PDF, por avance en EPUB), en las tres formas de leer; tocar uno salta ahí.
+    En el libro real, la pestaña de la hoja se ve por dentro del borde (la hoja recorta lo que sale).
 - **RF-BH16. Capas:** lo pegado lleva orden (traer al frente, mandar atrás) y se puede **bloquear** para no
   moverlo sin querer.
   - **Hecho (T286, 13 oct 2026).** Tocar algo pegado lo elige (con un aro); abajo del lector aparecen

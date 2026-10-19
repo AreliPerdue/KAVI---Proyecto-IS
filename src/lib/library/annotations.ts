@@ -13,7 +13,7 @@ export const COLOR_DE_POSTIT = PEOPLE_COLORS_DISPLAY.find((c) => c.id === 'yello
 /** Lo que va pegado encima de la página: se mueve, tiene capa y se bloquea (RF-BH16). */
 export const PEGADOS: readonly LibraryAnnotationKind[] = ['postit', 'sticker', 'textbox', 'image'];
 /** Lo que el motor ya sabe pintar. Cada tarea de L3 agrega el suyo (T289 cuadros, T290 stickers…). */
-export const SE_PINTAN: readonly LibraryAnnotationKind[] = ['postit', 'highlight', 'textbox', 'image', 'sticker'];
+export const SE_PINTAN: readonly LibraryAnnotationKind[] = ['postit', 'highlight', 'textbox', 'image', 'sticker', 'bookmark'];
 
 /** Cuánto se escribe en cada uno (T289). */
 export const TEXTO_MAXIMO: Partial<Record<LibraryAnnotationKind, number>> = { postit: 280, textbox: 1000 };
@@ -28,6 +28,43 @@ export function escalaDe(a: Pick<LibraryAnnotation, 'content'>): number {
 export function giroDe(a: Pick<LibraryAnnotation, 'content'>): number {
   const g = a.content.rot;
   return typeof g === 'number' && Number.isFinite(g) ? ((Math.round(g) % 360) + 360) % 360 : 0;
+}
+
+// ─── Separadores (RF-BH15, T290) ─────────────────────────────────────────────
+
+export type BordeDeSeparador = 'top' | 'right' | 'bottom' | 'left';
+export const BORDES_DE_SEPARADOR: readonly BordeDeSeparador[] = ['top', 'right', 'bottom', 'left'];
+/** Una palabra corta en la pestaña. */
+export const PALABRA_MAXIMA = 12;
+
+/** Borde, altura (0 – 1 a lo largo del borde) y palabra de un separador, con valores de omisión. */
+export function separadorDe(a: Pick<LibraryAnnotation, 'content'>): { edge: BordeDeSeparador; pos: number; label: string } {
+  const c = a.content;
+  const edge = BORDES_DE_SEPARADOR.includes(c.edge as BordeDeSeparador) ? (c.edge as BordeDeSeparador) : 'right';
+  const pos = typeof c.pos === 'number' && Number.isFinite(c.pos) ? Math.min(1, Math.max(0, c.pos)) : 0.1;
+  const label = typeof c.label === 'string' ? c.label.slice(0, PALABRA_MAXIMA) : '';
+  return { edge, pos, label };
+}
+
+/**
+ * Dónde va la pestaña de un separador nuevo: a la derecha, un poco más abajo que los que ya hay en esa página
+ * para que no se encimen.
+ */
+export function separadorNuevo(lista: readonly LibraryAnnotation[], enMismaPagina: (a: LibraryAnnotation) => boolean): { edge: BordeDeSeparador; pos: number } {
+  const ocupadas = new Set(lista.filter((a) => a.kind === 'bookmark' && !a.removed && enMismaPagina(a)).map((a) => Math.round(separadorDe(a).pos * 10)));
+  for (let i = 1; i <= 9; i++) if (!ocupadas.has(i)) return { edge: 'right', pos: i / 10 };
+  return { edge: 'right', pos: 0.5 };
+}
+
+/**
+ * Dónde está un separador en el libro, de 0 a 1, para su pestaña en el canto (la página en un PDF, el avance
+ * guardado en un EPUB).
+ */
+export function lugarEnElLibro(a: Pick<LibraryAnnotation, 'locator'>, totalPaginas: number | null): number | null {
+  const l = a.locator;
+  if (typeof l.page === 'number' && totalPaginas && totalPaginas > 1) return Math.min(1, Math.max(0, (l.page - 1) / (totalPaginas - 1)));
+  if (typeof l.fraction === 'number') return Math.min(1, Math.max(0, l.fraction));
+  return null;
 }
 
 /** Qué sticker incluido es (`<paquete>/<nombre>`, RF-BH13; T290). */

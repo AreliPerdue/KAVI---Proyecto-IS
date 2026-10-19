@@ -7,7 +7,10 @@ import {
   localizadorDeTexto,
   notaDe,
   palabraParaDefinir,
+  lugarEnElLibro,
   quitados,
+  separadorDe,
+  separadorNuevo,
   stickerDe,
   destinoDe,
   filtrarAnotaciones,
@@ -209,5 +212,24 @@ describe('stickers (RF-BH13, T290)', () => {
       nota('postit', { removed: true }),
     ];
     expect(quitados(lista).map((a) => a.id)).toEqual(['nuevo', 'viejo']);
+  });
+});
+
+describe('separadores (RF-BH15, T290)', () => {
+  const sep = (id: string, page: number, pos: number) => nota(id, { kind: 'bookmark', locator: { page, x: 0, y: 0, w: 0 }, content: { edge: 'right', pos } });
+  it('valores de omisión y palabra corta', () => {
+    expect(separadorDe(nota('x', { kind: 'bookmark', content: {} }))).toEqual({ edge: 'right', pos: 0.1, label: '' });
+    expect(separadorDe(nota('x', { kind: 'bookmark', content: { edge: 'top', pos: 3, label: 'una palabra larguísima' } }))).toEqual({ edge: 'top', pos: 1, label: 'una palabra ' });
+  });
+  it('uno nuevo no se encima con los de su página', () => {
+    const lista = [sep('a', 5, 0.1), sep('b', 5, 0.2), sep('c', 9, 0.3)];
+    expect(separadorNuevo(lista, (a) => a.locator.page === 5)).toEqual({ edge: 'right', pos: 0.3 });
+    expect(separadorNuevo(lista, (a) => a.locator.page === 7)).toEqual({ edge: 'right', pos: 0.1 });
+  });
+  it('su lugar en el libro: por página en un PDF, por avance en un EPUB', () => {
+    expect(lugarEnElLibro({ locator: { page: 1 } }, 101)).toBe(0);
+    expect(lugarEnElLibro({ locator: { page: 51 } }, 101)).toBe(0.5);
+    expect(lugarEnElLibro({ locator: { cfi: 'epubcfi(/6/4)', fraction: 0.25 } }, null)).toBe(0.25);
+    expect(lugarEnElLibro({ locator: { cfi: 'epubcfi(/6/4)' } }, null)).toBeNull();
   });
 });

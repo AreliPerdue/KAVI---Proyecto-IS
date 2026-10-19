@@ -8,6 +8,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AnnotationToolbar } from '@/components/library/annotation-toolbar';
 import { AnnotationsSheet } from '@/components/library/annotations-sheet';
+import { BookmarkRail } from '@/components/library/bookmark-rail';
+import { BookmarkSheet, type CambioDeSeparador } from '@/components/library/bookmark-sheet';
 import { DefineSheet } from '@/components/library/define-sheet';
 import { HighlightSheet, type CambioDeSubrayado } from '@/components/library/highlight-sheet';
 import { type CambioDeEstilo, PegadoStyleSheet } from '@/components/library/pegado-style-sheet';
@@ -45,8 +47,11 @@ import {
   type EstiloDeSubrayado,
   estiloDe,
   giroDe,
+  lugarEnElLibro,
   palabraParaDefinir,
   quitados,
+  separadorDe,
+  separadorNuevo,
   rutaDeImagen,
   SE_PINTAN,
   stickerDe,
@@ -110,6 +115,9 @@ function nombreDeSticker(a: LibraryAnnotation, nombres: Record<NombreDeSticker, 
   const cara = partesDeSticker(stickerDe(a) ?? '')?.nombre;
   return cara ? (nombres as Record<string, string>)[cara] : undefined;
 }
+
+/** El color de un separador nuevo: rojo, como un listón (después, el último que se usó). */
+const COLORES_RAPIDOS_SEPARADOR = '#E24947';
 
 export default function ReaderScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -181,11 +189,13 @@ function Lector({ id }: { id: string }) {
   const [verPanel, setVerPanel] = useState(false);
   // El color del último post-it guardado: el siguiente sale de ese color.
   const ultimoColor = useRef(COLOR_DE_POSTIT);
+  const ultimoColorDeSeparador = useRef(COLORES_RAPIDOS_SEPARADOR);
   const lista = anotaciones.data;
   // La barra de lo elegido es para lo pegado; un subrayado tocado abre su hoja.
   const elegida = lista?.find((a) => a.id === seleccionId) ?? null;
   const seleccionada = elegida && esPegado(elegida) ? elegida : null;
   const subrayado = elegida?.kind === 'highlight' ? elegida : null;
+  const separador = elegida?.kind === 'bookmark' ? elegida : null;
   const deEstilo = lista?.find((a) => a.id === estiloDeId) ?? null;
   const urlsDeImagenes = useAnnotationImageUrls(lista);
   const nombresDeStickers = tx.library.stickers.names;
@@ -250,6 +260,7 @@ function Lector({ id }: { id: string }) {
           ...(a.kind === 'highlight' ? { style: estiloDe(a) } : {}),
           ...(a.kind === 'textbox' || a.kind === 'postit' ? { size: escalaDe(a) } : {}),
           ...(a.kind === 'postit' ? { rot: giroDe(a), ...(a.content.folded === true ? { folded: true } : {}) } : {}),
+          ...(a.kind === 'bookmark' ? { ...separadorDe(a) } : {}),
           ...(a.kind === 'image' ? { src: vistasPrevias.get(a.id) ?? urlsDeImagenes.get(rutaDeImagen(a) ?? '') ?? undefined, rot: giroDe(a) } : {}),
           ...(a.kind === 'sticker'
             ? { sticker: stickerDe(a) ?? undefined, rot: giroDe(a), label: nombreDeSticker(a, nombresDeStickers), src: fuenteDeSticker(stickerDe(a), fuentesDeStickers, packsDeStickers.data?.packs) }
@@ -594,6 +605,62 @@ function Lector({ id }: { id: string }) {
     }
   };
 
+  /**
+   * Poner un separador en la página que se lee (RF-BH15, T290): en el borde derecho, sin encimarse con otros de
+   * esa página; queda elegido y abre su hoja para escoger borde, altura, color y palabra.
+   */
+  const ponerSeparador = () => {
+    const pagina = posicion?.page;
+    const locator: LibraryLocator | null = esEpub
+      ? posicion?.cfi
+        ? { cfi: posicion.cfi, x: 0, w: 0, fraction: posicion.fraction ?? 0 }
+        : null
+      : pagina
+        ? { page: pagina, x: 0, y: 0, w: 0 }
+        : null;
+    if (!locator) return;
+    const t = ahora();
+    const id_ = uuidv4();
+    const { edge, pos } = separadorNuevo(lista ?? [], (a) => (esEpub ? a.locator.cfi === locator.cfi : a.locator.page === locator.page));
+    editor.crear({
+      id: id_,
+      item_id: id,
+      owner_id: '',
+      kind: 'bookmark',
+      locator,
+      content: { edge, pos, color: ultimoColorDeSeparador.current, label: '' },
+      z: zNueva(lista ?? []),
+      removed: false,
+      locked: false,
+      created_at: t,
+      updated_at: t,
+    });
+    elegir(id_);
+  };
+
+  const guardarSeparador = (cambio: CambioDeSeparador) => {
+    const a = separador;
+    elegir(null);
+    if (!a) return;
+    ultimoColorDeSeparador.current = cambio.color;
+    const antes = separadorDe(a);
+    if (cambio.edge !== antes.edge || cambio.pos !== antes.pos || cambio.label !== antes.label || cambio.color !== colorDe(a)) {
+      cambiar(a, { content: { ...a.content, ...cambio } });
+    }
+  };
+
+  const quitarSeparador = () => {
+    if (!separador) return;
+    editor.borrar(separador);
+    elegir(null);
+  };
+
+  const irASeparador = (idSeparador: string) => {
+    const a = lista?.find((x) => x.id === idSeparador);
+    const destino = a && destinoDe(a.locator);
+    if (destino) motor.current?.send({ type: 'goTo', ...destino });
+  };
+
   const quitarSubrayado = () => {
     if (!subrayado) return;
     editor.borrar(subrayado);
@@ -619,6 +686,16 @@ function Lector({ id }: { id: string }) {
   const esEpub = item.data?.kind === 'epub';
   const total = posicion?.total ?? 0;
   const porPagina = !esEpub && total > 1;
+  // Las pestañas del canto: todos los separadores, a la altura de su lugar en el libro.
+  const pestanasDelCanto = (lista ?? [])
+    .filter((a) => a.kind === 'bookmark' && !a.removed)
+    .flatMap((a) => {
+      const lugar = lugarEnElLibro(a, porPagina ? total : null);
+      if (lugar === null) return [];
+      const donde = typeof a.locator.page === 'number' ? l.progressPage(a.locator.page, total) : l.progressPercent(Math.round(lugar * 100));
+      return [{ id: a.id, lugar, color: colorDe(a) ?? COLOR_DE_POSTIT, palabra: separadorDe(a).label, donde }];
+    });
+
   // En PDF la barra va de la primera a la última página: su punto y su etiqueta salen de la misma
   // cuenta, para que "p. 4" en el texto sea la página 4 de verdad. En EPUB, la fracción del motor.
   const paginaEn = (f: number) => Math.min(total, Math.max(1, Math.round(f * (total - 1)) + 1));
@@ -779,6 +856,7 @@ function Lector({ id }: { id: string }) {
               onDoblar={() => seleccionada && cambiar(seleccionada, { content: { ...seleccionada.content, folded: seleccionada.content.folded !== true } })}
               onImagen={() => (PUEDE_TOMAR_FOTO ? setEligiendoImagen(true) : void elegirImagen('galeria'))}
               onSticker={() => setEligiendoSticker(true)}
+              onSeparador={ponerSeparador}
               onFrente={alFrente}
               onAtras={alFondo}
               onBloquear={() => seleccionada && cambiar(seleccionada, { locked: !seleccionada.locked })}
@@ -834,6 +912,7 @@ function Lector({ id }: { id: string }) {
           </View>
         ) : null}
         {pastillaZoom}
+        {abierto && !mensajeError ? <BookmarkRail pestanas={pestanasDelCanto} arriba={reservaArriba} abajo={reservaAbajo} onIr={irASeparador} /> : null}
         {superpuestos && barraArriba ? (
           <View style={[styles.arriba, { backgroundColor: theme.background }]} onLayout={(e) => medirBarra('arriba', e.nativeEvent.layout.height)}>
             {barraArriba}
@@ -900,6 +979,7 @@ function Lector({ id }: { id: string }) {
           <Button title={tx.library.annotations.imageCamera} variant="secondary" onPress={() => void elegirImagen('camara')} />
         </View>
       </Sheet>
+      <BookmarkSheet anotacion={separador} onClose={() => elegir(null)} onGuardar={guardarSeparador} onQuitar={quitarSeparador} />
       <HighlightSheet anotacion={subrayado} onClose={() => elegir(null)} onGuardar={guardarSubrayado} onQuitar={quitarSubrayado} />
       <DefineSheet palabra={definiendo} idioma={idiomaLibro} onClose={() => setDefiniendo(null)} />
     </View>

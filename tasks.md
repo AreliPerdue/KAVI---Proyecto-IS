@@ -1085,10 +1085,12 @@ Decisiones B1–B9 aprobadas el 12 oct 2026 (T274); ver la tabla de la spec 13 �
   **Hecho (13 oct 2026):** `.hoja-pdf` con capa de texto de pdf.js en cada hoja del PDF; en EPUB, `seleccion()`
   de `book.js` traduce la selección de la sombra (`getComposedRanges` o `shadowRoot.getSelection`) a CFI; con
   mouse, el arrastre fuera de las esquinas no le llega al hojeador. Falta probar con el dedo en el teléfono.
-- [ ] T290 Stickers con charola de quitados, post-its que se doblan, separadores en el borde elegido.
-  (RF-BH13 – RF-BH15) Dep: T286 — El post-it básico (pegar, mover, escribir, color) ya está desde T286;
-  aquí falta girarlo un poco, doblarlo y el post-it con trazo. Los stickers (colección y charola) se hicieron
-  en T334; de aquí falta el sticker de una imagen propia y girar con dos dedos.
+- [x] T290 Stickers con charola de quitados, post-its que se doblan, separadores en el borde elegido.
+  (RF-BH13 – RF-BH15) Dep: T286
+  **Hecho (19 oct 2026):** post-it que se ladea (±15°) y se dobla (esquina de 40 px que se abre al tocarla); stickers
+  e imágenes que giran y crecen con dos dedos (`dosDedos`, un solo `move` con `rot`); separadores con pestaña en el
+  borde elegido (`pestana` en `annotations.js`, `bookmark-sheet.tsx`) y el canto con todos (`bookmark-rail.tsx`).
+  El post-it con trazo pasa a T291 (lápiz); el sticker de imagen propia es T335.
 - [x] T334 Stickers de los Nobi rosa con charola de "Quitados": pegar, mover, crecer sin deformarse, girar,
   quitar a la charola, volver a pegar con su tamaño y giro, y tirar. (RF-BH13, pedido de Areli del 14 oct
   2026) Dep: T289

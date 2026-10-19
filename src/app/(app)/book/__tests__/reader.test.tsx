@@ -1051,3 +1051,61 @@ describe('stickers con charola de quitados (spec 13c, RF-BH13; T290)', () => {
     expect(screen.getByText(S.removedEmpty)).toBeTruthy();
   });
 });
+
+describe('separadores (spec 13c, RF-BH15; T290)', () => {
+  const sep = (id: string, cambio: Record<string, unknown> = {}) => ({
+    id,
+    item_id: 'l1',
+    owner_id: 'u1',
+    kind: 'bookmark',
+    locator: { page: 50, x: 0, y: 0, w: 0 },
+    content: { edge: 'top', pos: 0.3, color: '#E24947', label: 'Clave' },
+    z: 1,
+    removed: false,
+    locked: false,
+    created_at: 'c',
+    updated_at: 'u',
+    ...cambio,
+  });
+
+  it('poner uno lo deja en la página que se lee, a la derecha y sin encimarse, y abre su hoja', async () => {
+    mockLista = [sep('s0', { locator: { page: 12, x: 0, y: 0, w: 0 }, content: { edge: 'right', pos: 0.1, color: '#E24947', label: '' } })];
+    const { rerender } = await render(<Lector />);
+    await responder({ type: 'opened', total: 340 });
+    await responder({ type: 'position', page: 12, total: 340, fraction: 12 / 340 });
+    await fireEvent.press(screen.getByRole('button', { name: A.bookmark }));
+    const nuevo = mockCrear.mock.calls[0][0] as { id: string; locator: unknown; content: Record<string, unknown> };
+    expect(nuevo).toMatchObject({ kind: 'bookmark', locator: { page: 12 }, content: { edge: 'right', pos: 0.2, color: '#E24947', label: '' } });
+    expect(mockEnviados).toContainEqual({ type: 'select', id: nuevo.id });
+    mockLista = [...mockLista, sep(nuevo.id, { locator: nuevo.locator, content: nuevo.content })];
+    await rerender(<Lector />);
+    await fireEvent.changeText(screen.getByLabelText(A.bookmarkWord), 'Capítulo tres y más');
+    await fireEvent.press(screen.getByText(A.edges.top));
+    await fireEvent.press(screen.getByRole('button', { name: A.save }));
+    expect(mockCambiar).toHaveBeenLastCalledWith(
+      expect.objectContaining({ id: nuevo.id }),
+      expect.objectContaining({ content: { edge: 'top', pos: 0.2, color: '#E24947', label: 'Capítulo tre' } }),
+    );
+  });
+
+  it('se manda al motor con su borde, altura y palabra; tocar su pestaña abre su hoja y se puede quitar', async () => {
+    mockLista = [sep('s1')];
+    await render(<Lector />);
+    expect(mockEnviados).toContainEqual(expect.objectContaining({ type: 'annotations', items: [expect.objectContaining({ kind: 'bookmark', content: expect.objectContaining({ edge: 'top', pos: 0.3, label: 'Clave' }) })] }));
+    await responder({ type: 'opened', total: 340 });
+    await responder({ type: 'select', id: 's1' });
+    expect(screen.getByDisplayValue('Clave')).toBeTruthy();
+    await fireEvent.press(screen.getByRole('button', { name: A.removeBookmark }));
+    expect(mockBorrar).toHaveBeenCalledWith(expect.objectContaining({ id: 's1' }));
+  });
+
+  it('en el canto se ven todos y tocar uno lleva a su página', async () => {
+    mockLista = [sep('s1'), sep('s2', { locator: { page: 200, x: 0, y: 0, w: 0 }, content: { edge: 'right', pos: 0.5, color: '#4087EE', label: '' } })];
+    await render(<Lector />);
+    await responder({ type: 'opened', total: 340 });
+    await responder({ type: 'position', page: 1, total: 340, fraction: 0 });
+    await fireEvent.press(screen.getByRole('button', { name: A.bookmarkGoTo('Clave', es.library.progressPage(50, 340)) }));
+    expect(mockEnviados.at(-1)).toEqual({ type: 'goTo', page: 50 });
+    expect(screen.getByRole('button', { name: A.bookmarkGoTo('', es.library.progressPage(200, 340)) })).toBeTruthy();
+  });
+});

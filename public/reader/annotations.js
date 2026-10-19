@@ -125,6 +125,7 @@ export function crearCapa(ctx, enviar) {
   let anchoNuevo = null; // el de un sticker que vuelve de la charola: conserva su tamaño
   let porEditar = null; // un id que pidió escribirse antes de pintarse
   const subrayados = () => lista.filter((a) => a.kind === 'highlight');
+  const separadores = () => lista.filter((a) => a.kind === 'bookmark');
   const colorDe = (a) => (/^#[0-9a-fA-F]{6}$/.test(a.content?.color ?? '') ? a.content.color : '#F1D35D');
   const estiloDe = (a) => (a.content?.style === 'underline' || a.content?.style === 'strike' ? a.content.style : 'highlight');
   const interactiva = () => ctx.forma() !== 'book';
@@ -334,6 +335,7 @@ export function crearCapa(ctx, enviar) {
       const a = lista.find((x) => x.id === el.dataset.id);
       if (a && a.id === seleccion) marcarSeleccion(el, a);
     }
+    for (const el of document.querySelectorAll('.separador')) el.style.outline = el.dataset.id === seleccion ? '2px solid #131313' : '';
   }
 
   function elegir(id, avisar = true) {
@@ -1077,6 +1079,16 @@ export function crearCapa(ctx, enviar) {
       el.style.display = 'none';
       capa.append(el);
     }
+    // Los separadores van en una caja del tamaño del área de lectura: su pestaña sale del borde de esa caja.
+    for (const a of separadores()) {
+      if (!a.locator.cfi) continue;
+      const caja = document.createElement('div');
+      caja.dataset.id = a.id;
+      caja.className = 'caja-separador';
+      Object.assign(caja.style, { position: 'fixed', pointerEvents: 'none', display: 'none' });
+      caja.append(pestana(a));
+      capa.append(caja);
+    }
     if (capa.childElementCount) seguirCuadros();
     else detenerCuadros();
   }
@@ -1096,6 +1108,13 @@ export function crearCapa(ctx, enviar) {
         continue;
       }
       el.style.display = '';
+      if (el.classList.contains('caja-separador')) {
+        // Su renglón está a la vista: la pestaña sale del borde del área de lectura, un poco hacia adentro para que
+        // se vea entera aunque el área llegue a la orilla de la pantalla (teléfono).
+        const m = PESTANA.ancho - PESTANA.dentro + 2;
+        Object.assign(el.style, { left: `${area.left + m}px`, top: `${area.top + m}px`, width: `${area.width - 2 * m}px`, height: `${area.height - 2 * m}px` });
+        continue;
+      }
       el.style.left = `${pos.left}px`;
       el.style.top = `${pos.top}px`;
     }
@@ -1142,15 +1161,75 @@ export function crearCapa(ctx, enviar) {
 
   // ─── PDF ─────────────────────────────────────────────────────────────────────
 
+  // ─── Separadores (RF-BH15, T290) ──────────────────────────────────────────────
+
+  const BORDES = ['top', 'right', 'bottom', 'left'];
+  /** Lo largo y lo ancho de la pestaña, y cuánto se mete en la página (el resto sale del borde). */
+  const PESTANA = { largo: 64, ancho: 26, dentro: 12 };
+
+  /**
+   * La pestañita de un separador en el borde elegido de su página, a su altura (0 – 1 a lo largo del borde),
+   * con su color y su palabra. Tocarla lo elige (la app abre su hoja). En el libro real solo se ve.
+   */
+  function pestana(a, { enLibro = false } = {}) {
+    const borde = BORDES.includes(a.content?.edge) ? a.content.edge : 'right';
+    const pos = Number.isFinite(a.content?.pos) ? entre(a.content.pos, 0, 1) : 0.1;
+    const color = colorDe(a);
+    const palabra = typeof a.content?.label === 'string' ? a.content.label.slice(0, 12) : '';
+    const el = document.createElement('div');
+    el.className = 'separador';
+    el.dataset.id = a.id;
+    el.setAttribute('role', 'button');
+    el.setAttribute('aria-label', palabra ? `Separador: ${palabra}` : 'Separador');
+    const lateral = borde === 'left' || borde === 'right';
+    const fuera = `calc(100% - ${PESTANA.dentro}px)`;
+    const a_lo_largo = `calc(${pos} * (100% - ${PESTANA.largo}px))`;
+    Object.assign(el.style, {
+      position: 'absolute',
+      boxSizing: 'border-box',
+      width: `${lateral ? PESTANA.ancho : PESTANA.largo}px`,
+      height: `${lateral ? PESTANA.largo : PESTANA.ancho}px`,
+      background: color,
+      color: letraSobre(color),
+      font: '600 11px/1 -apple-system, system-ui, "Segoe UI", Roboto, sans-serif',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      overflow: 'hidden',
+      whiteSpace: 'nowrap',
+      writingMode: lateral ? 'vertical-rl' : '',
+      boxShadow: '0 1px 4px rgb(0 0 0 / 0.3)',
+      pointerEvents: enLibro || !interactiva() ? 'none' : 'auto',
+      cursor: 'pointer',
+      zIndex: '3',
+      ...(borde === 'right' ? { left: fuera, top: a_lo_largo, borderRadius: '0 6px 6px 0' } : {}),
+      ...(borde === 'left' ? { right: fuera, top: a_lo_largo, borderRadius: '6px 0 0 6px', transform: 'rotate(180deg)' } : {}),
+      ...(borde === 'top' ? { bottom: fuera, left: a_lo_largo, borderRadius: '6px 6px 0 0' } : {}),
+      ...(borde === 'bottom' ? { top: fuera, left: a_lo_largo, borderRadius: '0 0 6px 6px' } : {}),
+    });
+    el.textContent = palabra;
+    if (a.id === seleccion) el.style.outline = '2px solid #131313';
+    el.addEventListener('pointerdown', (e) => {
+      e.stopPropagation();
+    });
+    el.addEventListener('pointerup', (e) => {
+      e.stopPropagation();
+      elegir(a.id);
+    });
+    return el;
+  }
+
   /** La capa de una página del PDF (scroll o de lado), con lo que va en ella. */
   function pintarPaginaPdf(n, div, { enLibro = false } = {}) {
     div.querySelector(':scope > .capa-anotaciones')?.remove();
     div.querySelector(':scope > .capa-subrayados')?.remove();
     pintarSubrayadosPdf(n, div);
     const enPaginaN = pegados().filter((a) => a.locator.page === n);
-    if (!enPaginaN.length) return;
+    const susSeparadores = separadores().filter((a) => a.locator.page === n);
+    if (!enPaginaN.length && !susSeparadores.length) return;
     const capa = document.createElement('div');
     capa.className = 'capa-anotaciones';
+    for (const a of susSeparadores) capa.append(pestana(a, { enLibro }));
     for (const a of enPaginaN) {
       const el = pegado(a, { ancho: `${a.locator.w * 100}%`, enLibro });
       el.style.left = `${a.locator.x * 100}%`;

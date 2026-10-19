@@ -1,4 +1,4 @@
-import { BringToFront, Check, FoldVertical, ImagePlus, Lock, LockOpen, Palette, Pencil, Redo2, RotateCw, SendToBack, Sticker, StickyNote, Trash2, Type, Undo2 } from 'lucide-react-native';
+import { Bookmark, BringToFront, Check, FoldVertical, ImagePlus, Lock, LockOpen, Palette, Pencil, Redo2, RotateCw, SendToBack, Sticker, StickyNote, Trash2, Type, Undo2 } from 'lucide-react-native';
 import type { ComponentType } from 'react';
 import { StyleSheet, View } from 'react-native';
 
@@ -21,6 +21,8 @@ type Props = {
   onImagen: () => void;
   /** Abrir la hoja de stickers (T290): la colección y los quitados de este libro. */
   onSticker: () => void;
+  /** Poner un separador en la página que se lee (RF-BH15, T290); también en el libro real. */
+  onSeparador: () => void;
   onDeshacer: () => void;
   onRehacer: () => void;
   onEscribir: () => void;
@@ -112,6 +114,9 @@ export function AnnotationToolbar(p: Props) {
         {herr('textbox', Type, a.textbox, () => p.onHerramienta('textbox'))}
         {herr('image', ImagePlus, a.image, p.onImagen)}
         {herr('sticker', Sticker, a.sticker, p.onSticker)}
+        <IconButton label={a.bookmark} onPress={p.onSeparador}>
+          <Bookmark {...icono()} />
+        </IconButton>
         <View style={[styles.separador, { backgroundColor: theme.border }]} />
         <IconButton label={a.undo} onPress={p.onDeshacer} disabled={!p.puedeDeshacer}>
           <Undo2 {...icono(p.puedeDeshacer)} />
