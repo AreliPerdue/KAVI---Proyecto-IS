@@ -703,6 +703,17 @@ export type LibraryReadingSession = {
 
 export type LibraryReadingSessionInput = Omit<LibraryReadingSession, 'owner_id' | 'created_at' | 'updated_at'>;
 
+/** Un sticker hecho por la persona con su imagen (spec 13c, RF-BH13; T335). Se pega como `mios/<id>`. */
+export type UserSticker = {
+  id: string;
+  owner_id: string;
+  /** `<persona>/stickers/<id>.png` en R2. */
+  path: string;
+  ar: number;
+  margin: number;
+  created_at: string;
+};
+
 /**
  * Un pack de la tienda de stickers (spec 13c, RF-BH13b; T338). Sus imágenes están en el bucket público
  * `stickers`: `<id>/<name>.png` y `<id>/muestra.png`. `version` sube cuando cambian.

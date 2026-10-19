@@ -237,3 +237,24 @@ describe('tienda de stickers (13c, RF-BH13b; T338)', () => {
     await expect(api.addStickerPack(ANA, 'no-existe')).rejects.toThrow();
   });
 });
+
+describe('stickers propios (13c, RF-BH13; T335)', () => {
+  const ID = '11111111-0000-4000-8000-000000000001';
+  it('se guardan en su carpeta con su proporción, se listan solo los propios y se borran con su imagen', async () => {
+    const api = fresh();
+    const fila = await api.createUserSticker(ANA, { id: ID, ar: 0.8, margin: 12 }, new Uint8Array([1, 2, 3]));
+    expect(fila).toMatchObject({ id: ID, owner_id: ANA, path: `${ANA}/stickers/${ID}.png`, ar: 0.8, margin: 12 });
+    await api.createUserSticker('otra', { id: '22222222-0000-4000-8000-000000000002', ar: 1, margin: 0 }, new Uint8Array([1]));
+    expect((await api.listUserStickers(ANA)).map((s) => s.id)).toEqual([ID]);
+    await expect(api.fileUrl(fila.path)).resolves.toBeTruthy();
+    await api.removeUserSticker(ANA, ID);
+    expect(await api.listUserStickers(ANA)).toEqual([]);
+    await expect(api.fileUrl(fila.path)).rejects.toThrow();
+  });
+
+  it('no acepta una imagen de más de 2 MB ni una proporción fuera de rango', async () => {
+    const api = fresh();
+    await expect(api.createUserSticker(ANA, { id: ID, ar: 0.8, margin: 0 }, new Uint8Array(2 * MB + 1))).rejects.toThrow();
+    await expect(api.createUserSticker(ANA, { id: ID, ar: 9, margin: 0 }, new Uint8Array(10))).rejects.toThrow();
+  });
+});

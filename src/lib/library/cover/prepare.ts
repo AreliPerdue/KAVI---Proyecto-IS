@@ -54,3 +54,29 @@ export async function prepararImagenPegada(uri: string): Promise<ImagenLista> {
   if (!guardada.base64 || !guardada.width || !guardada.height) throw new AuthUiError(t().library.cover.unreadable);
   return { jpeg: base64ToBytes(guardada.base64), ancho: guardada.width, alto: guardada.height, vistaPrevia: `data:image/jpeg;base64,${guardada.base64}` };
 }
+
+/** El lado mayor de la imagen con que se hace un sticker propio (T335). */
+export const LADO_STICKER = 512;
+
+/**
+ * Deja lista una imagen para hacerla sticker (13c, RF-BH13; T335): a lo más `LADO_STICKER` por su lado mayor y
+ * en PNG, para no perder lo transparente. El motor del lector le pone el margen.
+ */
+export async function prepararSticker(uri: string): Promise<{ dataUrl: string; ancho: number; alto: number }> {
+  let guardada: { base64?: string; width: number; height: number };
+  try {
+    const original = await ImageManipulator.manipulate(uri).renderAsync();
+    const mayor = Math.max(original.width, original.height);
+    const imagen =
+      mayor > LADO_STICKER
+        ? await ImageManipulator.manipulate(uri)
+            .resize(original.width >= original.height ? { width: LADO_STICKER } : { height: LADO_STICKER })
+            .renderAsync()
+        : original;
+    guardada = await imagen.saveAsync({ format: SaveFormat.PNG, base64: true });
+  } catch (e) {
+    throw new AuthUiError(t().library.cover.unreadable, e);
+  }
+  if (!guardada.base64 || !guardada.width || !guardada.height) throw new AuthUiError(t().library.cover.unreadable);
+  return { dataUrl: `data:image/png;base64,${guardada.base64}`, ancho: guardada.width, alto: guardada.height };
+}

@@ -51,6 +51,7 @@ import type {
   LibraryReadingSession,
   LibraryReadingSessionInput,
   StickerPack,
+  UserSticker,
   LibraryLink,
   LibraryLinkKind,
   LibrarySeries,
@@ -541,6 +542,13 @@ export interface LibraryApi {
   listMyStickerPacks(userId: string): Promise<string[]>;
   addStickerPack(userId: string, packId: string): Promise<void>;
   removeStickerPack(userId: string, packId: string): Promise<void>;
+
+  /** Stickers propios (13c, RF-BH13; T335): los de la persona, el más nuevo primero. */
+  listUserStickers(userId: string): Promise<UserSticker[]>;
+  /** Sube la imagen ya hecha (PNG) y guarda su fila. */
+  createUserSticker(userId: string, sticker: Pick<UserSticker, 'id' | 'ar' | 'margin'>, png: LibraryFileBody): Promise<UserSticker>;
+  /** Lo quita de la colección y borra su imagen; lo ya pegado se queda sin imagen. */
+  removeUserSticker(userId: string, stickerId: string): Promise<void>;
 
   /** Acomodos guardados (RF-BL7b, T331). */
   listLayouts(userId: string): Promise<LibraryLayout[]>;

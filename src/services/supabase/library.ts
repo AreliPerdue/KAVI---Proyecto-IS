@@ -11,6 +11,7 @@ import type {
   LibraryLayout,
   LibraryReadingSession,
   StickerPack,
+  UserSticker,
   LibraryCard,
   LibraryCardTemplate,
   LibraryFileBody,
@@ -255,6 +256,23 @@ export const supabaseLibrary: LibraryApi = {
 
   async removeStickerPack(userId, packId) {
     sinError(await db().from('user_sticker_packs').delete().eq('owner_id', userId).eq('pack_id', packId));
+  },
+
+  async listUserStickers(userId) {
+    return unwrap(await db().from('library_user_stickers').select('*').eq('owner_id', userId).order('created_at', { ascending: false })) as UserSticker[];
+  },
+
+  async createUserSticker(userId, sticker, png) {
+    const path = `${userId}/stickers/${sticker.id}.png`;
+    await subir(archivos, { path, contentType: 'image/png', size: tamanoDe(png) }, png);
+    return unwrap(
+      await db().from('library_user_stickers').insert({ id: sticker.id, owner_id: userId, path, ar: sticker.ar, margin: sticker.margin }).select().single(),
+    ) as UserSticker;
+  },
+
+  async removeUserSticker(userId, stickerId) {
+    sinError(await db().from('library_user_stickers').delete().eq('owner_id', userId).eq('id', stickerId));
+    await archivos({ action: 'deleteFile', path: `${userId}/stickers/${stickerId}.png` });
   },
 
   async saveReadingSession(userId, session) {

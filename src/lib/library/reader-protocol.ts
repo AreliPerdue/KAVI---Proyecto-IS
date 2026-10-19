@@ -67,6 +67,8 @@ export type MensajeAlMotor =
   | { type: 'searchStep'; step: 1 | -1 }
   | { type: 'searchClear' }
   | { type: 'cover'; url: string; width?: number }
+  /** Hacer un sticker propio (T335): recortar lo transparente y ponerle margen blanco (px para 512). */
+  | { type: 'outline'; id: string; src: string; margin: number }
   /** Todo lo que se pinta encima de las páginas, ya en orden de capa (13c, RF-BH16; T286). */
   | { type: 'annotations'; items: AnotacionEnMotor[] }
   /**
@@ -101,6 +103,8 @@ export type MensajeDelMotor =
   | { type: 'position'; page?: number; pageEnd?: number; total?: number; cfi?: string; fraction: number; screen?: number; screens?: number }
   | { type: 'search'; count: number; index: number; searching?: boolean }
   | { type: 'cover'; dataUrl: string }
+  /** El sticker hecho (PNG) con su medida, o que no se pudo. */
+  | { type: 'outline'; id: string; dataUrl?: string; width?: number; height?: number; error?: boolean }
   /** Toque o clic en el centro de la página: mostrar u ocultar los controles (RF-BR7b). */
   | { type: 'tap' }
   /** Con la herramienta de post-it, el toque en la página: dónde pegarlo (T286). */
@@ -209,6 +213,12 @@ export function leerMensaje(crudo: unknown): MensajeDelMotor | null {
     }
     case 'cover':
       return typeof m.dataUrl === 'string' && m.dataUrl.startsWith('data:image/') ? { type: 'cover', dataUrl: m.dataUrl } : null;
+    case 'outline':
+      if (typeof m.id !== 'string' || m.id.length > 64) return null;
+      if (m.error === true) return { type: 'outline', id: m.id, error: true };
+      return typeof m.dataUrl === 'string' && m.dataUrl.startsWith('data:image/png;base64,') && m.dataUrl.length < 4_000_000 && numero(m.width) && numero(m.height)
+        ? { type: 'outline', id: m.id, dataUrl: m.dataUrl, width: m.width, height: m.height }
+        : null;
     case 'error':
       return { type: 'error', code: CODIGOS.includes(m.code as CodigoDeError) ? (m.code as CodigoDeError) : 'unknown', message: typeof m.message === 'string' ? m.message : undefined };
     default:

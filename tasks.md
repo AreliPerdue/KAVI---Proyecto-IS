@@ -1100,9 +1100,13 @@ Decisiones B1–B9 aprobadas el 12 oct 2026 (T274); ver la tabla de la spec 13 �
   soltar), `sticker-sheet.tsx` y la herramienta en la barra. Ajustes del mismo día: sin contorno al elegir
   (solo asas), 8 asas en el sticker (lados estiran), flecha de girar, en EPUB se queda donde se suelta (`dy`) y
   Supr/Retroceso quitan lo elegido.
-- [ ] T335 Stickers propios: desde una imagen (galería, cámara o archivo), con margen blanco opcional alrededor
+- [x] T335 Stickers propios: desde una imagen (galería, cámara o archivo), con margen blanco opcional alrededor
   de la silueta y su grosor ajustable; se guardan en la colección de la persona y se pegan como los incluidos.
   (RF-BH13, pedido de Areli del 14 oct 2026) Dep: T334
+  **Hecho (19 oct 2026):** `prepararSticker` (PNG 512), `contorno` en el motor (recorta y pone el margen siguiendo la
+  silueta), `create-sticker-sheet.tsx`, "Hechos por mí" en la hoja de stickers, `use-user-stickers.ts`, copias en
+  `lib/library/offline/user-stickers.ts`, la función de archivos acepta `<uid>/stickers/<id>.png` y la migración
+  `20261019100000_library_user_stickers.sql` (aplicada; RLS probada con PGlite).
 - [x] T337 Tienda de stickers, datos y archivos: migración `sticker_packs` + `user_sticker_packs` con RLS, bucket
   público `stickers`, script que optimiza los packs (400 px, 256 colores), arma su muestra y su fila del
   catálogo, y los sube con el CLI. Primer Rebote en 24 colores. (RF-BH13b) Dep: T334

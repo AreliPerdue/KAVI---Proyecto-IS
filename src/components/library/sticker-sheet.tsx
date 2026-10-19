@@ -1,5 +1,5 @@
 import { Image, type ImageSource } from 'expo-image';
-import { Check, ChevronLeft, ChevronRight, X } from 'lucide-react-native';
+import { Check, ChevronLeft, ChevronRight, Plus, X } from 'lucide-react-native';
 import { useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 
@@ -13,7 +13,11 @@ import { useLanguage, useT } from '@/i18n';
 import { giroDe, stickerDe } from '@/lib/library/annotations';
 import { uriLocal } from '@/lib/library/offline/sticker-packs';
 import { idDeSticker, partesDeSticker, pesoDe, urlDeMuestra, urlDeSticker } from '@/lib/library/sticker-packs';
-import type { LibraryAnnotation, StickerPack } from '@/types/domain';
+import { PREFIJO_PROPIO, idPropio } from '@/hooks/use-user-stickers';
+import type { LibraryAnnotation, StickerPack, UserSticker } from '@/types/domain';
+
+/** Los stickers propios y cómo se ven (T335). */
+export type Propios = { stickers: readonly UserSticker[]; imagenes: ReadonlyMap<string, string> };
 
 type Vista = 'mios' | 'tienda' | 'quitados';
 
@@ -27,9 +31,14 @@ export type StickerElegible = {
   imagen: ImageSource | number;
 };
 
-/** De un id pegado o de la tienda a lo que se puede elegir: los incluidos de la app, los demás de su pack. */
-export function elegibleDe(id: string | null, packs: readonly StickerPack[] | undefined): StickerElegible | null {
+/** De un id pegado o de la tienda a lo que se puede elegir: los incluidos de la app, los propios y los de su pack. */
+export function elegibleDe(id: string | null, packs: readonly StickerPack[] | undefined, propios?: Propios): StickerElegible | null {
   if (!id) return null;
+  if (id.startsWith(PREFIJO_PROPIO)) {
+    const s = propios?.stickers.find((x) => idPropio(x.id) === id);
+    const uri = s && propios?.imagenes.get(s.id);
+    return s && uri ? { id, nombre: 'mine', ar: Number(s.ar), imagen: { uri } } : null;
+  }
   const incluido = stickerPorId(id);
   if (incluido) return { id, nombre: incluido.nombre, ar: incluido.ar, imagen: incluido.imagen as number };
   const partes = partesDeSticker(id);
@@ -41,8 +50,9 @@ export function elegibleDe(id: string | null, packs: readonly StickerPack[] | un
 
 /** El nombre de una cara en el idioma de la app (las de la tienda son las mismas que las incluidas). */
 export function useNombreDeCara() {
-  const nombres = useT().library.stickers.names as Record<string, string>;
-  return (cara: string) => nombres[cara as NombreDeSticker] ?? cara.replace(/-/g, ' ');
+  const t = useT().library.stickers;
+  const nombres = t.names as Record<string, string>;
+  return (cara: string) => (cara === 'mine' ? t.mineName : (nombres[cara as NombreDeSticker] ?? cara.replace(/-/g, ' ')));
 }
 
 const COLOR_HEX = new Map(PEOPLE_COLORS_DISPLAY.map((c) => [c.id, c.hex]));
@@ -56,25 +66,32 @@ const COLOR_HEX = new Map(PEOPLE_COLORS_DISPLAY.map((c) => [c.id, c.hex]));
 export function StickerSheet({
   visible,
   quitados,
+  propios,
   onClose,
   onElegir,
   onDevolver,
   onTirar,
+  onCrear,
+  onBorrarPropio,
 }: {
   visible: boolean;
   /** Los stickers quitados de este libro, el último primero. */
   quitados: readonly LibraryAnnotation[];
+  propios: Propios;
   onClose: () => void;
   onElegir: (s: StickerElegible) => void;
   onDevolver: (a: LibraryAnnotation, s: StickerElegible) => void;
   onTirar: (a: LibraryAnnotation) => void;
+  /** Abrir la hoja para hacer un sticker con una imagen propia (T335). */
+  onCrear: () => void;
+  onBorrarPropio: (s: UserSticker) => void;
 }) {
   const t = useT().library.stickers;
   const [vista, setVista] = useState<Vista>('mios');
   const packs = useStickerPacks();
   const nombre = useNombreDeCara();
   const charola = quitados.flatMap((a) => {
-    const s = elegibleDe(stickerDe(a), packs.data?.packs);
+    const s = elegibleDe(stickerDe(a), packs.data?.packs, propios);
     return s ? [{ a, s }] : [];
   });
 
@@ -93,7 +110,7 @@ export function StickerSheet({
           onChange={setVista}
         />
         {vista === 'mios' ? (
-          <MisStickers onElegir={onElegir} />
+          <MisStickers onElegir={onElegir} propios={propios} onCrear={onCrear} onBorrarPropio={onBorrarPropio} />
         ) : vista === 'tienda' ? (
           <Tienda />
         ) : charola.length ? (
@@ -135,7 +152,18 @@ function useNombreDePack() {
   };
 }
 
-function MisStickers({ onElegir }: { onElegir: (s: StickerElegible) => void }) {
+function MisStickers({
+  onElegir,
+  propios,
+  onCrear,
+  onBorrarPropio,
+}: {
+  onElegir: (s: StickerElegible) => void;
+  propios: Propios;
+  onCrear: () => void;
+  onBorrarPropio: (s: UserSticker) => void;
+}) {
+  const theme = useTheme();
   const t = useT().library.stickers;
   const packs = useStickerPacks();
   const mios = useMyStickerPacks();
@@ -144,6 +172,31 @@ function MisStickers({ onElegir }: { onElegir: (s: StickerElegible) => void }) {
   const descargados = (packs.data?.packs ?? []).filter((p) => mios.data?.includes(p.id));
   return (
     <>
+      <AppText variant="label" color="textSecondary">
+        {t.mineMade}
+      </AppText>
+      <View style={styles.rejilla}>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={t.createSticker}
+          onPress={onCrear}
+          style={({ pressed }) => [styles.botonCelda, styles.crear, { borderColor: theme.border, backgroundColor: pressed ? theme.surfaceAlt : 'transparent' }]}>
+          <Plus size={IconSize.action} strokeWidth={IconStroke} color={theme.textSecondary} />
+        </Pressable>
+        {propios.stickers.map((s) => {
+          const uri = propios.imagenes.get(s.id);
+          if (!uri) return null;
+          return (
+            <Celda
+              key={s.id}
+              imagen={{ uri }}
+              etiqueta={t.pick(t.mineName)}
+              onPress={() => onElegir({ id: idPropio(s.id), nombre: 'mine', ar: Number(s.ar), imagen: { uri } })}
+              tirar={{ etiqueta: t.removeMine, onPress: () => onBorrarPropio(s) }}
+            />
+          );
+        })}
+      </View>
       <AppText variant="label" color="textSecondary">
         {t.pack['nobi-pink']}
       </AppText>
@@ -403,6 +456,7 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   rejilla: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.xs },
   celda: { width: 76, height: 68 },
+  crear: { borderWidth: 1, borderStyle: 'dashed' },
   previa: { borderRadius: Radius.lg, borderCurve: 'continuous', padding: Spacing.md, gap: Spacing.sm, alignItems: 'center' },
   previaImagen: { width: '100%', maxWidth: 320, maxHeight: 260 },
   previaFila: { flexDirection: 'row', alignItems: 'center', gap: Spacing.xs, alignSelf: 'stretch' },

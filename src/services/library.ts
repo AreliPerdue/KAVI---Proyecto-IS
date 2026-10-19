@@ -24,6 +24,7 @@ export type {
   LibraryReadingSession,
   LibraryReadingSessionInput,
   StickerPack,
+  UserSticker,
   LibraryLinkKind,
   LibrarySeries,
   LibraryShelfItem,
@@ -62,6 +63,9 @@ export const listStickerPacks = libraryApi.listStickerPacks;
 export const listMyStickerPacks = libraryApi.listMyStickerPacks;
 export const addStickerPack = libraryApi.addStickerPack;
 export const removeStickerPack = libraryApi.removeStickerPack;
+export const listUserStickers = libraryApi.listUserStickers;
+export const createUserSticker = libraryApi.createUserSticker;
+export const removeUserSticker = libraryApi.removeUserSticker;
 export const saveLayout = libraryApi.saveLayout;
 export const removeLayout = libraryApi.removeLayout;
 export const applyOrder = libraryApi.applyOrder;

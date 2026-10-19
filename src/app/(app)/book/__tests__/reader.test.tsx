@@ -55,12 +55,34 @@ jest.mock('@/hooks/use-library', () => ({
 }));
 
 const mockAvisar = jest.fn();
-jest.mock('@/providers', () => ({ useSnackbar: () => mockAvisar, useAuth: () => ({ userId: 'u1' }) }));
-// Elegir la imagen: el doble da una lista para pegar.
-const mockElegirFoto = jest.fn(async () => 'file://foto.jpg');
-jest.mock('@/lib/library/cover/sources', () => ({ PUEDE_TOMAR_FOTO: true, desdeGaleria: () => mockElegirFoto(), desdeCamara: () => mockElegirFoto() }));
+const mockConfirmar = jest.fn(async () => true);
+jest.mock('@/providers', () => ({ useSnackbar: () => mockAvisar, useAuth: () => ({ userId: 'u1' }), useConfirm: () => mockConfirmar }));
+// Stickers propios (T335): el doble guarda lo que se le pide y deja borrar.
+let mockMisStickers: Record<string, unknown>[] = [];
+const mockCrearSticker = jest.fn();
+const mockBorrarSticker = jest.fn();
+const mockImagenesPropias = new Map<string, string>();
+const mockFuentesPropias = new Map<string, string>();
+jest.mock('@/hooks/use-user-stickers', () => ({
+  PREFIJO_PROPIO: 'mios/',
+  idPropio: (id: string) => `mios/${id}`,
+  useUserStickers: () => ({ data: mockMisStickers }),
+  useUserStickerImages: () => mockImagenesPropias,
+  useUserStickerSources: () => mockFuentesPropias,
+  useCreateUserSticker: () => ({ mutate: mockCrearSticker, isPending: false }),
+  useRemoveUserSticker: () => ({ mutate: mockBorrarSticker }),
+}));
 jest.mock('@/lib/library/cover/prepare', () => ({
   prepararImagenPegada: async () => ({ jpeg: new Uint8Array([1, 2]), ancho: 800, alto: 400, vistaPrevia: 'data:image/jpeg;base64,AA' }),
+  prepararSticker: async () => ({ dataUrl: 'data:image/png;base64,ORIGINAL', ancho: 400, alto: 300 }),
+}));
+// Elegir la imagen: el doble da una lista para pegar.
+const mockElegirFoto = jest.fn(async () => 'file://foto.jpg');
+jest.mock('@/lib/library/cover/sources', () => ({
+  PUEDE_TOMAR_FOTO: true,
+  desdeGaleria: () => mockElegirFoto(),
+  desdeCamara: () => mockElegirFoto(),
+  desdeArchivo: () => mockElegirFoto(),
 }));
 // Tiempo de lectura (T318): el doble cuenta las señales y deja poner lo ya leído.
 let mockSesiones: Record<string, unknown>[] = [];
@@ -1107,5 +1129,69 @@ describe('separadores (spec 13c, RF-BH15; T290)', () => {
     await fireEvent.press(screen.getByRole('button', { name: A.bookmarkGoTo('Clave', es.library.progressPage(50, 340)) }));
     expect(mockEnviados.at(-1)).toEqual({ type: 'goTo', page: 50 });
     expect(screen.getByRole('button', { name: A.bookmarkGoTo('', es.library.progressPage(200, 340)) })).toBeTruthy();
+  });
+});
+
+describe('stickers propios (spec 13c, RF-BH13; T335)', () => {
+  const S = es.library.stickers;
+  beforeEach(() => {
+    mockMisStickers = [];
+    mockImagenesPropias.clear();
+    mockFuentesPropias.clear();
+    mockCrearSticker.mockReset();
+    mockBorrarSticker.mockReset();
+  });
+
+  it('crear: elegir imagen, el motor le pone el margen elegido, se guarda y queda listo para pegar', async () => {
+    mockCrearSticker.mockImplementation((_v: unknown, o: { onSuccess: () => void }) => o.onSuccess());
+    await render(<Lector />);
+    await responder({ type: 'opened', total: 12 });
+    await fireEvent.press(screen.getByRole('button', { name: A.sticker }));
+    await fireEvent.press(screen.getByRole('button', { name: S.createSticker }));
+    await fireEvent.press(screen.getByRole('button', { name: S.fromFile }));
+    const pedido = mockEnviados.filter((m) => m.type === 'outline').at(-1) as { id: string; src: string; margin: number };
+    expect(pedido).toMatchObject({ src: 'data:image/png;base64,ORIGINAL', margin: 12 });
+    await responder({ type: 'outline', id: pedido.id, dataUrl: 'data:image/png;base64,HECHO', width: 424, height: 324 });
+    expect(screen.getByLabelText(S.createPreview)).toBeTruthy();
+    // Otro margen: se vuelve a pedir.
+    await fireEvent.press(screen.getByText(S.margins.thick));
+    const otro = mockEnviados.filter((m) => m.type === 'outline').at(-1) as { id: string; margin: number };
+    expect(otro.margin).toBe(20);
+    await responder({ type: 'outline', id: otro.id, dataUrl: 'data:image/png;base64,GRUESO', width: 440, height: 340 });
+    await fireEvent.press(screen.getByRole('button', { name: S.createSave }));
+    const [datos] = mockCrearSticker.mock.calls[0] as [{ id: string; dataUrl: string; ar: number; margin: number }];
+    expect(datos).toMatchObject({ dataUrl: 'data:image/png;base64,GRUESO', ar: 0.773, margin: 20 });
+    expect(mockEnviados.at(-1)).toEqual({ type: 'tool', tool: 'sticker', ar: 0.773 });
+    await responder({ type: 'place', locator: { page: 1, x: 0.1, y: 0.1, w: 0.3, ar: 0.773 } });
+    expect(mockCrear).toHaveBeenLastCalledWith(expect.objectContaining({ kind: 'sticker', content: { sticker: `mios/${datos.id}`, rot: 0 } }));
+  });
+
+  it('si el motor no puede, lo dice', async () => {
+    await render(<Lector />);
+    await responder({ type: 'opened', total: 12 });
+    await fireEvent.press(screen.getByRole('button', { name: A.sticker }));
+    await fireEvent.press(screen.getByRole('button', { name: S.createSticker }));
+    await fireEvent.press(screen.getByRole('button', { name: S.fromFile }));
+    const pedido = mockEnviados.filter((m) => m.type === 'outline').at(-1) as { id: string };
+    await responder({ type: 'outline', id: pedido.id, error: true });
+    expect(screen.getByText(S.createFailed)).toBeTruthy();
+  });
+
+  it('se ven en Mis stickers, se pegan con su imagen en el lector y se borran con confirmación', async () => {
+    mockMisStickers = [{ id: 'p1', owner_id: 'u1', path: 'u1/stickers/p1.png', ar: 0.8, margin: 12, created_at: 'c' }];
+    mockImagenesPropias.set('p1', 'file:///p1.png');
+    mockFuentesPropias.set('mios/p1', 'data:image/png;base64,P1');
+    mockLista = [{ id: 'k1', item_id: 'l1', owner_id: 'u1', kind: 'sticker', locator: { page: 1, x: 0, y: 0, w: 0.3, ar: 0.8 }, content: { sticker: 'mios/p1', rot: 0 }, z: 1, removed: false, locked: false, created_at: 'c', updated_at: 'u' }];
+    await render(<Lector />);
+    expect(mockEnviados).toContainEqual(expect.objectContaining({ type: 'annotations', items: [expect.objectContaining({ content: expect.objectContaining({ sticker: 'mios/p1', src: 'data:image/png;base64,P1' }) })] }));
+    await responder({ type: 'opened', total: 12 });
+    await fireEvent.press(screen.getByRole('button', { name: A.sticker }));
+    await fireEvent.press(screen.getByRole('button', { name: S.pick(S.mineName) }));
+    expect(mockEnviados.at(-1)).toEqual({ type: 'tool', tool: 'sticker', ar: 0.8 });
+    await fireEvent.press(screen.getByRole('button', { name: A.cancelTool }));
+    await fireEvent.press(screen.getByRole('button', { name: A.sticker }));
+    await fireEvent.press(screen.getByRole('button', { name: S.removeMine }));
+    expect(mockConfirmar).toHaveBeenCalledWith(expect.objectContaining({ destructive: true }));
+    expect(mockBorrarSticker).toHaveBeenCalledWith('p1');
   });
 });

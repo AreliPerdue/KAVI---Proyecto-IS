@@ -12,6 +12,7 @@ import type {
   LibraryLayout,
   LibraryReadingSession,
   StickerPack,
+  UserSticker,
   LibraryCardTemplate,
   LibraryFileBody,
   LibraryFont,
@@ -43,6 +44,7 @@ const fonts: LibraryFont[] = [];
 const layouts: LibraryLayout[] = [];
 const sesiones: LibraryReadingSession[] = [];
 const misPacks: { owner_id: string; pack_id: string }[] = [];
+const stickersPropios: UserSticker[] = [];
 const archivos = new Map<string, { body: LibraryFileBody; type: string }>();
 
 /**
@@ -390,6 +392,33 @@ export const demoLibrary: LibraryApi = {
     await delay();
     const i = misPacks.findIndex((x) => x.owner_id === userId && x.pack_id === packId);
     if (i >= 0) misPacks.splice(i, 1);
+    emitDataChange();
+  },
+
+  async listUserStickers(userId) {
+    await delay();
+    return copia(stickersPropios.filter((s) => s.owner_id === userId).sort((a, b) => b.created_at.localeCompare(a.created_at)));
+  },
+
+  async createUserSticker(userId, sticker, png) {
+    await delay();
+    if (tamanoDe(png) > 2 * 1024 * 1024) throw new AuthUiError(t().errors.libraryFileTooBig);
+    if (!(sticker.ar >= 0.25 && sticker.ar <= 4)) throw new AuthUiError(t().errors.noPermission);
+    const path = `${userId}/stickers/${sticker.id}.png`;
+    archivos.set(path, { body: png, type: 'image/png' });
+    const fila: UserSticker = { id: sticker.id, owner_id: userId, path, ar: sticker.ar, margin: sticker.margin, created_at: ahora() };
+    stickersPropios.push(fila);
+    emitDataChange();
+    return copia(fila);
+  },
+
+  async removeUserSticker(userId, stickerId) {
+    await delay();
+    const i = stickersPropios.findIndex((s) => s.owner_id === userId && s.id === stickerId);
+    if (i >= 0) {
+      archivos.delete(stickersPropios[i].path);
+      stickersPropios.splice(i, 1);
+    }
     emitDataChange();
   },
 

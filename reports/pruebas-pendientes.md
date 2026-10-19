@@ -703,3 +703,12 @@ escribir en un post-it mientras la ventana se encoge como con el teclado (PDF sc
 - [ ] (manual) Android: tocar dos veces un post-it (o pegar uno nuevo) abre el teclado y se puede escribir; al
   cerrarlo, lo escrito se queda y la página se acomoda.
 - [ ] (manual) iOS (cuando haya build): lo mismo; el teclado aparece al pegar un post-it nuevo.
+
+## Post-its, separadores y stickers propios (T290, T335)
+Automatizado: `app/(app)/book/__tests__/reader.test.tsx` (doblar, dos dedos, separadores y canto, stickers propios),
+`lib/library/__tests__/annotations.test.ts`, `lib/__tests__/library-files-api.test.ts`, demo en
+`services/demo/__tests__/library.test.ts`. Visto en el demo (web 1280 y 390 px).
+- [ ] (manual) Teléfono: girar y agrandar un sticker con dos dedos (el segundo dedo fuera del sticker también).
+- [ ] (manual) Teléfono: doblar un post-it y abrirlo tocando la esquina.
+- [ ] (manual) Teléfono: crear un sticker desde la galería y desde la cámara; verlo y pegarlo sin red.
+- [ ] (manual) Con Supabase: un sticker hecho en el teléfono aparece en la web (y al revés).

@@ -263,3 +263,24 @@ describe('borrar', () => {
 it('una acción desconocida es un error de la petición', async () => {
   expect((await pedir({ action: 'hackear' })).status).toBe(400);
 });
+
+describe('stickers propios (T335)', () => {
+  const ST = 'eeeeeeee-0000-4000-8000-000000000005';
+  const OTRA = 'ffffffff-0000-4000-8000-000000000006';
+  it('se suben como PNG de hasta 2 MB en la carpeta de stickers de la persona', async () => {
+    const ok = await pedir({ action: 'upload', path: `${UID}/stickers/${ST}.png`, contentType: 'image/png', size: 300_000 });
+    expect(ok.status).toBe(200);
+    expect(new URL(ok.body.url as string).pathname).toBe(`/kavi-library/${UID}/stickers/${ST}.png`);
+    expect((await pedir({ action: 'upload', path: `${UID}/stickers/${ST}.png`, contentType: 'image/jpeg', size: 300_000 })).status).toBe(403);
+    expect((await pedir({ action: 'upload', path: `${UID}/stickers/${ST}.png`, contentType: 'image/png', size: 3 * 1024 * 1024 })).status).toBe(413);
+    expect((await pedir({ action: 'upload', path: `${OTRA}/stickers/${ST}.png`, contentType: 'image/png', size: 300_000 })).status).toBe(403);
+  });
+
+  it('se leen y se borran solo los propios', async () => {
+    expect((await pedir({ action: 'read', path: `${UID}/stickers/${ST}.png` })).status).toBe(200);
+    expect((await pedir({ action: 'read', path: `${OTRA}/stickers/${ST}.png` })).status).toBe(403);
+    mockR2.mockResolvedValue(new Response(null, { status: 204 }));
+    expect(await pedir({ action: 'deleteFile', path: `${UID}/stickers/${ST}.png` })).toEqual({ status: 200, body: { removed: 1 } });
+    expect((await pedir({ action: 'deleteFile', path: `${OTRA}/stickers/${ST}.png` })).status).toBe(403);
+  });
+});

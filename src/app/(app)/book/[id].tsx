@@ -19,6 +19,7 @@ import { useDuracion } from '@/components/library/reading-summary';
 import { ReaderTextPicker } from '@/components/library/reader-text-picker';
 import { ReaderThemePicker } from '@/components/library/reader-theme-picker';
 import { SelectionBar } from '@/components/library/selection-bar';
+import { CreateStickerSheet, type StickerHecho } from '@/components/library/create-sticker-sheet';
 import { type StickerElegible, StickerSheet } from '@/components/library/sticker-sheet';
 import { AppText, Button, IconButton, Segmented, Sheet } from '@/components/ui';
 import { type NombreDeSticker } from '@/constants/stickers';
@@ -26,6 +27,7 @@ import { Fonts, IconSize, IconStroke, Radius, Spacing, Typography } from '@/cons
 import { useAnnotationEditor, useAnnotationImageUrls, useAnnotations, useUploadAnnotationImage } from '@/hooks/use-annotations';
 import { useReadingSessions, useReadingTimer } from '@/hooks/use-reading-sessions';
 import { useStickerPacks, useStickerSources } from '@/hooks/use-sticker-packs';
+import { idPropio, PREFIJO_PROPIO, useCreateUserSticker, useRemoveUserSticker, useUserStickerImages, useUserStickers, useUserStickerSources } from '@/hooks/use-user-stickers';
 import { usePantallaCompleta } from '@/hooks/use-full-screen';
 import { useLibrarySync } from '@/hooks/use-library-sync';
 import { useAbrirCopiaLocal } from '@/hooks/use-local-book';
@@ -72,9 +74,9 @@ import { FORMA_POR_OMISION, type FormaDeLeer } from '@/lib/library/reading-mode'
 import { coloresDe } from '@/lib/library/reader-theme';
 import { partesDeSticker, urlDeSticker } from '@/lib/library/sticker-packs';
 import { etiquetaDeSaga, siguienteDeSaga } from '@/lib/library/series';
-import { useAuth, useSnackbar } from '@/providers';
+import { useAuth, useConfirm, useSnackbar } from '@/providers';
 import { usePreferencesStore } from '@/store/preferences-store';
-import type { LibraryAnnotation, LibraryLocator, StickerPack } from '@/types/domain';
+import type { LibraryAnnotation, LibraryLocator, StickerPack, UserSticker } from '@/types/domain';
 
 /** Cuánto se espera sin moverse antes de guardar la posición: así no se escribe en cada página. */
 const GUARDAR_MS = 1200;
@@ -101,8 +103,14 @@ type Posicion = Extract<MensajeDelMotor, { type: 'position' }>;
  * La imagen de un sticker de la tienda para el lector: la copia del teléfono si ya se leyó; si no (o en la web),
  * su dirección en la nube. Los incluidos no llevan: el lector los tiene.
  */
-function fuenteDeSticker(id: string | null, fuentes: ReadonlyMap<string, string>, packs: readonly StickerPack[] | undefined): string | undefined {
+function fuenteDeSticker(
+  id: string | null,
+  fuentes: ReadonlyMap<string, string>,
+  packs: readonly StickerPack[] | undefined,
+  propias: ReadonlyMap<string, string>,
+): string | undefined {
   if (!id || id.startsWith('nobi-pink/')) return undefined;
+  if (id.startsWith(PREFIJO_PROPIO)) return propias.get(id);
   const lista = fuentes.get(id);
   if (lista) return lista;
   const partes = partesDeSticker(id);
@@ -201,6 +209,19 @@ function Lector({ id }: { id: string }) {
   const nombresDeStickers = tx.library.stickers.names;
   // Los stickers de la tienda pegados en este libro (T338): cómo los ve el lector (sin red, de su copia).
   const packsDeStickers = useStickerPacks();
+  // Los stickers propios (T335): su imagen para la hoja y para el lector.
+  const misStickers = useUserStickers();
+  const imagenesPropias = useUserStickerImages(misStickers.data);
+  const fuentesPropias = useUserStickerSources(
+    (lista ?? []).filter((a) => a.kind === 'sticker' && !a.removed).map((a) => stickerDe(a) ?? ''),
+    imagenesPropias,
+  );
+  const crearSticker = useCreateUserSticker();
+  const borrarSticker = useRemoveUserSticker();
+  const confirmar = useConfirm();
+  const [creandoSticker, setCreandoSticker] = useState(false);
+  // Lo que se le pidió al motor para hacer un sticker: se cumple cuando contesta `outline`.
+  const pedidosDeContorno = useRef(new Map<string, { resolver: (h: StickerHecho) => void; fallar: () => void }>());
   const fuentesDeStickers = useStickerSources(
     (lista ?? []).filter((a) => a.kind === 'sticker' && !a.removed && !stickerDe(a)?.startsWith('nobi-pink/')).map((a) => stickerDe(a) ?? ''),
     packsDeStickers.data?.packs,
@@ -263,12 +284,12 @@ function Lector({ id }: { id: string }) {
           ...(a.kind === 'bookmark' ? { ...separadorDe(a) } : {}),
           ...(a.kind === 'image' ? { src: vistasPrevias.get(a.id) ?? urlsDeImagenes.get(rutaDeImagen(a) ?? '') ?? undefined, rot: giroDe(a) } : {}),
           ...(a.kind === 'sticker'
-            ? { sticker: stickerDe(a) ?? undefined, rot: giroDe(a), label: nombreDeSticker(a, nombresDeStickers), src: fuenteDeSticker(stickerDe(a), fuentesDeStickers, packsDeStickers.data?.packs) }
+            ? { sticker: stickerDe(a) ?? undefined, rot: giroDe(a), label: nombreDeSticker(a, nombresDeStickers), src: fuenteDeSticker(stickerDe(a), fuentesDeStickers, packsDeStickers.data?.packs, fuentesPropias) }
             : {}),
         },
       }));
     motor.current?.send({ type: 'annotations', items });
-  }, [lista, vistasPrevias, urlsDeImagenes, nombresDeStickers, fuentesDeStickers]);
+  }, [lista, vistasPrevias, urlsDeImagenes, nombresDeStickers, fuentesDeStickers, fuentesPropias]);
 
   useEffect(() => {
     const medida =
@@ -418,6 +439,14 @@ function Lector({ id }: { id: string }) {
         if (a && a.kind === 'postit') cambiar(a, { content: { ...a.content, folded: m.folded } });
         return;
       }
+      case 'outline': {
+        const pedido = pedidosDeContorno.current.get(m.id);
+        pedidosDeContorno.current.delete(m.id);
+        if (!pedido) return;
+        if (m.dataUrl && m.width && m.height) pedido.resolver({ dataUrl: m.dataUrl, ancho: m.width, alto: m.height });
+        else pedido.fallar();
+        return;
+      }
       case 'edit':
         setSeleccionId(m.id);
         motor.current?.send({ type: 'write', id: m.id });
@@ -528,6 +557,35 @@ function Lector({ id }: { id: string }) {
       avisar({ message: tx.library.stickers.savedToRemoved });
     } else editor.borrar(a);
     elegir(null);
+  };
+
+  /** Que el motor haga el sticker (T335): recorta y pone el margen; contesta con `outline`. */
+  const procesarSticker = (src: string, margen: number) =>
+    new Promise<StickerHecho>((resolver, fallar) => {
+      const pedido = uuidv4();
+      pedidosDeContorno.current.set(pedido, { resolver, fallar: () => fallar(new Error('outline')) });
+      motor.current?.send({ type: 'outline', id: pedido, src, margin: margen });
+    });
+
+  /** Guardar el sticker hecho en "Mis stickers" y dejarlo listo para pegar. */
+  const guardarStickerPropio = (hecho: StickerHecho, margen: number) => {
+    const nuevo = uuidv4();
+    const ar = Math.min(4, Math.max(0.25, Math.round((hecho.alto / hecho.ancho) * 1000) / 1000));
+    crearSticker.mutate(
+      { id: nuevo, dataUrl: hecho.dataUrl, ar, margin: margen },
+      {
+        onSuccess: () => {
+          setCreandoSticker(false);
+          pegarSticker({ id: idPropio(nuevo), nombre: 'mine', ar, imagen: { uri: hecho.dataUrl } });
+        },
+        onError: () => avisar({ message: tx.library.stickers.createSaveFailed }),
+      },
+    );
+  };
+
+  const borrarStickerPropio = async (s: UserSticker) => {
+    const ok = await confirmar({ title: tx.library.stickers.removeMine, message: tx.library.stickers.removeMineMessage, confirmLabel: tx.library.stickers.removeMineConfirm, destructive: true });
+    if (ok) borrarSticker.mutate(s.id);
   };
 
   /** Elegir un sticker para pegar (T290): nuevo o de vuelta de la charola; luego se toca dónde va. */
@@ -967,10 +1025,23 @@ function Lector({ id }: { id: string }) {
       <StickerSheet
         visible={eligiendoSticker}
         quitados={quitados(lista ?? [])}
+        propios={{ stickers: misStickers.data ?? [], imagenes: imagenesPropias }}
+        onCrear={() => {
+          setEligiendoSticker(false);
+          setCreandoSticker(true);
+        }}
+        onBorrarPropio={(s) => void borrarStickerPropio(s)}
         onClose={() => setEligiendoSticker(false)}
         onElegir={(s) => pegarSticker(s)}
         onDevolver={(a, s) => pegarSticker(s, a)}
         onTirar={(a) => editor.borrar(a)}
+      />
+      <CreateStickerSheet
+        visible={creandoSticker}
+        onClose={() => setCreandoSticker(false)}
+        procesar={procesarSticker}
+        onGuardar={guardarStickerPropio}
+        guardando={crearSticker.isPending}
       />
       <PegadoStyleSheet anotacion={deEstilo} colorPortada={item.data ? colorDeParte(item.data, 'front') : null} onClose={() => setEstiloDeId(null)} onGuardar={guardarEstilo} />
       <Sheet visible={eligiendoImagen} onClose={() => setEligiendoImagen(false)} title={tx.library.annotations.imageFrom}>

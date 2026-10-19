@@ -139,9 +139,13 @@
     guarda el renglón más cercano y cuánto se separa de él (`dy`, en tamaños de letra).
   - **Supr o Retroceso** quitan lo pegado que esté elegido (como **Quitar**: el sticker va a la charola), salvo
     mientras se escribe en él o con el foco en un campo. El botón se queda.
-  - **Stickers propios (T335, pendiente, pedido de Areli del 14 oct):** desde una imagen (galería, cámara o
-    archivo), con la opción de ponerle **margen blanco** alrededor de su silueta para que parezca sticker y
-    **ajustar su grosor**. Se guardan en la colección de la persona y se pegan como los incluidos.
+  - **Stickers propios (T335, hecho el 19 oct 2026, pedido de Areli):** en **Mis stickers → Crear sticker** se elige
+    una imagen (galería, cámara o archivo), se reduce a 512 px en PNG y el motor del lector **recorta lo
+    transparente de alrededor** y le pone **margen blanco** que sigue su silueta (una foto sin transparencia queda
+    enmarcada): sin margen, delgado, mediano o grueso, viendo cómo queda. Se guarda en "Hechos por mí"
+    (`library_user_stickers` con RLS; la imagen en R2 en `<persona>/stickers/<id>.png`, hasta 2 MB) con una copia en
+    el teléfono para verlo sin red, y queda listo para pegar (`mios/<id>`). Se borra con confirmación (lo pegado deja
+    de verse).
   - **Dos dedos (T290, 19 oct 2026):** con un sticker o una imagen elegidos, el primer dedo encima y el segundo en
     cualquier lado los **giran y agrandan a la vez** desde su centro, sin deformarlos; se guarda en un solo paso
     (posición y giro juntos, un solo deshacer).

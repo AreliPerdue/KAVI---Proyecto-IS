@@ -118,6 +118,8 @@ async function atender(m) {
       return limpiarBusqueda();
     case 'cover':
       return portada(m.url, m.width ?? 600);
+    case 'outline':
+      return contorno(m.id, m.src, m.margin);
     case 'annotations':
       return anotaciones.actualizar(m.items);
     case 'tool':
@@ -1007,6 +1009,73 @@ function teclas(e) {
 }
 
 document.addEventListener('keydown', teclas);
+
+// ─── Stickers propios (T335) ─────────────────────────────────────────────────
+
+/** Los px de margen se piensan para una imagen de 512 y se escalan a la que llegue. */
+const LADO_DE_STICKER = 512;
+
+/**
+ * Hace un sticker de una imagen: recorta lo transparente de alrededor y, si se pide, le pone margen blanco que
+ * sigue su silueta (con fondo transparente) o su contorno (una foto). Devuelve un PNG. Se hace aquí porque el
+ * motor puede dibujar en cualquier plataforma; la app solo manda la imagen y recibe el resultado.
+ */
+async function contorno(id, src, margen) {
+  try {
+    const img = new Image();
+    img.src = src;
+    await img.decode();
+    const w0 = img.naturalWidth;
+    const h0 = img.naturalHeight;
+    const lienzo = (w, h) => {
+      const c = document.createElement('canvas');
+      c.width = w;
+      c.height = h;
+      return c;
+    };
+    // Lo que tiene algo: sin las orillas transparentes.
+    const base = lienzo(w0, h0);
+    const bctx = base.getContext('2d', { willReadFrequently: true });
+    bctx.drawImage(img, 0, 0);
+    const datos = bctx.getImageData(0, 0, w0, h0).data;
+    let [x0, y0, x1, y1] = [w0, h0, -1, -1];
+    for (let y = 0; y < h0; y++) {
+      for (let x = 0; x < w0; x++) {
+        if (datos[(y * w0 + x) * 4 + 3] > 8) {
+          if (x < x0) x0 = x;
+          if (x > x1) x1 = x;
+          if (y < y0) y0 = y;
+          if (y > y1) y1 = y;
+        }
+      }
+    }
+    if (x1 < 0) [x0, y0, x1, y1] = [0, 0, w0 - 1, h0 - 1];
+    const w = x1 - x0 + 1;
+    const h = y1 - y0 + 1;
+    const m = Math.round((Math.max(0, Math.min(40, Number(margen) || 0)) * Math.max(w, h)) / LADO_DE_STICKER);
+    const final = lienzo(w + 2 * m, h + 2 * m);
+    const ctx = final.getContext('2d');
+    if (m > 0) {
+      // La silueta corrida en círculo alrededor, pintada de blanco: el margen.
+      const silueta = lienzo(w + 2 * m, h + 2 * m);
+      const sctx = silueta.getContext('2d');
+      const pasos = 48;
+      for (let i = 0; i < pasos; i++) {
+        const a = (i / pasos) * Math.PI * 2;
+        sctx.drawImage(base, x0, y0, w, h, m + Math.cos(a) * m, m + Math.sin(a) * m, w, h);
+      }
+      sctx.drawImage(base, x0, y0, w, h, m, m, w, h);
+      sctx.globalCompositeOperation = 'source-in';
+      sctx.fillStyle = '#FFFFFF';
+      sctx.fillRect(0, 0, silueta.width, silueta.height);
+      ctx.drawImage(silueta, 0, 0);
+    }
+    ctx.drawImage(base, x0, y0, w, h, m, m, w, h);
+    enviar({ type: 'outline', id, dataUrl: final.toDataURL('image/png'), width: final.width, height: final.height });
+  } catch {
+    enviar({ type: 'outline', id, error: true });
+  }
+}
 
 // ─── Zoom (RF-BH1, T288) ─────────────────────────────────────────────────────
 

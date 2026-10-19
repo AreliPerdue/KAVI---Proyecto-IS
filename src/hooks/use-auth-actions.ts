@@ -4,6 +4,7 @@ import { clearOutbox } from '@/lib/gym/outbox';
 import { borrarTodas } from '@/lib/library/offline/copies';
 import { vaciarCola } from '@/lib/library/offline/outbox';
 import { borrarPacks } from '@/lib/library/offline/sticker-packs';
+import { borrarCopias as borrarStickersPropios } from '@/lib/library/offline/user-stickers';
 import { olvidarLista } from '@/lib/library/offline/snapshot';
 import { syncNotifications } from '@/lib/notifications';
 import type { LoginValues, RegisterValues } from '@/lib/schemas/auth';
@@ -81,6 +82,7 @@ export async function olvidarDatosDelDispositivo(queryClient: QueryClient): Prom
   useGymStore.getState().stopRest();
   useOutboxStore.getState().setEntries(() => []);
   borrarTodas();
+  borrarStickersPropios();
   await Promise.allSettled([clearOutbox(), syncNotifications([]), vaciarCola(), olvidarLista(), borrarPacks()]);
   queryClient.clear();
 }
