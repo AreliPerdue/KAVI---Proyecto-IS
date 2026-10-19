@@ -91,8 +91,6 @@ Es la única parte de Library que se comparte, y solo con quien se invita (P4).
   - **Desconectar (RF-BC8) lo hace la base,** `library_club_disconnect`. Lo usan salir (`library_leave_club`),
     quitar (`library_remove_club_member`) y cerrar. Cerrar es borrar el club, y un disparador desconecta
     antes a cada miembro. Así cada quien se queda con lo del club aunque el anfitrión borre su cuenta.
-  - **Pendiente:**
-    - que los miembros vean las imágenes pegadas por otros: T307.
 - **Hecho (T306, 20 oct 2026):**
   - **Crear:** en el menú de un PDF o EPUB, **Leer en club** (si ya está en uno, **Club de lectura** lo
     abre). Se pone el nombre (el título por omisión), se eligen contactos aceptados y se ve el aviso de
@@ -114,6 +112,27 @@ Es la única parte de Library que se comparte, y solo con quien se invita (P4).
   - **En la librería:** la copia lleva la marca de club (un ícono de personas en la portada).
   - **Tiempo real:** las tablas del club entran a Realtime, así que las invitaciones llegan solas.
   - **Demo:** Ana manda una invitación de muestra, y los contactos invitados aceptan solos al rato.
+- **Hecho (T307, 20 oct 2026):**
+  - **Lo que se ve:** en una copia de club, lo anotado incluye lo mío y lo del club de todos
+    (`listAnnotations(item, club)`).
+  - **Compartido por omisión:** lo nuevo es del club. En Ajustes del lector, "Lo que anote ahora" elige "Para
+    el club" o "Solo para mí". Lo ya hecho se cambia en la barra de lo elegido o en la hoja del subrayado,
+    solo si es mío.
+  - **Quién la hizo (RF-BC6):** lo de otro miembro lleva en la página una marca con su inicial en su color.
+    El color es el que le doy como contacto (RF-S15) o, si no es mi contacto, uno fijo. La marca va en lo
+    pegado, en los dibujos y en los subrayados de PDF; en un EPUB, el subrayado lo dibuja foliate y la
+    autoría se ve en el panel y en su hoja.
+  - **Quién la cambió (RF-BC7):** la barra de lo elegido, la hoja del subrayado y el panel dicen "De Ana · la
+    cambió Luis". Cualquiera la mueve, la cambia o la quita; la base conserva su dueño. Deshacer regresa lo
+    que yo cambié.
+  - **Capa ocultable:** "Ver lo del club" en Ajustes la apaga para leer limpio.
+  - **Tiempo real:** `library_annotations` entra a Realtime y el lector escucha solo su club. Lo mío no avisa;
+    al quitar, la lista se recarga.
+  - **Imágenes y stickers de otros:** la función de archivos deja ver la imagen pegada o el sticker propio de
+    otra persona a quien ve una anotación que los usa: un miembro, o una copia que quedó del club. Quitar la
+    imagen de otro no borra su archivo.
+  - **Charola:** la de "Quitados" solo muestra mis stickers.
+  - **Demo:** Ana ya tiene un subrayado y un post-it en su club de muestra.
 - **Modo demo:** los otros miembros son contactos simulados, igual que en Compartido.
 
 ## 6. Fuera de esta versión

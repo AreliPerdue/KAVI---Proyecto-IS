@@ -132,7 +132,18 @@ export function textoDe(a: Pick<LibraryAnnotation, 'content'>): string {
 
 /** Lo que se manda a guardar de una anotación: la fila completa, para que el último cambio gane entero. */
 export function aEntrada(a: LibraryAnnotation): LibraryAnnotationInput {
-  return { id: a.id, item_id: a.item_id, kind: a.kind, locator: a.locator, content: a.content, z: a.z, removed: a.removed, locked: a.locked };
+  return {
+    id: a.id,
+    item_id: a.item_id,
+    kind: a.kind,
+    locator: a.locator,
+    content: a.content,
+    z: a.z,
+    removed: a.removed,
+    locked: a.locked,
+    // Del club de lectura o solo mía (13f, T307); sin el dato, como estaba.
+    ...(a.club_id !== undefined ? { club_id: a.club_id } : {}),
+  };
 }
 
 // ─── Capas (RF-BH16) ─────────────────────────────────────────────────────────

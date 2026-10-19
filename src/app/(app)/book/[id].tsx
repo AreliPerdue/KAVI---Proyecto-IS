@@ -2,7 +2,7 @@ import * as Clipboard from 'expo-clipboard';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { BookOpen, ChevronDown, ChevronLeft, ChevronUp, GalleryHorizontal, NotebookText, Rows3, Search, Shrink, X } from 'lucide-react-native';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Platform, Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -25,18 +25,20 @@ import { CardPeek } from '@/components/library/card-peek';
 import { PenToolbar } from '@/components/library/pen-toolbar';
 import { CreateStickerSheet, type StickerHecho } from '@/components/library/create-sticker-sheet';
 import { type StickerElegible, StickerSheet } from '@/components/library/sticker-sheet';
-import { AppText, Button, IconButton, Segmented, Sheet } from '@/components/ui';
+import { AppText, Button, IconButton, Segmented, Sheet, Toggle } from '@/components/ui';
 import { type NombreDeSticker } from '@/constants/stickers';
 import { Fonts, IconSize, IconStroke, Radius, Spacing, Typography } from '@/constants/theme';
-import { useAnnotationEditor, useAnnotationImageUrls, useAnnotations, useUploadAnnotationImage } from '@/hooks/use-annotations';
+import { useAnnotationEditor, useAnnotationImageUrls, useAnnotations, useClubAnnotationsLive, useUploadAnnotationImage } from '@/hooks/use-annotations';
 import { useReadingSessions, useReadingTimer } from '@/hooks/use-reading-sessions';
 import { useStickerPacks, useStickerSources } from '@/hooks/use-sticker-packs';
-import { idPropio, PREFIJO_PROPIO, useCreateUserSticker, useRemoveUserSticker, useUserStickerImages, useUserStickers, useUserStickerSources } from '@/hooks/use-user-stickers';
+import { idPropio, PREFIJO_PROPIO, useCreateUserSticker, useRemoveUserSticker, useStickersDeOtros, useUserStickerImages, useUserStickers, useUserStickerSources } from '@/hooks/use-user-stickers';
 import { usePantallaCompleta } from '@/hooks/use-full-screen';
 import { useLibrarySync } from '@/hooks/use-library-sync';
 import { useAbrirCopiaLocal } from '@/hooks/use-local-book';
 import { useCreateClip } from '@/hooks/use-clips';
 import { useCards, useCardTemplates } from '@/hooks/use-cards';
+import { useClubs } from '@/hooks/use-clubs';
+import { usePeopleColors } from '@/hooks/use-connections';
 import { useLibraryFileUrl, useLibraryItem, useLibraryItems, useSaveReadingPosition, useSeries } from '@/hooks/use-library';
 import { useTheme } from '@/hooks/use-theme';
 import { useT } from '@/i18n';
@@ -80,6 +82,7 @@ import {
 import { lugarDeImagen, lugarDeSeleccion, posicionDeRuta } from '@/lib/library/clips';
 import { lapizParaMotor, trazosDe } from '@/lib/library/ink';
 import { alFinal, alInicio, plantillasVigentes } from '@/lib/library/cards';
+import { autoresDelClub, autoria, conCapaDelClub, esDeOtroEnElClub, esMia } from '@/lib/library/club-annotations';
 import { FORMA_POR_OMISION, type FormaDeLeer } from '@/lib/library/reading-mode';
 import { coloresDe } from '@/lib/library/reader-theme';
 import { partesDeSticker, urlDeSticker } from '@/lib/library/sticker-packs';
@@ -194,8 +197,22 @@ function Lector({ id, irA }: { id: string; irA?: LugarDeApertura }) {
   const segundosLeidos =
     (sesiones.data ?? []).filter((x) => x.item_id === id && x.id !== tiempo.sesionId).reduce((suma, x) => suma + x.seconds, 0) + tiempo.segundos;
 
-  const anotaciones = useAnnotations(id);
-  const editor = useAnnotationEditor(id);
+  const { userId } = useAuth();
+  // Club de lectura (13f, T307): en una copia de club se ve y se anota con los demás miembros.
+  const clubId = item.data?.club_id ?? null;
+  const [verClub, setVerClub] = useState(true);
+  const [compartirNuevo, setCompartirNuevo] = useState(true);
+  const anotaciones = useAnnotations(id, clubId);
+  useClubAnnotationsLive(id, clubId);
+  const editor = useAnnotationEditor(id, { clubId, compartir: compartirNuevo });
+  const clubes = useClubs();
+  const coloresDePersonas = usePeopleColors();
+  const sinNombre = tx.library.annotations.club.someone;
+  const miembrosDelClub = clubes.members;
+  const autores = useMemo(
+    () => autoresDelClub(clubId ? miembrosDelClub.filter((m) => m.club_id === clubId) : [], coloresDePersonas, sinNombre),
+    [clubId, miembrosDelClub, coloresDePersonas, sinNombre],
+  );
   const [herramienta, setHerramienta] = useState<Herramienta>(null);
   const [seleccionId, setSeleccionId] = useState<string | null>(null);
   // De qué pegado se elige el color (T289); y la imagen lista para pegar, que espera el toque en la página.
@@ -208,13 +225,14 @@ function Lector({ id, irA }: { id: string; irA?: LugarDeApertura }) {
   // Mientras una imagen recién pegada sube, se ve con su copia local.
   const [vistasPrevias, setVistasPrevias] = useState<ReadonlyMap<string, string>>(new Map());
   const subirImagen = useUploadAnnotationImage();
-  const { userId } = useAuth();
   const avisarError = useSnackbar();
   const [verPanel, setVerPanel] = useState(false);
   // El color del último post-it guardado: el siguiente sale de ese color.
   const ultimoColor = useRef(COLOR_DE_POSTIT);
   const ultimoColorDeSeparador = useRef(COLORES_RAPIDOS_SEPARADOR);
-  const lista = anotaciones.data;
+  // Con la capa del club oculta (RF-BC7) solo queda lo mío.
+  const todasLasAnotaciones = anotaciones.data;
+  const lista = useMemo(() => (todasLasAnotaciones ? conCapaDelClub(todasLasAnotaciones, userId, verClub) : undefined), [todasLasAnotaciones, userId, verClub]);
   // La barra de lo elegido es para lo pegado; un subrayado tocado abre su hoja.
   const elegida = lista?.find((a) => a.id === seleccionId) ?? null;
   const seleccionada = elegida && esPegado(elegida) ? elegida : null;
@@ -232,6 +250,9 @@ function Lector({ id, irA }: { id: string; irA?: LugarDeApertura }) {
     (lista ?? []).filter((a) => a.kind === 'sticker' && !a.removed).map((a) => stickerDe(a) ?? ''),
     imagenesPropias,
   );
+  // Y los propios que pegaron otros miembros del club (T307).
+  const fuentesAjenas = useStickersDeOtros(lista, userId);
+  const fuentesDeMios = useMemo(() => new Map([...fuentesAjenas, ...fuentesPropias]), [fuentesAjenas, fuentesPropias]);
   const crearSticker = useCreateUserSticker();
   const borrarSticker = useRemoveUserSticker();
   const confirmar = useConfirm();
@@ -291,6 +312,11 @@ function Lector({ id, irA }: { id: string; irA?: LugarDeApertura }) {
   // sabe pintar; lo demás llega con su tarea (T287 – T291).
   useEffect(() => {
     if (!lista) return;
+    // Lo de otro miembro del club lleva su inicial y su color (13f, RF-BC6; T307).
+    const autorEnMotor = (a: LibraryAnnotation) => {
+      const x = esDeOtroEnElClub(a, userId) ? autores.get(a.owner_id) : undefined;
+      return x ? { author: { initial: x.inicial, color: x.color, name: x.nombre } } : {};
+    };
     const items: AnotacionEnMotor[] = lista
       .filter((a) => !a.removed && SE_PINTAN.includes(a.kind))
       .map((a) => ({
@@ -309,14 +335,15 @@ function Lector({ id, irA }: { id: string; irA?: LugarDeApertura }) {
             : {}),
           ...(a.kind === 'bookmark' ? { ...separadorDe(a) } : {}),
           ...(a.kind === 'ink' ? { strokes: trazosDe(a) } : {}),
+          ...autorEnMotor(a),
           ...(a.kind === 'image' ? { src: vistasPrevias.get(a.id) ?? urlsDeImagenes.get(rutaDeImagen(a) ?? '') ?? undefined, rot: giroDe(a) } : {}),
           ...(a.kind === 'sticker'
-            ? { sticker: stickerDe(a) ?? undefined, rot: giroDe(a), label: nombreDeSticker(a, nombresDeStickers), src: fuenteDeSticker(stickerDe(a), fuentesDeStickers, packsDeStickers.data?.packs, fuentesPropias) }
+            ? { sticker: stickerDe(a) ?? undefined, rot: giroDe(a), label: nombreDeSticker(a, nombresDeStickers), src: fuenteDeSticker(stickerDe(a), fuentesDeStickers, packsDeStickers.data?.packs, fuentesDeMios) }
             : {}),
         },
       }));
     motor.current?.send({ type: 'annotations', items });
-  }, [lista, vistasPrevias, urlsDeImagenes, nombresDeStickers, fuentesDeStickers, fuentesPropias]);
+  }, [lista, vistasPrevias, urlsDeImagenes, nombresDeStickers, fuentesDeStickers, fuentesDeMios, autores, userId]);
 
   useEffect(() => {
     const medida =
@@ -524,6 +551,19 @@ function Lector({ id, irA }: { id: string; irA?: LugarDeApertura }) {
         return;
     }
   };
+
+  /** Lo del club de lo elegido (RF-BC6 – RF-BC7): quién lo hizo y lo cambió, y si es mío, "Solo para mí". */
+  const tc = tx.library.annotations.club;
+  const deClub = (a: LibraryAnnotation | null) =>
+    clubId && a
+      ? {
+          texto: autoria(a, userId, autores, tc),
+          compartida: !!a.club_id,
+          puedeCambiar: esMia(a, userId),
+          onCambiar: () => cambiar(a, { club_id: a.club_id ? null : clubId }),
+        }
+      : undefined;
+  const autoriaEnPanel = (a: LibraryAnnotation) => (clubId ? autoria(a, userId, autores, tc) : null);
 
   const ahora = () => new Date().toISOString();
   const cambiar = (a: LibraryAnnotation, cambio: Partial<LibraryAnnotation>) => editor.cambiar(a, { ...a, ...cambio, updated_at: ahora() });
@@ -1078,6 +1118,7 @@ function Lector({ id, irA }: { id: string; irA?: LugarDeApertura }) {
               onBloquear={() => seleccionada && cambiar(seleccionada, { locked: !seleccionada.locked })}
               onQuitar={() => quitar()}
               onListo={() => elegir(null)}
+              club={deClub(seleccionada)}
             />
           ) : null}
           <ReaderProgress
@@ -1193,6 +1234,33 @@ function Lector({ id, irA }: { id: string; irA?: LugarDeApertura }) {
           </AppText>
           <ReaderTextPicker esPdf={!esEpub} />
           <ReaderThemePicker />
+          {clubId ? (
+            <>
+              <AppText variant="label">{tc.layer}</AppText>
+              <View style={styles.filaClub}>
+                <View style={styles.flex}>
+                  <AppText variant="bodyStrong">{tc.showClub}</AppText>
+                  <AppText variant="caption" color="textSecondary">
+                    {tc.showClubHint}
+                  </AppText>
+                </View>
+                <Toggle label={tc.showClub} value={verClub} onValueChange={setVerClub} />
+              </View>
+              <AppText variant="caption" color="textSecondary">
+                {tc.newFor}
+              </AppText>
+              <Segmented<'club' | 'yo'>
+                fullWidth
+                label={tc.newFor}
+                options={[
+                  { value: 'club', label: tc.forClub },
+                  { value: 'yo', label: tc.forMe },
+                ]}
+                value={compartirNuevo ? 'club' : 'yo'}
+                onChange={(v) => setCompartirNuevo(v === 'club')}
+              />
+            </>
+          ) : null}
         </View>
       </Sheet>
 
@@ -1204,10 +1272,11 @@ function Lector({ id, irA }: { id: string; irA?: LugarDeApertura }) {
         error={anotaciones.isError}
         onReintentar={() => void anotaciones.refetch()}
         onIr={irAAnotacion}
+        autoria={clubId ? autoriaEnPanel : undefined}
       />
       <StickerSheet
         visible={eligiendoSticker}
-        quitados={quitados(lista ?? [])}
+        quitados={quitados((lista ?? []).filter((a) => esMia(a, userId)))}
         propios={{ stickers: misStickers.data ?? [], imagenes: imagenesPropias }}
         onCrear={() => {
           setEligiendoSticker(false);
@@ -1234,7 +1303,7 @@ function Lector({ id, irA }: { id: string; irA?: LugarDeApertura }) {
         </View>
       </Sheet>
       <BookmarkSheet anotacion={separador} onClose={() => elegir(null)} onGuardar={guardarSeparador} onQuitar={quitarSeparador} />
-      <HighlightSheet anotacion={subrayado} onClose={() => elegir(null)} onGuardar={guardarSubrayado} onQuitar={quitarSubrayado} />
+      <HighlightSheet anotacion={subrayado} onClose={() => elegir(null)} onGuardar={guardarSubrayado} onQuitar={quitarSubrayado} club={deClub(subrayado)} />
       <DefineSheet palabra={definiendo} idioma={idiomaLibro} onClose={() => setDefiniendo(null)} />
       <CardChooserSheet
         visible={eligiendoFicha}
@@ -1251,6 +1320,8 @@ function Lector({ id, irA }: { id: string; irA?: LugarDeApertura }) {
 }
 
 const styles = StyleSheet.create({
+  filaClub: { flexDirection: 'row', alignItems: 'center', gap: Spacing.md },
+  flex: { flex: 1, gap: 2 },
   pantalla: { flex: 1 },
   barra: { flexDirection: 'row', alignItems: 'center', gap: Spacing.xs, paddingHorizontal: Spacing.sm, paddingBottom: Spacing.xs },
   titulo: { flex: 1, textAlign: 'center' },

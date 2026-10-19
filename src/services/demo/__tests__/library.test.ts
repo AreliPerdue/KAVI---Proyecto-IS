@@ -415,3 +415,26 @@ describe('club de lectura: aceptar con copia propia (13f, RF-BC3; T306)', () => 
     }
   });
 });
+
+describe('club de lectura: anotar juntos (13f; T307)', () => {
+  /* eslint-disable-next-line @typescript-eslint/no-require-imports -- el mismo estado que `fresh()` */
+  const store = () => require('@/services/demo/store') as typeof import('@/services/demo/store');
+
+  it('en mi copia veo lo del club de Ana; si lo cambio sigue siendo suyo y del club', async () => {
+    const api = fresh();
+    store().setCurrentUser({ id: 'demo-ana', email: 'ana@kavi.app' });
+    const [club] = await api.listClubs('demo-user');
+    const deAna = (await api.listItems('demo-ana'))[0];
+    await api.saveAnnotations('demo-ana', [{ id: 'h-ana', item_id: deAna.id, kind: 'highlight', locator: { page: 1 }, club_id: club.id }]);
+    store().setCurrentUser({ id: 'demo-user', email: 'demo@kavi.app' });
+    const copia = await api.acceptClubInvite('demo-user', club.id);
+    // Lo que Ana ya tenía en el club (las dos de muestra) y lo nuevo.
+    const vistas = await api.listAnnotations(copia.id, club.id);
+    expect(vistas.map((a) => a.id)).toContain('h-ana');
+    expect(vistas.every((a) => a.owner_id === 'demo-ana')).toBe(true);
+    expect(await api.listAnnotations(copia.id)).toEqual([]);
+    const h = vistas.find((a) => a.id === 'h-ana') as (typeof vistas)[number];
+    await api.saveAnnotations('demo-user', [{ ...h, content: { color: '#E24947' } }]);
+    expect((await api.listAnnotations(copia.id, club.id)).find((a) => a.id === 'h-ana')).toMatchObject({ owner_id: 'demo-ana', club_id: club.id, updated_by: 'demo-user', content: { color: '#E24947' } });
+  });
+});

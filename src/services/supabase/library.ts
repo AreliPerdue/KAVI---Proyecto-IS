@@ -437,12 +437,16 @@ export const supabaseLibrary: LibraryApi = {
     sinError(await db().rpc('library_apply_order', { p_view: view, p_shelf: shelfId, p_ids: [...itemIds] }));
   },
 
-  async listAnnotations(itemId) {
-    return unwrap(await db().from('library_annotations').select('*').eq('item_id', itemId).order('z')) as LibraryAnnotation[];
+  async listAnnotations(itemId, clubId) {
+    const consulta = db().from('library_annotations').select('*');
+    // En una copia de club: lo mío de esta pieza y lo del club de todos (la RLS deja ver solo eso).
+    const filtrada = clubId ? consulta.or(`item_id.eq.${itemId},club_id.eq.${clubId}`) : consulta.eq('item_id', itemId);
+    return unwrap(await filtrada.order('z')) as LibraryAnnotation[];
   },
 
   async saveAnnotations(userId, annotations) {
     if (annotations.length === 0) return;
+    // Una anotación del club de otro miembro se cambia sin volverse mía: la base conserva su dueño (T305).
     sinError(await db().from('library_annotations').upsert(annotations.map((a) => ({ ...a, owner_id: userId }))));
   },
 

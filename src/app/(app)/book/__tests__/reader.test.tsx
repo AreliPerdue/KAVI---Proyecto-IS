@@ -63,15 +63,22 @@ const mockCrearSticker = jest.fn();
 const mockBorrarSticker = jest.fn();
 const mockImagenesPropias = new Map<string, string>();
 const mockFuentesPropias = new Map<string, string>();
+const mockFuentesAjenas = new Map<string, string>();
 jest.mock('@/hooks/use-user-stickers', () => ({
   PREFIJO_PROPIO: 'mios/',
   idPropio: (id: string) => `mios/${id}`,
   useUserStickers: () => ({ data: mockMisStickers }),
   useUserStickerImages: () => mockImagenesPropias,
   useUserStickerSources: () => mockFuentesPropias,
+  useStickersDeOtros: () => mockFuentesAjenas,
   useCreateUserSticker: () => ({ mutate: mockCrearSticker, isPending: false }),
   useRemoveUserSticker: () => ({ mutate: mockBorrarSticker }),
 }));
+// Club de lectura (T307): los miembros los pone cada prueba.
+let mockMiembros: Record<string, unknown>[] = [];
+jest.mock('@/hooks/use-clubs', () => ({ useClubs: () => ({ clubs: [], members: mockMiembros, isPending: false }) }));
+const mockColores = new Map([['u-ana', '#E24947']]);
+jest.mock('@/hooks/use-connections', () => ({ usePeopleColors: () => mockColores }));
 // Fichas (T294): la lista la pone cada prueba.
 let mockFichas: Record<string, unknown>[] = [];
 let mockPlantillasDeFicha: Record<string, unknown>[] = [];
@@ -108,6 +115,7 @@ const mockCopiar = jest.fn(async (_t: string) => true);
 jest.mock('expo-clipboard', () => ({ setStringAsync: (t: string) => mockCopiar(t) }));
 // Lo anotado (T286): la lista la pone cada prueba; el editor anota lo que se le pide.
 let mockLista: Record<string, unknown>[] | undefined;
+const mockEditorClub: unknown[] = [];
 let mockPuedeDeshacer = false;
 const mockCrear = jest.fn();
 const mockCambiar = jest.fn();
@@ -120,7 +128,8 @@ jest.mock('@/hooks/use-annotations', () => ({
   useAnnotations: () => ({ data: mockLista, isLoading: false, isError: false, refetch: jest.fn() }),
   useAnnotationImageUrls: () => mockUrlsDeImagenes,
   useUploadAnnotationImage: () => mockSubirImagen,
-  useAnnotationEditor: () => ({
+  useClubAnnotationsLive: () => undefined,
+  useAnnotationEditor: (_id: string, club?: unknown) => (mockEditorClub.push(club), {
     crear: mockCrear,
     cambiar: mockCambiar,
     borrar: mockBorrar,
@@ -179,6 +188,7 @@ beforeEach(() => {
   mockCrearFragmento.mockReset();
   mockFichas = [];
   mockPlantillasDeFicha = [];
+  mockMiembros = [];
   mockAbrirCopia.mockImplementation(async (pieza: { kind: string }, _ruta: string, forma: string, enviar: (m: MensajeAlMotor) => void, posicion?: unknown) => {
     const { posicionGuardada } = jest.requireActual<typeof import('@/lib/library/reader-protocol')>('@/lib/library/reader-protocol');
     enviar({ type: 'openBegin', format: pieza.kind === 'epub' ? 'epub' : 'pdf', size: 1, position: (posicion as never) ?? posicionGuardada(pieza as never), mode: forma as never });
@@ -1420,3 +1430,53 @@ describe('fichas en el libro (spec 13d, RF-BF4, RF-BF6; T294)', () => {
     expect(screen.getByRole('button', { name: O.peek('Romance') })).toBeTruthy();
   });
 });
+
+describe('club de lectura: anotar juntos (spec 13f, RF-BC6 – RF-BC7; T307)', () => {
+  const T = es.library.annotations.club;
+  const enClub = (a: Record<string, unknown>) => ({ ...a, club_id: 'c1' });
+  const postit = (id: string, owner_id: string, extra: Record<string, unknown> = {}) =>
+    enClub({ id, item_id: owner_id === 'u1' ? 'l1' : 'otra', owner_id, kind: 'postit', locator: { page: 3, x: 0.1, y: 0.2, w: 0.24 }, content: { color: '#F1D35D', text: id }, z: 1, removed: false, locked: false, created_at: 'c', updated_at: 'u', ...extra });
+  const ultimasAnotaciones = () => [...mockEnviados].reverse().find((m) => m.type === 'annotations') as { items: { id: string; content: Record<string, unknown> }[] } | undefined;
+  beforeEach(() => {
+    mockPieza = { ...pdf, club_id: 'c1' };
+    mockMiembros = [
+      { club_id: 'c1', person_id: 'u1', status: 'accepted', profile: { display_name: 'Areli', username: 'areli' } },
+      { club_id: 'c1', person_id: 'u-ana', status: 'accepted', profile: { display_name: 'Ana Torres', username: 'ana' } },
+    ];
+    mockEditorClub.length = 0;
+  });
+
+  it('en una copia de club lo nuevo es del club; "Solo para mí" en Ajustes lo cambia', async () => {
+    await render(<Lector />);
+    expect(mockEditorClub.at(-1)).toEqual({ clubId: 'c1', compartir: true });
+    await responder({ type: 'opened', total: 12 });
+    await fireEvent.press(screen.getByRole('button', { name: R.mode }));
+    await fireEvent.press(screen.getByRole('tab', { name: T.forMe }));
+    expect(mockEditorClub.at(-1)).toEqual({ clubId: 'c1', compartir: false });
+  });
+
+  it('lo de otro miembro lleva su inicial y su color; ocultar la capa del club lo quita', async () => {
+    mockLista = [postit('mio', 'u1'), postit('de-ana', 'u-ana')];
+    await render(<Lector />);
+    await responder({ type: 'opened', total: 12 });
+    const items = ultimasAnotaciones()?.items ?? [];
+    expect(items.find((x) => x.id === 'de-ana')?.content.author).toEqual({ initial: 'A', color: '#E24947', name: 'Ana Torres' });
+    expect(items.find((x) => x.id === 'mio')?.content.author).toBeUndefined();
+    await fireEvent.press(screen.getByRole('button', { name: R.mode }));
+    await fireEvent.press(screen.getByRole('switch', { name: T.showClub }));
+    expect((ultimasAnotaciones()?.items ?? []).map((x) => x.id)).toEqual(['mio']);
+  });
+
+  it('elegir lo de Ana dice que es suyo y no ofrece "Solo para mí"; lo mío sí, y lo pasa a privado', async () => {
+    mockLista = [postit('mio', 'u1'), postit('de-ana', 'u-ana', { updated_by: 'u1' })];
+    await render(<Lector />);
+    await responder({ type: 'opened', total: 12 });
+    await responder({ type: 'select', id: 'de-ana' });
+    expect(screen.getByText(T.by('Ana Torres'))).toBeTruthy();
+    expect(screen.queryByRole('button', { name: T.onlyMe })).toBeNull();
+    await responder({ type: 'select', id: 'mio' });
+    await fireEvent.press(screen.getByRole('button', { name: T.onlyMe }));
+    expect(mockCambiar).toHaveBeenCalledWith(expect.objectContaining({ id: 'mio' }), expect.objectContaining({ club_id: null }));
+  });
+});
+

@@ -6,4 +6,7 @@ export const demoRealtime: RealtimeApi = {
   subscribe(_userId, onChange) {
     return subscribeDataChanges(() => onChange());
   },
+  subscribeClub(_clubId, _userId, onChange) {
+    return subscribeDataChanges(() => onChange());
+  },
 };

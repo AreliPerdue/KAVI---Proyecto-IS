@@ -1,4 +1,4 @@
-import { Bookmark, BringToFront, Check, Crop, FoldVertical, ImagePlus, PenLine, Lock, LockOpen, Palette, Pencil, Redo2, RotateCw, SendToBack, Sticker, StickyNote, Trash2, Type, Undo2 } from 'lucide-react-native';
+import { Bookmark, BringToFront, Check, Crop, FoldVertical, ImagePlus, PenLine, UserRound, Users, Lock, LockOpen, Palette, Pencil, Redo2, RotateCw, SendToBack, Sticker, StickyNote, Trash2, Type, Undo2 } from 'lucide-react-native';
 import type { ComponentType } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
@@ -41,6 +41,11 @@ type Props = {
   onBloquear: () => void;
   onQuitar: () => void;
   onListo: () => void;
+  /**
+   * En una copia de club (13f, RF-BC6 – RF-BC7; T307): quién la hizo y la cambió (`texto`), si la ve el club y,
+   * si es mía, pasarla a "Solo para mí" o compartirla.
+   */
+  club?: { texto: string | null; compartida: boolean; puedeCambiar: boolean; onCambiar: () => void };
 };
 
 /**
@@ -62,39 +67,46 @@ export function AnnotationToolbar(p: Props) {
     const doblado = p.seleccionada.kind === 'postit' && p.seleccionada.content.folded === true;
     return (
       <View style={styles.contenedor}>
-        {bloqueada ? <Aviso texto={a.lockedHint} /> : null}
+        {bloqueada ? <Aviso texto={a.lockedHint} /> : p.club?.texto ? <Aviso texto={p.club.texto} /> : null}
         <View style={styles.fila} accessibilityRole="toolbar">
-          {esImagen ? (
-            <IconButton label={a.rotate} onPress={p.onGirar} disabled={bloqueada}>
-              <RotateCw {...icono(!bloqueada)} />
-            </IconButton>
-          ) : (
-            <>
-              <IconButton label={a.write} onPress={p.onEscribir} disabled={bloqueada || doblado}>
-                <Pencil {...icono(!bloqueada && !doblado)} />
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.desliza} contentContainerStyle={styles.herramientas}>
+            {p.club?.puedeCambiar ? (
+              <IconButton label={p.club.compartida ? a.club.onlyMe : a.club.shareWithClub} onPress={p.club.onCambiar}>
+                {p.club.compartida ? <Users {...icono()} /> : <UserRound {...icono()} />}
               </IconButton>
-              <IconButton label={a.styleColor} onPress={p.onEstilo}>
-                <Palette {...icono()} />
+            ) : null}
+            {esImagen ? (
+              <IconButton label={a.rotate} onPress={p.onGirar} disabled={bloqueada}>
+                <RotateCw {...icono(!bloqueada)} />
               </IconButton>
-              {p.seleccionada.kind === 'postit' ? (
-                <IconButton label={p.seleccionada.content.folded === true ? a.unfold : a.fold} onPress={p.onDoblar} disabled={bloqueada}>
-                  <FoldVertical {...icono(!bloqueada)} />
+            ) : (
+              <>
+                <IconButton label={a.write} onPress={p.onEscribir} disabled={bloqueada || doblado}>
+                  <Pencil {...icono(!bloqueada && !doblado)} />
                 </IconButton>
-              ) : null}
-            </>
-          )}
-          <IconButton label={a.toFront} onPress={p.onFrente}>
-            <BringToFront {...icono()} />
-          </IconButton>
-          <IconButton label={a.toBack} onPress={p.onAtras}>
-            <SendToBack {...icono()} />
-          </IconButton>
-          <IconButton label={bloqueada ? a.unlock : a.lock} onPress={p.onBloquear}>
-            {bloqueada ? <Lock {...icono()} /> : <LockOpen {...icono()} />}
-          </IconButton>
-          <IconButton label={a.remove} onPress={p.onQuitar}>
-            <Trash2 size={IconSize.action} strokeWidth={IconStroke} color={theme.danger} />
-          </IconButton>
+                <IconButton label={a.styleColor} onPress={p.onEstilo}>
+                  <Palette {...icono()} />
+                </IconButton>
+                {p.seleccionada.kind === 'postit' ? (
+                  <IconButton label={p.seleccionada.content.folded === true ? a.unfold : a.fold} onPress={p.onDoblar} disabled={bloqueada}>
+                    <FoldVertical {...icono(!bloqueada)} />
+                  </IconButton>
+                ) : null}
+              </>
+            )}
+            <IconButton label={a.toFront} onPress={p.onFrente}>
+              <BringToFront {...icono()} />
+            </IconButton>
+            <IconButton label={a.toBack} onPress={p.onAtras}>
+              <SendToBack {...icono()} />
+            </IconButton>
+            <IconButton label={bloqueada ? a.unlock : a.lock} onPress={p.onBloquear}>
+              {bloqueada ? <Lock {...icono()} /> : <LockOpen {...icono()} />}
+            </IconButton>
+            <IconButton label={a.remove} onPress={p.onQuitar}>
+              <Trash2 size={IconSize.action} strokeWidth={IconStroke} color={theme.danger} />
+            </IconButton>
+          </ScrollView>
           <IconButton label={a.done} onPress={p.onListo}>
             <Check {...icono()} />
           </IconButton>

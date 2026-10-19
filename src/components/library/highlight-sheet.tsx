@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { AppText, Button, ColorSwatch, Segmented, Sheet, TextField } from '@/components/ui';
+import { AppText, Button, ColorSwatch, Segmented, Sheet, TextField, Toggle } from '@/components/ui';
 import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useT } from '@/i18n';
@@ -19,21 +19,34 @@ export function HighlightSheet({
   onClose,
   onGuardar,
   onQuitar,
+  club,
 }: {
   anotacion: LibraryAnnotation | null;
   onClose: () => void;
   onGuardar: (cambio: CambioDeSubrayado) => void;
   onQuitar: () => void;
+  /** En una copia de club (13f, T307): quién lo hizo y lo cambió, y si es mío, "Solo para mí". */
+  club?: { texto: string | null; compartida: boolean; puedeCambiar: boolean; onCambiar: () => void };
 }) {
   const a = useT().library.annotations;
   return (
     <Sheet visible={!!anotacion} onClose={onClose} title={a.highlightTitle}>
-      {anotacion ? <Editor key={anotacion.id} anotacion={anotacion} onGuardar={onGuardar} onQuitar={onQuitar} /> : null}
+      {anotacion ? <Editor key={anotacion.id} anotacion={anotacion} onGuardar={onGuardar} onQuitar={onQuitar} club={club} /> : null}
     </Sheet>
   );
 }
 
-function Editor({ anotacion, onGuardar, onQuitar }: { anotacion: LibraryAnnotation; onGuardar: (c: CambioDeSubrayado) => void; onQuitar: () => void }) {
+function Editor({
+  anotacion,
+  onGuardar,
+  onQuitar,
+  club,
+}: {
+  anotacion: LibraryAnnotation;
+  onGuardar: (c: CambioDeSubrayado) => void;
+  onQuitar: () => void;
+  club?: { texto: string | null; compartida: boolean; puedeCambiar: boolean; onCambiar: () => void };
+}) {
   const theme = useTheme();
   const tx = useT();
   const a = tx.library.annotations;
@@ -74,6 +87,22 @@ function Editor({ anotacion, onGuardar, onQuitar }: { anotacion: LibraryAnnotati
         ))}
       </View>
       <TextField label={a.note} value={nota} onChangeText={setNota} placeholder={a.notePlaceholder} multiline maxLength={NOTA_MAXIMA} style={styles.campo} />
+      {club?.texto ? (
+        <AppText variant="caption" color="textSecondary">
+          {club.texto}
+        </AppText>
+      ) : null}
+      {club?.puedeCambiar ? (
+        <View style={styles.fila}>
+          <View style={styles.flex}>
+            <AppText variant="bodyStrong">{a.club.onlyMe}</AppText>
+            <AppText variant="caption" color="textSecondary">
+              {a.club.onlyMeHint}
+            </AppText>
+          </View>
+          <Toggle label={a.club.onlyMe} value={!club.compartida} onValueChange={club.onCambiar} />
+        </View>
+      ) : null}
       <Button title={a.save} onPress={() => onGuardar({ color: color.toUpperCase(), style: estilo, note: nota.trim() })} />
       <Button title={a.removeHighlight} variant="danger" onPress={onQuitar} />
     </View>
@@ -85,4 +114,6 @@ const styles = StyleSheet.create({
   cita: { borderLeftWidth: 4, borderRadius: Radius.sm, borderCurve: 'continuous', padding: Spacing.md },
   paleta: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.xs },
   campo: { minHeight: 80, textAlignVertical: 'top' },
+  fila: { flexDirection: 'row', alignItems: 'center', gap: Spacing.md },
+  flex: { flex: 1, gap: 2 },
 });

@@ -7,7 +7,7 @@ import { base64ToBytes } from '@/lib/library/base64';
 import { asegurarCopia, borrarCopia, comoDato, guardarCopia, uriLocal } from '@/lib/library/offline/user-stickers';
 import { useAuth } from '@/providers';
 import { createUserSticker, libraryFileUrl, listUserStickers, removeUserSticker } from '@/services/library';
-import type { UserSticker } from '@/types/domain';
+import type { LibraryAnnotation, UserSticker } from '@/types/domain';
 
 /** El prefijo de un sticker propio en una anotación: `mios/<id>` (T335). */
 export const PREFIJO_PROPIO = 'mios/';
@@ -102,4 +102,28 @@ export function useUserStickerSources(ids: readonly string[], imagenes: Readonly
   });
   const json = JSON.stringify(datos.data ?? []);
   return useMemo(() => new Map(JSON.parse(json) as [string, string][]), [json]);
+}
+
+/**
+ * Los stickers propios que pegaron otros miembros de un club (13f, T307): su imagen vive en la carpeta de quien
+ * los hizo; la función de archivos la deja ver a quien ve la anotación. Devuelve `mios/<id>` → dirección.
+ */
+export function useStickersDeOtros(anotaciones: readonly Pick<LibraryAnnotation, 'kind' | 'owner_id' | 'content' | 'removed'>[] | undefined, yo: string | null): ReadonlyMap<string, string> {
+  const ajenos = new Map<string, string>();
+  for (const a of anotaciones ?? []) {
+    const id = a.kind === 'sticker' && !a.removed && typeof a.content.sticker === 'string' ? a.content.sticker : null;
+    if (id?.startsWith(PREFIJO_PROPIO) && a.owner_id && a.owner_id !== yo) ajenos.set(id, `${a.owner_id}/stickers/${id.slice(PREFIJO_PROPIO.length)}.png`);
+  }
+  const pares = [...ajenos].sort();
+  const urls = useQueries({
+    queries: pares.map(([, ruta]) => ({
+      queryKey: claves.url(ruta),
+      queryFn: () => libraryFileUrl(ruta),
+      staleTime: (LIBRARY_URL_SECONDS - 300) * 1000,
+      gcTime: (LIBRARY_URL_SECONDS - 300) * 1000,
+      retry: 1,
+    })),
+  });
+  const clave = JSON.stringify(pares.flatMap(([id], i) => (urls[i]?.data ? [[id, urls[i].data]] : [])));
+  return useMemo(() => new Map(JSON.parse(clave) as [string, string][]), [clave]);
 }

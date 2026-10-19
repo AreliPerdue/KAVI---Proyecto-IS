@@ -126,6 +126,36 @@ function letraSobre(hex) {
   return l > 0.18 ? '#131313' : '#F2F2F2';
 }
 
+/**
+ * Quién hizo algo del club de lectura (13f, RF-BC6; T307): un circulito con su inicial en su color, en la esquina.
+ * Lo manda la app en `content.author` solo para lo de otros miembros.
+ */
+function marcaDeAutor(a) {
+  const autor = a.content?.author;
+  if (!autor || !/^#[0-9a-fA-F]{6}$/.test(autor.color ?? '')) return null;
+  const el = document.createElement('span');
+  el.className = 'marca-autor';
+  el.textContent = String(autor.initial ?? '').slice(0, 2);
+  el.setAttribute('aria-label', autor.name ? `De ${autor.name}` : 'De otra persona');
+  Object.assign(el.style, {
+    position: 'absolute',
+    left: '-9px',
+    top: '-9px',
+    width: '18px',
+    height: '18px',
+    borderRadius: '9px',
+    background: autor.color,
+    color: letraSobre(autor.color),
+    font: '700 10px/18px -apple-system, system-ui, "Segoe UI", Roboto, sans-serif',
+    textAlign: 'center',
+    boxShadow: '0 1px 2px rgb(0 0 0 / 0.3)',
+    pointerEvents: 'none',
+    zIndex: '4',
+    rotate: '0deg',
+  });
+  return el;
+}
+
 const CANDADO =
   '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="18" height="11" x="3" y="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>';
 
@@ -265,6 +295,8 @@ export function crearCapa(ctx, enviar) {
       }
     }
     if (a.locked) el.dataset.bloqueado = '';
+    const autor = marcaDeAutor(a);
+    if (autor) el.append(autor);
     if (!enLibro) {
       if (a.id === seleccion) marcarSeleccion(el, a);
       escucharArrastre(el, a);
@@ -289,6 +321,8 @@ export function crearCapa(ctx, enviar) {
       pointerEvents: 'none',
     });
     lienzoDeTrazos(el, trazosValidos(a));
+    const autor = marcaDeAutor(a);
+    if (autor) el.append(autor);
     return el;
   }
 
@@ -1415,7 +1449,21 @@ export function crearCapa(ctx, enviar) {
   /** Los subrayados de una página del PDF, en su propia capa debajo de lo pegado. */
   function pintarSubrayadosPdf(n, div) {
     const marcas = [];
-    for (const a of subrayados()) for (const q of a.locator.rects ?? []) if (q.page === n) marcas.push(marcaDeTexto(a, q));
+    for (const a of subrayados()) {
+      const rects = (a.locator.rects ?? []).filter((q) => q.page === n);
+      rects.forEach((q, i) => {
+        marcas.push(marcaDeTexto(a, q));
+        // La inicial de quien lo hizo va al principio del primer renglón (club de lectura, T307), aparte: el
+        // resaltado es transparente y la apagaría.
+        const autor = i === 0 && marcaDeAutor(a);
+        if (autor) {
+          const lugar = document.createElement('div');
+          Object.assign(lugar.style, { position: 'absolute', left: `${q.x * 100}%`, top: `${q.y * 100}%`, width: '0', height: '0', pointerEvents: 'none' });
+          lugar.append(autor);
+          marcas.push(lugar);
+        }
+      });
+    }
     if (!marcas.length) return;
     const capa = document.createElement('div');
     capa.className = 'capa-subrayados';

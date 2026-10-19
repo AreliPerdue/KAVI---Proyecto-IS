@@ -17,7 +17,8 @@
  *   tamaño queda
  *   firmado: el archivo debe medir lo que dice su fila (la base cuida el tope de 500 MB con ese número),
  *   una portada o una imagen pegada 5 MB o menos y una fuente 10 MB o menos.
- * - `read` `{ path }` → dirección para leer con `GET`, válida una hora.
+ * - `read` `{ path }` → dirección para leer con `GET`, válida una hora. También la imagen pegada o el sticker propio
+ *   de otra persona si quien pide ve una anotación que los usa (club de lectura, 13f, T307; la RLS decide).
  * - `delete` `{ itemId | fontId }` → borra la carpeta de la pieza o el archivo de la fuente (antes de
  *   borrar su fila).
  * - Stickers propios (T335): `upload`, `read` y `deleteFile` de `<uid>/stickers/<id>.png` (PNG de hasta 2 MB).
@@ -178,6 +179,24 @@ async function pieza(supabase: SupabaseClient, filtro: { id?: string; ruta?: str
   return ((data as Pieza[] | null) ?? [])[0] ?? null;
 }
 
+/**
+ * Una imagen pegada o un sticker propio de otra persona (club de lectura, 13f, T307): se deja ver si quien pide ve
+ * una anotación que lo usa. La RLS decide qué anotaciones ve: las del club si es miembro, y las que le quedaron
+ * en su copia al desconectarse.
+ */
+const IMAGEN_AJENA = /^[0-9a-f-]{36}\/[0-9a-f-]{36}\/anotaciones\/[0-9a-f-]{36}\.jpg$/i;
+const STICKER_AJENO = /^([0-9a-f-]{36})\/stickers\/([0-9a-f-]{36})\.png$/i;
+async function deOtroEnUnaAnotacion(supabase: SupabaseClient, ruta: string): Promise<boolean> {
+  let consulta = supabase.from('library_annotations').select('id');
+  const sticker = ruta.match(STICKER_AJENO);
+  if (IMAGEN_AJENA.test(ruta)) consulta = consulta.eq('content->>path', ruta);
+  else if (sticker) consulta = consulta.eq('content->>sticker', `mios/${sticker[2]}`).eq('author_id', sticker[1]);
+  else return false;
+  const { data, error } = await consulta.limit(1);
+  if (error) throw new Error(`select annotations ${error.code ?? ''} ${error.message}`);
+  return ((data as unknown[] | null) ?? []).length > 0;
+}
+
 async function fuente(supabase: SupabaseClient, filtro: { id?: string; ruta?: string }): Promise<Fuente | null> {
   let consulta = supabase.from('library_fonts').select('id, file_path, file_size');
   if (filtro.id) consulta = consulta.eq('id', filtro.id);
@@ -264,7 +283,8 @@ export async function POST(request: Request): Promise<Response> {
         const deImagen = piezaDeImagenPegada(ruta, uid);
         const permitido =
           !!tipoDeSueltaPropia(ruta, uid) ||
-          (suya(ruta) && (deImagen ? await pieza(supabase, { id: deImagen }) : (await pieza(supabase, { ruta })) || (await fuente(supabase, { ruta }))));
+          (suya(ruta) && (deImagen ? await pieza(supabase, { id: deImagen }) : (await pieza(supabase, { ruta })) || (await fuente(supabase, { ruta })))) ||
+          (!suya(ruta) && (await deOtroEnUnaAnotacion(supabase, ruta)));
         if (!permitido) return responder(403, { code: 'forbidden', error: 'No tienes permiso para ver ese archivo.' });
         return responder(200, { url: await firmar(r2, 'GET', ruta, SEGUNDOS_LECTURA) });
       }

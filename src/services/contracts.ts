@@ -202,6 +202,11 @@ export interface RealtimeApi {
    * Dice qué tabla cambió cuando lo sabe, para recargar solo lo que depende de ella (T271).
    */
   subscribe(userId: string, onChange: (table?: string) => void): () => void;
+  /**
+   * Lo que cambian los demás en un club de lectura (13f, RF-BC6; T307): avisa cuando otro miembro crea, cambia o
+   * quita una anotación del club. Lo mío no avisa (ya lo tengo).
+   */
+  subscribeClub(clubId: string, userId: string, onChange: () => void): () => void;
 }
 
 /** Una sesión con sus ejercicios, cada uno con sus series y segmentos (spec 07 v2). */
@@ -598,7 +603,8 @@ export interface LibraryApi {
   /** Reescribe el orden de un lugar (Todos si `shelfId` es nulo) con la lista dada, en una sola llamada. */
   applyOrder(view: LibraryLayoutView, shelfId: string | null, itemIds: readonly string[]): Promise<void>;
 
-  listAnnotations(itemId: string): Promise<LibraryAnnotation[]>;
+  /** Lo anotado en una pieza; en una copia de club, también lo del club (13f, RF-BC6; T307). */
+  listAnnotations(itemId: string, clubId?: string | null): Promise<LibraryAnnotation[]>;
   /** Guarda (crea o reemplaza) por id: las anotaciones llevan id del cliente (RF-BR3). */
   saveAnnotations(userId: string, annotations: readonly LibraryAnnotationInput[]): Promise<void>;
   removeAnnotations(ids: readonly string[]): Promise<void>;

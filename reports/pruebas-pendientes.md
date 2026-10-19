@@ -770,3 +770,12 @@ un club con Pedro.
   Compartido; aceptar copia el libro (se abre y se descarga sin red) y el espacio usado sube su tamaño.
 - [ ] (manual) Con poco espacio: la invitación dice cuánto falta y no deja aceptar.
 - [ ] (manual) Salir, quitar y cerrar: la copia se queda en la librería de cada quien, sin la marca de club.
+
+## Club de lectura: anotar juntos (T307)
+Automatizado: `lib/library/__tests__/club-annotations.test.ts`, `app/(app)/book/__tests__/reader.test.tsx` (lo nuevo
+del club, "Solo para mí", la marca y la capa oculta), `lib/__tests__/library-files-api.test.ts` (imágenes de otros) y el
+demo. Visto en el demo: el subrayado y el post-it de Ana con su marca, y "De Ana Torres" al elegirlo.
+- [ ] (manual, dos cuentas) Lo que subraya una aparece en la otra en uno o dos segundos sin recargar; cambiarle el
+  color se ve en las dos y dice quién lo cambió.
+- [ ] (manual) Un post-it "Solo para mí" no aparece en la otra cuenta; al compartirlo, sí.
+- [ ] (manual) La imagen y el sticker propio que pega una se ven en la otra.

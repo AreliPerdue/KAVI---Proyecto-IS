@@ -1276,8 +1276,15 @@ Reemplazan L5 (13e). Un recorte es una página 1 : √2 del visor de PDF (decisi
   - Interfaz: `create-club-sheet.tsx`, `club-contact-picker.tsx`, `club-invitations.tsx` (en Compartido, con el
     número de la pestaña), la pantalla `app/(app)/club/[id].tsx` y la marca de club en la portada.
   - Demo con invitación de muestra y contactos que aceptan solos.
-- [ ] T307 Anotaciones del club: compartidas por omisión, "Solo para mí", editables por todos con autor y
+- [x] T307 Anotaciones del club: compartidas por omisión, "Solo para mí", editables por todos con autor y
   color, capa ocultable; al desconectarse se quedan en la copia. (RF-BC6 – RF-BC8) Dep: T306, T286
+  **Hecho (20 oct 2026):**
+  - Migración `20261020130000_library_club_annotations_realtime.sql`; `subscribeClub` en Realtime.
+  - Reglas de autoría en `lib/library/club-annotations.ts`.
+  - Lector: compartir por omisión, "Solo para mí", la capa ocultable, la marca de autor (`marcaDeAutor` en el
+    motor) y la autoría en la barra, la hoja y el panel.
+  - `api/library-files.ts` deja leer las imágenes y stickers de otros vía la RLS.
+  - Al desconectarse se quedan en la copia: lo hace la base desde T305.
 - [ ] T308 Avance de cada quien en el club y en la barra del lector. (RF-BC9) Dep: T306, T279
 - [ ] T309 Sesión en vivo con Realtime (presence y broadcast): seguir, soltarse, pasar el mando, señalar.
   (RF-BC10 – RF-BC14) Dep: T306, T283

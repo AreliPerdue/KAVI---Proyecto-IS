@@ -2,3 +2,5 @@
 import { realtimeApi } from '@/services/backend';
 
 export const subscribeToChanges = realtimeApi.subscribe;
+
+export const subscribeToClub = realtimeApi.subscribeClub;

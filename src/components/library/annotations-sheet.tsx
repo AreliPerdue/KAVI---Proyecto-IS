@@ -28,13 +28,15 @@ type Props = {
   error: boolean;
   onReintentar: () => void;
   onIr: (a: LibraryAnnotation) => void;
+  /** En una copia de club (13f, T307): quién la hizo y quién la cambió. */
+  autoria?: (a: LibraryAnnotation) => string | null;
 };
 
 /**
  * El panel de lo anotado (spec 13c, RF-BH17; T286): todo lo de la pieza en el orden del libro, con su
  * página (o su avance en EPUB). Se filtra por tipo y por color; tocar uno lleva ahí.
  */
-export function AnnotationsSheet({ visible, onClose, anotaciones, cargando, error, onReintentar, onIr }: Props) {
+export function AnnotationsSheet({ visible, onClose, anotaciones, cargando, error, onReintentar, onIr, autoria }: Props) {
   const tx = useT();
   const a = tx.library.annotations;
   const theme = useTheme();
@@ -107,7 +109,7 @@ export function AnnotationsSheet({ visible, onClose, anotaciones, cargando, erro
           <FlatList
             data={lista}
             keyExtractor={(x) => x.id}
-            renderItem={({ item }) => <Fila anotacion={item} onPress={ir} />}
+            renderItem={({ item }) => <Fila anotacion={item} onPress={ir} autor={autoria?.(item) ?? null} />}
             ItemSeparatorComponent={Separador}
             ListEmptyComponent={
               <AppText variant="body" color="textSecondary" style={styles.textoCentro}>
@@ -127,7 +129,7 @@ function Separador() {
   return <View style={[styles.separador, { backgroundColor: theme.border }]} />;
 }
 
-const Fila = memo(function Fila({ anotacion, onPress }: { anotacion: LibraryAnnotation; onPress: (a: LibraryAnnotation) => void }) {
+const Fila = memo(function Fila({ anotacion, onPress, autor }: { anotacion: LibraryAnnotation; onPress: (a: LibraryAnnotation) => void; autor: string | null }) {
   const theme = useTheme();
   const a = useT().library.annotations;
   const Icono = ICONOS[anotacion.kind];
@@ -139,14 +141,14 @@ const Fila = memo(function Fila({ anotacion, onPress }: { anotacion: LibraryAnno
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={a.rowA11y(a.kindOne[anotacion.kind], nota ? `${texto || a.emptyText}. ${a.note}: ${nota}` : texto || a.emptyText, lugar)}
+      accessibilityLabel={[a.rowA11y(a.kindOne[anotacion.kind], nota ? `${texto || a.emptyText}. ${a.note}: ${nota}` : texto || a.emptyText, lugar), autor].filter(Boolean).join('. ')}
       onPress={() => onPress(anotacion)}
       style={({ pressed }) => [styles.fila, pressed ? { backgroundColor: theme.surfaceAlt } : null]}>
       <Icono size={IconSize.inline} strokeWidth={IconStroke} color={theme.textSecondary} />
       {color ? <ColorDot hex={color} size={12} background={theme.surface} /> : null}
       <View style={styles.cuerpo}>
         <AppText variant="label" color="textSecondary">
-          {a.kindOne[anotacion.kind]}
+          {autor ? `${a.kindOne[anotacion.kind]} · ${autor}` : a.kindOne[anotacion.kind]}
         </AppText>
         <AppText variant="body" numberOfLines={2} color={texto ? 'text' : 'textTertiary'}>
           {texto || a.emptyText}

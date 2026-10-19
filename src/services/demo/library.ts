@@ -179,6 +179,12 @@ function sembrarClubDeAna() {
     { club_id: club.id, person_id: ana, status: 'accepted', item_id: libroId, shows_progress: true, invited_by: ana, created_at: t0, joined_at: t0 },
     { club_id: club.id, person_id: 'demo-user', status: 'pending', item_id: null, shows_progress: true, invited_by: ana, created_at: t0, joined_at: null },
   );
+  // Lo que Ana ya anotó en el club: al aceptar se ve con su inicial y su color (T307).
+  const base = { item_id: libroId, owner_id: ana, removed: false, locked: false, club_id: club.id, author_id: ana, updated_by: null, created_at: t0, updated_at: t0 };
+  annotations.push(
+    { ...base, id: nextId('anotacion'), kind: 'highlight', z: 1, locator: { page: 1, rects: [{ page: 1, x: 0.1, y: 0.13, w: 0.62, h: 0.07 }] }, content: { color: '#F1D35D', style: 'highlight', text: 'Cuentos de la selva' } },
+    { ...base, id: nextId('anotacion'), kind: 'postit', z: 2, locator: { page: 1, x: 0.55, y: 0.45, w: 0.3 }, content: { color: '#F6A9CD', text: '¡Lean el de las medias de los flamencos!' } },
+  );
 }
 
 /**
@@ -816,9 +822,11 @@ export const demoLibrary: LibraryApi = {
     emitDataChange();
   },
 
-  async listAnnotations(itemId) {
+  async listAnnotations(itemId, clubId) {
     await delay();
-    return copia(annotations.filter((a) => a.item_id === itemId).sort((a, b) => a.z - b.z));
+    // En una copia de club: lo de esta pieza y lo del club que ven los miembros (como la RLS, T305).
+    const miembro = clubId && miembros.some((m) => m.club_id === clubId && m.person_id === yo() && m.status === 'accepted');
+    return copia(annotations.filter((a) => a.item_id === itemId || (miembro && a.club_id === clubId)).sort((a, b) => a.z - b.z));
   },
 
   async saveAnnotations(userId, entradas) {

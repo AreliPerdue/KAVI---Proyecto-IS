@@ -82,8 +82,8 @@ describe('useAnnotationEditor', () => {
   function preparar(inicial: LibraryAnnotation[]) {
     const { Wrapper, queryClient } = crearWrapper();
     queryClient.setQueryDefaults(libraryKeys.all, { gcTime: Infinity });
-    queryClient.setQueryData(libraryKeys.annotations('l1'), inicial);
-    return { Wrapper, lista: () => queryClient.getQueryData<LibraryAnnotation[]>(libraryKeys.annotations('l1')) };
+    queryClient.setQueryData([...libraryKeys.annotations('l1'), null], inicial);
+    return { Wrapper, lista: () => queryClient.getQueryData<LibraryAnnotation[]>([...libraryKeys.annotations('l1'), null]) };
   }
 
   it('crear se ve al instante, va a la cola con su dueño y se deshace y rehace', async () => {

@@ -1,5 +1,5 @@
 import { useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 
 import { useEditHistory } from '@/hooks/use-edit-history';
 import { LIBRARY_URL_SECONDS } from '@/constants/library';
@@ -11,20 +11,22 @@ import { aplicarAnotacionesPendientes, encolar, ESPERA_PARA_BORRAR_IMAGEN_MS, pe
 import { anotacionesGuardadas, guardarAnotaciones } from '@/lib/library/offline/snapshot';
 import { useAuth } from '@/providers';
 import { libraryFileUrl, listAnnotations, uploadAnnotationImage } from '@/services/library';
+import { subscribeToClub } from '@/services/realtime';
 import type { LibraryAnnotation } from '@/types/domain';
 
 /**
  * Lo anotado de un libro (spec 13c; T286). Cada vez que llega del servidor se guarda una copia en el
  * dispositivo y sin red se usa esa (RF-BR3); en los dos casos, con lo que la cola aún no sube encima.
+ * En una copia de club (13f, T307), también lo que anotaron los demás miembros en el club.
  */
-export function useAnnotations(itemId: string) {
+export function useAnnotations(itemId: string, clubId?: string | null) {
   const { userId } = useAuth();
   return useQuery<LibraryAnnotation[]>({
-    queryKey: libraryKeys.annotations(itemId),
+    queryKey: [...libraryKeys.annotations(itemId), clubId ?? null],
     queryFn: async () => {
       const id = userId as string;
       try {
-        const lista = await listAnnotations(itemId);
+        const lista = await listAnnotations(itemId, clubId);
         void guardarAnotaciones(id, itemId, lista).catch(() => undefined);
         return aplicarAnotacionesPendientes(lista, await pendientes(), itemId);
       } catch (e) {
@@ -41,10 +43,10 @@ export function useAnnotations(itemId: string) {
  * Guardar y quitar anotaciones: se ven al instante y van primero a la cola del dispositivo, que las sube
  * (sin red, al volver). Por eso aquí no hay errores que mostrar: nada se pierde.
  */
-function useEscritor(itemId: string) {
+function useEscritor(itemId: string, clubId: string | null) {
   const { userId } = useAuth();
   const queryClient = useQueryClient();
-  const clave = libraryKeys.annotations(itemId);
+  const clave = [...libraryKeys.annotations(itemId), clubId];
 
   const guardar = useCallback(
     (a: LibraryAnnotation) => {
@@ -53,21 +55,22 @@ function useEscritor(itemId: string) {
       );
       void encolar({ op: 'annotation', itemId, userId: userId as string, annotation: aEntrada(a), at: Date.now() }).then(subirPendientes);
     },
-    // `clave` sale de `itemId`.
+    // `clave` sale de `itemId` y `clubId`.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [queryClient, itemId, userId],
+    [queryClient, itemId, userId, clubId],
   );
 
   const quitar = useCallback(
-    (a: Pick<LibraryAnnotation, 'id' | 'kind'>) => {
+    (a: Pick<LibraryAnnotation, 'id' | 'kind'> & { owner_id?: string }) => {
       queryClient.setQueryData<LibraryAnnotation[]>(clave, (lista = []) => lista.filter((x) => x.id !== a.id));
       const ahora = Date.now();
-      // El archivo de una imagen se queda una hora, por si se deshace; luego se borra (T333).
-      const imagen = a.kind === 'image' ? encolar({ op: 'imageCleanup', itemId, userId: userId as string, id: a.id, due: ahora + ESPERA_PARA_BORRAR_IMAGEN_MS, at: ahora }) : null;
+      // El archivo de una imagen se queda una hora, por si se deshace; luego se borra (T333). La imagen de otro
+      // miembro del club es suya: no se toca su archivo.
+      const imagen = a.kind === 'image' && (!a.owner_id || a.owner_id === userId) ? encolar({ op: 'imageCleanup', itemId, userId: userId as string, id: a.id, due: ahora + ESPERA_PARA_BORRAR_IMAGEN_MS, at: ahora }) : null;
       void Promise.all([encolar({ op: 'annotationRemove', itemId, id: a.id, at: ahora }), imagen]).then(subirPendientes);
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [queryClient, itemId, userId],
+    [queryClient, itemId, userId, clubId],
   );
 
   return { guardar, quitar };
@@ -78,17 +81,20 @@ function useEscritor(itemId: string) {
  * revertirse con la fila completa de antes; la pila vive en el lector y se olvida al salir, como en el
  * logger del gym (RF-F40).
  */
-export function useAnnotationEditor(itemId: string) {
-  const { guardar, quitar } = useEscritor(itemId);
+export function useAnnotationEditor(itemId: string, club: { clubId: string | null; compartir: boolean } = { clubId: null, compartir: false }) {
+  const { clubId, compartir } = club;
+  const { guardar, quitar } = useEscritor(itemId, clubId);
   const historia = useEditHistory();
   const { record } = historia;
 
+  // En una copia de club, lo nuevo es del club salvo que se anote "Solo para mí" (13f, RF-BC6; T307).
   const crear = useCallback(
-    (a: LibraryAnnotation) => {
+    (nueva: LibraryAnnotation) => {
+      const a = nueva.club_id !== undefined ? nueva : { ...nueva, club_id: clubId && compartir ? clubId : null };
       guardar(a);
       record({ undo: () => quitar(a), redo: () => guardar(a) });
     },
-    [guardar, quitar, record],
+    [guardar, quitar, record, clubId, compartir],
   );
 
   const cambiar = useCallback(
@@ -137,4 +143,25 @@ export function useAnnotationImageUrls(anotaciones: readonly LibraryAnnotation[]
   // El mismo mapa mientras no cambie ninguna dirección: así el lector no le vuelve a mandar todo al motor.
   const clave = JSON.stringify(rutas.flatMap((ruta, i) => (urls[i]?.data ? [[ruta, urls[i].data as string]] : [])));
   return useMemo(() => new Map(JSON.parse(clave) as [string, string][]), [clave]);
+}
+
+/**
+ * Mientras se lee una copia de club (13f, RF-BC6; T307): lo que anotan, cambian o quitan los demás llega solo.
+ * Varios avisos seguidos se juntan en una recarga.
+ */
+export function useClubAnnotationsLive(itemId: string, clubId: string | null | undefined) {
+  const { userId } = useAuth();
+  const queryClient = useQueryClient();
+  useEffect(() => {
+    if (!clubId || !userId) return;
+    let espera: ReturnType<typeof setTimeout> | null = null;
+    const quitar = subscribeToClub(clubId, userId, () => {
+      if (espera) clearTimeout(espera);
+      espera = setTimeout(() => void queryClient.invalidateQueries({ queryKey: libraryKeys.annotations(itemId) }), 300);
+    });
+    return () => {
+      if (espera) clearTimeout(espera);
+      quitar();
+    };
+  }, [clubId, userId, itemId, queryClient]);
 }

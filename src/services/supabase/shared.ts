@@ -261,4 +261,22 @@ export const supabaseRealtime: RealtimeApi = {
       getSupabase().removeChannel(channel);
     };
   },
+
+  subscribeClub(clubId, userId, onChange) {
+    const channel = getSupabase().channel(`club:${clubId}:anotaciones`);
+    const deOtro = (fila: Record<string, unknown> | undefined) => !!fila && (fila.updated_by ?? fila.owner_id) !== userId;
+    // Crear y cambiar llegan filtrados por club (la RLS ya los limita a miembros); lo mío no avisa.
+    channel.on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'library_annotations', filter: `club_id=eq.${clubId}` }, (p) => {
+      if (deOtro(p.new as Record<string, unknown>)) onChange();
+    });
+    channel.on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'library_annotations', filter: `club_id=eq.${clubId}` }, (p) => {
+      if (deOtro(p.new as Record<string, unknown>)) onChange();
+    });
+    // Quitar no se puede filtrar (solo trae el id): se recarga y la lista decide.
+    channel.on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'library_annotations' }, () => onChange());
+    channel.subscribe();
+    return () => {
+      getSupabase().removeChannel(channel);
+    };
+  },
 };

@@ -12,7 +12,15 @@ let mockPiezas: Fila[];
 let mockFuentes: Fila[];
 /** Lo que devuelve `library_club_source` (null si no estoy invitado). */
 let mockOriginal: Fila | null = null;
+/** Las anotaciones que la RLS deja ver (para leer la imagen o el sticker de otro miembro del club). */
+let mockAnotaciones: Fila[] = [];
 const mockConsultas: { tabla: string; filtros: unknown[][] }[] = [];
+
+/** `content->>path` lee dentro del JSON, como PostgREST. */
+const valorDe = (f: Fila, col: string) => {
+  const [base, llave] = col.split('->>');
+  return llave ? (f[base] as Fila | undefined)?.[llave] : f[col];
+};
 
 jest.mock('@supabase/supabase-js', () => ({
   createClient: () => ({
@@ -29,11 +37,11 @@ jest.mock('@supabase/supabase-js', () => ({
         };
       }
       cadena.limit = async () => {
-        const filas = tabla === 'library_fonts' ? mockFuentes : mockPiezas;
+        const filas = tabla === 'library_fonts' ? mockFuentes : tabla === 'library_annotations' ? mockAnotaciones : mockPiezas;
         // Imita la RLS y los filtros: solo lo que coincide con el id o con alguna ruta.
         const coincide = (f: Fila) =>
           consulta.filtros.every(([m, col, val]) =>
-            m === 'eq' ? f[col as string] === val : ['file_path', 'cover_path', 'custom_cover_path', 'spine_path', 'back_cover_path'].some((k) => f[k] && String(col).includes(`"${String(f[k])}"`)),
+            m === 'eq' ? valorDe(f, col as string) === val : ['file_path', 'cover_path', 'custom_cover_path', 'spine_path', 'back_cover_path'].some((k) => f[k] && String(col).includes(`"${String(f[k])}"`)),
           );
         return { data: filas.filter(coincide), error: null };
       };
@@ -341,6 +349,36 @@ describe('club de lectura: copiar el libro a quien acepta (T306)', () => {
   it('si R2 no copia, falla (la app deshace la copia a medias)', async () => {
     mockR2.mockResolvedValue(new Response(null, { status: 500 }));
     expect((await pedir({ action: 'clubCopy', clubId: CLUB, itemId: ITEM })).status).toBe(502);
+  });
+});
+
+describe('club de lectura: la imagen o el sticker de otro miembro (T307)', () => {
+  const OTRA = 'eeeeeeee-0000-4000-8000-000000000009';
+  const SU_PIEZA = 'ffffffff-0000-4000-8000-00000000000a';
+  const IMG = '11111111-0000-4000-8000-00000000000b';
+  const ST = '22222222-0000-4000-8000-00000000000c';
+  beforeEach(() => {
+    mockAnotaciones = [];
+  });
+
+  it('se lee si veo una anotación que la usa (la RLS decide)', async () => {
+    const ruta = `${OTRA}/${SU_PIEZA}/anotaciones/${IMG}.jpg`;
+    expect((await pedir({ action: 'read', path: ruta })).status).toBe(403);
+    mockAnotaciones = [{ id: 'a1', content: { path: ruta }, author_id: OTRA }];
+    expect((await pedir({ action: 'read', path: ruta })).status).toBe(200);
+  });
+
+  it('su sticker propio también, si la anotación es suya', async () => {
+    const ruta = `${OTRA}/stickers/${ST}.png`;
+    mockAnotaciones = [{ id: 'a2', content: { sticker: `mios/${ST}` }, author_id: UID }];
+    expect((await pedir({ action: 'read', path: ruta })).status).toBe(403);
+    mockAnotaciones = [{ id: 'a2', content: { sticker: `mios/${ST}` }, author_id: OTRA }];
+    expect((await pedir({ action: 'read', path: ruta })).status).toBe(200);
+  });
+
+  it('otras rutas ajenas no', async () => {
+    mockAnotaciones = [{ id: 'a3', content: { path: `${OTRA}/${SU_PIEZA}/libro.pdf` } }];
+    expect((await pedir({ action: 'read', path: `${OTRA}/${SU_PIEZA}/libro.pdf` })).status).toBe(403);
   });
 });
 
