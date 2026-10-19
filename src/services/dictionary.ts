@@ -35,13 +35,24 @@ export function enlaceWordReference(palabra: string): string {
 }
 
 /**
- * A dónde mandar la palabra fuera de la app, según el idioma de la app y el de la palabra (RF-BH8): en
- * español, siempre la RAE; en inglés, Merriam-Webster si la palabra es inglesa y WordReference (su traducción)
- * si es española. La RAE no tiene sentido para quien lee la app en inglés.
+ * A dónde mandar la palabra fuera de la app, según los idiomas que la persona lee (el de la app y los que marcó
+ * en el perfil; RF-BH8, T339) y el de la palabra: una palabra en español va a la RAE si lee español y a
+ * WordReference (su traducción) si no; una en inglés, a Merriam-Webster si lee inglés y, si solo lee español,
+ * a la RAE como hasta ahora.
  */
-export function enlaceExterno(palabra: string, idiomaApp: 'es' | 'en', palabraEspanola: boolean): { sitio: 'rae' | 'merriam' | 'wordreference'; url: string } {
-  if (idiomaApp === 'es') return { sitio: 'rae', url: enlaceRae(palabra) };
-  return palabraEspanola ? { sitio: 'wordreference', url: enlaceWordReference(palabra) } : { sitio: 'merriam', url: enlaceMerriamWebster(palabra) };
+export function enlaceExterno(
+  palabra: string,
+  idiomas: readonly ('es' | 'en')[],
+  palabraEspanola: boolean,
+): { sitio: 'rae' | 'merriam' | 'wordreference'; url: string } {
+  const leeEspanol = idiomas.includes('es');
+  if (palabraEspanola) return leeEspanol ? { sitio: 'rae', url: enlaceRae(palabra) } : { sitio: 'wordreference', url: enlaceWordReference(palabra) };
+  return idiomas.includes('en') || !leeEspanol ? { sitio: 'merriam', url: enlaceMerriamWebster(palabra) } : { sitio: 'rae', url: enlaceRae(palabra) };
+}
+
+/** Los idiomas que la persona lee: el de la app siempre, más los que marcó en el perfil (T339). */
+export function idiomasQueLee(idiomaApp: 'es' | 'en', marcados: readonly ('es' | 'en')[]): ('es' | 'en')[] {
+  return [...new Set([idiomaApp, ...marcados])];
 }
 
 /** Una palabra con letras del español (acentos, ñ, ü) no se busca en el diccionario de inglés. */

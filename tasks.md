@@ -1126,8 +1126,12 @@ Decisiones B1–B9 aprobadas el 12 oct 2026 (T274); ver la tabla de la spec 13 �
   **Hecho (14 oct 2026):** tamaño hasta 300 %; en PDF el tamaño es el acercamiento (hoja Lectura) y en páginas de lado
   se lee por pantallas con "p. 12 · 2/3" (`pasarPantalla`, `avisarPantalla` en `engine.js`); EPUB en libro real dice
   la página de foliate. El texto reacomodado de PDF (T327) queda para agrandar más allá del ancho.
-- [ ] T339 Idiomas que la persona lee, en el perfil; Definir elige RAE para el español si lo lee aunque la app
+- [x] T339 Idiomas que la persona lee, en el perfil; Definir elige RAE para el español si lo lee aunque la app
   esté en inglés (WordReference solo para quien no). (RF-BH8, pedido de Areli del 14 oct 2026) Dep: T287
+  **Hecho (19 oct 2026):** `readingLanguages` en `store/preferences-store.ts` (guardado y validado: solo `es`/`en`);
+  Perfil → "Idiomas en que lees" con dos chips, el de la app siempre marcado; `enlaceExterno(palabra, idiomas,
+  espanola)` e `idiomasQueLee` en `services/dictionary.ts`, y la hoja de Definir los usa. Una palabra en inglés va
+  a Merriam-Webster si se lee inglés aunque la app esté en español.
 - [x] T336 Post-it: la letra fija que se reduce si no cabe (como PowerPoint) y su tamaño elegible (50 – 300 %).
   (RF-BH14, pedido de Areli del 14 oct 2026) Dep: T329
   **Hecho (14 oct 2026):** `ajustarLetra` con un `ResizeObserver` en `public/reader/annotations.js` (busca la letra

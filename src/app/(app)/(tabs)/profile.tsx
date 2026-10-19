@@ -35,6 +35,7 @@ import {
   Avatar,
   Banner,
   Button,
+  Chip,
   DateInputSheet,
   ErrorState,
   LoadingState,
@@ -117,6 +118,8 @@ export default function ProfileScreen() {
   const setAppearance = usePreferencesStore((s) => s.setAppearance);
   const language = usePreferencesStore((s) => s.language);
   const setLanguage = usePreferencesStore((s) => s.setLanguage);
+  const readingLanguages = usePreferencesStore((s) => s.readingLanguages);
+  const setReadingLanguages = usePreferencesStore((s) => s.setReadingLanguages);
   const tx = useT();
   const lang = useLanguage();
   const showWorkouts = usePreferencesStore((s) => s.showWorkouts);
@@ -482,6 +485,30 @@ export default function ProfileScreen() {
         />
         {/* Debajo y no a la derecha: tres opciones no caben junto a la etiqueta en 375 px. */}
         <SettingsRow
+          icon={<BookOpen size={IconSize.inline} strokeWidth={IconStroke} color={theme.textSecondary} />}
+          label={tx.profile.readingLanguages}
+          hint={tx.profile.readingLanguagesHint}
+          below={
+            // T339: el de la app va siempre marcado; tocarlo no lo quita.
+            <View style={styles.idiomas} accessibilityLabel={tx.profile.readingLanguages}>
+              {(['es', 'en'] as const).map((l) => {
+                const nombre = l === 'es' ? tx.profile.languageSpanish : tx.profile.languageEnglish;
+                const marcado = readingLanguages.includes(l);
+                return (
+                  <Chip
+                    key={l}
+                    label={nombre}
+                    accessibilityLabel={l === lang ? tx.profile.readingLanguageAppOne(nombre) : nombre}
+                    selected={l === lang || marcado}
+                    onPress={() => l !== lang && setReadingLanguages(marcado ? readingLanguages.filter((x) => x !== l) : [...readingLanguages, l])}
+                    compact
+                  />
+                );
+              })}
+            </View>
+          }
+        />
+        <SettingsRow
           icon={<Info size={IconSize.inline} strokeWidth={IconStroke} color={theme.textSecondary} />}
           label={tx.profile.version}
           value={env.isDemoMode ? `${version} · demo` : version}
@@ -626,6 +653,7 @@ export default function ProfileScreen() {
 
 const styles = StyleSheet.create({
   nobis: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm, padding: Spacing.md },
+  idiomas: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm },
   nobi: { width: 60, height: 60, borderRadius: Radius.full, borderWidth: 2, overflow: 'hidden' },
   nobiImagen: { width: '100%', height: '100%' },
   content: { gap: Spacing.xl },

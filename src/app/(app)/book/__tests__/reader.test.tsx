@@ -663,6 +663,16 @@ describe('subrayar, definir y copiar (spec 13c, T287)', () => {
     expect(screen.getByRole('button', { name: A.defineRae })).toBeTruthy();
   });
 
+  it('quien marcó que lee inglés va a Merriam-Webster con una palabra en inglés (T339)', async () => {
+    usePreferencesStore.setState({ readingLanguages: ['en'] });
+    await render(<Lector />);
+    await responder({ type: 'opened', total: 12 });
+    await seleccionar('book', { cfi: 'epubcfi(/6/4!/4/2,/1:3,/1:7)', fraction: 0.1 });
+    await fireEvent.press(screen.getByRole('button', { name: A.define }));
+    expect(screen.getByRole('button', { name: A.defineMerriam })).toBeTruthy();
+    usePreferencesStore.setState({ readingLanguages: [] });
+  });
+
   it('en un libro en español, definir manda a la RAE sin buscar en inglés', async () => {
     mockPieza = { ...pdf, kind: 'epub', last_position: null };
     await render(<Lector />);

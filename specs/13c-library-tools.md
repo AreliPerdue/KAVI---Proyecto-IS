@@ -82,9 +82,15 @@
     inglés y **WordReference** (su traducción) para una en español —la RAE no sirve a quien lee la app en
     inglés— (14 oct 2026, pedido de Areli). (Enmienda del 13 oct 2026: a la Free Dictionary API le faltaban palabras comunes.) El diccionario del sistema
     del iPhone necesita un módulo nativo: queda pendiente para cuando haya cuenta de Apple Developer.
-    - **Pendiente (T339, pedido de Areli del 14 oct 2026): los idiomas que la persona sabe.** En el perfil se
-      marcan los idiomas que se leen (además del de la app). Si sabe español, una palabra en español lleva a la
-      **RAE** aunque la app esté en inglés; WordReference queda para quien solo lee inglés.
+    - **Los idiomas que la persona lee (T339, pedido de Areli del 14 oct 2026; hecho el 19 oct).** En Perfil →
+      "Idiomas en que lees" se marcan español e inglés; el de la app va siempre marcado. El enlace de afuera
+      sale de esos idiomas, no solo del de la app: una palabra en español va a la **RAE** si se lee español
+      (aunque la app esté en inglés) y a **WordReference** si no; una en inglés va a **Merriam-Webster** si se
+      lee inglés (aunque la app esté en español) y, si solo se lee español, a la RAE como antes.
+      - *Given* la app en inglés y "Español" marcado, *when* se define "ciudad", *then* el enlace es "Search
+        the RAE".
+      - *Given* la app en español y "English" marcado, *when* se define "book", *then* el enlace es "Buscar en
+        Merriam-Webster".
   - **Copiar:** un PDF que prohíbe copiar (permisos del archivo) deja subrayar pero el botón dice "Este libro
     no deja copiar su texto". La web permite `en.wiktionary.org` y `api.dictionaryapi.dev` en su CSP.
 

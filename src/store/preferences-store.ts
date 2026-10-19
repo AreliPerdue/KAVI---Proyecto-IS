@@ -63,6 +63,7 @@ type Prefs = {
   readingModes: Record<string, FormaDeLeer>;
   readerTheme: PreferenciaDeTema;
   readerText: PreferenciaDeTexto;
+  readingLanguages: Language[];
 };
 
 type PreferencesState = {
@@ -119,6 +120,12 @@ type PreferencesState = {
   /** Tema del lector (RF-BH5): el mismo para todos los libros, aparte del tema de la app. */
   readerTheme: PreferenciaDeTema;
   readerText: PreferenciaDeTexto;
+  /**
+   * Los idiomas que la persona lee además del de la app (T339): con español, Definir manda a la RAE aunque la
+   * app esté en inglés. Vacío = solo el de la app.
+   */
+  readingLanguages: Language[];
+  setReadingLanguages: (idiomas: Language[]) => void;
   hydrated: boolean;
   setTimeFormat: (formato: TimeFormat) => void;
   setLanguage: (idioma: LanguagePreference) => void;
@@ -180,6 +187,7 @@ export const usePreferencesStore = create<PreferencesState>((set, get) => ({
   readingModes: {},
   readerTheme: TEMA_POR_OMISION,
   readerText: TEXTO_POR_OMISION,
+  readingLanguages: [],
   hydrated: false,
 
   setTimeFormat: (formato) => {
@@ -312,6 +320,13 @@ export const usePreferencesStore = create<PreferencesState>((set, get) => ({
     persistir({ ...get(), readerText: texto });
   },
 
+  setReadingLanguages: (idiomas) => {
+    elegidoEnEstaSesion.add('readingLanguages');
+    const limpio = idiomasValidos(idiomas);
+    set({ readingLanguages: limpio });
+    persistir({ ...get(), readingLanguages: limpio });
+  },
+
   marcarVisto: () => {
     if (get().visto) return;
     elegidoEnEstaSesion.add('visto');
@@ -358,6 +373,7 @@ export const usePreferencesStore = create<PreferencesState>((set, get) => ({
       readingModes: guardado('readingModes', formasValidas(prefs?.readingModes)),
       readerTheme: guardado('readerTheme', temaValido(prefs?.readerTheme)),
       readerText: guardado('readerText', textoValido(prefs?.readerText)),
+      readingLanguages: guardado('readingLanguages', idiomasValidos(prefs?.readingLanguages)),
       hydrated: true,
     });
     // Lo elegido antes de hidratar se guardo con el resto de valores por omision;
@@ -368,7 +384,7 @@ export const usePreferencesStore = create<PreferencesState>((set, get) => ({
 
 /** Se guarda el conjunto entero: son dos claves y así no pueden desincronizarse. */
 function persistir(
-  estado: Pick<PreferencesState, 'timeFormat' | 'timeFormatChosen' | 'language' | 'lastWorkoutTitle' | 'showWorkouts' | 'showBirthdays' | 'visto' | 'appearance' | 'selfColor' | 'pinnedViews' | 'accesos' | 'overlayRecientes' | 'libraryView' | 'libraryOrder' | 'librarySeriesView' | 'librarySpineHeights' | 'readingModes' | 'readerTheme' | 'readerText'>,
+  estado: Pick<PreferencesState, 'timeFormat' | 'timeFormatChosen' | 'language' | 'lastWorkoutTitle' | 'showWorkouts' | 'showBirthdays' | 'visto' | 'appearance' | 'selfColor' | 'pinnedViews' | 'accesos' | 'overlayRecientes' | 'libraryView' | 'libraryOrder' | 'librarySeriesView' | 'librarySpineHeights' | 'readingModes' | 'readerTheme' | 'readerText' | 'readingLanguages'>,
 ): void {
   void setJson(PREFS_KEY, {
     timeFormat: estado.timeFormat,
@@ -390,5 +406,12 @@ function persistir(
     readingModes: estado.readingModes,
     readerTheme: estado.readerTheme,
     readerText: estado.readerText,
+    readingLanguages: estado.readingLanguages,
   } satisfies Prefs);
+}
+
+/** Solo español e inglés, sin repetir (T339). */
+function idiomasValidos(valor: unknown): Language[] {
+  if (!Array.isArray(valor)) return [];
+  return (['es', 'en'] as const).filter((l) => valor.includes(l));
 }

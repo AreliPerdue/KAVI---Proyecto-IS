@@ -7,11 +7,12 @@ import { useDefinition } from '@/hooks/use-dictionary';
 import { useTheme } from '@/hooks/use-theme';
 import { useLanguage, useT } from '@/i18n';
 import { isOfflineError } from '@/lib/auth-errors';
-import { enlaceExterno, idiomaEspanol, pareceEspanol } from '@/services/dictionary';
+import { enlaceExterno, idiomaEspanol, idiomasQueLee, pareceEspanol } from '@/services/dictionary';
+import { usePreferencesStore } from '@/store/preferences-store';
 
 /**
  * El significado de una palabra sin salir del libro (spec 13c, RF-BH8; decisión B4). En inglés, la
- * definición; además, un enlace afuera según el idioma de la app (ver `enlaceExterno`).
+ * definición; además, un enlace afuera según los idiomas que lee la persona (ver `enlaceExterno`).
  */
 export function DefineSheet({ palabra, idioma = null, onClose }: { palabra: string | null; idioma?: string | null; onClose: () => void }) {
   const a = useT().library.annotations;
@@ -26,12 +27,13 @@ function Contenido({ palabra, idioma }: { palabra: string; idioma: string | null
   const theme = useTheme();
   const a = useT().library.annotations;
   const lang = useLanguage();
+  const marcados = usePreferencesStore((s) => s.readingLanguages);
   const busqueda = useDefinition(palabra, idioma);
   // Del español: por el idioma del libro, por sus letras o porque Wiktionary solo la tiene en español.
   const espanol = pareceEspanol(palabra) || idiomaEspanol(idioma) || !!busqueda.data?.espanol;
   const definicion = busqueda.data?.definicion ?? null;
-  // Fuera de la app: la RAE en español; en inglés, Merriam-Webster o la traducción en WordReference.
-  const externo = enlaceExterno(palabra, lang, espanol);
+  // Fuera de la app: la RAE para quien lee español; Merriam-Webster o la traducción en WordReference si no.
+  const externo = enlaceExterno(palabra, idiomasQueLee(lang, marcados), espanol);
 
   return (
     <View style={styles.cuerpo}>

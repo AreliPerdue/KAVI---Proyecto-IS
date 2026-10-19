@@ -273,6 +273,37 @@ describe('apariencia (NFR-18)', () => {
 });
 
 /**
+ * Idiomas en que lees (T339): el de la app siempre cuenta; el otro se marca y se desmarca, y queda guardado
+ * para que Definir elija el diccionario.
+ */
+describe('idiomas en que lees (T339)', () => {
+  /* eslint-disable-next-line @typescript-eslint/no-require-imports -- tras los mocks */
+  const { usePreferencesStore } = require('@/store/preferences-store') as typeof import('@/store/preferences-store');
+
+  beforeEach(() => usePreferencesStore.setState({ readingLanguages: [] }));
+
+  it('el idioma de la app va marcado y tocarlo no lo quita', async () => {
+    await render(<Pantalla />);
+
+    const app = screen.getByRole('button', { name: 'Español, el idioma de la app' });
+    expect(app.props.accessibilityState.selected).toBe(true);
+    await fireEvent.press(app);
+    expect(usePreferencesStore.getState().readingLanguages).toEqual([]);
+  });
+
+  it('marcar inglés lo guarda y volver a tocarlo lo quita', async () => {
+    await render(<Pantalla />);
+
+    await fireEvent.press(screen.getByRole('button', { name: 'English' }));
+    expect(usePreferencesStore.getState().readingLanguages).toEqual(['en']);
+    expect(screen.getByRole('button', { name: 'English' }).props.accessibilityState.selected).toBe(true);
+
+    await fireEvent.press(screen.getByRole('button', { name: 'English' }));
+    expect(usePreferencesStore.getState().readingLanguages).toEqual([]);
+  });
+});
+
+/**
  * "Amigos y compartido" abre Compartido donde esté (RF-N3): su lugar en la barra si lo tiene,
  * o apilado si se quitó de la barra. Antes era "Ver solicitudes".
  */
