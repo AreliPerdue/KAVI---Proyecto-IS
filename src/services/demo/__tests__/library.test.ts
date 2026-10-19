@@ -1,6 +1,7 @@
 /**
  * KAVI Library en el demo (T275): las mismas reglas que la base (`20261012100000_library.sql`).
  */
+import { es } from '@/i18n/es';
 import type { LibraryApi } from '@/services/contracts';
 
 jest.mock('@/services/demo/store', () => ({
@@ -307,5 +308,61 @@ describe('fichas: versión archivada (13d, RF-BF5; T293)', () => {
     const archivada = await api.saveCardTemplate(ANA, { id: p.id, name: p.name, fields: p.fields, archived: true });
     expect(archivada.archived).toBe(true);
     expect((await api.listCards(ANA))[0]).toMatchObject({ template_id: p.id, values: { stars: 4 } });
+  });
+});
+
+describe('club de lectura: datos (13f; T305)', () => {
+  /* eslint-disable-next-line @typescript-eslint/no-require-imports -- el mismo estado que `fresh()` */
+  const store = () => require('@/services/demo/store') as typeof import('@/services/demo/store');
+  const YO = 'demo-user';
+  const ANA = 'demo-ana';
+  const LUIS = 'demo-luis';
+
+  async function conClub() {
+    const api = fresh();
+    store().setCurrentUser({ id: YO, email: 'demo@kavi.app' });
+    const libro = await api.createItem(YO, { family: 'book', kind: 'pdf', title: 'Rayuela', file_size: 20 * MB });
+    const club = await api.createClub(YO, { sourceItemId: libro.id, name: 'Club de Rayuela' });
+    return { api, libro, club };
+  }
+
+  it('crear: la huella sale del libro, quedo como anfitrión con mi libro y el libro queda en el club', async () => {
+    const { api, libro, club } = await conClub();
+    expect(club).toMatchObject({ host_id: YO, kind: 'pdf', file_size: 20 * MB, source_item_id: libro.id });
+    expect(await api.listClubMembers([club.id])).toEqual([expect.objectContaining({ person_id: YO, status: 'accepted', item_id: libro.id })]);
+    expect((await api.getItem(libro.id)).club_id).toBe(club.id);
+    await expect(api.createClub(YO, { sourceItemId: libro.id, name: 'Otro' })).rejects.toThrow(es.errors.clubAlready);
+  });
+
+  it('solo se invita a contactos aceptados, con su perfil, hasta 12 personas', async () => {
+    const { api, club } = await conClub();
+    await api.inviteToClub(club.id, [ANA]);
+    await expect(api.inviteToClub(club.id, [LUIS])).rejects.toThrow(es.errors.clubOnlyContacts);
+    const lista = await api.listClubMembers([club.id]);
+    expect(lista.find((m) => m.person_id === ANA)).toMatchObject({ status: 'pending', item_id: null, profile: { display_name: 'Ana Torres' } });
+    await api.removeClubInvite(club.id, ANA);
+    expect((await api.listClubMembers([club.id])).map((m) => m.person_id)).toEqual([YO]);
+  });
+
+  it('las anotaciones del club solo desde una copia del club; cerrar el club deja las mías solo mías', async () => {
+    const { api, libro, club } = await conClub();
+    const otro = await api.createItem(YO, { family: 'book', kind: 'pdf', title: 'Otro', file_size: MB });
+    await expect(api.saveAnnotations(YO, [{ id: 'a0', item_id: otro.id, kind: 'highlight', locator: { page: 1 }, club_id: club.id }])).rejects.toThrow();
+    await api.saveAnnotations(YO, [{ id: 'a1', item_id: libro.id, kind: 'highlight', locator: { page: 1 }, club_id: club.id }]);
+    expect((await api.listAnnotations(libro.id))[0]).toMatchObject({ club_id: club.id, author_id: YO });
+    await expect(api.leaveClub(club.id)).rejects.toThrow(es.errors.clubHostLeaves);
+    await api.closeClub(club.id);
+    expect(await api.listClubs(YO)).toEqual([]);
+    expect((await api.listAnnotations(libro.id))[0].club_id).toBeNull();
+    expect((await api.getItem(libro.id)).club_id).toBeNull();
+  });
+
+  it('quien no dirige no cambia el club; mostrar mi avance se apaga', async () => {
+    const { api, club } = await conClub();
+    await api.setClubProgressVisible(YO, club.id, false);
+    expect((await api.listClubMembers([club.id]))[0].shows_progress).toBe(false);
+    store().setCurrentUser({ id: ANA, email: 'ana@kavi.app' });
+    await expect(api.renameClub(club.id, 'Mío')).rejects.toThrow(es.errors.clubNotHost);
+    await expect(api.closeClub(club.id)).rejects.toThrow(es.errors.clubNotHost);
   });
 });

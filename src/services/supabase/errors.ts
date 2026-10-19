@@ -10,6 +10,17 @@ import { getSupabase } from '@/lib/supabase';
  * caducada y una columna que no existe, y sin el original no hay cómo distinguirlas. Pasó
  * exactamente eso con el alta de listas.
  */
+const AVISOS_DE_CLUB: Record<string, 'clubFull' | 'clubSource' | 'clubAlready' | 'clubHostLeaves' | 'clubNotHost' | 'clubNotMember' | 'clubCopy' | 'clubAnnotation'> = {
+  library_club_full: 'clubFull',
+  library_club_source: 'clubSource',
+  library_club_already: 'clubAlready',
+  library_club_host_leaves: 'clubHostLeaves',
+  library_club_not_host: 'clubNotHost',
+  library_club_not_member: 'clubNotMember',
+  library_club_copy: 'clubCopy',
+  library_club_annotation: 'clubAnnotation',
+};
+
 export function toError(error: { message: string; code?: string; details?: string; hint?: string }): AuthUiError {
    
   console.error('[supabase]', error.code ?? 'sin código', error.message, error.details ?? '', error.hint ?? '');
@@ -28,6 +39,8 @@ export function toError(error: { message: string; code?: string; details?: strin
    */
   if (error.code === '42501') {
     void cerrarSiNoHaySesion();
+    // Invitar a un club a quien no es contacto lo rechaza la RLS de sus miembros (13f, T305).
+    if (/library_club_members/.test(error.message)) return new AuthUiError(t().errors.clubOnlyContacts, error);
     return new AuthUiError(t().errors.noPermission, error);
   }
   // 22023 lo usan las funciones de la base que ya traen el mensaje en español para la persona
@@ -42,6 +55,9 @@ export function toError(error: { message: string; code?: string; details?: strin
   if (error.hint === 'library_quota' || error.message === 'library_quota') {
     return new AuthUiError(t().errors.libraryQuota, error);
   }
+  // Club de lectura (13f, T305): las reglas de la base llegan con su aviso.
+  const club = AVISOS_DE_CLUB[error.hint ?? ''] ?? AVISOS_DE_CLUB[error.message];
+  if (club) return new AuthUiError(t().errors[club], error);
   return new AuthUiError(AUTH_MESSAGES.generic, error);
 }
 

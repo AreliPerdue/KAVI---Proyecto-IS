@@ -76,6 +76,24 @@ Es la única parte de Library que se comparte, y solo con quien se invita (P4).
   club llegan por los cambios de la tabla, como Compartido (RF-S14).
 - **Eliminar la cuenta** (RF-A12): cierra los clubes que dirigía (cada miembro conserva su copia) y la quita
   de los demás.
+- **Hecho (T305, 20 oct 2026), migración `20261020110000_library_clubs.sql`:**
+  - **Tablas:** `library_clubs` lleva la huella (tipo y tamaño) del libro del anfitrión, que la base copia de
+    su pieza. `library_club_members` guarda `status`, `item_id`, `shows_progress` e `invited_by`.
+  - **Columnas nuevas:** `club_id` en `library_items`; en `library_annotations`, `club_id`, `author_id` y
+    `updated_by` (quién la cambió al último, RF-BC7).
+  - **Al crear el club:** el anfitrión queda como miembro aceptado con su libro como copia.
+  - **Reglas:**
+    - solo se invita a contactos aceptados, hasta 12 contando invitaciones;
+    - una pieza entra a un club solo si su dueño está invitado y es el mismo tipo de libro;
+    - aceptar pide una copia propia de ese club;
+    - una anotación entra al club solo desde una copia del club;
+    - otro miembro cambia el contenido de una anotación, pero no su dueño, su pieza, su club ni su autor.
+  - **Desconectar (RF-BC8) lo hace la base,** `library_club_disconnect`. Lo usan salir (`library_leave_club`),
+    quitar (`library_remove_club_member`) y cerrar. Cerrar es borrar el club, y un disparador desconecta
+    antes a cada miembro. Así cada quien se queda con lo del club aunque el anfitrión borre su cuenta.
+  - **Pendiente:**
+    - copiar el archivo del anfitrión a la carpeta de quien acepta, en R2, con su función: T306;
+    - que los miembros vean las imágenes pegadas por otros: T307.
 - **Modo demo:** los otros miembros son contactos simulados, igual que en Compartido.
 
 ## 6. Fuera de esta versión

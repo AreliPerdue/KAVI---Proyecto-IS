@@ -53,6 +53,8 @@ import type {
   StickerPack,
   UserSticker,
   LibraryClip,
+  LibraryClub,
+  LibraryClubMember,
   NuevoFragmento,
   LibraryLink,
   LibraryLinkKind,
@@ -560,6 +562,26 @@ export interface LibraryApi {
   updateClipNote(userId: string, clipId: string, note: string | null): Promise<LibraryClip>;
   /** Lo borra con su imagen. */
   removeClip(userId: string, clipId: string): Promise<void>;
+
+  /** Clubes de lectura (13f; T305): los que dirijo, en los que estoy y a los que me invitaron. */
+  listClubs(userId: string): Promise<LibraryClub[]>;
+  /** Los miembros e invitados de esos clubes, con su perfil. */
+  listClubMembers(clubIds: readonly string[]): Promise<LibraryClubMember[]>;
+  /** Crea el club con un libro mío (PDF o EPUB); quedo como anfitrión y mi libro como mi copia. */
+  createClub(userId: string, input: { sourceItemId: string; name: string }): Promise<LibraryClub>;
+  renameClub(clubId: string, name: string): Promise<void>;
+  /** Invita a contactos aceptados (hasta 12 personas en el club). */
+  inviteToClub(clubId: string, personIds: readonly string[]): Promise<void>;
+  /** Rechazar mi invitación o retirar una que hice (solo pendientes). */
+  removeClubInvite(clubId: string, personId: string): Promise<void>;
+  /** Salir (me quedo con mi copia y lo del club). */
+  leaveClub(clubId: string): Promise<void>;
+  /** El anfitrión quita a alguien (se queda con su copia y lo del club). */
+  removeClubMember(clubId: string, personId: string): Promise<void>;
+  /** El anfitrión cierra el club: cada quien se queda con su copia y lo del club. */
+  closeClub(clubId: string): Promise<void>;
+  /** Si los demás ven por dónde voy (RF-BC9). */
+  setClubProgressVisible(userId: string, clubId: string, visible: boolean): Promise<void>;
 
   /** Acomodos guardados (RF-BL7b, T331). */
   listLayouts(userId: string): Promise<LibraryLayout[]>;

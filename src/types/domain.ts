@@ -610,6 +610,8 @@ export type LibraryItem = {
   /** Saga a la que pertenece y su número en ella (RF-BL24); el número admite decimales (#1.5). */
   series_id: string | null;
   series_index: number | null;
+  /** El club de lectura al que está conectada esta copia (spec 13f; T305). */
+  club_id?: string | null;
   /** Más datos, todos opcionales (RF-BL19, de KAVI Reader). */
   publisher: string | null;
   publish_place: string | null;
@@ -784,12 +786,19 @@ export type LibraryAnnotation = {
   /** Un sticker quitado vive en la charola y se puede volver a poner (RF-BH13). */
   removed: boolean;
   locked: boolean;
+  /**
+   * Club de lectura (spec 13f; T305): `club_id` si la ven todos los miembros (las "Solo para mí" no lo
+   * llevan); quién la hizo (en una copia que quedó del club, la persona original) y quién la cambió al último.
+   */
+  club_id?: string | null;
+  author_id?: string | null;
+  updated_by?: string | null;
   created_at: string;
   updated_at: string;
 };
 
 export type LibraryAnnotationInput = Pick<LibraryAnnotation, 'id' | 'item_id' | 'kind' | 'locator'> &
-  Partial<Pick<LibraryAnnotation, 'content' | 'z' | 'removed' | 'locked'>>;
+  Partial<Pick<LibraryAnnotation, 'content' | 'z' | 'removed' | 'locked' | 'club_id'>>;
 
 export type CardFieldType = 'scale' | 'choice' | 'text' | 'date' | 'boolean';
 
@@ -860,3 +869,31 @@ export type LibraryFont = {
 
 /** Contenido de un archivo para subirlo: en web un Blob; en el teléfono, sus bytes. */
 export type LibraryFileBody = Blob | ArrayBuffer | Uint8Array;
+
+/** Un club de lectura (spec 13f; T305): un grupo de contactos que lee el mismo PDF o EPUB, cada quien su copia. */
+export type LibraryClub = {
+  id: string;
+  host_id: string;
+  name: string;
+  /** El libro del anfitrión del que salen las copias, y su huella (tipo y tamaño). */
+  source_item_id: string | null;
+  kind: 'pdf' | 'epub';
+  file_size: number;
+  created_at: string;
+  updated_at: string;
+};
+
+export type LibraryClubMember = {
+  club_id: string;
+  person_id: string;
+  status: 'pending' | 'accepted';
+  /** Su copia; vacía hasta que acepta. */
+  item_id: string | null;
+  /** Si los demás ven por dónde va (RF-BC9). */
+  shows_progress: boolean;
+  invited_by: string | null;
+  created_at: string;
+  joined_at: string | null;
+  /** Para mostrar quién es. */
+  profile: { display_name: string | null; username: string | null; avatar_url: string | null } | null;
+};

@@ -73,3 +73,18 @@ describe('unwrap', () => {
     expect(unwrap({ data: false, error: null })).toBe(false);
   });
 });
+
+describe('club de lectura (13f, T305)', () => {
+  /* eslint-disable-next-line @typescript-eslint/no-require-imports -- el diccionario activo */
+  const { es } = require('@/i18n/es') as typeof import('@/i18n/es');
+  it('los avisos de la base del club se dicen en palabras', () => {
+    expect(toError({ message: 'library_club_full', code: 'P0001', hint: 'library_club_full' }).message).toBe(es.errors.clubFull);
+    expect(toError({ message: 'library_club_host_leaves', code: 'P0001', hint: 'library_club_host_leaves' }).message).toBe(es.errors.clubHostLeaves);
+  });
+
+  it('invitar a quien no es contacto (la RLS) lo dice así', () => {
+    const e = toError({ message: 'new row violates row-level security policy for table "library_club_members"', code: '42501' });
+    expect(e.message).toBe(es.errors.clubOnlyContacts);
+  });
+});
+

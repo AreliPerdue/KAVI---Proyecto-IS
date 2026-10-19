@@ -1258,9 +1258,15 @@ Reemplazan L5 (13e). Un recorte es una página 1 : √2 del visor de PDF (decisi
   **Hecho (12 oct 2026):** C1 a su ritmo y en vivo · C2 anotaciones compartidas por omisión y editables por
   todos · C3 sin llamada (no es simple; al largo plazo) · C4 copia propia para cada miembro, que se la queda ·
   C5 hasta 12 · C6 después de L3.
-- [ ] T305 Datos: `library_clubs`, `library_club_members`, `club_id` y `author_id` en `library_annotations`,
+- [x] T305 Datos: `library_clubs`, `library_club_members`, `club_id` y `author_id` en `library_annotations`,
   RLS con `library_club_member()` y `are_connected`, lectura del original para miembros en Storage; en
   Supabase y demo. (spec 13f §5) Dep: T275
+  **Hecho (20 oct 2026):**
+  - Migración `20261020110000_library_clubs.sql`, con `updated_by` y la desconexión en la base (RF-BC8).
+    RLS probada en PGlite: 33 casos.
+  - Servicios en Supabase y demo: listar, crear, invitar, retirar invitación, salir, quitar, cerrar, nombre y
+    avance. Errores del club traducidos.
+  - Copiar el original para quien acepta pasa a T306 (es en R2, no en Storage).
 - [ ] T306 Crear club desde el menú de la pieza, invitar contactos (tope 12), aceptar con copia propia y aviso
   de espacio, salir, quitar y cerrar sin borrar copias. (RF-BC1 – RF-BC5) Dep: T305, T281
 - [ ] T307 Anotaciones del club: compartidas por omisión, "Solo para mí", editables por todos con autor y

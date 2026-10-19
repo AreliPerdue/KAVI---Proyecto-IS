@@ -13,6 +13,8 @@ import type {
   StickerPack,
   UserSticker,
   LibraryClip,
+  LibraryClub,
+  LibraryClubMember,
   LibraryCard,
   LibraryCardTemplate,
   LibraryFileBody,
@@ -301,6 +303,62 @@ export const supabaseLibrary: LibraryApi = {
     const fila = unwrap(await db().from('library_clips').delete().eq('owner_id', userId).eq('id', clipId).select('path')) as { path: string | null }[];
     const path = fila[0]?.path;
     if (path) await archivos({ action: 'deleteFile', path });
+  },
+
+  async listClubs() {
+    // La RLS deja ver los clubes que dirijo y en los que estoy o me invitaron.
+    return unwrap(await db().from('library_clubs').select('*').order('created_at', { ascending: false })) as LibraryClub[];
+  },
+
+  async listClubMembers(clubIds) {
+    if (!clubIds.length) return [];
+    return unwrap(
+      await db()
+        .from('library_club_members')
+        .select('*, profile:profiles!library_club_members_person_id_fkey(display_name, username, avatar_url)')
+        .in('club_id', [...clubIds])
+        .order('created_at'),
+    ) as LibraryClubMember[];
+  },
+
+  async createClub(userId, input) {
+    return unwrap(
+      await db()
+        .from('library_clubs')
+        // El tipo y el tamaño los pone la base desde el libro (su huella); van solo para cumplir la tabla.
+        .insert({ host_id: userId, name: input.name.trim(), source_item_id: input.sourceItemId, kind: 'pdf', file_size: 1 })
+        .select('*')
+        .single(),
+    ) as LibraryClub;
+  },
+
+  async renameClub(clubId, name) {
+    sinError(await db().from('library_clubs').update({ name: name.trim() }).eq('id', clubId));
+  },
+
+  async inviteToClub(clubId, personIds) {
+    if (!personIds.length) return;
+    sinError(await db().from('library_club_members').insert(personIds.map((person_id) => ({ club_id: clubId, person_id }))));
+  },
+
+  async removeClubInvite(clubId, personId) {
+    sinError(await db().from('library_club_members').delete().eq('club_id', clubId).eq('person_id', personId).eq('status', 'pending'));
+  },
+
+  async leaveClub(clubId) {
+    sinError(await db().rpc('library_leave_club', { p_club: clubId }));
+  },
+
+  async removeClubMember(clubId, personId) {
+    sinError(await db().rpc('library_remove_club_member', { p_club: clubId, p_person: personId }));
+  },
+
+  async closeClub(clubId) {
+    sinError(await db().from('library_clubs').delete().eq('id', clubId));
+  },
+
+  async setClubProgressVisible(userId, clubId, visible) {
+    sinError(await db().from('library_club_members').update({ shows_progress: visible }).eq('club_id', clubId).eq('person_id', userId));
   },
 
   async saveReadingSession(userId, session) {

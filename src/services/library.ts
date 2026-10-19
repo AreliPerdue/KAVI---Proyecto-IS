@@ -27,6 +27,8 @@ export type {
   UserSticker,
   LibraryClip,
   NuevoFragmento,
+  LibraryClub,
+  LibraryClubMember,
   LibraryLinkKind,
   LibrarySeries,
   LibraryShelfItem,
@@ -72,6 +74,16 @@ export const listClips = libraryApi.listClips;
 export const createClip = libraryApi.createClip;
 export const updateClipNote = libraryApi.updateClipNote;
 export const removeClip = libraryApi.removeClip;
+export const listClubs = libraryApi.listClubs;
+export const listClubMembers = libraryApi.listClubMembers;
+export const createClub = libraryApi.createClub;
+export const renameClub = libraryApi.renameClub;
+export const inviteToClub = libraryApi.inviteToClub;
+export const removeClubInvite = libraryApi.removeClubInvite;
+export const leaveClub = libraryApi.leaveClub;
+export const removeClubMember = libraryApi.removeClubMember;
+export const closeClub = libraryApi.closeClub;
+export const setClubProgressVisible = libraryApi.setClubProgressVisible;
 export const saveLayout = libraryApi.saveLayout;
 export const removeLayout = libraryApi.removeLayout;
 export const applyOrder = libraryApi.applyOrder;

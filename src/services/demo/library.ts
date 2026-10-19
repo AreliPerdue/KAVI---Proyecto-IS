@@ -4,7 +4,8 @@ import { Platform } from 'react-native';
 import { AuthUiError } from '@/lib/auth-errors';
 import { LIBRARY_LIMITS } from '@/constants/library';
 import type { LibraryApi } from '@/services/contracts';
-import { delay, emitDataChange, nextId } from '@/services/demo/store';
+import { areConnected } from '@/services/demo/connections';
+import { delay, demoState, emitDataChange, nextId } from '@/services/demo/store';
 import { nombreSeguro } from '@/lib/library/files';
 import type {
   LibraryAnnotation,
@@ -14,6 +15,8 @@ import type {
   StickerPack,
   UserSticker,
   LibraryClip,
+  LibraryClub,
+  LibraryClubMember,
   LibraryCardTemplate,
   LibraryFileBody,
   LibraryFont,
@@ -47,6 +50,35 @@ const sesiones: LibraryReadingSession[] = [];
 const misPacks: { owner_id: string; pack_id: string }[] = [];
 const stickersPropios: UserSticker[] = [];
 const fragmentos: LibraryClip[] = [];
+const clubes: LibraryClub[] = [];
+const miembros: Omit<LibraryClubMember, 'profile'>[] = [];
+
+/** Quien usa el demo en este momento (las reglas del club dependen de quién pide). */
+const yo = () => demoState.currentUser?.id ?? '';
+const esAnfitrion = (clubId: string) => clubes.some((c) => c.id === clubId && c.host_id === yo());
+
+function perfilDe(id: string): LibraryClubMember['profile'] {
+  const p = demoState.accounts.find((a) => a.user.id === id)?.profile;
+  return p ? { display_name: p.display_name, username: p.username, avatar_url: p.avatar_url } : null;
+}
+
+/**
+ * Como `library_club_disconnect` en la base (RF-BC8): a la copia de la persona pasan, como suyas, las
+ * anotaciones del club de los demás (con su autor); las suyas dejan de ser del club; su copia sale del club.
+ */
+function desconectar(clubId: string, personId: string) {
+  const m = miembros.find((x) => x.club_id === clubId && x.person_id === personId);
+  if (m?.status === 'accepted' && m.item_id) {
+    const t0 = ahora();
+    for (const a of annotations.filter((x) => x.club_id === clubId && x.owner_id !== personId && !x.removed)) {
+      annotations.push({ ...copia(a), id: nextId('anotacion'), item_id: m.item_id, owner_id: personId, club_id: null, author_id: a.author_id ?? a.owner_id, updated_by: null, removed: false, updated_at: t0 });
+    }
+    for (const a of annotations) if (a.club_id === clubId && a.owner_id === personId) a.club_id = null;
+    const item = items.find((i) => i.id === m.item_id);
+    if (item?.club_id === clubId) item.club_id = null;
+  }
+  quitarDe(miembros, (x) => x.club_id === clubId && x.person_id === personId);
+}
 const archivos = new Map<string, { body: LibraryFileBody; type: string }>();
 
 /**
@@ -179,6 +211,9 @@ export const demoLibrary: LibraryApi = {
     quitarDe(pages, (p) => p.item_id === itemId);
     // Los fragmentos se quedan, con su título (RF-BH21).
     for (const f of fragmentos) if (f.item_id === itemId) f.item_id = null;
+    // Un club pierde su libro de origen o la copia de alguien, pero sigue (13f).
+    for (const c of clubes) if (c.source_item_id === itemId) c.source_item_id = null;
+    for (const m of miembros) if (m.item_id === itemId) m.item_id = null;
     emitDataChange();
   },
 
@@ -479,6 +514,97 @@ export const demoLibrary: LibraryApi = {
     emitDataChange();
   },
 
+  async listClubs(userId) {
+    await delay();
+    return copia(clubes.filter((c) => c.host_id === userId || miembros.some((m) => m.club_id === c.id && m.person_id === userId)));
+  },
+
+  async listClubMembers(clubIds) {
+    await delay();
+    return copia(miembros.filter((m) => clubIds.includes(m.club_id)).map((m) => ({ ...m, profile: perfilDe(m.person_id) })));
+  },
+
+  async createClub(userId, input) {
+    await delay();
+    const libro = items.find((i) => i.id === input.sourceItemId && i.owner_id === userId);
+    if (!libro || libro.family !== 'book' || (libro.kind !== 'pdf' && libro.kind !== 'epub') || !libro.file_size) throw new AuthUiError(t().errors.clubSource);
+    if (libro.club_id) throw new AuthUiError(t().errors.clubAlready);
+    const t0 = ahora();
+    const club: LibraryClub = {
+      id: nextId('club'),
+      host_id: userId,
+      name: input.name.trim().slice(0, 120) || libro.title,
+      source_item_id: libro.id,
+      kind: libro.kind,
+      file_size: libro.file_size,
+      created_at: t0,
+      updated_at: t0,
+    };
+    clubes.push(club);
+    miembros.push({ club_id: club.id, person_id: userId, status: 'accepted', item_id: libro.id, shows_progress: true, invited_by: userId, created_at: t0, joined_at: t0 });
+    libro.club_id = club.id;
+    emitDataChange();
+    return copia(club);
+  },
+
+  async renameClub(clubId, name) {
+    await delay();
+    const club = clubes.find((c) => c.id === clubId);
+    if (!club || club.host_id !== yo()) throw new AuthUiError(t().errors.clubNotHost);
+    club.name = name.trim().slice(0, 120) || club.name;
+    club.updated_at = ahora();
+    emitDataChange();
+  },
+
+  async inviteToClub(clubId, personIds) {
+    await delay();
+    if (!esAnfitrion(clubId)) throw new AuthUiError(t().errors.clubNotHost);
+    const nuevos = personIds.filter((p) => p !== yo() && !miembros.some((m) => m.club_id === clubId && m.person_id === p));
+    if (nuevos.some((p) => !areConnected(yo(), p))) throw new AuthUiError(t().errors.clubOnlyContacts);
+    if (miembros.filter((m) => m.club_id === clubId).length + nuevos.length > 12) throw new AuthUiError(t().errors.clubFull);
+    const t0 = ahora();
+    for (const p of nuevos) miembros.push({ club_id: clubId, person_id: p, status: 'pending', item_id: null, shows_progress: true, invited_by: yo(), created_at: t0, joined_at: null });
+    emitDataChange();
+  },
+
+  async removeClubInvite(clubId, personId) {
+    await delay();
+    if (personId !== yo() && !esAnfitrion(clubId)) throw new AuthUiError(t().errors.clubNotHost);
+    quitarDe(miembros, (m) => m.club_id === clubId && m.person_id === personId && m.status === 'pending');
+    emitDataChange();
+  },
+
+  async leaveClub(clubId) {
+    await delay();
+    if (!miembros.some((m) => m.club_id === clubId && m.person_id === yo())) throw new AuthUiError(t().errors.clubNotMember);
+    if (esAnfitrion(clubId)) throw new AuthUiError(t().errors.clubHostLeaves);
+    desconectar(clubId, yo());
+    emitDataChange();
+  },
+
+  async removeClubMember(clubId, personId) {
+    await delay();
+    if (!esAnfitrion(clubId) || personId === yo()) throw new AuthUiError(t().errors.clubNotHost);
+    desconectar(clubId, personId);
+    emitDataChange();
+  },
+
+  async closeClub(clubId) {
+    await delay();
+    if (!esAnfitrion(clubId)) throw new AuthUiError(t().errors.clubNotHost);
+    for (const m of miembros.filter((x) => x.club_id === clubId && x.status === 'accepted')) desconectar(clubId, m.person_id);
+    quitarDe(miembros, (m) => m.club_id === clubId);
+    quitarDe(clubes, (c) => c.id === clubId);
+    emitDataChange();
+  },
+
+  async setClubProgressVisible(userId, clubId, visible) {
+    await delay();
+    const m = miembros.find((x) => x.club_id === clubId && x.person_id === userId);
+    if (m) m.shows_progress = visible;
+    emitDataChange();
+  },
+
   async saveReadingSession(userId, session) {
     await delay();
     // Las mismas reglas que la base: de 1 min a 24 h, nunca más que lo que duró, y en un libro propio.
@@ -542,13 +668,23 @@ export const demoLibrary: LibraryApi = {
     const t0 = ahora();
     for (const e of entradas) {
       const previa = annotations.find((a) => a.id === e.id);
-      if (previa) Object.assign(previa, e, { updated_at: t0 });
-      else
+      if (previa) {
+        // Otro miembro del club solo cambia el contenido: ni la pieza ni el club (como la base, T305).
+        const ajena = previa.owner_id !== userId;
+        Object.assign(previa, ajena ? { ...e, item_id: previa.item_id, club_id: previa.club_id } : e, { updated_by: userId, updated_at: t0 });
+      } else {
+        if (e.club_id) {
+          const item = items.find((i) => i.id === e.item_id);
+          const miembro = miembros.some((m) => m.club_id === e.club_id && m.person_id === userId && m.status === 'accepted');
+          if (!miembro || item?.club_id !== e.club_id) throw new AuthUiError(t().errors.clubAnnotation);
+        }
         annotations.push({
           id: e.id, item_id: e.item_id, owner_id: userId, kind: e.kind, locator: e.locator,
           content: e.content ?? {}, z: e.z ?? 0, removed: e.removed ?? false, locked: e.locked ?? false,
+          club_id: e.club_id ?? null, author_id: userId, updated_by: null,
           created_at: t0, updated_at: t0,
         });
+      }
     }
     emitDataChange();
   },
