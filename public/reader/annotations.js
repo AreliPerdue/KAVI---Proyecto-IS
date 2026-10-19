@@ -287,6 +287,7 @@ export function crearCapa(ctx, enviar) {
           repintarAlSoltar = false;
           repintar();
         }
+        ctx.alDejarDeEscribir?.();
       },
       { once: true },
     );
@@ -1154,6 +1155,8 @@ export function crearCapa(ctx, enviar) {
     },
     elegir: (id) => elegir(typeof id === 'string' ? id : null, false),
     escribir: (id) => typeof id === 'string' && editar(id),
+    /** Si hay un post-it o un cuadro de texto abierto para escribir (el teclado está arriba). */
+    escribiendo: () => !!editando,
     alTocar,
     alCambiarSeleccion,
     soltarSeleccion,

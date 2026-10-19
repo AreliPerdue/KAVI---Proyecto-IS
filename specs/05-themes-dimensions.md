@@ -65,6 +65,38 @@ Clasificar actividades en un toque mediante temas predefinidos, cada uno ligado 
 - RF-T5. Los filtros del calendario usan dimensión y tema (ver RF-C11).
 - RF-T6. Si se elimina un tema propio, sus actividades conservan color/icono copiados y quedan sin tema (FK `on delete set null` + copia de estilo al guardar).
 
+### Modo daltonismo — propuesta del 19 oct 2026, falta aprobarla
+Pedido de Areli: que toda la app tenga colores amigables para personas con daltonismo.
+
+- RF-T7. **Interruptor "Colores para daltonismo"** en Perfil → Presentación, junto a claro/oscuro. Es del
+  dispositivo y aplica en toda la app (iOS, Android y web). Apagado por omisión.
+- RF-T8. **Las 7 dimensiones con una paleta segura para los tres tipos de daltonismo** (rojo-verde y azul-amarillo):
+  la "bright" de Paul Tol, que conserva el tono de cada dimensión:
+
+  | Dimensión | Normal | Daltonismo |
+  |---|---|---|
+  | Física | `#4CAF50` | `#228833` verde |
+  | Emocional | `#E91E63` | `#EE6677` rojo rosado |
+  | Social | `#FF9800` | `#CCBB44` amarillo ocre |
+  | Intelectual | `#2196F3` | `#4477AA` azul |
+  | Espiritual | `#9C27B0` | `#AA3377` morado |
+  | Financiera | `#009688` | `#66CCEE` cian |
+  | Ocupacional | `#607D8B` | `#BBBBBB` gris claro |
+
+  Con el modo encendido, **cada actividad se pinta con el color de su dimensión** (los temas de una misma
+  dimensión comparten color y se distinguen por su icono), en todas las vistas, filtros, leyendas y gráficas de
+  Fitness. Una actividad sin dimensión sigue en el neutro (RF-T4). La letra sobre cada color se elige por contraste.
+- RF-T9. **Colores de estado:** éxito en azul (`#4477AA`) en lugar de verde; peligro y aviso conservan rojo y
+  ámbar pero **siempre con icono o texto** (✓, ⚠, ✕), nunca solo el color.
+- RF-T10. **Personas en el calendario compartido:** sus colores (los 24 de los Nobi) no alcanzan a distinguirse;
+  con el modo encendido, cada bloque de otra persona lleva además **su inicial** y la leyenda de personas muestra
+  nombre y color juntos.
+- RF-T11. **No se toca lo que la persona eligió:** portadas, stickers, colores de post-its, subrayados, cuadros de
+  texto y lienzos (13c, 13h) se ven como se pintaron.
+- **Criterio.** *Dado* el modo encendido, *cuando* veo una semana con actividades física y emocional, *entonces*
+  se pintan `#228833` y `#EE6677` y cada bloque lleva el icono de su tema; *y cuando* lo apago, *entonces* vuelven
+  a los colores de su tema.
+
 ## Criterios de aceptación
 - Given el formulario de actividad, When elijo "Gimnasio", Then la actividad queda con dimensión física, color/icono del tema e `is_gym=true`.
 - Given un tema propio usado por 5 actividades, When lo elimino, Then las 5 actividades mantienen su apariencia y quedan sin tema, sin errores.

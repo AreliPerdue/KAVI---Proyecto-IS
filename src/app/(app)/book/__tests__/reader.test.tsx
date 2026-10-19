@@ -1001,9 +1001,16 @@ describe('stickers con charola de quitados (spec 13c, RF-BH13; T290)', () => {
     expect(screen.getByText(S.downloaded)).toBeTruthy();
     await fireEvent.press(screen.getByRole('button', { name: S.removePackA11y(azul) }));
     expect(mockQuitarPack).toHaveBeenCalledWith(expect.objectContaining({ id: 'primer-rebote-blue' }));
-    // Al tocar la tarjeta se ven todas sus caras.
+    // Al tocar la tarjeta se ven todas sus caras; tocar una la muestra en grande y se pasa a la siguiente.
     await fireEvent.press(screen.getByRole('button', { name: S.openPack(azul) }));
+    await fireEvent.press(screen.getByRole('button', { name: S.previewA11y(S.names.popcorn) }));
+    expect(screen.getByLabelText(S.names.popcorn)).toBeTruthy();
+    expect(screen.getByText(S.previewCount(1, 2))).toBeTruthy();
+    await fireEvent.press(screen.getByRole('button', { name: S.next }));
+    expect(screen.getByText(S.previewCount(2, 2))).toBeTruthy();
     expect(screen.getByLabelText(S.names.idea)).toBeTruthy();
+    await fireEvent.press(screen.getByRole('button', { name: S.closePreview }));
+    expect(screen.queryByText(S.previewCount(2, 2))).toBeNull();
     await fireEvent.press(screen.getByRole('button', { name: S.backToStore }));
     expect(screen.getByRole('button', { name: S.downloadA11y(rojo) })).toBeTruthy();
   });

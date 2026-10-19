@@ -1,5 +1,5 @@
 import { Image, type ImageSource } from 'expo-image';
-import { Check, ChevronLeft, X } from 'lucide-react-native';
+import { Check, ChevronLeft, ChevronRight, X } from 'lucide-react-native';
 import { useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 
@@ -284,6 +284,7 @@ function DetalleDePack({ pack, descargado, onVolver }: { pack: StickerPack; desc
   const t = useT().library.stickers;
   const nombre = useNombreDeCara();
   const nombreDePack = useNombreDePack();
+  const [viendo, setViendo] = useState<number | null>(null);
   return (
     <View style={styles.cuerpo}>
       <View style={styles.nombreFila}>
@@ -292,14 +293,62 @@ function DetalleDePack({ pack, descargado, onVolver }: { pack: StickerPack; desc
         </IconButton>
         <InfoDePack pack={pack} nombre={nombreDePack(pack)} />
       </View>
+      {viendo !== null ? <VistaPrevia pack={pack} indice={viendo} onCambiar={setViendo} onCerrar={() => setViendo(null)} /> : null}
       <View style={styles.rejilla}>
-        {pack.stickers.map((s) => (
-          <View key={s.name} style={[styles.celda, styles.celdaSola]} accessible accessibilityLabel={nombre(s.name)}>
-            <Image source={{ uri: urlDeSticker(pack, s.name) }} contentFit="contain" style={styles.imagenSola} accessible={false} />
-          </View>
+        {pack.stickers.map((s, i) => (
+          <Celda
+            key={s.name}
+            imagen={{ uri: urlDeSticker(pack, s.name) }}
+            etiqueta={t.previewA11y(nombre(s.name))}
+            elegida={viendo === i}
+            onPress={() => setViendo(viendo === i ? null : i)}
+          />
         ))}
       </View>
       <BotonDePack pack={pack} descargado={descargado} nombre={nombreDePack(pack)} />
+    </View>
+  );
+}
+
+/**
+ * Un sticker de la tienda en grande, para verlo de cerca antes de descargar el pack (pedido de Areli, 19 oct):
+ * su nombre, el anterior y el siguiente, y cerrar.
+ */
+function VistaPrevia({ pack, indice, onCambiar, onCerrar }: { pack: StickerPack; indice: number; onCambiar: (i: number) => void; onCerrar: () => void }) {
+  const theme = useTheme();
+  const t = useT().library.stickers;
+  const nombre = useNombreDeCara();
+  const s = pack.stickers[indice];
+  const total = pack.stickers.length;
+  const icono = { size: IconSize.action, strokeWidth: IconStroke, color: theme.text };
+  if (!s) return null;
+  return (
+    <View style={[styles.previa, { backgroundColor: theme.surfaceAlt }]} accessibilityLiveRegion="polite">
+      <Image
+        source={{ uri: urlDeSticker(pack, s.name) }}
+        contentFit="contain"
+        style={[styles.previaImagen, { aspectRatio: 1 / s.ar }]}
+        accessibilityLabel={nombre(s.name)}
+      />
+      <View style={styles.previaFila}>
+        <IconButton label={t.previous} onPress={() => onCambiar((indice - 1 + total) % total)}>
+          <ChevronLeft {...icono} />
+        </IconButton>
+        <View style={styles.previaTexto}>
+          <AppText variant="bodyStrong" numberOfLines={1}>
+            {nombre(s.name)}
+          </AppText>
+          <AppText variant="caption" color="textSecondary" tabular>
+            {t.previewCount(indice + 1, total)}
+          </AppText>
+        </View>
+        <IconButton label={t.next} onPress={() => onCambiar((indice + 1) % total)}>
+          <ChevronRight {...icono} />
+        </IconButton>
+        <IconButton label={t.closePreview} onPress={onCerrar}>
+          <X {...icono} />
+        </IconButton>
+      </View>
     </View>
   );
 }
@@ -310,12 +359,14 @@ function Celda({
   etiqueta,
   onPress,
   tirar,
+  elegida = false,
 }: {
   imagen: ImageSource | number;
   giro?: number;
   etiqueta: string;
   onPress: () => void;
   tirar?: { etiqueta: string; onPress: () => void };
+  elegida?: boolean;
 }) {
   const theme = useTheme();
   return (
@@ -323,10 +374,12 @@ function Celda({
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={etiqueta}
+        accessibilityState={elegida ? { selected: true } : undefined}
         onPress={onPress}
         style={({ pressed, hovered }: { pressed: boolean; hovered?: boolean }) => [
           styles.botonCelda,
-          { backgroundColor: pressed || hovered ? theme.surfaceAlt : 'transparent' },
+          { backgroundColor: pressed || hovered || elegida ? theme.surfaceAlt : 'transparent' },
+          elegida ? { borderWidth: 2, borderColor: theme.ink } : null,
         ]}>
         <Image source={imagen} contentFit="contain" style={[styles.imagen, giro ? { transform: [{ rotate: `${giro}deg` }] } : null]} accessible={false} />
       </Pressable>
@@ -350,10 +403,12 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   rejilla: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.xs },
   celda: { width: 76, height: 68 },
-  celdaSola: { padding: Spacing.xs },
+  previa: { borderRadius: Radius.lg, borderCurve: 'continuous', padding: Spacing.md, gap: Spacing.sm, alignItems: 'center' },
+  previaImagen: { width: '100%', maxWidth: 320, maxHeight: 260 },
+  previaFila: { flexDirection: 'row', alignItems: 'center', gap: Spacing.xs, alignSelf: 'stretch' },
+  previaTexto: { flex: 1, alignItems: 'center' },
   botonCelda: { width: 76, height: 68, padding: Spacing.xs, borderRadius: Radius.md, borderCurve: 'continuous', alignItems: 'center', justifyContent: 'center' },
   imagen: { width: '100%', height: '100%' },
-  imagenSola: { width: '100%', height: '100%' },
   cargando: { paddingVertical: Spacing.xl },
   tarjeta: { borderWidth: StyleSheet.hairlineWidth, borderRadius: Radius.lg, borderCurve: 'continuous', padding: Spacing.sm, gap: Spacing.sm },
   muestra: { width: '100%', aspectRatio: 390 / 250, borderRadius: Radius.md, borderCurve: 'continuous' },

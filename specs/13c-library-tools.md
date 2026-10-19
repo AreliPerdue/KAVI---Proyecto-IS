@@ -161,6 +161,8 @@
   - **Sin conexión:** en el teléfono, descargar guarda las imágenes en el dispositivo; lo pegado se ve con esas
     copias (el lector recibe solo las de los stickers de ese libro). Sin red, Mis stickers muestra lo descargado
     y la Tienda dice que hace falta conexión. En la web, las imágenes salen de la nube (con caché).
+  - **Vista previa (T359, 19 oct 2026, pedido de Areli):** en el detalle de un pack, tocar un sticker lo muestra en
+    grande arriba de la cuadrícula, con su nombre, "3 de 26", anterior/siguiente y cerrar.
   - **Hecho (T337 – T338, 14 oct 2026).** Catálogo y 24 packs de Primer Rebote en la nube; la hoja con las tres
     pestañas, tarjetas con su muestra y el detalle del pack; descargar y quitar; copias en el teléfono.
 - **RF-BH14. Post-its:** cuadrados de color (paleta de los Nobi) con texto o trazo; se pegan, se mueven, se

@@ -870,6 +870,14 @@ Plan y decisiones en `docs/gym/AUDITORIA.md`. Cada fase cierra con typecheck, li
   by…, 100 reps, escalera descendente e intervalos a tu medida. (RF-F46) Dep: —
 
 ### Bugs reportados
+- [x] T358 **Post-it en el teléfono: no se podía escribir; el teclado intentaba salir y se cerraba** (19 oct 2026).
+  Causa: al abrirse el teclado la ventana del lector se encoge y el motor rearmaba las páginas del PDF
+  (`reacomodarPdf`), lo que volvía a pintar el post-it y le quitaba el foco. Arreglo: mientras se escribe no se
+  rearma (se hace al terminar, `acomodarAlTamano` y `escribiendo()`), y en iOS el WebView deja mostrar el teclado
+  sin toque directo (`keyboardDisplayRequiresUserAction={false}`). Reproducido y verificado en el demo encogiendo la
+  ventana; falta probarlo en el teléfono. (RF-BH14) Dep: T289
+- [x] T359 Tienda de stickers: tocar un sticker de un pack lo muestra en grande con su nombre, anterior/siguiente y
+  cerrar. (RF-BH13b, pedido de Areli del 19 oct 2026) Dep: T338
 - [x] T332 **Acomodar arrastrando: solo se movió un libro y los demás se abrían al agarrarlos** (13 oct 2026).
   Causa probable (web): las portadas son `<img>` y el navegador inicia su propio arrastre de imagen (o, en
   Safari del iPhone, el menú de "Guardar imagen"), que cancela el gesto; al soltar, el toque abría el libro.
@@ -1135,6 +1143,11 @@ Decisiones B1–B9 aprobadas el 12 oct 2026 (T274); ver la tabla de la spec 13 �
 - [ ] T293 Plantillas de ficha incluidas y editor de campos y aspecto. (RF-BF1 – RF-BF3, RF-BF5) Dep: T275
 - [ ] T294 Fichas pegadas en la pieza y ofrecer llenarla al terminar. (RF-BF4, RF-BF6, RF-BF7) Dep: T293, T279
 - [ ] T295 Mis reseñas: todas las fichas, orden, filtros y totales. (RF-BF8 – RF-BF10) Dep: T294
+
+### Modo daltonismo (spec 05 RF-T7 – RF-T11, propuesta del 19 oct 2026; falta aprobarla)
+- [ ] T357 Interruptor "Colores para daltonismo" en Presentación; paleta de Paul Tol por dimensión en calendario,
+  filtros, leyendas y Fitness; éxito en azul y estados con icono; inicial en bloques de otras personas.
+  (RF-T7 – RF-T11, NFR de accesibilidad) Dep: —
 
 ### Atajos del calendario (spec 04 RF-C19 – RF-C21, propuesta del 14 oct 2026; falta aprobarla)
 - [ ] T353 Fila de atajos personalizable arriba del calendario: agregar, quitar, reordenar y ocultar; Seguir leyendo,

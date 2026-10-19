@@ -71,6 +71,9 @@ export const ReaderEngine = forwardRef<ReaderEngineHandle, ReaderEngineProps>(fu
       ref={vista}
       source={{ html, baseUrl: URL_MOTOR }}
       onMessage={recibir}
+      // Escribir en un post-it recién pegado (el foco lo pone el motor, no un toque): en iOS, sin esto el teclado
+      // no aparece.
+      keyboardDisplayRequiresUserAction={false}
       onLoadStart={() => cola.reiniciar()}
       onShouldStartLoadWithRequest={(r) => r.url.startsWith(SITIO) || r.url.startsWith('about:') || r.url.startsWith('data:')}
       originWhitelist={[SITIO, 'about:*', 'data:*']}

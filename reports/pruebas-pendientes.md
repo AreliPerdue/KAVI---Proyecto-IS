@@ -696,3 +696,10 @@ arrastre con gestos estables en `components/lists/__tests__/drag-guard.test.tsx`
   "Atrás" de Android sale de la selección; arrastrar sigue reordenando.
 - [ ] (manual) En el teléfono con Supabase: agregar varios elementos seguidos se siente inmediato y cambiar de pestaña
   no se traba. Comparar en un APK (modo producción), no solo en Expo Go.
+
+## Feedback del 19 oct 2026: post-it en el teléfono y vista previa de stickers
+Automatizado: vista previa en la tienda en `app/(app)/book/__tests__/reader.test.tsx`. Visto en el demo (web, 390 px):
+escribir en un post-it mientras la ventana se encoge como con el teclado (PDF scroll, páginas de lado y EPUB).
+- [ ] (manual) Android: tocar dos veces un post-it (o pegar uno nuevo) abre el teclado y se puede escribir; al
+  cerrarlo, lo escrito se queda y la página se acomoda.
+- [ ] (manual) iOS (cuando haya build): lo mismo; el teclado aparece al pegar un post-it nuevo.

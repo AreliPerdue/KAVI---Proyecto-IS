@@ -162,7 +162,19 @@ let busqueda = { consulta: '', resultados: [], actual: -1 };
 
 /** Lo pegado encima de las páginas (13c, T286). */
 const anotaciones = crearCapa(
-  { forma: () => forma, pdf: () => pdf, epub: () => epub, libro: () => libro, paginaBlanca: () => tema.pagina.toUpperCase() === '#FFFFFF' },
+  {
+    forma: () => forma,
+    pdf: () => pdf,
+    epub: () => epub,
+    libro: () => libro,
+    paginaBlanca: () => tema.pagina.toUpperCase() === '#FFFFFF',
+    // Al terminar de escribir, lo que se dejó de acomodar mientras el teclado estaba abierto.
+    alDejarDeEscribir: () => {
+      if (!acomodoPendiente) return;
+      acomodoPendiente = false;
+      acomodarAlTamano();
+    },
+  },
   enviar,
 );
 
@@ -608,10 +620,7 @@ function cambiarReserva(arriba, abajo) {
   raiz.setProperty('--reserva-arriba', `${reserva.arriba}px`);
   raiz.setProperty('--reserva-abajo', `${reserva.abajo}px`);
   if (epub) margenEpub(epub.view);
-  if (forma === 'book' && (libro || creandoLibro)) {
-    const donde = pdf ? (libro?.pagina?.() ?? pdf.pagina) : (libro?.cfi?.() ?? epub?.ultimo);
-    void entrarAlLibro(donde);
-  } else if (pdf) reacomodarPdf();
+  acomodarAlTamano();
 }
 
 /** El margen de arriba y abajo de un EPUB: el suyo de siempre, o lo que tapen los controles si es más. */
@@ -870,14 +879,27 @@ async function pasar(paso) {
 // Al girar el teléfono o cambiar el tamaño de la ventana, la página se vuelve a acomodar sin perder el
 // lugar (foliate lo hace solo con el EPUB): en el libro real, de una a dos páginas o al revés.
 let esperaDeTamano = null;
+/**
+ * Mientras se escribe en un post-it o un cuadro de texto, abrir el teclado encoge la ventana. Si en ese momento
+ * se rearmaran las páginas, el post-it se volvería a pintar, perdería el foco y el teclado se cerraría (en el
+ * teléfono no se podía escribir): se espera a que termine de escribir.
+ */
+let acomodoPendiente = false;
+
+function acomodarAlTamano() {
+  if (anotaciones.escribiendo()) {
+    acomodoPendiente = true;
+    return;
+  }
+  if (forma === 'book' && (libro || creandoLibro)) {
+    const donde = pdf ? (libro?.pagina?.() ?? pdf.pagina) : (libro?.cfi?.() ?? epub?.ultimo);
+    void entrarAlLibro(donde);
+  } else if (pdf) reacomodarPdf();
+}
+
 window.addEventListener('resize', () => {
   clearTimeout(esperaDeTamano);
-  esperaDeTamano = setTimeout(() => {
-    if (forma === 'book' && (libro || creandoLibro)) {
-      const donde = pdf ? (libro?.pagina?.() ?? pdf.pagina) : (libro?.cfi?.() ?? epub?.ultimo);
-      void entrarAlLibro(donde);
-    } else if (pdf) reacomodarPdf();
-  }, 200);
+  esperaDeTamano = setTimeout(acomodarAlTamano, 200);
 });
 
 /**
