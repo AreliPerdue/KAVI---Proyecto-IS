@@ -221,6 +221,10 @@
       .anotacion.postit.seleccionada {
         box-shadow: 0 4px 14px rgb(0 0 0 / 0.35) !important;
       }
+      /* Doblado: la esquina ya lleva su sombra (con su forma); una cuadrada se vería detrás. */
+      .anotacion.postit.doblado.seleccionada {
+        box-shadow: none !important;
+      }
       /*
        * Asas de lo pegado y elegido (T329, al estilo KAVI): una "L" en cada esquina y una rayita en medio de
        * cada lado, en tinta con un halo claro (se ven sobre cualquier color). Cada una con 32 px para tomarla.

@@ -1133,7 +1133,6 @@ Decisiones B1–B9 aprobadas el 12 oct 2026 (T274); ver la tabla de la spec 13 �
   de una pieza propia), `removeAnnotationImage` en los servicios, entrada `imageCleanup` con `due` en la cola
   (guardar otra vez la anotación la cancela) y `use-library-sync` la procesa al vencer.
 - [ ] T291 Lápiz y dedo con Skia; presión del Apple Pencil; modo "solo lápiz". (RF-BH11) Dep: T286
-- [ ] T292 Escuchar en voz alta con la frase resaltada. (RF-BH6) Dep: T279
 - [ ] T317 Fragmentos (antes "Recortes", renombrado el 14 oct 2026) de texto ("Guardar fragmento" al seleccionar) y de
   imagen (rectángulo sobre la página), `library_clips` con RLS e imágenes en R2, sección "Mis fragmentos" con
   filtros y nota; pegar en recortes (13h).
@@ -1221,6 +1220,9 @@ Reemplazan L5 (13e). Un recorte es una página 1 : √2 del visor de PDF (decisi
 ### L7 · Conectar a la app
 - [ ] T302 Library visible en Más y elegible para la barra; una actividad de Lectura se liga a una pieza y la
   abre donde iba. (spec 13 §4) Dep: L1 – L5, LC
+
+### Extras (cuando haya tiempo; decisión de Areli del 19 oct 2026)
+- [ ] T292 Escuchar en voz alta con la frase resaltada. (RF-BH6) Dep: T279
 
 ### Largo plazo (cuando KAVI se lance al público)
 Distribución en iOS y cuenta de Apple Developer · notificaciones push con la app cerrada ·

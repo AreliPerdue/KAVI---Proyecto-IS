@@ -1,4 +1,4 @@
-import { BringToFront, Check, ImagePlus, Lock, LockOpen, Palette, Pencil, Redo2, RotateCw, SendToBack, Sticker, StickyNote, Trash2, Type, Undo2 } from 'lucide-react-native';
+import { BringToFront, Check, FoldVertical, ImagePlus, Lock, LockOpen, Palette, Pencil, Redo2, RotateCw, SendToBack, Sticker, StickyNote, Trash2, Type, Undo2 } from 'lucide-react-native';
 import type { ComponentType } from 'react';
 import { StyleSheet, View } from 'react-native';
 
@@ -27,6 +27,8 @@ type Props = {
   /** Color (y en un cuadro de texto, el tamaño de la letra). */
   onEstilo: () => void;
   onGirar: () => void;
+  /** Doblar o desdoblar un post-it (RF-BH14, T290). */
+  onDoblar: () => void;
   onFrente: () => void;
   onAtras: () => void;
   onBloquear: () => void;
@@ -48,6 +50,7 @@ export function AnnotationToolbar(p: Props) {
   if (p.seleccionada) {
     const bloqueada = p.seleccionada.locked;
     const esImagen = p.seleccionada.kind === 'image' || p.seleccionada.kind === 'sticker';
+    const doblado = p.seleccionada.kind === 'postit' && p.seleccionada.content.folded === true;
     return (
       <View style={styles.contenedor}>
         {bloqueada ? <Aviso texto={a.lockedHint} /> : null}
@@ -58,12 +61,17 @@ export function AnnotationToolbar(p: Props) {
             </IconButton>
           ) : (
             <>
-              <IconButton label={a.write} onPress={p.onEscribir} disabled={bloqueada}>
-                <Pencil {...icono(!bloqueada)} />
+              <IconButton label={a.write} onPress={p.onEscribir} disabled={bloqueada || doblado}>
+                <Pencil {...icono(!bloqueada && !doblado)} />
               </IconButton>
               <IconButton label={a.styleColor} onPress={p.onEstilo}>
                 <Palette {...icono()} />
               </IconButton>
+              {p.seleccionada.kind === 'postit' ? (
+                <IconButton label={p.seleccionada.content.folded === true ? a.unfold : a.fold} onPress={p.onDoblar} disabled={bloqueada}>
+                  <FoldVertical {...icono(!bloqueada)} />
+                </IconButton>
+              ) : null}
             </>
           )}
           <IconButton label={a.toFront} onPress={p.onFrente}>

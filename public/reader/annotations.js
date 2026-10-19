@@ -73,6 +73,11 @@ const ajusteDeLetra = new ResizeObserver((cambios) => {
   for (const c of cambios) ajustarLetra(c.target);
 });
 
+/** Lo que mide un post-it doblado: la esquina que se asoma. */
+const ESQUINA_PX = 40;
+/** Cuánto se gira un post-it: "un poco" (RF-BH14). */
+const GIRO_POSTIT = 15;
+
 /** Lo que se pega encima de la página (lo demás, como los subrayados, va en el texto). */
 const PEGABLES = ['postit', 'textbox', 'image', 'sticker'];
 /** Lo que es solo una imagen: se gira y no se escribe. */
@@ -177,7 +182,22 @@ export function crearCapa(ctx, enviar) {
       caja.textContent = texto;
       el.append(caja);
       el.setAttribute('role', 'note');
-      if (a.kind === 'postit') {
+      if (a.kind === 'postit' && a.content?.folded) {
+        // Doblado (T290, RF-BH14): solo se asoma una esquina con el color del post-it; tocarlo lo abre.
+        const color = colorDe(a);
+        el.classList.add('doblado');
+        el.setAttribute('aria-label', texto ? `Post-it doblado: ${texto}` : 'Post-it doblado');
+        caja.textContent = '';
+        Object.assign(el.style, {
+          width: `${ESQUINA_PX}px`,
+          aspectRatio: '1 / 1',
+          // Se ve el triángulo de la esquina con su doblez; el resto del cuadro es transparente pero se puede tocar
+          // (40 px: lo mínimo para el dedo).
+          background: `linear-gradient(135deg, ${color} 0 44%, color-mix(in srgb, ${color} 68%, #000) 44% 50%, transparent 50%)`,
+          filter: 'drop-shadow(1px 2px 2px rgb(0 0 0 / 0.3))',
+          borderRadius: '2px',
+        });
+      } else if (a.kind === 'postit') {
         const color = colorDe(a);
         el.setAttribute('aria-label', texto ? `Post-it: ${texto}` : 'Post-it');
         Object.assign(el.style, {
@@ -193,7 +213,7 @@ export function crearCapa(ctx, enviar) {
           boxShadow: '0 2px 6px rgb(0 0 0 / 0.28)',
         });
         ajusteDeLetra.observe(el);
-      } else {
+      } else if (a.kind !== 'postit') {
         // Cuadro de texto: la letra no depende del ancho (estirarlo reacomoda los renglones).
         const escala = escalaDe(a);
         el.setAttribute('aria-label', texto ? `Cuadro de texto: ${texto}` : 'Cuadro de texto');
@@ -226,7 +246,8 @@ export function crearCapa(ctx, enviar) {
       porEditar = id;
       return;
     }
-    if (esImagen(a) || a.locked || !interactiva()) {
+    // Doblado no se escribe: primero se abre (su texto no está a la vista).
+    if (esImagen(a) || a.locked || !interactiva() || a.content?.folded) {
       porEditar = null;
       return;
     }
@@ -302,7 +323,7 @@ export function crearCapa(ctx, enviar) {
       el.append(candado);
     }
     // Elegido y sin candado: asas en las esquinas y orillas para cambiarle el tamaño (T329).
-    if (!a.locked && interactiva() && !el.querySelector('.asa')) ponerAsas(el, a);
+    if (!a.locked && interactiva() && !a.content?.folded && !el.querySelector('.asa')) ponerAsas(el, a);
   }
 
   function remarcar() {
@@ -323,6 +344,68 @@ export function crearCapa(ctx, enviar) {
 
   // ─── Tocar y arrastrar ───────────────────────────────────────────────────────
 
+  /**
+   * Girar y agrandar con dos dedos un sticker o una imagen elegidos (RF-BH13, T290): con el primer dedo sobre él,
+   * el segundo puede caer en cualquier lado. Crece desde su centro y no se deforma.
+   */
+  function dosDedos(el, a, primero) {
+    const dedos = new Map([[primero.pointerId, { x: primero.clientX, y: primero.clientY }]]);
+    let gesto = null;
+    const angulo = () => { const [p, q] = [...dedos.values()]; return Math.atan2(q.y - p.y, q.x - p.x); };
+    const distancia = () => { const [p, q] = [...dedos.values()]; return Math.hypot(q.x - p.x, q.y - p.y); };
+    const abajo = (e) => {
+      if (e.pointerId === primero.pointerId || dedos.size >= 2 || e.pointerType !== 'touch') return;
+      e.stopPropagation();
+      e.preventDefault();
+      dedos.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      el.style.translate = '';
+      gesto = {
+        a0: angulo(), d0: Math.max(10, distancia()),
+        rot0: Number.isFinite(a.content?.rot) ? a.content.rot : 0,
+        w0: el.offsetWidth, h0: el.offsetHeight, l0: el.offsetLeft, t0: el.offsetTop, rot: null,
+      };
+      if (arrastre) Object.assign(arrastre, { giro: true, dosDedos: true });
+    };
+    const mover = (e) => {
+      if (!dedos.has(e.pointerId)) return;
+      dedos.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (!gesto) return;
+      e.stopPropagation();
+      const capa = el.offsetParent;
+      const s = entre(distancia() / gesto.d0, LADO_MIN_PX / Math.min(gesto.w0, gesto.h0), (capa?.clientWidth || Infinity) / gesto.w0);
+      const w = gesto.w0 * s, h = gesto.h0 * s;
+      gesto.rot = Math.round((((gesto.rot0 + ((angulo() - gesto.a0) * 180) / Math.PI) % 360) + 360) % 360);
+      Object.assign(el.style, { left: `${gesto.l0 - (w - gesto.w0) / 2}px`, top: `${gesto.t0 - (h - gesto.h0) / 2}px`, width: `${w}px`, height: `${h}px`, aspectRatio: 'auto', rotate: `${gesto.rot}deg` });
+      if (arrastre) arrastre.movido = true;
+    };
+    const fin = (e) => {
+      if (!dedos.has(e.pointerId)) return;
+      dedos.delete(e.pointerId);
+      if (dedos.size > 0 && gesto) return;
+      soltarTodo();
+      if (gesto) {
+        const g = gesto;
+        gesto = null;
+        arrastre = null;
+        redimensionado(el, a, g.rot ?? g.rot0);
+        if (repintarAlSoltar) {
+          repintarAlSoltar = false;
+          repintar();
+        }
+      }
+    };
+    const soltarTodo = () => {
+      document.removeEventListener('pointerdown', abajo, true);
+      document.removeEventListener('pointermove', mover, true);
+      document.removeEventListener('pointerup', fin, true);
+      document.removeEventListener('pointercancel', fin, true);
+    };
+    document.addEventListener('pointerdown', abajo, true);
+    document.addEventListener('pointermove', mover, true);
+    document.addEventListener('pointerup', fin, true);
+    document.addEventListener('pointercancel', fin, true);
+  }
+
   function escucharArrastre(el, a) {
     el.addEventListener('pointerdown', (e) => {
       if (!interactiva() || !e.isPrimary) return;
@@ -332,6 +415,7 @@ export function crearCapa(ctx, enviar) {
       e.preventDefault();
       arrastre = { id: a.id, el, x0: e.clientX, y0: e.clientY, movido: false };
       el.setPointerCapture?.(e.pointerId);
+      if (e.pointerType === 'touch' && esImagen(a) && !a.locked && seleccion === a.id) dosDedos(el, a, e);
     });
     el.addEventListener('pointermove', (e) => {
       // Jalando un asa (tamaño o giro), la nota no se mueve: ese movimiento es del asa.
@@ -346,7 +430,8 @@ export function crearCapa(ctx, enviar) {
       el.style.cursor = 'grabbing';
     });
     const soltar = (e, cancelado) => {
-      if (arrastre?.el !== el) return;
+      // Con dos dedos, el gesto lo termina `dosDedos`.
+      if (arrastre?.el !== el || arrastre.dosDedos) return;
       e.stopPropagation();
       const { movido } = arrastre;
       arrastre = null;
@@ -370,6 +455,12 @@ export function crearCapa(ctx, enviar) {
 
   /** Un toque elige; dos seguidos, en un post-it o un cuadro de texto, ponen a escribir ahí mismo. */
   function tocar(a) {
+    // Un post-it doblado se abre con un toque (RF-BH14).
+    if (a.kind === 'postit' && a.content?.folded) {
+      if (seleccion !== a.id) elegir(a.id);
+      enviar({ type: 'fold', id: a.id, folded: false });
+      return;
+    }
     const ahora = performance.now();
     const doble = ultimoToque.id === a.id && ahora - ultimoToque.t < DOBLE_TOQUE_MS;
     ultimoToque = { id: doble ? null : a.id, t: ahora };
@@ -443,7 +534,7 @@ export function crearCapa(ctx, enviar) {
    * agrandan o achican sin deformarlo y las de los lados lo estiran (pedido de Areli, 14 oct).
    */
   function ponerAsas(el, a) {
-    if (esImagen(a)) ponerGiro(el, a);
+    if (esImagen(a) || a.kind === 'postit') ponerGiro(el, a);
     for (const lado of LADOS) {
       const proporcional = a.kind === 'sticker' && lado.length === 2;
       const asa = document.createElement('div');
@@ -514,8 +605,14 @@ export function crearCapa(ctx, enviar) {
       if (!centro) return;
       e.stopPropagation();
       let g = (Math.atan2(e.clientY - centro.y, e.clientX - centro.x) * 180) / Math.PI + 90;
-      const recto = Math.round(g / 90) * 90;
-      if (Math.abs(g - recto) < 4) g = recto;
+      if (a.kind === 'postit') {
+        // Un post-it se ladea un poco, nada más (±15°), y vuelve a derecho cerca del cero.
+        const firmado = ((((g + 180) % 360) + 360) % 360) - 180;
+        g = Math.abs(firmado) < 2 ? 0 : entre(firmado, -GIRO_POSTIT, GIRO_POSTIT);
+      } else {
+        const recto = Math.round(g / 90) * 90;
+        if (Math.abs(g - recto) < 4) g = recto;
+      }
       grados = Math.round(((g % 360) + 360) % 360);
       el.style.rotate = `${grados}deg`;
       arrastre.movido = true;
@@ -573,7 +670,7 @@ export function crearCapa(ctx, enviar) {
   }
 
   /** Al soltar un asa: la caja nueva como posición, ancho y proporción. */
-  function redimensionado(el, a) {
+  function redimensionado(el, a, rot = null) {
     const caja = cajaSinGiro(el);
     const ar = entre(caja.height / caja.width, 0.25, 4);
     let locator = null;
@@ -588,7 +685,7 @@ export function crearCapa(ctx, enviar) {
       if (area) locator = enEpub(caja.left, caja.top, caja.width, redondear(entre(caja.width / area.width, 0.02, 1)), ar);
     }
     if (!locator) return repintar();
-    enviar({ type: 'move', id: a.id, locator });
+    enviar({ type: 'move', id: a.id, locator, ...(rot !== null ? { rot } : {}) });
   }
 
   /**

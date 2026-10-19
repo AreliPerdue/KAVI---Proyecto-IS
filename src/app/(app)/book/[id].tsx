@@ -249,6 +249,7 @@ function Lector({ id }: { id: string }) {
           text: textoDe(a),
           ...(a.kind === 'highlight' ? { style: estiloDe(a) } : {}),
           ...(a.kind === 'textbox' || a.kind === 'postit' ? { size: escalaDe(a) } : {}),
+          ...(a.kind === 'postit' ? { rot: giroDe(a), ...(a.content.folded === true ? { folded: true } : {}) } : {}),
           ...(a.kind === 'image' ? { src: vistasPrevias.get(a.id) ?? urlsDeImagenes.get(rutaDeImagen(a) ?? '') ?? undefined, rot: giroDe(a) } : {}),
           ...(a.kind === 'sticker'
             ? { sticker: stickerDe(a) ?? undefined, rot: giroDe(a), label: nombreDeSticker(a, nombresDeStickers), src: fuenteDeSticker(stickerDe(a), fuentesDeStickers, packsDeStickers.data?.packs) }
@@ -398,7 +399,12 @@ function Lector({ id }: { id: string }) {
         return;
       case 'move': {
         const a = lista?.find((x) => x.id === m.id);
-        if (a && !a.locked) cambiar(a, { locator: m.locator });
+        if (a && !a.locked) cambiar(a, { locator: m.locator, ...(m.rot !== undefined ? { content: { ...a.content, rot: m.rot } } : {}) });
+        return;
+      }
+      case 'fold': {
+        const a = lista?.find((x) => x.id === m.id);
+        if (a && a.kind === 'postit') cambiar(a, { content: { ...a.content, folded: m.folded } });
         return;
       }
       case 'edit':
@@ -770,6 +776,7 @@ function Lector({ id }: { id: string }) {
               onEscribir={() => seleccionada && motor.current?.send({ type: 'write', id: seleccionada.id })}
               onEstilo={() => setEstiloDeId(seleccionada?.id ?? null)}
               onGirar={() => seleccionada && cambiar(seleccionada, { content: { ...seleccionada.content, rot: (giroDe(seleccionada) + 90) % 360 } })}
+              onDoblar={() => seleccionada && cambiar(seleccionada, { content: { ...seleccionada.content, folded: seleccionada.content.folded !== true } })}
               onImagen={() => (PUEDE_TOMAR_FOTO ? setEligiendoImagen(true) : void elegirImagen('galeria'))}
               onSticker={() => setEligiendoSticker(true)}
               onFrente={alFrente}

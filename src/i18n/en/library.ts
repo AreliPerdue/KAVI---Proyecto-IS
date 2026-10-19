@@ -446,6 +446,8 @@ export const library: Dictionary['library'] = {
     sticker: 'Add a sticker',
     stickerOn: 'Tap the page where you want to stick it.',
     imageFailed: 'The image couldn’t be pasted. Check your connection and try again.',
+    fold: 'Fold',
+    unfold: 'Unfold',
     rotate: 'Rotate 90°',
     styleColor: 'Color',
     textSize: 'Text size',

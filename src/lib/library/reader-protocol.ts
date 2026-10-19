@@ -36,6 +36,8 @@ export type AnotacionEnMotor = {
     /** Imagen (y sticker de la tienda): la dirección para verla y cuánto está girada (grados). */
     src?: string;
     rot?: number;
+    /** Post-it doblado: solo se asoma una esquina (T290). */
+    folded?: boolean;
     /** Sticker (T290): cuál de la colección (`<paquete>/<nombre>`) y su nombre, para leerlo en voz alta. */
     sticker?: string;
     label?: string;
@@ -106,7 +108,10 @@ export type MensajeDelMotor =
   /** Se tocó algo pegado (o la página, para soltarlo). */
   | { type: 'select'; id: string | null }
   /** Se arrastró algo pegado: su nueva posición. */
-  | { type: 'move'; id: string; locator: LibraryLocator }
+  /** `rot`: con dos dedos se gira y se agranda a la vez (T290). */
+  | { type: 'move'; id: string; locator: LibraryLocator; rot?: number }
+  /** Tocar un post-it doblado lo abre (RF-BH14, T290). */
+  | { type: 'fold'; id: string; folded: boolean }
   /** Doble toque en algo pegado: abrirlo para escribir. */
   | { type: 'edit'; id: string }
   /** Supr o Retroceso con algo pegado elegido: quitarlo, como el botón Quitar. */
@@ -178,8 +183,11 @@ export function leerMensaje(crudo: unknown): MensajeDelMotor | null {
       return m.id === null || esId(m.id) ? { type: 'select', id: m.id } : null;
     case 'move': {
       const locator = localizadorPegado(m.locator);
-      return locator && esId(m.id) ? { type: 'move', id: m.id, locator } : null;
+      if (!locator || !esId(m.id)) return null;
+      return { type: 'move', id: m.id, locator, ...(numero(m.rot) ? { rot: ((Math.round(m.rot) % 360) + 360) % 360 } : {}) };
     }
+    case 'fold':
+      return esId(m.id) && typeof m.folded === 'boolean' ? { type: 'fold', id: m.id, folded: m.folded } : null;
     case 'edit':
       return esId(m.id) ? { type: 'edit', id: m.id } : null;
     case 'remove':

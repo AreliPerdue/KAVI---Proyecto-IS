@@ -417,7 +417,7 @@ describe('anotaciones (spec 13c, T286)', () => {
     await render(<Lector />);
     expect(mockEnviados).toContainEqual({
       type: 'annotations',
-      items: [{ id: 'a1', kind: 'postit', locator: { page: 3, x: 0.1, y: 0.2, w: 0.24 }, z: 1, locked: false, content: { color: '#F1D35D', text: 'nota a1', size: 1 } }],
+      items: [{ id: 'a1', kind: 'postit', locator: { page: 3, x: 0.1, y: 0.2, w: 0.24 }, z: 1, locked: false, content: { color: '#F1D35D', text: 'nota a1', size: 1, rot: 0 } }],
     });
   });
 
@@ -460,13 +460,41 @@ describe('anotaciones (spec 13c, T286)', () => {
   it('el tamaño de la letra de un post-it se elige en la misma hoja y llega al motor (T336)', async () => {
     mockLista = [postit('a1', { content: { color: '#F1D35D', text: 'grande', size: 2 } })];
     await render(<Lector />);
-    expect(mockEnviados).toContainEqual(expect.objectContaining({ type: 'annotations', items: [expect.objectContaining({ content: { color: '#F1D35D', text: 'grande', size: 2 } })] }));
+    expect(mockEnviados).toContainEqual(expect.objectContaining({ type: 'annotations', items: [expect.objectContaining({ content: { color: '#F1D35D', text: 'grande', size: 2, rot: 0 } })] }));
     await responder({ type: 'opened', total: 12 });
     await responder({ type: 'select', id: 'a1' });
     await fireEvent.press(screen.getByRole('button', { name: A.styleColor }));
     await fireEvent.press(screen.getByRole('button', { name: A.textBigger }));
     await fireEvent.press(screen.getByRole('button', { name: A.save }));
     expect(mockCambiar).toHaveBeenLastCalledWith(expect.objectContaining({ id: 'a1' }), expect.objectContaining({ content: { color: '#F1D35D', text: 'grande', size: 2.25 } }));
+  });
+
+  it('un post-it se dobla desde la barra y tocarlo doblado lo abre; doblado no se escribe (T290)', async () => {
+    mockLista = [postit('a1', { content: { color: '#F1D35D', text: 'oculto', rot: 350 } })];
+    const { rerender } = await render(<Lector />);
+    expect(mockEnviados).toContainEqual(expect.objectContaining({ type: 'annotations', items: [expect.objectContaining({ content: expect.objectContaining({ rot: 350 }) })] }));
+    await responder({ type: 'opened', total: 12 });
+    await responder({ type: 'select', id: 'a1' });
+    await fireEvent.press(screen.getByRole('button', { name: A.fold }));
+    expect(mockCambiar).toHaveBeenLastCalledWith(expect.objectContaining({ id: 'a1' }), expect.objectContaining({ content: expect.objectContaining({ folded: true }) }));
+    mockLista = [postit('a1', { content: { color: '#F1D35D', text: 'oculto', folded: true } })];
+    await rerender(<Lector />);
+    expect(mockEnviados.filter((m) => m.type === 'annotations').at(-1)).toEqual(expect.objectContaining({ items: [expect.objectContaining({ content: expect.objectContaining({ folded: true }) })] }));
+    expect(screen.getByRole('button', { name: A.write })).toBeDisabled();
+    await responder({ type: 'fold', id: 'a1', folded: false });
+    expect(mockCambiar).toHaveBeenLastCalledWith(expect.objectContaining({ id: 'a1' }), expect.objectContaining({ content: expect.objectContaining({ folded: false }) }));
+  });
+
+  it('con dos dedos se gira y se agranda a la vez: un solo cambio con posición y giro (T290)', async () => {
+    mockLista = [{ ...postit('s1'), kind: 'sticker', content: { sticker: 'nobi-pink/idea', rot: 0 } }];
+    await render(<Lector />);
+    await responder({ type: 'opened', total: 12 });
+    await responder({ type: 'move', id: 's1', locator: { page: 3, x: 0.1, y: 0.2, w: 0.4, ar: 0.81 }, rot: 30 });
+    expect(mockCambiar).toHaveBeenCalledTimes(1);
+    expect(mockCambiar).toHaveBeenLastCalledWith(
+      expect.objectContaining({ id: 's1' }),
+      expect.objectContaining({ locator: { page: 3, x: 0.1, y: 0.2, w: 0.4, ar: 0.81 }, content: { sticker: 'nobi-pink/idea', rot: 30 } }),
+    );
   });
 
   it('"Escribir" pone a escribir ahí mismo; con candado no se puede', async () => {

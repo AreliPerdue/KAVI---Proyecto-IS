@@ -457,6 +457,8 @@ export const library = {
     imageFailed: 'No se pudo pegar la imagen. Revisa tu conexión e inténtalo de nuevo.',
     sticker: 'Pegar un sticker',
     stickerOn: 'Toca la página donde quieras pegarlo.',
+    fold: 'Doblar',
+    unfold: 'Desdoblar',
     rotate: 'Girar 90°',
     styleColor: 'Color',
     textSize: 'Tamaño de letra',

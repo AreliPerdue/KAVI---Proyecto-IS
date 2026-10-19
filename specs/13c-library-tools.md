@@ -142,7 +142,9 @@
   - **Stickers propios (T335, pendiente, pedido de Areli del 14 oct):** desde una imagen (galería, cámara o
     archivo), con la opción de ponerle **margen blanco** alrededor de su silueta para que parezca sticker y
     **ajustar su grosor**. Se guardan en la colección de la persona y se pegan como los incluidos.
-  - Falta: girar **con dos dedos** en el teléfono y los demás colores o estilos (13e).
+  - **Dos dedos (T290, 19 oct 2026):** con un sticker o una imagen elegidos, el primer dedo encima y el segundo en
+    cualquier lado los **giran y agrandan a la vez** desde su centro, sin deformarlos; se guarda en un solo paso
+    (posición y giro juntos, un solo deshacer).
 - **RF-BH13b. Tienda de stickers en la nube (T337 – T338, 14 oct 2026, pedido de Areli).** Los packs que no
   vienen en la app viven en la nube y cada quien **descarga los que le gustan**; así la app no crece con cada
   temporada y se agregan packs sin sacar otra versión.
@@ -167,6 +169,10 @@
     pestañas, tarjetas con su muestra y el detalle del pack; descargar y quitar; copias en el teléfono.
 - **RF-BH14. Post-its:** cuadrados de color (paleta de los Nobi) con texto o trazo; se pegan, se mueven, se
   rotan un poco y se pueden **doblar** para que solo se vea una esquina. Tocar uno doblado lo abre.
+  - **Hecho (T290, 19 oct 2026):** el post-it se **ladea** con el asa de arriba, hasta ±15° (vuelve a derecho
+    cerca del cero). **Doblar** (botón en la barra) deja solo la esquina de su color con su doblez, de 40 px para
+    el dedo; tocarla lo abre. Doblado no se escribe (primero se abre). El post-it **con trazo** queda con el lápiz
+    (T291).
 - **RF-BH15. Separadores:** las pestañitas que salen del borde. La persona elige **en qué borde** (arriba,
   abajo, izquierda o derecha) y **a qué altura**; llevan color y una palabra corta. Se ven desde fuera, en
   el canto del libro, y tocar uno salta a su página.
