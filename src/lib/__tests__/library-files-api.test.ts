@@ -10,11 +10,14 @@ type Fila = Record<string, unknown>;
 let mockUsuario: { id: string } | null;
 let mockPiezas: Fila[];
 let mockFuentes: Fila[];
+/** Lo que devuelve `library_club_source` (null si no estoy invitado). */
+let mockOriginal: Fila | null = null;
 const mockConsultas: { tabla: string; filtros: unknown[][] }[] = [];
 
 jest.mock('@supabase/supabase-js', () => ({
   createClient: () => ({
     auth: { getUser: async () => ({ data: { user: mockUsuario } }) },
+    rpc: async () => ({ data: mockOriginal, error: null }),
     from: (tabla: string) => {
       const consulta = { tabla, filtros: [] as unknown[][] };
       mockConsultas.push(consulta);
@@ -306,3 +309,38 @@ describe('fragmentos de imagen (T317)', () => {
     expect((await pedir({ action: 'deleteFile', path: `${OTRA}/clips/${FR}.jpg` })).status).toBe(403);
   });
 });
+
+describe('club de lectura: copiar el libro a quien acepta (T306)', () => {
+  const CLUB = 'cccccccc-0000-4000-8000-000000000003';
+  const ANFITRION = 'dddddddd-0000-4000-8000-000000000004';
+  beforeEach(() => {
+    mockPiezas[0] = { ...mockPiezas[0], club_id: CLUB, cover_path: `${UID}/${ITEM}/cover.jpg` };
+    mockOriginal = { file_path: `${ANFITRION}/x/rayuela.pdf`, file_size: 1000, cover_path: `${ANFITRION}/x/cover.jpg` };
+  });
+
+  it('copia el original y su portada dentro de R2 a la carpeta de la copia', async () => {
+    mockR2.mockResolvedValue(new Response(null, { status: 200 }));
+    expect(await pedir({ action: 'clubCopy', clubId: CLUB, itemId: ITEM })).toEqual({ status: 200, body: { copied: 1 } });
+    const [libro, portada] = mockR2.mock.calls.map(([r]) => r as Request);
+    expect(libro.method).toBe('PUT');
+    expect(new URL(libro.url).pathname).toBe(`/kavi-library/${UID}/${ITEM}/rayuela.pdf`);
+    expect(libro.headers.get('x-amz-copy-source')).toBe(`/kavi-library/${ANFITRION}/x/rayuela.pdf`);
+    expect(new URL(portada.url).pathname).toBe(`/kavi-library/${UID}/${ITEM}/cover.jpg`);
+  });
+
+  it('no copia si no estoy invitado, si la copia no es de ese club o no mide lo mismo', async () => {
+    mockOriginal = null;
+    expect((await pedir({ action: 'clubCopy', clubId: CLUB, itemId: ITEM })).status).toBe(403);
+    mockOriginal = { file_path: `${ANFITRION}/x/rayuela.pdf`, file_size: 999 };
+    expect((await pedir({ action: 'clubCopy', clubId: CLUB, itemId: ITEM })).status).toBe(403);
+    mockOriginal = { file_path: `${ANFITRION}/x/rayuela.pdf`, file_size: 1000 };
+    expect((await pedir({ action: 'clubCopy', clubId: 'otro', itemId: ITEM })).status).toBe(403);
+    expect(mockR2).not.toHaveBeenCalled();
+  });
+
+  it('si R2 no copia, falla (la app deshace la copia a medias)', async () => {
+    mockR2.mockResolvedValue(new Response(null, { status: 500 }));
+    expect((await pedir({ action: 'clubCopy', clubId: CLUB, itemId: ITEM })).status).toBe(502);
+  });
+});
+

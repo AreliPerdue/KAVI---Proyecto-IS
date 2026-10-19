@@ -29,6 +29,7 @@ export type {
   NuevoFragmento,
   LibraryClub,
   LibraryClubMember,
+  LibraryClubBook,
   LibraryLinkKind,
   LibrarySeries,
   LibraryShelfItem,
@@ -84,6 +85,8 @@ export const leaveClub = libraryApi.leaveClub;
 export const removeClubMember = libraryApi.removeClubMember;
 export const closeClub = libraryApi.closeClub;
 export const setClubProgressVisible = libraryApi.setClubProgressVisible;
+export const getClubBook = libraryApi.getClubBook;
+export const acceptClubInvite = libraryApi.acceptClubInvite;
 export const saveLayout = libraryApi.saveLayout;
 export const removeLayout = libraryApi.removeLayout;
 export const applyOrder = libraryApi.applyOrder;

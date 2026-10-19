@@ -240,6 +240,9 @@ const WATCHED = [
   'list_sections',
   'list_items',
   'list_shares',
+  // Club de lectura (13f, T306): invitaciones y miembros.
+  'library_clubs',
+  'library_club_members',
 ] as const;
 
 export const supabaseRealtime: RealtimeApi = {

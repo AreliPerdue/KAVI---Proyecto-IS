@@ -92,8 +92,28 @@ Es la única parte de Library que se comparte, y solo con quien se invita (P4).
     quitar (`library_remove_club_member`) y cerrar. Cerrar es borrar el club, y un disparador desconecta
     antes a cada miembro. Así cada quien se queda con lo del club aunque el anfitrión borre su cuenta.
   - **Pendiente:**
-    - copiar el archivo del anfitrión a la carpeta de quien acepta, en R2, con su función: T306;
     - que los miembros vean las imágenes pegadas por otros: T307.
+- **Hecho (T306, 20 oct 2026):**
+  - **Crear:** en el menú de un PDF o EPUB, **Leer en club** (si ya está en uno, **Club de lectura** lo
+    abre). Se pone el nombre (el título por omisión), se eligen contactos aceptados y se ve el aviso de
+    derechos.
+  - **Invitaciones:** llegan a **Compartido** (sección "Clubes de lectura", y cuentan en el número de la
+    pestaña), con quién invita, el libro y cuánto ocupa. Si no alcanza el espacio, se dice cuánto falta y
+    Aceptar no se deja tocar.
+  - **Aceptar:**
+    - crea la copia en mi carpeta, con `club_id`; la base cuida el tope de 500 MB;
+    - la función de archivos (`clubCopy`) copia dentro de R2 el original y su portada. El original lo da
+      `library_club_source`, que solo responde a invitados;
+    - si algo falla, la copia se borra y no queda nada a medias.
+  - **Pantalla del club:**
+    - el libro (mi copia), los miembros con su papel (Dirige, Miembro, Invitación enviada) y "Que vean por
+      dónde voy";
+    - quien dirige invita a más, retira invitaciones, quita personas, cambia el nombre y cierra el club;
+    - los demás salen;
+    - salir, quitar y cerrar piden confirmación y dicen que cada quien se queda con su copia.
+  - **En la librería:** la copia lleva la marca de club (un ícono de personas en la portada).
+  - **Tiempo real:** las tablas del club entran a Realtime, así que las invitaciones llegan solas.
+  - **Demo:** Ana manda una invitación de muestra, y los contactos invitados aceptan solos al rato.
 - **Modo demo:** los otros miembros son contactos simulados, igual que en Compartido.
 
 ## 6. Fuera de esta versión

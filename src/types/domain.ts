@@ -897,3 +897,14 @@ export type LibraryClubMember = {
   /** Para mostrar quién es. */
   profile: { display_name: string | null; username: string | null; avatar_url: string | null } | null;
 };
+
+/** El libro que trae una invitación a un club (RF-BC3), para decidir si aceptar. */
+export type LibraryClubBook = {
+  title: string;
+  authors: string[];
+  kind: 'pdf' | 'epub';
+  file_size: number;
+  cover_color: string | null;
+  page_count: number | null;
+  host_name: string | null;
+};

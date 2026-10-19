@@ -41,6 +41,7 @@ const mockAcomodosMut = { guardar: { mutate: jest.fn(), isPending: false }, quit
 const mockElegir = jest.fn();
 const mockLeer = jest.fn();
 
+jest.mock('@/hooks/use-clubs', () => ({ useClubMutations: () => ({ create: { mutate: jest.fn(), isPending: false, error: null } }) }));
 jest.mock('@/hooks/use-library', () => ({
   useLibraryItems: () => mockPiezas,
   useLibraryUsage: () => mockEspacio,

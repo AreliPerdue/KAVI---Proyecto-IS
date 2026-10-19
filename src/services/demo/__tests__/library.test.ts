@@ -352,7 +352,8 @@ describe('club de lectura: datos (13f; T305)', () => {
     expect((await api.listAnnotations(libro.id))[0]).toMatchObject({ club_id: club.id, author_id: YO });
     await expect(api.leaveClub(club.id)).rejects.toThrow(es.errors.clubHostLeaves);
     await api.closeClub(club.id);
-    expect(await api.listClubs(YO)).toEqual([]);
+    // (Queda la invitación de muestra de Ana.)
+    expect((await api.listClubs(YO)).map((c) => c.id)).not.toContain(club.id);
     expect((await api.listAnnotations(libro.id))[0].club_id).toBeNull();
     expect((await api.getItem(libro.id)).club_id).toBeNull();
   });
@@ -364,5 +365,53 @@ describe('club de lectura: datos (13f; T305)', () => {
     store().setCurrentUser({ id: ANA, email: 'ana@kavi.app' });
     await expect(api.renameClub(club.id, 'Mío')).rejects.toThrow(es.errors.clubNotHost);
     await expect(api.closeClub(club.id)).rejects.toThrow(es.errors.clubNotHost);
+  });
+});
+
+describe('club de lectura: aceptar con copia propia (13f, RF-BC3; T306)', () => {
+  /* eslint-disable-next-line @typescript-eslint/no-require-imports -- el mismo estado que `fresh()` */
+  const store = () => require('@/services/demo/store') as typeof import('@/services/demo/store');
+  const YO = 'demo-user';
+
+  it('la invitación de muestra de Ana: su libro y aceptar deja una copia mía con la marca del club', async () => {
+    const api = fresh();
+    store().setCurrentUser({ id: YO, email: 'demo@kavi.app' });
+    const [club] = await api.listClubs(YO);
+    expect(club.host_id).toBe('demo-ana');
+    const libro = await api.getClubBook(club.id);
+    expect(libro).toMatchObject({ title: 'Cuentos de la selva', kind: 'pdf', host_name: 'Ana Torres' });
+    const copia = await api.acceptClubInvite(YO, club.id);
+    expect(copia).toMatchObject({ owner_id: YO, club_id: club.id, kind: 'pdf', title: 'Cuentos de la selva', progress: 0 });
+    expect(copia.file_path?.startsWith(`${YO}/${copia.id}/`)).toBe(true);
+    await expect(api.fileUrl(copia.file_path as string)).resolves.toBeTruthy();
+    expect((await api.usage(YO)).usedBytes).toBe(club.file_size);
+    expect((await api.listClubMembers([club.id])).find((m) => m.person_id === YO)).toMatchObject({ status: 'accepted', item_id: copia.id });
+    // Al salir me quedo con la copia, ya sin el club.
+    await api.leaveClub(club.id);
+    expect((await api.getItem(copia.id)).club_id).toBeNull();
+  });
+
+  it('sin espacio no acepta ni deja una copia a medias', async () => {
+    const api = fresh();
+    store().setCurrentUser({ id: YO, email: 'demo@kavi.app' });
+    for (let i = 0; i < 10; i++) await api.createItem(YO, { family: 'book', kind: 'pdf', title: `L${i}`, file_size: 50 * MB });
+    const [club] = (await api.listClubs(YO)).filter((c) => c.host_id === 'demo-ana');
+    await expect(api.acceptClubInvite(YO, club.id)).rejects.toThrow(/500 MB/);
+    expect((await api.listItems(YO)).some((i) => i.club_id)).toBe(false);
+  });
+
+  it('los contactos invitados aceptan solos al rato, con su copia', async () => {
+    jest.useFakeTimers();
+    try {
+      const api = fresh();
+      store().setCurrentUser({ id: YO, email: 'demo@kavi.app' });
+      const libro = await api.createItem(YO, { family: 'book', kind: 'epub', title: 'Rayuela', file_size: MB });
+      const club = await api.createClub(YO, { sourceItemId: libro.id, name: 'Club' });
+      await api.inviteToClub(club.id, ['demo-ana']);
+      jest.advanceTimersByTime(2000);
+      expect((await api.listClubMembers([club.id])).find((m) => m.person_id === 'demo-ana')).toMatchObject({ status: 'accepted' });
+    } finally {
+      jest.useRealTimers();
+    }
   });
 });

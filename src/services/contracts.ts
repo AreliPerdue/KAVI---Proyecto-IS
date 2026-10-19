@@ -55,6 +55,7 @@ import type {
   LibraryClip,
   LibraryClub,
   LibraryClubMember,
+  LibraryClubBook,
   NuevoFragmento,
   LibraryLink,
   LibraryLinkKind,
@@ -582,6 +583,13 @@ export interface LibraryApi {
   closeClub(clubId: string): Promise<void>;
   /** Si los demás ven por dónde voy (RF-BC9). */
   setClubProgressVisible(userId: string, clubId: string, visible: boolean): Promise<void>;
+  /** El libro de un club al que me invitaron: título, tamaño y quién invita (RF-BC3). */
+  getClubBook(clubId: string): Promise<LibraryClubBook | null>;
+  /**
+   * Aceptar (RF-BC3): recibo una copia del libro en mi librería, con la marca del club, que cuenta en mi espacio.
+   * Si algo falla no queda una copia a medias.
+   */
+  acceptClubInvite(userId: string, clubId: string): Promise<LibraryItem>;
 
   /** Acomodos guardados (RF-BL7b, T331). */
   listLayouts(userId: string): Promise<LibraryLayout[]>;

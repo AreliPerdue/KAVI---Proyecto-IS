@@ -21,6 +21,8 @@ const SHARED_DATA_KEYS = [
    * Invalidar solo el detalle dejaría el resto mintiendo.
    */
   ['lists'],
+  /** Los clubes de lectura (13f): invitar, aceptar, salir; las copias cambian la librería. */
+  ['library', 'clubs'],
 ] as const;
 
 export function invalidateSharedData(queryClient: QueryClient): void {
@@ -48,6 +50,10 @@ const POR_TABLA: Record<string, readonly (readonly string[])[]> = {
   list_sections: [['lists']],
   list_items: [['lists']],
   list_shares: [['lists']],
+  // Club de lectura (13f, T306): una invitación nueva, alguien que acepta o sale; si sale o se cierra el club,
+  // la copia deja de estar en él.
+  library_clubs: [['library', 'clubs'], ['library', 'items']],
+  library_club_members: [['library', 'clubs'], ['library', 'items']],
 };
 
 /** Cuánto dura "acabo de cambiar mis listas": el eco de Realtime llega antes de eso. */

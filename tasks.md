@@ -1267,8 +1267,15 @@ Reemplazan L5 (13e). Un recorte es una página 1 : √2 del visor de PDF (decisi
   - Servicios en Supabase y demo: listar, crear, invitar, retirar invitación, salir, quitar, cerrar, nombre y
     avance. Errores del club traducidos.
   - Copiar el original para quien acepta pasa a T306 (es en R2, no en Storage).
-- [ ] T306 Crear club desde el menú de la pieza, invitar contactos (tope 12), aceptar con copia propia y aviso
+- [x] T306 Crear club desde el menú de la pieza, invitar contactos (tope 12), aceptar con copia propia y aviso
   de espacio, salir, quitar y cerrar sin borrar copias. (RF-BC1 – RF-BC5) Dep: T305, T281
+  **Hecho (20 oct 2026):**
+  - Migración `20261020120000_library_club_source.sql`: `library_club_source` y Realtime de las tablas del club.
+  - `api/library-files.ts` `clubCopy`: copia dentro de R2 el original y su portada.
+  - Servicios `getClubBook` y `acceptClubInvite` (con deshacer si falla); hooks en `hooks/use-clubs.ts`.
+  - Interfaz: `create-club-sheet.tsx`, `club-contact-picker.tsx`, `club-invitations.tsx` (en Compartido, con el
+    número de la pestaña), la pantalla `app/(app)/club/[id].tsx` y la marca de club en la portada.
+  - Demo con invitación de muestra y contactos que aceptan solos.
 - [ ] T307 Anotaciones del club: compartidas por omisión, "Solo para mí", editables por todos con autor y
   color, capa ocultable; al desconectarse se quedan en la copia. (RF-BC6 – RF-BC8) Dep: T306, T286
 - [ ] T308 Avance de cada quien en el club y en la barra del lector. (RF-BC9) Dep: T306, T279

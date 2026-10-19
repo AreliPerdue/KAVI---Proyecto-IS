@@ -14,6 +14,7 @@ import { useConfirm, useSnackbar } from '@/providers';
 import type { CalendarVisibility, Contact } from '@/services/connections';
 import { usePreferencesStore } from '@/store/preferences-store';
 import { useMyProfile } from '@/hooks/use-profile';
+import { ClubInvitations } from '@/components/library/club-invitations';
 import { StackedModuleBack } from '@/components/navigation/stacked-module';
 import { type Dictionary, useT } from '@/i18n';
 
@@ -99,6 +100,9 @@ export default function SharedScreen() {
       {error ? <Banner tone="error" message={error.message} /> : null}
       {contacts.isPending || invitations.isPending ? <LoadingState /> : null}
       {contacts.isError ? <ErrorState message={contacts.error.message} onRetry={() => contacts.refetch()} /> : null}
+
+      {/* Invitaciones a clubes de lectura (13f, RF-BC3; T306). */}
+      <ClubInvitations />
 
       {(invitations.data?.length ?? 0) > 0 ? (
         <View style={styles.section}>

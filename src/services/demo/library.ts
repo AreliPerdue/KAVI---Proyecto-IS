@@ -5,7 +5,7 @@ import { AuthUiError } from '@/lib/auth-errors';
 import { LIBRARY_LIMITS } from '@/constants/library';
 import type { LibraryApi } from '@/services/contracts';
 import { areConnected } from '@/services/demo/connections';
-import { delay, demoState, emitDataChange, nextId } from '@/services/demo/store';
+import { DEMO_CONTACTS, delay, demoState, emitDataChange, nextId } from '@/services/demo/store';
 import { nombreSeguro } from '@/lib/library/files';
 import type {
   LibraryAnnotation,
@@ -17,6 +17,7 @@ import type {
   LibraryClip,
   LibraryClub,
   LibraryClubMember,
+  LibraryClubBook,
   LibraryCardTemplate,
   LibraryFileBody,
   LibraryFont,
@@ -60,6 +61,124 @@ const esAnfitrion = (clubId: string) => clubes.some((c) => c.id === clubId && c.
 function perfilDe(id: string): LibraryClubMember['profile'] {
   const p = demoState.accounts.find((a) => a.user.id === id)?.profile;
   return p ? { display_name: p.display_name, username: p.username, avatar_url: p.avatar_url } : null;
+}
+
+/** Una copia de un libro de club para `ownerId`: el mismo archivo en su carpeta, sin su avance ni su saga. */
+function copiaDeClub(fuente: LibraryItem, ownerId: string, clubId: string): LibraryItem {
+  const id = nextId('libro');
+  const nombre = (ruta: string) => ruta.split('/').pop() as string;
+  const t0 = ahora();
+  const nueva: LibraryItem = {
+    ...copia(fuente),
+    id,
+    owner_id: ownerId,
+    file_path: fuente.file_path ? `${ownerId}/${id}/${nombre(fuente.file_path)}` : null,
+    cover_path: fuente.cover_path ? `${ownerId}/${id}/${nombre(fuente.cover_path)}` : null,
+    custom_cover_path: null,
+    spine_path: null,
+    back_cover_path: null,
+    series_id: null,
+    series_index: null,
+    progress: 0,
+    last_position: null,
+    sort_order: -Date.now() / 1000,
+    spine_order: null,
+    club_id: clubId,
+    created_at: t0,
+    updated_at: t0,
+  };
+  for (const [de, a] of [[fuente.file_path, nueva.file_path], [fuente.cover_path, nueva.cover_path]] as const) {
+    const archivo = de ? archivos.get(de) : undefined;
+    if (archivo && a) archivos.set(a, archivo);
+  }
+  items.push(nueva);
+  return nueva;
+}
+
+/**
+ * En el demo los otros miembros son contactos simulados (13f §5): aceptan solos al rato de invitarlos, con su
+ * copia del libro.
+ */
+function aceptaSolo(clubId: string, personId: string) {
+  const espera = setTimeout(() => {
+    const m = miembros.find((x) => x.club_id === clubId && x.person_id === personId && x.status === 'pending');
+    const club = clubes.find((c) => c.id === clubId);
+    const fuente = club && items.find((i) => i.id === club.source_item_id);
+    if (!m || !fuente) return;
+    m.item_id = copiaDeClub(fuente, personId, clubId).id;
+    m.status = 'accepted';
+    m.joined_at = ahora();
+    emitDataChange();
+  }, 1500);
+  // En las pruebas (Node) no detiene el cierre; en la app no hace nada.
+  (espera as unknown as { unref?: () => void }).unref?.();
+}
+
+/**
+ * Una invitación de Ana a su club, para ver en el demo cómo se acepta (13f, RF-BC3). Su libro es una muestra
+ * de una página.
+ */
+const PDF_DE_MUESTRA =
+  '%PDF-1.4\n1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj\n2 0 obj<</Type/Pages/Kids[3 0 R]/Count 1>>endobj\n' +
+  '3 0 obj<</Type/Page/Parent 2 0 R/MediaBox[0 0 360 480]/Contents 4 0 R/Resources<</Font<</F1 5 0 R>>>>>>endobj\n' +
+  '4 0 obj<</Length 92>>stream\nBT /F1 22 Tf 40 400 Td (Cuentos de la selva) Tj 0 -40 Td /F1 14 Tf (Muestra para el club) Tj ET\nendstream endobj\n' +
+  '5 0 obj<</Type/Font/Subtype/Type1/BaseFont/Helvetica>>endobj\ntrailer<</Root 1 0 R>>\n%%EOF\n';
+let clubDeAnaSembrado = false;
+function sembrarClubDeAna() {
+  if (clubDeAnaSembrado) return;
+  clubDeAnaSembrado = true;
+  const ana = DEMO_CONTACTS.ana.id;
+  const bytes = new TextEncoder().encode(PDF_DE_MUESTRA);
+  const t0 = ahora();
+  const libroId = nextId('libro');
+  const ruta = `${ana}/${libroId}/cuentos-de-la-selva.pdf`;
+  archivos.set(ruta, { body: bytes, type: 'application/pdf' });
+  const libro: LibraryItem = {
+    id: libroId,
+    owner_id: ana,
+    family: 'book',
+    kind: 'pdf',
+    title: 'Cuentos de la selva',
+    authors: ['Horacio Quiroga'],
+    category: null,
+    genres: [],
+    cover_path: null,
+    cover_color: '#3E7C47',
+    custom_cover_path: null,
+    custom_cover_color: null,
+    spine_path: null,
+    spine_color: null,
+    back_cover_path: null,
+    back_cover_color: null,
+    sort_order: 0,
+    spine_order: null,
+    series_id: null,
+    series_index: null,
+    publisher: null,
+    publish_place: null,
+    edition: null,
+    chapter_count: null,
+    synopsis: null,
+    file_path: ruta,
+    pdf_path: null,
+    file_size: bytes.length,
+    page_count: 1,
+    progress: 0,
+    last_position: null,
+    reading_mode: null,
+    style: null,
+    base_color: null,
+    created_at: t0,
+    updated_at: t0,
+  };
+  items.push(libro);
+  const club: LibraryClub = { id: nextId('club'), host_id: ana, name: 'Club de Ana', source_item_id: libroId, kind: 'pdf', file_size: bytes.length, created_at: t0, updated_at: t0 };
+  clubes.push(club);
+  libro.club_id = club.id;
+  miembros.push(
+    { club_id: club.id, person_id: ana, status: 'accepted', item_id: libroId, shows_progress: true, invited_by: ana, created_at: t0, joined_at: t0 },
+    { club_id: club.id, person_id: 'demo-user', status: 'pending', item_id: null, shows_progress: true, invited_by: ana, created_at: t0, joined_at: null },
+  );
 }
 
 /**
@@ -516,6 +635,7 @@ export const demoLibrary: LibraryApi = {
 
   async listClubs(userId) {
     await delay();
+    sembrarClubDeAna();
     return copia(clubes.filter((c) => c.host_id === userId || miembros.some((m) => m.club_id === c.id && m.person_id === userId)));
   },
 
@@ -563,7 +683,10 @@ export const demoLibrary: LibraryApi = {
     if (nuevos.some((p) => !areConnected(yo(), p))) throw new AuthUiError(t().errors.clubOnlyContacts);
     if (miembros.filter((m) => m.club_id === clubId).length + nuevos.length > 12) throw new AuthUiError(t().errors.clubFull);
     const t0 = ahora();
-    for (const p of nuevos) miembros.push({ club_id: clubId, person_id: p, status: 'pending', item_id: null, shows_progress: true, invited_by: yo(), created_at: t0, joined_at: null });
+    for (const p of nuevos) {
+      miembros.push({ club_id: clubId, person_id: p, status: 'pending', item_id: null, shows_progress: true, invited_by: yo(), created_at: t0, joined_at: null });
+      aceptaSolo(clubId, p);
+    }
     emitDataChange();
   },
 
@@ -603,6 +726,41 @@ export const demoLibrary: LibraryApi = {
     const m = miembros.find((x) => x.club_id === clubId && x.person_id === userId);
     if (m) m.shows_progress = visible;
     emitDataChange();
+  },
+
+  async getClubBook(clubId) {
+    await delay();
+    const club = clubes.find((c) => c.id === clubId);
+    const invitado = miembros.some((m) => m.club_id === clubId && m.person_id === yo());
+    const fuente = club && invitado ? items.find((i) => i.id === club.source_item_id) : undefined;
+    if (!club || !fuente) return null;
+    const libro: LibraryClubBook = {
+      title: fuente.title,
+      authors: [...fuente.authors],
+      kind: club.kind,
+      file_size: club.file_size,
+      cover_color: fuente.cover_color,
+      page_count: fuente.page_count,
+      host_name: perfilDe(club.host_id)?.display_name ?? null,
+    };
+    return libro;
+  },
+
+  async acceptClubInvite(userId, clubId) {
+    await delay();
+    const m = miembros.find((x) => x.club_id === clubId && x.person_id === userId && x.status === 'pending');
+    if (!m) throw new AuthUiError(t().errors.clubNotMember);
+    const club = clubes.find((c) => c.id === clubId);
+    const fuente = club && items.find((i) => i.id === club.source_item_id);
+    if (!club || !fuente) throw new AuthUiError(t().errors.clubNoBook);
+    // Como la base: la copia cuenta en mi espacio (B2).
+    revisarEspacio(userId, club.file_size);
+    const nueva = copiaDeClub(fuente, userId, clubId);
+    m.status = 'accepted';
+    m.item_id = nueva.id;
+    m.joined_at = ahora();
+    emitDataChange();
+    return copia(nueva);
   },
 
   async saveReadingSession(userId, session) {

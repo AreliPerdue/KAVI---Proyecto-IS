@@ -26,6 +26,10 @@
  * - `deleteFile` `{ path }` → borra una imagen pegada que ya no se usa (T333: una hora después de quitarla,
  *   si no se deshizo). Solo rutas `<uid>/<pieza>/anotaciones/<id>.jpg` de una pieza propia.
  * - `deleteAll` → borra la carpeta de la persona (al eliminar la cuenta, RF-A12).
+ * - `clubCopy` `{ clubId, itemId }` → club de lectura (13f, RF-BC3; T306): copia dentro de R2 el libro del
+ *   anfitrión (y su portada) a la copia de quien acepta, sin pasar por el teléfono. La copia es una pieza suya,
+ *   ya creada con `club_id` (la base cuidó su espacio); el original lo da `library_club_source`, que solo
+ *   responde a quien está invitado.
  *
  * Cada error lleva un `code` (`unavailable`, `signIn`, `forbidden`, `tooBig`, `badRequest`, `failed`)
  * que la app traduce a su idioma (spec 12); `error` es el mismo mensaje en español, para los registros.
@@ -54,6 +58,7 @@ type Pieza = {
   spine_path: string | null;
   back_cover_path: string | null;
   file_size: number;
+  club_id?: string | null;
 };
 type Fuente = { id: string; file_path: string; file_size: number };
 
@@ -126,6 +131,13 @@ async function borrarPrefijo(r2: R2, prefijo: string): Promise<number> {
   return borrados;
 }
 
+/** Copia un objeto dentro de R2 (CopyObject), sin bajarlo. */
+async function copiar(r2: R2, de: string, a: string): Promise<void> {
+  const origen = `/${r2.bucket}/${de.split('/').map((p) => encodeURIComponent(p)).join('/')}`;
+  const r = await cliente(r2).fetch(direccion(r2, a).toString(), { method: 'PUT', headers: { 'x-amz-copy-source': origen } });
+  if (!r.ok) throw new Error(`copy ${r.status}`);
+}
+
 function entidades(texto: string): string {
   return texto.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&apos;/g, "'").replace(/&amp;/g, '&');
 }
@@ -153,7 +165,7 @@ function tipoDeSueltaPropia(ruta: string, uid: string): 'image/png' | 'image/jpe
 }
 
 async function pieza(supabase: SupabaseClient, filtro: { id?: string; ruta?: string }): Promise<Pieza | null> {
-  let consulta = supabase.from('library_items').select('id, owner_id, file_path, pdf_path, cover_path, custom_cover_path, spine_path, back_cover_path, file_size');
+  let consulta = supabase.from('library_items').select('id, owner_id, file_path, pdf_path, cover_path, custom_cover_path, spine_path, back_cover_path, file_size, club_id');
   if (filtro.id) consulta = consulta.eq('id', filtro.id);
   if (filtro.ruta) {
     const r = filtro.ruta.replace(/[,()"]/g, '');
@@ -279,6 +291,20 @@ export async function POST(request: Request): Promise<Response> {
       }
       case 'deleteAll':
         return responder(200, { removed: await borrarPrefijo(r2, `${uid}/`) });
+      case 'clubCopy': {
+        const clubId = texto(cuerpo.clubId);
+        const item = await pieza(supabase, { id: texto(cuerpo.itemId) });
+        const { data: original, error } = await supabase.rpc('library_club_source', { p_club: clubId });
+        if (error) throw new Error(`club ${error.code ?? ''} ${error.message}`);
+        const o = original as { file_path?: string; file_size?: number; cover_path?: string | null } | null;
+        // La copia es mía, de este club, en mi carpeta y del tamaño del original.
+        if (!item || !o?.file_path || item.club_id !== clubId || !item.file_path || !item.file_path.startsWith(`${uid}/${item.id}/`) || item.file_size !== o.file_size) {
+          return responder(403, { code: 'forbidden', error: 'No tienes permiso para copiar ese libro.' });
+        }
+        await copiar(r2, o.file_path, item.file_path);
+        if (o.cover_path && item.cover_path?.startsWith(`${uid}/${item.id}/`)) await copiar(r2, o.cover_path, item.cover_path).catch(() => undefined);
+        return responder(200, { copied: 1 });
+      }
       default:
         return responder(400, { code: 'badRequest', error: 'Acción desconocida.' });
     }

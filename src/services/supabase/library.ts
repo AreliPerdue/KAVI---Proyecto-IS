@@ -1,6 +1,7 @@
 import { File } from 'expo-file-system';
 import { apiUrl } from '@/lib/api';
 import { AUTH_MESSAGES, AuthUiError, isOfflineError } from '@/lib/auth-errors';
+import { uuidv4 } from '@/lib/gym/ids';
 import { getSupabase } from '@/lib/supabase';
 import { LIBRARY_LIMITS } from '@/constants/library';
 import { nombreSeguro } from '@/lib/library/files';
@@ -15,6 +16,7 @@ import type {
   LibraryClip,
   LibraryClub,
   LibraryClubMember,
+  LibraryClubBook,
   LibraryCard,
   LibraryCardTemplate,
   LibraryFileBody,
@@ -359,6 +361,54 @@ export const supabaseLibrary: LibraryApi = {
 
   async setClubProgressVisible(userId, clubId, visible) {
     sinError(await db().from('library_club_members').update({ shows_progress: visible }).eq('club_id', clubId).eq('person_id', userId));
+  },
+
+  async getClubBook(clubId) {
+    const f = unwrap(await db().rpc('library_club_source', { p_club: clubId })) as LibraryClubBook | null;
+    // Solo lo que se muestra: las rutas del original son para la función de archivos.
+    return f
+      ? { title: f.title, authors: f.authors ?? [], kind: f.kind, file_size: f.file_size, cover_color: f.cover_color, page_count: f.page_count, host_name: f.host_name }
+      : null;
+  },
+
+  async acceptClubInvite(userId, clubId) {
+    const fuente = unwrap(await db().rpc('library_club_source', { p_club: clubId })) as
+      | (LibraryClubBook & { file_path: string | null; cover_path: string | null })
+      | null;
+    if (!fuente?.file_path) throw new AuthUiError(t().errors.clubNoBook);
+    // La copia vive en mi carpeta, con el mismo nombre de archivo; la base cuida mi tope de 500 MB.
+    const id = uuidv4();
+    const nombre = (ruta: string) => ruta.split('/').pop() as string;
+    const copia = unwrap(
+      await db()
+        .from('library_items')
+        .insert({
+          id,
+          owner_id: userId,
+          family: 'book',
+          kind: fuente.kind,
+          title: fuente.title,
+          authors: fuente.authors ?? [],
+          file_size: fuente.file_size,
+          file_path: `${userId}/${id}/${nombre(fuente.file_path)}`,
+          cover_path: fuente.cover_path ? `${userId}/${id}/${nombre(fuente.cover_path)}` : null,
+          cover_color: fuente.cover_color,
+          page_count: fuente.page_count,
+          club_id: clubId,
+        })
+        .select('*')
+        .single(),
+    ) as LibraryItem;
+    try {
+      await archivos({ action: 'clubCopy', clubId, itemId: id });
+      sinError(await db().from('library_club_members').update({ status: 'accepted', item_id: id }).eq('club_id', clubId).eq('person_id', userId));
+    } catch (e) {
+      // Sin la copia completa no queda nada a medias (13f §7).
+      await archivos({ action: 'delete', itemId: id }).catch(() => undefined);
+      await db().from('library_items').delete().eq('id', id);
+      throw e;
+    }
+    return copia;
   },
 
   async saveReadingSession(userId, session) {

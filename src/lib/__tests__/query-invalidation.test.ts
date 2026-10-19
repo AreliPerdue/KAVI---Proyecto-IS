@@ -23,20 +23,21 @@ function clienteFalso() {
 }
 
 describe('invalidateSharedData', () => {
-  it('invalida las seis familias afectadas', () => {
+  it('invalida las siete familias afectadas', () => {
     const { client, llamadas } = clienteFalso();
     invalidateSharedData(client);
-    expect(llamadas).toHaveLength(6);
+    expect(llamadas).toHaveLength(7);
   });
 
   // Lists entró al compartir con la fase 2 (RF-L16): una lista compartida que cambia
   // en otro dispositivo deja obsoletos la tarjeta, el detalle y la franja del día.
-  it('cubre contactos, actividades, shares, recordatorios, disponibilidad y listas', () => {
+  // Los clubes de lectura (13f, T306) dependen de con quién compartes: invitaciones de contactos.
+  it('cubre contactos, actividades, shares, recordatorios, disponibilidad, listas y clubes', () => {
     const { client, llamadas } = clienteFalso();
     invalidateSharedData(client);
-    const claves = llamadas.map((l) => (l as { queryKey: string[] }).queryKey[0]);
+    const claves = llamadas.map((l) => (l as { queryKey: string[] }).queryKey.join('/'));
     expect(new Set(claves)).toEqual(
-      new Set(['connections', 'activities', 'shares', 'reminders', 'availability', 'lists']),
+      new Set(['connections', 'activities', 'shares', 'reminders', 'availability', 'lists', 'library/clubs']),
     );
   });
 

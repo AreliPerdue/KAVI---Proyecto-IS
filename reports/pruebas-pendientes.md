@@ -760,3 +760,13 @@ Automatizado: `lib/library/__tests__/reviews.test.ts` y `app/(app)/__tests__/rev
 (375 px): dos fichas, totales y "Picante 4 o más".
 - [ ] (manual) Con 20 o más fichas reales: filtrar por género y por año, y ordenar por estrellas, se siente rápido en
   el teléfono.
+
+## Club de lectura: crear, invitar y aceptar (T305, T306)
+Automatizado: RLS en PGlite (33 casos: contactos, tope de 12, anotar y editar juntos, desconectarse),
+`services/demo/__tests__/library.test.ts`, `lib/__tests__/library-files-api.test.ts` (copiar en R2) y
+`app/(app)/__tests__/club.test.tsx`. Visto en el demo (375 px): aceptar la invitación de Ana, la marca de club y crear
+un club con Pedro.
+- [ ] (manual, con dos cuentas reales) Crear un club con un PDF, invitar a la otra cuenta; la invitación llega sola a
+  Compartido; aceptar copia el libro (se abre y se descarga sin red) y el espacio usado sube su tamaño.
+- [ ] (manual) Con poco espacio: la invitación dice cuánto falta y no deja aceptar.
+- [ ] (manual) Salir, quitar y cerrar: la copia se queda en la librería de cada quien, sin la marca de club.

@@ -1,4 +1,4 @@
-import { Check, Ellipsis } from 'lucide-react-native';
+import { Check, Ellipsis, Users } from 'lucide-react-native';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { BookCover } from './book-cover';
@@ -22,7 +22,7 @@ export function textoAvance(item: LibraryItem, l: Dictionary['library']): string
 /** Lo que dice un lector de pantalla de cada pieza: título, autor y avance (y si está elegida). */
 export function etiqueta(item: LibraryItem, l: Dictionary['library'], seleccion?: boolean, saga?: string): string {
   const estado = seleccion === undefined ? null : seleccion ? l.selection.selected : l.selection.notSelected;
-  return [item.title, item.authors.join(', '), saga, textoAvance(item, l), estado].filter(Boolean).join(', ');
+  return [item.title, item.authors.join(', '), saga, item.club_id ? l.clubs.badgeA11y : null, textoAvance(item, l), estado].filter(Boolean).join(', ');
 }
 
 /** Mantener presionado sin mover selecciona, como en Listas (RF-BL15, RF-L28). */
@@ -106,6 +106,12 @@ export function LibraryCoverCard({ width, ...props }: LibraryItemProps & { width
         accessibilityState={seleccionando ? { selected: elegida } : undefined}>
         <View>
           <BookCover item={item} width={width} />
+          {/* La marca de club (13f, RF-BC3): este libro se lee con otros. */}
+          {item.club_id ? (
+            <View pointerEvents="none" style={[styles.marcaClub, { backgroundColor: theme.overlay }]}>
+              <Users size={14} strokeWidth={IconStroke} color={PAPER} />
+            </View>
+          ) : null}
           {elegida ? <View pointerEvents="none" style={[styles.elegida, { borderColor: theme.ink }]} /> : null}
         </View>
         <View>
@@ -173,6 +179,7 @@ export function LibraryRow(props: LibraryItemProps) {
 }
 
 const styles = StyleSheet.create({
+  marcaClub: { position: 'absolute', left: 6, bottom: 6, width: 26, height: 26, borderRadius: 13, alignItems: 'center', justifyContent: 'center' },
   tarjeta: { gap: Spacing.sm },
   // La portada elegida lleva un marco de tinta encima (RF-BL15): no cambia el tamaño ni mueve nada.
   elegida: { ...StyleSheet.absoluteFill, borderWidth: 3, borderRadius: Radius.sm, borderCurve: 'continuous' },

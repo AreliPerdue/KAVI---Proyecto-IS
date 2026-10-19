@@ -11,6 +11,7 @@ import { DetailsSheet } from '@/components/library/details-sheet';
 import { EditItemSheet } from '@/components/library/edit-item-sheet';
 import { ImportSheet } from '@/components/library/import-sheet';
 import { LibraryHeader } from '@/components/library/library-header';
+import { CreateClubSheet } from '@/components/library/create-club-sheet';
 import { ItemSheet } from '@/components/library/item-sheet';
 import { PdfCoverWorker } from '@/components/library/pdf-cover-worker';
 import { ShelfEditSheet } from '@/components/library/shelf-edit-sheet';
@@ -46,6 +47,7 @@ import {
   useUpdateLibraryItem,
 } from '@/hooks/use-library';
 import { useTheme } from '@/hooks/use-theme';
+import { useClubMutations } from '@/hooks/use-clubs';
 import { useLanguage, useT } from '@/i18n';
 import { uuidv4 } from '@/lib/gym/ids';
 import { formatBytes } from '@/lib/library/files';
@@ -125,6 +127,10 @@ export default function LibraryScreen() {
   const f = l.find;
 
   // Organizar (T280).
+  // Leer en club (13f, T306).
+  const [clubDe, setClubDe] = useState<LibraryItem | null>(null);
+  const clubs = useClubMutations();
+
   const libreros = useShelves();
   const enLibreros = useShelfItems();
   const librerosMut = useShelfMutations();
@@ -717,11 +723,31 @@ export default function LibraryScreen() {
         onDetails={setDetallesDe}
         onCover={setPortadaDe}
         onCards={(p) => router.push({ pathname: '/(app)/book-cards/[id]', params: { id: p.id } })}
+        onClub={(p) => (p.club_id ? router.push({ pathname: '/(app)/club/[id]', params: { id: p.club_id } }) : setClubDe(p))}
         onAddToShelf={(p) => setAgregandoA([p.id])}
         shelfName={libreroActual?.name}
         onRemoveFromShelf={libreroActual ? (p) => quitarDelLibrero([p.id]) : undefined}
         onSelect={(p) => setSeleccion(new Set([p.id]))}
         onDelete={(p) => eliminarPiezas([p])}
+      />
+      <CreateClubSheet
+        libro={clubDe}
+        onClose={() => setClubDe(null)}
+        creando={clubs.create.isPending}
+        error={clubs.create.error?.message ?? null}
+        onCrear={({ name, invitar }) =>
+          clubDe &&
+          clubs.create.mutate(
+            { sourceItemId: clubDe.id, name, invitar },
+            {
+              onSuccess: (club) => {
+                setClubDe(null);
+                showSnackbar({ message: l.clubs.created });
+                router.push({ pathname: '/(app)/club/[id]', params: { id: club.id } });
+              },
+            },
+          )
+        }
       />
       <SpinePreviewSheet
         item={sacada}

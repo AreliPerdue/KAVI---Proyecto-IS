@@ -21,6 +21,7 @@ let mockContactos: Record<string, unknown>;
 let mockInvitaciones: Record<string, unknown>;
 let mockBusqueda: Record<string, unknown>;
 
+jest.mock('@/components/library/club-invitations', () => ({ ClubInvitations: () => null }));
 jest.mock('@/hooks/use-connections', () => ({
   SEARCH_MIN_LENGTH: 3,
   useContacts: () => mockContactos,

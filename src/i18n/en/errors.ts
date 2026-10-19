@@ -64,6 +64,7 @@ export const errors: Dictionary['errors'] = {
   clubCopy: 'That copy isn’t from this club.',
   clubAnnotation: 'Only club members annotate in it.',
   clubOnlyContacts: 'You can only invite your contacts.',
+  clubNoBook: 'That club’s book is gone: its host deleted it.',
   libraryFilesUnavailable: 'Library files aren’t available right now. Try again later.',
   libraryFilesFailed: 'Couldn’t finish with the library files. Check your connection and try again.',
   libraryUploadFailed: 'The file couldn’t be uploaded to the library. Try again in a moment.',

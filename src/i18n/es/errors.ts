@@ -63,6 +63,7 @@ export const errors = {
   clubCopy: 'Esa copia no es de este club.',
   clubAnnotation: 'Solo los miembros del club anotan en él.',
   clubOnlyContacts: 'Solo puedes invitar a tus contactos.',
+  clubNoBook: 'El libro de ese club ya no está: quien lo dirige lo borró.',
   libraryFileTooBig: 'El archivo pesa más de 50 MB, que es el máximo por libro.',
   libraryFilesUnavailable: 'Los archivos de la biblioteca no están disponibles por ahora. Inténtalo más tarde.',
   libraryFilesFailed: 'No se pudo completar con los archivos de la biblioteca. Revisa tu conexión e inténtalo de nuevo.',
