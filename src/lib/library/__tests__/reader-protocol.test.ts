@@ -181,7 +181,9 @@ describe('lápiz (T291)', () => {
 
   it('el borrador manda los trazos que quedan; deshacer lo guardado llega como undo', () => {
     expect(leerMensaje({ type: 'inkChange', id: 'a1', strokes })).toEqual({ type: 'inkChange', id: 'a1', strokes });
-    expect(leerMensaje({ type: 'inkChange', id: 'a1', strokes: [] })).toBeNull();
+    // Un post-it al que le borraron todo el dibujo.
+    expect(leerMensaje({ type: 'inkChange', id: 'a1', strokes: [] })).toEqual({ type: 'inkChange', id: 'a1', strokes: [] });
+    expect(leerMensaje({ type: 'inkChange', id: 'a1', strokes: 'x' })).toBeNull();
     expect(leerMensaje({ type: 'undo' })).toEqual({ type: 'undo' });
   });
 });

@@ -11,6 +11,8 @@
  *   pegado (en PDF, en su página; en EPUB, junto a su renglón) y sus trazos relativos a esa caja: cada uno
  *   `{ t, c, s, p }` con la herramienta, el color, el grosor (parte del ancho de la caja) y sus puntos
  *   `[x, y, w, …]` (x e y en anchos de la caja; w, cuánto engruesa la presión).
+ * - **En un post-it** (T291b): si el trazo empieza sobre un post-it abierto y sin bloquear, va dentro de él
+ *   (sus `content.strokes`, en anchos del post-it y sin su giro) y viaja con él: moverlo, girarlo, estirarlo.
  * - **El borrador** quita trazos enteros al pasar por encima; cada pasada es un paso de deshacer.
  * - **Solo lápiz:** dibuja solo el lápiz; el dedo sigue moviendo la página. Sin él, el dedo (o el mouse)
  *   también dibuja y la página no se mueve con el dedo mientras el lápiz está puesto.
@@ -138,18 +140,21 @@ function toca(t, x, y, radio) {
 /**
  * `ctx`: `forma()`, `pdf()`, `epub()`; y de la capa de anotaciones, `lugarDeDibujo(caja, pagina)` (la caja en
  * px de la ventana → `{ locator, caja }` o null), `provisional(item)` (pintarlo ya, antes de que vuelva de la
- * app), `dibujosVisibles()` (`[{ el, a }]`) y `cambiarTrazos(id, trazos)` (repintar uno con menos trazos).
+ * app), `dibujosVisibles()` (`[{ el, a, trazos, ancho, local(x, y) }]`), `cambiarTrazos(id, trazos)` (repintar
+ * uno ya), `postitEn(x, y)`, `marcoDePostit(id)` (`{ ancho, local }`) y `trazosDe(id)`.
  */
 export function crearLapiz(ctx, enviar) {
   let modo = null; // { tool, color, size, penOnly }
   let trazo = null; // el que se está haciendo: { pointerId, t, c, px, pts: [x, y, w, …] en px de la ventana, borrador }
   let pendientes = []; // trazos terminados que aún no se guardan
   let paginaPendiente = null; // en PDF, la página del primer trazo pendiente
+  let postitPendiente = null; // el post-it donde va lo pendiente (T291b), o null si va en la página
   let espera = null;
   let vivo = null; // el lienzo encima de todo donde se ve lo que se dibuja
   let lapizAbajo = false;
   let cuadro = null;
   const borrados = new Map(); // id → trazos que le quedan, mientras se borra
+  const borradosDePostit = new Set();
   const enganchadas = new WeakSet();
 
   const activo = () => !!modo && ctx.forma() !== 'book';
@@ -200,9 +205,10 @@ export function crearLapiz(ctx, enviar) {
       return;
     }
     const { x, y } = enVentana(e);
-    // En PDF se dibuja sobre una página; en EPUB, sobre el área del libro.
-    const pagina = ctx.pdf() ? paginaPdfEn(x, y) : null;
-    if (ctx.pdf() && !pagina) return;
+    // Sobre un post-it, dentro de él; si no, en PDF sobre una página y en EPUB sobre el área del libro.
+    const postit = modo.tool === 'eraser' ? null : ctx.postitEn(x, y);
+    const pagina = ctx.pdf() && !postit ? paginaPdfEn(x, y) : null;
+    if (ctx.pdf() && !pagina && !postit) return;
     e.preventDefault();
     e.stopImmediatePropagation();
     if (e.pointerType === 'pen') lapizAbajo = true;
@@ -217,7 +223,9 @@ export function crearLapiz(ctx, enviar) {
       borrarEn(x, y);
       return;
     }
-    if (pagina && paginaPendiente && pagina !== paginaPendiente) guardar();
+    // Lo pendiente va a un solo lugar: si este trazo va a otro (otra página, un post-it), se guarda antes.
+    if (pendientes.length && (postit !== postitPendiente || (pagina && paginaPendiente && pagina !== paginaPendiente))) guardar();
+    postitPendiente = postit;
     if (pagina) paginaPendiente = pagina;
     trazo = { pointerId: e.pointerId, t: modo.tool, c: modo.color, px: modo.size, pts: [r2(x), r2(y), r2(grosorDe(e, modo.tool))] };
     pedirCuadro();
@@ -292,10 +300,13 @@ export function crearLapiz(ctx, enviar) {
     espera = null;
     const trazos = pendientes;
     const pagina = paginaPendiente;
+    const postit = postitPendiente;
     pendientes = [];
     paginaPendiente = null;
+    postitPendiente = null;
     pedirCuadro();
     if (!trazos.length) return;
+    if (postit && guardarEnPostit(postit, trazos)) return;
     let izq = Infinity;
     let arr = Infinity;
     let der = -Infinity;
@@ -324,26 +335,52 @@ export function crearLapiz(ctx, enviar) {
     enviar({ type: 'ink', locator, strokes });
   }
 
+  /**
+   * Lo dibujado sobre un post-it pasa a ser suyo (T291b): sus puntos, sin el giro del post-it y en anchos de
+   * él, se suman a los que ya tenía. Si el post-it ya no está o se llenó, el dibujo queda en la página.
+   */
+  function guardarEnPostit(id, trazos) {
+    const marco = ctx.marcoDePostit(id);
+    if (!marco) return false;
+    const nuevos = trazos.map((t) => {
+      const p = [];
+      for (let i = 0; i < t.pts.length; i += 3) {
+        const q = marco.local(t.pts[i], t.pts[i + 1]);
+        p.push(r4(q.x), r4(q.y), t.pts[i + 2]);
+      }
+      return { t: t.t, c: t.c, s: r4(t.px / marco.ancho), p };
+    });
+    const todos = [...ctx.trazosDe(id), ...nuevos];
+    if (todos.length > 390 || todos.reduce((n, t) => n + t.p.length, 0) > 38_000) return false;
+    ctx.cambiarTrazos(id, todos);
+    enviar({ type: 'inkChange', id, strokes: todos });
+    return true;
+  }
+
   /** El borrador en un punto de la ventana: quita lo que toque, guardado o pendiente. */
   function borrarEn(x, y) {
     const radio = modo.size / 2;
     const antes = pendientes.length;
     pendientes = pendientes.filter((t) => !toca({ s: t.px, p: t.pts }, x, y, radio));
     if (pendientes.length !== antes) pedirCuadro();
-    for (const { el, a } of ctx.dibujosVisibles()) {
+    for (const { el, a, trazos, ancho, local } of ctx.dibujosVisibles()) {
       const r = el.getBoundingClientRect();
-      if (x < r.left - radio || x > r.right + radio || y < r.top - radio || y > r.bottom + radio || !r.width) continue;
-      const quedan = borrados.get(a.id) ?? a.content?.strokes ?? [];
-      const nuevos = quedan.filter((t) => !toca(t, (x - r.left) / r.width, (y - r.top) / r.width, radio / r.width));
+      if (x < r.left - radio || x > r.right + radio || y < r.top - radio || y > r.bottom + radio) continue;
+      const quedan = borrados.get(a.id) ?? trazos;
+      const q = local(x, y);
+      const nuevos = quedan.filter((t) => !toca(t, q.x, q.y, radio / ancho));
       if (nuevos.length === quedan.length) continue;
       borrados.set(a.id, nuevos);
+      if (a.kind === 'postit') borradosDePostit.add(a.id);
       ctx.cambiarTrazos(a.id, nuevos);
     }
   }
 
   function terminarDeBorrar() {
-    for (const [id, quedan] of borrados) enviar(quedan.length ? { type: 'inkChange', id, strokes: quedan } : { type: 'remove', id });
+    // Un dibujo sin trazos se quita; un post-it se queda, solo sin dibujo.
+    for (const [id, quedan] of borrados) enviar(quedan.length || borradosDePostit.has(id) ? { type: 'inkChange', id, strokes: quedan } : { type: 'remove', id });
     borrados.clear();
+    borradosDePostit.clear();
   }
 
   return {
@@ -376,6 +413,7 @@ export function crearLapiz(ctx, enviar) {
         if (!pendientes.length) {
           clearTimeout(espera);
           paginaPendiente = null;
+          postitPendiente = null;
         }
         pedirCuadro();
         return;
@@ -394,7 +432,9 @@ export function crearLapiz(ctx, enviar) {
       trazo = null;
       modo = null;
       paginaPendiente = null;
+      postitPendiente = null;
       borrados.clear();
+      borradosDePostit.clear();
       vivo?.remove();
       vivo = null;
       document.body.classList.remove('dibujando', 'dibujando-dedo');

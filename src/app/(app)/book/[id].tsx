@@ -295,7 +295,9 @@ function Lector({ id, irA }: { id: string; irA?: LugarDeApertura }) {
           text: textoDe(a),
           ...(a.kind === 'highlight' ? { style: estiloDe(a) } : {}),
           ...(a.kind === 'textbox' || a.kind === 'postit' ? { size: escalaDe(a) } : {}),
-          ...(a.kind === 'postit' ? { rot: giroDe(a), ...(a.content.folded === true ? { folded: true } : {}) } : {}),
+          ...(a.kind === 'postit'
+            ? { rot: giroDe(a), ...(a.content.folded === true ? { folded: true } : {}), ...(trazosDe(a).length ? { strokes: trazosDe(a) } : {}) }
+            : {}),
           ...(a.kind === 'bookmark' ? { ...separadorDe(a) } : {}),
           ...(a.kind === 'ink' ? { strokes: trazosDe(a) } : {}),
           ...(a.kind === 'image' ? { src: vistasPrevias.get(a.id) ?? urlsDeImagenes.get(rutaDeImagen(a) ?? '') ?? undefined, rot: giroDe(a) } : {}),
@@ -498,8 +500,10 @@ function Lector({ id, irA }: { id: string; irA?: LugarDeApertura }) {
         return;
       }
       case 'inkChange': {
+        // Un dibujo con menos trazos (sin ninguno, se quita) o lo dibujado dentro de un post-it (T291b).
         const a = lista?.find((x) => x.id === m.id);
-        if (a?.kind === 'ink') cambiar(a, { content: { ...a.content, strokes: m.strokes } });
+        if (a?.kind === 'ink' && !m.strokes.length) editor.borrar(a);
+        else if (a?.kind === 'ink' || (a?.kind === 'postit' && !a.locked)) cambiar(a, { content: { ...a.content, strokes: m.strokes } });
         return;
       }
       case 'undo':

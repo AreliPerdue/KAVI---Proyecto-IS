@@ -88,10 +88,19 @@ const proporcionDeDibujo = (a) => (Number.isFinite(a.locator?.ar) && a.locator.a
 const trazosDe = new WeakMap();
 const alMedirDibujo = new ResizeObserver((cambios) => {
   for (const c of cambios) {
-    const lienzo = c.target.firstElementChild;
-    if (lienzo) pintarTrazos(lienzo, trazosDe.get(c.target), c.target.clientWidth, c.target.clientHeight);
+    const lienzo = c.target.querySelector(':scope > canvas');
+    if (lienzo) pintarTrazos(lienzo, trazosDe.get(c.target), c.target.offsetWidth, c.target.offsetHeight);
   }
 });
+/** Un lienzo que cubre toda su caja, encima de lo demás y sin recibir toques. */
+function lienzoDeTrazos(el, trazos) {
+  const lienzo = document.createElement('canvas');
+  Object.assign(lienzo.style, { position: 'absolute', inset: '0', width: '100%', height: '100%', display: 'block', pointerEvents: 'none' });
+  el.append(lienzo);
+  trazosDe.set(el, trazos);
+  alMedirDibujo.observe(el);
+}
+const trazosValidos = (a) => (Array.isArray(a.content?.strokes) ? a.content.strokes : []);
 
 /** Lo que es solo una imagen: se gira y no se escribe. */
 const esImagen = (a) => a.kind === 'image' || a.kind === 'sticker';
@@ -235,6 +244,12 @@ export function crearCapa(ctx, enviar) {
           boxShadow: '0 2px 6px rgb(0 0 0 / 0.28)',
         });
         ajusteDeLetra.observe(el);
+        // Lo dibujado con el lápiz en el post-it (T291b): va con él al moverlo, girarlo o estirarlo.
+        const trazos = trazosValidos(a);
+        if (trazos.length) {
+          lienzoDeTrazos(el, trazos);
+          if (!texto) el.setAttribute('aria-label', 'Post-it con dibujo');
+        }
       } else if (a.kind !== 'postit') {
         // Cuadro de texto: la letra no depende del ancho (estirarlo reacomoda los renglones).
         const escala = escalaDe(a);
@@ -273,11 +288,7 @@ export function crearCapa(ctx, enviar) {
       aspectRatio: `1 / ${proporcionDeDibujo(a)}`,
       pointerEvents: 'none',
     });
-    const lienzo = document.createElement('canvas');
-    Object.assign(lienzo.style, { width: '100%', height: '100%', display: 'block' });
-    el.append(lienzo);
-    trazosDe.set(el, a.content?.strokes ?? []);
-    alMedirDibujo.observe(el);
+    lienzoDeTrazos(el, trazosValidos(a));
     return el;
   }
 
@@ -285,11 +296,63 @@ export function crearCapa(ctx, enviar) {
   function cambiarTrazos(id, trazos) {
     const a = lista.find((x) => x.id === id);
     if (a) a.content = { ...a.content, strokes: trazos };
-    for (const el of document.querySelectorAll(`.anotacion.ink[data-id="${CSS.escape(id)}"]`)) {
+    for (const el of document.querySelectorAll(`.anotacion[data-id="${CSS.escape(id)}"]`)) {
+      let lienzo = el.querySelector(':scope > canvas');
+      if (!lienzo) {
+        // El primer dibujo de un post-it: su lienzo se crea ya.
+        lienzoDeTrazos(el, trazos);
+        lienzo = el.querySelector(':scope > canvas');
+      }
       trazosDe.set(el, trazos);
-      pintarTrazos(el.firstElementChild, trazos, el.clientWidth, el.clientHeight);
+      pintarTrazos(lienzo, trazos, el.offsetWidth, el.offsetHeight);
     }
   }
+
+  /** El post-it (abierto y sin bloquear) bajo un punto de la ventana: ahí se dibuja dentro de él (T291b). */
+  function postitEn(x, y) {
+    const el = document.elementsFromPoint(x, y).find((e) => e.matches?.('.anotacion.postit:not(.doblado)'));
+    const a = el && lista.find((p) => p.id === el.dataset.id);
+    return a && !a.locked && !a.provisional ? a.id : null;
+  }
+
+  /**
+   * Cómo se ve un punto de la ventana desde adentro de algo con trazos: sin su giro, en anchos de su caja.
+   * Devuelve `{ local(x, y), ancho }` o null si no está a la vista.
+   */
+  function marcoDe(el, a) {
+    if (!el.getClientRects().length) return null;
+    if (a.kind === 'ink') {
+      const r = el.getBoundingClientRect();
+      return r.width ? { ancho: r.width, local: (x, y) => ({ x: (x - r.left) / r.width, y: (y - r.top) / r.width }) } : null;
+    }
+    const caja = cajaSinGiro(el);
+    if (!caja.width) return null;
+    const giro = ((Number.isFinite(a.content?.rot) ? a.content.rot : 0) * Math.PI) / 180;
+    const cx = caja.left + caja.width / 2;
+    const cy = caja.top + caja.height / 2;
+    const cos = Math.cos(-giro);
+    const sin = Math.sin(-giro);
+    return {
+      ancho: caja.width,
+      local: (x, y) => {
+        const dx = x - cx;
+        const dy = y - cy;
+        return { x: (dx * cos - dy * sin + caja.width / 2) / caja.width, y: (dx * sin + dy * cos + caja.height / 2) / caja.width };
+      },
+    };
+  }
+
+  /** El marco de un post-it por su id (para pasar a él lo que se dibujó encima). */
+  function marcoDePostit(id) {
+    const el = document.querySelector(`.anotacion.postit[data-id="${CSS.escape(id)}"]`);
+    const a = lista.find((p) => p.id === id);
+    return el && a ? marcoDe(el, a) : null;
+  }
+
+  const trazosDeId = (id) => {
+    const a = lista.find((p) => p.id === id);
+    return a ? trazosValidos(a) : [];
+  };
 
   /**
    * Dónde queda un dibujo nuevo (T291): su caja en px de la ventana → su lugar (en PDF, en `pagina` o la de su
@@ -331,11 +394,19 @@ export function crearCapa(ctx, enviar) {
     repintar();
   }
 
-  /** Los dibujos a la vista que el borrador puede tocar (no los provisionales: aún no tienen id). */
+  /**
+   * Lo dibujado a la vista que el borrador puede tocar: los dibujos y los post-its con trazos (no los
+   * provisionales: aún no tienen id). Cada uno con su marco para pasar un punto de la ventana a sus unidades.
+   */
   function dibujosVisibles() {
-    return [...document.querySelectorAll('.anotacion.ink')]
-      .map((el) => ({ el, a: lista.find((x) => x.id === el.dataset.id) }))
-      .filter((x) => x.a && !x.a.provisional && x.el.getClientRects().length > 0);
+    return [...document.querySelectorAll('.anotacion.ink, .anotacion.postit:not(.doblado)')]
+      .map((el) => {
+        const a = lista.find((x) => x.id === el.dataset.id);
+        if (!a || a.provisional || (a.kind === 'postit' && (a.locked || !trazosValidos(a).length))) return null;
+        const marco = marcoDe(el, a);
+        return marco ? { el, a, trazos: trazosValidos(a), ...marco } : null;
+      })
+      .filter(Boolean);
   }
 
   // ─── Escribir directo (T289, pedido de Areli) ─────────────────────────────────
@@ -1447,6 +1518,9 @@ export function crearCapa(ctx, enviar) {
     provisional,
     dibujosVisibles,
     cambiarTrazos,
+    postitEn,
+    marcoDePostit,
+    trazosDe: trazosDeId,
     /** Cambió la forma de leer o se abrió otro libro. */
     repintar,
     cerrar() {

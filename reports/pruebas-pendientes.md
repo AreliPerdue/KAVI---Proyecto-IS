@@ -737,3 +737,5 @@ presión simulada con eventos de lápiz, solo lápiz y EPUB que sigue al texto.
   (la palma no dibuja ni mueve la página mientras el lápiz está abajo).
 - [ ] (manual) Lo dibujado en el teléfono se ve en la web en el mismo lugar (PDF y EPUB), y al cambiar el tamaño
   de letra de un EPUB el dibujo sigue junto a su renglón.
+- [ ] (manual) Teléfono (T291b): dibujar con el dedo dentro de un post-it ladeado; moverlo, estirarlo y doblarlo, y
+  que el dibujo vaya con él.

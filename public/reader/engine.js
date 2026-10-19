@@ -207,6 +207,9 @@ const lapiz = crearLapiz(
     provisional: anotaciones.provisional,
     dibujosVisibles: anotaciones.dibujosVisibles,
     cambiarTrazos: anotaciones.cambiarTrazos,
+    postitEn: anotaciones.postitEn,
+    marcoDePostit: anotaciones.marcoDePostit,
+    trazosDe: anotaciones.trazosDe,
   },
   enviar,
 );

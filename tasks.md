@@ -1152,8 +1152,13 @@ Decisiones B1–B9 aprobadas el 12 oct 2026 (T274); ver la tabla de la spec 13 �
     sus herramientas se deslizan si no caben en 375 px.
   - Visto en el demo (web 1280 y 375 px): dibujar, marcador, borrar, deshacer, presión con eventos de lápiz,
     solo lápiz con el mouse (no dibuja) y un dibujo en EPUB que sigue a su texto al desplazar.
-- [ ] T291b Post-it con trazo: dibujar dentro de un post-it y que el dibujo viaje con él (moverlo, girarlo,
+- [x] T291b Post-it con trazo: dibujar dentro de un post-it y que el dibujo viaje con él (moverlo, girarlo,
   doblarlo). (RF-BH14) Dep: T291
+  **Hecho (19 oct 2026):**
+  - Motor: `ink.js` manda a un post-it lo que empieza sobre él (`postitEn`, `marcoDePostit`: sin su giro y en
+    anchos de él) con `inkChange`. `annotations.js` le pone su lienzo y el borrador lo alcanza.
+  - App: `inkChange` cambia los trazos de un post-it (vacío lo deja sin dibujo) y le manda sus trazos al motor.
+  - Visto en el demo: X en un post-it ladeado 15°, moverlo, y borrarla sin quitar el post-it.
 - [x] T317 Fragmentos (antes "Recortes", renombrado el 14 oct 2026) de texto ("Guardar fragmento" al seleccionar) y de
   imagen (rectángulo sobre la página), `library_clips` con RLS e imágenes en R2, sección "Mis fragmentos" con
   filtros y nota; pegar en recortes (13h).

@@ -117,8 +117,10 @@
     - **Un dibujo** junta los trazos hechos seguidos: se guarda tras una pausa breve, al moverse en el libro
       o al salir del lápiz. Se ve en las tres formas de leer; en el libro real no se dibuja.
     - **Borrador:** quita trazos enteros. Deshacer quita primero el último trazo aún sin guardar.
-    - **Pendiente (T291b):** el post-it con trazo. Hoy un dibujo hecho sobre un post-it queda en la página y
-      no se mueve con él.
+    - **Post-it con trazo (T291b, 19 oct 2026):** lo que se dibuja empezando sobre un post-it abierto y sin
+      bloquear queda dentro de él, encima de su texto. Viaja con el post-it al moverlo, ladearlo o estirarlo
+      (no se deforma: se mide en anchos del post-it). Doblado no se ve, y el borrador lo quita sin quitar el
+      post-it.
 - **RF-BH12. Imágenes:** se insertan desde la galería o la cámara, se mueven, rotan y cambian de tamaño.
 - **Hecho (T289, 14 oct 2026).**
   - **Cuadro de texto:** herramienta en la barra; se toca dónde va y se escribe **ahí mismo** sobre la página
@@ -198,8 +200,8 @@
   rotan un poco y se pueden **doblar** para que solo se vea una esquina. Tocar uno doblado lo abre.
   - **Hecho (T290, 19 oct 2026):** el post-it se **ladea** con el asa de arriba, hasta ±15° (vuelve a derecho
     cerca del cero). **Doblar** (botón en la barra) deja solo la esquina de su color con su doblez, de 40 px para
-    el dedo; tocarla lo abre. Doblado no se escribe (primero se abre). El post-it **con trazo** queda con el lápiz
-    (T291).
+    el dedo; tocarla lo abre. Doblado no se escribe (primero se abre). El post-it **con trazo** se hace con el
+    lápiz (T291b, ver RF-BH11).
 - **RF-BH15. Separadores:** las pestañitas que salen del borde. La persona elige **en qué borde** (arriba,
   abajo, izquierda o derecha) y **a qué altura**; llevan color y una palabra corta. Se ven desde fuera, en
   el canto del libro, y tocar uno salta a su página.
@@ -313,6 +315,8 @@ Como recortar de un libro o de una revista: se guarda un pedazo para después.
   - Mensajes `pen` y `penUndo` (de la app al motor); `ink`, `inkChange` y `undo` (del motor a la app).
   - En iOS el lápiz se distingue del dedo por `touchType: 'stylus'` y en Android por `pointerType: 'pen'`;
     así "solo lápiz" deja que el dedo mueva la página.
+  - Un post-it con trazo (T291b) guarda los suyos en su propio `content.strokes`, en anchos del post-it y sin
+    su giro; el motor los pinta en un lienzo dentro del post-it.
 - Escuchar: `expo-speech` en teléfono y la Web Speech API en web.
 
 ## 8. Criterios de aceptación

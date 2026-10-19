@@ -123,7 +123,10 @@ export type MensajeDelMotor =
   | { type: 'clip'; error: 'empty' | 'failed' }
   /** Un dibujo nuevo del lápiz (T291): dónde va su caja y sus trazos. */
   | { type: 'ink'; locator: LibraryLocator; strokes: Trazo[] }
-  /** El borrador le quitó trazos a un dibujo (si se los quitó todos, llega `remove`). */
+  /**
+   * Los trazos de un dibujo o de un post-it cambiaron: el borrador le quitó (si a un dibujo le quitó todos, llega
+   * `remove`; un post-it se queda sin dibujo) o se dibujó dentro del post-it (T291b).
+   */
   | { type: 'inkChange'; id: string; strokes: Trazo[] }
   /** El lápiz no tenía nada pendiente: deshacer lo último guardado. */
   | { type: 'undo' }
@@ -260,7 +263,7 @@ export function leerMensaje(crudo: unknown): MensajeDelMotor | null {
       return { type: 'undo' };
     case 'inkChange': {
       const strokes = trazosValidos(m.strokes);
-      return esId(m.id) && strokes?.length ? { type: 'inkChange', id: m.id, strokes } : null;
+      return esId(m.id) && strokes ? { type: 'inkChange', id: m.id, strokes } : null;
     }
     case 'error':
       return { type: 'error', code: CODIGOS.includes(m.code as CodigoDeError) ? (m.code as CodigoDeError) : 'unknown', message: typeof m.message === 'string' ? m.message : undefined };

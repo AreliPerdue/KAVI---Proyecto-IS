@@ -1329,6 +1329,29 @@ describe('lápiz y dedo (spec 13c, RF-BH11; T291)', () => {
     expect(mockDeshacer).toHaveBeenCalled();
   });
 
+  it('lo dibujado dentro de un post-it se guarda en él y se manda al motor con el post-it (T291b)', async () => {
+    const nota = { id: 'p1', item_id: 'l1', owner_id: 'u1', kind: 'postit', locator: { page: 2, x: 0.1, y: 0.1, w: 0.24 }, content: { color: '#F1D35D', text: 'Ojo', rot: 15 }, z: 1, removed: false, locked: false, created_at: 'c', updated_at: 'u' };
+    mockLista = [nota];
+    await render(<Lector />);
+    await responder({ type: 'opened', total: 12 });
+    await responder({ type: 'inkChange', id: 'p1', strokes });
+    expect(mockCambiar).toHaveBeenCalledWith(nota, expect.objectContaining({ content: { color: '#F1D35D', text: 'Ojo', rot: 15, strokes } }));
+    // Borrado todo su dibujo, el post-it se queda.
+    await responder({ type: 'inkChange', id: 'p1', strokes: [] });
+    expect(mockCambiar).toHaveBeenLastCalledWith(nota, expect.objectContaining({ content: expect.objectContaining({ strokes: [] }) }));
+    expect(mockBorrar).not.toHaveBeenCalled();
+  });
+
+  it('el post-it con dibujo lo lleva al motor; uno bloqueado no recibe trazos', async () => {
+    const nota = { id: 'p1', item_id: 'l1', owner_id: 'u1', kind: 'postit', locator: { page: 2, x: 0.1, y: 0.1, w: 0.24 }, content: { color: '#F1D35D', text: '', strokes }, z: 1, removed: false, locked: true, created_at: 'c', updated_at: 'u' };
+    mockLista = [nota];
+    await render(<Lector />);
+    const pintados = [...mockEnviados].reverse().find((m) => m.type === 'annotations');
+    expect(pintados).toMatchObject({ items: [expect.objectContaining({ id: 'p1', content: expect.objectContaining({ strokes }) })] });
+    await responder({ type: 'inkChange', id: 'p1', strokes: [] });
+    expect(mockCambiar).not.toHaveBeenCalled();
+  });
+
   it('en el libro real no se dibuja', async () => {
     usePreferencesStore.setState({ readingModes: { l1: 'book' } });
     await render(<Lector />);
