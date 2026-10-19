@@ -1174,7 +1174,16 @@ Decisiones B1–B9 aprobadas el 12 oct 2026 (T274); ver la tabla de la spec 13 �
   - Pegar en recortes queda en T349 (RF-CC24).
 
 ### L4 · Fichas de calificación
-- [ ] T293 Plantillas de ficha incluidas y editor de campos y aspecto. (RF-BF1 – RF-BF3, RF-BF5) Dep: T275
+- [x] T293 Plantillas de ficha incluidas y editor de campos y aspecto. (RF-BF1 – RF-BF3, RF-BF5) Dep: T275
+  **Hecho (19 oct 2026), ficha aparte del lienzo (decisión de Areli):**
+  - Reglas en `lib/library/cards.ts`; hooks en `hooks/use-cards.ts` (siembra de las incluidas y "solo a las
+    nuevas") y `use-sticker-elegible.ts`.
+  - Interfaz: `components/library/card-view.tsx` (la tarjeta) y `card-field-sheet.tsx`; pantallas
+    `app/(app)/card-templates.tsx` y `card-template/[id].tsx`. En la librería, una fila de accesos (Mis
+    fragmentos, Fichas) que se ve aunque no haya libros.
+  - Migración `20261020100000_library_card_templates_archived.sql`.
+  - `StickerSheet` sirve fuera del lector (sin charola ni crear). En las pruebas de hooks, las mutaciones ya
+    no dejan un temporizador vivo (`gcTime: 0` en `query-wrapper`).
 - [ ] T294 Fichas pegadas en la pieza y ofrecer llenarla al terminar. (RF-BF4, RF-BF6, RF-BF7) Dep: T293, T279
 - [ ] T295 Mis reseñas: todas las fichas, orden, filtros y totales. (RF-BF8 – RF-BF10) Dep: T294
 

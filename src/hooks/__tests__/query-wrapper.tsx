@@ -33,7 +33,7 @@ export function crearWrapper() {
   const queryClient = new QueryClient({
     defaultOptions: {
       queries: { retry: false, gcTime: 0, staleTime: 0 },
-      mutations: { retry: false },
+      mutations: { retry: false, gcTime: 0 },
     },
   });
   creados.push(queryClient);

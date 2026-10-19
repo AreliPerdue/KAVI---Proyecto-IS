@@ -814,6 +814,8 @@ export type LibraryCardTemplate = {
   name: string;
   fields: CardField[];
   look: Record<string, unknown>;
+  /** La versión de antes de un cambio que no se aplicó a las fichas ya llenas (RF-BF5): no se ofrece para nuevas. */
+  archived?: boolean;
   created_at: string;
   updated_at: string;
 };

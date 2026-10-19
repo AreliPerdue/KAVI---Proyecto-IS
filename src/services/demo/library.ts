@@ -576,7 +576,7 @@ export const demoLibrary: LibraryApi = {
     }
     const nueva: LibraryCardTemplate = {
       id: input.id ?? nextId('plantilla'), owner_id: userId, name: input.name.trim(), fields: input.fields, look: input.look ?? {},
-      created_at: t0, updated_at: t0,
+      archived: input.archived ?? false, created_at: t0, updated_at: t0,
     };
     templates.push(nueva);
     emitDataChange();

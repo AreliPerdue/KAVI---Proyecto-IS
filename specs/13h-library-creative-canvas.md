@@ -140,7 +140,7 @@ llevar texto, pero nunca debe sentirse como un formulario ni como una nota grand
 - **13c RF-BH19 – RF-BH21 ("Recortes" del lector, T317) se renombran a "Fragmentos"**, para no chocar con los
   Recortes de aquí. Siguen igual: recortar texto o imagen al leer, y ahora se pegan en un recorte (RF-CC24).
 - **13d (fichas):** la plantilla Book Review puede llevar el módulo **rating**; la ficha completa sigue siendo
-  aparte. Se decide al llegar a L4 si la ficha se vuelve un módulo del lienzo.
+  aparte. Decidido al llegar a L4 (19 oct 2026): la ficha sigue **aparte** (13d); el lienzo podrá mostrar una.
 
 ## 12. Fases propuestas
 

@@ -25,3 +25,13 @@ export function contrastRatio(a: string, b: string): number {
 export function needsOutline(hex: string, background: string): boolean {
   return /^#[0-9A-Fa-f]{6}$/.test(hex) && contrastRatio(hex, background) < 3;
 }
+
+/** Mezcla dos colores hex: `t` = 0 es `a`, 1 es `b`. */
+export function mixHex(a: string, b: string, t: number): string {
+  const canal = (hex: string, i: number) => parseInt(hex.slice(1 + i * 2, 3 + i * 2), 16);
+  const k = Math.min(1, Math.max(0, t));
+  return `#${[0, 1, 2]
+    .map((i) => Math.round(canal(a, i) * (1 - k) + canal(b, i) * k).toString(16).padStart(2, '0'))
+    .join('')
+    .toUpperCase()}`;
+}

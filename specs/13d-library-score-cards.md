@@ -26,6 +26,22 @@ ven juntas en un resumen.
   tarjeta física (con una sombra ligera) y se toca para abrirla.
 - **RF-BF5.** Cambiar el diseño de una plantilla pregunta si aplicarlo también a las fichas ya llenas; los
   valores de un campo que se quitó se conservan ocultos hasta que se borre a propósito.
+- **Hecho (T293, 19 oct 2026).** La ficha es una **tarjeta aparte** y no un módulo del lienzo (decisión de Areli
+  del 19 oct; ver 13h §11). Cuando llegue el lienzo, una ficha se podrá mostrar en un recorte.
+  - **Plantillas incluidas:** la primera vez que la persona entra a **Fichas** (en la librería, junto a Mis
+    fragmentos) se crean las tres en su cuenta, en el idioma de la app. Se editan como cualquier otra, y
+    también se duplican o se borran (avisando cuántas fichas llenas se van con ella).
+  - **Editor:** vista previa al momento; nombre; campos que se agregan (con una explicación de cada tipo),
+    se editan en su hoja, se arrastran por el asa o se suben y bajan, y se quitan. Hasta 20 campos.
+  - **Escala:** 5 o 10, con estrellas, corazones, chiles, calaveras, lágrimas, destellos, tazas o rayos.
+  - **Aspecto:** el color (paleta de los Nobi o HEX propio); el fondo (liso, papel con banda de color,
+    rayas, cuadrícula o puntos); la letra (sistema, con serifa, máquina o manuscrita, esta última del
+    sistema en el teléfono y Patrick Hand en la web); y hasta 3 stickers de la colección, uno por esquina,
+    chico, mediano o grande y un poco ladeados. La tarjeta es de papel claro aunque la app esté en oscuro.
+  - **RF-BF5:** si el diseño ya tiene fichas llenas, al guardar se pregunta **Aplicar a todas** o **Solo a las
+    nuevas**. "Solo a las nuevas" archiva la versión de antes (`archived`): sus fichas la siguen usando y ya
+    no se ofrece para nuevas. Los valores van por id de campo, así que quitar o renombrar un campo no
+    pierde nada.
 
 ## 3. Llenar la ficha (RF-BF6 – RF-BF7)
 
@@ -44,8 +60,8 @@ ven juntas en un resumen.
 
 ## 5. Datos
 
-- `library_card_templates`: dueño, nombre, campos (`jsonb`: tipo, etiqueta, opciones, símbolo, orden) y
-  aspecto (colores, fondo, letra, stickers).
+- `library_card_templates`: dueño, nombre, campos (`jsonb`: tipo, etiqueta, opciones, símbolo, orden),
+  aspecto (`{ color, background, font, stickers: [{ sticker, corner, size, rot }] }`) y `archived` (T293).
 - `library_cards`: pieza, plantilla, valores (`jsonb` por id de campo), lugar donde va pegada, fechas.
 - Los valores se guardan por **id de campo**, no por etiqueta, para que renombrar un campo no pierda nada.
 

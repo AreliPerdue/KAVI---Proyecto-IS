@@ -61,7 +61,8 @@ const COLOR_HEX = new Map(PEOPLE_COLORS_DISPLAY.map((c) => [c.id, c.hex]));
  * Elegir un sticker (spec 13c, RF-BH13, RF-BH13b; T290, T338): **Mis stickers** (los incluidos y los packs
  * descargados), la **Tienda** (los packs de la nube, con su muestra) y **Quitados** (la charola de este libro).
  * Elegir uno cierra la hoja y el siguiente toque en la página lo pega; uno de la charola vuelve con su tamaño
- * y su giro.
+ * y su giro. Fuera del lector (decorar una ficha, 13d) no hay charola ni se crean o borran stickers propios:
+ * sin `quitados`, `onCrear` ni `onBorrarPropio`, eso no se muestra.
  */
 export function StickerSheet({
   visible,
@@ -76,21 +77,21 @@ export function StickerSheet({
 }: {
   visible: boolean;
   /** Los stickers quitados de este libro, el último primero. */
-  quitados: readonly LibraryAnnotation[];
+  quitados?: readonly LibraryAnnotation[];
   propios: Propios;
   onClose: () => void;
   onElegir: (s: StickerElegible) => void;
-  onDevolver: (a: LibraryAnnotation, s: StickerElegible) => void;
-  onTirar: (a: LibraryAnnotation) => void;
+  onDevolver?: (a: LibraryAnnotation, s: StickerElegible) => void;
+  onTirar?: (a: LibraryAnnotation) => void;
   /** Abrir la hoja para hacer un sticker con una imagen propia (T335). */
-  onCrear: () => void;
-  onBorrarPropio: (s: UserSticker) => void;
+  onCrear?: () => void;
+  onBorrarPropio?: (s: UserSticker) => void;
 }) {
   const t = useT().library.stickers;
   const [vista, setVista] = useState<Vista>('mios');
   const packs = useStickerPacks();
   const nombre = useNombreDeCara();
-  const charola = quitados.flatMap((a) => {
+  const charola = (quitados ?? []).flatMap((a) => {
     const s = elegibleDe(stickerDe(a), packs.data?.packs, propios);
     return s ? [{ a, s }] : [];
   });
@@ -104,7 +105,7 @@ export function StickerSheet({
           options={[
             { value: 'mios', label: t.mine },
             { value: 'tienda', label: t.store },
-            { value: 'quitados', label: t.removed(charola.length) },
+            ...(quitados ? [{ value: 'quitados' as const, label: t.removed(charola.length) }] : []),
           ]}
           value={vista}
           onChange={setVista}
@@ -125,8 +126,8 @@ export function StickerSheet({
                   imagen={s.imagen}
                   giro={giroDe(a)}
                   etiqueta={t.putBack(nombre(s.nombre))}
-                  onPress={() => onDevolver(a, s)}
-                  tirar={{ etiqueta: t.discard(nombre(s.nombre)), onPress: () => onTirar(a) }}
+                  onPress={() => onDevolver?.(a, s)}
+                  tirar={{ etiqueta: t.discard(nombre(s.nombre)), onPress: () => onTirar?.(a) }}
                 />
               ))}
             </View>
@@ -160,8 +161,8 @@ function MisStickers({
 }: {
   onElegir: (s: StickerElegible) => void;
   propios: Propios;
-  onCrear: () => void;
-  onBorrarPropio: (s: UserSticker) => void;
+  onCrear?: () => void;
+  onBorrarPropio?: (s: UserSticker) => void;
 }) {
   const theme = useTheme();
   const t = useT().library.stickers;
@@ -172,31 +173,37 @@ function MisStickers({
   const descargados = (packs.data?.packs ?? []).filter((p) => mios.data?.includes(p.id));
   return (
     <>
-      <AppText variant="label" color="textSecondary">
-        {t.mineMade}
-      </AppText>
-      <View style={styles.rejilla}>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={t.createSticker}
-          onPress={onCrear}
-          style={({ pressed }) => [styles.botonCelda, styles.crear, { borderColor: theme.border, backgroundColor: pressed ? theme.surfaceAlt : 'transparent' }]}>
-          <Plus size={IconSize.action} strokeWidth={IconStroke} color={theme.textSecondary} />
-        </Pressable>
-        {propios.stickers.map((s) => {
-          const uri = propios.imagenes.get(s.id);
-          if (!uri) return null;
-          return (
-            <Celda
-              key={s.id}
-              imagen={{ uri }}
-              etiqueta={t.pick(t.mineName)}
-              onPress={() => onElegir({ id: idPropio(s.id), nombre: 'mine', ar: Number(s.ar), imagen: { uri } })}
-              tirar={{ etiqueta: t.removeMine, onPress: () => onBorrarPropio(s) }}
-            />
-          );
-        })}
-      </View>
+      {onCrear || propios.stickers.length ? (
+        <>
+          <AppText variant="label" color="textSecondary">
+            {t.mineMade}
+          </AppText>
+          <View style={styles.rejilla}>
+            {onCrear ? (
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={t.createSticker}
+                onPress={onCrear}
+                style={({ pressed }) => [styles.botonCelda, styles.crear, { borderColor: theme.border, backgroundColor: pressed ? theme.surfaceAlt : 'transparent' }]}>
+                <Plus size={IconSize.action} strokeWidth={IconStroke} color={theme.textSecondary} />
+              </Pressable>
+            ) : null}
+            {propios.stickers.map((s) => {
+              const uri = propios.imagenes.get(s.id);
+              if (!uri) return null;
+              return (
+                <Celda
+                  key={s.id}
+                  imagen={{ uri }}
+                  etiqueta={t.pick(t.mineName)}
+                  onPress={() => onElegir({ id: idPropio(s.id), nombre: 'mine', ar: Number(s.ar), imagen: { uri } })}
+                  tirar={onBorrarPropio ? { etiqueta: t.removeMine, onPress: () => onBorrarPropio(s) } : undefined}
+                />
+              );
+            })}
+          </View>
+        </>
+      ) : null}
       <AppText variant="label" color="textSecondary">
         {t.pack['nobi-pink']}
       </AppText>

@@ -739,3 +739,11 @@ presión simulada con eventos de lápiz, solo lápiz y EPUB que sigue al texto.
   de letra de un EPUB el dibujo sigue junto a su renglón.
 - [ ] (manual) Teléfono (T291b): dibujar con el dedo dentro de un post-it ladeado; moverlo, estirarlo y doblarlo, y
   que el dibujo vaya con él.
+
+## Fichas: diseños (T293)
+Automatizado: `lib/library/__tests__/cards.test.ts`, `hooks/__tests__/use-cards.test.tsx`,
+`app/(app)/__tests__/card-templates.test.tsx` y el demo. Visto en el demo (web 1280 y 375 px): las tres incluidas,
+editar Romance con un campo nuevo, cuadrícula y sticker, y guardar.
+- [ ] (manual) Teléfono: arrastrar campos por el asa en el editor; las letras "Con serifa", "Máquina" y "Manuscrita"
+  se ven distintas en Android (y en iOS cuando haya build).
+- [ ] (manual) Con Supabase: las tres incluidas se crean una sola vez aunque se abra Fichas en dos aparatos a la vez.

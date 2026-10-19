@@ -574,7 +574,7 @@ export interface LibraryApi {
   removeAnnotations(ids: readonly string[]): Promise<void>;
 
   listCardTemplates(userId: string): Promise<LibraryCardTemplate[]>;
-  saveCardTemplate(userId: string, input: Pick<LibraryCardTemplate, 'name' | 'fields'> & Partial<Pick<LibraryCardTemplate, 'id' | 'look'>>): Promise<LibraryCardTemplate>;
+  saveCardTemplate(userId: string, input: Pick<LibraryCardTemplate, 'name' | 'fields'> & Partial<Pick<LibraryCardTemplate, 'id' | 'look' | 'archived'>>): Promise<LibraryCardTemplate>;
   removeCardTemplate(templateId: string): Promise<void>;
   listCards(userId: string): Promise<LibraryCard[]>;
   saveCard(userId: string, input: Pick<LibraryCard, 'item_id' | 'template_id'> & Partial<Pick<LibraryCard, 'id' | 'values' | 'placement'>>): Promise<LibraryCard>;

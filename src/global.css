@@ -7,6 +7,17 @@
     monospace;
 }
 
+/*
+ * La letra manuscrita de las fichas de Library en la web (spec 13d, RF-BF3): Patrick Hand (OFL), la misma
+ * que el lector ya trae en `public/reader/vendor/fonts/`. En el teléfono la ficha usa la del sistema.
+ */
+@font-face {
+  font-family: 'KAVI Manuscrita';
+  src: url('/reader/vendor/fonts/hand-400.woff2') format('woff2');
+  font-weight: 400;
+  font-display: swap;
+}
+
 /**
  * Autofill del navegador (web).
  *

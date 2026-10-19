@@ -296,3 +296,16 @@ describe('fragmentos (13c, RF-BH19 – RF-BH21; T317)', () => {
     await expect(api.fileUrl(fila.path as string)).rejects.toThrow();
   });
 });
+
+describe('fichas: versión archivada (13d, RF-BF5; T293)', () => {
+  it('una plantilla se puede archivar y sus fichas la siguen usando', async () => {
+    const api = fresh();
+    const p = await api.saveCardTemplate(ANA, { name: 'Romance', fields: [{ id: 'stars', type: 'scale', label: 'Estrellas', max: 5 }] });
+    expect(p.archived).toBe(false);
+    const libro = await api.createItem(ANA, { family: 'book', kind: 'pdf', title: 'Rayuela' });
+    await api.saveCard(ANA, { item_id: libro.id, template_id: p.id, values: { stars: 4 } });
+    const archivada = await api.saveCardTemplate(ANA, { id: p.id, name: p.name, fields: p.fields, archived: true });
+    expect(archivada.archived).toBe(true);
+    expect((await api.listCards(ANA))[0]).toMatchObject({ template_id: p.id, values: { stars: 4 } });
+  });
+});

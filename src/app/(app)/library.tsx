@@ -1,7 +1,7 @@
 import { useRouter } from 'expo-router';
-import { BookOpen, ChevronLeft, FolderMinus, FolderPlus, FlaskConical, Library, Scissors, Search, SlidersHorizontal, Tag, Timer, Trash2, X } from 'lucide-react-native';
+import { BookOpen, ChevronLeft, FolderMinus, FolderPlus, FlaskConical, IdCard, Library, Scissors, Search, SlidersHorizontal, Tag, Timer, Trash2, X } from 'lucide-react-native';
 import { useEffect, useMemo, useState } from 'react';
-import { BackHandler, FlatList, type LayoutChangeEvent, StyleSheet, TextInput, View } from 'react-native';
+import { BackHandler, FlatList, type LayoutChangeEvent, Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { useReducedMotion } from 'react-native-reanimated';
 
 import { ActiveFilters } from '@/components/library/active-filters';
@@ -488,6 +488,24 @@ export default function LibraryScreen() {
         </View>
       </View>
 
+      {/* Las secciones de Library fuera de los libros: se ven aunque no haya ninguno (lo guardado sigue ahí). */}
+      <View style={styles.accesos}>
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => router.push('/(app)/fragments')}
+          style={({ pressed }) => [styles.acceso, { borderColor: theme.border, backgroundColor: pressed ? theme.surfaceAlt : theme.surface }]}>
+          <Scissors size={IconSize.inline} strokeWidth={IconStroke} color={theme.text} />
+          <AppText variant="label">{l.clips.title}</AppText>
+        </Pressable>
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => router.push('/(app)/card-templates')}
+          style={({ pressed }) => [styles.acceso, { borderColor: theme.border, backgroundColor: pressed ? theme.surfaceAlt : theme.surface }]}>
+          <IdCard size={IconSize.inline} strokeWidth={IconStroke} color={theme.text} />
+          <AppText variant="label">{l.cards.title}</AppText>
+        </Pressable>
+      </View>
+
       {espacio.data ? (
         <View
           style={styles.espacio}
@@ -541,10 +559,6 @@ export default function LibraryScreen() {
             </View>
             <IconButton label={l.time.open} onPress={() => setViendoTiempo(true)}>
               <Timer size={IconSize.action} strokeWidth={IconStroke} color={theme.text} />
-            </IconButton>
-            {/* Mis fragmentos (RF-BH21, T317). */}
-            <IconButton label={l.clips.title} onPress={() => router.push('/(app)/fragments')}>
-              <Scissors size={IconSize.action} strokeWidth={IconStroke} color={theme.text} />
             </IconButton>
             <View>
               <IconButton label={f.filterCount(nFiltros)} onPress={() => setFiltrando(true)}>
@@ -800,6 +814,8 @@ export default function LibraryScreen() {
 type RepisaDelLibrero = { tipo: 'repisa'; numero: number; entradas: EntradaDeLibreria[] };
 
 const styles = StyleSheet.create({
+  accesos: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm },
+  acceso: { flexDirection: 'row', alignItems: 'center', gap: Spacing.xs, borderWidth: 1, borderRadius: Radius.full, borderCurve: 'continuous', paddingHorizontal: Spacing.md, minHeight: 44 },
   content: { gap: Spacing.md, paddingBottom: Spacing.lg },
   rejilla: { gap: Spacing.xl },
   pie: { height: 88 },
