@@ -81,6 +81,8 @@ export type MensajeAlMotor =
   | { type: 'pen'; on: true; tool: HerramientaDeLapiz; color: string; size: number; penOnly: boolean }
   /** Deshacer mientras se dibuja: el motor quita el último trazo aún sin guardar o, si no hay, pide `undo`. */
   | { type: 'penUndo' }
+  /** Iluminar un momento un pasaje señalado en una sesión en vivo del club (13f, RF-BC13; T309). */
+  | { type: 'flash'; locator: LibraryLocator }
   /** Todo lo que se pinta encima de las páginas, ya en orden de capa (13c, RF-BH16; T286). */
   | { type: 'annotations'; items: AnotacionEnMotor[] }
   /**

@@ -57,6 +57,9 @@ import type {
   LibraryClubMember,
   LibraryClubBook,
   LibraryClubProgress,
+  PosicionEnVivo,
+  PresenteEnVivo,
+  LibraryLocator,
   NuevoFragmento,
   LibraryLink,
   LibraryLinkKind,
@@ -627,4 +630,29 @@ export interface LibraryApi {
   /** Solo con el aviso de licencias aceptado (RF-BH4). */
   addFont(userId: string, input: { name: string; format: LibraryFontFormat; body: LibraryFileBody; size: number; licenseAcceptedAt: string }): Promise<LibraryFont>;
   removeFont(fontId: string): Promise<void>;
+}
+
+/** Lo que llega de una sesión en vivo de un club (13f, T309). Nada se guarda en la base. */
+export type EventosEnVivo = {
+  onPresentes: (presentes: PresenteEnVivo[]) => void;
+  onMover: (pos: PosicionEnVivo, por: string) => void;
+  onSenalar: (locator: LibraryLocator, por: string) => void;
+  onMando: (para: string, por: string) => void;
+};
+
+export type SesionEnVivo = {
+  /** Mi estado en la sesión: si estoy en ella, si la dirijo y desde cuándo estoy. */
+  estado(e: { enSesion: boolean; dirige: boolean; desde: number; pos?: PosicionEnVivo }): void;
+  mover(pos: PosicionEnVivo): void;
+  senalar(locator: LibraryLocator): void;
+  pasarMando(para: string): void;
+  salir(): void;
+};
+
+export interface ClubLiveApi {
+  /** Estar en el canal del club mientras se lee su copia: quién está, y lo que manda quien dirige. */
+  entrar(clubId: string, yo: { id: string; nombre: string }, eventos: EventosEnVivo): SesionEnVivo;
+  /** "Ana está leyendo Rayuela en vivo" a los demás miembros. */
+  avisar(clubId: string, aviso: { quien: string; libro: string }): void;
+  escucharAvisos(clubIds: readonly string[], onAviso: (clubId: string, aviso: { quien: string; libro: string }) => void): () => void;
 }

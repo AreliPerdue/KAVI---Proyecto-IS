@@ -1,4 +1,4 @@
-import { BookA, Copy, Highlighter, Scissors, Strikethrough, Underline, X } from 'lucide-react-native';
+import { BookA, Copy, Highlighter, Megaphone, Scissors, Strikethrough, Underline, X } from 'lucide-react-native';
 import { StyleSheet, View } from 'react-native';
 
 import { ColorSwatch, IconButton } from '@/components/ui';
@@ -21,6 +21,8 @@ type Props = {
   onCopiar: () => void;
   /** Guardar lo seleccionado en Mis fragmentos (RF-BH19, T317). */
   onFragmento: () => void;
+  /** Quien dirige una sesión en vivo del club ilumina el pasaje en la pantalla de todos (T309). */
+  onSenalar?: () => void;
   onCerrar: () => void;
 };
 
@@ -69,6 +71,11 @@ export function SelectionBar(p: Props) {
       <IconButton label={a.saveClip} onPress={p.onFragmento}>
         <Scissors {...icono()} />
       </IconButton>
+      {p.onSenalar ? (
+        <IconButton label={tx.library.clubs.live.signal} onPress={p.onSenalar}>
+          <Megaphone {...icono()} />
+        </IconButton>
+      ) : null}
       <IconButton label={a.clearSelection} onPress={p.onCerrar}>
         <X {...icono()} />
       </IconButton>

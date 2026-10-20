@@ -1,7 +1,7 @@
 import * as Clipboard from 'expo-clipboard';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { BookOpen, ChevronDown, ChevronLeft, ChevronUp, GalleryHorizontal, NotebookText, Rows3, Search, Shrink, X } from 'lucide-react-native';
+import { BookOpen, ChevronDown, ChevronLeft, ChevronUp, GalleryHorizontal, NotebookText, Radio, Rows3, Search, Shrink, X } from 'lucide-react-native';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Platform, Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -38,6 +38,8 @@ import { useAbrirCopiaLocal } from '@/hooks/use-local-book';
 import { useCreateClip } from '@/hooks/use-clips';
 import { useCards, useCardTemplates } from '@/hooks/use-cards';
 import { useClubProgress, useClubs } from '@/hooks/use-clubs';
+import { useClubLive } from '@/hooks/use-club-live';
+import { ClubLiveBar } from '@/components/library/club-live-bar';
 import { usePeopleColors } from '@/hooks/use-connections';
 import { useLibraryFileUrl, useLibraryItem, useLibraryItems, useSaveReadingPosition, useSeries } from '@/hooks/use-library';
 import { useTheme } from '@/hooks/use-theme';
@@ -83,6 +85,7 @@ import { lugarDeImagen, lugarDeSeleccion, posicionDeRuta } from '@/lib/library/c
 import { lapizParaMotor, trazosDe } from '@/lib/library/ink';
 import { alFinal, alInicio, plantillasVigentes } from '@/lib/library/cards';
 import { autoresDelClub, autoria, conCapaDelClub, esDeOtroEnElClub, esMia } from '@/lib/library/club-annotations';
+import { posicionParaSeguir } from '@/lib/library/club-live';
 import { FORMA_POR_OMISION, type FormaDeLeer } from '@/lib/library/reading-mode';
 import { coloresDe } from '@/lib/library/reader-theme';
 import { partesDeSticker, urlDeSticker } from '@/lib/library/sticker-packs';
@@ -141,14 +144,15 @@ function nombreDeSticker(a: LibraryAnnotation, nombres: Record<NombreDeSticker, 
 const COLORES_RAPIDOS_SEPARADOR = '#E24947';
 
 export default function ReaderScreen() {
-  const { id, ir } = useLocalSearchParams<{ id: string; ir?: string }>();
+  const { id, ir, vivo } = useLocalSearchParams<{ id: string; ir?: string; vivo?: string }>();
   // Una pieza nueva arranca de cero (motor, posición, aviso del siguiente): al pasar al siguiente de
   // la saga se reemplaza la ruta y Expo Router puede reutilizar el componente.
   // `ir`: abrir en un lugar y no donde se quedó (desde Mis fragmentos, RF-BH21).
-  return <Lector key={id} id={id} irA={posicionDeRuta(ir)} />;
+  // `vivo`: se entró desde el aviso de una sesión en vivo del club (T309): unirse al abrir.
+  return <Lector key={id} id={id} irA={posicionDeRuta(ir)} unirseEnVivo={vivo === '1'} />;
 }
 
-function Lector({ id, irA }: { id: string; irA?: LugarDeApertura }) {
+function Lector({ id, irA, unirseEnVivo = false }: { id: string; irA?: LugarDeApertura; unirseEnVivo?: boolean }) {
   const router = useRouter();
   const theme = useTheme();
   const insets = useSafeAreaInsets();
@@ -207,6 +211,21 @@ function Lector({ id, irA }: { id: string; irA?: LugarDeApertura }) {
   const editor = useAnnotationEditor(id, { clubId, compartir: compartirNuevo });
   const clubes = useClubs();
   const coloresDePersonas = usePeopleColors();
+  // Sesión en vivo del club (RF-BC10 – RF-BC14; T309): quien sigue llega a donde va quien dirige.
+  const vivo = useClubLive({
+    clubId,
+    yo: userId && clubId ? { id: userId, nombre: clubes.members.find((m) => m.club_id === clubId && m.person_id === userId)?.profile?.display_name ?? '' } : null,
+    libro: item.data?.title ?? '',
+    alMover: (pos) => motor.current?.send({ type: 'goTo', ...pos }),
+    alSenalar: (locator) => motor.current?.send({ type: 'flash', locator }),
+  });
+  const unidoAlAbrir = useRef(false);
+  const { hay: hayEnVivo, enSesion: estoyEnVivo, unirme: unirmeEnVivo } = vivo;
+  useEffect(() => {
+    if (!unirseEnVivo || unidoAlAbrir.current || !hayEnVivo || estoyEnVivo) return;
+    unidoAlAbrir.current = true;
+    unirmeEnVivo();
+  }, [unirseEnVivo, hayEnVivo, estoyEnVivo, unirmeEnVivo]);
   // Por dónde van los demás (RF-BC9; T308): su inicial en la barra de avance.
   const avanceDelClub = useClubProgress(clubId);
   const sinNombre = tx.library.annotations.club.someone;
@@ -454,6 +473,8 @@ function Lector({ id, irA }: { id: string; irA?: LugarDeApertura }) {
         return;
       case 'position': {
         setPosicion(m);
+        // Si dirijo la sesión en vivo, los demás vienen conmigo (T309).
+        vivo.moverme(posicionParaSeguir(m, item.data?.kind === 'epub'));
         const lugar = cambioDePosicion(m);
         tiempo.alMoverse({ locator: lugar.last_position, progress: lugar.progress });
         if (pendiente.current) clearTimeout(pendiente.current.timer);
@@ -1033,6 +1054,11 @@ function Lector({ id, irA }: { id: string; irA?: LugarDeApertura }) {
               <Rows3 size={IconSize.action} strokeWidth={IconStroke} color={abierto ? theme.text : theme.textTertiary} />
             )}
           </IconButton>
+          {clubId && !vivo.hay ? (
+            <IconButton label={tx.library.clubs.live.start} onPress={vivo.empezar} disabled={!abierto}>
+              <Radio size={IconSize.action} strokeWidth={IconStroke} color={abierto ? theme.text : theme.textTertiary} />
+            </IconButton>
+          ) : null}
           <IconButton label={r.search} onPress={() => setBuscando(true)} disabled={!abierto}>
             <Search size={IconSize.action} strokeWidth={IconStroke} color={abierto ? theme.text : theme.textTertiary} />
           </IconButton>
@@ -1072,6 +1098,15 @@ function Lector({ id, irA }: { id: string; irA?: LugarDeApertura }) {
               copiable={copiable}
               onCopiar={() => void copiar()}
               onFragmento={guardarFragmentoDeTexto}
+              onSenalar={
+                vivo.yoDirijo
+                  ? () => {
+                      vivo.senalar(seleccionTexto.locator);
+                      motor.current?.send({ type: 'flash', locator: seleccionTexto.locator });
+                      soltarSeleccion();
+                    }
+                  : undefined
+              }
               onCerrar={soltarSeleccion}
             />
           ) : !mensajeError && lapizPuesto ? (
@@ -1202,6 +1237,11 @@ function Lector({ id, irA }: { id: string; irA?: LugarDeApertura }) {
           </View>
         ) : null}
         {pastillaZoom}
+        {clubId && abierto && !mensajeError && vivo.hay ? (
+          <View style={[styles.vivoArriba, { top: (superpuestos && barraArriba ? barras.arriba : 0) + Spacing.sm }]} pointerEvents="box-none">
+            <ClubLiveBar vivo={vivo} autores={autores} yo={userId} />
+          </View>
+        ) : null}
         {abierto && !mensajeError ? <BookmarkRail pestanas={pestanasDelCanto} arriba={reservaArriba} abajo={reservaAbajo} onIr={irASeparador} /> : null}
         {superpuestos && barraArriba ? (
           <View style={[styles.arriba, { backgroundColor: theme.background }]} onLayout={(e) => medirBarra('arriba', e.nativeEvent.layout.height)}>
@@ -1352,6 +1392,7 @@ const styles = StyleSheet.create({
   abajoEncima: { position: 'absolute', bottom: 0, left: 0, right: 0 },
   // Lo que aparece abajo del libro: las fichas que asoman, la invitación a llenar una y el siguiente de la saga.
   pila: { position: 'absolute', left: Spacing.lg, right: Spacing.lg, gap: Spacing.sm },
+  vivoArriba: { position: 'absolute', left: Spacing.lg, right: Spacing.lg },
   asoman: { flexDirection: 'row', justifyContent: 'flex-end', gap: Spacing.sm, paddingRight: Spacing.lg },
   siguiente: {
     padding: Spacing.lg,

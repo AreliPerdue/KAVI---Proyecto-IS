@@ -993,3 +993,8 @@ export const demoLibrary: LibraryApi = {
     emitDataChange();
   },
 };
+
+/** Los miembros de un club en el demo, para simular la sesión en vivo (T309). */
+export function miembrosDelDemo(clubId: string): readonly Omit<LibraryClubMember, 'profile'>[] {
+  return miembros.filter((m) => m.club_id === clubId);
+}

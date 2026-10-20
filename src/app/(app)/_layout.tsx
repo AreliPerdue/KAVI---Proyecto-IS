@@ -7,6 +7,7 @@ import { Platform } from 'react-native';
 
 import { useConsentGate } from '@/hooks/use-consent';
 import { useRealtimeInvalidation } from '@/hooks/use-realtime';
+import { useClubLiveNotices } from '@/hooks/use-club-live-notices';
 import { useReminderSync } from '@/hooks/use-reminders';
 import { useSocialNotifications } from '@/hooks/use-social-notifications';
 import { useGymStore } from '@/store/gym-store';
@@ -21,6 +22,8 @@ function ReminderSync() {
   useReminderSync();
   useRealtimeInvalidation();
   useSocialNotifications();
+  // Sesiones en vivo de los clubes de lectura (13f, T309).
+  useClubLiveNotices();
   return null;
 }
 

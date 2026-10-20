@@ -1290,8 +1290,14 @@ Reemplazan L5 (13e). Un recorte es una página 1 : √2 del visor de PDF (decisi
   - `library_club_progress` en la base; RLS probada en PGlite.
   - `listClubProgress` en Supabase y demo; `useClubProgress` se vuelve a pedir cada minuto.
   - Las iniciales en la barra (`ReaderProgress` con `marcas`) y el avance en la pantalla del club.
-- [ ] T309 Sesión en vivo con Realtime (presence y broadcast): seguir, soltarse, pasar el mando, señalar.
+- [x] T309 Sesión en vivo con Realtime (presence y broadcast): seguir, soltarse, pasar el mando, señalar.
   (RF-BC10 – RF-BC14) Dep: T306, T283
+  **Hecho (20 oct 2026):**
+  - Canales privados `club-vivo:<club>` y `club-avisos:<club>`; solo los miembros leen y escriben
+    (migración `20261020150000`, RLS probada en PGlite).
+  - `ClubLiveApi` en Supabase y demo; `useClubLive` calcula quién dirige igual en todos y sigue por CFI o página.
+  - Motor: `flash` destella lo señalado. Lector: "Leer en vivo", `ClubLiveBar`, "Señalar" en la selección.
+  - Aviso con "Entrar" en toda la app (`useClubLiveNotices`).
 
 ### L7 · Conectar a la app
 - [ ] T302 Library visible en Más y elegible para la barra; una actividad de Lectura se liga a una pieza y la

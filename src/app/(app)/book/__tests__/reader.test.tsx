@@ -77,6 +77,15 @@ jest.mock('@/hooks/use-user-stickers', () => ({
 // Club de lectura (T307): los miembros los pone cada prueba.
 let mockMiembros: Record<string, unknown>[] = [];
 let mockAvance: Record<string, unknown>[] = [];
+// Sesión en vivo (T309): el doble deja poner cómo está y anota lo que se manda.
+const mockVivo = {
+  presentes: [] as Record<string, unknown>[], hay: false, enSesion: false, siguiendo: true, lider: null as Record<string, unknown> | null, yoDirijo: false,
+  empezar: jest.fn(), unirme: jest.fn(), salir: jest.fn(), pasarMando: jest.fn(), soltarme: jest.fn(), seguir: jest.fn(), moverme: jest.fn(), senalar: jest.fn(),
+};
+let mockVivoArgs: { alMover: (p: unknown) => void; alSenalar: (l: unknown) => void } | null = null;
+jest.mock('@/hooks/use-club-live', () => ({
+  useClubLive: (args: { alMover: (p: unknown) => void; alSenalar: (l: unknown) => void }) => ((mockVivoArgs = args), mockVivo),
+}));
 jest.mock('@/hooks/use-clubs', () => ({
   useClubs: () => ({ clubs: [], members: mockMiembros, isPending: false }),
   useClubProgress: () => ({ data: mockAvance }),
@@ -194,6 +203,8 @@ beforeEach(() => {
   mockPlantillasDeFicha = [];
   mockMiembros = [];
   mockAvance = [];
+  Object.assign(mockVivo, { presentes: [], hay: false, enSesion: false, siguiendo: true, lider: null, yoDirijo: false });
+  for (const k of ['empezar', 'unirme', 'salir', 'pasarMando', 'soltarme', 'seguir', 'moverme', 'senalar'] as const) mockVivo[k].mockReset();
   mockAbrirCopia.mockImplementation(async (pieza: { kind: string }, _ruta: string, forma: string, enviar: (m: MensajeAlMotor) => void, posicion?: unknown) => {
     const { posicionGuardada } = jest.requireActual<typeof import('@/lib/library/reader-protocol')>('@/lib/library/reader-protocol');
     enviar({ type: 'openBegin', format: pieza.kind === 'epub' ? 'epub' : 'pdf', size: 1, position: (posicion as never) ?? posicionGuardada(pieza as never), mode: forma as never });
@@ -1503,3 +1514,75 @@ describe('club de lectura: por dónde va cada quien (spec 13f, RF-BC9; T308)', (
   });
 });
 
+
+describe('club de lectura: leer en vivo (spec 13f, RF-BC10 – RF-BC14; T309)', () => {
+  const L = es.library.clubs.live;
+  const ana = { id: 'u-ana', nombre: 'Ana Torres', desde: 1, enSesion: true, dirige: true };
+  const yo = { id: 'u1', nombre: 'Areli', desde: 2, enSesion: true, dirige: false };
+  beforeEach(() => {
+    mockPieza = { ...pdf, club_id: 'c1' };
+    mockMiembros = [
+      { club_id: 'c1', person_id: 'u1', status: 'accepted', profile: { display_name: 'Areli', username: 'areli' } },
+      { club_id: 'c1', person_id: 'u-ana', status: 'accepted', profile: { display_name: 'Ana Torres', username: 'ana' } },
+    ];
+  });
+
+  it('en una copia de club, "Leer en vivo" empieza la sesión', async () => {
+    await render(<Lector />);
+    await responder({ type: 'opened', total: 12 });
+    await fireEvent.press(screen.getByRole('button', { name: L.start }));
+    expect(mockVivo.empezar).toHaveBeenCalled();
+  });
+
+  it('sin club no hay botón de leer en vivo', async () => {
+    mockPieza = pdf;
+    await render(<Lector />);
+    await responder({ type: 'opened', total: 12 });
+    expect(screen.queryByRole('button', { name: L.start })).toBeNull();
+  });
+
+  it('si Ana lee en vivo, invita a unirme; dentro, la sigo y puedo leer por mi cuenta', async () => {
+    Object.assign(mockVivo, { presentes: [ana, { ...yo, enSesion: false }], hay: true, lider: ana });
+    const { rerender } = await render(<Lector />);
+    await responder({ type: 'opened', total: 12 });
+    expect(screen.queryByRole('button', { name: L.start })).toBeNull();
+    expect(screen.getByText(L.someoneLive('Ana Torres'))).toBeTruthy();
+    await fireEvent.press(screen.getByRole('button', { name: L.join }));
+    expect(mockVivo.unirme).toHaveBeenCalled();
+
+    Object.assign(mockVivo, { presentes: [ana, yo], enSesion: true });
+    await rerender(<Lector />);
+    expect(screen.getByText(L.leads('Ana Torres'))).toBeTruthy();
+    await fireEvent.press(screen.getByRole('button', { name: L.own }));
+    expect(mockVivo.soltarme).toHaveBeenCalled();
+    // Lo que manda quien dirige mueve el libro y destella lo señalado.
+    await act(async () => mockVivoArgs?.alMover({ page: 9 }));
+    expect(mockEnviados.at(-1)).toEqual({ type: 'goTo', page: 9 });
+    await act(async () => mockVivoArgs?.alSenalar({ page: 3 }));
+    expect(mockEnviados.at(-1)).toEqual({ type: 'flash', locator: { page: 3 } });
+  });
+
+  it('si dirijo, mi lugar va a los demás y puedo señalar lo que seleccioné', async () => {
+    Object.assign(mockVivo, { presentes: [{ ...yo, dirige: true, desde: 1 }, { ...ana, dirige: false, desde: 2 }], hay: true, enSesion: true, yoDirijo: true, lider: { ...yo, dirige: true } });
+    await render(<Lector />);
+    await responder({ type: 'opened', total: 12 });
+    expect(screen.getByText(L.youLead)).toBeTruthy();
+    await responder({ type: 'position', page: 7, total: 12, fraction: 7 / 12 });
+    expect(mockVivo.moverme).toHaveBeenLastCalledWith({ page: 7 });
+    const locator = { page: 3, y: 0.4, rects: [{ page: 3, x: 0.1, y: 0.4, w: 0.5, h: 0.02 }] };
+    await responder({ type: 'selection', text: 'la Maga', locator });
+    await fireEvent.press(screen.getByRole('button', { name: L.signal }));
+    expect(mockVivo.senalar).toHaveBeenCalledWith(locator);
+    await fireEvent.press(screen.getByRole('button', { name: L.handOff }));
+    await fireEvent.press(screen.getByText('Ana Torres'));
+    expect(mockVivo.pasarMando).toHaveBeenCalledWith('u-ana');
+  });
+
+  it('al entrar desde el aviso (vivo=1) me une sola una vez', async () => {
+    globalThis.setParametrosDeRuta({ id: 'l1', vivo: '1' });
+    Object.assign(mockVivo, { presentes: [ana], hay: true, lider: ana });
+    const { rerender } = await render(<Lector />);
+    await rerender(<Lector />);
+    expect(mockVivo.unirme).toHaveBeenCalledTimes(1);
+  });
+});

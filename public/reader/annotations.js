@@ -1506,6 +1506,44 @@ export function crearCapa(ctx, enviar) {
     if (capa.childElementCount) sombra.append(capa);
   }
 
+  // ─── Señalar en una sesión en vivo (13f, RF-BC13; T309) ───────────────────────
+
+  /**
+   * Un pasaje señalado por quien dirige se ilumina un momento: en PDF, sus renglones en su página; en EPUB, el
+   * rango de su CFI en el capítulo cargado.
+   */
+  function destello(locator) {
+    const cajas = [];
+    const pdf = ctx.pdf();
+    if (pdf && Array.isArray(locator?.rects)) {
+      for (const q of locator.rects) {
+        const pagina = [...document.querySelectorAll(`.pagina[data-pagina="${q.page}"], .hoja-pdf[data-pagina="${q.page}"]`)].find((el) => el.getClientRects().length);
+        if (!pagina) continue;
+        const r = pagina.getBoundingClientRect();
+        cajas.push({ left: r.left + q.x * r.width, top: r.top + q.y * r.height, width: q.w * r.width, height: q.h * r.height });
+      }
+    } else if (ctx.epub() && typeof locator?.cfi === 'string') {
+      try {
+        const { index, anchor } = ctx.epub().view.resolveCFI(locator.cfi);
+        const capitulo = capitulos().find((c) => c.index === index);
+        const rango = capitulo && anchor(capitulo.doc);
+        if (rango?.getClientRects) {
+          const m = capitulo.marco.getBoundingClientRect();
+          for (const q of rango.getClientRects()) cajas.push({ left: m.left + q.left, top: m.top + q.top, width: q.width, height: q.height });
+        }
+      } catch {
+        // un CFI que no está cargado: no hay qué iluminar
+      }
+    }
+    for (const c of cajas) {
+      const el = document.createElement('div');
+      el.className = 'destello';
+      Object.assign(el.style, { left: `${c.left - 2}px`, top: `${c.top - 2}px`, width: `${c.width + 4}px`, height: `${c.height + 4}px` });
+      document.body.append(el);
+      setTimeout(() => el.remove(), 2600);
+    }
+  }
+
   // ─── Lo que pide la app ──────────────────────────────────────────────────────
 
   function repintar() {
@@ -1551,6 +1589,7 @@ export function crearCapa(ctx, enviar) {
       if (herramienta && seleccion) elegir(null, false);
     },
     elegir: (id) => elegir(typeof id === 'string' ? id : null, false),
+    destello,
     escribir: (id) => typeof id === 'string' && editar(id),
     /** Si hay un post-it o un cuadro de texto abierto para escribir (el teclado está arriba). */
     escribiendo: () => !!editando,

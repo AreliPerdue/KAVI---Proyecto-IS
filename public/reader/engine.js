@@ -8,7 +8,7 @@
  * App → motor: `open`, `openBegin` / `openChunk` / `openEnd`, `goTo`, `mode`, `turn`, `theme`, `search`,
  * `searchStep`, `searchClear`, `cover`, y de la capa de anotaciones (T286) `annotations`, `tool`, `select`,
  * `clearSelection`; de la letra y el zoom (T288) `text` y `zoom`; el fragmento de imagen (T317) `clipTool`; el
- * lápiz (T291) `pen`.
+ * lápiz (T291) `pen`; señalar en una sesión en vivo del club (T309) `flash`.
  * Motor → app: `ready`, `opened`, `position`, `search`, `tap`, `cover`, `error`; `place`, `select`,
  * `move`, `edit`, `selection` (ver `annotations.js`); `zoom` y `textSize` (T288); `activity` (T318); `clip`
  * (ver `clip.js`, T317); `ink` e `inkChange` (ver `ink.js`, T291).
@@ -138,6 +138,8 @@ async function atender(m) {
       return lapiz.poner(m);
     case 'penUndo':
       return lapiz.deshacer();
+    case 'flash':
+      return anotaciones.destello(m.locator);
     case 'write':
       return anotaciones.escribir(m.id);
     case 'select':

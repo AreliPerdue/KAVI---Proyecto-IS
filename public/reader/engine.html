@@ -327,6 +327,25 @@
       body.pegando #epub {
         cursor: copy;
       }
+      /* Señalar en una sesión en vivo (T309): el pasaje se ilumina un momento. */
+      .destello {
+        position: fixed;
+        z-index: 46;
+        pointer-events: none;
+        border-radius: 4px;
+        background: rgb(255 196 0 / 0.38);
+        box-shadow: 0 0 0 2px rgb(255 160 0 / 0.9);
+        animation: destello 2.6s ease-out forwards;
+      }
+      @keyframes destello {
+        0% { opacity: 0; }
+        12% { opacity: 1; }
+        70% { opacity: 1; }
+        100% { opacity: 0; }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .destello { animation: none; }
+      }
       /* Lápiz (T291): lo que se está dibujando se ve encima de todo; mientras, no se selecciona texto. */
       #trazo-vivo {
         position: fixed;

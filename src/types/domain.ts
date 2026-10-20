@@ -911,3 +911,9 @@ export type LibraryClubBook = {
 
 /** Por dónde va un miembro del club en su copia (RF-BC9). Solo sale si lo deja ver. */
 export type LibraryClubProgress = { person_id: string; progress: number; page: number | null; cfi: string | null; updated_at: string };
+
+/** Sesión en vivo de un club (13f, RF-BC10 – RF-BC14; T309): dónde va quien dirige. */
+export type PosicionEnVivo = { page?: number; cfi?: string; fraction?: number };
+
+/** Quien tiene abierta su copia del club: si está en la sesión y si la dirige. */
+export type PresenteEnVivo = { id: string; nombre: string; desde: number; enSesion: boolean; dirige: boolean; pos?: PosicionEnVivo };

@@ -785,3 +785,15 @@ Automatizado: RLS en PGlite, demo, `app/(app)/book/__tests__/reader.test.tsx` y 
 Visto en el demo (375 px): la "A" de Ana a la mitad de la barra.
 - [ ] (manual, dos cuentas) Al leer en una, en menos de un minuto la otra ve su inicial moverse en la barra y su página
   en el club; al apagar "Que vean por dónde voy", desaparece.
+
+## Club de lectura: leer en vivo (T309)
+Automatizado: RLS de los canales en PGlite, `lib/library/__tests__/club-live.test.ts` (quién dirige, CFI o página),
+`hooks/__tests__/use-club-live.test.tsx` (empezar, seguir, soltarse, mando, señalar) y
+`app/(app)/book/__tests__/reader.test.tsx` (botón, barra, señalar y entrar desde el aviso).
+- [ ] (manual, dos cuentas) Una empieza "Leer en vivo": a la otra le sale el aviso con "Entrar" y, al entrar, llega a la
+  misma página en menos de un segundo; al pasar de página, la sigue.
+- [ ] (manual, dos teléfonos con distinta letra en un EPUB) Quien dirige avanza y las dos quedan en el mismo párrafo.
+- [ ] (manual) "Leer por mi cuenta" deja de mover; "Seguir a Ana" regresa. Pasar el mando y salir: el mando pasa solo a
+  quien lleva más tiempo.
+- [ ] (manual) Señalar un pasaje: destella en las dos pantallas; con "Reducir movimiento", sin animación.
+- [ ] (manual) Alguien que no es del club no puede escuchar el canal (la conexión se rechaza).

@@ -3,12 +3,15 @@
  * Hooks y UI solo importan las fachadas services/*.ts, nunca las implementaciones.
  */
 import { env } from '@/lib/env';
+import { demoClubLive } from '@/services/demo/club-live';
+import { supabaseClubLive } from '@/services/supabase/club-live';
 import type {
   ActivitiesApi,
   AdminApi,
   AuthApi,
   AvailabilityApi,
   ConsentApi,
+  ClubLiveApi,
   ConnectionsApi,
   ExercisesApi,
   LibraryApi,
@@ -63,3 +66,4 @@ export const adminApi: AdminApi = env.isDemoMode ? demoAdmin : supabaseAdmin;
 export const listsApi: ListsApi = env.isDemoMode ? demoLists : supabaseLists;
 export const libraryApi: LibraryApi = env.isDemoMode ? demoLibrary : supabaseLibrary;
 export const consentApi: ConsentApi = env.isDemoMode ? demoConsent : supabaseConsent;
+export const clubLiveApi: ClubLiveApi = env.isDemoMode ? demoClubLive : supabaseClubLive;

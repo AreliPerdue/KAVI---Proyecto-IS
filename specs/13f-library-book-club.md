@@ -139,7 +139,27 @@ Es la única parte de Library que se comparte, y solo con quien se invita (P4).
     de cada copia aceptada; quien apagó "Que vean por dónde voy" no sale, salvo para sí.
   - **En la barra del lector:** la inicial de cada miembro, en su color, a la altura de donde va. La mía no.
   - **En la pantalla del club:** "Va en la p. 40 · 35 %", "Aún no empieza" o "Ya lo terminó".
-  - **Actualización:** se vuelve a pedir cada minuto; en una sesión en vivo irá por su canal (T309).
+  - **Actualización:** se vuelve a pedir cada minuto. En una sesión en vivo, el lugar de quien dirige viaja
+    por el canal de la sesión (T309); el avance de los demás sigue llegando cada minuto.
+- **Hecho (T309, 20 oct 2026):**
+  - **Canales:** `club-vivo:<club>` lleva la sesión y `club-avisos:<club>` el aviso de que empezó. Los dos
+    son privados: la migración `20261020150000` deja leer y escribir en ellos solo a los miembros del club
+    (`library_club_de_canal` + `library_club_member` sobre `realtime.messages`). Nada se guarda en la base.
+  - **Quién está (presence):** cada quien publica si está en la sesión, si dice dirigir, desde cuándo y,
+    quien dirige, su lugar. Quien solo tiene abierto el libro cuenta para el aviso, no para la sesión.
+  - **Quién dirige (RF-BC14):** todos lo calculan igual con lo que ven: quien dice dirigir; si se fue, quien
+    lleva más tiempo dentro; si dos lo dicen a la vez, el que llegó antes. A quien le toca lo declara.
+  - **Seguir (RF-BC11):** quien dirige manda su lugar al moverse, sin repetir el mismo. En EPUB, por CFI;
+    en PDF, por página. Al unirse o al volver con "Seguir a Ana", se llega a donde va.
+  - **Soltarse y pasar el mando (RF-BC12):** "Leer por mi cuenta" deja de mover; quien dirige elige a quién
+    pasarlo en una hoja con los que están.
+  - **Señalar (RF-BC13):** con algo seleccionado, quien dirige toca "Señalar" y el pasaje destella 2.6 s en
+    todos (sin animación si se pidió menos movimiento). Lo que mande otro se ignora.
+  - **Aviso (RF-BC10):** al empezar, los miembros con la app abierta ven "Ana está leyendo *Rayuela* en
+    vivo" con "Entrar", que abre su copia y los une.
+  - **Barra arriba del libro:** invita a unirse si hay sesión; dentro, las iniciales de quienes están
+    (borde en el acento para quien dirige), quién dirige, seguir o soltarse, pasar el mando y salir.
+  - **Demo:** al empezar, los miembros aceptados del club de muestra se unen después de un momento.
 - **Modo demo:** los otros miembros son contactos simulados, igual que en Compartido.
 
 ## 6. Fuera de esta versión

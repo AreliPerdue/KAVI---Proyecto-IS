@@ -17,6 +17,7 @@ const mockReminderSync = jest.fn();
 const mockRealtime = jest.fn();
 const mockSociales = jest.fn();
 
+jest.mock('@/hooks/use-club-live-notices', () => ({ useClubLiveNotices: () => undefined }));
 jest.mock('@/hooks/use-reminders', () => ({ useReminderSync: () => mockReminderSync() }));
 jest.mock('@/hooks/use-realtime', () => ({ useRealtimeInvalidation: () => mockRealtime() }));
 jest.mock('@/hooks/use-social-notifications', () => ({ useSocialNotifications: () => mockSociales() }));
