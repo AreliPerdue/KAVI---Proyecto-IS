@@ -588,6 +588,9 @@ export const library: Dictionary['library'] = {
     notFound: 'This club no longer exists or you’re no longer in it.',
     badgeA11y: 'Club book',
     inviteMore: 'Invite more',
+    progressAt: (pagina, porcentaje) => (pagina ? `On p. ${pagina} · ${porcentaje}%` : `At ${porcentaje}%`),
+    notStarted: 'Hasn’t started yet',
+    finished: 'Finished it',
     bookGone: 'The host deleted the book: invitations can no longer be accepted.',
   },
   clips: {

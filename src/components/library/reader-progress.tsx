@@ -5,6 +5,7 @@ import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { AppText } from '@/components/ui';
 import { MinTouchTarget, Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { luminance } from '@/lib/color';
 
 type Props = {
   /** 0–1: dónde va la lectura. */
@@ -19,13 +20,15 @@ type Props = {
   paso: number;
   /** Algo más junto a la etiqueta, discreto: el tiempo leído (RF-BR11). */
   nota?: string;
+  /** Por dónde van los demás del club (13f, RF-BC9; T308): su inicial en su color, sobre la barra. */
+  marcas?: readonly { id: string; fraction: number; color: string; inicial: string; nombre: string }[];
 };
 
 /**
  * La barra delgada de abajo del lector (RF-BR10): dice dónde va la lectura y deja saltar tocando o
  * arrastrando. Mientras se arrastra, el texto muestra a dónde se va a ir; al soltar, se va.
  */
-export function ReaderProgress({ fraction, etiqueta, onJump, a11yLabel, paso, nota }: Props) {
+export function ReaderProgress({ fraction, etiqueta, onJump, a11yLabel, paso, nota, marcas }: Props) {
   const theme = useTheme();
   const [ancho, setAncho] = useState(0);
   const [arrastre, setArrastre] = useState<number | null>(null);
@@ -65,6 +68,18 @@ export function ReaderProgress({ fraction, etiqueta, onJump, a11yLabel, paso, no
           <View style={[styles.riel, { backgroundColor: theme.surfaceAlt }]}>
             <View style={[styles.relleno, { width: `${visible * 100}%`, backgroundColor: theme.ink }]} />
           </View>
+          {(marcas ?? []).map((m) => (
+            <View
+              key={m.id}
+              pointerEvents="none"
+              accessible
+              accessibilityLabel={m.nombre}
+              style={[styles.marca, { left: `${Math.min(1, Math.max(0, m.fraction)) * 100}%`, backgroundColor: m.color, borderColor: theme.background }]}>
+              <AppText variant="caption" style={[styles.inicial, { color: letraSobre(m.color) }]}>
+                {m.inicial}
+              </AppText>
+            </View>
+          ))}
           <View style={[styles.perilla, { left: `${visible * 100}%`, backgroundColor: theme.ink, borderColor: theme.background }]} />
         </View>
       </GestureDetector>
@@ -73,6 +88,10 @@ export function ReaderProgress({ fraction, etiqueta, onJump, a11yLabel, paso, no
 }
 
 const PERILLA = 14;
+const MARCA = 22;
+
+/** Letra clara u oscura según el color de la persona. */
+const letraSobre = (hex: string) => (luminance(hex) > 0.18 ? '#131313' : '#F2F2F2');
 
 const styles = StyleSheet.create({
   contenedor: { gap: Spacing.xs, paddingHorizontal: Spacing.lg, paddingTop: Spacing.sm },
@@ -81,6 +100,19 @@ const styles = StyleSheet.create({
   zona: { height: MinTouchTarget, justifyContent: 'center' },
   riel: { height: 4, borderRadius: Radius.full, overflow: 'hidden' },
   relleno: { height: '100%' },
+  // Arriba del riel, para no taparse con la perilla.
+  marca: {
+    position: 'absolute',
+    top: -3,
+    width: MARCA,
+    height: MARCA,
+    marginLeft: -MARCA / 2,
+    borderRadius: MARCA / 2,
+    borderWidth: 1.5,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  inicial: { fontWeight: '700' },
   perilla: {
     position: 'absolute',
     width: PERILLA,

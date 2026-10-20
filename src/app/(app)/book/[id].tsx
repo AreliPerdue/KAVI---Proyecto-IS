@@ -37,7 +37,7 @@ import { useLibrarySync } from '@/hooks/use-library-sync';
 import { useAbrirCopiaLocal } from '@/hooks/use-local-book';
 import { useCreateClip } from '@/hooks/use-clips';
 import { useCards, useCardTemplates } from '@/hooks/use-cards';
-import { useClubs } from '@/hooks/use-clubs';
+import { useClubProgress, useClubs } from '@/hooks/use-clubs';
 import { usePeopleColors } from '@/hooks/use-connections';
 import { useLibraryFileUrl, useLibraryItem, useLibraryItems, useSaveReadingPosition, useSeries } from '@/hooks/use-library';
 import { useTheme } from '@/hooks/use-theme';
@@ -207,6 +207,8 @@ function Lector({ id, irA }: { id: string; irA?: LugarDeApertura }) {
   const editor = useAnnotationEditor(id, { clubId, compartir: compartirNuevo });
   const clubes = useClubs();
   const coloresDePersonas = usePeopleColors();
+  // Por dónde van los demás (RF-BC9; T308): su inicial en la barra de avance.
+  const avanceDelClub = useClubProgress(clubId);
   const sinNombre = tx.library.annotations.club.someone;
   const miembrosDelClub = clubes.members;
   const autores = useMemo(
@@ -551,6 +553,11 @@ function Lector({ id, irA }: { id: string; irA?: LugarDeApertura }) {
         return;
     }
   };
+
+  const marcasDelClub = (avanceDelClub.data ?? []).flatMap((x) => {
+    const autor = x.person_id !== userId ? autores.get(x.person_id) : undefined;
+    return autor ? [{ id: x.person_id, fraction: x.progress, color: autor.color, inicial: autor.inicial, nombre: autor.nombre }] : [];
+  });
 
   /** Lo del club de lo elegido (RF-BC6 – RF-BC7): quién lo hizo y lo cambió, y si es mío, "Solo para mí". */
   const tc = tx.library.annotations.club;
@@ -1130,6 +1137,7 @@ function Lector({ id, irA }: { id: string; irA?: LugarDeApertura }) {
             )}
             paso={porPagina ? 1 / (total - 1) : 0.02}
             nota={segundosLeidos >= 60 ? l.time.read(duracion(segundosLeidos)) : undefined}
+            marcas={marcasDelClub}
           />
         </View>
       ) : null;

@@ -908,3 +908,6 @@ export type LibraryClubBook = {
   page_count: number | null;
   host_name: string | null;
 };
+
+/** Por dónde va un miembro del club en su copia (RF-BC9). Solo sale si lo deja ver. */
+export type LibraryClubProgress = { person_id: string; progress: number; page: number | null; cfi: string | null; updated_at: string };

@@ -1285,7 +1285,11 @@ Reemplazan L5 (13e). Un recorte es una página 1 : √2 del visor de PDF (decisi
     motor) y la autoría en la barra, la hoja y el panel.
   - `api/library-files.ts` deja leer las imágenes y stickers de otros vía la RLS.
   - Al desconectarse se quedan en la copia: lo hace la base desde T305.
-- [ ] T308 Avance de cada quien en el club y en la barra del lector. (RF-BC9) Dep: T306, T279
+- [x] T308 Avance de cada quien en el club y en la barra del lector. (RF-BC9) Dep: T306, T279
+  **Hecho (20 oct 2026):**
+  - `library_club_progress` en la base; RLS probada en PGlite.
+  - `listClubProgress` en Supabase y demo; `useClubProgress` se vuelve a pedir cada minuto.
+  - Las iniciales en la barra (`ReaderProgress` con `marcas`) y el avance en la pantalla del club.
 - [ ] T309 Sesión en vivo con Realtime (presence y broadcast): seguir, soltarse, pasar el mando, señalar.
   (RF-BC10 – RF-BC14) Dep: T306, T283
 

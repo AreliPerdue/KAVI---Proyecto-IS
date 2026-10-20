@@ -15,15 +15,30 @@ import {
   removeClubMember,
   renameClub,
   setClubProgressVisible,
+  listClubProgress,
 } from '@/services/library';
-import type { LibraryClub, LibraryClubBook, LibraryClubMember } from '@/types/domain';
+import type { LibraryClub, LibraryClubBook, LibraryClubMember, LibraryClubProgress } from '@/types/domain';
 
 export const clubKeys = {
   all: ['library', 'clubs'] as const,
   clubs: (userId: string | null) => ['library', 'clubs', userId] as const,
   members: (userId: string | null, ids: string) => ['library', 'clubs', userId, 'members', ids] as const,
   book: (clubId: string) => ['library', 'clubs', 'book', clubId] as const,
+  progress: (clubId: string) => ['library', 'clubs', 'progress', clubId] as const,
 };
+
+/**
+ * Por dónde va cada miembro (RF-BC9; T308). Se vuelve a pedir cada minuto mientras se ve: el avance de los demás
+ * no llega por Realtime (cada copia es de su dueño); en una sesión en vivo va por su canal (T309).
+ */
+export function useClubProgress(clubId: string | null) {
+  return useQuery<LibraryClubProgress[]>({
+    queryKey: clubKeys.progress(clubId ?? ''),
+    queryFn: () => listClubProgress(clubId as string),
+    enabled: !!clubId,
+    refetchInterval: 60_000,
+  });
+}
 
 /**
  * Los clubes de lectura de la persona (spec 13f; T306) con sus miembros e invitados: los que dirige, en los que

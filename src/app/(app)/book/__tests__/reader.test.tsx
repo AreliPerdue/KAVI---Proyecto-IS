@@ -76,7 +76,11 @@ jest.mock('@/hooks/use-user-stickers', () => ({
 }));
 // Club de lectura (T307): los miembros los pone cada prueba.
 let mockMiembros: Record<string, unknown>[] = [];
-jest.mock('@/hooks/use-clubs', () => ({ useClubs: () => ({ clubs: [], members: mockMiembros, isPending: false }) }));
+let mockAvance: Record<string, unknown>[] = [];
+jest.mock('@/hooks/use-clubs', () => ({
+  useClubs: () => ({ clubs: [], members: mockMiembros, isPending: false }),
+  useClubProgress: () => ({ data: mockAvance }),
+}));
 const mockColores = new Map([['u-ana', '#E24947']]);
 jest.mock('@/hooks/use-connections', () => ({ usePeopleColors: () => mockColores }));
 // Fichas (T294): la lista la pone cada prueba.
@@ -189,6 +193,7 @@ beforeEach(() => {
   mockFichas = [];
   mockPlantillasDeFicha = [];
   mockMiembros = [];
+  mockAvance = [];
   mockAbrirCopia.mockImplementation(async (pieza: { kind: string }, _ruta: string, forma: string, enviar: (m: MensajeAlMotor) => void, posicion?: unknown) => {
     const { posicionGuardada } = jest.requireActual<typeof import('@/lib/library/reader-protocol')>('@/lib/library/reader-protocol');
     enviar({ type: 'openBegin', format: pieza.kind === 'epub' ? 'epub' : 'pdf', size: 1, position: (posicion as never) ?? posicionGuardada(pieza as never), mode: forma as never });
@@ -1477,6 +1482,24 @@ describe('club de lectura: anotar juntos (spec 13f, RF-BC6 – RF-BC7; T307)', (
     await responder({ type: 'select', id: 'mio' });
     await fireEvent.press(screen.getByRole('button', { name: T.onlyMe }));
     expect(mockCambiar).toHaveBeenCalledWith(expect.objectContaining({ id: 'mio' }), expect.objectContaining({ club_id: null }));
+  });
+});
+
+describe('club de lectura: por dónde va cada quien (spec 13f, RF-BC9; T308)', () => {
+  it('en la barra de avance sale la inicial de cada miembro que lo deja ver, no la mía', async () => {
+    mockPieza = { ...pdf, club_id: 'c1' };
+    mockMiembros = [
+      { club_id: 'c1', person_id: 'u1', status: 'accepted', profile: { display_name: 'Areli', username: 'areli' } },
+      { club_id: 'c1', person_id: 'u-ana', status: 'accepted', profile: { display_name: 'Ana Torres', username: 'ana' } },
+    ];
+    mockAvance = [
+      { person_id: 'u1', progress: 0.2, page: 3, cfi: null, updated_at: 'u' },
+      { person_id: 'u-ana', progress: 0.4, page: 5, cfi: null, updated_at: 'u' },
+    ];
+    await render(<Lector />);
+    await responder({ type: 'opened', total: 12 });
+    expect(screen.getByLabelText('Ana Torres')).toBeTruthy();
+    expect(screen.queryByLabelText('Areli')).toBeNull();
   });
 });
 

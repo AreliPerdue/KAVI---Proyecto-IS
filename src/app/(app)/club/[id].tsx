@@ -8,7 +8,7 @@ import { ClubContactPicker } from '@/components/library/club-contact-picker';
 import { TOPE_DEL_CLUB } from '@/components/library/create-club-sheet';
 import { AppText, Avatar, Banner, Button, EmptyState, IconButton, LoadingState, Screen, Sheet, TextField, Toggle } from '@/components/ui';
 import { IconSize, IconStroke, Radius, Spacing } from '@/constants/theme';
-import { useClubMutations, useClubs } from '@/hooks/use-clubs';
+import { useClubMutations, useClubProgress, useClubs } from '@/hooks/use-clubs';
 import { useContacts } from '@/hooks/use-connections';
 import { useLibraryItems } from '@/hooks/use-library';
 import { useTheme } from '@/hooks/use-theme';
@@ -29,6 +29,7 @@ export default function ClubScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { userId } = useAuth();
   const datos = useClubs();
+  const avance = useClubProgress(id ?? null);
   const piezas = useLibraryItems();
   const contactos = useContacts();
   const m = useClubMutations();
@@ -50,6 +51,14 @@ export default function ClubScreen() {
     return x.person_id === userId ? c.you(n) : n;
   };
   const enElClub = new Set(miembros.map((x) => x.person_id));
+  // Por dónde va cada quien (RF-BC9; T308); quien lo apagó no sale.
+  const avanceDe = (persona: string) => {
+    const a = avance.data?.find((x) => x.person_id === persona);
+    if (!a) return null;
+    if (a.progress >= 1) return c.finished;
+    if (a.progress <= 0) return c.notStarted;
+    return c.progressAt(a.page, Math.round(a.progress * 100));
+  };
   const invitables = (contactos.data ?? []).filter((k) => k.kind === 'accepted' && !enElClub.has(k.profile.id));
   const lugares = TOPE_DEL_CLUB - miembros.length;
   const error = m.invite.error ?? m.removeMember.error ?? m.removeInvite.error ?? m.leave.error ?? m.close.error ?? m.rename.error ?? m.progress.error;
@@ -149,7 +158,7 @@ export default function ClubScreen() {
                 {nombreDe(x)}
               </AppText>
               <AppText variant="caption" color="textSecondary">
-                {x.person_id === club.host_id ? c.host : x.status === 'pending' ? c.pending : c.member}
+                {[x.person_id === club.host_id ? c.host : x.status === 'pending' ? c.pending : c.member, avanceDe(x.person_id)].filter(Boolean).join(' · ')}
               </AppText>
             </View>
             {dirijo && x.person_id !== userId ? (

@@ -17,6 +17,7 @@ import type {
   LibraryClub,
   LibraryClubMember,
   LibraryClubBook,
+  LibraryClubProgress,
   LibraryCard,
   LibraryCardTemplate,
   LibraryFileBody,
@@ -369,6 +370,11 @@ export const supabaseLibrary: LibraryApi = {
     return f
       ? { title: f.title, authors: f.authors ?? [], kind: f.kind, file_size: f.file_size, cover_color: f.cover_color, page_count: f.page_count, host_name: f.host_name }
       : null;
+  },
+
+  async listClubProgress(clubId) {
+    const filas = unwrap(await db().rpc('library_club_progress', { p_club: clubId })) as LibraryClubProgress[] | null;
+    return (filas ?? []).map((f) => ({ ...f, progress: Number(f.progress) }));
   },
 
   async acceptClubInvite(userId, clubId) {

@@ -18,6 +18,7 @@ import type {
   LibraryClub,
   LibraryClubMember,
   LibraryClubBook,
+  LibraryClubProgress,
   LibraryCardTemplate,
   LibraryFileBody,
   LibraryFont,
@@ -105,7 +106,11 @@ function aceptaSolo(clubId: string, personId: string) {
     const club = clubes.find((c) => c.id === clubId);
     const fuente = club && items.find((i) => i.id === club.source_item_id);
     if (!m || !fuente) return;
-    m.item_id = copiaDeClub(fuente, personId, clubId).id;
+    const suya = copiaDeClub(fuente, personId, clubId);
+    // Ya empezó a leer: así se ve su avance en el demo (RF-BC9).
+    suya.progress = 0.35;
+    suya.last_position = fuente.page_count ? { page: Math.max(1, Math.round(fuente.page_count * 0.35)) } : null;
+    m.item_id = suya.id;
     m.status = 'accepted';
     m.joined_at = ahora();
     emitDataChange();
@@ -163,8 +168,9 @@ function sembrarClubDeAna() {
     pdf_path: null,
     file_size: bytes.length,
     page_count: 1,
-    progress: 0,
-    last_position: null,
+    // Ana ya va a la mitad (RF-BC9).
+    progress: 0.5,
+    last_position: { page: 1 },
     reading_mode: null,
     style: null,
     base_color: null,
@@ -750,6 +756,18 @@ export const demoLibrary: LibraryApi = {
       host_name: perfilDe(club.host_id)?.display_name ?? null,
     };
     return libro;
+  },
+
+  async listClubProgress(clubId) {
+    await delay();
+    // Como la función de la base: solo para miembros, y de quien lo deja ver (o de mí).
+    if (!miembros.some((m) => m.club_id === clubId && m.person_id === yo() && m.status === 'accepted')) return [];
+    return miembros.flatMap((m): LibraryClubProgress[] => {
+      const copiaDe = m.item_id ? items.find((i) => i.id === m.item_id && i.club_id === clubId) : undefined;
+      if (m.club_id !== clubId || m.status !== 'accepted' || !copiaDe || (!m.shows_progress && m.person_id !== yo())) return [];
+      const p = copiaDe.last_position;
+      return [{ person_id: m.person_id, progress: copiaDe.progress, page: p?.page ?? null, cfi: p?.cfi ?? null, updated_at: copiaDe.updated_at }];
+    });
   },
 
   async acceptClubInvite(userId, clubId) {

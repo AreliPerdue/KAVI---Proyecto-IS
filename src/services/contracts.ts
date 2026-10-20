@@ -56,6 +56,7 @@ import type {
   LibraryClub,
   LibraryClubMember,
   LibraryClubBook,
+  LibraryClubProgress,
   NuevoFragmento,
   LibraryLink,
   LibraryLinkKind,
@@ -595,6 +596,8 @@ export interface LibraryApi {
    * Si algo falla no queda una copia a medias.
    */
   acceptClubInvite(userId: string, clubId: string): Promise<LibraryItem>;
+  /** Por dónde va cada miembro (RF-BC9; T308): los que lo dejan ver, y yo. */
+  listClubProgress(clubId: string): Promise<LibraryClubProgress[]>;
 
   /** Acomodos guardados (RF-BL7b, T331). */
   listLayouts(userId: string): Promise<LibraryLayout[]>;

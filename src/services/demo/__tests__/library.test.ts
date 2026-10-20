@@ -438,3 +438,22 @@ describe('club de lectura: anotar juntos (13f; T307)', () => {
     expect((await api.listAnnotations(copia.id, club.id)).find((a) => a.id === 'h-ana')).toMatchObject({ owner_id: 'demo-ana', club_id: club.id, updated_by: 'demo-user', content: { color: '#E24947' } });
   });
 });
+
+describe('club de lectura: avance (13f, RF-BC9; T308)', () => {
+  /* eslint-disable-next-line @typescript-eslint/no-require-imports -- el mismo estado que `fresh()` */
+  const store = () => require('@/services/demo/store') as typeof import('@/services/demo/store');
+  it('los miembros ven por dónde va cada quien que lo deja ver; quien no es miembro, nada', async () => {
+    const api = fresh();
+    store().setCurrentUser({ id: 'demo-user', email: 'demo@kavi.app' });
+    const [club] = await api.listClubs('demo-user');
+    expect(await api.listClubProgress(club.id)).toEqual([]);
+    await api.acceptClubInvite('demo-user', club.id);
+    const avance = await api.listClubProgress(club.id);
+    expect(avance.find((x) => x.person_id === 'demo-ana')).toMatchObject({ progress: 0.5, page: 1 });
+    expect(avance.find((x) => x.person_id === 'demo-user')).toMatchObject({ progress: 0 });
+    store().setCurrentUser({ id: 'demo-ana', email: 'ana@kavi.app' });
+    await api.setClubProgressVisible('demo-user', club.id, false);
+    expect((await api.listClubProgress(club.id)).map((x) => x.person_id)).toEqual(['demo-ana']);
+  });
+});
+

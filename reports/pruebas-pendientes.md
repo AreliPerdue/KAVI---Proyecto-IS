@@ -779,3 +779,9 @@ demo. Visto en el demo: el subrayado y el post-it de Ana con su marca, y "De Ana
   color se ve en las dos y dice quién lo cambió.
 - [ ] (manual) Un post-it "Solo para mí" no aparece en la otra cuenta; al compartirlo, sí.
 - [ ] (manual) La imagen y el sticker propio que pega una se ven en la otra.
+
+## Club de lectura: avance de cada quien (T308)
+Automatizado: RLS en PGlite, demo, `app/(app)/book/__tests__/reader.test.tsx` y `app/(app)/__tests__/club.test.tsx`.
+Visto en el demo (375 px): la "A" de Ana a la mitad de la barra.
+- [ ] (manual, dos cuentas) Al leer en una, en menos de un minuto la otra ve su inicial moverse en la barra y su página
+  en el club; al apagar "Que vean por dónde voy", desaparece.

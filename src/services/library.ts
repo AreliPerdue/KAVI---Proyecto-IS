@@ -30,6 +30,7 @@ export type {
   LibraryClub,
   LibraryClubMember,
   LibraryClubBook,
+  LibraryClubProgress,
   LibraryLinkKind,
   LibrarySeries,
   LibraryShelfItem,
@@ -87,6 +88,7 @@ export const closeClub = libraryApi.closeClub;
 export const setClubProgressVisible = libraryApi.setClubProgressVisible;
 export const getClubBook = libraryApi.getClubBook;
 export const acceptClubInvite = libraryApi.acceptClubInvite;
+export const listClubProgress = libraryApi.listClubProgress;
 export const saveLayout = libraryApi.saveLayout;
 export const removeLayout = libraryApi.removeLayout;
 export const applyOrder = libraryApi.applyOrder;

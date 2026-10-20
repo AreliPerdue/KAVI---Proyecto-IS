@@ -26,11 +26,13 @@ let mockClubs: Record<string, unknown>[] = [];
 let mockMiembros: Record<string, unknown>[] = [];
 let mockUsado = 0;
 let mockLibro: Record<string, unknown> | null = null;
+let mockAvance: Record<string, unknown>[] = [];
 
 jest.mock('@/hooks/use-clubs', () => ({
   useClubs: () => ({ clubs: mockClubs, members: mockMiembros, isPending: false, isError: false, error: null, refetch: jest.fn() }),
   useClubMutations: () => mockMut,
   useClubBook: () => ({ data: mockLibro, isSuccess: true }),
+  useClubProgress: () => ({ data: mockAvance }),
 }));
 jest.mock('@/hooks/use-connections', () => ({
   useContacts: () => ({
@@ -67,6 +69,7 @@ beforeEach(() => {
   mockClubs = [club];
   mockMiembros = [miembro('u-yo', 'Areli', 'accepted', { item_id: 'copia' }), miembro('u-ana', 'Ana Torres'), miembro('u-pedro', 'Pedro Ruiz', 'pending')];
   mockUsado = 0;
+  mockAvance = [];
   mockLibro = { title: 'Rayuela', authors: [], kind: 'pdf', file_size: 20 * MB, cover_color: null, page_count: 3, host_name: 'Areli' };
   for (const m of Object.values(mockMut)) m.mutate.mockReset();
   mockConfirm.mockClear();
@@ -113,6 +116,16 @@ describe('pantalla del club', () => {
     await fireEvent.press(screen.getByRole('button', { name: C.leave }));
     expect(mockConfirm).toHaveBeenCalledWith(expect.objectContaining({ title: C.leaveTitle, message: C.leaveMessage }));
     await waitFor(() => expect(mockMut.leave.mutate).toHaveBeenCalledWith('c1', expect.anything()));
+  });
+
+  it('dice por dónde va cada quien que lo deja ver (RF-BC9)', async () => {
+    mockAvance = [
+      { person_id: 'u-yo', progress: 0, page: null, cfi: null, updated_at: 'u' },
+      { person_id: 'u-ana', progress: 0.35, page: 40, cfi: null, updated_at: 'u' },
+    ];
+    await render(<Club />);
+    expect(screen.getByText(`${C.member} · ${C.progressAt(40, 35)}`)).toBeTruthy();
+    expect(screen.getByText(`${C.host} · ${C.notStarted}`)).toBeTruthy();
   });
 
   it('si ya no estoy en el club lo dice', async () => {

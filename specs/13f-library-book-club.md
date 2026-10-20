@@ -133,6 +133,13 @@ Es la única parte de Library que se comparte, y solo con quien se invita (P4).
     imagen de otro no borra su archivo.
   - **Charola:** la de "Quitados" solo muestra mis stickers.
   - **Demo:** Ana ya tiene un subrayado y un post-it en su club de muestra.
+- **Hecho (T308, 20 oct 2026):**
+  - **De dónde sale el avance:** el avance de una copia es de su dueño, así que los miembros lo leen con
+    `library_club_progress(club)` (migración `20261020140000`). Devuelve la parte leída y la página o el CFI
+    de cada copia aceptada; quien apagó "Que vean por dónde voy" no sale, salvo para sí.
+  - **En la barra del lector:** la inicial de cada miembro, en su color, a la altura de donde va. La mía no.
+  - **En la pantalla del club:** "Va en la p. 40 · 35 %", "Aún no empieza" o "Ya lo terminó".
+  - **Actualización:** se vuelve a pedir cada minuto; en una sesión en vivo irá por su canal (T309).
 - **Modo demo:** los otros miembros son contactos simulados, igual que en Compartido.
 
 ## 6. Fuera de esta versión

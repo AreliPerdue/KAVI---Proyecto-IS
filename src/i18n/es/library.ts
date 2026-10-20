@@ -613,6 +613,9 @@ export const library = {
     notFound: 'Este club ya no existe o ya no estás en él.',
     badgeA11y: 'Libro de club',
     inviteMore: 'Invitar a más',
+    progressAt: (pagina: number | null, porcentaje: number) => (pagina ? `Va en la p. ${pagina} · ${porcentaje} %` : `Va en el ${porcentaje} %`),
+    notStarted: 'Aún no empieza',
+    finished: 'Ya lo terminó',
     bookGone: 'Quien dirige borró el libro: ya no se pueden aceptar invitaciones.',
   },
   /** Fragmentos (spec 13c, RF-BH19 – RF-BH21; T317). */
