@@ -32,13 +32,20 @@ export type ElementoDeLienzo = {
   locked: boolean;
   /** Los de un grupo se eligen y se mueven juntos (RF-CC9). */
   group: string | null;
-  /** Color (texto, forma) y tamaño de la letra (1 = normal). */
-  style: { color?: string; size?: number };
+  /**
+   * Color (texto, forma) y tamaño de la letra (1 = normal); opacidad (0.1–1), borde (grosor en fracción del ancho de
+   * la página y su color) y sombra (RF-CC9, T342).
+   */
+  style: { color?: string; size?: number; opacity?: number; border?: { width: number; color: string }; shadow?: boolean };
   /** Texto; forma; ruta de la imagen en R2; sticker (`<paquete>/<nombre>`) y su nombre. */
   content: { text?: string; shape?: FormaDeLienzo; path?: string; sticker?: string; label?: string; src?: string };
 };
 
-export type DocumentoDeLienzo = { pages: number; elements: ElementoDeLienzo[] };
+/** `background`: el color de las páginas (RF-CC12, T342); sin él, papel blanco. */
+export type DocumentoDeLienzo = { pages: number; background?: string; elements: ElementoDeLienzo[] };
+
+/** Los grosores de borde que se ofrecen, en fracción del ancho de la página. */
+export const BORDES = { thin: 0.004, thick: 0.012 } as const;
 
 export const DOCUMENTO_VACIO: DocumentoDeLienzo = { pages: 1, elements: [] };
 /** Proporción de la serie ISO A (A4, A5): alto entre ancho de una página vertical. */
@@ -80,6 +87,9 @@ export function elementoValido(raw: unknown, paginas = MAX_PAGINAS): ElementoDeL
     style: {
       ...(esColor(estilo.color) ? { color: estilo.color } : {}),
       ...(numero(estilo.size) ? { size: entre(estilo.size, 0.5, 3) } : {}),
+      ...(numero(estilo.opacity) && estilo.opacity < 1 ? { opacity: entre(estilo.opacity, 0.1, 1) } : {}),
+      ...(bordeValido(estilo.border) ? { border: bordeValido(estilo.border) as { width: number; color: string } } : {}),
+      ...(estilo.shadow === true ? { shadow: true } : {}),
     },
     content: {
       ...(tipo === 'textbox' ? { text: texto(contenido.text, MAX_TEXTO) ?? '' } : {}),
@@ -91,18 +101,25 @@ export function elementoValido(raw: unknown, paginas = MAX_PAGINAS): ElementoDeL
   };
 }
 
+function bordeValido(raw: unknown): { width: number; color: string } | null {
+  if (!raw || typeof raw !== 'object') return null;
+  const b = raw as Record<string, unknown>;
+  return numero(b.width) && b.width > 0 && esColor(b.color) ? { width: entre(b.width, 0.001, 0.05), color: b.color } : null;
+}
+
 /** El documento tal como debe ser: páginas en su rango y elementos válidos, sin repetir id, en orden de capa. */
 export function documentoValido(raw: unknown): DocumentoDeLienzo {
   if (!raw || typeof raw !== 'object') return DOCUMENTO_VACIO;
   const d = raw as Record<string, unknown>;
   const pages = numero(d.pages) ? entre(Math.round(d.pages), 1, MAX_PAGINAS) : 1;
+  const background = esColor(d.background) ? d.background.toUpperCase() : undefined;
   const vistos = new Set<string>();
   const elements = (Array.isArray(d.elements) ? d.elements : [])
     .map((e) => elementoValido(e, pages))
     .filter((e): e is ElementoDeLienzo => !!e && !vistos.has(e.id) && !!vistos.add(e.id))
     .slice(0, MAX_ELEMENTOS)
     .sort((a, b) => a.z - b.z);
-  return { pages, elements };
+  return { pages, ...(background ? { background } : {}), elements };
 }
 
 /**
@@ -112,7 +129,13 @@ export function documentoValido(raw: unknown): DocumentoDeLienzo {
 export function aMotor(doc: DocumentoDeLienzo, fuentes: { imagenes?: ReadonlyMap<string, string>; stickers?: ReadonlyMap<string, string> } = {}): AnotacionEnMotor[] {
   return doc.elements.map((e) => {
     const locator: LibraryLocator = { page: e.page, x: e.x, y: e.y, w: e.w, ar: e.ar };
-    const comun = { ...(e.rot ? { rot: e.rot } : {}), ...(e.group ? { group: e.group } : {}) };
+    const comun = {
+      ...(e.rot ? { rot: e.rot } : {}),
+      ...(e.group ? { group: e.group } : {}),
+      ...(e.style.opacity ? { opacity: e.style.opacity } : {}),
+      ...(e.style.border ? { border: e.style.border } : {}),
+      ...(e.style.shadow ? { shadow: true } : {}),
+    };
     const content: AnotacionEnMotor['content'] =
       e.type === 'textbox'
         ? { text: e.content.text ?? '', ...(e.style.color ? { color: e.style.color } : {}), ...(e.style.size ? { size: e.style.size } : {}), ...comun }
@@ -150,6 +173,7 @@ export function cambiar(doc: DocumentoDeLienzo, id: string, cambio: Partial<Omit
     doc.elements.map((e) => {
       if (e.id !== id) return e;
       const lugar = e.locked && cambio.locked !== false ? { page: e.page, x: e.x, y: e.y, w: e.w, ar: e.ar, rot: e.rot } : {};
+      // En `style`, una clave con `undefined` se quita (sin borde, sin sombra, opacidad entera).
       return elementoValido({ ...e, ...cambio, ...lugar, style: { ...e.style, ...cambio.style }, content: { ...e.content, ...cambio.content } }, doc.pages) ?? e;
     }),
   );
@@ -220,4 +244,15 @@ export function desagrupar(doc: DocumentoDeLienzo, ids: readonly string[]): Docu
 /** El tamaño de una página del lienzo en pantalla, para un ancho dado: la proporción nunca cambia (RF-CC4). */
 export function proporcionDePagina(orientacion: OrientacionDeLienzo): number {
   return orientacion === 'landscape' ? 1 / RAIZ_DE_DOS : RAIZ_DE_DOS;
+}
+
+/** El color de las páginas (RF-CC12); `null` vuelve al papel blanco. */
+export function conFondo(doc: DocumentoDeLienzo, color: string | null): DocumentoDeLienzo {
+  const { background: _antes, ...resto } = doc;
+  return color && /^#[0-9a-fA-F]{6}$/.test(color) ? { ...resto, background: color.toUpperCase() } : resto;
+}
+
+/** Cambia el estilo de varios a la vez (con su grupo), como lo hace el panel de estilo. */
+export function conEstilo(doc: DocumentoDeLienzo, ids: readonly string[], estilo: Partial<ElementoDeLienzo['style']>): DocumentoDeLienzo {
+  return conSuGrupo(doc, ids).reduce((d, id) => cambiar(d, id, { style: estilo }), doc);
 }

@@ -824,3 +824,15 @@ duplicar, elegir varios, agrupar, arrastrar el grupo, deshacer los dos juntos y 
 - [ ] (manual) Pegar una imagen de la galería y un sticker propio; salir sin red y volver: todo sigue ahí y sube al
   regresar la red.
 - [ ] (manual) Hacer el recorte en la compu y abrirlo en el teléfono: cada cosa en el mismo lugar, tamaño y giro.
+
+## Recortes: Mi libreta, color, estilo y exportar (T342)
+Automatizado: RLS de "Mis colores" en PGlite (8 casos), `app/(app)/canvas/__tests__/canvas.test.tsx` (fondo, HEX,
+Mis colores, estilo, nombre, exportar, imágenes), `app/(app)/notebook/__tests__/notebook.test.tsx`,
+`lib/library/__tests__/canvas.test.ts`, `lib/__tests__/color-hsv.test.ts`, `canvas-export.test.ts`,
+`hooks/__tests__/use-library-sync.test.ts`, `store/__tests__/preferences-store.test.ts` y el demo. Visto en el demo
+web: Mi libreta, recorte con fondo, corazón con color, borde grueso y sombra, texto, nombre y miniatura.
+- [ ] (manual, teléfono) Exportar un recorte: sale la hoja de compartir con la imagen igual a lo que se ve; guardarla
+  en Fotos.
+- [ ] (manual) Arrastrar en el cuadro de color y la barra de tono con el dedo: el color sigue al dedo sin trabarse.
+- [ ] (manual, dos aparatos) Guardar un color en "Mis colores" en la compu y verlo en el teléfono.
+- [ ] (manual) Borrar un recorte con una imagen: la imagen ya no aparece en R2.

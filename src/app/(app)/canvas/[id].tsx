@@ -7,10 +7,14 @@ import {
   ImagePlus,
   Lock,
   LockOpen,
+  PaintBucket,
+  Palette,
   Pencil,
+  Plus,
   Redo2,
   SendToBack,
   Shapes,
+  Share,
   SquareDashedMousePointer,
   Sticker,
   Trash2,
@@ -20,15 +24,17 @@ import {
   X,
 } from 'lucide-react-native';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Platform, ScrollView, StyleSheet, View } from 'react-native';
+import { Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { CanvasStyleSheet } from '@/components/library/canvas-style-sheet';
+import { ColorPickerSheet } from '@/components/library/color-picker-sheet';
 import { ReaderEngine, type ReaderEngineHandle } from '@/components/library/reader-engine';
 import { type StickerElegible, StickerSheet } from '@/components/library/sticker-sheet';
-import { ActionRow, AppText, Button, ErrorState, IconButton, LoadingState, Sheet } from '@/components/ui';
+import { ActionRow, AppText, Button, ErrorState, IconButton, LoadingState, Sheet, TextField } from '@/components/ui';
 import { IconSize, IconStroke, Spacing } from '@/constants/theme';
 import { useLibraryImageUrls, useUploadAnnotationImage } from '@/hooks/use-annotations';
-import { useCanvas, useCanvasEditor } from '@/hooks/use-canvases';
+import { useCanvas, useCanvasEditor, useLimpiarImagenesDeLienzo } from '@/hooks/use-canvases';
 import { useStickerPacks, useStickerSources } from '@/hooks/use-sticker-packs';
 import { useTheme } from '@/hooks/use-theme';
 import { useUserStickerImages, useUserStickers, useUserStickerSources } from '@/hooks/use-user-stickers';
@@ -41,6 +47,8 @@ import {
   bloquear,
   cambiar,
   capa,
+  conEstilo,
+  conFondo,
   conSuGrupo,
   desagrupar,
   duplicar,
@@ -48,10 +56,13 @@ import {
   mover,
   quitar,
 } from '@/lib/library/canvas';
+import { archivoDeExportacion, nombreDeExportacion } from '@/lib/library/canvas-export';
+import { PAPEL_DE_LIENZO } from '@/lib/library/canvas-shapes';
 import { prepararImagenPegada } from '@/lib/library/cover/prepare';
 import { desdeCamara, desdeGaleria, PUEDE_TOMAR_FOTO } from '@/lib/library/cover/sources';
 import { FORMAS_DE_LIENZO, type FormaDeLienzo, type Herramienta, type MensajeDelMotor } from '@/lib/library/reader-protocol';
 import { fuenteDeSticker } from '@/lib/library/sticker-packs';
+import { shareImage } from '@/lib/share';
 import { useAuth, useSnackbar } from '@/providers';
 import type { LibraryLocator } from '@/types/domain';
 
@@ -62,7 +73,8 @@ type PorPegar = { forma?: FormaDeLienzo; imagen?: { jpeg: Uint8Array; ar: number
  * lector (RF-CC4), así que se acerca, se desplaza y se ve igual que un PDF; sus elementos son lo pegado encima:
  * texto, imagen, forma y sticker (RF-CC14). Todo se mueve, se estira, se gira, cambia de capa, se bloquea, se
  * duplica, se agrupa y se quita (RF-CC8, RF-CC9), con deshacer y rehacer, y se guarda solo, también sin red
- * (RF-CC10).
+ * (RF-CC10). En C2 (T342): "+ Agregar" (RF-CC19), el color del fondo y de cada pieza con su opacidad, borde y
+ * sombra (RF-CC12), cambiar el nombre y exportar la página como imagen (RF-CC25).
  */
 export default function CanvasScreen() {
   const { id, item } = useLocalSearchParams<{ id: string; item: string }>();
@@ -90,6 +102,13 @@ export default function CanvasScreen() {
   const [eligiendoSticker, setEligiendoSticker] = useState(false);
   const [vistasPrevias, setVistasPrevias] = useState<ReadonlyMap<string, string>>(new Map());
   const subirImagen = useUploadAnnotationImage();
+  const limpiarImagenes = useLimpiarImagenesDeLienzo();
+  const [agregando, setAgregando] = useState(false);
+  const [conEstiloAbierto, setConEstiloAbierto] = useState(false);
+  /** De qué se está eligiendo el color: el fondo, lo elegido o su borde. */
+  const [colorDe, setColorDe] = useState<'fondo' | 'elemento' | 'borde' | null>(null);
+  const [exportando, setExportando] = useState(false);
+  const [renombrando, setRenombrando] = useState<string | null>(null);
 
   // Las direcciones de lo que se ve: imágenes subidas (o su vista previa mientras suben) y stickers.
   const rutas = doc.elements.flatMap((e) => (e.type === 'image' && e.content.path ? [e.content.path] : []));
@@ -133,6 +152,19 @@ export default function CanvasScreen() {
   useEffect(() => {
     if (abierto) motor.current?.send({ type: 'annotations', items: enMotor });
   }, [abierto, enMotor]);
+
+  // El color de la página (RF-CC12).
+  const fondo = doc.background ?? null;
+  useEffect(() => {
+    if (abierto) motor.current?.send({ type: 'canvasBackground', color: fondo });
+  }, [abierto, fondo]);
+
+  /** Quitar del documento y dejar que el archivo de sus imágenes se borre en una hora, si no se deshace (T342). */
+  const quitarElementos = (ids: string[]) => {
+    const fuera = conSuGrupo(doc, ids);
+    aplicar((d) => quitar(d, fuera));
+    limpiarImagenes(item, id, doc.elements.filter((e) => e.type === 'image' && fuera.includes(e.id)).map((e) => e.id));
+  };
 
   const elegido = doc.elements.find((e) => e.id === seleccion) ?? null;
   const juntos = elegido ? conSuGrupo(doc, [elegido.id, ...(varios ? elegidos : [])]) : [];
@@ -247,8 +279,11 @@ export default function CanvasScreen() {
         motor.current?.send({ type: 'write', id: m.id });
         return;
       case 'remove':
-        aplicar((d) => quitar(d, [m.id]));
+        quitarElementos([m.id]);
         soltar();
+        return;
+      case 'exported':
+        void compartir(m);
         return;
       default:
         return;
@@ -293,10 +328,41 @@ export default function CanvasScreen() {
       if (elegido) elegir(elegido.id);
     },
     quitar: () => {
-      aplicar((d) => quitar(d, juntos));
+      quitarElementos(juntos);
       soltar();
     },
   };
+
+  /** La imagen del recorte (RF-CC25): el motor la dibuja y aquí se comparte (o se descarga en la web). */
+  const exportar = () => {
+    soltar();
+    setExportando(true);
+    motor.current?.send({ type: 'export', width: 1600 });
+  };
+  const compartir = async (m: Extract<MensajeDelMotor, { type: 'exported' }>) => {
+    setExportando(false);
+    if ('error' in m) {
+      avisar({ message: c.exportFailed });
+      return;
+    }
+    try {
+      const nombre = nombreDeExportacion(editor.titulo, c.title);
+      const r = await shareImage(archivoDeExportacion(m.dataUrl, nombre), nombre);
+      if (r === 'downloaded') avisar({ message: c.exported });
+    } catch {
+      avisar({ message: c.exportFailed });
+    }
+  };
+
+  const elegirColor = (hex: string | null) => {
+    const de = colorDe;
+    setColorDe(null);
+    if (de === 'fondo') aplicar((d) => conFondo(d, hex));
+    else if (de === 'elemento' && hex) aplicar((d) => conEstilo(d, juntos, { color: hex }));
+    else if (de === 'borde') aplicar((d) => conEstilo(d, juntos, { border: hex ? { width: elegido?.style.border?.width ?? 0.004, color: hex } : undefined }));
+  };
+  // El fondo sin color es el papel blanco: el selector empieza ahí.
+  const colorActual = colorDe === 'fondo' ? (fondo ?? PAPEL_DE_LIENZO) : colorDe === 'elemento' ? (elegido?.style.color ?? null) : colorDe === 'borde' ? (elegido?.style.border?.color ?? null) : null;
 
   const icono = (Icono: typeof Type, color: string = theme.text) => <Icono size={IconSize.action} strokeWidth={IconStroke} color={color} />;
   const volver = () => {
@@ -318,7 +384,7 @@ export default function CanvasScreen() {
     );
   }
 
-  const aviso = herramienta === 'textbox' ? a.textboxOn : herramienta === 'image' ? a.imageOn : herramienta === 'sticker' ? a.stickerOn : herramienta === 'shape' ? c.shapeOn : null;
+  const aviso = exportando ? c.exporting : herramienta === 'textbox' ? a.textboxOn : herramienta === 'image' ? a.imageOn : herramienta === 'sticker' ? a.stickerOn : herramienta === 'shape' ? c.shapeOn : null;
 
   return (
     <View style={[styles.pantalla, { backgroundColor: theme.background, paddingTop: insets.top }]}>
@@ -326,9 +392,15 @@ export default function CanvasScreen() {
         <IconButton label={tx.common.back} onPress={volver}>
           {icono(ChevronLeft)}
         </IconButton>
-        <AppText variant="bodyStrong" numberOfLines={1} style={styles.titulo} accessibilityRole="header">
-          {lienzo.data?.title || c.untitled}
-        </AppText>
+        <Pressable
+          style={styles.titulo}
+          onPress={() => setRenombrando(editor.titulo)}
+          accessibilityRole="button"
+          accessibilityLabel={`${editor.titulo || c.untitled}. ${c.rename}`}>
+          <AppText variant="bodyStrong" numberOfLines={1} style={styles.centro} accessibilityRole="header">
+            {editor.titulo || c.untitled}
+          </AppText>
+        </Pressable>
         <IconButton label={a.undo} onPress={editor.deshacer} disabled={!editor.puedeDeshacer}>
           {icono(Undo2, editor.puedeDeshacer ? theme.text : theme.textTertiary)}
         </IconButton>
@@ -367,6 +439,9 @@ export default function CanvasScreen() {
                   {icono(Pencil)}
                 </IconButton>
               ) : null}
+              <IconButton label={c.style.open} onPress={() => setConEstiloAbierto(true)}>
+                {icono(Palette)}
+              </IconButton>
               <IconButton label={a.toFront} onPress={acciones.alFrente}>
                 {icono(BringToFront)}
               </IconButton>
@@ -400,22 +475,79 @@ export default function CanvasScreen() {
           </>
         ) : (
           <View style={styles.fila} accessibilityLabel={c.tools}>
-            <IconButton label={c.text} onPress={() => ponerHerramienta('textbox')}>
-              {icono(Type)}
+            <Button title={c.add} icon={icono(Plus, theme.onInk)} onPress={() => setAgregando(true)} />
+            <IconButton label={c.background} onPress={() => setColorDe('fondo')}>
+              {icono(PaintBucket)}
             </IconButton>
-            <IconButton label={c.image} onPress={() => (Platform.OS === 'web' ? void elegirImagen('galeria') : setEligiendoImagen(true))}>
-              {icono(ImagePlus)}
-            </IconButton>
-            <IconButton label={c.shape} onPress={() => setEligiendoForma(true)}>
-              {icono(Shapes)}
-            </IconButton>
-            <IconButton label={c.sticker} onPress={() => setEligiendoSticker(true)}>
-              {icono(Sticker)}
+            <IconButton label={c.export} onPress={exportar} disabled={exportando || !abierto}>
+              {icono(Share, exportando ? theme.textTertiary : theme.text)}
             </IconButton>
           </View>
         )}
       </View>
 
+      <Sheet visible={agregando} onClose={() => setAgregando(false)} title={c.addTitle}>
+        <ActionRow
+          icon={icono(Type)}
+          label={c.text}
+          onPress={() => {
+            setAgregando(false);
+            ponerHerramienta('textbox');
+          }}
+        />
+        <ActionRow
+          icon={icono(ImagePlus)}
+          label={c.image}
+          onPress={() => {
+            setAgregando(false);
+            if (Platform.OS === 'web') void elegirImagen('galeria');
+            else setEligiendoImagen(true);
+          }}
+        />
+        <ActionRow
+          icon={icono(Shapes)}
+          label={c.shape}
+          onPress={() => {
+            setAgregando(false);
+            setEligiendoForma(true);
+          }}
+        />
+        <ActionRow
+          icon={icono(Sticker)}
+          label={c.sticker}
+          onPress={() => {
+            setAgregando(false);
+            setEligiendoSticker(true);
+          }}
+        />
+      </Sheet>
+      <CanvasStyleSheet
+        elemento={conEstiloAbierto && colorDe === null ? elegido : null}
+        onClose={() => setConEstiloAbierto(false)}
+        onCambiar={(estilo) => aplicar((d) => conEstilo(d, juntos, estilo))}
+        onColor={() => setColorDe('elemento')}
+        onColorDeBorde={() => setColorDe('borde')}
+      />
+      <ColorPickerSheet
+        visible={colorDe !== null}
+        titulo={colorDe === 'fondo' ? c.backgroundTitle : colorDe === 'borde' ? c.style.borderColor : c.style.color}
+        valor={colorActual}
+        ninguno={colorDe === 'fondo' ? c.paper : colorDe === 'borde' ? c.style.borderNone : undefined}
+        onClose={() => setColorDe(null)}
+        onElegir={elegirColor}
+      />
+      <Sheet visible={renombrando !== null} onClose={() => setRenombrando(null)} title={c.rename}>
+        <View style={styles.renombrar}>
+          <TextField label={c.renameLabel} value={renombrando ?? ''} onChangeText={setRenombrando} placeholder={c.renamePlaceholder} maxLength={120} autoFocus returnKeyType="done" />
+          <Button
+            title={c.save}
+            onPress={() => {
+              editor.renombrar(renombrando ?? '');
+              setRenombrando(null);
+            }}
+          />
+        </View>
+      </Sheet>
       <Sheet visible={eligiendoForma} onClose={() => setEligiendoForma(false)} title={c.shapeTitle}>
         {FORMAS_DE_LIENZO.map((f) => (
           <ActionRow
@@ -451,7 +583,9 @@ export default function CanvasScreen() {
 const styles = StyleSheet.create({
   pantalla: { flex: 1 },
   barra: { flexDirection: 'row', alignItems: 'center', gap: Spacing.xs, paddingHorizontal: Spacing.sm, paddingVertical: Spacing.xs, borderBottomWidth: StyleSheet.hairlineWidth },
-  titulo: { flex: 1, textAlign: 'center' },
+  titulo: { flex: 1, minHeight: 44, justifyContent: 'center' },
+  centro: { textAlign: 'center' },
+  renombrar: { gap: Spacing.lg, paddingBottom: Spacing.md },
   lienzo: { flex: 1 },
   cubre: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, justifyContent: 'center' },
   abajo: { borderTopWidth: StyleSheet.hairlineWidth, paddingTop: Spacing.xs, paddingHorizontal: Spacing.sm },

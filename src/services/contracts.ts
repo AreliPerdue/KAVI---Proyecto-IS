@@ -629,6 +629,9 @@ export interface LibraryApi {
   getCanvas(canvasId: string): Promise<LibraryCanvas>;
   saveCanvas(userId: string, canvas: LibraryCanvasInput): Promise<void>;
   removeCanvas(canvasId: string): Promise<void>;
+  /** "Mis colores" (RF-CC12; T342): la paleta de la persona, en su orden. */
+  getSavedColors(userId: string): Promise<string[]>;
+  saveSavedColors(userId: string, colors: readonly string[]): Promise<void>;
 
   listPages(itemId: string): Promise<LibraryPage[]>;
   savePages(userId: string, pages: readonly (Pick<LibraryPage, 'id' | 'item_id' | 'template'> & Partial<Pick<LibraryPage, 'sort_order' | 'layers'>>)[]): Promise<void>;

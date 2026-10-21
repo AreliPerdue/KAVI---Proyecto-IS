@@ -22,7 +22,11 @@ export type EntradaDeLibreria =
   /** Una sesión de lectura: se reescribe mientras dura, así que la última versión gana. */
   | { op: 'session'; itemId: string; userId: string; session: LibraryReadingSessionInput; at: number }
   /** El archivo de una imagen quitada: no se borra antes de `due` (ms), por si se deshace. */
-  | { op: 'imageCleanup'; itemId: string; userId: string; id: string; due: number; at: number }
+  /**
+   * `canvasId`: la imagen es de un recorte (T342); antes de borrarla se revisa que el recorte ya no la use (pudo
+   * volver con deshacer) o que el recorte ya no exista.
+   */
+  | { op: 'imageCleanup'; itemId: string; userId: string; id: string; due: number; at: number; canvasId?: string }
   /** Un lienzo creativo completo (13h, RF-CC10; T351): el último guardado gana. */
   | { op: 'canvas'; itemId: string; userId: string; canvas: LibraryCanvasInput; at: number }
   | { op: 'canvasRemove'; itemId: string; id: string; at: number };

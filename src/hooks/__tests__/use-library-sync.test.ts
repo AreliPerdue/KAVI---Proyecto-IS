@@ -7,6 +7,7 @@ const mockQuitarNotas = jest.fn();
 const mockGuardarSesion = jest.fn();
 const mockListarNotas = jest.fn();
 const mockBorrarImagen = jest.fn();
+const mockLienzo = jest.fn();
 jest.mock('@/lib/library/offline/outbox', () => ({
   pendientes: () => mockPendientes(),
   confirmar: (e: unknown[]) => mockConfirmar(e),
@@ -18,6 +19,7 @@ jest.mock('@/services/library', () => ({
   saveReadingSession: (...a: unknown[]) => mockGuardarSesion(...a),
   listAnnotations: (...a: unknown[]) => mockListarNotas(...a),
   removeAnnotationImage: (...a: unknown[]) => mockBorrarImagen(...a),
+  getCanvas: (...a: unknown[]) => mockLienzo(...a),
 }));
 
 /* eslint-disable-next-line @typescript-eslint/no-require-imports -- tras los mocks */
@@ -27,7 +29,7 @@ const entrada = (itemId: string) => ({ op: 'position', itemId, patch: { progress
 
 beforeEach(() => {
   jest.useFakeTimers();
-  for (const m of [mockPendientes, mockConfirmar, mockActualizar, mockGuardarNotas, mockQuitarNotas, mockGuardarSesion, mockListarNotas, mockBorrarImagen]) m.mockReset();
+  for (const m of [mockPendientes, mockConfirmar, mockActualizar, mockGuardarNotas, mockQuitarNotas, mockGuardarSesion, mockListarNotas, mockBorrarImagen, mockLienzo]) m.mockReset();
 });
 afterEach(() => jest.useRealTimers());
 
@@ -121,5 +123,28 @@ describe('la imagen de una anotación quitada (T333)', () => {
     mockListarNotas.mockRejectedValue(new TypeError('Network request failed'));
     await subirPendientes();
     expect(mockConfirmar).not.toHaveBeenCalled();
+  });
+});
+
+describe('la imagen quitada de un recorte (13h; T342)', () => {
+  const limpieza = { op: 'imageCleanup', itemId: 'l1', userId: 'u1', id: 'img1', canvasId: 'r1', due: 0, at: 1 };
+
+  it('si el recorte la volvió a poner (deshacer), se queda', async () => {
+    mockPendientes.mockResolvedValue([limpieza]);
+    mockLienzo.mockResolvedValue({ doc: { elements: [{ id: 'img1' }] } });
+    await subirPendientes();
+    expect(mockBorrarImagen).not.toHaveBeenCalled();
+    expect(mockListarNotas).not.toHaveBeenCalled();
+    expect(mockConfirmar).toHaveBeenCalledWith([limpieza]);
+  });
+
+  it('si el recorte ya no la usa, o ya no existe, se borra', async () => {
+    mockPendientes.mockResolvedValue([limpieza]);
+    mockLienzo.mockResolvedValueOnce({ doc: { elements: [] } });
+    await subirPendientes();
+    expect(mockBorrarImagen).toHaveBeenCalledWith('u1', 'l1', 'img1');
+    mockLienzo.mockRejectedValueOnce(new Error('no existe'));
+    await subirPendientes();
+    expect(mockBorrarImagen).toHaveBeenCalledTimes(2);
   });
 });

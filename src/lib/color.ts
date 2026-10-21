@@ -35,3 +35,35 @@ export function mixHex(a: string, b: string, t: number): string {
     .join('')
     .toUpperCase()}`;
 }
+
+/** Tono (0–360), saturación y brillo (0–1): lo que mueve el selector de color del lienzo (13h, RF-CC12; T342). */
+export type Hsv = { h: number; s: number; v: number };
+
+/** `#RRGGBB` (o `#RGB`, con o sin `#`) en mayúscula; `null` si no es un color. */
+export function normalizarHex(texto: string): string | null {
+  const limpio = texto.trim().replace(/^#/, '');
+  if (/^[0-9a-fA-F]{3}$/.test(limpio)) return `#${[...limpio].map((c) => c + c).join('')}`.toUpperCase();
+  return /^[0-9a-fA-F]{6}$/.test(limpio) ? `#${limpio}`.toUpperCase() : null;
+}
+
+export function hsvAHex({ h, s, v }: Hsv): string {
+  const f = (n: number) => {
+    const k = (n + ((((h % 360) + 360) % 360) / 60)) % 6;
+    return v - v * s * Math.max(0, Math.min(k, 4 - k, 1));
+  };
+  return `#${[f(5), f(3), f(1)].map((x) => Math.round(Math.min(1, Math.max(0, x)) * 255).toString(16).padStart(2, '0')).join('')}`.toUpperCase();
+}
+
+export function hexAHsv(hex: string): Hsv {
+  const n = parseInt(hex.slice(1), 16);
+  const [r, g, b] = [(n >> 16) & 255, (n >> 8) & 255, n & 255].map((x) => x / 255);
+  const max = Math.max(r, g, b);
+  const d = max - Math.min(r, g, b);
+  let h = 0;
+  if (d) {
+    if (max === r) h = 60 * (((g - b) / d) % 6);
+    else if (max === g) h = 60 * ((b - r) / d + 2);
+    else h = 60 * ((r - g) / d + 4);
+  }
+  return { h: (h + 360) % 360, s: max ? d / max : 0, v: max };
+}

@@ -491,3 +491,15 @@ describe('lienzo creativo: recortes de un libro (13h; T351)', () => {
     expect(await api.listCanvases(libro.id)).toEqual([]);
   });
 });
+
+describe('"Mis colores" (13h, RF-CC12; T342)', () => {
+  it('cada quien guarda su paleta en HEX mayúscula, hasta 30; otra persona no la ve', async () => {
+    const api = fresh();
+    expect(await api.getSavedColors(ANA)).toEqual([]);
+    await api.saveSavedColors(ANA, ['#7a1e3a', '#F2C14E']);
+    expect(await api.getSavedColors(ANA)).toEqual(['#7A1E3A', '#F2C14E']);
+    expect(await api.getSavedColors('otra')).toEqual([]);
+    await expect(api.saveSavedColors(ANA, ['rojo'])).rejects.toThrow();
+    await expect(api.saveSavedColors(ANA, Array.from({ length: 31 }, () => '#000000'))).rejects.toThrow();
+  });
+});

@@ -1226,10 +1226,14 @@ Reemplazan L5 (13e). Un recorte es una página 1 : √2 del visor de PDF (decisi
     cola sin red (`canvas`/`canvasRemove`).
   - `lib/library/canvas.ts` (documento y operaciones), `useCanvasEditor` (deshacer, rehacer y guardado solo) y la
     pantalla `canvas/[id]`; entrada provisional "Nuevo recorte" en el menú ⋯ del libro.
-- [ ] T342 C2 · Recortes: Mi libreta en el libro, lista con miniaturas, lienzo en blanco, + Agregar, selector de
+- [x] T342 C2 · Recortes: Mi libreta en el libro, lista con miniaturas, lienzo en blanco, + Agregar, selector de
   color (HEX, recientes, mis colores), opacidad/borde/sombra, exportar imagen; borrar un recorte y el archivo de sus
   imágenes (`library_canvases` ya existe desde T351).
   (RF-CC1, RF-CC11 – RF-CC13, RF-CC19, RF-CC23, RF-CC25) Dep: T351
+  **Hecho (21 oct 2026):** `notebook/[id]` (Mi libreta) con `CanvasPreview`; `ColorPickerSheet` (HSV, HEX,
+  recientes en `preferences-store`, Mis colores en `library_saved_colors`, migración `20261021100000`);
+  `CanvasStyleSheet`; fondo (`canvasBackground`) y exportar (`export` → `exported`, `public/reader/export.js`);
+  borrar recorte y limpieza de sus imágenes (`imageCleanup` con `canvasId`).
 - [ ] T343 C3 · Polaroids, quote, rating y libro; primer pack de assets en grises recolorables (papeles, cintas,
   doodles) en la tienda. (RF-CC14 – RF-CC17) Dep: T342, T337
 - [ ] T344 C4 · Plantillas de Recortes (Book Review, Character Collage, Favorite Quotes, Reading Experience, DNF

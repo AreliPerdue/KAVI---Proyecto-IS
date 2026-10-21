@@ -146,6 +146,23 @@ llevar texto, pero nunca debe sentirse como un formulario ni como una nota grand
   - **Entrada provisional:** "Nuevo recorte" en el menú ⋯ del libro (vertical u horizontal) abre el lienzo. Mi
     libreta, la lista con miniaturas, el color, exportar y borrar un recorte son C2 (T342).
 
+- **Hecho (C2, T342, 21 oct 2026):**
+  - **Mi libreta** (RF-CC23): en el menú ⋯ del libro (reemplaza la entrada provisional de T351). Recortes con su
+    miniatura (dibujada en la app a escala, sin guardar una imagen aparte), "Nuevo recorte" con la forma de la página,
+    tocar para abrir y ⋯ → Borrar recorte (con confirmación; sus imágenes se borran de R2). Abajo, Fragmentos de ese
+    libro (se abren ya filtrados) y sus Fichas.
+  - **"+ Agregar"** (RF-CC19) junta texto, imagen, forma y sticker; la barra sin nada elegido es Agregar, Fondo y
+    Exportar. Tocar el nombre del recorte lo cambia.
+  - **Color** (RF-CC12): cuadro de saturación y brillo, barra de tono, **HEX**, **recientes** (en el dispositivo,
+    12) y **Mis colores** (en la cuenta, hasta 30, tabla `library_saved_colors` privada; migración
+    `20261021100000`). Se aplica al fondo de la página, al texto, a las formas y al borde.
+  - **Estilo de lo elegido** (RF-CC9): color, opacidad (100/75/50/25 %), borde (sin, fino, grueso, con su color) y
+    sombra; se aplica a todo el grupo y se deshace. Los recolorables con textura (RF-CC13) llegan con los assets (C3).
+  - **Exportar** (RF-CC25): el motor dibuja la página en un `<canvas>` (`public/reader/export.js`, PNG de 1600 px
+    de ancho) y se comparte con la hoja del sistema; en la web, la del navegador o se descarga.
+  - **Imágenes:** quitar una deja su archivo una hora (por si se deshace) y el borrado revisa que el recorte ya no
+    la use.
+
 ## 11. Qué cambia en otras specs
 
 - **13e (cuadernos, diarios, álbumes por capas) se reemplaza:** el cuaderno pasa a ser el **Journal** con

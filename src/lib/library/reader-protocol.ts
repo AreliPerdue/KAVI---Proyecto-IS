@@ -49,6 +49,10 @@ export type AnotacionEnMotor = {
     shape?: FormaDeLienzo;
     /** Grupo del lienzo creativo (RF-CC9): los de un grupo se eligen y se mueven juntos. */
     group?: string;
+    /** Estilo del lienzo creativo (RF-CC9, T342): opacidad, borde (grosor en fracción de la página) y sombra. */
+    opacity?: number;
+    border?: { width: number; color: string };
+    shadow?: boolean;
     /** De otro miembro del club (13f, T307): su inicial y su color, para su marca en la página. */
     author?: { initial: string; color: string; name: string };
   };
@@ -71,6 +75,10 @@ export type MensajeAlMotor =
   | { type: 'openChunk'; data: string }
   /** El lienzo creativo (13h, RF-CC4; T351): páginas en blanco 1 : √2 que arma el motor. */
   | { type: 'openCanvas'; orientation: 'portrait' | 'landscape'; pages: number; mode?: FormaDeLeer }
+  /** El color de las páginas del lienzo (RF-CC12; T342); `null`, papel blanco. */
+  | { type: 'canvasBackground'; color: string | null }
+  /** Exportar una página del lienzo como PNG de `width` px (RF-CC25; T342). Contesta `exported`. */
+  | { type: 'export'; width?: number; page?: number }
   | { type: 'openEnd' }
   | ({ type: 'goTo' } & Posicion)
   /** Cambiar la forma de leer sin perder el lugar (RF-BR8, T283). */
@@ -156,6 +164,9 @@ export type MensajeDelMotor =
   | { type: 'move'; id: string; locator: LibraryLocator; rot?: number }
   /** Un grupo del lienzo creativo que se soltó junto (T351): un solo paso para guardar y deshacer. */
   | { type: 'moves'; items: { id: string; locator: LibraryLocator }[] }
+  /** La página del lienzo como PNG, o que no se pudo (T342). */
+  | { type: 'exported'; dataUrl: string }
+  | { type: 'exported'; error: true }
   /** Tocar un post-it doblado lo abre (RF-BH14, T290). */
   | { type: 'fold'; id: string; folded: boolean }
   /** Doble toque en algo pegado: abrirlo para escribir. */
@@ -232,6 +243,9 @@ export function leerMensaje(crudo: unknown): MensajeDelMotor | null {
       if (!locator || !esId(m.id)) return null;
       return { type: 'move', id: m.id, locator, ...(numero(m.rot) ? { rot: ((Math.round(m.rot) % 360) + 360) % 360 } : {}) };
     }
+    case 'exported':
+      if (m.error === true) return { type: 'exported', error: true };
+      return typeof m.dataUrl === 'string' && m.dataUrl.startsWith('data:image/png') ? { type: 'exported', dataUrl: m.dataUrl } : null;
     case 'moves': {
       const items = (Array.isArray(m.items) ? m.items : []).slice(0, 400).flatMap((x: { id?: unknown; locator?: unknown }) => {
         const locator = localizadorPegado(x?.locator);

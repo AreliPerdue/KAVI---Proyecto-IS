@@ -7,7 +7,7 @@ import { subirPendientes } from '@/hooks/use-library-sync';
 import { isOfflineError } from '@/lib/auth-errors';
 import { uuidv4 } from '@/lib/gym/ids';
 import { DOCUMENTO_VACIO, type DocumentoDeLienzo, type OrientacionDeLienzo } from '@/lib/library/canvas';
-import { aplicarLienzosPendientes, encolar, pendientes } from '@/lib/library/offline/outbox';
+import { aplicarLienzosPendientes, encolar, ESPERA_PARA_BORRAR_IMAGEN_MS, pendientes } from '@/lib/library/offline/outbox';
 import { useAuth } from '@/providers';
 import { getCanvas, listCanvases } from '@/services/library';
 import type { LibraryCanvas, LibraryCanvasInput } from '@/types/domain';
@@ -96,6 +96,38 @@ export function useCreateCanvas() {
 }
 
 /**
+ * Que el archivo de unas imágenes de un recorte se borre (T342): `espera` ms después (una hora si se quitaron
+ * editando, por si se deshace; ya, si se borró el recorte entero).
+ */
+export function useLimpiarImagenesDeLienzo() {
+  const { userId } = useAuth();
+  return useCallback(
+    (itemId: string, canvasId: string, ids: readonly string[], espera = ESPERA_PARA_BORRAR_IMAGEN_MS) => {
+      if (!ids.length || !userId) return;
+      const ahora = Date.now();
+      void Promise.all(ids.map((id) => encolar({ op: 'imageCleanup', itemId, userId, id, canvasId, due: ahora + espera, at: ahora }))).then(subirPendientes);
+    },
+    [userId],
+  );
+}
+
+/** Borrar un recorte (RF-CC23): sale de su libro al instante, va a la cola y sus imágenes se borran. */
+export function useRemoveCanvas() {
+  const queryClient = useQueryClient();
+  const limpiar = useLimpiarImagenesDeLienzo();
+  return useCallback(
+    (canvas: Pick<LibraryCanvas, 'id' | 'item_id' | 'doc'>) => {
+      const itemId = canvas.item_id ?? '';
+      queryClient.setQueryData<LibraryCanvas[]>(libraryKeys.canvases(itemId), (lista = []) => lista.filter((c) => c.id !== canvas.id));
+      queryClient.removeQueries({ queryKey: libraryKeys.canvas(canvas.id) });
+      void encolar({ op: 'canvasRemove', itemId, id: canvas.id, at: Date.now() }).then(subirPendientes);
+      limpiar(itemId, canvas.id, canvas.doc.elements.filter((e) => e.type === 'image').map((e) => e.id), 0);
+    },
+    [queryClient, limpiar],
+  );
+}
+
+/**
  * Editar un lienzo (13h, RF-CC10; T351): el documento vive aquí mientras se edita, cada cambio se puede deshacer
  * y rehacer, y se guarda solo un momento después del último (al salir, de inmediato).
  */
@@ -104,6 +136,7 @@ export function useCanvasEditor(canvas: LibraryCanvas | undefined) {
   const historia = useEditHistory();
   const { record } = historia;
   const [doc, setDoc] = useState<DocumentoDeLienzo>(canvas?.doc ?? DOCUMENTO_VACIO);
+  const [titulo, setTitulo] = useState(canvas?.title ?? '');
   const actual = useRef(doc);
   const base = useRef(canvas);
   const version = useRef(canvas?.version ?? 1);
@@ -119,6 +152,7 @@ export function useCanvasEditor(canvas: LibraryCanvas | undefined) {
     version.current = canvas.version;
     actual.current = canvas.doc;
     setDoc(canvas.doc);
+    setTitulo(canvas.title);
     // Solo al cambiar de lienzo: lo que llega del servidor del mismo no pisa lo que se está editando.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
@@ -156,8 +190,22 @@ export function useCanvasEditor(canvas: LibraryCanvas | undefined) {
     [poner, record],
   );
 
+  /** Cambiar el nombre del recorte (no es un paso de deshacer: es del recorte, no de su contenido). */
+  const renombrar = useCallback(
+    (nuevo: string) => {
+      const b = base.current;
+      if (!b) return;
+      const limpio = nuevo.trim().slice(0, 120);
+      base.current = { ...b, title: limpio };
+      setTitulo(limpio);
+      sucio.current = true;
+      guardarYa();
+    },
+    [guardarYa],
+  );
+
   // Al salir del lienzo, lo pendiente se guarda ya.
   useEffect(() => guardarYa, [guardarYa]);
 
-  return { doc, aplicar, guardarYa, deshacer: historia.undo, rehacer: historia.redo, puedeDeshacer: historia.canUndo, puedeRehacer: historia.canRedo };
+  return { doc, titulo, renombrar, aplicar, guardarYa, deshacer: historia.undo, rehacer: historia.redo, puedeDeshacer: historia.canUndo, puedeRehacer: historia.canRedo };
 }

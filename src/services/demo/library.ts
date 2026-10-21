@@ -49,6 +49,8 @@ const templates: LibraryCardTemplate[] = [];
 const cards: LibraryCard[] = [];
 /** Lienzos creativos (13h; T351). */
 const lienzos: LibraryCanvas[] = [];
+/** "Mis colores" de cada quien (T342). */
+const coloresGuardados = new Map<string, string[]>();
 const pages: LibraryPage[] = [];
 const fonts: LibraryFont[] = [];
 const layouts: LibraryLayout[] = [];
@@ -976,6 +978,20 @@ export const demoLibrary: LibraryApi = {
   async removeCanvas(canvasId) {
     await delay();
     quitarDe(lienzos, (c) => c.id === canvasId);
+    emitDataChange();
+  },
+
+  async getSavedColors(userId) {
+    await delay();
+    return [...(coloresGuardados.get(userId) ?? [])];
+  },
+
+  async saveSavedColors(userId, colors) {
+    await delay();
+    // Como la base: hasta 30, en HEX mayúscula.
+    const validos = colors.map((c) => c.toUpperCase());
+    if (validos.length > 30 || validos.some((c) => !/^#[0-9A-F]{6}$/.test(c))) throw new AuthUiError(t().errors.noPermission);
+    coloresGuardados.set(userId, validos);
     emitDataChange();
   },
 

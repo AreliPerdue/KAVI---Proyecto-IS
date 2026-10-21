@@ -1,4 +1,4 @@
-import { BookOpen, FolderMinus, FolderPlus, Frame, IdCard, ImageIcon, Info, ListChecks, Pencil, Trash2, Users } from 'lucide-react-native';
+import { BookOpen, FolderMinus, FolderPlus, IdCard, ImageIcon, Info, ListChecks, NotebookPen, Pencil, Trash2, Users } from 'lucide-react-native';
 
 import { ActionRow, Sheet } from '@/components/ui';
 import { IconSize, IconStroke } from '@/constants/theme';
@@ -17,8 +17,8 @@ export type ItemSheetProps = {
   onCards: (item: LibraryItem) => void;
   /** Leerlo en club, o abrir su club si ya está en uno (13f, T306). Solo PDF y EPUB. */
   onClub: (item: LibraryItem) => void;
-  /** Hacer un recorte del libro (13h, T351). Mientras no exista Mi libreta (T342), se crea desde aquí. */
-  onNewCanvas?: (item: LibraryItem) => void;
+  /** Mi libreta del libro: sus recortes, fragmentos y fichas (13h, RF-CC23; T342). */
+  onNotebook?: (item: LibraryItem) => void;
   onAddToShelf: (item: LibraryItem) => void;
   /** Si se está viendo un librero: su nombre y quitar de él (RF-BL6). */
   shelfName?: string;
@@ -31,7 +31,7 @@ export type ItemSheetProps = {
  * El menú de una pieza (RF-BL16): abrir, editar datos, seleccionar y eliminar, con lo destructivo al
  * final (kavi-design §3). "Fichas" lleva a las fichas de calificación del libro (13d, T294).
  */
-export function ItemSheet({ item, onClose, onOpen, onEdit, onDetails, onCover, onCards, onClub, onNewCanvas, onAddToShelf, shelfName, onRemoveFromShelf, onSelect, onDelete }: ItemSheetProps) {
+export function ItemSheet({ item, onClose, onOpen, onEdit, onDetails, onCover, onCards, onClub, onNotebook, onAddToShelf, shelfName, onRemoveFromShelf, onSelect, onDelete }: ItemSheetProps) {
   const theme = useTheme();
   const m = useT().library.item;
   const c = useT().library.cover;
@@ -39,7 +39,7 @@ export function ItemSheet({ item, onClose, onOpen, onEdit, onDetails, onCover, o
   const det = useT().library.details;
   const cards = useT().library.cards.book;
   const clubs = useT().library.clubs;
-  const canvas = useT().library.canvas;
+  const libreta = useT().library.notebook;
   const icono = (C: typeof BookOpen, color: string = theme.text) => <C size={IconSize.action} strokeWidth={IconStroke} color={color} />;
   // Cada acción cierra la hoja primero: la siguiente pantalla u hoja no debe abrirse encima de esta.
   const hacer = (accion: (i: LibraryItem) => void) => () => {
@@ -57,7 +57,7 @@ export function ItemSheet({ item, onClose, onOpen, onEdit, onDetails, onCover, o
           {item.family === 'book' && (item.kind === 'pdf' || item.kind === 'epub') ? (
             <ActionRow icon={icono(Users)} label={item.club_id ? clubs.club : clubs.readInClub} onPress={hacer(onClub)} />
           ) : null}
-          {item.family === 'book' && onNewCanvas ? <ActionRow icon={icono(Frame)} label={canvas.newCanvas} onPress={hacer(onNewCanvas)} /> : null}
+          {item.family === 'book' && onNotebook ? <ActionRow icon={icono(NotebookPen)} label={libreta.menu} onPress={hacer(onNotebook)} /> : null}
           <ActionRow icon={icono(Pencil)} label={m.edit} onPress={hacer(onEdit)} />
           <ActionRow icon={icono(ImageIcon)} label={c.change} onPress={hacer(onCover)} />
           <ActionRow icon={icono(FolderPlus)} label={s.addTo} onPress={hacer(onAddToShelf)} />

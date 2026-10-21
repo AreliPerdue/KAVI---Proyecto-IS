@@ -1,6 +1,6 @@
 import * as Clipboard from 'expo-clipboard';
 import { Image } from 'expo-image';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ChevronLeft, Ellipsis, Scissors } from 'lucide-react-native';
 import { memo, useState } from 'react';
 import { FlatList, Pressable, ScrollView, StyleSheet, View } from 'react-native';
@@ -34,7 +34,9 @@ export default function FragmentsScreen() {
   const borrar = useRemoveClip();
   const confirmar = useConfirm();
   const avisar = useSnackbar();
-  const [filtro, setFiltro] = useState<FiltroDeFragmentos>({ kind: 'all', libro: null });
+  // Desde Mi libreta (T342) llega el libro: se abre con su filtro puesto.
+  const { libro: libroDeRuta } = useLocalSearchParams<{ libro?: string }>();
+  const [filtro, setFiltro] = useState<FiltroDeFragmentos>({ kind: 'all', libro: libroDeRuta ?? null });
   const [abiertoId, setAbiertoId] = useState<string | null>(null);
 
   const todos = clips.data ?? [];

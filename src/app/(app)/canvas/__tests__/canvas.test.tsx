@@ -8,6 +8,7 @@ import { act, fireEvent, render, screen, waitFor } from '@testing-library/react-
 
 import { es } from '@/i18n/es';
 import type { AnotacionEnMotor, MensajeAlMotor, MensajeDelMotor } from '@/lib/library/reader-protocol';
+import { usePreferencesStore } from '@/store/preferences-store';
 
 const mockEnviados: MensajeAlMotor[] = [];
 let mockResponder: (m: MensajeDelMotor) => void = () => undefined;
@@ -31,7 +32,14 @@ jest.mock('@/hooks/use-canvases', () => ({
 const mockEncolar = jest.fn(async () => undefined);
 jest.mock('@/lib/library/offline/outbox', () => ({ ...jest.requireActual('@/lib/library/offline/outbox'), encolar: (...a: unknown[]) => mockEncolar(...(a as [])) }));
 jest.mock('@/hooks/use-library-sync', () => ({ subirPendientes: jest.fn() }));
-jest.mock('@/providers', () => ({ useAuth: () => ({ userId: 'u1' }), useSnackbar: () => jest.fn() }));
+const mockAvisar = jest.fn();
+jest.mock('@/providers', () => ({ useAuth: () => ({ userId: 'u1' }), useSnackbar: () => mockAvisar }));
+// "Mis colores" (T342): una paleta guardada.
+const mockGuardarColores = jest.fn();
+jest.mock('@/hooks/use-saved-colors', () => ({ useSavedColors: () => ({ data: ['#F2C14E'] }), useSaveColors: () => ({ mutate: mockGuardarColores }) }));
+const mockCompartir = jest.fn(async () => 'shared');
+jest.mock('@/lib/share', () => ({ shareImage: (...a: unknown[]) => mockCompartir(...(a as [])) }));
+jest.mock('@/lib/library/canvas-export', () => ({ ...jest.requireActual('@/lib/library/canvas-export'), archivoDeExportacion: (_d: string, nombre: string) => `file:///cache/${nombre}` }));
 const mockSubir = jest.fn(async () => undefined);
 // Como los de verdad, el mismo mapa en cada render.
 const mockVacio = new Map<string, string>();
@@ -67,6 +75,12 @@ async function montar() {
   await responder({ type: 'opened', total: 1 });
 }
 
+/** "+ Agregar" y la pieza (RF-CC19). */
+async function agregar(nombre: string) {
+  await fireEvent.press(screen.getByRole('button', { name: C.add }));
+  await fireEvent.press(screen.getByRole('button', { name: nombre }));
+}
+
 /** Pega con la herramienta puesta donde "se tocó" la página. */
 const tocarPagina = (x = 0.2, y = 0.2) => responder({ type: 'place', locator: { page: 1, x, y, w: 0.24, ar: 1 } });
 
@@ -74,6 +88,8 @@ beforeEach(() => {
   globalThis.setParametrosDeRuta({ id: 'r1', item: 'l1' });
   mockEnviados.length = 0;
   mockEncolar.mockClear();
+  mockAvisar.mockReset();
+  mockCompartir.mockClear();
   mockLienzo = {
     id: 'r1',
     owner_id: 'u1',
@@ -107,7 +123,7 @@ it('sin el recorte, lo dice y deja reintentar', async () => {
 
 it('texto: se pega donde se toca, se escribe ahí mismo y, si queda vacío, se quita', async () => {
   await montar();
-  await fireEvent.press(screen.getByRole('button', { name: C.text }));
+  await agregar(C.text);
   expect(mockEnviados.at(-1)).toEqual({ type: 'tool', tool: 'textbox' });
   expect(screen.getByText(A.textboxOn)).toBeTruthy();
   await tocarPagina();
@@ -122,7 +138,7 @@ it('texto: se pega donde se toca, se escribe ahí mismo y, si queda vacío, se q
 
 it('forma: se elige en su hoja y se pega en gris neutro, sin paleta de KAVI', async () => {
   await montar();
-  await fireEvent.press(screen.getByRole('button', { name: C.shape }));
+  await agregar(C.shape);
   await fireEvent.press(screen.getByRole('button', { name: C.shapes.heart }));
   expect(mockEnviados.at(-1)).toEqual({ type: 'tool', tool: 'shape', ar: 1 });
   await tocarPagina(0.4, 0.5);
@@ -133,7 +149,7 @@ it('forma: se elige en su hoja y se pega en gris neutro, sin paleta de KAVI', as
 
 it('lo elegido se duplica, se manda atrás, se bloquea y se quita; deshacer regresa', async () => {
   await montar();
-  await fireEvent.press(screen.getByRole('button', { name: C.shape }));
+  await agregar(C.shape);
   await fireEvent.press(screen.getByRole('button', { name: C.shapes.star }));
   await tocarPagina();
   await fireEvent.press(screen.getByRole('button', { name: C.duplicate }));
@@ -157,7 +173,7 @@ it('elegir varios y agrupar; el grupo se mueve en un paso y se deshace junto', a
     [0.1, 0.1],
     [0.5, 0.5],
   ]) {
-    await fireEvent.press(screen.getByRole('button', { name: C.shape }));
+    await agregar(C.shape);
     await fireEvent.press(screen.getByRole('button', { name: C.shapes.rect }));
     await tocarPagina(x, y);
     await fireEvent.press(screen.getByRole('button', { name: A.done }));
@@ -191,7 +207,7 @@ it('elegir varios y agrupar; el grupo se mueve en un paso y se deshace junto', a
 
 it('se guarda solo en la cola con la versión siguiente, sin red incluida', async () => {
   await montar();
-  await fireEvent.press(screen.getByRole('button', { name: C.shape }));
+  await agregar(C.shape);
   await fireEvent.press(screen.getByRole('button', { name: C.shapes.blob }));
   await tocarPagina();
   await waitFor(() => expect(mockEncolar).toHaveBeenCalled(), { timeout: 2000 });
@@ -206,9 +222,96 @@ it('se guarda solo en la cola con la versión siguiente, sin red incluida', asyn
 
 it('Supr en el motor quita lo elegido', async () => {
   await montar();
-  await fireEvent.press(screen.getByRole('button', { name: C.text }));
+  await agregar(C.text);
   await tocarPagina();
   await responder({ type: 'text', id: ultimas()[0].id, text: 'Hola' });
   await responder({ type: 'remove', id: ultimas()[0].id });
   expect(ultimas()).toEqual([]);
+});
+
+describe('C2: color, estilo, nombre y exportar (T342)', () => {
+  const S = C.style;
+  const K = C.color;
+  const ultimoFondo = () => mockEnviados.filter((m) => m.type === 'canvasBackground').at(-1);
+
+  it('el fondo se elige en HEX y se puede volver al papel blanco; el color queda en recientes', async () => {
+    await montar();
+    expect(ultimoFondo()).toEqual({ type: 'canvasBackground', color: null });
+    await fireEvent.press(screen.getByRole('button', { name: C.background }));
+    await fireEvent.changeText(screen.getByLabelText(K.hex), '#7a1e3a');
+    await fireEvent.press(screen.getByRole('button', { name: K.use }));
+    expect(ultimoFondo()).toEqual({ type: 'canvasBackground', color: '#7A1E3A' });
+    expect(usePreferencesStore.getState().recentColors[0]).toBe('#7A1E3A');
+    await fireEvent.press(screen.getByRole('button', { name: C.background }));
+    await fireEvent.press(screen.getByRole('button', { name: C.paper }));
+    expect(ultimoFondo()).toEqual({ type: 'canvasBackground', color: null });
+  });
+
+  it('un HEX que no es color se dice; "Mis colores" se usa con un toque y guarda el de ahora', async () => {
+    await montar();
+    await fireEvent.press(screen.getByRole('button', { name: C.background }));
+    await fireEvent.changeText(screen.getByLabelText(K.hex), 'rojo');
+    await fireEvent(screen.getByLabelText(K.hex), 'blur');
+    expect(screen.getByText(K.hexInvalid)).toBeTruthy();
+    await fireEvent.press(screen.getByRole('button', { name: '#F2C14E' }));
+    await fireEvent.press(screen.getByRole('button', { name: K.use }));
+    expect(ultimoFondo()).toEqual({ type: 'canvasBackground', color: '#F2C14E' });
+    await fireEvent.press(screen.getByRole('button', { name: C.background }));
+    await fireEvent.changeText(screen.getByLabelText(K.hex), '#112233');
+    await fireEvent.press(screen.getByRole('button', { name: K.save('#112233') }));
+    expect(mockGuardarColores).toHaveBeenCalledWith(['#F2C14E', '#112233']);
+  });
+
+  it('estilo de lo elegido: color, opacidad, borde y sombra, y se deshace', async () => {
+    await montar();
+    await agregar(C.shape);
+    await fireEvent.press(screen.getByRole('button', { name: C.shapes.star }));
+    await tocarPagina();
+    await fireEvent.press(screen.getByRole('button', { name: S.open }));
+    await fireEvent.press(screen.getByRole('tab', { name: '50 %' }));
+    expect(ultimas()[0].content.opacity).toBe(0.5);
+    await fireEvent.press(screen.getByRole('tab', { name: S.borderThick }));
+    expect(ultimas()[0].content.border).toEqual({ width: 0.012, color: expect.stringMatching(/^#/) });
+    await fireEvent.press(screen.getByRole('switch', { name: S.shadow }));
+    expect(ultimas()[0].content.shadow).toBe(true);
+    await fireEvent.press(screen.getByRole('button', { name: S.color }));
+    await fireEvent.changeText(screen.getByLabelText(K.hex), '#2E7D32');
+    await fireEvent.press(screen.getByRole('button', { name: K.use }));
+    expect(ultimas()[0].content.color).toBe('#2E7D32');
+    await fireEvent.press(screen.getByRole('button', { name: A.undo }));
+    expect(ultimas()[0].content.color).toBeUndefined();
+  });
+
+  it('cambiar el nombre se guarda con el recorte', async () => {
+    await montar();
+    await fireEvent.press(screen.getByRole('button', { name: new RegExp(C.rename) }));
+    await fireEvent.changeText(screen.getByLabelText(C.renameLabel), '  Personajes ');
+    await fireEvent.press(screen.getByRole('button', { name: C.save }));
+    expect(screen.getByText('Personajes')).toBeTruthy();
+    expect(mockEncolar).toHaveBeenCalledWith(expect.objectContaining({ op: 'canvas', canvas: expect.objectContaining({ title: 'Personajes' }) }));
+  });
+
+  it('exportar pide la imagen al motor y la comparte con el nombre del recorte; si falla, lo dice', async () => {
+    mockLienzo = { ...mockLienzo, title: 'Mis quotes' };
+    await montar();
+    await fireEvent.press(screen.getByRole('button', { name: C.export }));
+    expect(mockEnviados.at(-1)).toEqual({ type: 'export', width: 1600 });
+    expect(screen.getByText(C.exporting)).toBeTruthy();
+    await responder({ type: 'exported', dataUrl: 'data:image/png;base64,AAAA' });
+    expect(mockCompartir).toHaveBeenCalledWith('file:///cache/Mis-quotes.png', 'Mis-quotes.png');
+    await fireEvent.press(screen.getByRole('button', { name: C.export }));
+    await responder({ type: 'exported', error: true });
+    expect(mockAvisar).toHaveBeenCalledWith({ message: C.exportFailed });
+  });
+
+  it('quitar una imagen deja su archivo para borrarse en una hora, revisando el recorte', async () => {
+    mockLienzo = {
+      ...mockLienzo,
+      doc: { pages: 1, elements: [{ id: 'img1', type: 'image', page: 1, x: 0.1, y: 0.1, w: 0.3, ar: 1, rot: 0, z: 1, locked: false, group: null, style: {}, content: { path: 'u1/l1/anotaciones/img1.jpg' } }] },
+    };
+    await montar();
+    await responder({ type: 'remove', id: 'img1' });
+    expect(ultimas()).toEqual([]);
+    expect(mockEncolar).toHaveBeenCalledWith(expect.objectContaining({ op: 'imageCleanup', itemId: 'l1', id: 'img1', canvasId: 'r1', due: expect.any(Number) }));
+  });
 });

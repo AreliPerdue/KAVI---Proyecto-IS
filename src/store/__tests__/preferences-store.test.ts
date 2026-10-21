@@ -354,3 +354,17 @@ describe('forma de leer', () => {
     expect(otra.store.usePreferencesStore.getState().readingModes).toEqual({ l1: 'paged' });
   });
 });
+
+describe('colores recientes del lienzo creativo (13h, RF-CC12; T342)', () => {
+  it('el último usado va primero, en mayúscula, sin repetir y hasta 12', () => {
+    const { store: { usePreferencesStore, MAX_COLORES_RECIENTES } } = fresh();
+    const { addRecentColor } = usePreferencesStore.getState();
+    for (let i = 0; i < 14; i++) addRecentColor(`#0000${String(i).padStart(2, '0')}`);
+    addRecentColor('#000005');
+    addRecentColor('rojo');
+    const recientes = usePreferencesStore.getState().recentColors;
+    expect(recientes).toHaveLength(MAX_COLORES_RECIENTES);
+    expect(recientes[0]).toBe('#000005');
+    expect(new Set(recientes).size).toBe(recientes.length);
+  });
+});

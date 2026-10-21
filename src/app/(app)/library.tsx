@@ -11,7 +11,6 @@ import { DetailsSheet } from '@/components/library/details-sheet';
 import { EditItemSheet } from '@/components/library/edit-item-sheet';
 import { ImportSheet } from '@/components/library/import-sheet';
 import { LibraryHeader } from '@/components/library/library-header';
-import { NewCanvasSheet } from '@/components/library/new-canvas-sheet';
 import { CreateClubSheet } from '@/components/library/create-club-sheet';
 import { ItemSheet } from '@/components/library/item-sheet';
 import { PdfCoverWorker } from '@/components/library/pdf-cover-worker';
@@ -47,7 +46,6 @@ import {
   useShelves,
   useUpdateLibraryItem,
 } from '@/hooks/use-library';
-import { useCreateCanvas } from '@/hooks/use-canvases';
 import { useTheme } from '@/hooks/use-theme';
 import { useClubMutations } from '@/hooks/use-clubs';
 import { useLanguage, useT } from '@/i18n';
@@ -317,9 +315,6 @@ export default function LibraryScreen() {
 
   // Menú, edición y selección (T281).
   const [menuDe, setMenuDe] = useState<LibraryItem | null>(null);
-  // Recorte nuevo de un libro (13h, T351).
-  const [recorteDe, setRecorteDe] = useState<LibraryItem | null>(null);
-  const crearRecorte = useCreateCanvas();
   const [editando, setEditando] = useState<LibraryItem | null>(null);
   const [portadaDe, setPortadaDe] = useState<LibraryItem | null>(null);
   const [detallesDe, setDetallesDe] = useState<LibraryItem | null>(null);
@@ -717,21 +712,12 @@ export default function LibraryScreen() {
         onCover={setPortadaDe}
         onCards={(p) => router.push({ pathname: '/(app)/book-cards/[id]', params: { id: p.id } })}
         onClub={(p) => (p.club_id ? router.push({ pathname: '/(app)/club/[id]', params: { id: p.club_id } }) : setClubDe(p))}
-        onNewCanvas={setRecorteDe}
+        onNotebook={(p) => router.push({ pathname: '/(app)/notebook/[id]', params: { id: p.id } })}
         onAddToShelf={(p) => setAgregandoA([p.id])}
         shelfName={libreroActual?.name}
         onRemoveFromShelf={libreroActual ? (p) => quitarDelLibrero([p.id]) : undefined}
         onSelect={(p) => setSeleccion(new Set([p.id]))}
         onDelete={(p) => eliminarPiezas([p])}
-      />
-      <NewCanvasSheet
-        item={recorteDe}
-        onClose={() => setRecorteDe(null)}
-        onCrear={(p, orientacion) => {
-          setRecorteDe(null);
-          const nuevo = crearRecorte(p.id, orientacion);
-          router.push({ pathname: '/(app)/canvas/[id]', params: { id: nuevo, item: p.id } });
-        }}
       />
       <CreateClubSheet
         libro={clubDe}

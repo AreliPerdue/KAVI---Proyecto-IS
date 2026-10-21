@@ -66,6 +66,7 @@ type Prefs = {
   readerText: PreferenciaDeTexto;
   readingLanguages: Language[];
   readerPen: PreferenciaDeLapiz;
+  recentColors: string[];
 };
 
 type PreferencesState = {
@@ -119,6 +120,8 @@ type PreferencesState = {
    * preferir el scroll y en la web las páginas de lado. Sin entrada, scroll.
    */
   readingModes: Record<string, FormaDeLeer>;
+  /** Los últimos colores usados en el lienzo creativo (13h, RF-CC12; T342), el más nuevo primero. */
+  recentColors: string[];
   /** Tema del lector (RF-BH5): el mismo para todos los libros, aparte del tema de la app. */
   readerTheme: PreferenciaDeTema;
   readerText: PreferenciaDeTexto;
@@ -148,6 +151,8 @@ type PreferencesState = {
   setLibrarySeriesView: (vista: VistaDeSagas) => void;
   setLibrarySpineHeights: (modo: AltoDeLomos) => void;
   setReadingMode: (itemId: string, forma: FormaDeLeer) => void;
+  /** Un color usado en el lienzo: sube al principio de los recientes (máximo `MAX_COLORES_RECIENTES`). */
+  addRecentColor: (hex: string) => void;
   setReaderTheme: (tema: PreferenciaDeTema) => void;
   setReaderText: (texto: PreferenciaDeTexto) => void;
   hydrate: () => Promise<void>;
@@ -190,6 +195,7 @@ export const usePreferencesStore = create<PreferencesState>((set, get) => ({
   librarySeriesView: VISTA_DE_SAGAS_POR_OMISION,
   librarySpineHeights: ALTO_DE_LOMOS_POR_OMISION,
   readingModes: {},
+  recentColors: [],
   readerTheme: TEMA_POR_OMISION,
   readerText: TEXTO_POR_OMISION,
   readingLanguages: [],
@@ -307,6 +313,15 @@ export const usePreferencesStore = create<PreferencesState>((set, get) => ({
     persistir({ ...get(), librarySpineHeights: modo });
   },
 
+  addRecentColor: (hex) => {
+    if (!/^#[0-9a-fA-F]{6}$/.test(hex)) return;
+    elegidoEnEstaSesion.add('recentColors');
+    const color = hex.toUpperCase();
+    const siguiente = [color, ...get().recentColors.filter((c) => c !== color)].slice(0, MAX_COLORES_RECIENTES);
+    set({ recentColors: siguiente });
+    persistir({ ...get(), recentColors: siguiente });
+  },
+
   setReadingMode: (itemId, forma) => {
     elegidoEnEstaSesion.add('readingModes');
     const siguiente = recordarForma(get().readingModes, itemId, forma);
@@ -388,6 +403,7 @@ export const usePreferencesStore = create<PreferencesState>((set, get) => ({
       readerText: guardado('readerText', textoValido(prefs?.readerText)),
       readingLanguages: guardado('readingLanguages', idiomasValidos(prefs?.readingLanguages)),
       readerPen: guardado('readerPen', lapizValido(prefs?.readerPen)),
+      recentColors: guardado('recentColors', coloresValidos(prefs?.recentColors)),
       hydrated: true,
     });
     // Lo elegido antes de hidratar se guardo con el resto de valores por omision;
@@ -398,7 +414,7 @@ export const usePreferencesStore = create<PreferencesState>((set, get) => ({
 
 /** Se guarda el conjunto entero: son dos claves y así no pueden desincronizarse. */
 function persistir(
-  estado: Pick<PreferencesState, 'timeFormat' | 'timeFormatChosen' | 'language' | 'lastWorkoutTitle' | 'showWorkouts' | 'showBirthdays' | 'visto' | 'appearance' | 'selfColor' | 'pinnedViews' | 'accesos' | 'overlayRecientes' | 'libraryView' | 'libraryOrder' | 'librarySeriesView' | 'librarySpineHeights' | 'readingModes' | 'readerTheme' | 'readerText' | 'readingLanguages' | 'readerPen'>,
+  estado: Pick<PreferencesState, 'timeFormat' | 'timeFormatChosen' | 'language' | 'lastWorkoutTitle' | 'showWorkouts' | 'showBirthdays' | 'visto' | 'appearance' | 'selfColor' | 'pinnedViews' | 'accesos' | 'overlayRecientes' | 'libraryView' | 'libraryOrder' | 'librarySeriesView' | 'librarySpineHeights' | 'readingModes' | 'readerTheme' | 'readerText' | 'readingLanguages' | 'readerPen' | 'recentColors'>,
 ): void {
   void setJson(PREFS_KEY, {
     timeFormat: estado.timeFormat,
@@ -422,7 +438,19 @@ function persistir(
     readerText: estado.readerText,
     readingLanguages: estado.readingLanguages,
     readerPen: estado.readerPen,
+    recentColors: estado.recentColors,
   } satisfies Prefs);
+}
+
+/** Cuántos colores recientes se recuerdan (T342). */
+export const MAX_COLORES_RECIENTES = 12;
+
+/** Solo HEX, en mayúscula, sin repetir y hasta `MAX_COLORES_RECIENTES`. */
+function coloresValidos(valor: unknown): string[] {
+  if (!Array.isArray(valor)) return [];
+  const vistos = new Set<string>();
+  for (const c of valor) if (typeof c === 'string' && /^#[0-9a-fA-F]{6}$/.test(c)) vistos.add(c.toUpperCase());
+  return [...vistos].slice(0, MAX_COLORES_RECIENTES);
 }
 
 /** Solo español e inglés, sin repetir (T339). */

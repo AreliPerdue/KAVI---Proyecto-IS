@@ -518,6 +518,15 @@ export const supabaseLibrary: LibraryApi = {
     sinError(await db().from('library_canvases').delete().eq('id', canvasId));
   },
 
+  async getSavedColors(userId) {
+    const filas = unwrap(await db().from('library_saved_colors').select('colors').eq('owner_id', userId)) as { colors: string[] }[];
+    return filas[0]?.colors ?? [];
+  },
+
+  async saveSavedColors(userId, colors) {
+    sinError(await db().from('library_saved_colors').upsert({ owner_id: userId, colors: [...colors] }));
+  },
+
   async listPages(itemId) {
     return unwrap(await db().from('library_pages').select('*').eq('item_id', itemId).order('sort_order')) as LibraryPage[];
   },

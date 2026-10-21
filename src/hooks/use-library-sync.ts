@@ -3,7 +3,7 @@ import { AppState } from 'react-native';
 
 import { isOfflineError } from '@/lib/auth-errors';
 import { confirmar, type EntradaDeLibreria, pendientes } from '@/lib/library/offline/outbox';
-import { listAnnotations, removeAnnotationImage, removeAnnotations, removeCanvas, saveAnnotations, saveCanvas, saveReadingSession, updateLibraryItem } from '@/services/library';
+import { getCanvas, listAnnotations, removeAnnotationImage, removeAnnotations, removeCanvas, saveAnnotations, saveCanvas, saveReadingSession, updateLibraryItem } from '@/services/library';
 
 /**
  * Sube lo que quedó en la cola de la librería (RF-BR3, T285): el avance y las anotaciones (T286). Lo que
@@ -24,7 +24,14 @@ const AUN_NO = Symbol('aun-no');
 
 async function borrarImagenQuitada(e: Extract<EntradaDeLibreria, { op: 'imageCleanup' }>): Promise<unknown> {
   if (Date.now() < e.due) return AUN_NO;
-  if ((await listAnnotations(e.itemId)).some((a) => a.id === e.id)) return null;
+  if (e.canvasId) {
+    // De un recorte (T342): si el recorte la volvió a poner, se queda; si el recorte ya no existe, se borra.
+    const recorte = await getCanvas(e.canvasId).catch((error: unknown) => {
+      if (isOfflineError(error)) throw error;
+      return null;
+    });
+    if (recorte?.doc.elements.some((x) => x.id === e.id)) return null;
+  } else if ((await listAnnotations(e.itemId)).some((a) => a.id === e.id)) return null;
   return removeAnnotationImage(e.userId, e.itemId, e.id);
 }
 

@@ -31,6 +31,7 @@
  */
 import { crearCapa } from './annotations.js';
 import { pdfEnBlanco } from './blank.js';
+import { exportarPagina } from './export.js';
 import { crearRecortador } from './clip.js';
 import { crearLapiz } from './ink.js';
 import { buscarEnPedazos } from './text-search.js';
@@ -114,6 +115,10 @@ async function atender(m) {
     case 'openCanvas':
       // El lienzo creativo (13h, RF-CC4; T351): páginas en blanco 1 : √2 que se abren como un PDF.
       return abrir({ format: 'pdf', mode: m.mode, position: { page: 1 } }, { datos: pdfEnBlanco(m.orientation, m.pages) });
+    case 'canvasBackground':
+      return anotaciones.fondo(m.color);
+    case 'export':
+      return exportar(m);
     case 'goTo':
       return irA(m);
     case 'mode':
@@ -1493,6 +1498,23 @@ function marcarPagina(n) {
 }
 
 // ─── Portada de un PDF (RF-BL12) ─────────────────────────────────────────────
+
+/** Un recorte como imagen (13h, RF-CC25; T342): la página del lienzo, con su fondo y lo pegado. */
+async function exportar(m) {
+  try {
+    if (!pdf) throw new Error('sin lienzo');
+    const dataUrl = await exportarPagina({
+      items: anotaciones.lista(),
+      pagina: Number.isFinite(m.page) ? m.page : 1,
+      ancho: Number.isFinite(m.width) ? m.width : 1600,
+      proporcion: pdf.base.height / pdf.base.width,
+      fondo: anotaciones.fondoActual(),
+    });
+    enviar({ type: 'exported', dataUrl });
+  } catch {
+    enviar({ type: 'exported', error: true });
+  }
+}
 
 /** Dibuja la primera página y la devuelve como JPEG: es la portada del PDF, como en el Finder. */
 async function portada(url, ancho) {

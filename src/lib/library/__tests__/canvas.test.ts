@@ -6,6 +6,8 @@ import {
   bloquear,
   cambiar,
   capa,
+  conEstilo,
+  conFondo,
   conSuGrupo,
   desagrupar,
   documentoValido,
@@ -117,5 +119,34 @@ describe('lo que se le hace', () => {
     expect(nuevos[0]).toMatchObject({ x: 0.13, y: 0.13, locked: false });
     expect(Math.min(...nuevos.map((e) => e.z))).toBeGreaterThan(3);
     expect(duplicar(d, ['c'], nuevoId).doc.elements.at(-1)?.locked).toBe(false);
+  });
+});
+
+describe('C2: fondo y estilo (RF-CC9, RF-CC12; T342)', () => {
+  it('el fondo se guarda en mayúscula y `null` vuelve al papel', () => {
+    const d = conFondo(DOCUMENTO_VACIO, '#7a1e3a');
+    expect(d.background).toBe('#7A1E3A');
+    expect(conFondo(d, null).background).toBeUndefined();
+    expect(documentoValido({ pages: 1, background: 'rojo', elements: [] }).background).toBeUndefined();
+  });
+
+  it('opacidad, borde y sombra se ponen y se quitan, en sus límites, a todo el grupo', () => {
+    let d = agrupar(conTres(), ['a', 'b'], 'g');
+    d = conEstilo(d, ['a'], { opacity: 0.5, border: { width: 0.004, color: '#112233' }, shadow: true });
+    const [a, b, c] = d.elements;
+    expect(a.style).toEqual({ opacity: 0.5, border: { width: 0.004, color: '#112233' }, shadow: true });
+    expect(b.style).toEqual(a.style);
+    expect(c.style).toEqual({});
+    d = conEstilo(d, ['a'], { opacity: undefined, border: undefined, shadow: undefined });
+    expect(d.elements[0].style).toEqual({});
+    expect(documentoValido({ elements: [{ id: 'x', type: 'shape', style: { opacity: 0, border: { width: 9, color: '#000000' } } }] }).elements[0].style).toEqual({
+      opacity: 0.1,
+      border: { width: 0.05, color: '#000000' },
+    });
+  });
+
+  it('al motor van opacidad, borde y sombra', () => {
+    const d = agregar(DOCUMENTO_VACIO, el('s', { style: { opacity: 0.75, border: { width: 0.012, color: '#000000' }, shadow: true } }));
+    expect(aMotor(d)[0].content).toMatchObject({ opacity: 0.75, border: { width: 0.012, color: '#000000' }, shadow: true });
   });
 });

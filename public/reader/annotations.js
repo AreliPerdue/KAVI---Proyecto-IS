@@ -124,7 +124,7 @@ const sinTexto = (a) => esImagen(a) || a.kind === 'shape';
  * La imagen de un sticker incluido (T290): en el teléfono viene dentro del motor (sin red también se ve); en
  * la web, junto a él, en `stickers/<paquete>/<nombre>.png`.
  */
-function fuenteDeSticker(id) {
+export function fuenteDeSticker(id) {
   if (typeof id !== 'string' || !/^[a-z0-9-]+\/[a-z0-9-]+$/.test(id)) return '';
   if (globalThis.KAVI_STICKERS?.[id]) return globalThis.KAVI_STICKERS[id];
   // Solo los incluidos viven junto al motor; los de la tienda llegan con su `src` (T338).
@@ -187,6 +187,8 @@ export function crearCapa(ctx, enviar) {
    * y los grupos (`content.group`), que se eligen y se mueven juntos.
    */
   let ademas = new Set();
+  /** El color de las páginas de un lienzo creativo (T342); `null`: papel blanco. */
+  let fondo = null;
   let arrastre = null; // { id, el, x0, y0, movido }
   let repintarAlSoltar = false;
   let ultimoToque = { id: null, t: 0 };
@@ -320,6 +322,7 @@ export function crearCapa(ctx, enviar) {
         if (!texto) el.classList.add('vacio');
       }
     }
+    estiloDeLienzo(el, a);
     if (a.locked) el.dataset.bloqueado = '';
     const autor = marcaDeAutor(a);
     if (autor) el.append(autor);
@@ -328,6 +331,28 @@ export function crearCapa(ctx, enviar) {
       escucharArrastre(el, a);
     }
     return el;
+  }
+
+  /**
+   * El estilo de un elemento del lienzo creativo (13h, RF-CC9; T342): opacidad, borde y sombra. El borde y la sombra
+   * se miden contra el ancho de la página (cqw), así se ven iguales a cualquier tamaño. En una forma, el borde es su
+   * contorno; en lo demás, el de su caja.
+   */
+  function estiloDeLienzo(el, a) {
+    const c = a.content ?? {};
+    if (Number.isFinite(c.opacity) && c.opacity < 1) el.style.opacity = String(Math.max(0.1, c.opacity));
+    if (c.shadow) el.style.filter = 'drop-shadow(0 0.5cqw 0.9cqw rgb(0 0 0 / 0.35))';
+    const borde = c.border && Number.isFinite(c.border.width) && /^#[0-9a-fA-F]{6}$/.test(c.border.color ?? '') ? c.border : null;
+    if (!borde) return;
+    const ancho = `${(Math.min(0.05, borde.width) * 100).toFixed(2)}cqw`;
+    const svg = a.kind === 'shape' ? el.querySelector('svg') : null;
+    if (svg) {
+      for (const f of svg.children) {
+        f.setAttribute('stroke', borde.color);
+        f.setAttribute('vector-effect', 'non-scaling-stroke');
+        f.style.strokeWidth = ancho;
+      }
+    } else el.style.outline = `${ancho} solid ${borde.color}`;
   }
 
   /**
@@ -1490,6 +1515,14 @@ export function crearCapa(ctx, enviar) {
   function pintarPaginaPdf(n, div, { enLibro = false } = {}) {
     div.querySelector(':scope > .capa-anotaciones')?.remove();
     div.querySelector(':scope > .capa-subrayados')?.remove();
+    div.querySelector(':scope > .capa-fondo')?.remove();
+    // El color de la página de un lienzo (T342), encima del blanco del PDF y debajo de todo lo demás.
+    if (fondo) {
+      const capaFondo = document.createElement('div');
+      capaFondo.className = 'capa-fondo';
+      Object.assign(capaFondo.style, { position: 'absolute', inset: '0', background: fondo, pointerEvents: 'none' });
+      div.append(capaFondo);
+    }
     pintarSubrayadosPdf(n, div);
     const enPaginaN = encima().filter((a) => a.locator.page === n);
     const susSeparadores = separadores().filter((a) => a.locator.page === n);
@@ -1654,6 +1687,14 @@ export function crearCapa(ctx, enviar) {
     /** `tambien`: lo que va elegido junto (lienzo creativo, para agrupar; T351). */
     elegir: (id, tambien) => elegir(typeof id === 'string' ? id : null, false, Array.isArray(tambien) ? tambien : []),
     destello,
+    /** El color de las páginas de un lienzo creativo (T342). */
+    fondo(color) {
+      fondo = /^#[0-9a-fA-F]{6}$/.test(color ?? '') ? color : null;
+      repintar();
+    },
+    /** Lo que hay en la página, en orden de capa, para exportarla (T342). */
+    lista: () => lista,
+    fondoActual: () => fondo,
     escribir: (id) => typeof id === 'string' && editar(id),
     /** Si hay un post-it o un cuadro de texto abierto para escribir (el teclado está arriba). */
     escribiendo: () => !!editando,

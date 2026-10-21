@@ -223,7 +223,8 @@
       }
       /* Lienzo creativo (T351): lo elegido junto o agrupado lleva un contorno punteado, sin asas. */
       .anotacion.en-grupo {
-        outline: 1.5px dashed #131313;
+        /* Por encima del borde que la pieza pueda tener (T342). */
+        outline: 1.5px dashed #131313 !important;
         outline-offset: 3px;
         box-shadow: 0 0 0 4px rgb(255 255 255 / 0.7);
       }
