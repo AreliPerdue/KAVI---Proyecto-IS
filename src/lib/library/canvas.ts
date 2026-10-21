@@ -12,9 +12,23 @@ import type { LibraryLocator } from '@/types/domain';
  * solo y usarlo igual en Supabase, el demo y la cola sin red.
  */
 
-export const TIPOS_DE_ELEMENTO = ['textbox', 'image', 'sticker', 'shape'] as const;
+export const TIPOS_DE_ELEMENTO = ['textbox', 'image', 'sticker', 'shape', 'polaroid', 'quote', 'rating', 'book'] as const;
 export type TipoDeElemento = (typeof TIPOS_DE_ELEMENTO)[number];
 export type OrientacionDeLienzo = 'portrait' | 'landscape';
+
+/**
+ * Las variantes de la polaroid (RF-CC14; T343), el componente estrella: cuántas fotos lleva y su proporción (alto
+ * entre ancho) al pegarla. Cambiar de variante conserva las fotos que quepan.
+ */
+export const VARIANTES_DE_POLAROID = ['classic', 'mini', 'caption', 'tape', 'double', 'stack', 'film'] as const;
+export type VarianteDePolaroid = (typeof VARIANTES_DE_POLAROID)[number];
+export const FOTOS_DE_POLAROID: Record<VarianteDePolaroid, number> = { classic: 1, mini: 1, caption: 1, tape: 1, double: 2, stack: 1, film: 3 };
+export const PROPORCION_DE_POLAROID: Record<VarianteDePolaroid, number> = { classic: 1.19, mini: 1.6, caption: 1.4, tape: 1.19, double: 0.62, stack: 1.19, film: 2.6 };
+
+/** Cómo se califica en un rating (RF-CC14; T343): estrellas o corazones del 0 al 5 (con medios), o un número del 0 al 10. */
+export const ESCALAS_DE_RATING = ['stars', 'hearts', 'number'] as const;
+export type EscalaDeRating = (typeof ESCALAS_DE_RATING)[number];
+export const PROPORCION_DE_RATING: Record<EscalaDeRating, number> = { stars: 0.2, hearts: 0.2, number: 0.42 };
 
 export type ElementoDeLienzo = {
   id: string;
@@ -37,8 +51,27 @@ export type ElementoDeLienzo = {
    * la página y su color) y sombra (RF-CC9, T342).
    */
   style: { color?: string; size?: number; opacity?: number; border?: { width: number; color: string }; shadow?: boolean };
-  /** Texto; forma; ruta de la imagen en R2; sticker (`<paquete>/<nombre>`) y su nombre. */
-  content: { text?: string; shape?: FormaDeLienzo; path?: string; sticker?: string; label?: string; src?: string };
+  /**
+   * Texto; forma; ruta de la imagen en R2; sticker (`<paquete>/<nombre>`) y su nombre. Polaroid: variante, rutas de
+   * sus fotos (vacía = sin foto aún) y su pie en `text`. Quote: la cita en `text`, quién la dijo, el capítulo y un
+   * comentario. Rating: escala y valor. Libro: la pieza de Library a la que apunta (RF-CC22).
+   */
+  content: {
+    text?: string;
+    shape?: FormaDeLienzo;
+    path?: string;
+    sticker?: string;
+    label?: string;
+    src?: string;
+    variant?: VarianteDePolaroid;
+    paths?: string[];
+    who?: string;
+    chapter?: string;
+    note?: string;
+    scale?: EscalaDeRating;
+    value?: number;
+    itemId?: string;
+  };
 };
 
 /** `background`: el color de las páginas (RF-CC12, T342); sin él, papel blanco. */
@@ -97,8 +130,42 @@ export function elementoValido(raw: unknown, paginas = MAX_PAGINAS): ElementoDeL
       ...(tipo === 'image' && typeof contenido.path === 'string' ? { path: contenido.path.slice(0, 300) } : {}),
       ...(tipo === 'sticker' && typeof contenido.sticker === 'string' ? { sticker: contenido.sticker.slice(0, 120) } : {}),
       ...(tipo === 'sticker' && typeof contenido.label === 'string' ? { label: contenido.label.slice(0, 80) } : {}),
+      ...(tipo === 'polaroid' ? polaroidValida(contenido) : {}),
+      ...(tipo === 'quote' ? quoteValida(contenido) : {}),
+      ...(tipo === 'rating' ? ratingValido(contenido) : {}),
+      ...(tipo === 'book' && typeof contenido.itemId === 'string' ? { itemId: contenido.itemId.slice(0, 64) } : {}),
     },
   };
+}
+
+function polaroidValida(c: Record<string, unknown>) {
+  const variant = VARIANTES_DE_POLAROID.includes(c.variant as VarianteDePolaroid) ? (c.variant as VarianteDePolaroid) : 'classic';
+  const rutas = Array.isArray(c.paths) ? c.paths.map((r) => (typeof r === 'string' ? r.slice(0, 300) : '')) : [];
+  const paths = Array.from({ length: FOTOS_DE_POLAROID[variant] }, (_, i) => rutas[i] ?? '');
+  return { variant, paths, text: texto(c.text, 80) ?? '' };
+}
+
+function quoteValida(c: Record<string, unknown>) {
+  return { text: texto(c.text, 600) ?? '', who: texto(c.who, 80) ?? '', chapter: texto(c.chapter, 40) ?? '', note: texto(c.note, 300) ?? '' };
+}
+
+function ratingValido(c: Record<string, unknown>) {
+  const scale = ESCALAS_DE_RATING.includes(c.scale as EscalaDeRating) ? (c.scale as EscalaDeRating) : 'stars';
+  const max = scale === 'number' ? 10 : 5;
+  const paso = scale === 'number' ? 1 : 0.5;
+  const value = numero(c.value) ? entre(Math.round(c.value / paso) * paso, 0, max) : 0;
+  return { scale, value };
+}
+
+/** Los archivos de imagen de unos elementos, por su id: el de cada imagen y el de cada foto de una polaroid (T343). */
+export function archivosDeImagenes(elementos: readonly ElementoDeLienzo[]): string[] {
+  const id = (ruta: string) => ruta.split('/').pop()?.replace(/\.jpg$/, '') ?? '';
+  return elementos.flatMap((e) => (e.type === 'image' ? [e.id] : e.type === 'polaroid' ? (e.content.paths ?? []).filter(Boolean).map(id) : [])).filter(Boolean);
+}
+
+/** Todas las rutas de imágenes de unos elementos, para pedir sus direcciones. */
+export function rutasDeImagenes(elementos: readonly ElementoDeLienzo[]): string[] {
+  return elementos.flatMap((e) => (e.type === 'image' && e.content.path ? [e.content.path] : e.type === 'polaroid' ? (e.content.paths ?? []).filter(Boolean) : []));
 }
 
 function bordeValido(raw: unknown): { width: number; color: string } | null {
@@ -126,7 +193,12 @@ export function documentoValido(raw: unknown): DocumentoDeLienzo {
  * Lo que el motor pinta de cada elemento (13h §10): un elemento del lienzo es algo pegado en su página. `fuentes`
  * da la dirección de cada imagen (por su ruta) y de cada sticker de la tienda (por su id).
  */
-export function aMotor(doc: DocumentoDeLienzo, fuentes: { imagenes?: ReadonlyMap<string, string>; stickers?: ReadonlyMap<string, string> } = {}): AnotacionEnMotor[] {
+export type LibroEnLienzo = { title: string; src?: string; color: string };
+
+export function aMotor(
+  doc: DocumentoDeLienzo,
+  fuentes: { imagenes?: ReadonlyMap<string, string>; stickers?: ReadonlyMap<string, string>; libros?: ReadonlyMap<string, LibroEnLienzo> } = {},
+): AnotacionEnMotor[] {
   return doc.elements.map((e) => {
     const locator: LibraryLocator = { page: e.page, x: e.x, y: e.y, w: e.w, ar: e.ar };
     const comun = {
@@ -143,7 +215,29 @@ export function aMotor(doc: DocumentoDeLienzo, fuentes: { imagenes?: ReadonlyMap
           ? { shape: e.content.shape ?? 'rect', ...(e.style.color ? { color: e.style.color } : {}), ...comun }
           : e.type === 'image'
             ? { ...(e.content.path && fuentes.imagenes?.get(e.content.path) ? { src: fuentes.imagenes.get(e.content.path) } : {}), ...comun }
-            : {
+            : e.type === 'polaroid'
+              ? {
+                  variant: e.content.variant ?? 'classic',
+                  srcs: (e.content.paths ?? []).map((r) => (r ? (fuentes.imagenes?.get(r) ?? '') : '')),
+                  text: e.content.text ?? '',
+                  ...(e.style.color ? { color: e.style.color } : {}),
+                  ...comun,
+                }
+              : e.type === 'quote'
+                ? {
+                    text: e.content.text ?? '',
+                    who: e.content.who ?? '',
+                    chapter: e.content.chapter ?? '',
+                    note: e.content.note ?? '',
+                    ...(e.style.color ? { color: e.style.color } : {}),
+                    ...(e.style.size ? { size: e.style.size } : {}),
+                    ...comun,
+                  }
+                : e.type === 'rating'
+                  ? { scale: e.content.scale ?? 'stars', value: e.content.value ?? 0, ...(e.style.color ? { color: e.style.color } : {}), ...comun }
+                  : e.type === 'book'
+                    ? libroParaMotor(e.content.itemId ? fuentes.libros?.get(e.content.itemId) : undefined, comun)
+                    : {
                 sticker: e.content.sticker,
                 label: e.content.label,
                 ...(e.content.sticker && fuentes.stickers?.get(e.content.sticker) ? { src: fuentes.stickers.get(e.content.sticker) } : {}),
@@ -151,6 +245,11 @@ export function aMotor(doc: DocumentoDeLienzo, fuentes: { imagenes?: ReadonlyMap
               };
     return { id: e.id, kind: e.type, locator, z: e.z, locked: e.locked, content };
   });
+}
+
+/** Un libro del lienzo: su portada (o su color y título si no tiene, o si ya no existe). */
+function libroParaMotor(libro: LibroEnLienzo | undefined, comun: AnotacionEnMotor['content']): AnotacionEnMotor['content'] {
+  return { title: libro?.title ?? '', coverColor: libro?.color ?? '#8C8C8C', ...(libro?.src ? { src: libro.src } : {}), ...comun };
 }
 
 // ─── Lo que se le hace a un documento ─────────────────────────────────────────────

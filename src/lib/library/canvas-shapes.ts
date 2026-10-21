@@ -18,3 +18,11 @@ export const FORMA_GRIS = '#BDBDBD';
 export const TINTA_DE_TEXTO = '#1A1A1A';
 /** El papel de una página sin fondo: blanco, como el PDF en blanco del motor. */
 export const PAPEL_DE_LIENZO = '#FFFFFF';
+/** Polaroid y libro (T343), como en `public/reader/modules.js`. */
+export const MARCO_POLAROID = '#FBFAF6';
+export const SIN_FOTO = '#D6D6D6';
+export const PELICULA = '#161616';
+export const SIMBOLOS_DE_RATING = {
+  stars: 'M50 4l13.6 29.4 32.2 3.7-23.9 21.9 6.5 31.8L50 74.8 21.6 90.8l6.5-31.8L4.2 37.1l32.2-3.7z',
+  hearts: 'M50 90C22 70 4 54 4 32 4 17 16 6 30 6c9 0 16 5 20 12 4-7 11-12 20-12 14 0 26 11 26 26 0 22-18 38-46 58z',
+} as const;

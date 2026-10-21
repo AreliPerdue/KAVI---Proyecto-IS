@@ -2,6 +2,7 @@
 import {
   aMotor,
   agregar,
+  archivosDeImagenes,
   agrupar,
   bloquear,
   cambiar,
@@ -16,6 +17,7 @@ import {
   type ElementoDeLienzo,
   mover,
   quitar,
+  rutasDeImagenes,
 } from '@/lib/library/canvas';
 
 const el = (id: string, extra: Partial<ElementoDeLienzo> = {}): Omit<ElementoDeLienzo, 'z'> => ({
@@ -148,5 +150,53 @@ describe('C2: fondo y estilo (RF-CC9, RF-CC12; T342)', () => {
   it('al motor van opacidad, borde y sombra', () => {
     const d = agregar(DOCUMENTO_VACIO, el('s', { style: { opacity: 0.75, border: { width: 0.012, color: '#000000' }, shadow: true } }));
     expect(aMotor(d)[0].content).toMatchObject({ opacity: 0.75, border: { width: 0.012, color: '#000000' }, shadow: true });
+  });
+});
+
+describe('C3: módulos (RF-CC14; T343)', () => {
+  it('una polaroid tiene tantos huecos como su variante, y su pie corto', () => {
+    const [p] = documentoValido({ elements: [{ id: 'p', type: 'polaroid', content: { variant: 'film', paths: ['a.jpg'], text: 'x'.repeat(200) } }] }).elements;
+    expect(p.content).toEqual({ variant: 'film', paths: ['a.jpg', '', ''], text: 'x'.repeat(80) });
+    const [q] = documentoValido({ elements: [{ id: 'q', type: 'polaroid', content: { variant: 'gigante', paths: ['a', 'b'] } }] }).elements;
+    expect(q.content).toEqual({ variant: 'classic', paths: ['a'], text: '' });
+  });
+
+  it('la calificación va de medio en medio (estrellas, corazones) o de uno en uno (número), en su rango', () => {
+    const valor = (content: Record<string, unknown>) => documentoValido({ elements: [{ id: 'r', type: 'rating', content }] }).elements[0].content;
+    expect(valor({ scale: 'hearts', value: 3.3 })).toEqual({ scale: 'hearts', value: 3.5 });
+    expect(valor({ scale: 'number', value: 12 })).toEqual({ scale: 'number', value: 10 });
+    expect(valor({ scale: 'otra', value: -1 })).toEqual({ scale: 'stars', value: 0 });
+  });
+
+  it('una cita guarda texto, quién, capítulo y comentario; un libro, su pieza', () => {
+    const [c, l] = documentoValido({
+      elements: [
+        { id: 'c', type: 'quote', z: 1, content: { text: 'Andábamos', who: 'Horacio' } },
+        { id: 'l', type: 'book', z: 2, content: { itemId: 'l1' } },
+      ],
+    }).elements;
+    expect(c.content).toEqual({ text: 'Andábamos', who: 'Horacio', chapter: '', note: '' });
+    expect(l.content).toEqual({ itemId: 'l1' });
+  });
+
+  it('al motor: fotos con su dirección, libro con portada o con su color y título', () => {
+    let d = agregar(DOCUMENTO_VACIO, el('p', { type: 'polaroid', content: { variant: 'double', paths: ['u/l/anotaciones/f1.jpg', ''] } }));
+    d = agregar(d, el('l', { type: 'book', content: { itemId: 'l1' } }));
+    d = agregar(d, el('x', { type: 'book', content: { itemId: 'borrado' } }));
+    const [p, l, x] = aMotor(d, {
+      imagenes: new Map([['u/l/anotaciones/f1.jpg', 'https://r2/f1']]),
+      libros: new Map([['l1', { title: 'Rayuela', color: '#2E7D32', src: 'https://r2/portada' }]]),
+    });
+    expect(p.content).toMatchObject({ variant: 'double', srcs: ['https://r2/f1', ''] });
+    expect(l.content).toEqual({ title: 'Rayuela', coverColor: '#2E7D32', src: 'https://r2/portada' });
+    expect(x.content).toEqual({ title: '', coverColor: '#8C8C8C' });
+  });
+
+  it('los archivos de imagen de unos elementos: las imágenes y las fotos de las polaroids', () => {
+    let d = agregar(DOCUMENTO_VACIO, el('img', { type: 'image', content: { path: 'u/l/anotaciones/img.jpg' } }));
+    d = agregar(d, el('p', { type: 'polaroid', content: { variant: 'film', paths: ['u/l/anotaciones/f1.jpg', '', 'u/l/anotaciones/f3.jpg'] } }));
+    d = agregar(d, el('s'));
+    expect(archivosDeImagenes(d.elements)).toEqual(['img', 'f1', 'f3']);
+    expect(rutasDeImagenes(d.elements)).toEqual(['u/l/anotaciones/img.jpg', 'u/l/anotaciones/f1.jpg', 'u/l/anotaciones/f3.jpg']);
   });
 });

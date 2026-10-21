@@ -1234,8 +1234,11 @@ Reemplazan L5 (13e). Un recorte es una página 1 : √2 del visor de PDF (decisi
   recientes en `preferences-store`, Mis colores en `library_saved_colors`, migración `20261021100000`);
   `CanvasStyleSheet`; fondo (`canvasBackground`) y exportar (`export` → `exported`, `public/reader/export.js`);
   borrar recorte y limpieza de sus imágenes (`imageCleanup` con `canvasId`).
-- [ ] T343 C3 · Polaroids, quote, rating y libro; primer pack de assets en grises recolorables (papeles, cintas,
-  doodles) en la tienda. (RF-CC14 – RF-CC17) Dep: T342, T337
+- [x] T343a C3 · Polaroids (7 variantes), quote, rating y libro. (RF-CC14, RF-CC22) Dep: T342
+  **Hecho (21 oct 2026):** `public/reader/modules.js` (pintar), `export.js` (exportar), `canvas-preview.tsx`
+  (miniatura), `canvas-module-sheets.tsx` (hojas) y `book-list.tsx` (la lista de libros, compartida con T302).
+- [ ] T343b C3 · Primer pack de assets en grises recolorables (papeles, cintas, doodles) en la tienda, con unos
+  básicos incluidos para usarse sin red. (RF-CC13, RF-CC15 – RF-CC17) Dep: T343a, T337
 - [ ] T344 C4 · Plantillas de Recortes (Book Review, Character Collage, Favorite Quotes, Reading Experience, DNF
   Graveyard), Guardar como plantilla y Mis plantillas. (RF-CC18 – RF-CC21) Dep: T343
 - [x] T352 Texturas de los 6 materiales: limpiar el muestrario de Areli, pasarlas a grises y hacerlas repetibles

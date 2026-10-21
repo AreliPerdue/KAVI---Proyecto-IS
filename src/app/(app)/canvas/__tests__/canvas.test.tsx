@@ -53,6 +53,18 @@ jest.mock('@/hooks/use-user-stickers', () => ({
   useUserStickerSources: () => mockVacio,
 }));
 jest.mock('@/components/library/sticker-sheet', () => ({ StickerSheet: () => null }));
+// La Biblioteca, para el módulo libro (T343): Rayuela, sin portada.
+const mockPiezas = {
+  data: [{ id: 'l2', title: 'Rayuela', authors: ['Julio Cortázar'], kind: 'pdf', family: 'book', cover_path: null, cover_color: '#2E7D32' }],
+  isPending: false,
+  isError: false,
+  refetch: jest.fn(),
+};
+jest.mock('@/hooks/use-library', () => ({ ...jest.requireActual('@/hooks/use-library'), useLibraryItems: () => mockPiezas }));
+jest.mock('@/components/library/book-cover', () => ({ BookCover: () => null }));
+// Elegir una foto de la galería (T343): siempre la misma, ya lista para subir.
+jest.mock('@/lib/library/cover/sources', () => ({ PUEDE_TOMAR_FOTO: true, desdeGaleria: async () => 'file:///foto.jpg', desdeCamara: async () => null }));
+jest.mock('@/lib/library/cover/prepare', () => ({ prepararImagenPegada: async () => ({ jpeg: new Uint8Array([1]), ancho: 100, alto: 100, vistaPrevia: 'data:image/jpeg;base64,FOTO' }) }));
 
 /* eslint-disable-next-line @typescript-eslint/no-require-imports -- tras los mocks */
 const Pantalla = require('@/app/(app)/canvas/[id]').default as () => React.ReactElement;
@@ -313,5 +325,80 @@ describe('C2: color, estilo, nombre y exportar (T342)', () => {
     await responder({ type: 'remove', id: 'img1' });
     expect(ultimas()).toEqual([]);
     expect(mockEncolar).toHaveBeenCalledWith(expect.objectContaining({ op: 'imageCleanup', itemId: 'l1', id: 'img1', canvasId: 'r1', due: expect.any(Number) }));
+  });
+});
+
+describe('C3: polaroid, cita, calificación y libro (T343)', () => {
+  const elegirFoto = async () => {
+    await fireEvent.press(screen.getByRole('button', { name: A.imageGallery }));
+    await act(async () => undefined);
+  };
+
+  it('polaroid doble: se pega con su forma, cada hueco recibe su foto, lleva pie y al cambiarla suelta la foto que sobra', async () => {
+    await montar();
+    await agregar(C.polaroid);
+    await fireEvent.press(screen.getByRole('button', { name: C.variants.double }));
+    expect(mockEnviados.at(-1)).toEqual({ type: 'tool', tool: 'polaroid', ar: 0.62 });
+    await tocarPagina();
+    expect(ultimas()[0]).toMatchObject({ kind: 'polaroid', locator: { ar: 0.62 }, content: { variant: 'double', srcs: ['', ''] } });
+
+    await fireEvent.press(screen.getByRole('button', { name: C.photo }));
+    await fireEvent.press(screen.getByRole('button', { name: C.photoN(2) }));
+    await elegirFoto();
+    expect(ultimas()[0].content.srcs).toEqual(['', 'data:image/jpeg;base64,FOTO']);
+    expect(mockSubir).toHaveBeenCalledWith('l1', expect.any(String), expect.any(Uint8Array));
+
+    await fireEvent.press(screen.getByRole('button', { name: C.captionAction }));
+    await fireEvent.changeText(screen.getByPlaceholderText(C.captionPlaceholder), ' Buenos Aires ');
+    await fireEvent.press(screen.getByRole('button', { name: C.save }));
+    expect(ultimas()[0].content.text).toBe('Buenos Aires');
+
+    mockEncolar.mockClear();
+    await fireEvent.press(screen.getByRole('button', { name: C.changePolaroid }));
+    await fireEvent.press(screen.getByRole('button', { name: C.variants.classic }));
+    expect(ultimas()[0]).toMatchObject({ locator: { ar: 1.19 }, content: { variant: 'classic', srcs: [''] } });
+    expect(mockEncolar).toHaveBeenCalledWith(expect.objectContaining({ op: 'imageCleanup', canvasId: 'r1' }));
+  });
+
+  it('cita: no se pega vacía; con texto y quién la dice, sí; doble toque la edita', async () => {
+    await montar();
+    await agregar(C.quote);
+    await fireEvent.press(screen.getByRole('button', { name: C.save }));
+    expect(screen.getByText(C.quoteRequired)).toBeTruthy();
+    await fireEvent.changeText(screen.getByLabelText(C.quoteText), 'Andábamos sin buscarnos');
+    await fireEvent.changeText(screen.getByLabelText(C.quoteWho), 'Horacio');
+    await fireEvent.press(screen.getByRole('button', { name: C.save }));
+    expect(mockEnviados.at(-1)).toEqual({ type: 'tool', tool: 'quote', ar: 0.6 });
+    await tocarPagina();
+    const [cita] = ultimas();
+    expect(cita).toMatchObject({ kind: 'quote', content: { text: 'Andábamos sin buscarnos', who: 'Horacio', chapter: '', note: '' } });
+    await responder({ type: 'edit', id: cita.id });
+    expect(screen.getByDisplayValue('Andábamos sin buscarnos')).toBeTruthy();
+    await fireEvent.changeText(screen.getByLabelText(C.quoteChapter), '7');
+    await fireEvent.press(screen.getByRole('button', { name: C.save }));
+    expect(ultimas()[0].content.chapter).toBe('7');
+  });
+
+  it('calificación: al pegarla se abre su hoja; sube de medio en medio y se pasa a número', async () => {
+    await montar();
+    await agregar(C.rating);
+    await tocarPagina();
+    expect(ultimas()[0]).toMatchObject({ kind: 'rating', content: { scale: 'stars', value: 0 } });
+    for (let i = 0; i < 3; i++) await fireEvent.press(screen.getByRole('button', { name: C.ratingMore }));
+    expect(ultimas()[0].content.value).toBe(1.5);
+    expect(screen.getByText(C.ratingValue(1.5, 5))).toBeTruthy();
+    await fireEvent.press(screen.getByRole('tab', { name: C.scales.number }));
+    expect(ultimas()[0]).toMatchObject({ locator: { ar: 0.42 }, content: { scale: 'number', value: 3 } });
+  });
+
+  it('libro: se elige de la Biblioteca, se ve con su título y color, y se abre', async () => {
+    await montar();
+    await agregar(C.book);
+    await fireEvent.press(screen.getByRole('button', { name: /^Rayuela/ }));
+    expect(mockEnviados.at(-1)).toEqual({ type: 'tool', tool: 'book', ar: 1.5 });
+    await tocarPagina();
+    expect(ultimas()[0]).toMatchObject({ kind: 'book', content: { title: 'Rayuela', coverColor: '#2E7D32' } });
+    await fireEvent.press(screen.getByRole('button', { name: C.openBook }));
+    expect(globalThis.mockRouter.push).toHaveBeenCalledWith({ pathname: '/(app)/book/[id]', params: { id: 'l2' } });
   });
 });

@@ -1,9 +1,13 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import {
+  BookOpen,
   BringToFront,
+  Camera,
   ChevronLeft,
   Copy,
+  Frame,
   Group,
+  LibraryBig,
   ImagePlus,
   Lock,
   LockOpen,
@@ -16,10 +20,12 @@ import {
   Shapes,
   Share,
   SquareDashedMousePointer,
+  Star,
   Sticker,
   Trash2,
   Type,
   Undo2,
+  Quote as IconoCita,
   Ungroup,
   X,
 } from 'lucide-react-native';
@@ -27,6 +33,8 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { BookList } from '@/components/library/book-list';
+import { type Cita, PolaroidSheet, QuoteSheet, RatingSheet } from '@/components/library/canvas-module-sheets';
 import { CanvasStyleSheet } from '@/components/library/canvas-style-sheet';
 import { ColorPickerSheet } from '@/components/library/color-picker-sheet';
 import { ReaderEngine, type ReaderEngineHandle } from '@/components/library/reader-engine';
@@ -35,6 +43,7 @@ import { ActionRow, AppText, Button, ErrorState, IconButton, LoadingState, Sheet
 import { IconSize, IconStroke, Spacing } from '@/constants/theme';
 import { useLibraryImageUrls, useUploadAnnotationImage } from '@/hooks/use-annotations';
 import { useCanvas, useCanvasEditor, useLimpiarImagenesDeLienzo } from '@/hooks/use-canvases';
+import { useLibraryItems } from '@/hooks/use-library';
 import { useStickerPacks, useStickerSources } from '@/hooks/use-sticker-packs';
 import { useTheme } from '@/hooks/use-theme';
 import { useUserStickerImages, useUserStickers, useUserStickerSources } from '@/hooks/use-user-stickers';
@@ -44,6 +53,7 @@ import {
   agregar,
   agrupar,
   aMotor,
+  archivosDeImagenes,
   bloquear,
   cambiar,
   capa,
@@ -53,20 +63,37 @@ import {
   desagrupar,
   duplicar,
   type ElementoDeLienzo,
+  FOTOS_DE_POLAROID,
+  type LibroEnLienzo,
   mover,
+  PROPORCION_DE_POLAROID,
+  PROPORCION_DE_RATING,
   quitar,
+  rutasDeImagenes,
+  type VarianteDePolaroid,
 } from '@/lib/library/canvas';
 import { archivoDeExportacion, nombreDeExportacion } from '@/lib/library/canvas-export';
 import { PAPEL_DE_LIENZO } from '@/lib/library/canvas-shapes';
 import { prepararImagenPegada } from '@/lib/library/cover/prepare';
 import { desdeCamara, desdeGaleria, PUEDE_TOMAR_FOTO } from '@/lib/library/cover/sources';
 import { FORMAS_DE_LIENZO, type FormaDeLienzo, type Herramienta, type MensajeDelMotor } from '@/lib/library/reader-protocol';
+import { colorDePortada, rutaDePortada } from '@/lib/library/shelf';
 import { fuenteDeSticker } from '@/lib/library/sticker-packs';
 import { shareImage } from '@/lib/share';
 import { useAuth, useSnackbar } from '@/providers';
 import type { LibraryLocator } from '@/types/domain';
 
-type PorPegar = { forma?: FormaDeLienzo; imagen?: { jpeg: Uint8Array; ar: number; vistaPrevia: string }; sticker?: StickerElegible };
+type PorPegar = {
+  forma?: FormaDeLienzo;
+  imagen?: { jpeg: Uint8Array; ar: number; vistaPrevia: string };
+  sticker?: StickerElegible;
+  /** Módulos (T343). */
+  variante?: VarianteDePolaroid;
+  cita?: Cita;
+  libro?: string;
+};
+/** Una imagen elegida va a pegarse sola o a un hueco de una polaroid. */
+type DestinoDeImagen = { polaroid: string; hueco: number } | null;
 
 /**
  * El lienzo creativo (spec 13h; T351): un recorte de un libro. Es una página en blanco 1 : √2 que arma el motor del
@@ -109,13 +136,29 @@ export default function CanvasScreen() {
   const [colorDe, setColorDe] = useState<'fondo' | 'elemento' | 'borde' | null>(null);
   const [exportando, setExportando] = useState(false);
   const [renombrando, setRenombrando] = useState<string | null>(null);
+  // Módulos (T343): qué hoja está abierta y para qué.
+  const [polaroidPara, setPolaroidPara] = useState<'nueva' | 'cambiar' | null>(null);
+  const [citaPara, setCitaPara] = useState<'nueva' | 'editar' | null>(null);
+  const [calificando, setCalificando] = useState(false);
+  const [libroPara, setLibroPara] = useState<'nuevo' | 'cambiar' | null>(null);
+  const [huecoPara, setHuecoPara] = useState<string | null>(null);
+  const [pieDe, setPieDe] = useState<{ id: string; texto: string } | null>(null);
+  const destinoDeImagen = useRef<DestinoDeImagen>(null);
+  const piezas = useLibraryItems();
 
   // Las direcciones de lo que se ve: imágenes subidas (o su vista previa mientras suben) y stickers.
-  const rutas = doc.elements.flatMap((e) => (e.type === 'image' && e.content.path ? [e.content.path] : []));
+  // Los libros que hay en el recorte (RF-CC22): su título, color y portada.
+  const claveIdsDeLibros = [...new Set(doc.elements.flatMap((e) => (e.type === 'book' && e.content.itemId ? [e.content.itemId] : [])))].sort().join('|');
+  const librosDelRecorte = useMemo(() => {
+    const ids = new Set(claveIdsDeLibros ? claveIdsDeLibros.split('|') : []);
+    return (piezas.data ?? []).filter((p) => ids.has(p.id));
+  }, [piezas.data, claveIdsDeLibros]);
+  const rutas = [...rutasDeImagenes(doc.elements), ...librosDelRecorte.flatMap((p) => (rutaDePortada(p) ? [rutaDePortada(p) as string] : []))];
   const urls = useLibraryImageUrls(rutas);
   const stickers = doc.elements.flatMap((e) => (e.type === 'sticker' && e.content.sticker ? [e.content.sticker] : []));
   const claveStickers = stickers.join('|');
   const packs = useStickerPacks();
+  const losPacks = packs.data?.packs;
   const misStickers = useUserStickers();
   const imagenesPropias = useUserStickerImages(misStickers.data);
   const fuentesPropias = useUserStickerSources(stickers, imagenesPropias);
@@ -127,14 +170,17 @@ export default function CanvasScreen() {
     const imagenes = new Map(urls);
     for (const [ruta, vista] of vistasPrevias) if (!imagenes.has(ruta)) imagenes.set(ruta, vista);
     const deStickers = new Map<string, string>();
-    for (const s of new Set(stickers)) {
-      const src = fuenteDeSticker(s, fuentesTienda, packs.data?.packs, fuentesPropias);
+    for (const s of new Set(claveStickers ? claveStickers.split('|') : [])) {
+      const src = fuenteDeSticker(s, fuentesTienda, losPacks, fuentesPropias);
       if (src) deStickers.set(s, src);
     }
-    return { imagenes, stickers: deStickers };
-    // `claveStickers` resume la lista `stickers`, que es nueva en cada render.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [urls, vistasPrevias, claveStickers, fuentesTienda, fuentesPropias, packs.data?.packs]);
+    const libros = new Map<string, LibroEnLienzo>();
+    for (const p of librosDelRecorte) {
+      const ruta = rutaDePortada(p);
+      libros.set(p.id, { title: p.title, color: colorDePortada(p), ...(ruta && urls.get(ruta) ? { src: urls.get(ruta) } : {}) });
+    }
+    return { imagenes, stickers: deStickers, libros };
+  }, [urls, vistasPrevias, claveStickers, librosDelRecorte, fuentesTienda, fuentesPropias, losPacks]);
 
   // Abrir la página en blanco con su forma (RF-CC4), una vez por lienzo.
   const orientacion = lienzo.data?.orientation;
@@ -163,7 +209,7 @@ export default function CanvasScreen() {
   const quitarElementos = (ids: string[]) => {
     const fuera = conSuGrupo(doc, ids);
     aplicar((d) => quitar(d, fuera));
-    limpiarImagenes(item, id, doc.elements.filter((e) => e.type === 'image' && fuera.includes(e.id)).map((e) => e.id));
+    limpiarImagenes(item, id, archivosDeImagenes(doc.elements.filter((e) => fuera.includes(e.id))));
   };
 
   const elegido = doc.elements.find((e) => e.id === seleccion) ?? null;
@@ -225,6 +271,30 @@ export default function CanvasScreen() {
       elegir(nuevoId);
       return;
     }
+    if (tipo === 'polaroid') {
+      const variant = pendiente.variante ?? 'classic';
+      aplicar((d) => agregar(d, { ...base, type: 'polaroid', ar: PROPORCION_DE_POLAROID[variant], content: { variant, paths: [], text: '' } }));
+      elegir(nuevoId);
+      return;
+    }
+    if (tipo === 'quote' && pendiente.cita) {
+      const cita = pendiente.cita;
+      aplicar((d) => agregar(d, { ...base, type: 'quote', w: Math.max(base.w, 0.5), ar: 0.6, content: cita }));
+      elegir(nuevoId);
+      return;
+    }
+    if (tipo === 'rating') {
+      aplicar((d) => agregar(d, { ...base, type: 'rating', w: Math.max(base.w, 0.4), ar: PROPORCION_DE_RATING.stars, content: { scale: 'stars', value: 0 } }));
+      elegir(nuevoId);
+      setCalificando(true);
+      return;
+    }
+    if (tipo === 'book' && pendiente.libro) {
+      const libro = pendiente.libro;
+      aplicar((d) => agregar(d, { ...base, type: 'book', ar: 1.5, content: { itemId: libro } }));
+      elegir(nuevoId);
+      return;
+    }
     if (tipo === 'image' && pendiente.imagen && userId) {
       const imagen = pendiente.imagen;
       // En la carpeta del libro, como las imágenes pegadas al leer (T289).
@@ -274,10 +344,17 @@ export default function CanvasScreen() {
           if (!m.id) setVarios(false);
         }
         return;
-      case 'edit':
+      case 'edit': {
+        // Doble toque: un texto se escribe ahí mismo; un módulo abre su hoja (T343).
+        const e = doc.elements.find((x) => x.id === m.id);
         elegir(m.id);
-        motor.current?.send({ type: 'write', id: m.id });
+        if (e?.type === 'polaroid') pedirFoto(e);
+        else if (e?.type === 'quote') setCitaPara('editar');
+        else if (e?.type === 'rating') setCalificando(true);
+        else if (e?.type === 'book') setLibroPara('cambiar');
+        else motor.current?.send({ type: 'write', id: m.id });
         return;
+      }
       case 'remove':
         quitarElementos([m.id]);
         soltar();
@@ -296,11 +373,55 @@ export default function CanvasScreen() {
       const uri = origen === 'camara' ? await desdeCamara() : await desdeGaleria();
       if (!uri) return;
       const lista = await prepararImagenPegada(uri);
+      const destino = destinoDeImagen.current;
+      destinoDeImagen.current = null;
+      if (destino) {
+        ponerFoto(destino.polaroid, destino.hueco, lista);
+        return;
+      }
       porPegar.current = { imagen: { jpeg: lista.jpeg, ar: lista.alto / lista.ancho, vistaPrevia: lista.vistaPrevia } };
       ponerHerramienta('image', lista.alto / lista.ancho);
     } catch (e) {
       avisar({ message: e instanceof Error ? e.message : a.imageFailed });
     }
+  };
+
+  /** Elegir de dónde sale una imagen: en la web, un archivo; en el teléfono, galería o cámara. */
+  const buscarImagen = (destino: DestinoDeImagen) => {
+    destinoDeImagen.current = destino;
+    if (Platform.OS === 'web') void elegirImagen('galeria');
+    else setEligiendoImagen(true);
+  };
+
+  /** Una polaroid de una foto la recibe directo; de varias, primero se elige el hueco. */
+  const pedirFoto = (e: ElementoDeLienzo) => {
+    if (FOTOS_DE_POLAROID[e.content.variant ?? 'classic'] > 1) setHuecoPara(e.id);
+    else buscarImagen({ polaroid: e.id, hueco: 0 });
+  };
+
+  /** La foto de un hueco de una polaroid (T343): se sube como las imágenes y la de antes se deja para borrarse. */
+  const ponerFoto = (elId: string, hueco: number, imagen: { jpeg: Uint8Array; vistaPrevia: string }) => {
+    const e = doc.elements.find((x) => x.id === elId);
+    if (!e || !userId) return;
+    const fotoId = uuidv4();
+    const ruta = `${userId}/${item}/anotaciones/${fotoId}.jpg`;
+    const antes = e.content.paths ?? [];
+    const paths = Array.from({ length: FOTOS_DE_POLAROID[e.content.variant ?? 'classic'] }, (_, i) => (i === hueco ? ruta : (antes[i] ?? '')));
+    setVistasPrevias((v) => new Map(v).set(ruta, imagen.vistaPrevia));
+    aplicar((d) => cambiar(d, elId, { content: { paths } }));
+    if (antes[hueco]) limpiarImagenes(item, id, archivosDeImagenes([{ ...e, content: { ...e.content, paths: [antes[hueco]] } }]));
+    subirImagen(item, fotoId, imagen.jpeg).catch(() => {
+      aplicar((d) => cambiar(d, elId, { content: { paths: paths.map((r) => (r === ruta ? '' : r)) } }));
+      avisar({ message: a.imageFailed });
+    });
+  };
+
+  const cambiarPolaroid = (variant: VarianteDePolaroid) => {
+    setPolaroidPara(null);
+    if (!elegido || elegido.type !== 'polaroid') return;
+    const sobran = (elegido.content.paths ?? []).slice(FOTOS_DE_POLAROID[variant]).filter(Boolean);
+    aplicar((d) => cambiar(d, elegido.id, { ar: PROPORCION_DE_POLAROID[variant], content: { variant } }));
+    limpiarImagenes(item, id, archivosDeImagenes([{ ...elegido, content: { ...elegido.content, paths: sobran } }]));
   };
 
   // ─── Lo que se le hace a lo elegido (RF-CC9): a todo lo que va junto ──────────
@@ -384,7 +505,7 @@ export default function CanvasScreen() {
     );
   }
 
-  const aviso = exportando ? c.exporting : herramienta === 'textbox' ? a.textboxOn : herramienta === 'image' ? a.imageOn : herramienta === 'sticker' ? a.stickerOn : herramienta === 'shape' ? c.shapeOn : null;
+  const aviso = exportando ? c.exporting : herramienta === 'textbox' ? a.textboxOn : herramienta === 'image' ? a.imageOn : herramienta === 'sticker' ? a.stickerOn : herramienta === 'shape' ? c.shapeOn : herramienta ? c.placeOn : null;
 
   return (
     <View style={[styles.pantalla, { backgroundColor: theme.background, paddingTop: insets.top }]}>
@@ -434,6 +555,41 @@ export default function CanvasScreen() {
               {varios ? `${c.chosen(juntos.length)} · ${c.selectManyOn}` : enGrupo ? c.grouped : elegido.locked ? a.lockedHint : ' '}
             </AppText>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.fila}>
+              {!varios && !elegido.locked && elegido.type === 'polaroid' ? (
+                <>
+                  <IconButton label={c.photo} onPress={() => pedirFoto(elegido)}>
+                    {icono(Camera)}
+                  </IconButton>
+                  <IconButton label={c.captionAction} onPress={() => setPieDe({ id: elegido.id, texto: elegido.content.text ?? '' })}>
+                    {icono(Type)}
+                  </IconButton>
+                  <IconButton label={c.changePolaroid} onPress={() => setPolaroidPara('cambiar')}>
+                    {icono(Frame)}
+                  </IconButton>
+                </>
+              ) : null}
+              {!varios && !elegido.locked && elegido.type === 'quote' ? (
+                <IconButton label={c.quoteEdit} onPress={() => setCitaPara('editar')}>
+                  {icono(Pencil)}
+                </IconButton>
+              ) : null}
+              {!varios && !elegido.locked && elegido.type === 'rating' ? (
+                <IconButton label={c.ratingEdit} onPress={() => setCalificando(true)}>
+                  {icono(Star)}
+                </IconButton>
+              ) : null}
+              {!varios && elegido.type === 'book' && elegido.content.itemId ? (
+                <>
+                  <IconButton label={c.openBook} onPress={() => router.push({ pathname: '/(app)/book/[id]', params: { id: elegido.content.itemId as string } })}>
+                    {icono(BookOpen)}
+                  </IconButton>
+                  {!elegido.locked ? (
+                    <IconButton label={c.changeBook} onPress={() => setLibroPara('cambiar')}>
+                      {icono(LibraryBig)}
+                    </IconButton>
+                  ) : null}
+                </>
+              ) : null}
               {elegido.type === 'textbox' && !varios && !elegido.locked ? (
                 <IconButton label={a.write} onPress={() => motor.current?.send({ type: 'write', id: elegido.id })}>
                   {icono(Pencil)}
@@ -520,6 +676,38 @@ export default function CanvasScreen() {
             setEligiendoSticker(true);
           }}
         />
+        <ActionRow
+          icon={icono(Frame)}
+          label={c.polaroid}
+          onPress={() => {
+            setAgregando(false);
+            setPolaroidPara('nueva');
+          }}
+        />
+        <ActionRow
+          icon={icono(IconoCita)}
+          label={c.quote}
+          onPress={() => {
+            setAgregando(false);
+            setCitaPara('nueva');
+          }}
+        />
+        <ActionRow
+          icon={icono(Star)}
+          label={c.rating}
+          onPress={() => {
+            setAgregando(false);
+            ponerHerramienta('rating', PROPORCION_DE_RATING.stars);
+          }}
+        />
+        <ActionRow
+          icon={icono(BookOpen)}
+          label={c.book}
+          onPress={() => {
+            setAgregando(false);
+            setLibroPara('nuevo');
+          }}
+        />
       </Sheet>
       <CanvasStyleSheet
         elemento={conEstiloAbierto && colorDe === null ? elegido : null}
@@ -565,6 +753,104 @@ export default function CanvasScreen() {
       <Sheet visible={eligiendoImagen} onClose={() => setEligiendoImagen(false)} title={c.image}>
         <ActionRow icon={icono(ImagePlus)} label={a.imageGallery} onPress={() => void elegirImagen('galeria')} />
         {PUEDE_TOMAR_FOTO ? <ActionRow icon={icono(ImagePlus)} label={a.imageCamera} onPress={() => void elegirImagen('camara')} /> : null}
+      </Sheet>
+      <PolaroidSheet
+        visible={polaroidPara !== null}
+        valor={polaroidPara === 'cambiar' && elegido?.type === 'polaroid' ? elegido.content.variant : undefined}
+        onClose={() => setPolaroidPara(null)}
+        onElegir={(v) => {
+          if (polaroidPara === 'cambiar') {
+            cambiarPolaroid(v);
+            return;
+          }
+          setPolaroidPara(null);
+          porPegar.current = { variante: v };
+          ponerHerramienta('polaroid', PROPORCION_DE_POLAROID[v]);
+        }}
+      />
+      <QuoteSheet
+        visible={citaPara !== null}
+        valor={
+          citaPara === 'editar' && elegido?.type === 'quote'
+            ? { text: elegido.content.text ?? '', who: elegido.content.who ?? '', chapter: elegido.content.chapter ?? '', note: elegido.content.note ?? '' }
+            : null
+        }
+        onClose={() => setCitaPara(null)}
+        onGuardar={(cita) => {
+          const para = citaPara;
+          setCitaPara(null);
+          if (para === 'editar' && elegido?.type === 'quote') {
+            aplicar((d) => cambiar(d, elegido.id, { content: cita }));
+            return;
+          }
+          porPegar.current = { cita };
+          ponerHerramienta('quote', 0.6);
+        }}
+      />
+      <RatingSheet
+        visible={calificando && elegido?.type === 'rating'}
+        valor={elegido?.type === 'rating' ? { scale: elegido.content.scale ?? 'stars', value: elegido.content.value ?? 0 } : null}
+        onClose={() => setCalificando(false)}
+        onCambiar={(v) => {
+          if (elegido?.type !== 'rating') return;
+          const ar = v.scale !== elegido.content.scale ? { ar: PROPORCION_DE_RATING[v.scale] } : {};
+          aplicar((d) => cambiar(d, elegido.id, { ...ar, content: v }));
+        }}
+      />
+      <Sheet visible={libroPara !== null} onClose={() => setLibroPara(null)} title={c.bookTitle} scrollable={false} maxHeightRatio={0.8}>
+        <BookList
+          piezas={piezas.data}
+          cargando={piezas.isPending}
+          error={piezas.isError}
+          onReintentar={() => void piezas.refetch()}
+          valor={libroPara === 'cambiar' && elegido?.type === 'book' ? (elegido.content.itemId ?? null) : null}
+          onElegir={(libro) => {
+            const para = libroPara;
+            setLibroPara(null);
+            if (!libro) return;
+            if (para === 'cambiar' && elegido?.type === 'book') {
+              aplicar((d) => cambiar(d, elegido.id, { content: { itemId: libro } }));
+              return;
+            }
+            porPegar.current = { libro };
+            ponerHerramienta('book', 1.5);
+          }}
+        />
+      </Sheet>
+      <Sheet visible={huecoPara !== null} onClose={() => setHuecoPara(null)} title={c.photoTitle}>
+        {Array.from({ length: FOTOS_DE_POLAROID[(doc.elements.find((e) => e.id === huecoPara)?.content.variant ?? 'classic') as VarianteDePolaroid] }, (_, i) => (
+          <ActionRow
+            key={i}
+            icon={icono(Camera)}
+            label={c.photoN(i + 1)}
+            onPress={() => {
+              const para = huecoPara;
+              setHuecoPara(null);
+              if (para) buscarImagen({ polaroid: para, hueco: i });
+            }}
+          />
+        ))}
+      </Sheet>
+      <Sheet visible={pieDe !== null} onClose={() => setPieDe(null)} title={c.captionAction}>
+        <View style={styles.renombrar}>
+          <TextField
+            label={c.captionLabel}
+            value={pieDe?.texto ?? ''}
+            onChangeText={(texto) => setPieDe((p) => (p ? { ...p, texto } : p))}
+            placeholder={c.captionPlaceholder}
+            maxLength={80}
+            autoFocus
+            returnKeyType="done"
+          />
+          <Button
+            title={c.save}
+            onPress={() => {
+              const p = pieDe;
+              setPieDe(null);
+              if (p) aplicar((d) => cambiar(d, p.id, { content: { text: p.texto.trim() } }));
+            }}
+          />
+        </View>
       </Sheet>
       <StickerSheet
         visible={eligiendoSticker}

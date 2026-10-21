@@ -25,6 +25,7 @@
  * en EPUB lo dibuja foliate con su capa de dibujo. Tocar uno lo elige.
  */
 import { pintarTrazos } from './ink.js';
+import { MODULOS, pintarModulo } from './modules.js';
 import { pellizcando as pellizcandoAhora } from './zoom.js';
 
 /** El ancho de un post-it nuevo, relativo a la página (igual que `ANCHO_DE_POSTIT` en la app). */
@@ -81,7 +82,7 @@ const ESQUINA_PX = 40;
 const GIRO_POSTIT = 15;
 
 /** Lo que se pega encima de la página (lo demás, como los subrayados, va en el texto). */
-const PEGABLES = ['postit', 'textbox', 'image', 'sticker', 'shape'];
+const PEGABLES = ['postit', 'textbox', 'image', 'sticker', 'shape', ...MODULOS];
 /** Alto entre ancho de un dibujo (T291): una raya puede ser muy larga y delgada. */
 const proporcionDeDibujo = (a) => (Number.isFinite(a.locator?.ar) && a.locator.ar >= 0.005 && a.locator.ar <= 200 ? a.locator.ar : 1);
 /** Los trazos de cada dibujo pintado, para volver a pintarlos cuando cambia su tamaño (zoom, letra, pantalla). */
@@ -118,7 +119,7 @@ const FORMAS = {
 };
 const FORMA_GRIS = '#BDBDBD';
 /** Lo que no lleva texto: se gira con dos dedos y no se abre para escribir. */
-const sinTexto = (a) => esImagen(a) || a.kind === 'shape';
+const sinTexto = (a) => esImagen(a) || a.kind === 'shape' || MODULOS.includes(a.kind);
 
 /**
  * La imagen de un sticker incluido (T290): en el teléfono viene dentro del motor (sin red también se ve); en
@@ -244,7 +245,10 @@ export function crearCapa(ctx, enviar) {
       cursor: a.locked ? 'pointer' : 'grab',
       rotate: Number.isFinite(a.content?.rot) && a.content.rot ? `${a.content.rot}deg` : '',
     });
-    if (a.kind === 'shape') {
+    if (MODULOS.includes(a.kind)) {
+      // Polaroid, quote, rating y libro (13h, T343): ver `modules.js`.
+      pintarModulo(el, a);
+    } else if (a.kind === 'shape') {
       const forma = FORMAS[a.content?.shape] ? a.content.shape : 'rect';
       const color = /^#[0-9a-fA-F]{6}$/.test(a.content?.color ?? '') ? a.content.color : FORMA_GRIS;
       el.setAttribute('role', 'img');
@@ -503,6 +507,12 @@ export function crearCapa(ctx, enviar) {
     // Recién pegado, la lista con él llega justo después: se escribe en cuanto se pinte.
     if (!a || !el) {
       porEditar = id;
+      return;
+    }
+    // Un módulo del lienzo (T343) se edita en su hoja, del lado de la app.
+    if (MODULOS.includes(a.kind) && !a.locked && interactiva()) {
+      porEditar = null;
+      enviar({ type: 'edit', id });
       return;
     }
     // Doblado no se escribe: primero se abre (su texto no está a la vista).
@@ -826,9 +836,10 @@ export function crearCapa(ctx, enviar) {
    * agrandan o achican sin deformarlo y las de los lados lo estiran (pedido de Areli, 14 oct).
    */
   function ponerAsas(el, a) {
-    if (esImagen(a) || a.kind === 'postit' || a.kind === 'shape') ponerGiro(el, a);
+    if (esImagen(a) || a.kind === 'postit' || a.kind === 'shape' || MODULOS.includes(a.kind)) ponerGiro(el, a);
     for (const lado of LADOS) {
-      const proporcional = a.kind === 'sticker' && lado.length === 2;
+      // Un sticker y los módulos que se ven como objeto (polaroid, libro, rating) no se deforman desde las esquinas.
+      const proporcional = (a.kind === 'sticker' || ['polaroid', 'book', 'rating'].includes(a.kind)) && lado.length === 2;
       const asa = document.createElement('div');
       asa.className = `asa asa-${lado}`;
       asa.dataset.lado = lado;

@@ -163,6 +163,21 @@ llevar texto, pero nunca debe sentirse como un formulario ni como una nota grand
   - **Imágenes:** quitar una deja su archivo una hora (por si se deshace) y el borrado revisa que el recorte ya no
     la use.
 
+- **Hecho (C3, módulos, T343a, 21 oct 2026):**
+  - **Polaroid** en siete variantes: clásica, mini, con pie, con cinta, doble (2 fotos), en pila y tira de película
+    (3 fotos). Se agrega eligiendo la variante; **Poner foto** (en la doble y la tira, primero el hueco), **Pie de
+    foto** y **Cambiar polaroid** (conserva las fotos que caben; las que sobran se borran de R2 a la hora). El color
+    de su papel se cambia en Estilo. No se deforma desde las esquinas.
+  - **Cita:** la cita (obligatoria), quién la dice, capítulo y un comentario; se escribe en su hoja antes de pegarla
+    y se edita con doble toque o "Editar cita". Letra con serifa, que crece con la caja.
+  - **Calificación:** estrellas o corazones del 0 al 5 de medio en medio, o un número del 0 al 10; al pegarla se
+    abre su hoja; cambiar de escala conserva la calificación (5 estrellas = 10).
+  - **Libro** (RF-CC22): se elige de la Biblioteca, se ve con su portada (o su color y título) y "Abrir libro" lo
+    abre; si el libro se borra, queda un libro sin título en gris.
+  - Los cuatro se pintan en el motor (`public/reader/modules.js`), se exportan igual (`export.js`) y salen en la
+    miniatura de Mi libreta. Doble toque abre la hoja de cada uno.
+  - **Pendiente (T343b):** el primer pack de assets (papeles, cintas, doodles en grises recolorables) en la tienda.
+
 ## 11. Qué cambia en otras specs
 
 - **13e (cuadernos, diarios, álbumes por capas) se reemplaza:** el cuaderno pasa a ser el **Journal** con

@@ -24,8 +24,8 @@ export type Posicion = { page?: number; cfi?: string; fraction?: number };
 /** Lo que el motor necesita de una anotación para pintarla (spec 13c, T286). */
 export type AnotacionEnMotor = {
   id: string;
-  /** `shape`: solo en el lienzo creativo (13h, T351), no en los libros. */
-  kind: LibraryAnnotationKind | 'shape';
+  /** `shape`, `polaroid`, `quote`, `rating` y `book`: solo en el lienzo creativo (13h; T351, T343), no en los libros. */
+  kind: LibraryAnnotationKind | 'shape' | 'polaroid' | 'quote' | 'rating' | 'book';
   locator: LibraryLocator;
   z: number;
   locked: boolean;
@@ -49,6 +49,19 @@ export type AnotacionEnMotor = {
     shape?: FormaDeLienzo;
     /** Grupo del lienzo creativo (RF-CC9): los de un grupo se eligen y se mueven juntos. */
     group?: string;
+    /** Polaroid (T343): su variante y la dirección de cada foto ('' = sin foto aún); su pie va en `text`. */
+    variant?: string;
+    srcs?: string[];
+    /** Quote (T343): quién, capítulo y comentario; la cita va en `text`. */
+    who?: string;
+    chapter?: string;
+    note?: string;
+    /** Rating (T343): escala y valor. */
+    scale?: 'stars' | 'hearts' | 'number';
+    value?: number;
+    /** Libro (T343): título y color de su portada; la imagen va en `src`. */
+    title?: string;
+    coverColor?: string;
     /** Estilo del lienzo creativo (RF-CC9, T342): opacidad, borde (grosor en fracción de la página) y sombra. */
     opacity?: number;
     border?: { width: number; color: string };
@@ -59,7 +72,7 @@ export type AnotacionEnMotor = {
 };
 
 /** Con qué se está anotando: nada (leer y mover lo pegado) o pegar algo donde se toque (T286, T289). */
-export type Herramienta = 'postit' | 'textbox' | 'image' | 'sticker' | 'shape' | null;
+export type Herramienta = 'postit' | 'textbox' | 'image' | 'sticker' | 'shape' | 'polaroid' | 'quote' | 'rating' | 'book' | null;
 
 /** Las formas del lienzo creativo (13h, RF-CC14; T351), como las dibuja el motor. */
 export const FORMAS_DE_LIENZO = ['rect', 'ellipse', 'heart', 'star', 'blob'] as const;

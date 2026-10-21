@@ -836,3 +836,11 @@ web: Mi libreta, recorte con fondo, corazón con color, borde grueso y sombra, t
 - [ ] (manual) Arrastrar en el cuadro de color y la barra de tono con el dedo: el color sigue al dedo sin trabarse.
 - [ ] (manual, dos aparatos) Guardar un color en "Mis colores" en la compu y verlo en el teléfono.
 - [ ] (manual) Borrar un recorte con una imagen: la imagen ya no aparece en R2.
+
+## Recortes: polaroid, cita, calificación y libro (T343a)
+Automatizado: `app/(app)/canvas/__tests__/canvas.test.tsx` (los cuatro módulos), `lib/library/__tests__/canvas.test.ts`,
+`components/library/__tests__/canvas-preview.test.tsx` y el campo de libro del calendario. Visto en el demo web: las
+siete polaroids, una con foto y pie, la cita, 4.5 estrellas y un libro; la imagen exportada y la miniatura iguales.
+- [ ] (manual, teléfono) Poner foto en una polaroid desde la cámara; en la doble, la segunda foto en su hueco.
+- [ ] (manual) Doble toque en una cita, una calificación y una polaroid: abre la hoja de cada una.
+- [ ] (manual) Estirar una polaroid desde la esquina: no se deforma; desde un lado, sí cambia (se ve bien).

@@ -11,7 +11,8 @@ jest.mock('@/hooks/use-canvases', () => ({
   useCreateCanvas: () => mockCrear,
   useRemoveCanvas: () => mockBorrar,
 }));
-jest.mock('@/hooks/use-library', () => ({ useLibraryItem: () => ({ data: { id: 'l1', title: 'Rayuela', family: 'book', kind: 'pdf' } }) }));
+const mockPiezas = { data: [{ id: 'l1', title: 'Rayuela', family: 'book', kind: 'pdf', cover_path: null, cover_color: '#2E7D32' }] };
+jest.mock('@/hooks/use-library', () => ({ useLibraryItem: () => ({ data: { id: 'l1', title: 'Rayuela', family: 'book', kind: 'pdf' } }), useLibraryItems: () => mockPiezas }));
 jest.mock('@/hooks/use-clips', () => ({ useClips: () => ({ data: [{ id: 'c1', item_id: 'l1' }, { id: 'c2', item_id: 'l1' }, { id: 'c3', item_id: 'otro' }] }) }));
 const mockVacio = new Map<string, string>();
 jest.mock('@/hooks/use-annotations', () => ({ useLibraryImageUrls: () => mockVacio }));
