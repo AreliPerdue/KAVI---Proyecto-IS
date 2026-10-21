@@ -797,3 +797,8 @@ Automatizado: RLS de los canales en PGlite, `lib/library/__tests__/club-live.tes
   quien lleva más tiempo.
 - [ ] (manual) Señalar un pasaje: destella en las dos pantallas; con "Reducir movimiento", sin animación.
 - [ ] (manual) Alguien que no es del club no puede escuchar el canal (la conexión se rechaza).
+
+## Separadores con mouse (T360)
+Automatizado: `components/library/__tests__/bookmark-rail.test.tsx`. Visto en el demo web (1280 px): "Capítulo 3 · p. 1 de 6"
+junto a la pestaña del canto y la palabra completa al pasar sobre la pestaña de la página.
+- [ ] (manual) En tu compu, con un separador en el borde izquierdo y otro con palabra larga: al pasar el mouse se lee completa.

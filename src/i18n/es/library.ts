@@ -813,6 +813,7 @@ export const library = {
     removeBookmark: 'Quitar separador',
     bookmarkRail: 'Separadores del libro',
     bookmarkGoTo: (palabra: string, donde: string) => (palabra ? `Ir al separador ${palabra}, ${donde}` : `Ir al separador, ${donde}`),
+    bookmarkHover: (palabra: string, donde: string) => (palabra ? `${palabra} · ${donde}` : `Separador · ${donde}`),
     rotate: 'Girar 90°',
     styleColor: 'Color',
     textSize: 'Tamaño de letra',

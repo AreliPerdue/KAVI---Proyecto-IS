@@ -213,6 +213,10 @@
     cambiarlo o quitarlo. El **canto**: en el borde derecho de la pantalla asoman todos los separadores del libro a
     la altura de su lugar (por página en PDF, por avance en EPUB), en las tres formas de leer; tocar uno salta ahí.
     En el libro real, la pestaña de la hoja se ve por dentro del borde (la hoja recorta lo que sale).
+  - **Hecho (T360, 20 oct 2026, pedido de Areli):** con mouse, pasar encima de una pestaña dice cuál es: en el
+    canto sale una etiqueta junto a ella con su palabra y su página ("Capítulo 3 · p. 40"; sin palabra,
+    "Separador · p. 40"), y en la pestaña de la página el navegador muestra la palabra completa, que en la pestaña
+    se corta si es larga. La etiqueta es solo para la vista: el lector de pantalla ya lee lo mismo en el botón.
 - **RF-BH16. Capas:** lo pegado lleva orden (traer al frente, mandar atrás) y se puede **bloquear** para no
   moverlo sin querer.
   - **Hecho (T286, 13 oct 2026).** Tocar algo pegado lo elige (con un aro); abajo del lector aparecen

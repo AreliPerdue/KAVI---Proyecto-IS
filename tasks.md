@@ -936,7 +936,7 @@ Decisiones B1–B9 aprobadas el 12 oct 2026 (T274); ver la tabla de la spec 13 �
   del estándar (`@noble`), color dominante con `expo-image-manipulator`. Se guarda la fila primero (tope en la
   base) y luego los archivos; si la subida falla, se borra la pieza. Metro resuelve `tslib` a su versión ES
   (con la de `pdf-lib` la app no cargaba). Módulos nativos nuevos: el APK se recompila (Expo Go ya los trae).
-- [ ] T313 Archivos de Library en Cloudflare R2 (enmienda a B2): función de Vercel `api/library-files` que revisa
+- [x] T313 Archivos de Library en Cloudflare R2 (enmienda a B2): función de Vercel `api/library-files` que revisa
   la sesión y la pieza y firma direcciones temporales para subir (tamaño fijado), leer y borrar; `LibraryApi`
   de Supabase sube y baja directo con ellas; CSP de la web con el dominio de R2; quitar el bucket `library` de
   Supabase cuando esté vacío. Lo de Areli: cuenta de Cloudflare, bucket, token y CORS de R2 y variables en
@@ -945,6 +945,7 @@ Decisiones B1–B9 aprobadas el 12 oct 2026 (T274); ver la tabla de la spec 13 �
   firmado; errores con código traducido en la app), `LibraryApi` de Supabase y las fuentes sobre R2, CSP con
   `*.r2.cloudflarestorage.com`; firma comparada con botocore. Falta para marcarla: que Areli cree el bucket y
   las variables, y probar de punta a punta en producción (subir, leer, borrar).
+  **Probada en producción por Areli (20 oct 2026):** subir, ver la portada, leer y borrar, todo bien.
 - [x] T279 Motor de lectura web (pdf.js y foliate-js) en WebView y en web; lectura en scroll; avance y barra de
   página; buscar dentro; al abrir un PDF por primera vez, su primera página se guarda como portada (con su
   color dominante) en lugar de la generada (RF-BL12). (RF-BR1, RF-BR2, RF-BR4, RF-BR6, RF-BR9, RF-BR10)
@@ -1091,6 +1092,9 @@ Decisiones B1–B9 aprobadas el 12 oct 2026 (T274); ver la tabla de la spec 13 �
   e imágenes que giran y crecen con dos dedos (`dosDedos`, un solo `move` con `rot`); separadores con pestaña en el
   borde elegido (`pestana` en `annotations.js`, `bookmark-sheet.tsx`) y el canto con todos (`bookmark-rail.tsx`).
   El post-it con trazo pasa a T291 (lápiz); el sticker de imagen propia es T335.
+- [x] T360 Separadores con mouse: al pasar encima, la palabra y la página en el canto y la palabra completa en la
+  pestaña de la página. (RF-BH15, pedido de Areli del 20 oct 2026) Dep: T290
+  **Hecho (20 oct 2026):** `bookmark-rail.tsx` (etiqueta con `onHoverIn`) y `title` en `pestana` de `annotations.js`.
 - [x] T334 Stickers de los Nobi rosa con charola de "Quitados": pegar, mover, crecer sin deformarse, girar,
   quitar a la charola, volver a pegar con su tamaño y giro, y tirar. (RF-BH13, pedido de Areli del 14 oct
   2026) Dep: T289

@@ -1388,6 +1388,8 @@ export function crearCapa(ctx, enviar) {
     el.dataset.id = a.id;
     el.setAttribute('role', 'button');
     el.setAttribute('aria-label', palabra ? `Separador: ${palabra}` : 'Separador');
+    // Con mouse, la palabra completa al pasar encima: en la pestaña se corta si es larga (T360).
+    if (palabra) el.title = palabra;
     const lateral = borde === 'left' || borde === 'right';
     const fuera = `calc(100% - ${PESTANA.dentro}px)`;
     const a_lo_largo = `calc(${pos} * (100% - ${PESTANA.largo}px))`;

@@ -784,6 +784,7 @@ export const library: Dictionary['library'] = {
     removeBookmark: 'Remove bookmark',
     bookmarkRail: 'Bookmarks in this book',
     bookmarkGoTo: (palabra: string, donde: string) => (palabra ? `Go to bookmark ${palabra}, ${donde}` : `Go to bookmark, ${donde}`),
+    bookmarkHover: (palabra: string, donde: string) => (palabra ? `${palabra} · ${donde}` : `Bookmark · ${donde}`),
     rotate: 'Rotate 90°',
     styleColor: 'Color',
     textSize: 'Text size',
