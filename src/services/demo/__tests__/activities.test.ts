@@ -433,7 +433,10 @@ describe('libro de una actividad de Lectura (spec 13 §4, T302)', () => {
   it('se liga a un libro mío, y las repeticiones lo heredan', async () => {
     const { activities, library } = conLibros();
     const libro = await library.createItem(USER, { family: 'book', kind: 'pdf', title: 'Rayuela' });
-    const creada = await activities.create(USER, input({ library_item_id: libro.id, recurrence: { freq: 'DAILY', byDay: [], until: null } }));
+    const creada = await activities.create(USER, {
+      ...input({ library_item_id: libro.id }),
+      recurrence: { freq: 'DAILY', byDay: [], until: toIso(addDays(base, 4)).slice(0, 10) },
+    });
     expect(creada.library_item_id).toBe(libro.id);
     const serie = (await activities.listByRange(USER, WIDE.from, WIDE.to)).filter((a) => a.id === creada.id || a.recurrence_parent_id === creada.id);
     expect(serie.length).toBeGreaterThan(1);
