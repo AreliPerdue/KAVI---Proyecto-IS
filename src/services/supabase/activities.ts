@@ -56,6 +56,7 @@ async function materialize(parent: Activity, rule: RecurrenceRule, after: Date):
       icon: parent.icon,
       all_day: parent.all_day,
       is_gym: parent.is_gym,
+      library_item_id: parent.library_item_id ?? null,
       recurrence_rule: null,
       recurrence_parent_id: parent.id,
       start_at: startIso,

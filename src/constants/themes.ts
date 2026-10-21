@@ -39,3 +39,6 @@ export const SYSTEM_THEMES: readonly Theme[] = SEEDS.map((seed) => ({
 
 /** Tema Gimnasio: enciende el módulo fitness (RF-T4). Mismo UUID que el seed SQL. */
 export const GYM_THEME_ID = '00000000-0000-4000-8000-000000000001';
+
+/** Tema Lectura: una actividad con él puede ligarse a un libro de la Biblioteca (spec 13 §4, T302). */
+export const READING_THEME_ID = '00000000-0000-4000-8000-000000000011';

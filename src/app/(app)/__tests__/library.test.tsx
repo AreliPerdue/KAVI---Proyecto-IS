@@ -139,10 +139,11 @@ beforeEach(() => {
   mockEspacio = ok({ usedBytes: 0, limitBytes: 500 * MB });
 });
 
-it('dice que está en desarrollo y, sin piezas, invita a lo que viene', async () => {
+it('sin piezas, invita a traer libros; ya no dice que está en desarrollo (T302)', async () => {
   await render(<Pantalla />);
-  expect(screen.getByText(L.inDevelopment)).toBeTruthy();
+  expect(screen.queryByText('En desarrollo')).toBeNull();
   expect(screen.getByText(L.emptyTitle)).toBeTruthy();
+  expect(screen.getByText(L.emptyDescription)).toBeTruthy();
   expect(screen.getByText(L.usage('0 KB', '500 MB'))).toBeTruthy();
 });
 

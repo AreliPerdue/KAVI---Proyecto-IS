@@ -1,5 +1,5 @@
 import type { Href } from 'expo-router';
-import { CircleCheck, Dumbbell, type LucideIcon, UserRound, Users } from 'lucide-react-native';
+import { CircleCheck, Dumbbell, LibraryBig, type LucideIcon, UserRound, Users } from 'lucide-react-native';
 
 /**
  * Módulos de KAVI que pueden ir en la barra o en Más (spec 01, RF-N1–N6).
@@ -8,7 +8,7 @@ import { CircleCheck, Dumbbell, type LucideIcon, UserRound, Users } from 'lucide
  * (Lectura, Sueño, Diario…) se agregan a esta lista y aparecen solos en Más y entre los
  * candidatos de la barra.
  */
-export type ModuleId = 'shared' | 'lists' | 'fitness' | 'profile';
+export type ModuleId = 'shared' | 'lists' | 'fitness' | 'library' | 'profile';
 
 export type ModuleInfo = {
   id: ModuleId;
@@ -34,6 +34,14 @@ export const MODULES: readonly ModuleInfo[] = [
     route: '/(app)/lists',
   },
   { id: 'fitness', Icon: Dumbbell, sf: { default: 'dumbbell', selected: 'dumbbell.fill' }, md: 'fitness_center' },
+  // KAVI Library (spec 13 §4, T302): como Listas, con ruta propia fuera de las pestañas.
+  {
+    id: 'library',
+    Icon: LibraryBig,
+    sf: { default: 'books.vertical', selected: 'books.vertical.fill' },
+    md: 'local_library',
+    route: '/(app)/library',
+  },
   {
     id: 'profile',
     Icon: UserRound,

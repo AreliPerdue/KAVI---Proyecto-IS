@@ -1,4 +1,5 @@
 import FitnessScreen from '@/app/(app)/(tabs)/fitness';
+import LibraryScreen from '@/app/(app)/library';
 import ListsScreen from '@/app/(app)/lists';
 import ProfileScreen from '@/app/(app)/(tabs)/profile';
 import SharedScreen from '@/app/(app)/(tabs)/shared';
@@ -9,6 +10,7 @@ const PANTALLAS: Record<ModuleId, () => React.JSX.Element> = {
   shared: SharedScreen,
   lists: ListsScreen,
   fitness: FitnessScreen,
+  library: LibraryScreen,
   profile: ProfileScreen,
 };
 

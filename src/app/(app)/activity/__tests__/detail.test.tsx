@@ -40,6 +40,12 @@ jest.mock('@/hooks/use-workouts', () => ({
   useWorkoutByActivity: () => mockWorkout,
   useWorkoutMutations: () => ({ create: mockCrearWorkout, addExercise: { mutateAsync: jest.fn() } }),
 }));
+// Los libros de la Biblioteca (T302): el que pida la actividad, si existe y es mío.
+const mockLibros: Record<string, { id: string; title: string }> = { l1: { id: 'l1', title: 'Rayuela' } };
+const mockPidioLibro: string[] = [];
+jest.mock('@/hooks/use-library', () => ({
+  useLibraryItem: (id: string) => (mockPidioLibro.push(id), { data: id ? mockLibros[id] : undefined }),
+}));
 jest.mock('@/providers', () => ({
   useConfirm: () => mockConfirm,
   useSnackbar: () => mockSnackbar,
@@ -66,6 +72,7 @@ beforeEach(() => {
   mockActividad = { data: ACTIVIDAD(), isPending: false, isError: false, error: null, refetch: jest.fn() };
   mockRecordatorios = { data: [] };
   mockWorkout = { data: null };
+  mockPidioLibro.length = 0;
   globalThis.setParametrosDeRuta({ id: 'a1' });
 });
 
@@ -227,6 +234,31 @@ describe('entrenamiento (privado del dueno)', () => {
   it('una actividad normal no lo ofrece', async () => {
     await render(<Pantalla />);
     expect(screen.queryByText(/registrar entrenamiento/i)).toBeNull();
+  });
+});
+
+describe('libro de una actividad de Lectura (spec 13 §4, T302)', () => {
+  it('"Seguir leyendo" abre el libro ligado donde iba', async () => {
+    mockActividad = { ...mockActividad, data: ACTIVIDAD({ library_item_id: 'l1' }) };
+    await render(<Pantalla />);
+    await fireEvent.press(screen.getByRole('button', { name: /Seguir leyendo Rayuela/ }));
+    expect(globalThis.mockRouter.push).toHaveBeenCalledWith({ pathname: '/(app)/book/[id]', params: { id: 'l1' } });
+  });
+
+  it('sin libro, o si ya no existe, no aparece', async () => {
+    await render(<Pantalla />);
+    expect(screen.queryByText(/Seguir leyendo/)).toBeNull();
+    mockActividad = { ...mockActividad, data: ACTIVIDAD({ library_item_id: 'borrado' }) };
+    await render(<Pantalla />);
+    expect(screen.queryByText(/Seguir leyendo/)).toBeNull();
+  });
+
+  it('quien la ve compartida no lo ve ni se pide: el libro no es suyo', async () => {
+    mockUserId = 'u2';
+    mockActividad = { ...mockActividad, data: ACTIVIDAD({ library_item_id: 'l1' }) };
+    await render(<Pantalla />);
+    expect(screen.queryByText(/Seguir leyendo/)).toBeNull();
+    expect(mockPidioLibro.every((id) => id === '')).toBe(true);
   });
 });
 

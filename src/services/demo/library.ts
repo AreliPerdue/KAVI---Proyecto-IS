@@ -345,6 +345,8 @@ export const demoLibrary: LibraryApi = {
     // Un club pierde su libro de origen o la copia de alguien, pero sigue (13f).
     for (const c of clubes) if (c.source_item_id === itemId) c.source_item_id = null;
     for (const m of miembros) if (m.item_id === itemId) m.item_id = null;
+    // Una actividad de Lectura con este libro se queda sin él, como `on delete set null` (T302).
+    for (const a of demoState.activities) if (a.library_item_id === itemId) a.library_item_id = null;
     emitDataChange();
   },
 
@@ -995,6 +997,11 @@ export const demoLibrary: LibraryApi = {
 };
 
 /** Los miembros de un club en el demo, para simular la sesión en vivo (T309). */
+/** Si la pieza es de esa persona: una actividad solo se liga a un libro de su dueño (spec 13 §4, T302). */
+export function esPiezaDe(itemId: string, ownerId: string): boolean {
+  return items.some((i) => i.id === itemId && i.owner_id === ownerId);
+}
+
 export function miembrosDelDemo(clubId: string): readonly Omit<LibraryClubMember, 'profile'>[] {
   return miembros.filter((m) => m.club_id === clubId);
 }

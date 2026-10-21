@@ -29,6 +29,8 @@ export const activityFormSchema = z
     /** Con 'selected', quiénes pueden ver el detalle. */
     viewerIds: z.array(z.string()),
     themeId: z.string().nullable(),
+    /** Libro de la Biblioteca, solo con el tema Lectura (spec 13 §4, T302). */
+    libraryItemId: z.string().nullable(),
     recurrence: recurrenceSchema,
     reminderOffsets: z.array(z.number().int().min(0)),
   })

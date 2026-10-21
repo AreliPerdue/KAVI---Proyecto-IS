@@ -1,5 +1,6 @@
 import { addDays } from 'date-fns';
 
+import { READING_THEME_ID } from '@/constants/themes';
 import { fromDayKey, fromIso, minutesSinceMidnight, nextHalfHour, setTimeOfDay, startOfDay, toDayKey, toIso } from '@/lib/dates';
 import { parseRRule } from '@/lib/recurrence';
 import type { ActivityFormValues } from '@/lib/schemas/activity';
@@ -21,6 +22,7 @@ export function defaultFormValues(options: { dayKey?: string; startMinutes?: num
     visibility: 'default',
     viewerIds: [],
     themeId: null,
+    libraryItemId: null,
     recurrence: null,
     reminderOffsets: [],
   };
@@ -41,6 +43,7 @@ export function activityToFormValues(activity: Activity, seriesRule: string | nu
     visibility: activity.visibility,
     viewerIds: [],
     themeId: activity.theme_id,
+    libraryItemId: activity.library_item_id ?? null,
     recurrence: parseRRule(seriesRule),
     reminderOffsets,
   };
@@ -58,6 +61,8 @@ export function formValuesToInput(values: ActivityFormValues, theme: Theme | nul
     end_at: toIso(end),
     all_day: values.allDay,
     is_gym: values.isGym,
+    // El libro solo va con el tema Lectura: si se cambió de tema, la actividad lo suelta.
+    library_item_id: theme?.id === READING_THEME_ID ? values.libraryItemId : null,
     visibility: values.visibility,
     viewerIds: values.visibility === 'selected' ? values.viewerIds : [],
     theme_id: theme?.id ?? null,

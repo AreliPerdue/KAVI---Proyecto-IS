@@ -87,6 +87,7 @@ create table public.activities (
   recurrence_parent_id uuid references public.activities(id) on delete cascade,
   recurrence_exdates date[] not null default '{}', -- días excluidos de la serie (EXDATE), solo en la madre (T249)
   is_gym boolean not null default false,  -- habilita módulo fitness (se activa con tema Gimnasio o manualmente)
+  library_item_id uuid references public.library_items(id) on delete set null,  -- libro de una actividad de Lectura (spec 13 §4, T302); solo una pieza del dueño
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   check (end_at > start_at)

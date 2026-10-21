@@ -13,6 +13,7 @@ import {
 } from '@/lib/recurrence';
 import type { ActivitiesApi, CreateActivityInput } from '@/services/contracts';
 import { removeRemindersForActivities, syncRecipients } from '@/services/demo/reminders';
+import { esPiezaDe } from '@/services/demo/library';
 import { detachWorkoutsFromActivities } from '@/services/demo/workouts';
 import { delay, demoState, emitDataChange, nextId } from '@/services/demo/store';
 import type { Activity } from '@/types/domain';
@@ -58,6 +59,11 @@ function materialize(parent: Activity, rule: RecurrenceRule, after: Date) {
   }
 }
 
+/** Como el trigger de la base (T302): el libro de una actividad tiene que ser de su dueño. */
+function revisarLibro(itemId: string | null | undefined, ownerId: string) {
+  if (itemId && !esPiezaDe(itemId, ownerId)) throw new AuthUiError(t().errors.noPermission);
+}
+
 function applyPatch(activity: Activity, patch: Partial<CreateActivityInput>): Activity {
   const { recurrence: _recurrence, ...fields } = patch;
   return {
@@ -90,6 +96,7 @@ export const demoActivities: ActivitiesApi = {
     await delay();
     const now = new Date().toISOString();
     const { recurrence, viewerIds, ...fields } = input;
+    revisarLibro(fields.library_item_id, userId);
     const created: Activity = {
       id: nextId('act'),
       owner_id: userId,
@@ -108,6 +115,7 @@ export const demoActivities: ActivitiesApi = {
       recurrence_tz: recurrence ? localTimeZone() : null,
       recurrence_parent_id: null,
       is_gym: fields.is_gym ?? false,
+      library_item_id: fields.library_item_id ?? null,
       created_at: now,
       updated_at: now,
     };
@@ -126,6 +134,7 @@ export const demoActivities: ActivitiesApi = {
   async update(id, patch, scope = 'this') {
     await delay();
     const current = find(id);
+    revisarLibro(patch.library_item_id, current.owner_id);
     if (scope === 'this' || (!current.recurrence_rule && !current.recurrence_parent_id)) {
       // Una instancia que se va a otro día deja libre el suyo: se excluye para que no se recree.
       if (current.recurrence_parent_id && patch.start_at && toDayKey(fromIso(patch.start_at)) !== toDayKey(fromIso(current.start_at))) excluirDia(current);

@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { BookOpen, ChevronLeft, FolderMinus, FolderPlus, FlaskConical, Library, Scissors, Search, Star, SlidersHorizontal, Tag, Timer, Trash2, X } from 'lucide-react-native';
+import { BookOpen, ChevronLeft, FolderMinus, FolderPlus, Library, Scissors, Search, Star, SlidersHorizontal, Tag, Timer, Trash2, X } from 'lucide-react-native';
 import { useEffect, useMemo, useState } from 'react';
 import { BackHandler, FlatList, type LayoutChangeEvent, Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { useReducedMotion } from 'react-native-reanimated';
@@ -71,10 +71,8 @@ import { useSpineRatiosStore } from '@/store/spine-ratios-store';
 import type { LibraryItem, LibraryLayout, LibraryLayoutView, LibraryShelf } from '@/types/domain';
 
 /**
- * KAVI Library, laboratorio (spec 13 §4, T276).
- *
- * Mientras se construye por etapas, Library no está en Más ni en la barra: se llega desde
- * Perfil → En desarrollo. Esta pantalla crece con cada etapa y en L7 pasa a ser el módulo visible.
+ * KAVI Library (spec 13 §4). Nació como laboratorio en Perfil → En desarrollo (T276); desde T302 es un
+ * módulo como Listas: sale en Más, se puede poner en la barra y en web tiene su botón arriba.
  *
  * La librería (spec 13a, T277): portadas en rejilla o lista, y la vista elegida se recuerda en el
  * dispositivo (RF-BL4). La rejilla y la lista son un solo `FlatList` (NFR-3) con el encabezado
@@ -484,16 +482,6 @@ export default function LibraryScreen() {
         <LibraryHeader />
       )}
 
-      <View style={[styles.aviso, { backgroundColor: theme.surfaceAlt }]}>
-        <FlaskConical size={IconSize.inline} strokeWidth={IconStroke} color={theme.textSecondary} />
-        <View style={styles.flex}>
-          <AppText variant="label">{l.inDevelopment}</AppText>
-          <AppText variant="caption" color="textSecondary">
-            {l.devHint}
-          </AppText>
-        </View>
-      </View>
-
       {/* Las secciones de Library fuera de los libros: se ven aunque no haya ninguno (lo guardado sigue ahí). */}
       <View style={styles.accesos}>
         <Pressable
@@ -865,7 +853,6 @@ const styles = StyleSheet.create({
   entrada: { flex: 1, minWidth: 0, ...Typography.body, fontFamily: Fonts?.sans, paddingVertical: Spacing.sm },
   insignia: { position: 'absolute', top: 2, right: 2, minWidth: 18, height: 18, borderRadius: 9, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 4 },
   vacio: { textAlign: 'center', paddingVertical: Spacing.xl },
-  aviso: { flexDirection: 'row', gap: Spacing.sm, padding: Spacing.md, borderRadius: Radius.md, borderCurve: 'continuous' },
   espacio: { gap: Spacing.xs },
   espacioFila: { flexDirection: 'row', justifyContent: 'space-between' },
   barra: { height: 6, borderRadius: Radius.full, overflow: 'hidden' },

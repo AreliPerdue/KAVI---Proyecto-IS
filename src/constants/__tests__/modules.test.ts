@@ -1,7 +1,7 @@
 /**
  * Barra configurable y "Más" (spec 01, RF-N1 – RF-N6; T188, T189, T189b).
  */
-import { ACCESO_ROUTES, accesosValidos, DEFAULT_ACCESOS, elegirAcceso, moduleHref } from '@/constants/modules';
+import { ACCESO_ROUTES, accesosValidos, DEFAULT_ACCESOS, elegirAcceso, MODULES, moduleHref } from '@/constants/modules';
 
 describe('accesosValidos', () => {
   it('lo guardado válido se respeta', () => {
@@ -56,5 +56,18 @@ describe('moduleHref', () => {
     expect(moduleHref('shared', accesos, true)).toBe('/(app)/(tabs)/shared');
     expect(moduleHref('profile', accesos, true)).toBe('/(app)/(tabs)/profile');
     expect(moduleHref('lists', accesos, true)).toBe('/(app)/lists');
+  });
+});
+
+describe('Biblioteca como módulo (spec 13 §4, T302)', () => {
+  it('está entre los módulos y se puede poner en la barra', () => {
+    expect(MODULES.map((m) => m.id)).toContain('library');
+    expect(accesosValidos(['library', 'shared'])).toEqual(['library', 'shared']);
+  });
+
+  it('en la barra abre su lugar; fuera de ella y en web, su ruta propia', () => {
+    expect(moduleHref('library', ['library', 'shared'], false)).toBe(ACCESO_ROUTES[0]);
+    expect(moduleHref('library', ['shared', 'fitness'], false)).toBe('/(app)/library');
+    expect(moduleHref('library', ['library', 'shared'], true)).toBe('/(app)/library');
   });
 });

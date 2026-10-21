@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Controller, useForm, useWatch } from 'react-hook-form';
 import { StyleSheet, View } from 'react-native';
 
+import { BookField } from './book-field';
 import { RecurrenceField } from './recurrence-field';
 import { RemindersField } from './reminders-field';
 import { VisibilityField } from './visibility-field';
@@ -11,7 +12,7 @@ import { ThemeField } from './theme-field';
 import { type ExerciseDraft, WorkoutDraft } from './workout-draft';
 
 import { Banner, Button, DatePickerSheet, FieldButton, SwitchRow, TextField, TimePickerSheet } from '@/components/ui';
-import { GYM_THEME_ID } from '@/constants/themes';
+import { GYM_THEME_ID, READING_THEME_ID } from '@/constants/themes';
 import { IconSize, IconStroke, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { formatDate, formatMinutes, fromDayKey, toDayKey } from '@/lib/dates';
@@ -62,6 +63,7 @@ export function ActivityForm({
   const startMinutes = useWatch({ control, name: 'startMinutes' });
   const endMinutes = useWatch({ control, name: 'endMinutes' });
   const allDay = useWatch({ control, name: 'allDay' });
+  const themeId = useWatch({ control, name: 'themeId' });
 
   const submit = handleSubmit((values) => onSubmit(values, exercises));
 
@@ -101,6 +103,15 @@ export function ActivityForm({
           />
         )}
       />
+
+      {/* Con el tema Lectura, la actividad se liga a un libro de la Biblioteca (spec 13 §4, T302). */}
+      {themeId === READING_THEME_ID ? (
+        <Controller
+          control={control}
+          name="libraryItemId"
+          render={({ field: { onChange, value } }) => <BookField value={value} onChange={onChange} />}
+        />
+      ) : null}
 
       <FieldButton
         label={tx.calendar.form.date}

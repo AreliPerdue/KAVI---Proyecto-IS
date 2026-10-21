@@ -1304,8 +1304,14 @@ Reemplazan L5 (13e). Un recorte es una página 1 : √2 del visor de PDF (decisi
   - Aviso con "Entrar" en toda la app (`useClubLiveNotices`).
 
 ### L7 · Conectar a la app
-- [ ] T302 Library visible en Más y elegible para la barra; una actividad de Lectura se liga a una pieza y la
+- [x] T302 Library visible en Más y elegible para la barra; una actividad de Lectura se liga a una pieza y la
   abre donde iba. (spec 13 §4) Dep: L1 – L5, LC
+  **Hecho (20 oct 2026):**
+  - Módulo `library` en `constants/modules` (ruta propia, como Listas); botón en la barra superior web; sin la fila
+    de Perfil ni el aviso de "En desarrollo".
+  - `activities.library_item_id` (migración `20261020160000`): solo un libro del dueño (trigger, probado en PGlite) y
+    `on delete set null`; las repeticiones lo heredan. Igual en el demo.
+  - Campo **Libro** con el tema Lectura (`book-field.tsx`) y "Seguir leyendo" en la ficha de la actividad.
 
 ### Extras (cuando haya tiempo; decisión de Areli del 19 oct 2026)
 - [ ] T292 Escuchar en voz alta con la frase resaltada. (RF-BH6) Dep: T279

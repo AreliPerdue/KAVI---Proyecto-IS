@@ -36,7 +36,8 @@ Los calendarios tradicionales registran compromisos, pero no relacionan la plani
   no reinicia la navegación ni hace perder lo que había abierto en otras pestañas.
 - RF-N5. **En web no hay límite:** la barra superior muestra todos los módulos con pestaña propia (Compartido,
   Fitness, Perfil) y no hace falta Más. Listas se abre desde el botón ○✓ del calendario (spec 10, §UI).
-- RF-N6. Los módulos que existen hoy son Compartido, Fitness, Perfil y **Listas** (T189b). Los futuros (Lectura,
+  Biblioteca (spec 13 §4, T302) lleva un botón en la barra superior que abre su pantalla.
+- RF-N6. Los módulos que existen hoy son Compartido, Fitness, Perfil, **Listas** (T189b) y **Biblioteca** (T302). Los futuros (Lectura,
   Sueño, Diario…) se suman a la lista de Más y a los candidatos de la barra sin cambiar estas reglas. El botón
   ○✓ del calendario abre Listas donde esté: en su lugar de la barra o apilada.
 

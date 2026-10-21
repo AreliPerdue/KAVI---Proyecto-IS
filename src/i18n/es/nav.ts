@@ -1,7 +1,7 @@
 /** Navegación: pestañas, módulos y Más (spec 01, RF-N1–N6). */
 export const nav = {
   calendar: 'Calendario',
-  modules: { shared: 'Compartido', lists: 'Listas', fitness: 'Fitness', profile: 'Perfil' },
+  modules: { shared: 'Compartido', lists: 'Listas', fitness: 'Fitness', library: 'Biblioteca', profile: 'Perfil' },
   more: 'Más',
   modulesSection: 'Módulos',
   inBar: 'En la barra',

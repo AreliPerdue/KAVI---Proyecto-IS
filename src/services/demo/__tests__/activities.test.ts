@@ -421,3 +421,38 @@ describe('días excluidos de una serie (T249)', () => {
     expect(delaSerie(state).map(diaDe)).not.toContain(diaDe(enMedio));
   });
 });
+
+describe('libro de una actividad de Lectura (spec 13 §4, T302)', () => {
+  function conLibros() {
+    const { activities, state } = freshApi();
+    /* eslint-disable-next-line @typescript-eslint/no-require-imports -- mismo registro recién cargado */
+    const library = (require('@/services/demo/library') as typeof import('@/services/demo/library')).demoLibrary;
+    return { activities, state, library };
+  }
+
+  it('se liga a un libro mío, y las repeticiones lo heredan', async () => {
+    const { activities, library } = conLibros();
+    const libro = await library.createItem(USER, { family: 'book', kind: 'pdf', title: 'Rayuela' });
+    const creada = await activities.create(USER, input({ library_item_id: libro.id, recurrence: { freq: 'DAILY', byDay: [], until: null } }));
+    expect(creada.library_item_id).toBe(libro.id);
+    const serie = (await activities.listByRange(USER, WIDE.from, WIDE.to)).filter((a) => a.id === creada.id || a.recurrence_parent_id === creada.id);
+    expect(serie.length).toBeGreaterThan(1);
+    expect(serie.every((a) => a.library_item_id === libro.id)).toBe(true);
+  });
+
+  it('no acepta el libro de otra persona, ni al crear ni al editar', async () => {
+    const { activities, library } = conLibros();
+    const ajeno = await library.createItem('otra', { family: 'book', kind: 'pdf', title: 'Ajeno' });
+    await expect(activities.create(USER, input({ library_item_id: ajeno.id }))).rejects.toThrow();
+    const creada = await activities.create(USER, input());
+    await expect(activities.update(creada.id, { library_item_id: ajeno.id })).rejects.toThrow();
+  });
+
+  it('al borrar el libro, la actividad se queda sin él', async () => {
+    const { activities, library, state } = conLibros();
+    const libro = await library.createItem(USER, { family: 'book', kind: 'pdf', title: 'Rayuela' });
+    const creada = await activities.create(USER, input({ library_item_id: libro.id }));
+    await library.removeItem(libro.id);
+    expect(state.activities.find((a) => a.id === creada.id)?.library_item_id).toBeNull();
+  });
+});

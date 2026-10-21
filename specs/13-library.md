@@ -67,6 +67,18 @@ Es grande a propósito, y por eso se construye **por capas** (§8): primero un n
 - **Con el calendario** (al conectarlo): una actividad con el tema **Lectura** puede ligarse a una pieza
   ("leer *Rayuela* 30 min"); desde la actividad se abre el libro en la página donde iba, igual que una
   actividad de gimnasio abre su sesión. Library nunca modifica el calendario (P6).
+- **Hecho al conectarlo (T302, 20 oct 2026):**
+  - **Módulo:** "Biblioteca" (*Library*) entra a `constants/modules` con su ruta propia, como Listas: sale en Más
+    y se puede elegir para la barra del teléfono; en la barra no lleva "Atrás". En web, la barra superior lleva
+    un botón "Biblioteca" que la abre (RF-N5). Se quitan la fila de Perfil → En desarrollo y el aviso de "En
+    desarrollo" de la librería.
+  - **Ligar un libro:** con el tema **Lectura**, el formulario de la actividad muestra **Libro** (opcional):
+    una hoja con mis piezas, con buscador, y "Sin libro" para quitarlo. La actividad guarda `library_item_id`;
+    la base solo acepta una pieza de quien es dueño de la actividad y, si la pieza se borra, el enlace se
+    vacía solo. Las repeticiones de una serie heredan el libro.
+  - **Abrirlo:** en la ficha de la actividad, quien es su dueño ve **"Seguir leyendo *Rayuela*"**, que abre el
+    libro donde iba (el lector ya abre en la última posición). Quien ve la actividad compartida no ve el
+    botón: el libro no es suyo. Si el libro se borró, no aparece.
 - **Con el idioma (spec 12):** toda la interfaz en español e inglés; el contenido de los libros es el que
   es.
 

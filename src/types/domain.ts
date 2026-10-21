@@ -93,6 +93,8 @@ export type Activity = {
    */
   recurrence_tz?: string | null;
   is_gym: boolean;
+  /** Libro de la Biblioteca de una actividad de Lectura (spec 13 §4, T302); solo una pieza del dueño. */
+  library_item_id?: string | null;
   /** Quién ve el título. El nivel del calendario sigue siendo el techo (RF-C14). */
   visibility: ActivityVisibility;
   created_at: string;
@@ -200,6 +202,7 @@ export type ActivityInput = {
   end_at: string;
   all_day?: boolean;
   is_gym?: boolean;
+  library_item_id?: string | null;
   /** Quién ve el título (RF-C14). Con 'selected', además, `viewerIds`. */
   visibility?: ActivityVisibility;
   /** Contactos que pueden ver el detalle cuando la visibilidad es 'selected'. */

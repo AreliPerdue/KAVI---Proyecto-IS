@@ -7,6 +7,7 @@
  * una de todo el dia, una que empieza a las 23:50— viven aqui, no en la UI.
  */
 import { defaultFormValues, activityToFormValues, formValuesToInput } from '@/components/calendar/activity-form-mapping';
+import { READING_THEME_ID } from '@/constants/themes';
 import { fromIso, minutesSinceMidnight, toDayKey } from '@/lib/dates';
 import type { ActivityFormValues } from '@/lib/schemas/activity';
 import type { Activity, Theme } from '@/types/domain';
@@ -30,7 +31,7 @@ const valores = (over: Partial<ActivityFormValues> = {}): ActivityFormValues => 
   title: 'Junta', description: '', dayKey: '2026-09-07',
   startMinutes: 570, endMinutes: 630,
   allDay: false, isGym: false, visibility: 'default', viewerIds: [],
-  themeId: null, recurrence: null, reminderOffsets: [],
+  themeId: null, libraryItemId: null, recurrence: null, reminderOffsets: [],
   ...over,
 });
 
@@ -183,5 +184,24 @@ describe('ida y vuelta', () => {
     const input = formValuesToInput(activityToFormValues(original), null);
     expect(input.start_at).toBe(original.start_at);
     expect(input.end_at).toBe(original.end_at);
+  });
+});
+
+describe('libro de una actividad de Lectura (spec 13 §4, T302)', () => {
+  const lectura = { ...tema, id: READING_THEME_ID, name: 'Lectura', dimension: 'intelectual' } as Theme;
+
+  it('con el tema Lectura, el libro elegido va a la actividad', () => {
+    expect(formValuesToInput(valores({ themeId: READING_THEME_ID, libraryItemId: 'l1' }), lectura).library_item_id).toBe('l1');
+  });
+
+  it('si se cambió a otro tema, la actividad suelta el libro', () => {
+    expect(formValuesToInput(valores({ themeId: 't1', libraryItemId: 'l1' }), tema).library_item_id).toBeNull();
+    expect(formValuesToInput(valores({ libraryItemId: 'l1' }), null).library_item_id).toBeNull();
+  });
+
+  it('al editar, el formulario arranca con el libro de la actividad', () => {
+    expect(activityToFormValues(actividad({ library_item_id: 'l1' })).libraryItemId).toBe('l1');
+    expect(activityToFormValues(actividad()).libraryItemId).toBeNull();
+    expect(defaultFormValues().libraryItemId).toBeNull();
   });
 });

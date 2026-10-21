@@ -2,7 +2,7 @@ import type { Dictionary } from '../types';
 
 export const nav: Dictionary['nav'] = {
   calendar: 'Calendar',
-  modules: { shared: 'Shared', lists: 'Lists', fitness: 'Fitness', profile: 'Profile' },
+  modules: { shared: 'Shared', lists: 'Lists', fitness: 'Fitness', library: 'Library', profile: 'Profile' },
   more: 'More',
   modulesSection: 'Modules',
   inBar: 'In the tab bar',

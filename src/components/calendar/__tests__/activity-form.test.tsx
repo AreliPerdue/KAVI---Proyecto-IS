@@ -11,6 +11,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react-nativ
 
 import { ActivityForm } from '@/components/calendar/activity-form';
 import { defaultFormValues } from '@/components/calendar/activity-form-mapping';
+import { READING_THEME_ID } from '@/constants/themes';
 
 jest.mock('@/hooks/use-themes', () => ({
   useThemes: () => ({ data: [] }),
@@ -31,6 +32,20 @@ jest.mock('@/hooks/use-exercises', () => ({
 jest.mock('@/hooks/use-exercise-history', () => ({
   exerciseHistoryQuery: (_u: string, ref: { name: string }) => ({ queryKey: ['historial', ref.name], queryFn: async () => [] }),
 }));
+
+// La Biblioteca de quien llena el formulario (T302): dos libros.
+jest.mock('@/hooks/use-library', () => ({
+  useLibraryItems: () => ({
+    data: [
+      { id: 'l1', title: 'Rayuela', authors: ['Julio Cortázar'], kind: 'pdf', family: 'book' },
+      { id: 'l2', title: 'Ficciones', authors: ['Jorge Luis Borges'], kind: 'epub', family: 'book' },
+    ],
+    isPending: false,
+    isError: false,
+    refetch: jest.fn(),
+  }),
+}));
+jest.mock('@/components/library/book-cover', () => ({ BookCover: () => null }));
 
 const campo = (label: string) => screen.getByLabelText(label, { includeHiddenElements: true });
 
@@ -205,5 +220,37 @@ describe('descripcion', () => {
 
     await waitFor(() => expect(onSubmit).toHaveBeenCalled());
     expect(onSubmit.mock.calls[0][0]).toMatchObject({ description: 'Revisar el avance' });
+  });
+});
+
+describe('libro de una actividad de Lectura (spec 13 §4, T302)', () => {
+  const lectura = () => ({ ...defaultFormValues({ dayKey: '2026-09-07', startMinutes: 540, endMinutes: 600, title: 'Leer' }), themeId: READING_THEME_ID });
+
+  it('sin el tema Lectura no hay campo Libro', async () => {
+    await montar();
+    expect(screen.queryByLabelText(/^Libro/)).toBeNull();
+  });
+
+  it('con Lectura se elige un libro con el buscador y se guarda con la actividad', async () => {
+    const onSubmit = jest.fn();
+    await montar({ defaultValues: lectura(), onSubmit });
+    await fireEvent.press(screen.getByLabelText(/^Libro/));
+    await fireEvent.changeText(screen.getByLabelText('Buscar en tu biblioteca'), 'borges');
+    expect(screen.queryByRole('button', { name: /^Rayuela/ })).toBeNull();
+    await fireEvent.press(screen.getByRole('button', { name: /^Ficciones/ }));
+    expect(screen.getByLabelText(/^Libro: Ficciones/)).toBeTruthy();
+    await fireEvent.press(screen.getByRole('button', { name: 'Crear actividad' }));
+    await waitFor(() => expect(onSubmit).toHaveBeenCalled());
+    expect(onSubmit.mock.calls[0][0].libraryItemId).toBe('l2');
+  });
+
+  it('"Sin libro" lo quita', async () => {
+    const onSubmit = jest.fn();
+    await montar({ defaultValues: { ...lectura(), libraryItemId: 'l1' }, onSubmit });
+    await fireEvent.press(screen.getByLabelText(/^Libro: Rayuela/));
+    await fireEvent.press(screen.getByRole('button', { name: 'Sin libro' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Crear actividad' }));
+    await waitFor(() => expect(onSubmit).toHaveBeenCalled());
+    expect(onSubmit.mock.calls[0][0].libraryItemId).toBeNull();
   });
 });

@@ -802,3 +802,15 @@ Automatizado: RLS de los canales en PGlite, `lib/library/__tests__/club-live.tes
 Automatizado: `components/library/__tests__/bookmark-rail.test.tsx`. Visto en el demo web (1280 px): "Capítulo 3 · p. 1 de 6"
 junto a la pestaña del canto y la palabra completa al pasar sobre la pestaña de la página.
 - [ ] (manual) En tu compu, con un separador en el borde izquierdo y otro con palabra larga: al pasar el mouse se lee completa.
+
+## Biblioteca conectada a la app (T302)
+Automatizado: RLS y trigger en PGlite (8 casos), `constants/__tests__/modules.test.ts`,
+`components/calendar/__tests__/activity-form.test.tsx` y `activity-form-mapping.test.ts`,
+`app/(app)/activity/__tests__/detail.test.tsx`, `services/demo/__tests__/activities.test.ts` y
+`components/library/__tests__/library-header.test.tsx`. Visto en el demo web (1280 y 375 px): Biblioteca en la barra
+superior, crear "Leer un rato" con el tema Lectura y un libro, y "Seguir leyendo" abre el libro.
+- [ ] (manual, teléfono) En Más sale Biblioteca; ponerla en la barra la muestra sin "Atrás"; fuera de la barra se abre
+  apilada con "Atrás".
+- [ ] (manual) Una actividad de Lectura que se repite cada día: todas las del calendario abren el mismo libro, donde
+  ibas.
+- [ ] (manual, dos cuentas) Quien ve tu actividad de Lectura compartida no ve "Seguir leyendo".

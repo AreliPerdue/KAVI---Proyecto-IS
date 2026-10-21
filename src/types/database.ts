@@ -24,6 +24,7 @@ export type Database = {
           recurrence_rule: string | null;
           recurrence_parent_id: string | null;
           is_gym: boolean;
+          library_item_id: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -42,6 +43,7 @@ export type Database = {
           recurrence_rule?: string | null;
           recurrence_parent_id?: string | null;
           is_gym?: boolean;
+          library_item_id?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -60,6 +62,7 @@ export type Database = {
           recurrence_rule?: string | null;
           recurrence_parent_id?: string | null;
           is_gym?: boolean;
+          library_item_id?: string | null;
           created_at?: string;
           updated_at?: string;
         };

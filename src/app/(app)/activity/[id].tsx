@@ -1,5 +1,5 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Bell, BellOff, Dumbbell, LogOut, Pencil, Repeat, Share2, Trash2, Users } from 'lucide-react-native';
+import { Bell, BellOff, BookOpen, Dumbbell, LogOut, Pencil, Repeat, Share2, Trash2, Users } from 'lucide-react-native';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
@@ -10,6 +10,7 @@ import { describeOffset } from '@/constants/reminders';
 import { IconSize, IconStroke, Radius, Spacing } from '@/constants/theme';
 import { useActivity, useActivityMutations } from '@/hooks/use-activity';
 import { useActivityReminders, useReminderMutations } from '@/hooks/use-reminders';
+import { useLibraryItem } from '@/hooks/use-library';
 import { useActivityShares, useShareMutations } from '@/hooks/use-shares';
 import { useWorkoutByActivity, useWorkoutMutations } from '@/hooks/use-workouts';
 import { useTheme } from '@/hooks/use-theme';
@@ -48,6 +49,8 @@ export default function ActivityDetailScreen() {
   const reminders = useActivityReminders(id);
   const { setEnabled } = useReminderMutations();
   const isOwner = !!activity.data && activity.data.owner_id === userId;
+  // El libro de una actividad de Lectura, solo para su dueño: quien la ve compartida no tiene ese libro (T302).
+  const libro = useLibraryItem(isOwner ? (activity.data?.library_item_id ?? '') : '');
   const shares = useActivityShares(id, isOwner);
   const shareMutations = useShareMutations();
   // Los entrenamientos son privados: solo el dueño consulta o crea el suyo (regla 07).
@@ -260,6 +263,15 @@ export default function ActivityDetailScreen() {
               { onSuccess: (created) => router.push({ pathname: '/(app)/workout/[id]', params: { id: created.id, mode: 'edit' } }) },
             );
           }}
+        />
+      ) : null}
+
+      {/* Abre el libro donde iba (spec 13 §4, T302); si se borró, la base ya vació el enlace. */}
+      {isOwner && libro.data ? (
+        <Button
+          title={tx.calendar.detail.keepReading(libro.data.title)}
+          icon={<BookOpen size={IconSize.inline} strokeWidth={IconStroke} color={theme.onInk} />}
+          onPress={() => router.push({ pathname: '/(app)/book/[id]', params: { id: libro.data.id } })}
         />
       ) : null}
 

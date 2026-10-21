@@ -327,11 +327,9 @@ describe('abrir Compartido', () => {
   });
 });
 
-/** KAVI Library en desarrollo (T276): se entra desde Perfil, no desde Más ni la barra. */
-describe('Biblioteca en desarrollo', () => {
-  it('la fila de "En desarrollo" abre la Biblioteca', async () => {
-    await render(<Pantalla />);
-    await fireEvent.press(screen.getByRole('button', { name: /^Biblioteca/ }));
-    expect(globalThis.mockRouter.push).toHaveBeenCalledWith('/(app)/library');
-  });
+/** KAVI Library ya es un módulo (T302): sale en Más y en la barra, no en Perfil. */
+it('Perfil ya no tiene la fila de "En desarrollo"', async () => {
+  await render(<Pantalla />);
+  expect(screen.queryByText('En desarrollo')).toBeNull();
+  expect(screen.queryByRole('button', { name: /^Biblioteca/ })).toBeNull();
 });

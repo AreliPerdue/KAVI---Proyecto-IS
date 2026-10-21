@@ -1,7 +1,7 @@
 import { ErrorFallback } from '@/components/error-fallback';
-import { type ErrorBoundaryProps } from 'expo-router';
+import { type ErrorBoundaryProps, useRouter } from 'expo-router';
 import { TabList, type TabListProps, TabSlot, TabTrigger, type TabTriggerSlotProps, Tabs } from 'expo-router/ui';
-import { CalendarDays, Dumbbell, UserRound, Users } from 'lucide-react-native';
+import { CalendarDays, Dumbbell, LibraryBig, UserRound, Users } from 'lucide-react-native';
 import { Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
 
 import { AppText, Wordmark } from '@/components/ui';
@@ -33,6 +33,8 @@ function TabButton({ label, Icon, isFocused, badge = 0, ...props }: TabButtonPro
       accessibilityState={{ selected: !!isFocused }}
       style={({ pressed }) => [
         styles.tab,
+        // Solo íconos en pantallas angostas: con Biblioteca son cinco y a 375 px no cabían (T302).
+        showLabel ? null : styles.tabCompacta,
         isFocused ? { backgroundColor: theme.surfaceAlt } : null,
         pressed ? styles.pressed : null,
       ]}>
@@ -87,16 +89,21 @@ function TopBar({ children, ...props }: TopBarProps) {
 /** Tabs web: barra superior con ancho máximo (NFR-9). */
 export default function TabsLayoutWeb() {
   const tx = useT();
+  const router = useRouter();
   const badge = useSharedBadgeCount();
   return (
     <Tabs>
       <TabList asChild>
         <TopBar>
-          {TABS.map(({ name, href, Icon }) => (
+          {TABS.map(({ name, href, Icon }) => [
+            // Biblioteca tiene ruta propia fuera de las pestañas, como Listas: un botón la abre, antes de Perfil (RF-N5, T302).
+            name === 'profile' ? (
+              <TabButton key="library" label={tx.nav.modules.library} Icon={LibraryBig} onPress={() => router.push('/(app)/library')} />
+            ) : null,
             <TabTrigger key={name} name={name} href={href} asChild>
               <TabButton label={name === 'calendar' ? tx.nav.calendar : tx.nav.modules[name]} Icon={Icon} badge={name === 'shared' ? badge : 0} />
-            </TabTrigger>
-          ))}
+            </TabTrigger>,
+          ])}
         </TopBar>
       </TabList>
       <TabSlot style={styles.slot} />
@@ -130,6 +137,7 @@ const styles = StyleSheet.create({
     borderRadius: Radius.sm,
     borderCurve: 'continuous',
   },
+  tabCompacta: { paddingHorizontal: 0 },
   pressed: { opacity: 0.7 },
   slot: { flex: 1 },
   badge: { minWidth: 18, height: 18, paddingHorizontal: 5, borderRadius: 9, alignItems: 'center', justifyContent: 'center' },
