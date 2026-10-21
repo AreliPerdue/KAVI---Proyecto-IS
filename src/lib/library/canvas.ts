@@ -12,7 +12,7 @@ import type { LibraryLocator } from '@/types/domain';
  * solo y usarlo igual en Supabase, el demo y la cola sin red.
  */
 
-export const TIPOS_DE_ELEMENTO = ['textbox', 'image', 'sticker', 'shape', 'polaroid', 'quote', 'rating', 'book'] as const;
+export const TIPOS_DE_ELEMENTO = ['textbox', 'image', 'sticker', 'shape', 'polaroid', 'quote', 'rating', 'book', 'asset'] as const;
 export type TipoDeElemento = (typeof TIPOS_DE_ELEMENTO)[number];
 export type OrientacionDeLienzo = 'portrait' | 'landscape';
 
@@ -71,6 +71,9 @@ export type ElementoDeLienzo = {
     scale?: EscalaDeRating;
     value?: number;
     itemId?: string;
+    /** Asset (T343b): cuál (`<pack>/<nombre>`) y cómo se recolorea. */
+    asset?: string;
+    mode?: 'textura' | 'trazo';
   };
 };
 
@@ -134,6 +137,8 @@ export function elementoValido(raw: unknown, paginas = MAX_PAGINAS): ElementoDeL
       ...(tipo === 'quote' ? quoteValida(contenido) : {}),
       ...(tipo === 'rating' ? ratingValido(contenido) : {}),
       ...(tipo === 'book' && typeof contenido.itemId === 'string' ? { itemId: contenido.itemId.slice(0, 64) } : {}),
+      ...(tipo === 'asset' && typeof contenido.asset === 'string' ? { asset: contenido.asset.slice(0, 120), mode: contenido.mode === 'trazo' ? ('trazo' as const) : ('textura' as const) } : {}),
+      ...(tipo === 'asset' && typeof contenido.label === 'string' ? { label: contenido.label.slice(0, 80) } : {}),
     },
   };
 }
@@ -237,7 +242,9 @@ export function aMotor(
                   ? { scale: e.content.scale ?? 'stars', value: e.content.value ?? 0, ...(e.style.color ? { color: e.style.color } : {}), ...comun }
                   : e.type === 'book'
                     ? libroParaMotor(e.content.itemId ? fuentes.libros?.get(e.content.itemId) : undefined, comun)
-                    : {
+                    : e.type === 'asset'
+                      ? { asset: e.content.asset, label: e.content.label, mode: e.content.mode ?? 'textura', ...(e.style.color ? { color: e.style.color } : {}), ...comun }
+                      : {
                 sticker: e.content.sticker,
                 label: e.content.label,
                 ...(e.content.sticker && fuentes.stickers?.get(e.content.sticker) ? { src: fuentes.stickers.get(e.content.sticker) } : {}),

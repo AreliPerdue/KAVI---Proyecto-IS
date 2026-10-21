@@ -7,6 +7,7 @@ import {
   Copy,
   Frame,
   Group,
+  Layers,
   LibraryBig,
   ImagePlus,
   Lock,
@@ -33,6 +34,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { AssetSheet } from '@/components/library/asset-sheet';
 import { BookList } from '@/components/library/book-list';
 import { type Cita, PolaroidSheet, QuoteSheet, RatingSheet } from '@/components/library/canvas-module-sheets';
 import { CanvasStyleSheet } from '@/components/library/canvas-style-sheet';
@@ -40,6 +42,7 @@ import { ColorPickerSheet } from '@/components/library/color-picker-sheet';
 import { ReaderEngine, type ReaderEngineHandle } from '@/components/library/reader-engine';
 import { type StickerElegible, StickerSheet } from '@/components/library/sticker-sheet';
 import { ActionRow, AppText, Button, ErrorState, IconButton, LoadingState, Sheet, TextField } from '@/components/ui';
+import type { AssetDeLienzo } from '@/constants/canvas-assets';
 import { IconSize, IconStroke, Spacing } from '@/constants/theme';
 import { useLibraryImageUrls, useUploadAnnotationImage } from '@/hooks/use-annotations';
 import { useCanvas, useCanvasEditor, useLimpiarImagenesDeLienzo } from '@/hooks/use-canvases';
@@ -87,7 +90,8 @@ type PorPegar = {
   forma?: FormaDeLienzo;
   imagen?: { jpeg: Uint8Array; ar: number; vistaPrevia: string };
   sticker?: StickerElegible;
-  /** Módulos (T343). */
+  /** Módulos (T343) y assets (T343b). */
+  asset?: AssetDeLienzo;
   variante?: VarianteDePolaroid;
   cita?: Cita;
   libro?: string;
@@ -143,6 +147,7 @@ export default function CanvasScreen() {
   const [libroPara, setLibroPara] = useState<'nuevo' | 'cambiar' | null>(null);
   const [huecoPara, setHuecoPara] = useState<string | null>(null);
   const [pieDe, setPieDe] = useState<{ id: string; texto: string } | null>(null);
+  const [eligiendoAsset, setEligiendoAsset] = useState(false);
   const destinoDeImagen = useRef<DestinoDeImagen>(null);
   const piezas = useLibraryItems();
 
@@ -268,6 +273,12 @@ export default function CanvasScreen() {
       const s = pendiente.sticker;
       const nombres = tx.library.stickers.names as Record<string, string>;
       aplicar((d) => agregar(d, { ...base, type: 'sticker', content: { sticker: s.id, label: nombres[s.nombre] ?? s.nombre } }));
+      elegir(nuevoId);
+      return;
+    }
+    if (tipo === 'asset' && pendiente.asset) {
+      const asset = pendiente.asset;
+      aplicar((d) => agregar(d, { ...base, type: 'asset', ar: asset.ar, content: { asset: asset.id, label: tx.library.canvas.assets.names[asset.nombre], mode: asset.modo } }));
       elegir(nuevoId);
       return;
     }
@@ -677,6 +688,14 @@ export default function CanvasScreen() {
           }}
         />
         <ActionRow
+          icon={icono(Layers)}
+          label={c.assets.title}
+          onPress={() => {
+            setAgregando(false);
+            setEligiendoAsset(true);
+          }}
+        />
+        <ActionRow
           icon={icono(Frame)}
           label={c.polaroid}
           onPress={() => {
@@ -754,6 +773,15 @@ export default function CanvasScreen() {
         <ActionRow icon={icono(ImagePlus)} label={a.imageGallery} onPress={() => void elegirImagen('galeria')} />
         {PUEDE_TOMAR_FOTO ? <ActionRow icon={icono(ImagePlus)} label={a.imageCamera} onPress={() => void elegirImagen('camara')} /> : null}
       </Sheet>
+      <AssetSheet
+        visible={eligiendoAsset}
+        onClose={() => setEligiendoAsset(false)}
+        onElegir={(asset) => {
+          setEligiendoAsset(false);
+          porPegar.current = { asset };
+          ponerHerramienta('asset', asset.ar);
+        }}
+      />
       <PolaroidSheet
         visible={polaroidPara !== null}
         valor={polaroidPara === 'cambiar' && elegido?.type === 'polaroid' ? elegido.content.variant : undefined}

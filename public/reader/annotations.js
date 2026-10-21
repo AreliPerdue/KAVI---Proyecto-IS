@@ -25,7 +25,7 @@
  * en EPUB lo dibuja foliate con su capa de dibujo. Tocar uno lo elige.
  */
 import { pintarTrazos } from './ink.js';
-import { MODULOS, pintarModulo } from './modules.js';
+import { MODULOS, pintarAsset, pintarModulo } from './modules.js';
 import { pellizcando as pellizcandoAhora } from './zoom.js';
 
 /** El ancho de un post-it nuevo, relativo a la página (igual que `ANCHO_DE_POSTIT` en la app). */
@@ -38,7 +38,12 @@ const redondear = (v) => Math.round(v * 10000) / 10000;
 /** Lo más chico que puede quedar un post-it al cambiarle el tamaño (T329). */
 const LADO_MIN_PX = 48;
 /** Alto entre ancho del post-it: 1 es cuadrado. */
-const proporcionDe = (a) => (Number.isFinite(a.locator?.ar) && a.locator.ar >= 0.25 && a.locator.ar <= 4 ? a.locator.ar : 1);
+const DEL_LIENZO = ['shape', 'asset', 'polaroid', 'quote', 'rating', 'book'];
+const proporcionDe = (a) => {
+  // Lo del lienzo creativo (T343) puede ser muy angosto o muy alto (una cinta, un marcapáginas), como en su modelo.
+  const [min, max] = DEL_LIENZO.includes(a.kind) ? [0.05, 20] : [0.25, 4];
+  return Number.isFinite(a.locator?.ar) && a.locator.ar >= min && a.locator.ar <= max ? a.locator.ar : 1;
+};
 const entre = (v, min, max) => Math.min(Math.max(v, min), max);
 
 /**
@@ -82,7 +87,7 @@ const ESQUINA_PX = 40;
 const GIRO_POSTIT = 15;
 
 /** Lo que se pega encima de la página (lo demás, como los subrayados, va en el texto). */
-const PEGABLES = ['postit', 'textbox', 'image', 'sticker', 'shape', ...MODULOS];
+const PEGABLES = ['postit', 'textbox', 'image', 'sticker', 'shape', 'asset', ...MODULOS];
 /** Alto entre ancho de un dibujo (T291): una raya puede ser muy larga y delgada. */
 const proporcionDeDibujo = (a) => (Number.isFinite(a.locator?.ar) && a.locator.ar >= 0.005 && a.locator.ar <= 200 ? a.locator.ar : 1);
 /** Los trazos de cada dibujo pintado, para volver a pintarlos cuando cambia su tamaño (zoom, letra, pantalla). */
@@ -119,7 +124,7 @@ const FORMAS = {
 };
 const FORMA_GRIS = '#BDBDBD';
 /** Lo que no lleva texto: se gira con dos dedos y no se abre para escribir. */
-const sinTexto = (a) => esImagen(a) || a.kind === 'shape' || MODULOS.includes(a.kind);
+const sinTexto = (a) => esImagen(a) || a.kind === 'shape' || a.kind === 'asset' || MODULOS.includes(a.kind);
 
 /**
  * La imagen de un sticker incluido (T290): en el teléfono viene dentro del motor (sin red también se ve); en
@@ -248,6 +253,9 @@ export function crearCapa(ctx, enviar) {
     if (MODULOS.includes(a.kind)) {
       // Polaroid, quote, rating y libro (13h, T343): ver `modules.js`.
       pintarModulo(el, a);
+    } else if (a.kind === 'asset') {
+      // Papeles, notas, cintas y doodles (T343b), con su color.
+      pintarAsset(el, a);
     } else if (a.kind === 'shape') {
       const forma = FORMAS[a.content?.shape] ? a.content.shape : 'rect';
       const color = /^#[0-9a-fA-F]{6}$/.test(a.content?.color ?? '') ? a.content.color : FORMA_GRIS;
@@ -836,10 +844,10 @@ export function crearCapa(ctx, enviar) {
    * agrandan o achican sin deformarlo y las de los lados lo estiran (pedido de Areli, 14 oct).
    */
   function ponerAsas(el, a) {
-    if (esImagen(a) || a.kind === 'postit' || a.kind === 'shape' || MODULOS.includes(a.kind)) ponerGiro(el, a);
+    if (esImagen(a) || a.kind === 'postit' || a.kind === 'shape' || a.kind === 'asset' || MODULOS.includes(a.kind)) ponerGiro(el, a);
     for (const lado of LADOS) {
       // Un sticker y los módulos que se ven como objeto (polaroid, libro, rating) no se deforman desde las esquinas.
-      const proporcional = (a.kind === 'sticker' || ['polaroid', 'book', 'rating'].includes(a.kind)) && lado.length === 2;
+      const proporcional = (a.kind === 'sticker' || ['polaroid', 'book', 'rating', 'asset'].includes(a.kind)) && lado.length === 2;
       const asa = document.createElement('div');
       asa.className = `asa asa-${lado}`;
       asa.dataset.lado = lado;
@@ -1223,6 +1231,8 @@ export function crearCapa(ctx, enviar) {
     if (herramienta === 'textbox') return { w: 0.42, ar: 0.3 };
     if (herramienta === 'image') return { w: 0.4, ar: entre(proporcionNueva, 0.25, 4) };
     if (herramienta === 'sticker') return { w: anchoNuevo ?? 0.3, ar: entre(proporcionNueva, 0.25, 4) };
+    // Lo del lienzo (T343): con su proporción; lo muy ancho (una cinta) más largo y lo muy alto (un marcapáginas) más angosto.
+    if (DEL_LIENZO.includes(herramienta)) return { w: proporcionNueva < 0.5 ? 0.45 : proporcionNueva > 2 ? 0.14 : 0.3, ar: entre(proporcionNueva, 0.05, 20) };
     return { w: ANCHO, ar: 1 };
   }
 

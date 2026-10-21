@@ -25,7 +25,7 @@ export type Posicion = { page?: number; cfi?: string; fraction?: number };
 export type AnotacionEnMotor = {
   id: string;
   /** `shape`, `polaroid`, `quote`, `rating` y `book`: solo en el lienzo creativo (13h; T351, T343), no en los libros. */
-  kind: LibraryAnnotationKind | 'shape' | 'polaroid' | 'quote' | 'rating' | 'book';
+  kind: LibraryAnnotationKind | 'shape' | 'polaroid' | 'quote' | 'rating' | 'book' | 'asset';
   locator: LibraryLocator;
   z: number;
   locked: boolean;
@@ -59,6 +59,9 @@ export type AnotacionEnMotor = {
     /** Rating (T343): escala y valor. */
     scale?: 'stars' | 'hearts' | 'number';
     value?: number;
+    /** Asset del lienzo (T343b): cuál y cómo se recolorea (multiplicar sobre su textura o teñir su trazo). */
+    asset?: string;
+    mode?: 'textura' | 'trazo';
     /** Libro (T343): título y color de su portada; la imagen va en `src`. */
     title?: string;
     coverColor?: string;
@@ -72,7 +75,7 @@ export type AnotacionEnMotor = {
 };
 
 /** Con qué se está anotando: nada (leer y mover lo pegado) o pegar algo donde se toque (T286, T289). */
-export type Herramienta = 'postit' | 'textbox' | 'image' | 'sticker' | 'shape' | 'polaroid' | 'quote' | 'rating' | 'book' | null;
+export type Herramienta = 'postit' | 'textbox' | 'image' | 'sticker' | 'shape' | 'polaroid' | 'quote' | 'rating' | 'book' | 'asset' | null;
 
 /** Las formas del lienzo creativo (13h, RF-CC14; T351), como las dibuja el motor. */
 export const FORMAS_DE_LIENZO = ['rect', 'ellipse', 'heart', 'star', 'blob'] as const;

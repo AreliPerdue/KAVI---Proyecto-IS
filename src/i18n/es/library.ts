@@ -1,4 +1,5 @@
 /** KAVI Library (spec 13). Biblioteca en español (decisión B8). */
+import type { NombreDeAsset } from '@/constants/canvas-assets';
 import type { NombreDeSticker, PaqueteDeStickers } from '@/constants/stickers';
 
 export const library = {
@@ -735,6 +736,38 @@ export const library = {
     openBook: 'Abrir libro',
     changeBook: 'Cambiar libro',
     placeOn: 'Toca el recorte donde quieras ponerlo.',
+    /** Assets del lienzo (T343b). */
+    assets: {
+      title: 'Papeles y más',
+      hint: 'Toma el color que elijas en Estilo y conserva su textura.',
+      categories: { papel: 'Papeles', nota: 'Notas', cinta: 'Cintas', doodle: 'Doodles' } as Record<'papel' | 'nota' | 'cinta' | 'doodle', string>,
+      names: {
+        'papel-rasgado': 'Papel rasgado',
+        'papel-arrugado': 'Papel arrugado',
+        'hoja-de-libreta': 'Hoja de libreta',
+        'papel-cuadriculado': 'Papel cuadriculado',
+        'papel-punteado': 'Papel punteado',
+        'papel-esquina-doblada': 'Esquina doblada',
+        'papel-con-fibras': 'Papel con fibras',
+        'tira-rasgada': 'Tira rasgada',
+        memo: 'Memo',
+        ticket: 'Boleto',
+        etiqueta: 'Etiqueta',
+        marcapaginas: 'Marcapáginas',
+        'cinta-lisa': 'Cinta lisa',
+        'cinta-rayas': 'Cinta de rayas',
+        'cinta-puntos': 'Cinta de puntos',
+        'cinta-cuadros': 'Cinta de cuadros',
+        destellos: 'Destellos',
+        'flecha-curva': 'Flecha',
+        rama: 'Rama',
+        lazo: 'Moño',
+        costura: 'Costura',
+        'corazon-a-mano': 'Corazón a mano',
+        'estrella-a-mano': 'Estrella a mano',
+        'circulo-a-mano': 'Círculo a mano',
+      } as Record<NombreDeAsset, string>,
+    },
     add: 'Agregar',
     addTitle: 'Agregar al recorte',
     background: 'Fondo',

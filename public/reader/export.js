@@ -4,7 +4,7 @@
  * guardada como PNG. Se dibuja a mano (y no copiando la página) para que salga igual en la web y en el teléfono.
  */
 import { fuenteDeSticker } from './annotations.js';
-import { MARCO_POLAROID, PELICULA, SIMBOLOS, SIN_FOTO } from './modules.js';
+import { fuenteDeAsset, MARCO_POLAROID, PELICULA, SIMBOLOS, SIN_FOTO } from './modules.js';
 
 /** Las formas en una caja de 100 × 100, como trazos (las mismas que pinta `annotations.js`). */
 const TRAZOS = {
@@ -18,7 +18,7 @@ const FORMA_GRIS = '#BDBDBD';
 const LETRA = '-apple-system, system-ui, "Segoe UI", Roboto, sans-serif';
 const esColor = (c) => /^#[0-9a-fA-F]{6}$/.test(c ?? '');
 const SERIFA = 'Georgia, "Times New Roman", serif';
-const TIPOS = ['shape', 'textbox', 'image', 'sticker', 'polaroid', 'quote', 'rating', 'book'];
+const TIPOS = ['shape', 'textbox', 'image', 'sticker', 'polaroid', 'quote', 'rating', 'book', 'asset'];
 const claroSobre = (hex) => {
   const n = parseInt(hex.slice(1), 16);
   return 0.299 * ((n >> 16) & 255) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255) < 140;
@@ -198,6 +198,32 @@ const MODULOS_DE_EXPORTACION = {
     }
   },
 
+  /** Un asset con su color: el color recortado con su forma y, si es de textura, el gris multiplicando encima. */
+  asset(ctx, c, w, h, imgs) {
+    const img = imgs[0];
+    if (!img) return;
+    if (!esColor(c.color)) {
+      ctx.drawImage(img, 0, 0, w, h);
+      return;
+    }
+    const capa = document.createElement('canvas');
+    capa.width = Math.max(1, Math.round(w));
+    capa.height = Math.max(1, Math.round(h));
+    const k = capa.getContext('2d');
+    k.fillStyle = c.color;
+    k.fillRect(0, 0, capa.width, capa.height);
+    k.globalCompositeOperation = 'destination-in';
+    k.drawImage(img, 0, 0, capa.width, capa.height);
+    if (c.mode !== 'trazo') {
+      k.globalCompositeOperation = 'multiply';
+      k.drawImage(img, 0, 0, capa.width, capa.height);
+      // Multiplicar también oscurece lo transparente: se vuelve a recortar con la forma.
+      k.globalCompositeOperation = 'destination-in';
+      k.drawImage(img, 0, 0, capa.width, capa.height);
+    }
+    ctx.drawImage(capa, 0, 0, w, h);
+  },
+
   book(ctx, c, w, h, imgs) {
     const u = w / 100;
     const color = esColor(c.coverColor) ? c.coverColor : '#8C8C8C';
@@ -277,7 +303,15 @@ export async function exportarPagina({ items, pagina = 1, ancho = 1600, proporci
       const srcs =
         a.kind === 'polaroid'
           ? (a.content?.srcs ?? [])
-          : [a.kind === 'image' || a.kind === 'book' ? a.content?.src : a.kind === 'sticker' ? a.content?.src || fuenteDeSticker(a.content?.sticker) : null];
+          : [
+              a.kind === 'image' || a.kind === 'book'
+                ? a.content?.src
+                : a.kind === 'sticker'
+                  ? a.content?.src || fuenteDeSticker(a.content?.sticker)
+                  : a.kind === 'asset'
+                    ? a.content?.src || fuenteDeAsset(a.content?.asset)
+                    : null,
+            ];
       return Promise.all(srcs.map((src) => (src ? cargar(src).catch(() => null) : null)));
     }),
   );

@@ -30,7 +30,7 @@ export function CanvasStyleSheet({
   const theme = useTheme();
   const s = useT().library.canvas.style;
   const estilo = elemento?.style ?? {};
-  const conColor = elemento?.type === 'shape' || elemento?.type === 'textbox';
+  const conColor = elemento?.type === 'shape' || elemento?.type === 'textbox' || elemento?.type === 'asset' || elemento?.type === 'quote' || elemento?.type === 'rating' || elemento?.type === 'polaroid';
   const grosor: Grosor = !estilo.border ? 'none' : estilo.border.width >= (BORDES.thin + BORDES.thick) / 2 ? 'thick' : 'thin';
   const opacidad = String(Math.round(((estilo.opacity ?? 1) * 100) / 25) * 25) as Opacidad;
   const colorDeBorde = estilo.border?.color ?? theme.ink;

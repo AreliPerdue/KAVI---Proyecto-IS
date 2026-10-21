@@ -1237,8 +1237,13 @@ Reemplazan L5 (13e). Un recorte es una página 1 : √2 del visor de PDF (decisi
 - [x] T343a C3 · Polaroids (7 variantes), quote, rating y libro. (RF-CC14, RF-CC22) Dep: T342
   **Hecho (21 oct 2026):** `public/reader/modules.js` (pintar), `export.js` (exportar), `canvas-preview.tsx`
   (miniatura), `canvas-module-sheets.tsx` (hojas) y `book-list.tsx` (la lista de libros, compartida con T302).
-- [ ] T343b C3 · Primer pack de assets en grises recolorables (papeles, cintas, doodles) en la tienda, con unos
-  básicos incluidos para usarse sin red. (RF-CC13, RF-CC15 – RF-CC17) Dep: T343a, T337
+- [x] T343b C3 · Primer pack de assets en grises recolorables (papeles, notas, cintas, doodles), incluido en la app
+  para usarse sin red. (RF-CC13, RF-CC15 – RF-CC17) Dep: T343a
+  **Hecho (21 oct 2026):** el arte lo genera Claude (decisión de Areli): `scripts/library/assets-lienzo.mjs` →
+  `public/reader/lienzo/basicos/*.png` (24, 1,4 MB); catálogo `constants/canvas-assets.ts`; tipo `asset` en el
+  motor (`pintarAsset`), la exportación, la miniatura y `asset-sheet.tsx`.
+- [ ] T343c C3 · Más packs de assets por la tienda en la nube, como los stickers (T337): `sticker_packs` con su tipo,
+  descargar y ver sin red. (RF-CC17) Dep: T343b, T337
 - [ ] T344 C4 · Plantillas de Recortes (Book Review, Character Collage, Favorite Quotes, Reading Experience, DNF
   Graveyard), Guardar como plantilla y Mis plantillas. (RF-CC18 – RF-CC21) Dep: T343
 - [x] T352 Texturas de los 6 materiales: limpiar el muestrario de Areli, pasarlas a grises y hacerlas repetibles

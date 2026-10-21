@@ -200,3 +200,18 @@ describe('C3: módulos (RF-CC14; T343)', () => {
     expect(rutasDeImagenes(d.elements)).toEqual(['u/l/anotaciones/img.jpg', 'u/l/anotaciones/f1.jpg', 'u/l/anotaciones/f3.jpg']);
   });
 });
+
+describe('assets (RF-CC13, RF-CC15; T343b)', () => {
+  it('guardan cuál son, su nombre y cómo se recolorean; al motor va su color', () => {
+    const [a, b] = documentoValido({
+      elements: [
+        { id: 'a', type: 'asset', z: 1, content: { asset: 'basicos/papel-rasgado', label: 'Papel rasgado', mode: 'textura' }, style: { color: '#7A1E3A' } },
+        { id: 'b', type: 'asset', z: 2, content: { asset: 'basicos/destellos', mode: 'trazo' } },
+      ],
+    }).elements;
+    expect(a.content).toEqual({ asset: 'basicos/papel-rasgado', label: 'Papel rasgado', mode: 'textura' });
+    expect(b.content).toEqual({ asset: 'basicos/destellos', mode: 'trazo' });
+    const [m] = aMotor({ pages: 1, elements: [a] });
+    expect(m).toMatchObject({ kind: 'asset', content: { asset: 'basicos/papel-rasgado', mode: 'textura', color: '#7A1E3A', label: 'Papel rasgado' } });
+  });
+});

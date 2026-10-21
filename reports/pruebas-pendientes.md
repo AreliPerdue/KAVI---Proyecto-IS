@@ -844,3 +844,12 @@ siete polaroids, una con foto y pie, la cita, 4.5 estrellas y un libro; la image
 - [ ] (manual, teléfono) Poner foto en una polaroid desde la cámara; en la doble, la segunda foto en su hueco.
 - [ ] (manual) Doble toque en una cita, una calificación y una polaroid: abre la hoja de cada una.
 - [ ] (manual) Estirar una polaroid desde la esquina: no se deforma; desde un lado, sí cambia (se ve bien).
+
+## Recortes: papeles y más (T343b)
+Automatizado: `constants/__tests__/canvas-assets.test.ts` (archivo, medida y nombres de cada pieza),
+`lib/library/__tests__/canvas.test.ts` y `app/(app)/canvas/__tests__/canvas.test.tsx`. Visto en el demo web: papel rasgado
+en vino, hoja de libreta, papel arrugado rosa, cinta de rayas sobre una polaroid, boleto verde y doodles; la imagen
+exportada igual, con la textura bajo el color.
+- [ ] (manual, Areli) Revisar el estilo de las 24 piezas: ¿se sienten como papel real y línea delicada? (hoja de
+  revisión: `node scripts/library/assets-lienzo.mjs <carpeta> <hoja.png>`).
+- [ ] (manual, iPhone) El color sobre un papel conserva la textura (máscara y multiplicar en WebKit).

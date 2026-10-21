@@ -3,6 +3,7 @@ import { memo, useId } from 'react';
 import { type ImageSourcePropType, Platform, StyleSheet, Text, View } from 'react-native';
 import Svg, { ClipPath, Defs, Path, Rect } from 'react-native-svg';
 
+import { assetPorId } from '@/constants/canvas-assets';
 import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { type DocumentoDeLienzo, type ElementoDeLienzo, type LibroEnLienzo, type OrientacionDeLienzo, RAIZ_DE_DOS } from '@/lib/library/canvas';
@@ -75,6 +76,15 @@ export const CanvasPreview = memo(function CanvasPreview({
             return (
               <View key={e.id} style={caja}>
                 <Modulo e={e} w={w} h={h} fuentes={fuentes} />
+              </View>
+            );
+          }
+          if (e.type === 'asset') {
+            // Con color, el asset entero toma ese tono (en la página real, la textura se conserva).
+            const asset = assetPorId(e.content.asset);
+            return (
+              <View key={e.id} style={caja}>
+                {asset ? <Image source={asset.imagen} style={styles.lleno} contentFit="fill" tintColor={e.style.color ?? undefined} /> : null}
               </View>
             );
           }

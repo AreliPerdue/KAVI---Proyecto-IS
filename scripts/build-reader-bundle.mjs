@@ -70,6 +70,18 @@ const stickers = Object.fromEntries(
     ),
 );
 
+// Los assets incluidos del lienzo creativo (T343b), igual: el lienzo sirve sin red.
+const carpetaAssets = join(motor, 'lienzo');
+const assets = Object.fromEntries(
+  readdirSync(carpetaAssets, { withFileTypes: true })
+    .filter((d) => d.isDirectory())
+    .flatMap((d) =>
+      readdirSync(join(carpetaAssets, d.name))
+        .filter((f) => f.endsWith('.png'))
+        .map((f) => [`${d.name}/${f.replace(/\.png$/, '')}`, `data:image/png;base64,${readFileSync(join(carpetaAssets, d.name, f)).toString('base64')}`]),
+    ),
+);
+
 const pagina = `<!doctype html>
 <html lang="es">
 <head>
@@ -78,7 +90,7 @@ const pagina = `<!doctype html>
 <meta name="color-scheme" content="dark light" />
 <title>KAVI Library</title>
 <style>${estilos}</style>
-<script>globalThis.KAVI_BASE = document.baseURI; globalThis.KAVI_PDF_WORKER = ${seguro(JSON.stringify(worker))}; globalThis.KAVI_FONTS = ${JSON.stringify(letras)}; globalThis.KAVI_STICKERS = ${JSON.stringify(stickers)};</script>
+<script>globalThis.KAVI_BASE = document.baseURI; globalThis.KAVI_PDF_WORKER = ${seguro(JSON.stringify(worker))}; globalThis.KAVI_FONTS = ${JSON.stringify(letras)}; globalThis.KAVI_STICKERS = ${JSON.stringify(stickers)}; globalThis.KAVI_ASSETS = ${JSON.stringify(assets)};</script>
 </head>
 <body>
 <script>${seguro(outputFiles[0].text)}</script>

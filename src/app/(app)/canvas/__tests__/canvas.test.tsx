@@ -402,3 +402,31 @@ describe('C3: polaroid, cita, calificación y libro (T343)', () => {
     expect(globalThis.mockRouter.push).toHaveBeenCalledWith({ pathname: '/(app)/book/[id]', params: { id: 'l2' } });
   });
 });
+
+describe('papeles y más (T343b)', () => {
+  const T = C.assets;
+  it('un papel se pega con su forma y conserva su textura; un doodle se tiñe; el color se elige en Estilo', async () => {
+    await montar();
+    await agregar(T.title);
+    await fireEvent.press(screen.getByRole('button', { name: T.names['papel-rasgado'] }));
+    const tool = mockEnviados.at(-1) as { type: string; tool: string; ar: number };
+    expect(tool).toMatchObject({ type: 'tool', tool: 'asset' });
+    expect(tool.ar).toBeCloseTo(1.225, 2);
+    await tocarPagina();
+    expect(ultimas()[0]).toMatchObject({ kind: 'asset', content: { asset: 'basicos/papel-rasgado', mode: 'textura', label: T.names['papel-rasgado'] } });
+    await fireEvent.press(screen.getByRole('button', { name: C.style.open }));
+    await fireEvent.press(screen.getByRole('button', { name: C.style.color }));
+    await fireEvent.changeText(screen.getByLabelText(C.color.hex), '#2E7D32');
+    await fireEvent.press(screen.getByRole('button', { name: C.color.use }));
+    expect(ultimas()[0].content.color).toBe('#2E7D32');
+  });
+
+  it('los doodles están en su pestaña y se pegan como trazo', async () => {
+    await montar();
+    await agregar(T.title);
+    await fireEvent.press(screen.getByRole('tab', { name: T.categories.doodle }));
+    await fireEvent.press(screen.getByRole('button', { name: T.names.destellos }));
+    await tocarPagina();
+    expect(ultimas()[0].content).toMatchObject({ asset: 'basicos/destellos', mode: 'trazo' });
+  });
+});

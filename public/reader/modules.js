@@ -202,6 +202,52 @@ function libro(el, a) {
   el.append(portada);
 }
 
+/**
+ * Los assets del lienzo (T343b): papeles, notas, cintas y doodles en grises. Los incluidos vienen junto al motor (en el
+ * teléfono, dentro de la página: `KAVI_ASSETS`); uno de la tienda llega con su `src`.
+ */
+export function fuenteDeAsset(id) {
+  if (typeof id !== 'string' || !/^[a-z0-9-]+\/[a-z0-9-]+$/.test(id)) return '';
+  if (globalThis.KAVI_ASSETS?.[id]) return globalThis.KAVI_ASSETS[id];
+  return new URL(`lienzo/${id}.png`, globalThis.KAVI_BASE ?? document.baseURI).href;
+}
+
+function imagenEstirada(src) {
+  const img = document.createElement('img');
+  img.alt = '';
+  img.draggable = false;
+  img.src = src;
+  Object.assign(img.style, { position: 'absolute', inset: '0', width: '100%', height: '100%', objectFit: 'fill', display: 'block', pointerEvents: 'none' });
+  return img;
+}
+
+/**
+ * Un asset con su color (RF-CC13): una capa del color recortada con la forma del asset y, si es de textura, el gris
+ * encima multiplicando (conserva fibras, pliegues y rayas). Un doodle (trazo) es solo la capa de color. Sin color, el
+ * gris tal cual.
+ */
+export function pintarAsset(el, a) {
+  const c = a.content ?? {};
+  const src = c.src || fuenteDeAsset(c.asset);
+  el.setAttribute('role', 'img');
+  el.setAttribute('aria-label', c.label || 'Adorno');
+  el.style.isolation = 'isolate';
+  if (!src) return;
+  if (!esColor(c.color)) {
+    el.append(imagenEstirada(src));
+    return;
+  }
+  const mascara = `url("${src}")`;
+  el.append(
+    caja({ position: 'absolute', inset: '0', background: c.color, maskImage: mascara, webkitMaskImage: mascara, maskSize: '100% 100%', webkitMaskSize: '100% 100%', maskRepeat: 'no-repeat', webkitMaskRepeat: 'no-repeat' }),
+  );
+  if (c.mode !== 'trazo') {
+    const gris = imagenEstirada(src);
+    gris.style.mixBlendMode = 'multiply';
+    el.append(gris);
+  }
+}
+
 /** Pinta un módulo dentro de su caja `el` (ya posicionada y con su tamaño). */
 export function pintarModulo(el, a) {
   // Lo de adentro se mide contra el ancho de la caja.

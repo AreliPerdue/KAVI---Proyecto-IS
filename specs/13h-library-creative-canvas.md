@@ -176,7 +176,24 @@ llevar texto, pero nunca debe sentirse como un formulario ni como una nota grand
     abre; si el libro se borra, queda un libro sin título en gris.
   - Los cuatro se pintan en el motor (`public/reader/modules.js`), se exportan igual (`export.js`) y salen en la
     miniatura de Mi libreta. Doble toque abre la hoja de cada uno.
-  - **Pendiente (T343b):** el primer pack de assets (papeles, cintas, doodles en grises recolorables) en la tienda.
+- **Hecho (C3, assets, T343b, 21 oct 2026):** decisión de Areli: el arte lo genera Claude.
+  - **"Papeles y más"** en "+ Agregar", con 24 piezas en cuatro pestañas:
+    - **Papeles:** rasgado, arrugado, hoja de libreta, cuadriculado, punteado, esquina doblada, con fibras y tira
+      rasgada.
+    - **Notas:** memo, boleto, etiqueta y marcapáginas.
+    - **Cintas washi:** lisa, rayas, puntos y cuadros.
+    - **Doodles:** destellos, flecha, rama, moño, costura, y corazón, estrella y círculo a mano.
+  - **Cómo se hacen:** las genera `scripts/library/assets-lienzo.mjs` con canvas en Chrome y semilla fija: ruido de
+    fibras, orillas rasgadas, pliegues que se desvanecen y trazo a mano con temblor. Salen en PNG gris con paleta de
+    256 tonos (1,4 MB las 24).
+  - **Van incluidas:** viven en `public/reader/lienzo/basicos/` y dentro del motor del teléfono (`KAVI_ASSETS`), así
+    que sirven sin red (RF-CC17).
+  - **Color (RF-CC13):** se elige en Estilo.
+    - Los de textura (papeles, notas y cintas) llevan una capa del color recortada con su forma y el gris encima
+      multiplicando, así conservan fibras, pliegues y rayas.
+    - Los doodles toman el color en su trazo.
+    - Exportar hace lo mismo en el `<canvas>`. La miniatura de Mi libreta los tiñe enteros.
+  - **Pendiente (T343c):** que más packs de assets lleguen por la tienda en la nube, como los stickers (T337).
 
 ## 11. Qué cambia en otras specs
 
