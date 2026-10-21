@@ -38,6 +38,8 @@ import type {
   WorkoutInput,
   LibraryAnnotation,
   LibraryAnnotationInput,
+  LibraryCanvas,
+  LibraryCanvasInput,
   LibraryCard,
   LibraryCardTemplate,
   LibraryFileBody,
@@ -621,6 +623,12 @@ export interface LibraryApi {
   listCards(userId: string): Promise<LibraryCard[]>;
   saveCard(userId: string, input: Pick<LibraryCard, 'item_id' | 'template_id'> & Partial<Pick<LibraryCard, 'id' | 'values' | 'placement'>>): Promise<LibraryCard>;
   removeCard(cardId: string): Promise<void>;
+
+  /** Lienzo creativo (13h; T351): los recortes de un libro, uno, guardar (crear o reemplazar por id) y borrar. */
+  listCanvases(itemId: string): Promise<LibraryCanvas[]>;
+  getCanvas(canvasId: string): Promise<LibraryCanvas>;
+  saveCanvas(userId: string, canvas: LibraryCanvasInput): Promise<void>;
+  removeCanvas(canvasId: string): Promise<void>;
 
   listPages(itemId: string): Promise<LibraryPage[]>;
   savePages(userId: string, pages: readonly (Pick<LibraryPage, 'id' | 'item_id' | 'template'> & Partial<Pick<LibraryPage, 'sort_order' | 'layers'>>)[]): Promise<void>;

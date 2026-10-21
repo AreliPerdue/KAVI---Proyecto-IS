@@ -81,7 +81,7 @@ const ESQUINA_PX = 40;
 const GIRO_POSTIT = 15;
 
 /** Lo que se pega encima de la página (lo demás, como los subrayados, va en el texto). */
-const PEGABLES = ['postit', 'textbox', 'image', 'sticker'];
+const PEGABLES = ['postit', 'textbox', 'image', 'sticker', 'shape'];
 /** Alto entre ancho de un dibujo (T291): una raya puede ser muy larga y delgada. */
 const proporcionDeDibujo = (a) => (Number.isFinite(a.locator?.ar) && a.locator.ar >= 0.005 && a.locator.ar <= 200 ? a.locator.ar : 1);
 /** Los trazos de cada dibujo pintado, para volver a pintarlos cuando cambia su tamaño (zoom, letra, pantalla). */
@@ -104,6 +104,21 @@ const trazosValidos = (a) => (Array.isArray(a.content?.strokes) ? a.content.stro
 
 /** Lo que es solo una imagen: se gira y no se escribe. */
 const esImagen = (a) => a.kind === 'image' || a.kind === 'sticker';
+
+/**
+ * Las formas del lienzo creativo (13h, RF-CC14; T351), en una caja de 100 × 100 que se estira con la pieza.
+ * Empiezan en un gris neutro: KAVI no trae paletas (RF-CC11).
+ */
+const FORMAS = {
+  rect: '<rect width="100" height="100"/>',
+  ellipse: '<ellipse cx="50" cy="50" rx="50" ry="50"/>',
+  heart: '<path d="M50 94C22 74 0 56 0 31 0 14 13 3 28 3c10 0 18 6 22 14C54 9 62 3 72 3c15 0 28 11 28 28 0 25-22 43-50 63z"/>',
+  star: '<polygon points="50,0 61.8,35.4 99,35.4 69,57.3 80.3,92.7 50,70.8 19.7,92.7 31,57.3 1,35.4 38.2,35.4"/>',
+  blob: '<path d="M53 2c21 0 42 13 45 35 4 23-9 47-29 57-21 10-46 4-59-14C-3 62 0 36 12 20 22 7 37 2 53 2z"/>',
+};
+const FORMA_GRIS = '#BDBDBD';
+/** Lo que no lleva texto: se gira con dos dedos y no se abre para escribir. */
+const sinTexto = (a) => esImagen(a) || a.kind === 'shape';
 
 /**
  * La imagen de un sticker incluido (T290): en el teléfono viene dentro del motor (sin red también se ve); en
@@ -167,6 +182,11 @@ export function crearCapa(ctx, enviar) {
   let seleccionEnviada = false;
   let herramienta = null;
   let seleccion = null;
+  /**
+   * Lienzo creativo (13h, RF-CC9; T351): lo que va elegido junto con `seleccion` (al elegir varios para agruparlos)
+   * y los grupos (`content.group`), que se eligen y se mueven juntos.
+   */
+  let ademas = new Set();
   let arrastre = null; // { id, el, x0, y0, movido }
   let repintarAlSoltar = false;
   let ultimoToque = { id: null, t: 0 };
@@ -222,7 +242,13 @@ export function crearCapa(ctx, enviar) {
       cursor: a.locked ? 'pointer' : 'grab',
       rotate: Number.isFinite(a.content?.rot) && a.content.rot ? `${a.content.rot}deg` : '',
     });
-    if (esImagen(a)) {
+    if (a.kind === 'shape') {
+      const forma = FORMAS[a.content?.shape] ? a.content.shape : 'rect';
+      const color = /^#[0-9a-fA-F]{6}$/.test(a.content?.color ?? '') ? a.content.color : FORMA_GRIS;
+      el.setAttribute('role', 'img');
+      el.setAttribute('aria-label', 'Forma');
+      el.innerHTML = `<svg viewBox="0 0 100 100" preserveAspectRatio="none" width="100%" height="100%" fill="${color}" style="display:block;pointer-events:none;overflow:visible">${FORMAS[forma]}</svg>`;
+    } else if (esImagen(a)) {
       const sticker = a.kind === 'sticker';
       el.setAttribute('role', 'img');
       el.setAttribute('aria-label', sticker ? (a.content?.label ?? 'Sticker') : 'Imagen');
@@ -455,7 +481,7 @@ export function crearCapa(ctx, enviar) {
       return;
     }
     // Doblado no se escribe: primero se abre (su texto no está a la vista).
-    if (esImagen(a) || a.locked || !interactiva() || a.content?.folded) {
+    if (sinTexto(a) || a.locked || !interactiva() || a.content?.folded) {
       porEditar = null;
       return;
     }
@@ -534,19 +560,38 @@ export function crearCapa(ctx, enviar) {
     if (!a.locked && interactiva() && !a.content?.folded && !el.querySelector('.asa')) ponerAsas(el, a);
   }
 
+  /** Los del mismo grupo que `a` (él incluido); vacío si no está en un grupo. */
+  const delGrupo = (a) => (a?.content?.group ? lista.filter((x) => x.content?.group === a.content.group) : []);
+  const elDe = (id) => document.querySelector(`.anotacion[data-id="${CSS.escape(id)}"]`);
+
+  /** Todo lo que va elegido: lo elegido, su grupo y lo que se eligió además. */
+  function elegidos() {
+    const a = lista.find((x) => x.id === seleccion);
+    return new Set([...(a ? [a.id] : []), ...delGrupo(a).map((x) => x.id), ...ademas]);
+  }
+
   function remarcar() {
+    const juntos = elegidos();
+    const varios = juntos.size > 1;
     for (const el of document.querySelectorAll('.anotacion')) {
-      el.classList.remove('seleccionada');
+      el.classList.remove('seleccionada', 'en-grupo');
       el.querySelector('.candado')?.remove();
       for (const asa of el.querySelectorAll('.asa')) asa.remove();
       const a = lista.find((x) => x.id === el.dataset.id);
-      if (a && a.id === seleccion) marcarSeleccion(el, a);
+      if (!a || !juntos.has(a.id)) continue;
+      // Varios a la vez se mueven juntos; para cambiar el tamaño o girar, uno solo (sin agrupar).
+      if (varios) el.classList.add('en-grupo');
+      if (a.id === seleccion) {
+        if (varios) el.classList.add('seleccionada');
+        else marcarSeleccion(el, a);
+      }
     }
     for (const el of document.querySelectorAll('.separador')) el.style.outline = el.dataset.id === seleccion ? '2px solid #131313' : '';
   }
 
-  function elegir(id, avisar = true) {
+  function elegir(id, avisar = true, tambien = []) {
     seleccion = id;
+    ademas = new Set(id ? tambien.filter((x) => typeof x === 'string' && x !== id) : []);
     remarcar();
     if (avisar) enviar({ type: 'select', id });
   }
@@ -622,9 +667,14 @@ export function crearCapa(ctx, enviar) {
       // Escribiendo, el dedo pone el cursor: no arrastra.
       if (editando?.el === el) return;
       e.preventDefault();
-      arrastre = { id: a.id, el, x0: e.clientX, y0: e.clientY, movido: false };
+      // Los de su grupo van con él (13h, RF-CC9); lo bloqueado se queda.
+      const companeros = delGrupo(a)
+        .filter((x) => x.id !== a.id && !x.locked)
+        .map((x) => ({ a: x, el: elDe(x.id) }))
+        .filter((c) => c.el);
+      arrastre = { id: a.id, el, x0: e.clientX, y0: e.clientY, movido: false, companeros };
       el.setPointerCapture?.(e.pointerId);
-      if (e.pointerType === 'touch' && esImagen(a) && !a.locked && seleccion === a.id) dosDedos(el, a, e);
+      if (e.pointerType === 'touch' && sinTexto(a) && !a.locked && seleccion === a.id && !companeros.length) dosDedos(el, a, e);
     });
     el.addEventListener('pointermove', (e) => {
       // Jalando un asa (tamaño o giro), la nota no se mueve: ese movimiento es del asa.
@@ -637,15 +687,22 @@ export function crearCapa(ctx, enviar) {
       arrastre.movido = true;
       el.style.translate = `${dx}px ${dy}px`;
       el.style.cursor = 'grabbing';
+      for (const c of arrastre.companeros ?? []) c.el.style.translate = `${dx}px ${dy}px`;
     });
     const soltar = (e, cancelado) => {
       // Con dos dedos, el gesto lo termina `dosDedos`.
       if (arrastre?.el !== el || arrastre.dosDedos) return;
       e.stopPropagation();
-      const { movido } = arrastre;
+      const { movido, companeros = [] } = arrastre;
       arrastre = null;
-      if (cancelado) el.style.translate = '';
-      else if (movido) soltarEn(el, a);
+      if (cancelado) {
+        el.style.translate = '';
+        for (const c of companeros) c.el.style.translate = '';
+      } else if (movido && companeros.length) {
+        // Un grupo se mueve en un solo paso (T351): la app lo guarda y lo deshace junto.
+        const items = [{ id: a.id, locator: soltarEn(el, a, true, false) }, ...companeros.map((c) => ({ id: c.a.id, locator: soltarEn(c.el, c.a, false, false) }))].filter((x) => x.locator);
+        if (items.length) enviar({ type: 'moves', items });
+      } else if (movido) soltarEn(el, a);
       else tocar(a);
       if (repintarAlSoltar) {
         repintarAlSoltar = false;
@@ -678,7 +735,7 @@ export function crearCapa(ctx, enviar) {
   }
 
   /** Al soltar: la nueva posición, en la página (PDF) o el renglón (EPUB) donde quedó. */
-  function soltarEn(el, a) {
+  function soltarEn(el, a, elegirlo = true, mandar = true) {
     const caja = cajaSinGiro(el);
     let locator = null;
     if (ctx.pdf()) {
@@ -690,7 +747,7 @@ export function crearCapa(ctx, enviar) {
     }
     if (!locator) {
       el.style.translate = '';
-      return;
+      return null;
     }
     // Se queda donde se soltó mientras la app guarda y manda la lista nueva.
     if (ctx.pdf()) {
@@ -701,8 +758,9 @@ export function crearCapa(ctx, enviar) {
         el.style.top = `${locator.y * 100}%`;
       }
     }
-    if (seleccion !== a.id) elegir(a.id);
-    enviar({ type: 'move', id: a.id, locator });
+    if (elegirlo && seleccion !== a.id) elegir(a.id);
+    if (mandar) enviar({ type: 'move', id: a.id, locator });
+    return locator;
   }
 
   /**
@@ -743,7 +801,7 @@ export function crearCapa(ctx, enviar) {
    * agrandan o achican sin deformarlo y las de los lados lo estiran (pedido de Areli, 14 oct).
    */
   function ponerAsas(el, a) {
-    if (esImagen(a) || a.kind === 'postit') ponerGiro(el, a);
+    if (esImagen(a) || a.kind === 'postit' || a.kind === 'shape') ponerGiro(el, a);
     for (const lado of LADOS) {
       const proporcional = a.kind === 'sticker' && lado.length === 2;
       const asa = document.createElement('div');
@@ -1558,6 +1616,8 @@ export function crearCapa(ctx, enviar) {
     ctx.libro()?.recapar?.();
     pintarEpub();
     sincronizarEpub();
+    // Lo elegido junto o en grupo (T351) se vuelve a marcar con la lista nueva.
+    if (ademas.size || delGrupo(lista.find((x) => x.id === seleccion)).length) remarcar();
     if (porEditar) editar(porEditar);
   }
 
@@ -1580,6 +1640,7 @@ export function crearCapa(ctx, enviar) {
     actualizar(items) {
       lista = Array.isArray(items) ? [...items].sort((a, b) => a.z - b.z) : [];
       if (seleccion && !lista.some((a) => a.id === seleccion)) seleccion = null;
+      ademas = new Set([...ademas].filter((id) => lista.some((a) => a.id === id)));
       repintar();
     },
     /** `ancho`: el de un sticker que vuelve de la charola, para que conserve su tamaño. */
@@ -1590,7 +1651,8 @@ export function crearCapa(ctx, enviar) {
       document.body.classList.toggle('pegando', !!herramienta);
       if (herramienta && seleccion) elegir(null, false);
     },
-    elegir: (id) => elegir(typeof id === 'string' ? id : null, false),
+    /** `tambien`: lo que va elegido junto (lienzo creativo, para agrupar; T351). */
+    elegir: (id, tambien) => elegir(typeof id === 'string' ? id : null, false, Array.isArray(tambien) ? tambien : []),
     destello,
     escribir: (id) => typeof id === 'string' && editar(id),
     /** Si hay un post-it o un cuadro de texto abierto para escribir (el teclado está arriba). */
@@ -1620,6 +1682,7 @@ export function crearCapa(ctx, enviar) {
       capaEpub = null;
       rangos = new Map();
       seleccion = null;
+      ademas = new Set();
     },
   };
 }

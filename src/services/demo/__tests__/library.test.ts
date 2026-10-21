@@ -457,3 +457,37 @@ describe('club de lectura: avance (13f, RF-BC9; T308)', () => {
   });
 });
 
+
+describe('lienzo creativo: recortes de un libro (13h; T351)', () => {
+  /* eslint-disable-next-line @typescript-eslint/no-require-imports -- el mismo estado que `fresh()` */
+  const store = () => require('@/services/demo/store') as typeof import('@/services/demo/store');
+  const YO = 'demo-user';
+  const recorte = (id: string, itemId: string) => ({ id, context: 'book' as const, item_id: itemId, title: '', orientation: 'portrait' as const, doc: { pages: 1, elements: [] }, version: 1 });
+
+  it('se guardan por id y se leen como la base: solo de un libro mío, con el documento en orden', async () => {
+    const api = fresh();
+    store().setCurrentUser({ id: YO, email: 'demo@kavi.app' });
+    const libro = await api.createItem(YO, { family: 'book', kind: 'pdf', title: 'Rayuela' });
+    const ajeno = await api.createItem(ANA, { family: 'book', kind: 'pdf', title: 'Ajeno' });
+    await api.saveCanvas(YO, recorte('r1', libro.id));
+    await api.saveCanvas(YO, { ...recorte('r1', libro.id), version: 2, doc: { pages: 1, elements: [{ id: 'e1', type: 'shape', z: 1 }] } as never });
+    await expect(api.saveCanvas(YO, recorte('r2', ajeno.id))).rejects.toThrow(es.errors.noPermission);
+    const [r1] = await api.listCanvases(libro.id);
+    expect(r1).toMatchObject({ id: 'r1', owner_id: YO, version: 2 });
+    expect(r1.doc.elements[0]).toMatchObject({ id: 'e1', type: 'shape', content: { shape: 'rect' } });
+    expect((await api.getCanvas('r1')).version).toBe(2);
+    await expect(api.getCanvas('no-existe')).rejects.toThrow(es.errors.canvasNotFound);
+  });
+
+  it('borrar el recorte, o el libro, se lo lleva', async () => {
+    const api = fresh();
+    store().setCurrentUser({ id: YO, email: 'demo@kavi.app' });
+    const libro = await api.createItem(YO, { family: 'book', kind: 'pdf', title: 'Rayuela' });
+    await api.saveCanvas(YO, recorte('r1', libro.id));
+    await api.saveCanvas(YO, recorte('r2', libro.id));
+    await api.removeCanvas('r1');
+    expect((await api.listCanvases(libro.id)).map((c) => c.id)).toEqual(['r2']);
+    await api.removeItem(libro.id);
+    expect(await api.listCanvases(libro.id)).toEqual([]);
+  });
+});

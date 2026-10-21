@@ -3,7 +3,7 @@ import { AppState } from 'react-native';
 
 import { isOfflineError } from '@/lib/auth-errors';
 import { confirmar, type EntradaDeLibreria, pendientes } from '@/lib/library/offline/outbox';
-import { listAnnotations, removeAnnotationImage, removeAnnotations, saveAnnotations, saveReadingSession, updateLibraryItem } from '@/services/library';
+import { listAnnotations, removeAnnotationImage, removeAnnotations, removeCanvas, saveAnnotations, saveCanvas, saveReadingSession, updateLibraryItem } from '@/services/library';
 
 /**
  * Sube lo que quedó en la cola de la librería (RF-BR3, T285): el avance y las anotaciones (T286). Lo que
@@ -40,6 +40,10 @@ function subir(e: EntradaDeLibreria): Promise<unknown> {
       return saveReadingSession(e.userId, e.session);
     case 'imageCleanup':
       return borrarImagenQuitada(e);
+    case 'canvas':
+      return saveCanvas(e.userId, e.canvas);
+    case 'canvasRemove':
+      return removeCanvas(e.id);
   }
 }
 

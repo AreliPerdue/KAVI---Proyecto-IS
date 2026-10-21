@@ -221,6 +221,12 @@
       .anotacion.postit.seleccionada {
         box-shadow: 0 4px 14px rgb(0 0 0 / 0.35) !important;
       }
+      /* Lienzo creativo (T351): lo elegido junto o agrupado lleva un contorno punteado, sin asas. */
+      .anotacion.en-grupo {
+        outline: 1.5px dashed #131313;
+        outline-offset: 3px;
+        box-shadow: 0 0 0 4px rgb(255 255 255 / 0.7);
+      }
       /* Doblado: la esquina ya lleva su sombra (con su forma); una cuadrada se vería detrás. */
       .anotacion.postit.doblado.seleccionada {
         box-shadow: none !important;

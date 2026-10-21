@@ -3,6 +3,7 @@
  * types/database.ts (T029), los services mapean filas de BD a estos tipos.
  */
 import type { Dimension } from '@/constants/dimensions';
+import type { DocumentoDeLienzo, OrientacionDeLienzo } from '@/lib/library/canvas';
 
 export type AuthUser = {
   id: string;
@@ -833,6 +834,27 @@ export type LibraryCardTemplate = {
 };
 
 export type CardPlacement = 'front' | 'back' | 'first_page' | 'last_page';
+
+/**
+ * Un lienzo creativo (spec 13h; T351): un recorte de un libro o, en C5, una página del Journal. Su documento lleva
+ * los elementos (ver `lib/library/canvas.ts`); `version` sube con cada guardado.
+ */
+export type LibraryCanvas = {
+  id: string;
+  owner_id: string;
+  context: 'book' | 'journal';
+  item_id: string | null;
+  title: string;
+  orientation: OrientacionDeLienzo;
+  doc: DocumentoDeLienzo;
+  version: number;
+  thumb_path: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+/** Lo que se guarda de un lienzo (crear o reemplazar por id: el id lo pone el cliente, como las anotaciones). */
+export type LibraryCanvasInput = Pick<LibraryCanvas, 'id' | 'context' | 'item_id' | 'title' | 'orientation' | 'doc' | 'version'>;
 
 export type LibraryCard = {
   id: string;

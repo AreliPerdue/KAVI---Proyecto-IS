@@ -4,6 +4,7 @@ import { AUTH_MESSAGES, AuthUiError, isOfflineError } from '@/lib/auth-errors';
 import { uuidv4 } from '@/lib/gym/ids';
 import { getSupabase } from '@/lib/supabase';
 import { LIBRARY_LIMITS } from '@/constants/library';
+import { documentoValido } from '@/lib/library/canvas';
 import { nombreSeguro } from '@/lib/library/files';
 import type { LibraryApi } from '@/services/contracts';
 import { toError, unwrap } from '@/services/supabase/errors';
@@ -18,6 +19,7 @@ import type {
   LibraryClubMember,
   LibraryClubBook,
   LibraryClubProgress,
+  LibraryCanvas,
   LibraryCard,
   LibraryCardTemplate,
   LibraryFileBody,
@@ -496,6 +498,24 @@ export const supabaseLibrary: LibraryApi = {
 
   async removeCard(cardId) {
     sinError(await db().from('library_cards').delete().eq('id', cardId));
+  },
+
+  async listCanvases(itemId) {
+    const filas = unwrap(await db().from('library_canvases').select('*').eq('item_id', itemId).order('created_at', { ascending: false })) as LibraryCanvas[];
+    return filas.map((c) => ({ ...c, doc: documentoValido(c.doc) }));
+  },
+
+  async getCanvas(canvasId) {
+    const c = unwrap(await db().from('library_canvases').select('*').eq('id', canvasId).single()) as LibraryCanvas;
+    return { ...c, doc: documentoValido(c.doc) };
+  },
+
+  async saveCanvas(userId, canvas) {
+    sinError(await db().from('library_canvases').upsert({ ...canvas, owner_id: userId }));
+  },
+
+  async removeCanvas(canvasId) {
+    sinError(await db().from('library_canvases').delete().eq('id', canvasId));
   },
 
   async listPages(itemId) {

@@ -7,10 +7,11 @@ import { base64ToBytes } from '@/lib/library/base64';
 import { asegurarCopia, borrarCopia, comoDato, guardarCopia, uriLocal } from '@/lib/library/offline/user-stickers';
 import { useAuth } from '@/providers';
 import { createUserSticker, libraryFileUrl, listUserStickers, removeUserSticker } from '@/services/library';
+import { PREFIJO_PROPIO } from '@/lib/library/sticker-packs';
 import type { LibraryAnnotation, UserSticker } from '@/types/domain';
 
-/** El prefijo de un sticker propio en una anotación: `mios/<id>` (T335). */
-export const PREFIJO_PROPIO = 'mios/';
+/** El prefijo de un sticker propio en una anotación: `mios/<id>` (T335); vive en `lib` para el lienzo (T351). */
+export { PREFIJO_PROPIO };
 export const idPropio = (id: string) => `${PREFIJO_PROPIO}${id}`;
 
 const claves = {

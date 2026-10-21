@@ -31,7 +31,7 @@ import { Fonts, IconSize, IconStroke, Radius, Spacing, Typography } from '@/cons
 import { useAnnotationEditor, useAnnotationImageUrls, useAnnotations, useClubAnnotationsLive, useUploadAnnotationImage } from '@/hooks/use-annotations';
 import { useReadingSessions, useReadingTimer } from '@/hooks/use-reading-sessions';
 import { useStickerPacks, useStickerSources } from '@/hooks/use-sticker-packs';
-import { idPropio, PREFIJO_PROPIO, useCreateUserSticker, useRemoveUserSticker, useStickersDeOtros, useUserStickerImages, useUserStickers, useUserStickerSources } from '@/hooks/use-user-stickers';
+import { idPropio, useCreateUserSticker, useRemoveUserSticker, useStickersDeOtros, useUserStickerImages, useUserStickers, useUserStickerSources } from '@/hooks/use-user-stickers';
 import { usePantallaCompleta } from '@/hooks/use-full-screen';
 import { useLibrarySync } from '@/hooks/use-library-sync';
 import { useAbrirCopiaLocal } from '@/hooks/use-local-book';
@@ -88,11 +88,11 @@ import { autoresDelClub, autoria, conCapaDelClub, esDeOtroEnElClub, esMia } from
 import { posicionParaSeguir } from '@/lib/library/club-live';
 import { FORMA_POR_OMISION, type FormaDeLeer } from '@/lib/library/reading-mode';
 import { coloresDe } from '@/lib/library/reader-theme';
-import { partesDeSticker, urlDeSticker } from '@/lib/library/sticker-packs';
+import { fuenteDeSticker, partesDeSticker } from '@/lib/library/sticker-packs';
 import { etiquetaDeSaga, siguienteDeSaga } from '@/lib/library/series';
 import { useAuth, useConfirm, useSnackbar } from '@/providers';
 import { usePreferencesStore } from '@/store/preferences-store';
-import type { LibraryAnnotation, LibraryLocator, StickerPack, UserSticker } from '@/types/domain';
+import type { LibraryAnnotation, LibraryLocator, UserSticker } from '@/types/domain';
 
 /** Cuánto se espera sin moverse antes de guardar la posición: así no se escribe en cada página. */
 const GUARDAR_MS = 1200;
@@ -115,25 +115,6 @@ type Posicion = Extract<MensajeDelMotor, { type: 'position' }>;
  * cola del dispositivo), se deshace y se rehace, y abajo están las herramientas: pegar un post-it y, con
  * algo elegido, escribir, traer al frente, mandar atrás, bloquear y quitar. Arriba, el panel de lo anotado.
  */
-/**
- * La imagen de un sticker de la tienda para el lector: la copia del teléfono si ya se leyó; si no (o en la web),
- * su dirección en la nube. Los incluidos no llevan: el lector los tiene.
- */
-function fuenteDeSticker(
-  id: string | null,
-  fuentes: ReadonlyMap<string, string>,
-  packs: readonly StickerPack[] | undefined,
-  propias: ReadonlyMap<string, string>,
-): string | undefined {
-  if (!id || id.startsWith('nobi-pink/')) return undefined;
-  if (id.startsWith(PREFIJO_PROPIO)) return propias.get(id);
-  const lista = fuentes.get(id);
-  if (lista) return lista;
-  const partes = partesDeSticker(id);
-  const pack = partes && packs?.find((p) => p.id === partes.pack);
-  return pack && partes ? urlDeSticker(pack, partes.nombre) : undefined;
-}
-
 /** El nombre de un sticker pegado, para leerlo en voz alta en la página (la cara: igual en todos los packs). */
 function nombreDeSticker(a: LibraryAnnotation, nombres: Record<NombreDeSticker, string>): string | undefined {
   const cara = partesDeSticker(stickerDe(a) ?? '')?.nombre;

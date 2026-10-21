@@ -8,6 +8,8 @@ jest.mock('@/lib/storage', () => ({
   storage: { removeItem: async (k: string) => mockDisco.delete(k) },
 }));
 
+import type { EntradaDeLibreria } from '@/lib/library/offline/outbox';
+
 /* eslint-disable-next-line @typescript-eslint/no-require-imports -- tras el mock */
 const cola = require('@/lib/library/offline/outbox') as typeof import('@/lib/library/offline/outbox');
 /* eslint-disable-next-line @typescript-eslint/no-require-imports -- tras el mock */
@@ -136,5 +138,45 @@ describe('lista guardada', () => {
     expect(await lista.anotacionesGuardadas('u2', 'l1')).toBeNull();
     await lista.olvidarLista();
     expect(await lista.anotacionesGuardadas('u2', 'l3')).toBeNull();
+  });
+});
+
+describe('lienzos en la cola (13h, RF-CC10; T351)', () => {
+  const lienzo = (id: string, extra: Record<string, unknown> = {}) => ({
+    id,
+    owner_id: 'u1',
+    context: 'book' as const,
+    item_id: 'l1',
+    title: '',
+    orientation: 'portrait' as const,
+    doc: { pages: 1, elements: [] },
+    version: 1,
+    thumb_path: null,
+    created_at: '2026-10-20T10:00:00.000Z',
+    updated_at: '2026-10-20T10:00:00.000Z',
+    ...extra,
+  });
+  // Lo que va en la cola es lo que se guarda (sin dueño ni fechas: esas las pone la base).
+  const entrada = (id: string, version: number, at: number) => {
+    const { id: _id, context, item_id, title, orientation, doc } = lienzo(id);
+    return { op: 'canvas' as const, itemId: 'l1', userId: 'u1', canvas: { id: _id, context, item_id, title, orientation, doc, version }, at };
+  };
+
+  it('lo guardado sin red se ve como quedó, uno nuevo aparece y lo borrado no vuelve', () => {
+    const otroLibro = { ...entrada('otro', 1, 3), itemId: 'l9' };
+    const entradas: EntradaDeLibreria[] = [entrada('r1', 5, 1), entrada('r3', 1, Date.parse('2026-10-21T10:00:00Z')), { op: 'canvasRemove', itemId: 'l1', id: 'r2', at: 2 }, otroLibro];
+    const lista = cola.aplicarLienzosPendientes([lienzo('r1'), lienzo('r2')], entradas, 'l1');
+    expect(lista.map((c) => [c.id, c.version])).toEqual([
+      ['r3', 1],
+      ['r1', 5],
+    ]);
+  });
+
+  it('guardar otra vez el mismo lienzo reemplaza lo pendiente: el último gana', async () => {
+    await cola.encolar(entrada('r1', 2, 10));
+    await cola.encolar(entrada('r1', 3, 11));
+    const pendientes = (await cola.pendientes()).filter((e) => e.op === 'canvas');
+    expect(pendientes).toHaveLength(1);
+    expect(pendientes[0].op === 'canvas' && pendientes[0].canvas.version).toBe(3);
   });
 });

@@ -814,3 +814,13 @@ superior, crear "Leer un rato" con el tema Lectura y un libro, y "Seguir leyendo
 - [ ] (manual) Una actividad de Lectura que se repite cada día: todas las del calendario abren el mismo libro, donde
   ibas.
 - [ ] (manual, dos cuentas) Quien ve tu actividad de Lectura compartida no ve "Seguir leyendo".
+
+## Lienzo creativo: lienzo base (T351)
+Automatizado: RLS en PGlite (11 casos), `lib/library/__tests__/canvas.test.ts`, `reader-protocol.test.ts` (`moves`),
+`offline/__tests__/outbox.test.ts`, `services/demo/__tests__/library.test.ts`, `app/(app)/canvas/__tests__/canvas.test.tsx`
+y `app/(app)/__tests__/library.test.tsx`. Visto en el demo web (1280 y 375 px): página 1 : √2 entera, texto, corazón,
+duplicar, elegir varios, agrupar, arrastrar el grupo, deshacer los dos juntos y volver.
+- [ ] (manual, teléfono) Crear un recorte horizontal: se ve entero y pide girar para verlo grande; pellizcar acerca.
+- [ ] (manual) Pegar una imagen de la galería y un sticker propio; salir sin red y volver: todo sigue ahí y sube al
+  regresar la red.
+- [ ] (manual) Hacer el recorte en la compu y abrirlo en el teléfono: cada cosa en el mismo lugar, tamaño y giro.

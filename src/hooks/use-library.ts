@@ -62,6 +62,8 @@ export const libraryKeys = {
   links: (userId: string | null) => ['library', 'links', userId] as const,
   annotations: (itemId: string) => ['library', 'annotations', itemId] as const,
   layouts: (userId: string | null) => ['library', 'layouts', userId] as const,
+  canvases: (itemId: string) => ['library', 'canvases', itemId] as const,
+  canvas: (id: string) => ['library', 'canvas', id] as const,
 };
 
 /** Las piezas de la persona, de la más nueva a la más vieja. */

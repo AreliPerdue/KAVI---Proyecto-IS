@@ -41,6 +41,9 @@ const mockAcomodosMut = { guardar: { mutate: jest.fn(), isPending: false }, quit
 const mockElegir = jest.fn();
 const mockLeer = jest.fn();
 
+// Recorte nuevo de un libro (13h, T351): el doble da el id del lienzo creado.
+const mockCrearRecorte = jest.fn(() => 'r-nuevo');
+jest.mock('@/hooks/use-canvases', () => ({ useCreateCanvas: () => mockCrearRecorte }));
 jest.mock('@/hooks/use-clubs', () => ({ useClubMutations: () => ({ create: { mutate: jest.fn(), isPending: false, error: null } }) }));
 jest.mock('@/hooks/use-library', () => ({
   useLibraryItems: () => mockPiezas,
@@ -104,6 +107,7 @@ const pieza = (id: string, extra: Record<string, unknown> = {}) => ({
   sort_order: 0,
   series_id: null,
   series_index: null,
+  family: 'book',
   kind: 'pdf',
   file_size: 1024,
   publisher: null,
@@ -367,6 +371,17 @@ describe('menú y selección', () => {
     expect(screen.getByText(L.item.edit)).toBeTruthy();
     await fireEvent.press(screen.getByRole('button', { name: L.item.open }));
     expect(globalThis.mockRouter.push).toHaveBeenCalledWith({ pathname: '/(app)/book/[id]', params: { id: 'l1' } });
+  });
+
+  it('"Nuevo recorte" pregunta la forma, crea el lienzo y lo abre (13h, T351)', async () => {
+    mockCrearRecorte.mockClear();
+    await render(<Pantalla />);
+    await fireEvent.press(screen.getByRole('button', { name: L.actionsFor('Rayuela') }));
+    await fireEvent.press(screen.getByRole('button', { name: L.canvas.newCanvas }));
+    await fireEvent.press(screen.getByRole('tab', { name: L.canvas.landscape }));
+    await fireEvent.press(screen.getByRole('button', { name: L.canvas.create }));
+    expect(mockCrearRecorte).toHaveBeenCalledWith('l1', 'landscape');
+    expect(globalThis.mockRouter.push).toHaveBeenCalledWith({ pathname: '/(app)/canvas/[id]', params: { id: 'r-nuevo', item: 'l1' } });
   });
 
   it('editar datos: título, categoría con sugerencia y géneros; lo no tocado se queda igual', async () => {

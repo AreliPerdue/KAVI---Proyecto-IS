@@ -187,3 +187,20 @@ describe('lápiz (T291)', () => {
     expect(leerMensaje({ type: 'undo' })).toEqual({ type: 'undo' });
   });
 });
+
+describe('leerMensaje · lienzo creativo (T351)', () => {
+  it('un grupo soltado llega como un solo `moves`, sin lo que no sirve', () => {
+    const m = leerMensaje(
+      JSON.stringify({
+        type: 'moves',
+        items: [
+          { id: 'a', locator: { page: 1, x: 0.2, y: 0.3, w: 0.2 } },
+          { id: 'b', locator: { nada: true } },
+          { locator: { page: 1, x: 0.1, y: 0.1 } },
+        ],
+      }),
+    );
+    expect(m).toEqual({ type: 'moves', items: [{ id: 'a', locator: expect.objectContaining({ page: 1, x: 0.2, y: 0.3 }) }] });
+    expect(leerMensaje(JSON.stringify({ type: 'moves', items: [] }))).toBeNull();
+  });
+});

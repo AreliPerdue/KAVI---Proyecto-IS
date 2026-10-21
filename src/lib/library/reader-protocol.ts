@@ -24,7 +24,8 @@ export type Posicion = { page?: number; cfi?: string; fraction?: number };
 /** Lo que el motor necesita de una anotación para pintarla (spec 13c, T286). */
 export type AnotacionEnMotor = {
   id: string;
-  kind: LibraryAnnotationKind;
+  /** `shape`: solo en el lienzo creativo (13h, T351), no en los libros. */
+  kind: LibraryAnnotationKind | 'shape';
   locator: LibraryLocator;
   z: number;
   locked: boolean;
@@ -44,13 +45,21 @@ export type AnotacionEnMotor = {
     label?: string;
     /** Dibujo del lápiz (T291): sus trazos, relativos a su caja. */
     strokes?: Trazo[];
+    /** Forma del lienzo creativo (13h, RF-CC14; T351). */
+    shape?: FormaDeLienzo;
+    /** Grupo del lienzo creativo (RF-CC9): los de un grupo se eligen y se mueven juntos. */
+    group?: string;
     /** De otro miembro del club (13f, T307): su inicial y su color, para su marca en la página. */
     author?: { initial: string; color: string; name: string };
   };
 };
 
 /** Con qué se está anotando: nada (leer y mover lo pegado) o pegar algo donde se toque (T286, T289). */
-export type Herramienta = 'postit' | 'textbox' | 'image' | 'sticker' | null;
+export type Herramienta = 'postit' | 'textbox' | 'image' | 'sticker' | 'shape' | null;
+
+/** Las formas del lienzo creativo (13h, RF-CC14; T351), como las dibuja el motor. */
+export const FORMAS_DE_LIENZO = ['rect', 'ellipse', 'heart', 'star', 'blob'] as const;
+export type FormaDeLienzo = (typeof FORMAS_DE_LIENZO)[number];
 
 export type MensajeAlMotor =
   | { type: 'open'; format: 'pdf' | 'epub'; url: string; position?: Posicion; mode?: FormaDeLeer }
@@ -60,6 +69,8 @@ export type MensajeAlMotor =
    */
   | { type: 'openBegin'; format: 'pdf' | 'epub'; size: number; position?: Posicion; mode?: FormaDeLeer }
   | { type: 'openChunk'; data: string }
+  /** El lienzo creativo (13h, RF-CC4; T351): páginas en blanco 1 : √2 que arma el motor. */
+  | { type: 'openCanvas'; orientation: 'portrait' | 'landscape'; pages: number; mode?: FormaDeLeer }
   | { type: 'openEnd' }
   | ({ type: 'goTo' } & Posicion)
   /** Cambiar la forma de leer sin perder el lugar (RF-BR8, T283). */
@@ -93,7 +104,7 @@ export type MensajeAlMotor =
   /** Escribir ahí mismo en un post-it o un cuadro de texto (T289). */
   | { type: 'write'; id: string }
   /** La app elige o suelta (al borrar, al cerrar la barra de lo seleccionado). */
-  | { type: 'select'; id: string | null }
+  | { type: 'select'; id: string | null; also?: string[] }
   /** Quitar la selección de texto (al subrayar o cerrar la barra). */
   | { type: 'clearSelection' }
   /** Tamaño (%) y letra del texto de un EPUB (RF-BH2, RF-BH3; T288). */
@@ -143,6 +154,8 @@ export type MensajeDelMotor =
   /** Se arrastró algo pegado: su nueva posición. */
   /** `rot`: con dos dedos se gira y se agranda a la vez (T290). */
   | { type: 'move'; id: string; locator: LibraryLocator; rot?: number }
+  /** Un grupo del lienzo creativo que se soltó junto (T351): un solo paso para guardar y deshacer. */
+  | { type: 'moves'; items: { id: string; locator: LibraryLocator }[] }
   /** Tocar un post-it doblado lo abre (RF-BH14, T290). */
   | { type: 'fold'; id: string; folded: boolean }
   /** Doble toque en algo pegado: abrirlo para escribir. */
@@ -218,6 +231,13 @@ export function leerMensaje(crudo: unknown): MensajeDelMotor | null {
       const locator = localizadorPegado(m.locator);
       if (!locator || !esId(m.id)) return null;
       return { type: 'move', id: m.id, locator, ...(numero(m.rot) ? { rot: ((Math.round(m.rot) % 360) + 360) % 360 } : {}) };
+    }
+    case 'moves': {
+      const items = (Array.isArray(m.items) ? m.items : []).slice(0, 400).flatMap((x: { id?: unknown; locator?: unknown }) => {
+        const locator = localizadorPegado(x?.locator);
+        return locator && esId(x?.id) ? [{ id: x.id as string, locator }] : [];
+      });
+      return items.length ? { type: 'moves', items } : null;
     }
     case 'fold':
       return esId(m.id) && typeof m.folded === 'boolean' ? { type: 'fold', id: m.id, folded: m.folded } : null;

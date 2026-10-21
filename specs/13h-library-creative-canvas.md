@@ -129,6 +129,23 @@ llevar texto, pero nunca debe sentirse como un formulario ni como una nota grand
 - **Plantillas de KAVI** en el cliente (`src/constants/library/canvas-templates/`), igual que el catálogo de
   ejercicios: crecen sin migraciones.
 
+- **Hecho (C1, T351, 21 oct 2026):**
+  - **La página:** el motor arma un PDF de páginas en blanco A5 (`public/reader/blank.js`, mensaje `openCanvas`) y
+    lo abre como cualquier PDF, entera a la vista (páginas de lado). Así el recorte comparte zoom, pellizco y la
+    capa de lo pegado.
+  - **Elementos:** texto, imagen, forma y sticker son lo pegado de esa capa. La forma es un tipo nuevo (rectángulo,
+    óvalo, corazón, estrella, mancha) en gris neutro, que se estira y se gira.
+  - **Lo elegido:** escribir (texto), traer al frente, mandar atrás, bloquear, duplicar, **elegir varios**,
+    agrupar, desagrupar y quitar (también con Supr). Un grupo se elige y se mueve junto con un contorno punteado;
+    para cambiar el tamaño o girar uno, se desagrupa. Soltar un grupo es un solo paso (`moves`) para deshacer.
+  - **Guardar:** el documento vive en el editor con deshacer y rehacer, y se guarda solo 0.6 s después del último
+    cambio en la cola sin red (`op: 'canvas'`), con `version` que sube en cada guardado. Las imágenes van a R2 en
+    la carpeta del libro, como las pegadas al leer.
+  - **Datos:** `library_canvases` (migración `20261020170000`) se adelantó de C2 a C1, porque C1 ya guarda. RLS:
+    solo lo propio y de un libro propio; al borrar el libro se van sus recortes; documento de 1 MB como máximo.
+  - **Entrada provisional:** "Nuevo recorte" en el menú ⋯ del libro (vertical u horizontal) abre el lienzo. Mi
+    libreta, la lista con miniaturas, el color, exportar y borrar un recorte son C2 (T342).
+
 ## 11. Qué cambia en otras specs
 
 - **13e (cuadernos, diarios, álbumes por capas) se reemplaza:** el cuaderno pasa a ser el **Journal** con

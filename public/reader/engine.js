@@ -5,7 +5,7 @@
  * origen y el teléfono en un WebView. La app y el motor solo se hablan por mensajes JSON; los tipos
  * viven del lado de la app en `src/lib/library/reader-protocol.ts`.
  *
- * App → motor: `open`, `openBegin` / `openChunk` / `openEnd`, `goTo`, `mode`, `turn`, `theme`, `search`,
+ * App → motor: `open`, `openBegin` / `openChunk` / `openEnd`, `openCanvas` (lienzo creativo, T351), `goTo`, `mode`, `turn`, `theme`, `search`,
  * `searchStep`, `searchClear`, `cover`, y de la capa de anotaciones (T286) `annotations`, `tool`, `select`,
  * `clearSelection`; de la letra y el zoom (T288) `text` y `zoom`; el fragmento de imagen (T317) `clipTool`; el
  * lápiz (T291) `pen`; señalar en una sesión en vivo del club (T309) `flash`.
@@ -30,6 +30,7 @@
  * centro avisa `tap` para que la app muestre u oculte sus controles.
  */
 import { crearCapa } from './annotations.js';
+import { pdfEnBlanco } from './blank.js';
 import { crearRecortador } from './clip.js';
 import { crearLapiz } from './ink.js';
 import { buscarEnPedazos } from './text-search.js';
@@ -110,6 +111,9 @@ async function atender(m) {
       if (!listo || listo.lleno !== listo.datos.length) throw Object.assign(new Error('incompleto'), { name: 'FormatoDesconocido' });
       return abrir(listo.m, { datos: listo.datos });
     }
+    case 'openCanvas':
+      // El lienzo creativo (13h, RF-CC4; T351): páginas en blanco 1 : √2 que se abren como un PDF.
+      return abrir({ format: 'pdf', mode: m.mode, position: { page: 1 } }, { datos: pdfEnBlanco(m.orientation, m.pages) });
     case 'goTo':
       return irA(m);
     case 'mode':
@@ -143,7 +147,7 @@ async function atender(m) {
     case 'write':
       return anotaciones.escribir(m.id);
     case 'select':
-      return anotaciones.elegir(m.id);
+      return anotaciones.elegir(m.id, m.also);
     case 'clearSelection':
       return anotaciones.soltarSeleccion();
     case 'text':

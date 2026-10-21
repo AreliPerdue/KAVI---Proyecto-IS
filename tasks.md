@@ -1217,11 +1217,18 @@ Decisiones B1–B9 aprobadas el 12 oct 2026 (T274); ver la tabla de la spec 13 �
 Reemplazan L5 (13e). Un recorte es una página 1 : √2 del visor de PDF (decisión 3 de Areli).
 - [x] T341 Specs 13h y 13i: propuesta, decisiones de Areli (Fragmentos, reemplazo de 13e, página del visor de PDF,
   emboss y deboss, texturas del muestrario, varios Journals, plantillas en dos idiomas) y aprobación. (14 oct 2026)
-- [ ] T351 C1 · Lienzo base: el recorte como página 1 : √2 en el motor del lector (vertical/horizontal, sin reacomodo),
+- [x] T351 C1 · Lienzo base: el recorte como página 1 : √2 en el motor del lector (vertical/horizontal, sin reacomodo),
   elementos con asas, giro, capas, agrupar, deshacer y cola sin red; módulos texto, imagen, forma y sticker.
   (RF-CC4 – RF-CC10) Dep: T334
+  **Hecho (21 oct 2026):**
+  - Motor: `blank.js` y `openCanvas` (página en blanco A5), forma (`shape`), elegir varios y grupos (`moves`).
+  - `library_canvases` con RLS (migración `20261020170000`, probada en PGlite), adelantada de T342; Supabase y demo,
+    cola sin red (`canvas`/`canvasRemove`).
+  - `lib/library/canvas.ts` (documento y operaciones), `useCanvasEditor` (deshacer, rehacer y guardado solo) y la
+    pantalla `canvas/[id]`; entrada provisional "Nuevo recorte" en el menú ⋯ del libro.
 - [ ] T342 C2 · Recortes: Mi libreta en el libro, lista con miniaturas, lienzo en blanco, + Agregar, selector de
-  color (HEX, recientes, mis colores), opacidad/borde/sombra, exportar imagen; `library_canvases` con RLS.
+  color (HEX, recientes, mis colores), opacidad/borde/sombra, exportar imagen; borrar un recorte y el archivo de sus
+  imágenes (`library_canvases` ya existe desde T351).
   (RF-CC1, RF-CC11 – RF-CC13, RF-CC19, RF-CC23, RF-CC25) Dep: T351
 - [ ] T343 C3 · Polaroids, quote, rating y libro; primer pack de assets en grises recolorables (papeles, cintas,
   doodles) en la tienda. (RF-CC14 – RF-CC17) Dep: T342, T337

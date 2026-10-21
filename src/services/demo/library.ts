@@ -6,9 +6,11 @@ import { LIBRARY_LIMITS } from '@/constants/library';
 import type { LibraryApi } from '@/services/contracts';
 import { areConnected } from '@/services/demo/connections';
 import { DEMO_CONTACTS, delay, demoState, emitDataChange, nextId } from '@/services/demo/store';
+import { documentoValido } from '@/lib/library/canvas';
 import { nombreSeguro } from '@/lib/library/files';
 import type {
   LibraryAnnotation,
+  LibraryCanvas,
   LibraryCard,
   LibraryLayout,
   LibraryReadingSession,
@@ -45,6 +47,8 @@ const shelfItems: (LibraryShelfItem & { owner_id: string })[] = [];
 const annotations: LibraryAnnotation[] = [];
 const templates: LibraryCardTemplate[] = [];
 const cards: LibraryCard[] = [];
+/** Lienzos creativos (13h; T351). */
+const lienzos: LibraryCanvas[] = [];
 const pages: LibraryPage[] = [];
 const fonts: LibraryFont[] = [];
 const layouts: LibraryLayout[] = [];
@@ -345,6 +349,7 @@ export const demoLibrary: LibraryApi = {
     // Un club pierde su libro de origen o la copia de alguien, pero sigue (13f).
     for (const c of clubes) if (c.source_item_id === itemId) c.source_item_id = null;
     for (const m of miembros) if (m.item_id === itemId) m.item_id = null;
+    quitarDe(lienzos, (c) => c.item_id === itemId);
     // Una actividad de Lectura con este libro se queda sin él, como `on delete set null` (T302).
     for (const a of demoState.activities) if (a.library_item_id === itemId) a.library_item_id = null;
     emitDataChange();
@@ -939,6 +944,38 @@ export const demoLibrary: LibraryApi = {
   async removeCard(cardId) {
     await delay();
     quitarDe(cards, (c) => c.id === cardId);
+    emitDataChange();
+  },
+
+  async listCanvases(itemId) {
+    await delay();
+    const yo = demoState.currentUser?.id;
+    return copia(lienzos.filter((c) => c.item_id === itemId && c.owner_id === yo).sort((a, b) => b.created_at.localeCompare(a.created_at)));
+  },
+
+  async getCanvas(canvasId) {
+    await delay();
+    const c = lienzos.find((x) => x.id === canvasId && x.owner_id === demoState.currentUser?.id);
+    if (!c) throw new AuthUiError(t().errors.canvasNotFound);
+    return copia(c);
+  },
+
+  async saveCanvas(userId, canvas) {
+    await delay();
+    // Como la RLS: solo de un libro mío.
+    if (canvas.item_id && !items.some((i) => i.id === canvas.item_id && i.owner_id === userId)) throw new AuthUiError(t().errors.noPermission);
+    const antes = lienzos.find((c) => c.id === canvas.id);
+    if (antes && antes.owner_id !== userId) throw new AuthUiError(t().errors.noPermission);
+    const t0 = ahora();
+    const nuevo: LibraryCanvas = { thumb_path: null, created_at: t0, ...antes, ...canvas, doc: documentoValido(canvas.doc), owner_id: userId, updated_at: t0 };
+    quitarDe(lienzos, (c) => c.id === canvas.id);
+    lienzos.push(nuevo);
+    emitDataChange();
+  },
+
+  async removeCanvas(canvasId) {
+    await delay();
+    quitarDe(lienzos, (c) => c.id === canvasId);
     emitDataChange();
   },
 

@@ -1,5 +1,5 @@
 import { getJson, setJson, storage } from '@/lib/storage';
-import type { LibraryAnnotation, LibraryAnnotationInput, LibraryItem, LibraryItemPatch, LibraryReadingSessionInput } from '@/types/domain';
+import type { LibraryAnnotation, LibraryAnnotationInput, LibraryCanvas, LibraryCanvasInput, LibraryItem, LibraryItemPatch, LibraryReadingSessionInput } from '@/types/domain';
 
 /**
  * Cola local de KAVI Library (spec 13b, RF-BR3; T285): lo que se cambió leyendo sin red se guarda primero
@@ -22,7 +22,10 @@ export type EntradaDeLibreria =
   /** Una sesión de lectura: se reescribe mientras dura, así que la última versión gana. */
   | { op: 'session'; itemId: string; userId: string; session: LibraryReadingSessionInput; at: number }
   /** El archivo de una imagen quitada: no se borra antes de `due` (ms), por si se deshace. */
-  | { op: 'imageCleanup'; itemId: string; userId: string; id: string; due: number; at: number };
+  | { op: 'imageCleanup'; itemId: string; userId: string; id: string; due: number; at: number }
+  /** Un lienzo creativo completo (13h, RF-CC10; T351): el último guardado gana. */
+  | { op: 'canvas'; itemId: string; userId: string; canvas: LibraryCanvasInput; at: number }
+  | { op: 'canvasRemove'; itemId: string; id: string; at: number };
 
 /** Una hora para deshacer antes de borrar el archivo de una imagen quitada (T333). */
 export const ESPERA_PARA_BORRAR_IMAGEN_MS = 60 * 60 * 1000;
@@ -39,6 +42,10 @@ const claveDe = (e: EntradaDeLibreria) => {
       return `annotation:${e.id}`;
     case 'imageCleanup':
       return `imageCleanup:${e.id}`;
+    case 'canvas':
+      return `canvas:${e.canvas.id}`;
+    case 'canvasRemove':
+      return `canvas:${e.id}`;
   }
 };
 
@@ -109,6 +116,23 @@ export function aplicarAnotacionesPendientes(lista: readonly LibraryAnnotation[]
     }
   }
   return [...porId.values()].sort((a, b) => a.z - b.z);
+}
+
+/**
+ * Los lienzos de un libro con lo que la cola aún no sube (T351): lo guardado sin red se ve como quedó y lo borrado
+ * no vuelve. Uno nuevo que solo está en la cola toma su dueño y sus fechas de ahí.
+ */
+export function aplicarLienzosPendientes(lista: readonly LibraryCanvas[], entradas: readonly EntradaDeLibreria[], itemId: string): LibraryCanvas[] {
+  const porId = new Map(lista.map((c) => [c.id, c]));
+  for (const e of entradas) {
+    if (e.itemId !== itemId) continue;
+    if (e.op === 'canvasRemove') porId.delete(e.id);
+    else if (e.op === 'canvas') {
+      const fecha = new Date(e.at).toISOString();
+      porId.set(e.canvas.id, { owner_id: e.userId, thumb_path: null, created_at: fecha, ...porId.get(e.canvas.id), ...e.canvas, updated_at: fecha });
+    }
+  }
+  return [...porId.values()].sort((a, b) => b.created_at.localeCompare(a.created_at));
 }
 
 /** Al eliminar la cuenta no queda nada suyo en el dispositivo (RF-A12). */

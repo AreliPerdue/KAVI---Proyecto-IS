@@ -130,7 +130,12 @@ export function useUploadAnnotationImage() {
  * como las portadas. Devuelve ruta → dirección.
  */
 export function useAnnotationImageUrls(anotaciones: readonly LibraryAnnotation[] | undefined): ReadonlyMap<string, string> {
-  const rutas = [...new Set((anotaciones ?? []).filter((a) => a.kind === 'image' && !a.removed).map(rutaDeImagen).filter((r): r is string => !!r))];
+  return useLibraryImageUrls((anotaciones ?? []).filter((a) => a.kind === 'image' && !a.removed).map(rutaDeImagen));
+}
+
+/** Las direcciones firmadas de unas imágenes de Library por su ruta (también las del lienzo creativo, T351). */
+export function useLibraryImageUrls(todas: readonly (string | null | undefined)[]): ReadonlyMap<string, string> {
+  const rutas = [...new Set(todas.filter((r): r is string => !!r))];
   const urls = useQueries({
     queries: rutas.map((ruta) => ({
       queryKey: libraryKeys.url(ruta),

@@ -115,8 +115,9 @@ export function AnnotationToolbar(p: Props) {
     );
   }
 
-  const avisos = { postit: a.postitOn, textbox: a.textboxOn, image: a.imageOn, sticker: a.stickerOn };
-  const aviso = p.recortando ? a.clipOn : p.enLibro ? a.postitBook : p.herramienta ? avisos[p.herramienta] : null;
+  // La forma es del lienzo creativo (T351): en el lector no se pone.
+  const avisos: Partial<Record<Exclude<Herramienta, null>, string>> = { postit: a.postitOn, textbox: a.textboxOn, image: a.imageOn, sticker: a.stickerOn };
+  const aviso = p.recortando ? a.clipOn : p.enLibro ? a.postitBook : p.herramienta ? (avisos[p.herramienta] ?? null) : null;
   const herr = (h: Exclude<Herramienta, null>, Icono: ComponentType<{ size: number; strokeWidth: number; color: string }>, etiqueta: string, onPress: () => void) => {
     const activa = p.herramienta === h;
     return (

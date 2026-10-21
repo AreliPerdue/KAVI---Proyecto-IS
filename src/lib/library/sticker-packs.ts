@@ -30,3 +30,25 @@ export function pesoDe(bytes: number): string {
 export function ordenarPacks(packs: readonly StickerPack[]): StickerPack[] {
   return [...packs].sort((a, b) => a.collection.localeCompare(b.collection) || a.sort_order - b.sort_order);
 }
+
+/** Los stickers propios (T335) se guardan como `mios/<id>`. */
+export const PREFIJO_PROPIO = 'mios/';
+
+/**
+ * La dirección para ver un sticker pegado: los Nobi incluidos los trae el motor; uno propio, de su imagen; uno de la
+ * tienda, de su copia guardada o de la nube.
+ */
+export function fuenteDeSticker(
+  id: string | null | undefined,
+  fuentes: ReadonlyMap<string, string>,
+  packs: readonly StickerPack[] | undefined,
+  propias: ReadonlyMap<string, string>,
+): string | undefined {
+  if (!id || id.startsWith('nobi-pink/')) return undefined;
+  if (id.startsWith(PREFIJO_PROPIO)) return propias.get(id);
+  const lista = fuentes.get(id);
+  if (lista) return lista;
+  const partes = partesDeSticker(id);
+  const pack = partes && packs?.find((p) => p.id === partes.pack);
+  return pack && partes ? urlDeSticker(pack, partes.nombre) : undefined;
+}
