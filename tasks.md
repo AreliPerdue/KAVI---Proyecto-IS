@@ -1259,6 +1259,10 @@ Reemplazan L5 (13e). Un recorte es una página 1 : √2 del visor de PDF (decisi
   **Hecho (22 oct 2026):** `kind` en `sticker_packs` (migraciones `20261022110000` y las de versión), tienda en
   `AssetSheet`, piezas de la tienda en el motor, la exportación y las miniaturas, y el pack **Papelería** (17 piezas)
   subido al bucket y verificado.
+- [x] T369 Doodles redibujados: los 8 básicos y los 7 de Papelería con pluma de presión (entra y sale afilada, grosor
+  variable, curvas suaves), a partir de los doodles de bullet journal más comunes. (RF-CC15, RF-CC17) Dep: T343c
+  **Hecho (22 oct 2026):** `pluma`, `suave`, `esquinas` y `hojita` en `scripts/library/assets-lienzo.mjs` (se quitó
+  `aMano`); mismas proporciones; básicos en `public/reader/lienzo/basicos/` y Papelería v4 (migración `20261022130000`).
 - [x] T344 C4 · Plantillas de Recortes (Book Review, Character Collage, Favorite Quotes, Reading Experience, DNF
   Graveyard), Guardar como plantilla y Mis plantillas. (RF-CC18 – RF-CC21) Dep: T343
   **Hecho (21 oct 2026):** `constants/canvas-templates.ts` (las 5 de KAVI), `lib/library/canvas-templates.ts` (usar y

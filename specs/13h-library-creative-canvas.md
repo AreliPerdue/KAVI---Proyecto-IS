@@ -225,6 +225,11 @@ llevar texto, pero nunca debe sentirse como un formulario ni como una nota grand
   - El primero: **Papelería** (17 piezas: periódico, perforado, con clip, kraft, sobre, sello postal, esquina de foto,
     cintas de corazones, estrellas y zigzag, marco a mano, burbuja, nube de pensamiento, flor, hoja, subrayado y
     espiral), hecho por Claude con `scripts/library/assets-lienzo.mjs --pack papeleria`.
+  - **Doodles redibujados (T369, 22 oct 2026, pedido de Areli: "están super feos"):** los 15 doodles (8 básicos y 7 de
+    Papelería) se dibujan con una pluma de presión —entra y sale afilada, grosor variable, ondula con ruido suave en
+    vez de temblar punto por punto— y formas de bullet journal: destellos de lados cóncavos, flecha con rizo, ramita
+    de hojas alternadas, lazo con pliegues y colas, flor de 5 pétalos en gota con centro relleno, hoja con venas
+    curvas, nube de bultos, burbuja redondeada y subrayado de pincel. Papelería pasa a la versión 4.
 - **Hecho (T368, 22 oct 2026, pedido de Areli: "todas las demás plantillas" y que sean personalizables):**
   - **Las que faltaban de RF-CC21:** Tablero de teorías, Predicciones, Soundtrack, El ADN del libro, Pasaporte del
     libro, Reporte de daños emocionales, ¿Sobreviviría? (recortes) y Mis eras lectoras (Journal).

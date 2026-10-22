@@ -248,8 +248,8 @@ const PACKS_DEMO: StickerPack[] = [
     name_en: 'Stationery',
     sort_order: 1,
     kind: 'assets',
-    bytes: 821_140,
-    version: 3,
+    bytes: 861_597,
+    version: 4,
     stickers: (
       [
         ['papel-periodico', 1.225, 'papel', 'Papel de periódico', 'Newspaper'],

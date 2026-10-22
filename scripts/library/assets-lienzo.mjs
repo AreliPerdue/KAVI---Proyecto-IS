@@ -115,14 +115,57 @@ function lineas(ctx, w, h, { arriba, paso, color = 'rgba(0,0,0,0.16)', ancho = 1
   ctx.strokeStyle = color; ctx.lineWidth = ancho; for (let y = arriba; y < h - 20; y += paso) { ctx.beginPath(); ctx.moveTo(desde, y); ctx.lineTo(hasta, y); ctx.stroke(); }
 }
 
-/** Trazo a mano: el camino se mueve un poco y se repasa dos veces, como con pluma fina. */
-function aMano(ctx, puntos, { ancho = 5, semilla = 1, temblor = 2.2, pasadas = 2 } = {}) {
-  const r = rnd(semilla); ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.strokeStyle = '#141414';
-  for (let p = 0; p < pasadas; p++) { ctx.lineWidth = ancho * (p ? 0.55 : 1); ctx.globalAlpha = p ? 0.55 : 1; ctx.beginPath();
-    puntos.forEach(([x, y], i) => { const jx = x + (r() - 0.5) * temblor, jy = y + (r() - 0.5) * temblor; i ? ctx.lineTo(jx, jy) : ctx.moveTo(jx, jy); }); ctx.stroke(); }
-  ctx.globalAlpha = 1;
-}
 const curva = (f, n = 80) => Array.from({ length: n + 1 }, (_, i) => f(i / n));
+
+/** Catmull-Rom: una curva suave que pasa por los puntos, como la mano que dibuja sin levantar la pluma. */
+function suave(pts, { cerrado = false, pasos = 20 } = {}) {
+  const P = cerrado ? [pts[pts.length - 1], ...pts, pts[0], pts[1]] : [pts[0], ...pts, pts[pts.length - 1]]; const out = [];
+  for (let i = 1; i < P.length - 2; i++) for (let s = 0; s < pasos; s++) { const t = s / pasos, t2 = t * t, t3 = t2 * t;
+    out.push([0, 1].map((k) => 0.5 * (2 * P[i][k] + (P[i + 1][k] - P[i - 1][k]) * t + (2 * P[i - 1][k] - 5 * P[i][k] + 4 * P[i + 1][k] - P[i + 2][k]) * t2 + (3 * P[i][k] - P[i - 1][k] - 3 * P[i + 1][k] + P[i + 2][k]) * t3))); }
+  out.push(cerrado ? out[0] : pts[pts.length - 1]); return out;
+}
+const bezier = (a, b, c, d, n = 40) => curva((t) => { const u = 1 - t; return [0, 1].map((k) => u * u * u * a[k] + 3 * u * u * t * b[k] + 3 * u * t * t * c[k] + t * t * t * d[k]); }, n);
+const cuadratica = (a, c, b, n = 24) => curva((t) => { const u = 1 - t; return [0, 1].map((k) => u * u * a[k] + 2 * u * t * c[k] + t * t * b[k]); }, n);
+
+/** Polígono con las esquinas apenas redondeadas: la pluma no hace picos perfectos. */
+function esquinas(pts, radio, cerrado = true) {
+  const N = pts.length; const out = [];
+  for (let i = 0; i < N; i++) { const p = pts[i];
+    if (!cerrado && (i === 0 || i === N - 1)) { out.push(p); continue; }
+    const a = pts[(i - 1 + N) % N], b = pts[(i + 1) % N]; const la = Math.hypot(a[0] - p[0], a[1] - p[1]), lb = Math.hypot(b[0] - p[0], b[1] - p[1]);
+    const ra = Math.min(radio, la / 2.2), rb = Math.min(radio, lb / 2.2);
+    out.push(...cuadratica([p[0] + (a[0] - p[0]) * ra / la, p[1] + (a[1] - p[1]) * ra / la], p, [p[0] + (b[0] - p[0]) * rb / lb, p[1] + (b[1] - p[1]) * rb / lb], 10)); }
+  if (cerrado) out.push(out[0]); return out;
+}
+
+/**
+ * Pluma de punta fina (T369): el camino se remuestrea cada 1.5 px, ondula apenas con ruido suave —no punto por punto,
+ * que se ve rasposo— y cambia de grosor como con presión: entra y sale afilado ('entrada' y 'salida' en anchos de
+ * trazo) y engorda o adelgaza un poco a lo largo. Tinta opaca de una sola pasada.
+ */
+function pluma(ctx, camino, { ancho = 7, semilla = 1, temblor = 1.4, entrada = 2, salida = 4, punta = 0.22, presion = 0.14 } = {}) {
+  const pts = [camino[0]], dist = [0]; let L = 0, resto = 0;
+  for (let i = 1; i < camino.length; i++) { const [x0, y0] = camino[i - 1], [x1, y1] = camino[i]; const l = Math.hypot(x1 - x0, y1 - y0); if (!l) continue;
+    let d = 1.5 - resto; while (d <= l) { pts.push([x0 + ((x1 - x0) * d) / l, y0 + ((y1 - y0) * d) / l]); dist.push(L + d); d += 1.5; } resto = l - (d - 1.5); L += l; }
+  pts.push(camino[camino.length - 1]); dist.push(L);
+  const n = ruido(semilla); const s = (t) => t * t * (3 - 2 * t); const ent = ancho * entrada, sal = ancho * salida;
+  const movidos = pts.map(([x, y], i) => { const a = pts[Math.max(0, i - 1)], b = pts[Math.min(pts.length - 1, i + 1)]; const nx = a[1] - b[1], ny = b[0] - a[0], l = Math.hypot(nx, ny) || 1;
+    const o = (n(dist[i] / 110, 0.37, 2) - 0.5) * 2.4 * temblor; return [x + (nx / l) * o, y + (ny / l) * o]; });
+  ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.strokeStyle = '#141414'; ctx.globalAlpha = 1;
+  for (let i = 1; i < movidos.length; i++) { const d = dist[i]; const p = s(Math.min(1, d / ent)) * s(Math.min(1, Math.max(0, L - d) / sal));
+    ctx.lineWidth = ancho * (punta + (1 - punta) * p) * (1 + (n(d / 60, 3.7, 2) - 0.5) * 2.4 * presion);
+    ctx.beginPath(); ctx.moveTo(movidos[i - 1][0], movidos[i - 1][1]); ctx.lineTo(movidos[i][0], movidos[i][1]); ctx.stroke(); }
+}
+const punto = (ctx, x, y, r) => { ctx.fillStyle = '#141414'; ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill(); };
+const ovalo = (cx, cy, rx, ry, { desde = 0, vueltas = 1, giro = 0, n = 90 } = {}) => curva((t) => { const a = desde + t * vueltas * Math.PI * 2; const x = Math.cos(a) * rx, y = Math.sin(a) * ry; return [cx + x * Math.cos(giro) - y * Math.sin(giro), cy + x * Math.sin(giro) + y * Math.cos(giro)]; }, n);
+
+/** Una hoja de ramita: almendra desde 'base' hacia 'angulo', con su vena al centro. */
+function hojita(ctx, base, angulo, largo, ancho, semilla, { vena = true, grosor = 6 } = {}) {
+  const w = ancho / 2; const lugar = ([u, v]) => [base[0] + u * Math.cos(angulo) - v * Math.sin(angulo), base[1] + u * Math.sin(angulo) + v * Math.cos(angulo)];
+  const contorno = [...bezier([0, 0], [largo * 0.25, -w * 1.25], [largo * 0.72, -w * 1.05], [largo, 0]), ...bezier([largo, 0], [largo * 0.7, w * 1.1], [largo * 0.22, w * 1.2], [0, 0]), ...bezier([0, 0], [largo * 0.25, -w * 1.25], [largo * 0.72, -w * 1.05], [largo, 0], 40).slice(0, 4)];
+  pluma(ctx, contorno.map(lugar), { ancho: grosor, semilla, temblor: 0.7, entrada: 1.2, salida: 1.5, punta: 0.35 });
+  if (vena) pluma(ctx, cuadratica([largo * 0.06, 0], [largo * 0.4, -w * 0.12], [largo * 0.68, -w * 0.05]).map(lugar), { ancho: grosor * 0.55, semilla: semilla + 50, temblor: 0.4, entrada: 1, salida: 3 });
+}
 
 const PIEZAS = {
   'papel-rasgado': () => recortar(papel(620, 760, { semilla: 11 }), rasgado(620, 760, 12, 14)),
@@ -153,22 +196,34 @@ const PIEZAS = {
   'cinta-rayas': () => cinta(141, (ctx, W, H) => { ctx.fillStyle = 'rgba(0,0,0,0.12)'; for (let x = -H; x < W + H; x += 34) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x + 16, 0); ctx.lineTo(x + 16 - H, H); ctx.lineTo(x - H, H); ctx.fill(); } }),
   'cinta-puntos': () => cinta(151, (ctx, W, H) => { ctx.fillStyle = 'rgba(0,0,0,0.16)'; for (let y = 22, f = 0; y < H; y += 26, f++) for (let x = 20 + (f % 2) * 14; x < W; x += 28) { ctx.beginPath(); ctx.arc(x, y, 4.5, 0, Math.PI * 2); ctx.fill(); } }),
   'cinta-cuadros': () => cinta(161, (ctx, W, H) => { ctx.fillStyle = 'rgba(0,0,0,0.09)'; for (let x = 0; x < W; x += 36) ctx.fillRect(x, 0, 18, H); for (let y = 0; y < H; y += 36) ctx.fillRect(0, y, W, 18); }),
-  'destellos': () => doodle(420, 420, (ctx) => { const estrella = (cx, cy, rr, s) => aMano(ctx, [[cx, cy - rr], [cx + rr * 0.16, cy - rr * 0.16], [cx + rr, cy], [cx + rr * 0.16, cy + rr * 0.16], [cx, cy + rr], [cx - rr * 0.16, cy + rr * 0.16], [cx - rr, cy], [cx - rr * 0.16, cy - rr * 0.16], [cx, cy - rr]], { ancho: 5, semilla: s, temblor: 1.4 });
-    estrella(170, 190, 120, 1); estrella(320, 110, 52, 2); estrella(318, 300, 36, 3); }),
-  'flecha-curva': () => doodle(520, 300, (ctx) => { const pts = curva((t) => [40 + t * 420, 220 - Math.sin(t * Math.PI) * 150 + t * 20]); aMano(ctx, pts, { ancho: 6, semilla: 4 });
-    aMano(ctx, [[400, 190], [462, 242], [392, 262]], { ancho: 6, semilla: 5 }); }),
-  'rama': () => doodle(320, 560, (ctx) => { aMano(ctx, curva((t) => [160 + Math.sin(t * 3) * 18, 530 - t * 500]), { ancho: 5, semilla: 6 });
-    for (let i = 0; i < 6; i++) { const t = 0.15 + i * 0.14, y = 530 - t * 500, x = 160 + Math.sin(t * 3) * 18, lado = i % 2 ? 1 : -1;
-      aMano(ctx, curva((u) => [x + lado * u * 95, y - u * 60 - Math.sin(u * Math.PI) * 26], 30), { ancho: 4, semilla: 10 + i });
-      aMano(ctx, curva((u) => [x + lado * u * 95, y - u * 60 + Math.sin(u * Math.PI) * 18], 30), { ancho: 4, semilla: 20 + i }); } }),
-  'lazo': () => doodle(460, 360, (ctx) => { const cx = 230, cy = 150; aMano(ctx, curva((t) => { const a = t * Math.PI * 2; return [cx - 90 - Math.cos(a) * 80, cy - Math.sin(a) * 55 + Math.sin(a * 2) * 10]; }), { ancho: 5, semilla: 7 });
-    aMano(ctx, curva((t) => { const a = t * Math.PI * 2; return [cx + 90 + Math.cos(a) * 80, cy - Math.sin(a) * 55 + Math.sin(a * 2) * 10]; }), { ancho: 5, semilla: 8 });
-    aMano(ctx, curva((t) => [cx - 10 - t * 70, cy + 10 + t * 180 + Math.sin(t * 5) * 8], 40), { ancho: 5, semilla: 9 }); aMano(ctx, curva((t) => [cx + 10 + t * 70, cy + 10 + t * 180 - Math.sin(t * 5) * 8], 40), { ancho: 5, semilla: 10 });
-    ctx.beginPath(); ctx.fillStyle = '#141414'; ctx.ellipse(cx, cy, 18, 22, 0, 0, Math.PI * 2); ctx.fill(); }),
-  'costura': () => doodle(640, 120, (ctx) => { ctx.setLineDash([26, 16]); aMano(ctx, curva((t) => [24 + t * 592, 60 + Math.sin(t * 9) * 3], 60), { ancho: 5, semilla: 11, temblor: 0.8, pasadas: 1 }); ctx.setLineDash([]); }),
-  'corazon-a-mano': () => doodle(400, 380, (ctx) => { aMano(ctx, curva((t) => { const a = t * Math.PI * 2 * 1.06; const x = 16 * Math.pow(Math.sin(a), 3); const y = 13 * Math.cos(a) - 5 * Math.cos(2 * a) - 2 * Math.cos(3 * a) - Math.cos(4 * a); return [200 + x * 10.5, 180 - y * 10.5]; }, 140), { ancho: 6, semilla: 12, temblor: 2.6 }); }),
-  'estrella-a-mano': () => doodle(400, 400, (ctx) => { const pts = []; for (let i = 0; i <= 10; i++) { const a = -Math.PI / 2 + i * Math.PI / 5; const rr = i % 2 ? 72 : 170; pts.push([200 + Math.cos(a) * rr, 212 + Math.sin(a) * rr]); } aMano(ctx, pts, { ancho: 6, semilla: 13, temblor: 3 }); }),
-  'circulo-a-mano': () => doodle(520, 380, (ctx) => { aMano(ctx, curva((t) => { const a = -0.3 + t * Math.PI * 2.15; return [260 + Math.cos(a) * (220 - t * 14), 190 + Math.sin(a) * (150 - t * 10)]; }, 160), { ancho: 6, semilla: 14, temblor: 2 }); }),
+  // Doodles (T369): pluma con presión y curvas suaves, a partir de los doodles de bullet journal más comunes.
+  'destellos': () => doodle(420, 420, (ctx) => { const brillo = (cx, cy, r, ancho, s) => { const rayo = (i) => { const a = -Math.PI / 2 + (i * Math.PI) / 2; const rr = i % 2 ? r * 0.82 : r * 1.12; return [cx + Math.cos(a) * rr, cy + Math.sin(a) * rr]; };
+      const p = []; for (let i = 0; i < 4; i++) { const m = -Math.PI / 4 + (i * Math.PI) / 2; p.push(...cuadratica(rayo(i), [cx + Math.cos(m) * r * 0.13, cy + Math.sin(m) * r * 0.13], rayo(i + 1))); }
+      pluma(ctx, [...p, ...p.slice(1, 5)], { ancho, semilla: s, temblor: 0.6, entrada: 1, salida: 1.5, punta: 0.45 }); };
+    brillo(178, 236, 142, 9, 1); brillo(330, 98, 56, 7, 2); brillo(340, 306, 30, 6, 3); punto(ctx, 76, 84, 8); pluma(ctx, ovalo(84, 352, 15, 15, { n: 40, vueltas: 1.08 }), { ancho: 5, semilla: 4, temblor: 0.3, entrada: 1, salida: 1 }); }),
+  'flecha-curva': () => doodle(520, 300, (ctx) => { pluma(ctx, suave([[32, 254], [112, 232], [188, 186], [236, 124], [238, 76], [206, 60], [184, 92], [214, 140], [292, 162], [382, 142], [454, 100]]), { ancho: 8, semilla: 5, entrada: 6, salida: 1 });
+    const [tx, ty] = [454, 100], a = Math.atan2(100 - 142, 454 - 382) + Math.PI; const ala = (g) => [tx + Math.cos(a + g) * 58, ty + Math.sin(a + g) * 58];
+    pluma(ctx, esquinas([ala(-0.52), [tx + 3, ty - 1], ala(0.5)], 5, false), { ancho: 8, semilla: 6, temblor: 0.4, entrada: 1.5, salida: 2, punta: 0.3 }); }),
+  'rama': () => doodle(320, 560, (ctx) => { const tallo = suave([[150, 548], [162, 440], [154, 320], [168, 200], [178, 100]]); pluma(ctx, tallo, { ancho: 9, semilla: 7, entrada: 1, salida: 30, punta: 0.35 });
+    const en = (f) => tallo[Math.round(f * (tallo.length - 1))];
+    [[0.16, 1, 118], [0.3, -1, 112], [0.44, 1, 104], [0.58, -1, 94], [0.71, 1, 82], [0.83, -1, 70]].forEach(([f, lado, largo], i) => hojita(ctx, en(f), -Math.PI / 2 + lado * 0.86, largo, largo * 0.4, 8 + i, { grosor: 6 }));
+    hojita(ctx, [178, 102], -Math.PI / 2 + 0.08, 68, 30, 20, { grosor: 6 }); }),
+  'lazo': () => doodle(460, 360, (ctx) => { const espejo = (pts) => pts.map(([x, y]) => [460 - x, y]);
+    const ojo = [[206, 128], [152, 74], [92, 50], [48, 82], [44, 150], [80, 204], [140, 196], [206, 156]]; const pliegue = [[198, 140], [158, 122], [116, 116]];
+    const cola = [...suave([[216, 166], [190, 244], [136, 326]]), [164, 310], [176, 338], ...suave([[176, 338], [208, 262], [228, 170]])];
+    pluma(ctx, suave(ojo), { ancho: 8, semilla: 9, entrada: 1.5, salida: 1.5 }); pluma(ctx, suave(espejo(ojo)), { ancho: 8, semilla: 10, entrada: 1.5, salida: 1.5 });
+    pluma(ctx, suave(pliegue), { ancho: 5, semilla: 11, entrada: 1, salida: 3 }); pluma(ctx, suave(espejo(pliegue)), { ancho: 5, semilla: 12, entrada: 1, salida: 3 });
+    pluma(ctx, cola, { ancho: 7, semilla: 13, temblor: 1, entrada: 1, salida: 1, punta: 0.4 }); pluma(ctx, espejo(cola).map(([x, y]) => [x, y - 4]), { ancho: 7, semilla: 14, temblor: 1, entrada: 1, salida: 1, punta: 0.4 });
+    pluma(ctx, ovalo(230, 142, 26, 30, { desde: -1.2, vueltas: 1.06 }), { ancho: 8, semilla: 15, temblor: 0.6, entrada: 1, salida: 1.5 }); }),
+  'costura': () => doodle(640, 120, (ctx) => { const base = curva((t) => [26 + t * 588, 60 + Math.sin(t * Math.PI * 2.2) * 12], 600); let largo = 0; const marcas = base.map((p, i) => (i ? (largo += Math.hypot(p[0] - base[i - 1][0], p[1] - base[i - 1][1])) : 0));
+    for (let s = 0, k = 0; s < largo - 20; s += 50, k++) { const tramo = base.filter((_, i) => marcas[i] >= s && marcas[i] <= s + 30); if (tramo.length > 2) pluma(ctx, tramo, { ancho: 8.5, semilla: 16 + k, temblor: 0.5, entrada: 1, salida: 1.4, punta: 0.35 }); } }),
+  'corazon-a-mano': () => doodle(400, 380, (ctx) => { const giro = -0.07; const lugar = ([x, y]) => [200 + x * Math.cos(giro) - y * Math.sin(giro), 178 + x * Math.sin(giro) + y * Math.cos(giro)];
+    pluma(ctx, curva((t) => { const a = 0.05 + t * (Math.PI * 2 + 0.3); return lugar([16 * Math.pow(Math.sin(a), 3) * 10.4, -(13 * Math.cos(a) - 5 * Math.cos(2 * a) - 2 * Math.cos(3 * a) - Math.cos(4 * a)) * 10.4]); }, 200), { ancho: 9, semilla: 17, temblor: 1.8, entrada: 1.5, salida: 4 });
+    pluma(ctx, curva((t) => { const a = Math.PI * (1.12 + t * 0.36); return lugar([-84 + Math.cos(a) * 44, -66 + Math.sin(a) * 44]); }, 30), { ancho: 6, semilla: 18, temblor: 0.4, entrada: 1, salida: 2 }); }),
+  'estrella-a-mano': () => doodle(400, 400, (ctx) => { const pts = []; for (let i = 0; i < 10; i++) { const a = -Math.PI / 2 - 0.06 + (i * Math.PI) / 5; const rr = i % 2 ? 74 : 168; pts.push([200 + Math.cos(a) * rr, 220 + Math.sin(a) * rr]); }
+    const camino = esquinas(pts, 16); pluma(ctx, [...camino, ...camino.slice(1, 14)], { ancho: 9, semilla: 19, temblor: 1.4, entrada: 1.5, salida: 3 });
+    pluma(ctx, [[66, 82], [92, 108]], { ancho: 6, semilla: 20, temblor: 0, entrada: 1, salida: 1.5 }); pluma(ctx, [[108, 46], [120, 80]], { ancho: 6, semilla: 21, temblor: 0, entrada: 1, salida: 1.5 }); pluma(ctx, [[42, 132], [76, 140]], { ancho: 6, semilla: 22, temblor: 0, entrada: 1, salida: 1.5 }); }),
+  'circulo-a-mano': () => doodle(520, 380, (ctx) => { pluma(ctx, curva((t) => { const a = -0.4 + t * (Math.PI * 2 + 0.75); const rx = 228 - t * 18, ry = 158 - t * 12, g = -0.05; const x = Math.cos(a) * rx, y = Math.sin(a) * ry; return [262 + x * Math.cos(g) - y * Math.sin(g), 192 + x * Math.sin(g) + y * Math.cos(g)]; }, 220), { ancho: 8, semilla: 23, temblor: 2.6, entrada: 2, salida: 7 }); }),
 };
 
 /** Cinta washi: tira translúcida con las puntas rasgadas en zigzag y su dibujo. */
@@ -202,24 +257,39 @@ const PAPELERIA = {
     ctx.beginPath(); ctx.moveTo(20, 22); ctx.lineTo(W / 2, H * 0.58); ctx.lineTo(W - 20, 22); ctx.stroke(); ctx.beginPath(); ctx.moveTo(20, H - 22); ctx.lineTo(W * 0.4, H * 0.5); ctx.moveTo(W - 20, H - 22); ctx.lineTo(W * 0.6, H * 0.5); ctx.stroke(); return c; },
   'sello-postal': () => { const W = 420, H = 500, m = 22, d = 16; const pts = []; const lado = (x0, y0, x1, y1) => { const n = Math.round(Math.hypot(x1 - x0, y1 - y0) / d); for (let i = 0; i < n; i++) { const t = i / n, t2 = (i + 0.5) / n; const nx = -(y1 - y0), ny = x1 - x0, l = Math.hypot(nx, ny); pts.push([x0 + (x1 - x0) * t, y0 + (y1 - y0) * t], [x0 + (x1 - x0) * t2 + (nx / l) * 7, y0 + (y1 - y0) * t2 + (ny / l) * 7]); } };
     lado(m, m, W - m, m); lado(W - m, m, W - m, H - m); lado(W - m, H - m, m, H - m); lado(m, H - m, m, m); const c = recortar(papel(W, H, { semilla: 251 }), pts); const ctx = c.getContext('2d'); ctx.strokeStyle = 'rgba(0,0,0,0.3)'; ctx.lineWidth = 3; ctx.strokeRect(58, 58, W - 116, H - 116);
-    aMano(ctx, [[96, 360], [160, 250], [205, 305], [270, 200], [326, 360]], { ancho: 4, semilla: 252, temblor: 1.4 }); aMano(ctx, curva((t) => [300 + Math.cos(t * Math.PI * 2) * 28, 140 + Math.sin(t * Math.PI * 2) * 28], 40), { ancho: 4, semilla: 253 }); return c; },
+    pluma(ctx, esquinas([[96, 360], [160, 250], [205, 305], [270, 200], [326, 360]], 8, false), { ancho: 5, semilla: 252, temblor: 0.6, entrada: 1.5, salida: 1.5, punta: 0.35 }); pluma(ctx, ovalo(300, 140, 28, 28, { desde: -1, vueltas: 1.06, n: 50 }), { ancho: 5, semilla: 253, temblor: 0.4, entrada: 1, salida: 1.5 }); return c; },
   'esquina-de-foto': () => { const W = 300, H = 300; return recortar(papel(W, H, { semilla: 261, base: 0.86 }), [[18, 18], [W - 18, 18], [18, H - 18]], { borde: 0.1 }); },
   'cinta-corazones': () => cinta(271, patron(40, (ctx, x, y) => corazonito(ctx, x, y))),
   'cinta-estrellas': () => cinta(281, patron(42, (ctx, x, y) => estrellita(ctx, x, y))),
   'cinta-zigzag': () => cinta(291, (ctx, W, H) => { ctx.strokeStyle = 'rgba(0,0,0,0.18)'; ctx.lineWidth = 6; for (const y0 of [36, 82]) { ctx.beginPath(); for (let x = 0; x <= W; x += 24) ctx.lineTo(x, y0 + ((x / 24) % 2 ? 12 : -12)); ctx.stroke(); } }),
-  'marco-a-mano': () => doodle(560, 420, (ctx) => { aMano(ctx, [[30, 34], [530, 26], [536, 392], [26, 398], [30, 34], [60, 30]], { ancho: 5, semilla: 301, temblor: 3 }); }),
-  'burbuja': () => doodle(520, 420, (ctx) => { aMano(ctx, [...curva((t) => { const a = Math.PI * 0.62 + t * Math.PI * 1.86; return [260 + Math.cos(a) * 230, 170 + Math.sin(a) * 140]; }, 120), [150, 300], [110, 400], [212, 312]], { ancho: 5, semilla: 311, temblor: 2 }); }),
-  'nube-de-pensamiento': () => doodle(540, 440, (ctx) => { const bultos = [[150, 150, 80], [260, 110, 95], [380, 150, 85], [400, 250, 70], [270, 280, 90], [140, 250, 75]]; for (const [i, [x, y, r]] of bultos.entries()) aMano(ctx, curva((t) => [x + Math.cos(t * Math.PI * 2) * r, y + Math.sin(t * Math.PI * 2) * r * 0.8], 60), { ancho: 5, semilla: 321 + i, temblor: 1.6 });
-    ctx.globalCompositeOperation = 'destination-out'; ctx.beginPath(); ctx.ellipse(270, 195, 190, 110, 0, 0, Math.PI * 2); ctx.fill(); ctx.globalCompositeOperation = 'source-over';
-    for (const [x, y, r] of [[120, 360, 24], [80, 405, 13]]) aMano(ctx, curva((t) => [x + Math.cos(t * Math.PI * 2) * r, y + Math.sin(t * Math.PI * 2) * r], 30), { ancho: 4, semilla: 330 + r }); }),
-  'flor': () => doodle(420, 520, (ctx) => { for (let i = 0; i < 5; i++) { const a = (i * Math.PI * 2) / 5 - Math.PI / 2; const c = [210 + Math.cos(a) * 92, 190 + Math.sin(a) * 92];
-      // Cada pétalo: un óvalo que nace afuera del botón, a lo largo de su dirección.
-      aMano(ctx, curva((t) => { const b = t * Math.PI * 2; const u = Math.cos(b) * 62, v = Math.sin(b) * 34; return [c[0] + u * Math.cos(a) - v * Math.sin(a), c[1] + u * Math.sin(a) + v * Math.cos(a)]; }, 50), { ancho: 5, semilla: 341 + i, temblor: 1.6 }); }
-    aMano(ctx, curva((t) => [210 + Math.cos(t * Math.PI * 2) * 26, 190 + Math.sin(t * Math.PI * 2) * 26], 30), { ancho: 5, semilla: 347 }); aMano(ctx, curva((t) => [210 + Math.sin(t * 2) * 10, 216 + t * 290]), { ancho: 5, semilla: 348 }); }),
-  'hoja': () => doodle(320, 520, (ctx) => { aMano(ctx, [...curva((t) => [160 + Math.sin(t * Math.PI) * 120, 40 + t * 400], 50), ...curva((t) => [160 - Math.sin((1 - t) * Math.PI) * 120, 440 - t * 400], 50)], { ancho: 5, semilla: 351, temblor: 1.8 });
-    aMano(ctx, curva((t) => [160, 60 + t * 440]), { ancho: 4, semilla: 352 }); for (let i = 1; i < 5; i++) { const y = 80 + i * 70; aMano(ctx, [[160, y + 30], [160 + 70, y]], { ancho: 3, semilla: 353 + i }); aMano(ctx, [[160, y + 30], [160 - 70, y]], { ancho: 3, semilla: 363 + i }); } }),
-  'subrayado': () => doodle(640, 120, (ctx) => { aMano(ctx, curva((t) => [24 + t * 592, 60 + Math.sin(t * Math.PI * 7) * 18], 140), { ancho: 6, semilla: 371, temblor: 1.2 }); }),
-  'espiral': () => doodle(440, 440, (ctx) => { aMano(ctx, curva((t) => { const a = t * Math.PI * 7; const rr = 8 + t * 190; return [220 + Math.cos(a) * rr, 220 + Math.sin(a) * rr]; }, 220), { ancho: 5, semilla: 381, temblor: 1.5 }); }),
+  'marco-a-mano': () => doodle(560, 420, (ctx) => { const lado = (a, b, s, ancho) => pluma(ctx, suave([a, [(a[0] + b[0]) / 2 + (s % 2 ? 2 : -3), (a[1] + b[1]) / 2 + (s % 2 ? -3 : 2)], b]), { ancho, semilla: s, temblor: 1.2, entrada: 1.2, salida: 2.5, punta: 0.35 });
+    lado([18, 38], [540, 30], 301, 7); lado([530, 16], [536, 402], 302, 7); lado([546, 390], [16, 396], 303, 7); lado([32, 408], [28, 20], 304, 7);
+    lado([56, 62], [506, 56], 305, 3.6); lado([500, 50], [504, 366], 306, 3.6); lado([510, 360], [52, 364], 307, 3.6); lado([58, 370], [56, 54], 308, 3.6); }),
+  'burbuja': () => doodle(520, 420, (ctx) => { const cx = 262, cy = 176, a = 226, b = 148, e = 2 / 2.7; const borde = (g) => { const c = Math.cos(g), s = Math.sin(g); return [cx + a * Math.sign(c) * Math.pow(Math.abs(c), e), cy + b * Math.sign(s) * Math.pow(Math.abs(s), e)]; };
+    const g0 = (130 * Math.PI) / 180, g1 = ((360 + 108) * Math.PI) / 180; const cuerpo = curva((t) => borde(g0 + t * (g1 - g0)), 240); const ini = cuerpo[0], fin = cuerpo[cuerpo.length - 1];
+    pluma(ctx, [...cuerpo, ...cuadratica(fin, [150, 372], [88, 400]), ...cuadratica([88, 400], [112, 350], ini), ...cuerpo.slice(1, 10)], { ancho: 8, semilla: 311, temblor: 1.8, entrada: 1.5, salida: 2.5 }); }),
+  'nube-de-pensamiento': () => doodle(540, 440, (ctx) => { const cx = 282, cy = 188, rx = 186, ry = 122; const angulos = [0, 36, 78, 116, 152, 196, 236, 276, 316, 360].map((g) => ((g - 8) * Math.PI) / 180);
+    const en = (g) => [cx + Math.cos(g) * rx, cy + Math.sin(g) * ry]; const contorno = [];
+    for (let i = 0; i < angulos.length - 1; i++) { const p = en(angulos[i]), q = en(angulos[i + 1]); const cuerda = Math.hypot(q[0] - p[0], q[1] - p[1]); const m = [(p[0] + q[0]) / 2 - cx, (p[1] + q[1]) / 2 - cy]; const l = Math.hypot(m[0], m[1]); const h = cuerda * 0.5;
+      contorno.push(...bezier(p, [p[0] + (m[0] / l) * h, p[1] + (m[1] / l) * h], [q[0] + (m[0] / l) * h, q[1] + (m[1] / l) * h], q, 36)); }
+    pluma(ctx, [...contorno, ...contorno.slice(1, 8)], { ancho: 8, semilla: 321, temblor: 1.4, entrada: 1.5, salida: 2.5 });
+    pluma(ctx, ovalo(112, 384, 22, 19, { desde: -1, vueltas: 1.06, n: 50 }), { ancho: 6.5, semilla: 322, temblor: 0.5, entrada: 1, salida: 1.5 }); pluma(ctx, ovalo(66, 420, 12, 11, { desde: 0.5, vueltas: 1.08, n: 36 }), { ancho: 5.5, semilla: 323, temblor: 0.3, entrada: 1, salida: 1 }); }),
+  'flor': () => doodle(420, 520, (ctx) => { const cx = 210, cy = 172, r0 = 30;
+    for (let i = 0; i < 5; i++) { const a = -Math.PI / 2 + (i * Math.PI * 2) / 5 + [0.04, -0.05, 0.03, -0.03, 0.05][i]; const L = [124, 116, 112, 114, 120][i], w = 44;
+      const lugar = ([u, v]) => [cx + u * Math.cos(a) - v * Math.sin(a), cy + u * Math.sin(a) + v * Math.cos(a)];
+      const petalo = [...bezier([r0, -5], [r0 + (L - r0) * 0.4, -w * 1.05], [L + 2, -w * 0.62], [L, 0]), ...bezier([L, 0], [L - 2, w * 0.62], [r0 + (L - r0) * 0.4, w * 1.05], [r0, 5])];
+      pluma(ctx, petalo.map(lugar), { ancho: 7, semilla: 341 + i, temblor: 0.8, entrada: 1.5, salida: 1.5, punta: 0.4 });
+      pluma(ctx, [lugar([r0 + 10, 0]), lugar([r0 + (L - r0) * 0.42, 0])], { ancho: 4, semilla: 351 + i, temblor: 0, entrada: 1, salida: 2.5 }); }
+    punto(ctx, cx, cy, 22); const tallo = suave([[cx, cy + 26], [206, 300], [214, 400], [204, 506]]); pluma(ctx, tallo, { ancho: 7, semilla: 361, entrada: 1, salida: 14, punta: 0.3 });
+    hojita(ctx, tallo[Math.round(tallo.length * 0.55)], -0.55, 96, 38, 362); hojita(ctx, tallo[Math.round(tallo.length * 0.72)], Math.PI + 0.6, 86, 34, 363); }),
+  'hoja': () => doodle(320, 520, (ctx) => { const contorno = [...bezier([160, 420], [38, 364], [62, 116], [172, 34], 70), ...bezier([172, 34], [268, 132], [286, 352], [160, 420], 70)];
+    pluma(ctx, [...contorno, ...contorno.slice(1, 6)], { ancho: 8, semilla: 371, temblor: 1, entrada: 1.5, salida: 1.5, punta: 0.4 });
+    pluma(ctx, suave([[160, 418], [156, 466], [144, 506]]), { ancho: 8, semilla: 372, entrada: 1, salida: 4 }); pluma(ctx, suave([[160, 418], [163, 300], [168, 170], [171, 84]]), { ancho: 5.5, semilla: 373, temblor: 0.6, entrada: 1, salida: 16 });
+    [[372, 0.75], [312, 1], [252, 0.98], [192, 0.8], [134, 0.55]].forEach(([y, s], k) => { for (const lado of [-1, 1]) { const yy = y + (lado > 0 ? 22 : 0); const x = 160 + ((420 - yy) / 336) * 11;
+      pluma(ctx, bezier([x, yy], [x + lado * 30 * s, yy - 8 * s], [x + lado * 58 * s, yy - 30 * s], [x + lado * 74 * s, yy - 66 * s], 30), { ancho: 4, semilla: 374 + k * 2 + (lado > 0 ? 1 : 0), temblor: 0.4, entrada: 1, salida: 4, punta: 0.15 }); } }); }),
+  'subrayado': () => doodle(640, 120, (ctx) => { pluma(ctx, suave([[24, 76], [170, 70], [340, 64], [500, 58], [618, 40]]), { ancho: 12, semilla: 381, temblor: 1.2, entrada: 5, salida: 9, punta: 0.12, presion: 0.2 });
+    pluma(ctx, suave([[96, 100], [290, 93], [500, 85]]), { ancho: 6, semilla: 382, temblor: 0.8, entrada: 4, salida: 8, punta: 0.12 }); }),
+  'espiral': () => doodle(440, 440, (ctx) => { pluma(ctx, curva((t) => { const a = 0.4 + t * Math.PI * 2 * 3.2; const rr = 6 + Math.pow(t, 0.92) * 194; return [222 + Math.cos(a) * rr, 222 + Math.sin(a) * rr * 0.94]; }, 320), { ancho: 7.5, semilla: 391, temblor: 1.6, entrada: 1, salida: 8, presion: 0.18 }); }),
 };
 
 /** Pasa a gris (por si algo quedó con color) y deja la pieza a lo más de 'max' px de lado. */

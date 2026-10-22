@@ -942,3 +942,10 @@ Automatizado: la migración en PGlite (5 casos), `asset-sheet.test.tsx` (obtener
 periódico, sello y una flor teñida.
 - [ ] (manual, teléfono) Obtener Papelería y pegar sus piezas sin red (se ven de la copia guardada).
 - [ ] (manual, Areli) ¿Las 17 piezas tienen la dirección visual que quieres? ¿Qué pack sigue?
+
+## Doodles redibujados (T369)
+Automatizado: el generador sale igual en cada corrida (solo cambian los doodles y el sello) y la hoja de revisión
+recolorea cada uno en 3 colores. Papelería v4 subida y verificada (200).
+- [ ] (manual, Areli) ¿Te gustan ahora? Destellos, flecha, rama, lazo, costura, corazón, estrella, círculo, marco,
+  burbuja, nube, flor, hoja, subrayado y espiral.
+- [ ] (manual, web) Recargar con ⌘⇧R y ver que los doodles ya pegados cambian al dibujo nuevo.
