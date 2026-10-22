@@ -7,6 +7,7 @@ import type { LibraryApi } from '@/services/contracts';
 import { areConnected } from '@/services/demo/connections';
 import { DEMO_CONTACTS, delay, demoState, emitDataChange, nextId } from '@/services/demo/store';
 import { documentoValido } from '@/lib/library/canvas';
+import { PORTADA_POR_OMISION, portadaValida } from '@/lib/library/journal';
 import { nombreSeguro } from '@/lib/library/files';
 import type {
   LibraryAnnotation,
@@ -321,6 +322,7 @@ export const demoLibrary: LibraryApi = {
       reading_mode: null,
       style: input.style ?? null,
       base_color: input.base_color ?? null,
+      ...(input.kind === 'journal' ? { journal: input.journal ? portadaValida(input.journal) : PORTADA_POR_OMISION } : {}),
       created_at: t0,
       updated_at: t0,
     };
@@ -333,7 +335,14 @@ export const demoLibrary: LibraryApi = {
     await delay();
     const item = buscar(items, itemId);
     if (patch.file_size !== undefined) revisarEspacio(item.owner_id, patch.file_size, item.id);
-    Object.assign(item, patch, patch.title !== undefined ? { title: patch.title.trim() } : {}, { updated_at: ahora() });
+    Object.assign(
+      item,
+      patch,
+      patch.title !== undefined ? { title: patch.title.trim() } : {},
+      // Como la base: la portada de un Journal, solo en un Journal y ya validada (T345).
+      patch.journal !== undefined ? { journal: item.kind === 'journal' && patch.journal ? portadaValida(patch.journal) : null } : {},
+      { updated_at: ahora() },
+    );
     emitDataChange();
     return copia(item);
   },

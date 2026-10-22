@@ -83,6 +83,14 @@
   por los cuatro lados) y se pintan con `background-blend-mode: soft-light` sobre el color del material; las genera
   `scripts/journal/texturas.cjs` desde el muestrario.
 - Una persona puede tener **varios Journals**; cada uno es su propia pieza con su portada.
+- **Hecho J1 (T345, 21 oct 2026):** la portada vive en su propia columna `library_items.journal` (jsonb; migración
+  `20261021120000`, solo para `kind = 'journal'`, ≤ 1 MB) en vez de `cover`, que ya guarda la imagen de portada de los
+  libros; los documentos de lienzo de portada, lomo y contraportada se agregan ahí en J2. `lib/library/journal.ts`
+  valida la portada y mide el lomo con la misma cuenta que un libro (`grosorDeLomo`). `JournalCover` pinta portada,
+  lomo y contraportada (textura con `soft-light` sobre el color, cantos en tapa dura, espiral y puntadas con el color
+  del acento); `journal/edit` crea y edita por pasos y `journal/[id]` gira el objeto. En la librería, "Nuevo Journal"
+  y el Journal en la cuadrícula y en el librero. **Libro real** queda para T347, cuando el Journal tenga páginas que
+  hojear.
 
 ## 7. Fases propuestas
 

@@ -860,3 +860,11 @@ las 5 de KAVI sin colores ni Nobi), `notebook.test.tsx`, `canvas.test.tsx` y el 
 con cada plantilla de KAVI, guardar uno como "Mi reseña favorita" y verla en Mis plantillas.
 - [ ] (manual, Areli) ¿Las cinco plantillas de KAVI se sienten como un buen punto de partida? (acomodo y textos)
 - [ ] (manual, dos aparatos) Una plantilla guardada en la compu aparece en el teléfono.
+
+## Journal como objeto (T345)
+Automatizado: la columna `journal` en PGlite (5 casos), `lib/library/__tests__/journal.test.ts`, `journal-cover.test.tsx`,
+`journal/__tests__/journal.test.tsx`, `library.test.tsx` y el demo. Visto en el demo web a 375 px y en escritorio: crear
+uno en espiral de madera con 240 páginas, girarlo y verlo en la cuadrícula y en el librero.
+- [ ] (manual, iOS y Android) Las texturas se repiten sin costuras y el `soft-light` se ve igual que en web.
+- [ ] (manual, Areli) ¿Los seis materiales y las cuatro encuadernaciones se sienten como el cuaderno que imaginaste?
+- [ ] (manual, dos aparatos) Un Journal creado en la compu aparece igual en el teléfono.

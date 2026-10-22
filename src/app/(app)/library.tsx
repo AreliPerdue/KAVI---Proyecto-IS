@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { BookOpen, ChevronLeft, FolderMinus, FolderPlus, Library, Scissors, Search, Star, SlidersHorizontal, Tag, Timer, Trash2, X } from 'lucide-react-native';
+import { BookOpen, ChevronLeft, FolderMinus, FolderPlus, Library, NotebookPen, Scissors, Search, Star, SlidersHorizontal, Tag, Timer, Trash2, X } from 'lucide-react-native';
 import { useEffect, useMemo, useState } from 'react';
 import { BackHandler, FlatList, type LayoutChangeEvent, Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { useReducedMotion } from 'react-native-reanimated';
@@ -113,7 +113,11 @@ export default function LibraryScreen() {
   const anchoPortadaRejilla = columnas > 1 ? Math.floor((ancho - Spacing.sm * (columnas - 1)) / columnas) : 0;
   const hayPiezas = piezas.isSuccess && piezas.data.length > 0;
   const router = useRouter();
-  const abrir = (id: string) => router.push({ pathname: '/(app)/book/[id]', params: { id } });
+  // Un Journal (13i; T345) no se lee: abre su ficha de cuaderno.
+  const abrir = (id: string) =>
+    piezas.data?.find((p) => p.id === id)?.kind === 'journal'
+      ? router.push({ pathname: '/(app)/journal/[id]', params: { id } })
+      : router.push({ pathname: '/(app)/book/[id]', params: { id } });
   const confirm = useConfirm();
   const showSnackbar = useSnackbar();
   const eliminar = useRemoveLibraryItems();
@@ -497,6 +501,13 @@ export default function LibraryScreen() {
           style={({ pressed }) => [styles.acceso, { borderColor: theme.border, backgroundColor: pressed ? theme.surfaceAlt : theme.surface }]}>
           <Star size={IconSize.inline} strokeWidth={IconStroke} color={theme.text} />
           <AppText variant="label">{l.cards.reviews.title}</AppText>
+        </Pressable>
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => router.push('/(app)/journal/edit')}
+          style={({ pressed }) => [styles.acceso, { borderColor: theme.border, backgroundColor: pressed ? theme.surfaceAlt : theme.surface }]}>
+          <NotebookPen size={IconSize.inline} strokeWidth={IconStroke} color={theme.text} />
+          <AppText variant="label">{l.journal.new}</AppText>
         </Pressable>
       </View>
 

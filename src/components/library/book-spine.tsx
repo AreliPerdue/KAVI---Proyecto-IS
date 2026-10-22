@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withTiming } from 'react-native-reanimated';
 
+import { JournalCover } from './journal-cover';
 import { etiqueta, type LibraryItemProps, RETARDO_MS } from './library-item';
 
 import { AppText } from '@/components/ui';
@@ -23,7 +24,7 @@ import type { LibraryItem, LibrarySeries } from '@/types/domain';
 export const SALIDA = 18;
 
 type PiezaDeLomo = Pick<LibraryItem, 'id' | 'title' | 'cover_path' | 'cover_color' | 'page_count'> &
-  Partial<Pick<LibraryItem, 'custom_cover_path' | 'custom_cover_color' | 'spine_path' | 'spine_color' | 'series_id'>>;
+  Partial<Pick<LibraryItem, 'custom_cover_path' | 'custom_cover_color' | 'spine_path' | 'spine_color' | 'series_id' | 'kind' | 'journal'>>;
 
 /**
  * El lomo de un libro (RF-BL2, RF-BL2b, RF-BL20): la imagen del lomo si la tiene, completa (el lomo toma el
@@ -49,6 +50,15 @@ export function BookSpine({ item }: { item: PiezaDeLomo }) {
   const letra = Math.min(14, Math.max(10, Math.round(grosor * 0.3)));
   // El texto girado ocupa el alto del lomo como su ancho, menos las bandas de arriba y abajo.
   const largo = alto - 28;
+
+  // Un Journal (13i, RF-JC5): su lomo es su material y su encuadernación, y engorda con sus páginas como un libro.
+  if (item.kind === 'journal' && item.journal) {
+    return (
+      <View accessible={false} importantForAccessibility="no-hide-descendants" pointerEvents="none" testID="lomo" style={{ width: grosor, height: alto }}>
+        <JournalCover portada={item.journal} cara="spine" ancho={grosor} alto={alto} />
+      </View>
+    );
+  }
 
   return (
     <View

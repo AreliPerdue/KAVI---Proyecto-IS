@@ -520,3 +520,17 @@ describe('Mis plantillas del lienzo (13h, RF-CC20; T344)', () => {
     expect(await api.listCanvasTemplates(ANA)).toEqual([]);
   });
 });
+
+describe('Journal (13i; T345)', () => {
+  it('se crea con su portada (o la de omisión) y sus páginas; editarla la valida; un libro no la lleva', async () => {
+    const api = fresh();
+    const j = await api.createItem(ANA, { family: 'creation', kind: 'journal', title: 'Mi año', page_count: 120, journal: { orientation: 'portrait', binding: 'sewn', material: 'linen', color: '#3b2a20', back: null, edges: '#F7F5EF', accent: '#B9B9B9' } });
+    expect(j.journal).toMatchObject({ binding: 'sewn', material: 'linen', color: '#3B2A20' });
+    const sinPortada = await api.createItem(ANA, { family: 'creation', kind: 'journal', title: 'Otro' });
+    expect(sinPortada.journal?.material).toBe('leather');
+    const cambiado = await api.updateItem(j.id, { page_count: 240, journal: { ...j.journal!, material: 'velvet', binding: 'nada' as never } });
+    expect(cambiado).toMatchObject({ page_count: 240, journal: { material: 'velvet', binding: 'hardcover', color: '#3B2A20' } });
+    const libro = await api.createItem(ANA, { family: 'book', kind: 'pdf', title: 'Rayuela' });
+    expect((await api.updateItem(libro.id, { journal: j.journal })).journal).toBeNull();
+  });
+});

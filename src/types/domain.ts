@@ -4,6 +4,7 @@
  */
 import type { Dimension } from '@/constants/dimensions';
 import type { DocumentoDeLienzo, OrientacionDeLienzo } from '@/lib/library/canvas';
+import type { PortadaDeJournal } from '@/lib/library/journal';
 
 export type AuthUser = {
   id: string;
@@ -616,6 +617,8 @@ export type LibraryItem = {
   series_index: number | null;
   /** El club de lectura al que está conectada esta copia (spec 13f; T305). */
   club_id?: string | null;
+  /** Un Journal (spec 13i; T345): su portada como objeto. Solo en los de tipo `journal`. */
+  journal?: PortadaDeJournal | null;
   /** Más datos, todos opcionales (RF-BL19, de KAVI Reader). */
   publisher: string | null;
   publish_place: string | null;
@@ -659,6 +662,7 @@ export type LibraryItemInput = Pick<LibraryItem, 'family' | 'kind' | 'title'> &
       | 'edition'
       | 'chapter_count'
       | 'synopsis'
+      | 'journal'
     >
   >;
 

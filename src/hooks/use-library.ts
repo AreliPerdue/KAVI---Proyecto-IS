@@ -9,6 +9,7 @@ import { guardarLista, listaGuardada } from '@/lib/library/offline/snapshot';
 import { LIBRARY_URL_SECONDS } from '@/constants/library';
 import { cambioDeColor, COLUMNAS_DE_PARTE, type ParteDeTapa } from '@/lib/library/cover/parts';
 import {
+  createLibraryItem,
   addLink,
   addToShelf,
   applyOrder,
@@ -176,6 +177,17 @@ export function useSaveCover() {
 }
 
 /** Cambiar los datos de una pieza (RF-BL16). Se ve al instante en la librería; si falla, se deshace. */
+/** Crear un Journal (13i, RF-JC1; T345): una pieza de la librería con su portada y sus páginas. */
+export function useCreateJournal() {
+  const { userId } = useAuth();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ title, pages, journal }: { title: string; pages: number; journal: NonNullable<LibraryItem['journal']> }) =>
+      createLibraryItem(userId as string, { family: 'creation', kind: 'journal', title, page_count: pages, journal }),
+    onSettled: () => queryClient.invalidateQueries({ queryKey: libraryKeys.all }),
+  });
+}
+
 export function useUpdateLibraryItem() {
   const { userId } = useAuth();
   const queryClient = useQueryClient();

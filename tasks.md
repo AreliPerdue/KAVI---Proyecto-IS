@@ -1255,8 +1255,12 @@ Reemplazan L5 (13e). Un recorte es una página 1 : √2 del visor de PDF (decisi
   sobre un toro) deja `assets/library/materials/<material>.png` (528 px, 576 la madera; ~980 KB las seis). Se
   mezclan con `soft-light` sobre el color elegido; probadas en A5 con 6 colores. El muestrario es de baja
   resolución (franjas de ~880 × 97 px): si Areli genera cada material a 2048 px, se vuelven a correr.
-- [ ] T345 J1 · Journal como objeto (varios por persona): A5, 4 encuadernaciones, 6 materiales recolorables, lomo por páginas, cantos y
+- [x] T345 J1 · Journal como objeto (varios por persona): A5, 4 encuadernaciones, 6 materiales recolorables, lomo por páginas, cantos y
   contraportada; en el librero y en libro real. (RF-JC1 – RF-JC9) Dep: T351, T352
+  **Hecho (21 oct 2026):** columna `library_items.journal` (jsonb, migración `20261021120000`, probada en PGlite),
+  `lib/library/journal.ts` (portada válida, páginas de 20 en 20, lomo como un libro), `JournalCover` (portada, lomo y
+  contraportada), `journal/edit` (crear y editar por pasos) y `journal/[id]` (girar el objeto); en la librería,
+  "Nuevo Journal" y el Journal en cuadrícula y librero; Supabase y demo. Libro real pasa a T347 (aún no hay páginas).
 - [ ] T346 J2 · Decorar la portada, lomo y contraportada con el lienzo; tratamiento impreso. (RF-JC10, RF-JC11) Dep: T345
 - [ ] T347 C5 · Páginas del Journal y Get to Know the Reader. (RF-CC2, RF-CC22) Dep: T344, T345
 - [ ] T348 J3 · Tratamientos hundido, relieve y recortado. (RF-JC11, RF-JC12) Dep: T346

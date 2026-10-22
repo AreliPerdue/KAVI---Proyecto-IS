@@ -2,6 +2,7 @@ import { Image } from 'expo-image';
 import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
+import { JournalCover } from '@/components/library/journal-cover';
 import { Radius, Spacing, Typography } from '@/constants/theme';
 import { useLibraryFileUrl } from '@/hooks/use-library';
 import { useTheme } from '@/hooks/use-theme';
@@ -9,7 +10,7 @@ import { colorDePortada, rutaDePortada, textoSobre } from '@/lib/library/shelf';
 import type { LibraryItem } from '@/types/domain';
 
 type Props = {
-  item: Pick<LibraryItem, 'id' | 'title' | 'authors' | 'cover_path' | 'cover_color'> & Partial<Pick<LibraryItem, 'custom_cover_path' | 'custom_cover_color'>>;
+  item: Pick<LibraryItem, 'id' | 'title' | 'authors' | 'cover_path' | 'cover_color'> & Partial<Pick<LibraryItem, 'custom_cover_path' | 'custom_cover_color' | 'kind' | 'journal'>>;
   /** Ancho en px; el alto sale de la proporción de libro, 2:3 (RF-BL1). */
   width: number;
   /** Miniatura de la lista (RF-BL3): sin texto, que a ese tamaño no se lee. */
@@ -32,6 +33,15 @@ export function BookCover({ item, width, thumb = false, uri }: Props) {
   const imagen = url.data && url.data !== fallo ? url.data : null;
   const fondo = colorDePortada(item);
   const tinta = textoSobre(fondo);
+
+  // Un Journal (13i; T345) se ve como objeto: su material, su encuadernación y sus cantos.
+  if (item.kind === 'journal' && item.journal) {
+    return (
+      <View accessible={false} importantForAccessibility="no-hide-descendants" pointerEvents="none" style={[styles.journal, { width, height: Math.round(width * 1.5) }]}>
+        <JournalCover portada={item.journal} ancho={item.journal.orientation === 'portrait' ? width * 0.96 : width} />
+      </View>
+    );
+  }
 
   return (
     <View
@@ -67,6 +77,7 @@ export function BookCover({ item, width, thumb = false, uri }: Props) {
 const styles = StyleSheet.create({
   portada: { borderRadius: Radius.sm, borderCurve: 'continuous', borderWidth: StyleSheet.hairlineWidth, overflow: 'hidden' },
   portadaChica: { borderRadius: 4 },
+  journal: { alignItems: 'center', justifyContent: 'flex-end', paddingBottom: 3 },
   generada: { flex: 1, padding: Spacing.md, justifyContent: 'space-between' },
   titulo: { ...Typography.bodyStrong, lineHeight: undefined },
   autor: { ...Typography.caption, opacity: 0.85 },

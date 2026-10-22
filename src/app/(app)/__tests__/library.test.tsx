@@ -370,6 +370,19 @@ describe('menú y selección', () => {
     expect(globalThis.mockRouter.push).toHaveBeenCalledWith({ pathname: '/(app)/book/[id]', params: { id: 'l1' } });
   });
 
+  it('"Nuevo Journal" lleva a crearlo; tocar un Journal abre su ficha y no el lector (13i; T345)', async () => {
+    mockPiezas = ok([
+      ...libros(),
+      pieza('j1', { title: 'Mi año', family: 'creation', kind: 'journal', page_count: 120, journal: { orientation: 'portrait', binding: 'spiral', material: 'wood', color: '#6B3E26', back: null, edges: '#F7F5EF', accent: '#B9B9B9' } }),
+    ]);
+    await render(<Pantalla />);
+    await fireEvent.press(screen.getByRole('button', { name: L.journal.new }));
+    expect(globalThis.mockRouter.push).toHaveBeenCalledWith('/(app)/journal/edit');
+    await fireEvent.press(screen.getByRole('button', { name: L.actionsFor('Mi año') }));
+    await fireEvent.press(screen.getByRole('button', { name: L.item.open }));
+    expect(globalThis.mockRouter.push).toHaveBeenCalledWith({ pathname: '/(app)/journal/[id]', params: { id: 'j1' } });
+  });
+
   it('"Mi libreta" lleva a lo personal del libro (13h, RF-CC23; T342)', async () => {
     await render(<Pantalla />);
     await fireEvent.press(screen.getByRole('button', { name: L.actionsFor('Rayuela') }));
