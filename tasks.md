@@ -1286,8 +1286,13 @@ Reemplazan L5 (13e). Un recorte es una página 1 : √2 del visor de PDF (decisi
   **Hecho (22 oct 2026):** "Acabado" en lo elegido de una tapa (texto, forma, papel o doodle), `style.treatment`,
   `colorDeTratamiento` (translúcido para conservar textura y tono del material; recortado del color de las hojas) y
   filtros SVG de sombra interior en el motor, uno por pieza. Sin migración.
-- [ ] T349 C6 · Módulos y plantillas avanzados, Journal con datos de Library, fragmentos pegados. (RF-CC14, RF-CC22,
+- [x] T349 C6 · Módulos y plantillas avanzados, Journal con datos de Library, fragmentos pegados. (RF-CC14, RF-CC22,
   RF-CC24) Dep: T347, T317
+  **Hecho (22 oct 2026), primera parte:** pegar fragmentos (texto → cita con página; imagen → copiada al recorte),
+  módulo `stat` (libros terminados, páginas, horas; del año o de siempre; en vivo, `journal-stats.ts`), plantilla
+  del Journal "Mi año lector" y módulo `swatch` (muestra de color). Sin migración.
+- [ ] T349b C6 · Más módulos (mood, canción, fecha/lugar, timeline, checklist…) y plantillas (Moodboard, Reading
+  Stats, Reading Awards, Reading Eras, Character Analysis…). (RF-CC14, RF-CC21) Dep: T349
 - [ ] T350 J4 · Primera colección de motivos Fantasy / Dragon en la tienda. (RF-JC10) Dep: T346
 
 ### L5 · Creaciones y plantillas por capas — reemplazada por LK (14 oct 2026)

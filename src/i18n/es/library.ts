@@ -852,6 +852,7 @@ export const library = {
         readingExperience: 'Experiencia de lectura',
         dnfGraveyard: 'Cementerio DNF',
         getToKnow: 'Conoce a quien lee',
+        readingYear: 'Mi año lector',
       },
       bookReview: {
         title: 'Mi reseña',
@@ -869,6 +870,13 @@ export const library = {
         recommend: '¿Lo recomiendo?',
       },
       dnf: { title: 'Aquí yace', page: 'Lo dejé en la página:', why: 'Por qué lo dejé:', rest: 'Descanse en paz' },
+      readingYear: {
+        title: (anio: number) => `Mi año lector ${anio}`,
+        favorite: 'Mi favorito del año',
+        lists: 'El que no esperaba:\n\nEl que me rompió el corazón:\n\nEl que voy a releer:',
+        quote: 'La frase que me llevo de este año.',
+        rating: 'Cómo fue mi año lector',
+      },
       getToKnow: {
         title: 'Conoce a quien lee',
         caption: 'Yo leyendo',
@@ -893,6 +901,34 @@ export const library = {
     },
     add: 'Agregar',
     addTitle: 'Agregar al recorte',
+    // Datos de la biblioteca (RF-CC22), muestra de color y fragmentos pegados (RF-CC24) (T349).
+    stats: {
+      title: 'Dato de mi biblioteca',
+      hint: 'Se cuenta solo con lo que lees: siempre está al día.',
+      names: { booksFinished: 'Libros terminados', pagesRead: 'Páginas leídas', hoursRead: 'Horas leyendo' } as Record<
+        'booksFinished' | 'pagesRead' | 'hoursRead',
+        string
+      >,
+      label: (dato: 'booksFinished' | 'pagesRead' | 'hoursRead', n: number): string =>
+        dato === 'booksFinished' ? (n === 1 ? 'libro terminado' : 'libros terminados') : dato === 'pagesRead' ? (n === 1 ? 'página leída' : 'páginas leídas') : n === 1 ? 'hora leyendo' : 'horas leyendo',
+      period: (anio: number | null) => (anio === null ? 'desde siempre' : `en ${anio}`),
+      thisYear: (anio: number) => `Este año (${anio})`,
+      always: 'Desde siempre',
+      change: 'Cambiar dato',
+    },
+    stat: 'Dato de mi biblioteca',
+    swatch: 'Muestra de color',
+    swatchName: 'Nombre del color',
+    swatchNamePlaceholder: 'Ej. Rojo de la portada',
+    swatchRename: 'Nombrar el color',
+    fragment: 'Fragmento',
+    fragmentTitle: 'Pegar un fragmento',
+    fragmentsEmpty: 'Aún no tienes fragmentos. Al leer, recorta un texto o una imagen y aparecerá aquí.',
+    fragmentsThisBook: 'De este libro',
+    fragmentsOther: 'De otros libros',
+    fragmentImage: 'Imagen',
+    fragmentPage: (n: number) => `p. ${n}`,
+    fragmentFailed: 'No se pudo pegar la imagen. Revisa tu conexión e inténtalo de nuevo.',
     // Acabados en una tapa del Journal (13i, RF-JC11; T348).
     finish: {
       title: 'Acabado',

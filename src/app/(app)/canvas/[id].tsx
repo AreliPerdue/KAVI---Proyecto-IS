@@ -3,6 +3,7 @@ import {
   BookOpen,
   BringToFront,
   Camera,
+  ChartNoAxesColumn,
   Check,
   ChevronLeft,
   Copy,
@@ -19,6 +20,7 @@ import {
   Pencil,
   Plus,
   Redo2,
+  Scissors,
   SendToBack,
   Shapes,
   Share,
@@ -26,6 +28,7 @@ import {
   Star,
   Stamp,
   Sticker,
+  SwatchBook,
   Trash2,
   Type,
   Undo2,
@@ -42,12 +45,14 @@ import { BookList } from '@/components/library/book-list';
 import { type Cita, PolaroidSheet, QuoteSheet, RatingSheet } from '@/components/library/canvas-module-sheets';
 import { CanvasStyleSheet } from '@/components/library/canvas-style-sheet';
 import { ColorPickerSheet } from '@/components/library/color-picker-sheet';
+import { FragmentSheet } from '@/components/library/fragment-sheet';
 import { ReaderEngine, type ReaderEngineHandle } from '@/components/library/reader-engine';
 import { type StickerElegible, StickerSheet } from '@/components/library/sticker-sheet';
-import { ActionRow, AppText, Button, ErrorState, IconButton, LoadingState, Sheet, TextField } from '@/components/ui';
+import { ActionRow, AppText, Button, ErrorState, IconButton, LoadingState, Segmented, Sheet, TextField } from '@/components/ui';
 import type { AssetDeLienzo } from '@/constants/canvas-assets';
 import { IconSize, IconStroke, Spacing } from '@/constants/theme';
 import { useLibraryImageUrls, useUploadAnnotationImage } from '@/hooks/use-annotations';
+import { useDatosDeBiblioteca } from '@/hooks/use-canvas-sources';
 import { useSaveCanvasTemplate } from '@/hooks/use-canvas-templates';
 import { useCanvas, useCanvasEditor, useLimpiarImagenesDeLienzo } from '@/hooks/use-canvases';
 import { useLibraryItem, useLibraryItems } from '@/hooks/use-library';
@@ -74,6 +79,9 @@ import {
   FOTOS_DE_POLAROID,
   type LibroEnLienzo,
   mover,
+  MUESTRA_SIN_COLOR,
+  PROPORCION_DE_DATO,
+  PROPORCION_DE_MUESTRA,
   PROPORCION_DE_POLAROID,
   PROPORCION_DE_RATING,
   quitar,
@@ -84,6 +92,7 @@ import {
 import { archivoDeExportacion, nombreDeExportacion } from '@/lib/library/canvas-export';
 import { comoPlantilla } from '@/lib/library/canvas-templates';
 import { fondoDeCara, portadaValida, proporcionDeCara } from '@/lib/library/journal';
+import { DATOS_DE_BIBLIOTECA, type DatoDeBiblioteca } from '@/lib/library/journal-stats';
 import { PAPEL_DE_LIENZO, TINTA_DE_TEXTO } from '@/lib/library/canvas-shapes';
 import { luminance } from '@/lib/color';
 import { prepararImagenPegada } from '@/lib/library/cover/prepare';
@@ -93,7 +102,7 @@ import { colorDePortada, rutaDePortada } from '@/lib/library/shelf';
 import { fuenteDeSticker } from '@/lib/library/sticker-packs';
 import { shareImage } from '@/lib/share';
 import { useAuth, useSnackbar } from '@/providers';
-import type { LibraryLocator } from '@/types/domain';
+import type { LibraryClip, LibraryLocator } from '@/types/domain';
 
 type PorPegar = {
   forma?: FormaDeLienzo;
@@ -104,6 +113,8 @@ type PorPegar = {
   variante?: VarianteDePolaroid;
   cita?: Cita;
   libro?: string;
+  /** Un dato de la biblioteca (T349). */
+  dato?: { stat: DatoDeBiblioteca; year: number | null };
 };
 /** Una imagen elegida va a pegarse sola o a un hueco de una polaroid. */
 type DestinoDeImagen = { polaroid: string; hueco: number } | null;
@@ -134,7 +145,10 @@ export default function CanvasScreen() {
   const editor = useCanvasEditor(lienzo.data);
   const { doc, aplicar } = editor;
   const motor = useRef<ReaderEngineHandle>(null);
-  const [abierto, setAbierto] = useState(false);
+  // Cuántas veces abrió el motor la página: cada vez que la abre empieza vacía y hay que mandarle lo pegado otra vez
+  // (si se abre de nuevo, p. ej. cuando llega el Journal de una tapa, lo de antes ya no está).
+  const [aperturas, setAperturas] = useState(0);
+  const abierto = aperturas > 0;
 
   const [herramienta, setHerramienta] = useState<Herramienta>(null);
   const porPegar = useRef<PorPegar>({});
@@ -165,6 +179,11 @@ export default function CanvasScreen() {
   const [nombrePlantilla, setNombrePlantilla] = useState<string | null>(null);
   // El acabado de lo elegido en una tapa (T348).
   const [eligiendoAcabado, setEligiendoAcabado] = useState(false);
+  // Un dato de la biblioteca, nuevo o para cambiar el elegido; el nombre de una muestra; pegar un fragmento (T349).
+  const [datoPara, setDatoPara] = useState<'nuevo' | 'cambiar' | null>(null);
+  const [anioDelDato, setAnioDelDato] = useState<'year' | 'all'>('year');
+  const [nombreDeMuestra, setNombreDeMuestra] = useState<{ id: string; texto: string } | null>(null);
+  const [eligiendoFragmento, setEligiendoFragmento] = useState(false);
   const guardarPlantilla = useSaveCanvasTemplate();
   const destinoDeImagen = useRef<DestinoDeImagen>(null);
   const piezas = useLibraryItems();
@@ -194,6 +213,8 @@ export default function CanvasScreen() {
     stickers.filter((s) => !s.startsWith('nobi-pink/')),
     packs.data?.packs,
   );
+  // Los datos de la biblioteca puestos, contados en vivo (RF-CC22; T349).
+  const datos = useDatosDeBiblioteca(doc.elements);
   const fuentes = useMemo(() => {
     const imagenes = new Map(urls);
     for (const [ruta, vista] of vistasPrevias) if (!imagenes.has(ruta)) imagenes.set(ruta, vista);
@@ -207,8 +228,8 @@ export default function CanvasScreen() {
       const ruta = rutaDePortada(p);
       libros.set(p.id, { title: p.title, color: colorDePortada(p), ...(ruta && urls.get(ruta) ? { src: urls.get(ruta) } : {}) });
     }
-    return { imagenes, stickers: deStickers, libros };
-  }, [urls, vistasPrevias, claveStickers, librosDelRecorte, fuentesTienda, fuentesPropias, losPacks]);
+    return { imagenes, stickers: deStickers, libros, datos };
+  }, [urls, vistasPrevias, claveStickers, librosDelRecorte, fuentesTienda, fuentesPropias, losPacks, datos]);
 
   // Abrir la página en blanco con su forma (RF-CC4), una vez por lienzo. El lomo de un Journal, con la suya (T346).
   // Una tapa sigue la forma del Journal aunque se haya cambiado después de decorarla.
@@ -229,8 +250,8 @@ export default function CanvasScreen() {
   const papel = cara && journal.data ? portadaValida(journal.data.journal).edges : undefined;
   const enMotor = useMemo(() => aMotor(doc, fuentes, papel), [doc, fuentes, papel]);
   useEffect(() => {
-    if (abierto) motor.current?.send({ type: 'annotations', items: enMotor });
-  }, [abierto, enMotor]);
+    if (aperturas) motor.current?.send({ type: 'annotations', items: enMotor });
+  }, [aperturas, enMotor]);
 
   // El color de la página (RF-CC12); en una tapa, el material del Journal con su color (T346).
   const fondo = doc.background ?? null;
@@ -238,9 +259,9 @@ export default function CanvasScreen() {
   const colorDeMaterial = material?.color;
   const nombreDeMaterial = material?.material;
   useEffect(() => {
-    if (!abierto) return;
+    if (!aperturas) return;
     motor.current?.send({ type: 'canvasBackground', color: colorDeMaterial && nombreDeMaterial ? { color: colorDeMaterial, material: nombreDeMaterial } : fondo });
-  }, [abierto, fondo, colorDeMaterial, nombreDeMaterial]);
+  }, [aperturas, fondo, colorDeMaterial, nombreDeMaterial]);
 
   /** Quitar del documento y dejar que el archivo de sus imágenes se borre en una hora, si no se deshace (T342). */
   const quitarElementos = (ids: string[]) => {
@@ -334,6 +355,19 @@ export default function CanvasScreen() {
       setCalificando(true);
       return;
     }
+    if (tipo === 'stat' && pendiente.dato) {
+      const dato = pendiente.dato;
+      aplicar((d) => agregar(d, { ...base, type: 'stat', w: Math.max(base.w, 0.32), ar: PROPORCION_DE_DATO, content: dato }));
+      elegir(nuevoId);
+      return;
+    }
+    if (tipo === 'swatch') {
+      // Una muestra nace en un neutro y pide su color de una vez.
+      aplicar((d) => agregar(d, { ...base, type: 'swatch', ar: PROPORCION_DE_MUESTRA, style: { color: MUESTRA_SIN_COLOR }, content: { text: '' } }));
+      elegir(nuevoId);
+      setColorDe('elemento');
+      return;
+    }
     if (tipo === 'book' && pendiente.libro) {
       const libro = pendiente.libro;
       aplicar((d) => agregar(d, { ...base, type: 'book', ar: 1.5, content: { itemId: libro } }));
@@ -357,7 +391,7 @@ export default function CanvasScreen() {
   const alMensaje = (m: MensajeDelMotor) => {
     switch (m.type) {
       case 'opened':
-        setAbierto(true);
+        setAperturas((n) => n + 1);
         return;
       case 'place':
         pegar(m.locator);
@@ -397,6 +431,8 @@ export default function CanvasScreen() {
         else if (e?.type === 'quote') setCitaPara('editar');
         else if (e?.type === 'rating') setCalificando(true);
         else if (e?.type === 'book') setLibroPara('cambiar');
+        else if (e?.type === 'stat') setDatoPara('cambiar');
+        else if (e?.type === 'swatch') setNombreDeMuestra({ id: e.id, texto: e.content.text ?? '' });
         else motor.current?.send({ type: 'write', id: m.id });
         return;
       }
@@ -409,6 +445,32 @@ export default function CanvasScreen() {
         return;
       default:
         return;
+    }
+  };
+
+  /**
+   * Pegar un fragmento (RF-CC24; T349): uno de texto, como cita con su página (y su libro, si es de otro); uno de
+   * imagen, como imagen. La imagen se copia al recorte: si después se borra el fragmento, el recorte no la pierde.
+   */
+  const pegarFragmento = async (f: LibraryClip, url: string | null) => {
+    setEligiendoFragmento(false);
+    if (f.kind === 'text') {
+      const deOtro = lienzo.data?.context !== 'book' || f.item_id !== item;
+      porPegar.current = {
+        cita: { text: f.text ?? '', who: deOtro ? f.book_title : '', chapter: f.locator.page ? c.fragmentPage(f.locator.page) : '', note: f.note ?? '' },
+      };
+      ponerHerramienta('quote', 0.6);
+      return;
+    }
+    if (!url) return;
+    try {
+      const respuesta = await fetch(url);
+      if (!respuesta.ok) throw new Error(String(respuesta.status));
+      const jpeg = new Uint8Array(await respuesta.arrayBuffer());
+      porPegar.current = { imagen: { jpeg, ar: f.ar ?? 1, vistaPrevia: url } };
+      ponerHerramienta('image', f.ar ?? 1);
+    } catch {
+      avisar({ message: c.fragmentFailed });
     }
   };
 
@@ -644,6 +706,16 @@ export default function CanvasScreen() {
                   ) : null}
                 </>
               ) : null}
+              {!varios && !elegido.locked && elegido.type === 'stat' ? (
+                <IconButton label={c.stats.change} onPress={() => setDatoPara('cambiar')}>
+                  {icono(ChartNoAxesColumn)}
+                </IconButton>
+              ) : null}
+              {!varios && !elegido.locked && elegido.type === 'swatch' ? (
+                <IconButton label={c.swatchRename} onPress={() => setNombreDeMuestra({ id: elegido.id, texto: elegido.content.text ?? '' })}>
+                  {icono(Type)}
+                </IconButton>
+              ) : null}
               {elegido.type === 'textbox' && !varios && !elegido.locked ? (
                 <IconButton label={a.write} onPress={() => motor.current?.send({ type: 'write', id: elegido.id })}>
                   {icono(Pencil)}
@@ -782,7 +854,101 @@ export default function CanvasScreen() {
             setLibroPara('nuevo');
           }}
         />
+        <ActionRow
+          icon={icono(Scissors)}
+          label={c.fragment}
+          onPress={() => {
+            setAgregando(false);
+            setEligiendoFragmento(true);
+          }}
+        />
+        <ActionRow
+          icon={icono(ChartNoAxesColumn)}
+          label={c.stat}
+          onPress={() => {
+            setAgregando(false);
+            setAnioDelDato('year');
+            setDatoPara('nuevo');
+          }}
+        />
+        <ActionRow
+          icon={icono(SwatchBook)}
+          label={c.swatch}
+          onPress={() => {
+            setAgregando(false);
+            ponerHerramienta('swatch', PROPORCION_DE_MUESTRA);
+          }}
+        />
       </Sheet>
+      <Sheet visible={datoPara !== null} onClose={() => setDatoPara(null)} title={c.stats.title}>
+        <View style={styles.renombrar}>
+          <AppText variant="body" color="textSecondary">
+            {c.stats.hint}
+          </AppText>
+          <Segmented
+            options={[
+              { value: 'year', label: c.stats.thisYear(new Date().getFullYear()) },
+              { value: 'all', label: c.stats.always },
+            ]}
+            value={datoPara === 'cambiar' && elegido?.type === 'stat' ? (elegido.content.year === null || elegido.content.year === undefined ? 'all' : 'year') : anioDelDato}
+            onChange={(v) => {
+              setAnioDelDato(v);
+              if (datoPara === 'cambiar' && elegido?.type === 'stat') {
+                const year = v === 'all' ? null : (elegido.content.year ?? new Date().getFullYear());
+                aplicar((d) => cambiar(d, elegido.id, { content: { year } }));
+              }
+            }}
+            fullWidth
+          />
+          <View>
+            {DATOS_DE_BIBLIOTECA.map((dato) => (
+              <ActionRow
+                key={dato}
+                icon={icono(ChartNoAxesColumn)}
+                label={c.stats.names[dato]}
+                onPress={() => {
+                  const para = datoPara;
+                  setDatoPara(null);
+                  if (para === 'cambiar' && elegido?.type === 'stat') {
+                    aplicar((d) => cambiar(d, elegido.id, { content: { stat: dato } }));
+                    return;
+                  }
+                  // "Este año" queda fijo: el Journal de 2026 sigue contando 2026 en 2027.
+                  porPegar.current = { dato: { stat: dato, year: anioDelDato === 'all' ? null : new Date().getFullYear() } };
+                  ponerHerramienta('stat', PROPORCION_DE_DATO);
+                }}
+              />
+            ))}
+          </View>
+        </View>
+      </Sheet>
+      <Sheet visible={nombreDeMuestra !== null} onClose={() => setNombreDeMuestra(null)} title={c.swatchRename}>
+        <View style={styles.renombrar}>
+          <TextField
+            label={c.swatchName}
+            value={nombreDeMuestra?.texto ?? ''}
+            onChangeText={(texto) => setNombreDeMuestra((m) => (m ? { ...m, texto } : m))}
+            placeholder={c.swatchNamePlaceholder}
+            maxLength={40}
+            autoFocus
+            returnKeyType="done"
+          />
+          <Button
+            title={c.save}
+            onPress={() => {
+              const m = nombreDeMuestra;
+              setNombreDeMuestra(null);
+              if (m) aplicar((d) => cambiar(d, m.id, { content: { text: m.texto.trim() } }));
+            }}
+          />
+        </View>
+      </Sheet>
+      <FragmentSheet
+        visible={eligiendoFragmento}
+        itemId={lienzo.data?.context === 'book' ? item : null}
+        onClose={() => setEligiendoFragmento(false)}
+        onElegir={(f, url) => void pegarFragmento(f, url)}
+      />
       <CanvasStyleSheet
         elemento={conEstiloAbierto && colorDe === null ? elegido : null}
         onClose={() => setConEstiloAbierto(false)}

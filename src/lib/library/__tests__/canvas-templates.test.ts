@@ -63,21 +63,34 @@ describe('plantillas de KAVI', () => {
   });
 });
 
-describe('plantillas del Journal (T347)', () => {
-  it('Conoce a quien lee: en los dos idiomas, vertical, en neutros y sin libro que apunte a otro lado', () => {
+describe('plantillas del Journal (T347, T349)', () => {
+  it('Conoce a quien lee y Mi año lector: en los dos idiomas, verticales, en neutros, sin Nobi', () => {
     for (const idioma of [es, en]) {
-      const [p, ...resto] = plantillasDeJournal(idioma.library.canvas.templates);
-      expect(resto).toEqual([]);
-      expect(p.id).toBe('kavi/get-to-know');
-      expect(p.orientacion).toBe('portrait');
-      expect(p.doc.elements.length).toBeGreaterThan(5);
-      expect(p.doc.background).toBeUndefined();
-      for (const e of p.doc.elements) {
-        expect(e.style.color).toBeUndefined();
-        expect(['sticker', 'book']).not.toContain(e.type);
-        expect(e.x + e.w).toBeLessThanOrEqual(1.01);
+      const lista = plantillasDeJournal(idioma.library.canvas.templates, 2026);
+      expect(lista.map((p) => p.id)).toEqual(['kavi/get-to-know', 'kavi/reading-year']);
+      for (const p of lista) {
+        expect(p.orientacion).toBe('portrait');
+        expect(p.doc.elements.length).toBeGreaterThan(5);
+        expect(p.doc.background).toBeUndefined();
+        for (const e of p.doc.elements) {
+          expect(e.style.color).toBeUndefined();
+          expect(e.type).not.toBe('sticker');
+          // Un libro en una plantilla del Journal queda por elegir.
+          if (e.type === 'book') expect(e.content.itemId).toBe(ESTE_LIBRO);
+          expect(e.x + e.w).toBeLessThanOrEqual(1.01);
+        }
       }
     }
-    expect(plantillasDeJournal(en.library.canvas.templates)[0].nombre).toBe('Get to Know the Reader');
+    expect(plantillasDeJournal(en.library.canvas.templates, 2026).map((p) => p.nombre)).toEqual(['Get to Know the Reader', 'My Reading Year']);
+  });
+
+  it('Mi año lector trae los tres datos del año en que se usa (RF-CC22)', () => {
+    const [, anio] = plantillasDeJournal(es.library.canvas.templates, 2027);
+    expect(anio.doc.elements.filter((e) => e.type === 'stat').map((e) => [e.content.stat, e.content.year])).toEqual([
+      ['booksFinished', 2027],
+      ['pagesRead', 2027],
+      ['hoursRead', 2027],
+    ]);
+    expect(anio.doc.elements.find((e) => e.type === 'textbox')?.content.text).toBe('Mi año lector 2027');
   });
 });

@@ -154,6 +154,53 @@ const MODULOS_DE_EXPORTACION = {
     }
   },
 
+  stat(ctx, c, w, h) {
+    const u = w / 100;
+    ctx.fillStyle = esColor(c.color) ? c.color : '#1A1A1A';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    const lineas = [
+      [c.title ?? '', `700 ${26 * u}px ${LETRA}`, 26 * u, 1],
+      [c.text ?? '', `600 ${8 * u}px ${LETRA}`, 9.6 * u, 1],
+      [c.note ?? '', `${6 * u}px ${LETRA}`, 7.2 * u, 0.7],
+    ].filter(([t]) => t);
+    const alto = lineas.reduce((t, l) => t + l[2], 0) + (lineas.length - 1) * 1.5 * u;
+    let y = (h - alto) / 2;
+    for (const [texto, letra, tam, alfa] of lineas) {
+      ctx.save();
+      ctx.globalAlpha *= alfa;
+      ctx.font = letra;
+      ctx.fillText(texto, w / 2, y, w);
+      ctx.restore();
+      y += tam + 1.5 * u;
+    }
+    ctx.textAlign = 'left';
+  },
+
+  swatch(ctx, c, w, h) {
+    const u = w / 100;
+    const color = esColor(c.color) ? c.color.slice(0, 7) : '#C9C2B8';
+    ctx.save();
+    sombra(ctx, u, 0.18);
+    ctx.fillStyle = MARCO_POLAROID;
+    ctx.fillRect(0, 0, w, h);
+    ctx.restore();
+    const banda = (c.text ? 9 * 1.15 + 1 : 0) * u + 7 * 1.1 * u;
+    ctx.fillStyle = color;
+    ctx.fillRect(5 * u, 5 * u, w - 10 * u, h - 14 * u - banda);
+    ctx.fillStyle = '#1A1A1A';
+    ctx.textBaseline = 'top';
+    let y = h - 5 * u - banda;
+    if (c.text) {
+      ctx.font = `700 ${9 * u}px ${LETRA}`;
+      ctx.fillText(c.text, 5 * u, y, w - 10 * u);
+      y += 9 * 1.15 * u + u;
+    }
+    ctx.globalAlpha *= 0.7;
+    ctx.font = `600 ${7 * u}px ${LETRA}`;
+    ctx.fillText(color.toUpperCase(), 5 * u, y, w - 10 * u);
+  },
+
   rating(ctx, c, w, h) {
     const u = w / 100;
     const color = esColor(c.color) ? c.color : '#1A1A1A';

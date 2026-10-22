@@ -892,3 +892,10 @@ Automatizado: `lib/library/__tests__/canvas.test.ts` (qué lleva acabado, su col
 corazón en relieve y círculo recortado sobre cuero.
 - [ ] (manual, iPhone y Android) Los filtros de sombra interior se ven igual que en la computadora, también al hojear.
 - [ ] (manual, Areli) ¿El hundido y el relieve se sienten como cuero prensado? Cambiar el color del material después.
+
+## Fragmentos, datos y muestra de color (T349)
+Automatizado: `journal-stats.test.ts` (libros, páginas y horas por año), `canvas.test.ts` (los módulos nuevos) y
+`canvas.test.tsx` (dato, muestra, fragmento de texto e imagen), `canvas-templates.test.ts` (Mi año lector). Visto en
+el demo web: una página con Mi año lector y una muestra "Vino".
+- [ ] (manual, Areli, en producción) Pegar un fragmento de imagen en un recorte (la copia baja de R2) y uno de texto.
+- [ ] (manual, Areli) ¿Los números de Mi año lector cuadran con lo que leíste este año?

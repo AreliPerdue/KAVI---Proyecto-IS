@@ -13,7 +13,7 @@ export const SIN_FOTO = '#D6D6D6';
 export const PELICULA = '#161616';
 const TINTA = '#1A1A1A';
 
-export const MODULOS = ['polaroid', 'quote', 'rating', 'book'];
+export const MODULOS = ['polaroid', 'quote', 'rating', 'book', 'stat', 'swatch'];
 
 // Con transparencia (`#RRGGBBAA`) para los acabados de una tapa del Journal (T348).
 const esColor = (c) => /^#[0-9a-fA-F]{6}([0-9a-fA-F]{2})?$/.test(c ?? '');
@@ -257,4 +257,47 @@ export function pintarModulo(el, a) {
   else if (a.kind === 'quote') quote(el, a);
   else if (a.kind === 'rating') rating(el, a);
   else if (a.kind === 'book') libro(el, a);
+  else if (a.kind === 'stat') dato(el, a);
+  else if (a.kind === 'swatch') muestra(el, a);
+}
+
+/** Un dato de la biblioteca (13h, RF-CC22; T349): el número grande, qué es y de cuándo. Ya viene escrito. */
+function dato(el, a) {
+  const c = a.content ?? {};
+  const color = esColor(c.color) ? c.color : TINTA;
+  el.setAttribute('role', 'img');
+  el.setAttribute('aria-label', [c.title, c.text, c.note].filter(Boolean).join(' '));
+  const cuerpo = caja({ position: 'absolute', inset: '0', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '1.5cqw', color, textAlign: 'center', overflow: 'hidden' });
+  const numero = caja({ font: `700 26cqw/1 ${LETRA}`, fontVariantNumeric: 'tabular-nums' });
+  numero.textContent = c.title ?? '';
+  const que = caja({ font: `600 8cqw/1.2 ${LETRA}` });
+  que.textContent = c.text ?? '';
+  cuerpo.append(numero, que);
+  if (c.note) {
+    const cuando = caja({ font: `6cqw/1.2 ${LETRA}`, opacity: '0.7' });
+    cuando.textContent = c.note;
+    cuerpo.append(cuando);
+  }
+  el.append(cuerpo);
+}
+
+/** Una muestra de color (RF-CC14; T349), como las de pintura: el color arriba y su nombre y HEX en la banda de abajo. */
+function muestra(el, a) {
+  const c = a.content ?? {};
+  const color = esColor(c.color) ? c.color.slice(0, 7) : '#C9C2B8';
+  el.setAttribute('role', 'img');
+  el.setAttribute('aria-label', `Muestra de color ${c.text ? `${c.text}, ` : ''}${color}`);
+  const tarjeta = caja({ position: 'absolute', inset: '0', background: MARCO_POLAROID, padding: '5cqw', display: 'flex', flexDirection: 'column', gap: '4cqw', boxShadow: '0 0.6cqw 1.8cqw rgb(0 0 0 / 0.18)' });
+  const parche = caja({ flex: '1', background: color });
+  const banda = caja({ display: 'flex', flexDirection: 'column', gap: '1cqw', color: TINTA });
+  if (c.text) {
+    const nombre = caja({ font: `700 9cqw/1.15 ${LETRA}`, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' });
+    nombre.textContent = c.text;
+    banda.append(nombre);
+  }
+  const hex = caja({ font: `600 7cqw/1.1 ${LETRA}`, opacity: '0.7', letterSpacing: '0.04em' });
+  hex.textContent = color.toUpperCase();
+  banda.append(hex);
+  tarjeta.append(parche, banda);
+  el.append(tarjeta);
 }

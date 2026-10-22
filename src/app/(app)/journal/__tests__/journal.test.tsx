@@ -23,7 +23,7 @@ const mockBorrarLienzo = jest.fn();
 jest.mock('@/hooks/use-canvases', () => ({ useCanvases: () => mockLienzos, useCreateCanvas: () => mockCrearLienzo, useRemoveCanvas: () => mockBorrarLienzo }));
 const mockVacio = new Map<string, string>();
 const mockFuentes = { miniatura: { imagenes: mockVacio, stickers: mockVacio }, motor: { imagenes: mockVacio, stickers: mockVacio, libros: new Map() } };
-jest.mock('@/hooks/use-canvas-sources', () => ({ useFuentesDeLienzos: () => mockFuentes }));
+jest.mock('@/hooks/use-canvas-sources', () => ({ useFuentesDeLienzos: () => mockFuentes, useDatosDeBiblioteca: () => mockVacio }));
 const mockMisPlantillas = { data: [] };
 jest.mock('@/hooks/use-canvas-templates', () => ({ useCanvasTemplates: () => mockMisPlantillas, useRemoveCanvasTemplate: () => ({ mutate: jest.fn() }) }));
 jest.mock('@/hooks/use-annotations', () => ({ useLibraryImageUrls: () => mockVacio }));

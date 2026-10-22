@@ -78,6 +78,20 @@ jest.mock('@/hooks/use-library', () => ({
   useLibraryItem: (id: string) => ({ data: id === 'j1' ? mockJournal : undefined }),
 }));
 jest.mock('@/components/library/book-cover', () => ({ BookCover: () => null }));
+// Sesiones de lectura y fragmentos (T349).
+const mockSesiones = { data: [] };
+jest.mock('@/hooks/use-reading-sessions', () => ({ useReadingSessions: () => mockSesiones }));
+const mockFragmentos = {
+  data: [
+    { id: 'f1', owner_id: 'u1', item_id: 'l1', book_title: 'Rayuela', kind: 'text', text: 'Andábamos sin buscarnos', locator: { page: 12 }, path: null, ar: null, note: null, created_at: 'c', updated_at: 'u' },
+    { id: 'f2', owner_id: 'u1', item_id: 'l9', book_title: 'Otro', kind: 'image', text: null, locator: { page: 3 }, path: 'u1/clips/f2.jpg', ar: 0.75, note: null, created_at: 'c', updated_at: 'u' },
+  ],
+  isPending: false,
+  isError: false,
+  refetch: jest.fn(),
+};
+const mockImagenesDeFragmentos = new Map([['f2', 'https://r2.test/f2.jpg']]);
+jest.mock('@/hooks/use-clips', () => ({ useClips: () => mockFragmentos, useClipImages: () => mockImagenesDeFragmentos }));
 // Elegir una foto de la galería (T343): siempre la misma, ya lista para subir.
 jest.mock('@/lib/library/cover/sources', () => ({ PUEDE_TOMAR_FOTO: true, desdeGaleria: async () => 'file:///foto.jpg', desdeCamara: async () => null }));
 jest.mock('@/lib/library/cover/prepare', () => ({ prepararImagenPegada: async () => ({ jpeg: new Uint8Array([1]), ancho: 100, alto: 100, vistaPrevia: 'data:image/jpeg;base64,FOTO' }) }));
@@ -535,5 +549,49 @@ describe('tapas del Journal (T346)', () => {
     await responder({ type: 'text', id: (ultimas()[0] as AnotacionEnMotor).id, text: 'Mi año' });
     await waitFor(() => expect(mockEncolar).toHaveBeenCalled(), { timeout: 2000 });
     expect((mockEncolar.mock.calls.at(-1) as unknown[] | undefined)?.[0]).toMatchObject({ op: 'canvas', canvas: { context: 'cover', face: 'front', item_id: 'j1' } });
+  });
+});
+
+describe('dato, muestra y fragmentos (T349)', () => {
+  it('un dato de la biblioteca de este año se pega ya contado', async () => {
+    await montar();
+    await agregar(C.stat);
+    await fireEvent.press(screen.getByRole('button', { name: C.stats.names.booksFinished }));
+    expect(mockEnviados.at(-1)).toMatchObject({ type: 'tool', tool: 'stat' });
+    await tocarPagina();
+    const anio = new Date().getFullYear();
+    expect(ultimas()[0]).toMatchObject({ kind: 'stat', content: { title: '0', text: C.stats.label('booksFinished', 0), note: C.stats.period(anio) } });
+  });
+
+  it('una muestra de color pide su color al pegarse', async () => {
+    await montar();
+    await agregar(C.swatch);
+    await tocarPagina();
+    expect(ultimas()[0]).toMatchObject({ kind: 'swatch' });
+    expect(screen.getByLabelText(C.color.hex)).toBeTruthy();
+  });
+
+  it('un fragmento de texto se pega como cita con su página', async () => {
+    await montar();
+    await agregar(C.fragment);
+    await fireEvent.press(screen.getByRole('button', { name: /Andábamos sin buscarnos/ }));
+    await tocarPagina();
+    expect(ultimas()[0]).toMatchObject({ kind: 'quote', content: { text: 'Andábamos sin buscarnos', chapter: C.fragmentPage(12), who: '' } });
+  });
+
+  it('un fragmento de imagen se copia al recorte', async () => {
+    const original = globalThis.fetch;
+    globalThis.fetch = jest.fn(async () => ({ ok: true, arrayBuffer: async () => new Uint8Array([1, 2]).buffer })) as unknown as typeof fetch;
+    try {
+      await montar();
+      await agregar(C.fragment);
+      await fireEvent.press(screen.getByRole('button', { name: new RegExp(C.fragmentImage) }));
+      await waitFor(() => expect(mockEnviados.at(-1)).toMatchObject({ type: 'tool', tool: 'image', ar: 0.75 }));
+      await tocarPagina();
+      expect(ultimas()[0]).toMatchObject({ kind: 'image' });
+      expect(mockSubir).toHaveBeenCalled();
+    } finally {
+      globalThis.fetch = original;
+    }
   });
 });

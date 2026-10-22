@@ -1,4 +1,5 @@
-import { type DocumentoDeLienzo, documentoValido, type ElementoDeLienzo, PROPORCION_DE_POLAROID } from '@/lib/library/canvas';
+import { type DocumentoDeLienzo, documentoValido, type ElementoDeLienzo, PROPORCION_DE_DATO, PROPORCION_DE_POLAROID } from '@/lib/library/canvas';
+import type { DatoDeBiblioteca } from '@/lib/library/journal-stats';
 import { ESTE_LIBRO, type PlantillaDeLienzo } from '@/lib/library/canvas-templates';
 import { ASSETS_DE_LIENZO, type NombreDeAsset } from '@/constants/canvas-assets';
 import type { Dictionary } from '@/i18n/types';
@@ -36,12 +37,15 @@ const asset = (nombre: NombreDeAsset, label: string, x: number, y: number, w: nu
 });
 
 /**
- * Las plantillas de página del Journal (13h, RF-CC21; T347): "yo como lector". Por ahora, Conoce a quien lee; el año
- * lector, las estadísticas y los premios llegan con los datos (C6).
+ * Las plantillas de página del Journal (13h, RF-CC21; T347, T349): "yo como lector". Conoce a quien lee y Mi año
+ * lector, con los datos de la biblioteca de `anio` (los libros terminados, las páginas y las horas, contados en vivo;
+ * RF-CC22). Sus libros quedan por elegir (en un Journal no hay "este libro").
  */
-export function plantillasDeJournal(t: Textos): PlantillaDeLienzo[] {
+export function plantillasDeJournal(t: Textos, anio: number): PlantillaDeLienzo[] {
   const n = t.assetLabels;
   const g = t.getToKnow;
+  const y = t.readingYear;
+  const dato = (stat: DatoDeBiblioteca, x: number): Pieza => ({ type: 'stat', x, y: 0.12, w: 0.27, ar: PROPORCION_DE_DATO, content: { stat, year: anio } });
   return [
     {
       id: 'kavi/get-to-know',
@@ -60,6 +64,26 @@ export function plantillasDeJournal(t: Textos): PlantillaDeLienzo[] {
         { type: 'rating', x: 0.3, y: 0.88, w: 0.4, ar: 0.2, content: { scale: 'hearts', value: 0 } },
         asset('corazon-a-mano', n.heart, 0.08, 0.85, 0.13),
         asset('destellos', n.sparkles, 0.8, 0.85, 0.13),
+      ]),
+    },
+    {
+      id: 'kavi/reading-year',
+      nombre: t.names.readingYear,
+      orientacion: 'portrait',
+      doc: documento([
+        texto(y.title(anio), 0.08, 0.04, 0.84, 1.8, 0.12),
+        dato('booksFinished', 0.06),
+        dato('pagesRead', 0.365),
+        dato('hoursRead', 0.67),
+        texto(y.favorite, 0.08, 0.27, 0.3, 1, 0.12),
+        { type: 'book', x: 0.1, y: 0.31, w: 0.26, ar: 1.5, rot: -3, content: { itemId: ESTE_LIBRO } },
+        asset('cinta-lisa', n.tape, 0.15, 0.3, 0.16, -6),
+        asset('hoja-de-libreta', n.notebook, 0.46, 0.27, 0.46, 2),
+        texto(y.lists, 0.52, 0.31, 0.36, 0.9, 1),
+        { type: 'quote', x: 0.08, y: 0.6, w: 0.62, ar: 0.36, content: { text: y.quote, who: '', chapter: '', note: '' } },
+        texto(y.rating, 0.28, 0.82, 0.44, 1, 0.12),
+        { type: 'rating', x: 0.3, y: 0.87, w: 0.4, ar: 0.2, content: { scale: 'hearts', value: 0 } },
+        asset('destellos', n.sparkles, 0.82, 0.84, 0.12),
       ]),
     },
   ];

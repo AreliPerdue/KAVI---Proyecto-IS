@@ -1,4 +1,5 @@
 import type { AnotacionEnMotor, FormaDeLienzo } from '@/lib/library/reader-protocol';
+import { claveDeDato, DATOS_DE_BIBLIOTECA, type DatoDeBiblioteca } from '@/lib/library/journal-stats';
 import { FORMAS_DE_LIENZO } from '@/lib/library/reader-protocol';
 import type { LibraryLocator } from '@/types/domain';
 
@@ -12,7 +13,7 @@ import type { LibraryLocator } from '@/types/domain';
  * solo y usarlo igual en Supabase, el demo y la cola sin red.
  */
 
-export const TIPOS_DE_ELEMENTO = ['textbox', 'image', 'sticker', 'shape', 'polaroid', 'quote', 'rating', 'book', 'asset'] as const;
+export const TIPOS_DE_ELEMENTO = ['textbox', 'image', 'sticker', 'shape', 'polaroid', 'quote', 'rating', 'book', 'asset', 'stat', 'swatch'] as const;
 export type TipoDeElemento = (typeof TIPOS_DE_ELEMENTO)[number];
 export type OrientacionDeLienzo = 'portrait' | 'landscape';
 
@@ -29,6 +30,9 @@ export const PROPORCION_DE_POLAROID: Record<VarianteDePolaroid, number> = { clas
 export const ESCALAS_DE_RATING = ['stars', 'hearts', 'number'] as const;
 export type EscalaDeRating = (typeof ESCALAS_DE_RATING)[number];
 export const PROPORCION_DE_RATING: Record<EscalaDeRating, number> = { stars: 0.2, hearts: 0.2, number: 0.42 };
+/** Un dato de la biblioteca (T349): el número grande y lo que es. Una muestra de color: el color y su nombre. */
+export const PROPORCION_DE_DATO = 0.6;
+export const PROPORCION_DE_MUESTRA = 1.3;
 
 /**
  * Acabados de lo decorado en una tapa del Journal (13i, RF-JC11 – RF-JC12; T348): impreso (a color, como siempre),
@@ -102,6 +106,9 @@ export type ElementoDeLienzo = {
     /** Asset (T343b): cuál (`<pack>/<nombre>`) y cómo se recolorea. */
     asset?: string;
     mode?: 'textura' | 'trazo';
+    /** Dato de la biblioteca (RF-CC22; T349): cuál y de qué año (`null`: de siempre). Su valor se lee en vivo. */
+    stat?: DatoDeBiblioteca;
+    year?: number | null;
   };
 };
 
@@ -168,6 +175,8 @@ export function elementoValido(raw: unknown, paginas = MAX_PAGINAS): ElementoDeL
       ...(tipo === 'quote' ? quoteValida(contenido) : {}),
       ...(tipo === 'rating' ? ratingValido(contenido) : {}),
       ...(tipo === 'book' && typeof contenido.itemId === 'string' ? { itemId: contenido.itemId.slice(0, 64) } : {}),
+      ...(tipo === 'stat' ? datoValido(contenido) : {}),
+      ...(tipo === 'swatch' ? { text: texto(contenido.text, 40) ?? '' } : {}),
       ...(tipo === 'asset' && typeof contenido.asset === 'string' ? { asset: contenido.asset.slice(0, 120), mode: contenido.mode === 'trazo' ? ('trazo' as const) : ('textura' as const) } : {}),
       ...(tipo === 'asset' && typeof contenido.label === 'string' ? { label: contenido.label.slice(0, 80) } : {}),
     },
@@ -183,6 +192,12 @@ function polaroidValida(c: Record<string, unknown>) {
 
 function quoteValida(c: Record<string, unknown>) {
   return { text: texto(c.text, 600) ?? '', who: texto(c.who, 80) ?? '', chapter: texto(c.chapter, 40) ?? '', note: texto(c.note, 300) ?? '' };
+}
+
+function datoValido(c: Record<string, unknown>) {
+  const stat = DATOS_DE_BIBLIOTECA.includes(c.stat as DatoDeBiblioteca) ? (c.stat as DatoDeBiblioteca) : 'booksFinished';
+  const year = numero(c.year) && c.year >= 1900 && c.year <= 3000 ? Math.round(c.year) : null;
+  return { stat, year };
 }
 
 function ratingValido(c: Record<string, unknown>) {
@@ -233,7 +248,13 @@ export type LibroEnLienzo = { title: string; src?: string; color: string };
 
 export function aMotor(
   doc: DocumentoDeLienzo,
-  fuentes: { imagenes?: ReadonlyMap<string, string>; stickers?: ReadonlyMap<string, string>; libros?: ReadonlyMap<string, LibroEnLienzo> } = {},
+  fuentes: {
+    imagenes?: ReadonlyMap<string, string>;
+    stickers?: ReadonlyMap<string, string>;
+    libros?: ReadonlyMap<string, LibroEnLienzo>;
+    /** Los datos de la biblioteca ya contados y escritos, por su clave (T349). */
+    datos?: ReadonlyMap<string, DatoEscrito>;
+  } = {},
   /** El color de las páginas del Journal, que se ve por lo recortado de una tapa (T348). */
   papel = '#F7F5EF',
 ): AnotacionEnMotor[] {
@@ -279,6 +300,10 @@ export function aMotor(
                   }
                 : e.type === 'rating'
                   ? { scale: e.content.scale ?? 'stars', value: e.content.value ?? 0, ...(e.style.color ? { color: e.style.color } : {}), ...comun }
+                  : e.type === 'stat'
+                    ? { ...datoParaMotor(fuentes.datos?.get(claveDeDato(e.content.stat ?? 'booksFinished', e.content.year ?? null))), ...(e.style.color ? { color: e.style.color } : {}), ...comun }
+                  : e.type === 'swatch'
+                    ? { text: e.content.text ?? '', color: e.style.color ?? MUESTRA_SIN_COLOR, ...comun }
                   : e.type === 'book'
                     ? libroParaMotor(e.content.itemId ? fuentes.libros?.get(e.content.itemId) : undefined, comun)
                     : e.type === 'asset'
@@ -291,6 +316,15 @@ export function aMotor(
               };
     return { id: e.id, kind: e.type, locator, z: e.z, locked: e.locked, content: t ? { ...content, treatment: t } : content };
   });
+}
+
+/** Un dato de la biblioteca listo para verse (T349): el número, qué es y de cuándo. */
+export type DatoEscrito = { valor: string; etiqueta: string; periodo: string };
+/** Una muestra de color recién puesta, antes de elegirle uno. */
+export const MUESTRA_SIN_COLOR = '#C9C2B8';
+
+function datoParaMotor(d: DatoEscrito | undefined): AnotacionEnMotor['content'] {
+  return { title: d?.valor ?? '—', text: d?.etiqueta ?? '', note: d?.periodo ?? '' };
 }
 
 /** Un libro del lienzo: su portada (o su color y título si no tiene, o si ya no existe). */

@@ -6,15 +6,18 @@ import Svg, { ClipPath, Defs, Path, Rect } from 'react-native-svg';
 import { assetPorId } from '@/constants/canvas-assets';
 import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import { colorDeTratamiento, type DocumentoDeLienzo, type ElementoDeLienzo, type LibroEnLienzo, type OrientacionDeLienzo, RAIZ_DE_DOS } from '@/lib/library/canvas';
+import { colorDeTratamiento, type DatoEscrito, type DocumentoDeLienzo, MUESTRA_SIN_COLOR, type ElementoDeLienzo, type LibroEnLienzo, type OrientacionDeLienzo, RAIZ_DE_DOS } from '@/lib/library/canvas';
 import { FORMA_GRIS, MARCO_POLAROID, PAPEL_DE_LIENZO, PELICULA, SIMBOLOS_DE_RATING, SIN_FOTO, TINTA_DE_TEXTO, TRAZOS_DE_FORMA } from '@/lib/library/canvas-shapes';
 import { luminance } from '@/lib/color';
+import { claveDeDato } from '@/lib/library/journal-stats';
 
 /** De dónde sale la imagen de cada pieza: ruta de una imagen → dirección; id de un sticker → imagen. */
 export type FuentesDeMiniatura = {
   imagenes: ReadonlyMap<string, string>;
   stickers: ReadonlyMap<string, string | ImageSourcePropType>;
   libros?: ReadonlyMap<string, LibroEnLienzo>;
+  /** Los datos de la biblioteca ya contados y escritos (T349). */
+  datos?: ReadonlyMap<string, DatoEscrito>;
 };
 
 /**
@@ -87,7 +90,7 @@ export const CanvasPreview = memo(function CanvasPreview({
               </View>
             );
           }
-          if (e.type === 'polaroid' || e.type === 'quote' || e.type === 'rating' || e.type === 'book') {
+          if (e.type === 'polaroid' || e.type === 'quote' || e.type === 'rating' || e.type === 'book' || e.type === 'stat' || e.type === 'swatch') {
             return (
               <View key={e.id} style={caja}>
                 <Modulo e={e} w={w} h={h} fuentes={fuentes} />
@@ -131,6 +134,7 @@ export const CanvasPreview = memo(function CanvasPreview({
 const styles = StyleSheet.create({
   pagina: { overflow: 'hidden', borderWidth: StyleSheet.hairlineWidth, borderRadius: Radius.sm / 2, borderCurve: 'continuous' },
   sinPapel: { overflow: 'hidden' },
+  centrado: { alignItems: 'center', justifyContent: 'center' },
   hundido: { textShadowColor: 'rgba(255,255,255,0.3)', textShadowOffset: { width: 0, height: 0.5 }, textShadowRadius: 0 },
   relieve: { textShadowColor: 'rgba(0,0,0,0.5)', textShadowOffset: { width: 0, height: 0.8 }, textShadowRadius: 0.6 },
   texto: { overflow: 'hidden' },
@@ -157,6 +161,31 @@ function Modulo({ e, w, h, fuentes }: { e: ElementoDeLienzo; w: number; h: numbe
   const u = w / 100;
   const id = useId();
   const c = e.content;
+  if (e.type === 'stat') {
+    const d = fuentes.datos?.get(claveDeDato(c.stat ?? 'booksFinished', c.year ?? null));
+    const tinta = e.style.color ?? TINTA_DE_TEXTO;
+    return (
+      <View style={[styles.lleno, styles.centrado, { gap: 1.5 * u }]}>
+        <Text style={{ color: tinta, fontSize: 26 * u, lineHeight: 28 * u, fontWeight: '700' }}>{d?.valor ?? '—'}</Text>
+        <Text style={{ color: tinta, fontSize: 8 * u, fontWeight: '600', textAlign: 'center' }}>{d?.etiqueta}</Text>
+        {d?.periodo ? <Text style={{ color: tinta, fontSize: 6 * u, opacity: 0.7 }}>{d.periodo}</Text> : null}
+      </View>
+    );
+  }
+  if (e.type === 'swatch') {
+    const color = (e.style.color ?? MUESTRA_SIN_COLOR).slice(0, 7);
+    return (
+      <View style={[styles.lleno, { backgroundColor: MARCO_POLAROID, padding: 5 * u, gap: 4 * u }]}>
+        <View style={{ flex: 1, backgroundColor: color }} />
+        {c.text ? (
+          <Text numberOfLines={1} style={{ color: TINTA_DE_TEXTO, fontSize: 9 * u, fontWeight: '700' }}>
+            {c.text}
+          </Text>
+        ) : null}
+        <Text style={{ color: TINTA_DE_TEXTO, fontSize: 7 * u, fontWeight: '600', opacity: 0.7 }}>{color.toUpperCase()}</Text>
+      </View>
+    );
+  }
   if (e.type === 'polaroid') {
     const fotos = (c.paths ?? []).map((r) => (r ? fuentes.imagenes.get(r) : undefined));
     if (c.variant === 'film') {

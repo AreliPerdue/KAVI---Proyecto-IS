@@ -253,3 +253,26 @@ describe('acabados de una tapa (13i, RF-JC11 – RF-JC12; T348)', () => {
     expect(conEstilo(hundido, ['a'], { treatment: undefined }).elements[0].style).toEqual({ color: '#123456' });
   });
 });
+
+describe('dato de la biblioteca y muestra de color (RF-CC14, RF-CC22; T349)', () => {
+  it('un dato guarda cuál y de qué año; lo raro vuelve a libros terminados de siempre', () => {
+    const doc = documentoValido({
+      pages: 1,
+      elements: [
+        { ...el('d', { type: 'stat' }), z: 1, content: { stat: 'hoursRead', year: 2026 } },
+        { ...el('x', { type: 'stat' }), z: 2, content: { stat: 'chismes', year: 12 } },
+        { ...el('m', { type: 'swatch' }), z: 3, content: { text: 'Rojo de la portada' } },
+      ],
+    });
+    expect(doc.elements.map((e) => e.content)).toEqual([{ stat: 'hoursRead', year: 2026 }, { stat: 'booksFinished', year: null }, { text: 'Rojo de la portada' }]);
+  });
+
+  it('al motor, el dato ya contado y escrito; la muestra, con su color y su nombre', () => {
+    const doc = [el('d', { type: 'stat', content: { stat: 'booksFinished', year: 2026 } }), el('m', { type: 'swatch', style: { color: '#7A1E3A' }, content: { text: 'Vino' } })].reduce(agregar, DOCUMENTO_VACIO);
+    const datos = new Map([['booksFinished|2026', { valor: '12', etiqueta: 'libros terminados', periodo: 'en 2026' }]]);
+    const [d, m] = aMotor(doc, { datos });
+    expect(d.content).toMatchObject({ title: '12', text: 'libros terminados', note: 'en 2026' });
+    expect(m.content).toMatchObject({ color: '#7A1E3A', text: 'Vino' });
+    expect(aMotor(doc)[0].content).toMatchObject({ title: '—' });
+  });
+});

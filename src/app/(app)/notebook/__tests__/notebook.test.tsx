@@ -6,6 +6,7 @@ import { es } from '@/i18n/es';
 let mockRecortes: { data?: Record<string, unknown>[]; isPending: boolean; isError: boolean; refetch: jest.Mock };
 const mockCrear = jest.fn(() => 'r-nuevo');
 const mockBorrar = jest.fn();
+jest.mock('@/hooks/use-reading-sessions', () => ({ useReadingSessions: () => ({ data: [] }) }));
 jest.mock('@/hooks/use-canvases', () => ({
   useCanvases: () => mockRecortes,
   useCreateCanvas: () => mockCrear,

@@ -1,10 +1,15 @@
+import { useMemo } from 'react';
+
 import type { FuentesDeMiniatura } from '@/components/library/canvas-preview';
 import { stickerPorId } from '@/constants/stickers';
 import { useLibraryImageUrls } from '@/hooks/use-annotations';
 import { useLibraryItems } from '@/hooks/use-library';
 import { useStickerPacks, useStickerSources } from '@/hooks/use-sticker-packs';
+import { useReadingSessions } from '@/hooks/use-reading-sessions';
 import { useUserStickerImages, useUserStickers, useUserStickerSources } from '@/hooks/use-user-stickers';
-import { type ElementoDeLienzo, type LibroEnLienzo, rutasDeImagenes } from '@/lib/library/canvas';
+import { useLanguage, useT } from '@/i18n';
+import { type DatoEscrito, type ElementoDeLienzo, type LibroEnLienzo, rutasDeImagenes } from '@/lib/library/canvas';
+import { claveDeDato, type DatoDeBiblioteca, numeroDeDato, valoresDeDatos } from '@/lib/library/journal-stats';
 import { colorDePortada, rutaDePortada } from '@/lib/library/shelf';
 import { fuenteDeSticker } from '@/lib/library/sticker-packs';
 
@@ -12,8 +17,39 @@ export type FuentesDeLienzo = {
   /** Para las miniaturas que dibuja la app (`CanvasPreview`): los Nobi incluidos van como imagen del paquete. */
   miniatura: FuentesDeMiniatura;
   /** Para el motor (`aMotor`): solo direcciones; los Nobi incluidos los trae el motor. */
-  motor: { imagenes: ReadonlyMap<string, string>; stickers: ReadonlyMap<string, string>; libros: ReadonlyMap<string, LibroEnLienzo> };
+  motor: { imagenes: ReadonlyMap<string, string>; stickers: ReadonlyMap<string, string>; libros: ReadonlyMap<string, LibroEnLienzo>; datos: ReadonlyMap<string, DatoEscrito> };
 };
+
+/**
+ * Los datos de la biblioteca que piden unos lienzos (RF-CC22; T349), contados en vivo de los libros y las sesiones de
+ * lectura, y escritos en el idioma de la app: "12 · libros terminados · en 2026".
+ */
+export function useDatosDeBiblioteca(elementos: readonly ElementoDeLienzo[]): ReadonlyMap<string, DatoEscrito> {
+  const tx = useT();
+  const idioma = useLanguage();
+  // Lo que se pide, como texto: así lo de abajo solo se recuenta si cambia lo pedido o los datos.
+  const clave = [...new Set(elementos.flatMap((e) => (e.type === 'stat' && e.content.stat ? [claveDeDato(e.content.stat, e.content.year ?? null)] : [])))].sort().join(',');
+  const piezas = useLibraryItems().data;
+  const sesiones = useReadingSessions().data;
+  const textos = tx.library.canvas.stats;
+  return useMemo(() => {
+    if (!clave) return SIN_DATOS;
+    const pedidos = clave.split(',').map((k) => {
+      const [dato, anio] = k.split('|');
+      return { dato: dato as DatoDeBiblioteca, anio: anio === 'todo' ? null : Number(anio) };
+    });
+    const valores = valoresDeDatos(pedidos, piezas ?? [], sesiones ?? []);
+    return new Map(
+      pedidos.map((p) => {
+        const k = claveDeDato(p.dato, p.anio);
+        const v = valores.get(k) ?? 0;
+        return [k, { valor: numeroDeDato(p.dato, v, idioma), etiqueta: textos.label(p.dato, v), periodo: textos.period(p.anio) }] as const;
+      }),
+    );
+  }, [clave, piezas, sesiones, textos, idioma]);
+}
+
+const SIN_DATOS: ReadonlyMap<string, DatoEscrito> = new Map();
 
 /**
  * De dónde sale lo que se ve en uno o varios lienzos (Mi libreta, las páginas de un Journal; T342, T347): las imágenes
@@ -47,13 +83,14 @@ export function useFuentesDeLienzos(elementos: readonly ElementoDeLienzo[]): Fue
     const deApp = incluido ? incluido.imagen : src;
     if (deApp) deMiniatura.set(s, deApp as string);
   }
+  const datos = useDatosDeBiblioteca(elementos);
   const libros = new Map<string, LibroEnLienzo>();
   for (const p of librosPuestos) {
     const ruta = rutaDePortada(p);
     libros.set(p.id, { title: p.title, color: colorDePortada(p), ...(ruta && urls.get(ruta) ? { src: urls.get(ruta) } : {}) });
   }
   return {
-    miniatura: { imagenes: urls, stickers: deMiniatura as FuentesDeMiniatura['stickers'], libros },
-    motor: { imagenes: urls, stickers: deMotor, libros },
+    miniatura: { imagenes: urls, stickers: deMiniatura as FuentesDeMiniatura['stickers'], libros, datos },
+    motor: { imagenes: urls, stickers: deMotor, libros, datos },
   };
 }

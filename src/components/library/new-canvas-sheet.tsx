@@ -6,6 +6,7 @@ import { AppText, Button, Segmented, Sheet } from '@/components/ui';
 import { plantillasDeJournal, plantillasDeKavi } from '@/constants/canvas-templates';
 import { PAPER, Radius, Spacing } from '@/constants/theme';
 import { useLibraryImageUrls } from '@/hooks/use-annotations';
+import { useDatosDeBiblioteca } from '@/hooks/use-canvas-sources';
 import { useCanvasTemplates, useRemoveCanvasTemplate } from '@/hooks/use-canvas-templates';
 import { useTheme } from '@/hooks/use-theme';
 import { useT } from '@/i18n';
@@ -57,7 +58,11 @@ export function NewCanvasSheet({
   // En las miniaturas, "este libro" se ve como el libro del recorte.
   const ruta = item && !journal ? rutaDePortada(item) : null;
   const urls = useLibraryImageUrls(ruta ? [ruta] : []);
+  const deKavi = journal ? plantillasDeJournal(t, new Date().getFullYear()).filter((p) => p.orientacion === orientacion) : plantillasDeKavi(t);
+  // Los datos de la biblioteca de las plantillas (Mi año lector, T349), con los de verdad.
+  const datos = useDatosDeBiblioteca(deKavi.flatMap((p) => p.doc.elements));
   const fuentes: FuentesDeMiniatura = {
+    datos,
     imagenes: SIN_IMAGENES,
     stickers: new Map(),
     libros: new Map(item && !journal ? [[ESTE_LIBRO, { title: item.title, color: colorDePortada(item), ...(ruta && urls.get(ruta) ? { src: urls.get(ruta) } : {}) }]] : []),
@@ -87,7 +92,6 @@ export function NewCanvasSheet({
     </Pressable>
   );
 
-  const deKavi = journal ? plantillasDeJournal(t).filter((p) => p.orientacion === orientacion) : plantillasDeKavi(t);
   const propias: PlantillaDeLienzo[] = (mias.data ?? [])
     .filter((p) => !journal || p.orientation === orientacion)
     .map((p) => ({ id: p.id, nombre: p.name, orientacion: p.orientation, doc: p.doc }));

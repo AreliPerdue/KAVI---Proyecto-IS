@@ -210,6 +210,20 @@ llevar texto, pero nunca debe sentirse como un formulario ni como una nota grand
     - El libro del recorte se guarda como "este libro".
     - Se guarda en `library_canvas_templates` (migración `20261021110000`, solo del dueño).
     - Mantener presionada una plantilla propia la borra; los recortes hechos con ella no cambian.
+- **Hecho (C6, primera parte, T349, 22 oct 2026):**
+  - **Fragmentos pegados** (RF-CC24): "+ Agregar → Fragmento" muestra Mis fragmentos, primero los del libro del
+    recorte. Uno de texto se pega como **cita** con su página (y el libro, si es de otro); uno de imagen, como
+    **imagen**, copiada al recorte (si se borra el fragmento, el recorte no la pierde).
+  - **Dato de mi biblioteca** (RF-CC22), módulo nuevo `stat`: libros terminados, páginas leídas u horas leyendo, de
+    este año (queda fijo: un Journal de 2026 sigue contando 2026) o de siempre. No se copia: se cuenta en vivo de los
+    libros y las sesiones de lectura (`lib/library/journal-stats.ts`). Un libro terminado cuenta en el año de su
+    última sesión; los Journals no cuentan.
+  - **Mi año lector**, plantilla del Journal: los tres datos del año, "mi favorito del año" (un libro por elegir),
+    listas, la frase del año y cómo fue el año.
+  - **Muestra de color** (RF-CC14), módulo `swatch`: el color arriba y su nombre y HEX abajo; pide su color al
+    pegarse y se nombra con "Nombrar el color".
+  - Lo demás de "después" (mood, canción, timeline, checklist…) y las plantillas Moodboard, Reading Stats, Awards y
+    Eras quedan para T349b.
 - **Hecho (C5, páginas del Journal, T347, 22 oct 2026):**
   - **Cada página es un lienzo** de `library_canvases` con contexto `journal` y el Journal como `item_id`; no hizo
     falta migración. Van en el orden en que se hicieron y tienen la forma del Journal (no se elige).
