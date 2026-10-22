@@ -47,7 +47,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { AssetSheet } from '@/components/library/asset-sheet';
+import { type AssetElegible, AssetSheet } from '@/components/library/asset-sheet';
 import { BookList } from '@/components/library/book-list';
 import { type Cita, PolaroidSheet, QuoteSheet, RatingSheet } from '@/components/library/canvas-module-sheets';
 import { CanvasStyleSheet } from '@/components/library/canvas-style-sheet';
@@ -58,7 +58,6 @@ import { FragmentSheet } from '@/components/library/fragment-sheet';
 import { ReaderEngine, type ReaderEngineHandle } from '@/components/library/reader-engine';
 import { type StickerElegible, StickerSheet } from '@/components/library/sticker-sheet';
 import { ActionRow, AppText, Button, ErrorState, IconButton, LoadingState, Segmented, Sheet, TextField } from '@/components/ui';
-import type { AssetDeLienzo } from '@/constants/canvas-assets';
 import { IconSize, IconStroke, Spacing } from '@/constants/theme';
 import { useLibraryImageUrls, useUploadAnnotationImage } from '@/hooks/use-annotations';
 import { useDatosDeBiblioteca } from '@/hooks/use-canvas-sources';
@@ -124,7 +123,7 @@ type PorPegar = {
   imagen?: { jpeg: Uint8Array; ar: number; vistaPrevia: string };
   sticker?: StickerElegible;
   /** Módulos (T343) y assets (T343b). */
-  asset?: AssetDeLienzo;
+  asset?: AssetElegible;
   variante?: VarianteDePolaroid;
   cita?: Cita;
   libro?: string;
@@ -244,6 +243,11 @@ export default function CanvasScreen() {
   const datos = useDatosDeBiblioteca(doc.elements);
   // El idioma de la app, para escribir las fechas (T349b).
   const idioma = useLanguage();
+  // Las piezas de los packs de papeles de la tienda (T343c), como los stickers.
+  const assetsDeTienda = useStickerSources(
+    doc.elements.flatMap((e) => (e.type === 'asset' && e.content.asset && !e.content.asset.startsWith('basicos/') ? [e.content.asset] : [])),
+    packs.data?.packs,
+  );
   const fuentes = useMemo(() => {
     const imagenes = new Map(urls);
     for (const [ruta, vista] of vistasPrevias) if (!imagenes.has(ruta)) imagenes.set(ruta, vista);
@@ -257,8 +261,8 @@ export default function CanvasScreen() {
       const ruta = rutaDePortada(p);
       libros.set(p.id, { title: p.title, color: colorDePortada(p), ...(ruta && urls.get(ruta) ? { src: urls.get(ruta) } : {}) });
     }
-    return { imagenes, stickers: deStickers, libros, datos, idioma };
-  }, [urls, vistasPrevias, claveStickers, librosDelRecorte, fuentesTienda, fuentesPropias, losPacks, datos, idioma]);
+    return { imagenes, stickers: deStickers, libros, datos, idioma, assets: assetsDeTienda };
+  }, [urls, vistasPrevias, claveStickers, librosDelRecorte, fuentesTienda, fuentesPropias, losPacks, datos, idioma, assetsDeTienda]);
 
   // Abrir la página en blanco con su forma (RF-CC4), una vez por lienzo. El lomo de un Journal, con la suya (T346).
   // Una tapa sigue la forma del Journal aunque se haya cambiado después de decorarla.
@@ -372,7 +376,7 @@ export default function CanvasScreen() {
     }
     if (tipo === 'asset' && pendiente.asset) {
       const asset = pendiente.asset;
-      aplicar((d) => agregar(d, { ...base, type: 'asset', ar: asset.ar, content: { asset: asset.id, label: tx.library.canvas.assets.names[asset.nombre], mode: asset.modo } }));
+      aplicar((d) => agregar(d, { ...base, type: 'asset', ar: asset.ar, content: { asset: asset.id, label: asset.label, mode: asset.modo } }));
       elegir(nuevoId);
       return;
     }

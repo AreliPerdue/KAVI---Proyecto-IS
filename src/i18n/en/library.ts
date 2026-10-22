@@ -782,6 +782,8 @@ export const library: Dictionary['library'] = {
     assets: {
       title: 'Papers and more',
       hint: 'Takes the color you pick in Style and keeps its texture.',
+      store: 'More packs in the store',
+      packMeta: (n: number, peso: string) => `${n} pieces · ${peso}`,
       categories: { papel: 'Papers', nota: 'Notes', cinta: 'Tapes', doodle: 'Doodles' } as Record<'papel' | 'nota' | 'cinta' | 'doodle', string>,
       names: {
         'papel-rasgado': 'Torn paper',

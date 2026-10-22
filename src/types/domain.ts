@@ -760,9 +760,15 @@ export type StickerPack = {
   name_es: string;
   name_en: string;
   sort_order: number;
-  stickers: { name: string; ar: number }[];
+  /**
+   * Sus piezas: nombre (su archivo) y proporción. Un pack de papeles y más (T343c) trae además la categoría, cómo se
+   * recolorea y su nombre en los dos idiomas.
+   */
+  stickers: { name: string; ar: number; category?: 'papel' | 'nota' | 'cinta' | 'doodle'; mode?: 'textura' | 'trazo'; label_es?: string; label_en?: string }[];
   bytes: number;
   version: number;
+  /** De stickers (por omisión) o de papeles y más para el lienzo (T343c). */
+  kind?: 'stickers' | 'assets';
 };
 
 /** Qué se acomoda: las portadas (también la lista) o los lomos del librero (RF-BL7b). */

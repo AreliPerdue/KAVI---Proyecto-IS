@@ -1254,8 +1254,11 @@ Reemplazan L5 (13e). Un recorte es una página 1 : √2 del visor de PDF (decisi
   oct 2026) Dep: T349b
   **Hecho (22 oct 2026):** `constants/canvas-templates-more.ts` y `canvas-template-kit.ts`, `conColores`/`coloresDe`,
   `PageColorRows`, paso de personalizar en `NewCanvasSheet` y botón en el editor.
-- [ ] T343c C3 · Más packs de assets por la tienda en la nube, como los stickers (T337): `sticker_packs` con su tipo,
+- [x] T343c C3 · Más packs de assets por la tienda en la nube, como los stickers (T337): `sticker_packs` con su tipo,
   descargar y ver sin red. (RF-CC17) Dep: T343b, T337
+  **Hecho (22 oct 2026):** `kind` en `sticker_packs` (migraciones `20261022110000` y las de versión), tienda en
+  `AssetSheet`, piezas de la tienda en el motor, la exportación y las miniaturas, y el pack **Papelería** (17 piezas)
+  subido al bucket y verificado.
 - [x] T344 C4 · Plantillas de Recortes (Book Review, Character Collage, Favorite Quotes, Reading Experience, DNF
   Graveyard), Guardar como plantilla y Mis plantillas. (RF-CC18 – RF-CC21) Dep: T343
   **Hecho (21 oct 2026):** `constants/canvas-templates.ts` (las 5 de KAVI), `lib/library/canvas-templates.ts` (usar y

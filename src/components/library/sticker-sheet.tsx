@@ -12,7 +12,7 @@ import { useTheme } from '@/hooks/use-theme';
 import { useLanguage, useT } from '@/i18n';
 import { giroDe, stickerDe } from '@/lib/library/annotations';
 import { uriLocal } from '@/lib/library/offline/sticker-packs';
-import { idDeSticker, partesDeSticker, pesoDe, urlDeMuestra, urlDeSticker } from '@/lib/library/sticker-packs';
+import { idDeSticker, partesDeSticker, pesoDe, soloStickers, urlDeMuestra, urlDeSticker } from '@/lib/library/sticker-packs';
 import { PREFIJO_PROPIO, idPropio } from '@/hooks/use-user-stickers';
 import type { LibraryAnnotation, StickerPack, UserSticker } from '@/types/domain';
 
@@ -170,7 +170,7 @@ function MisStickers({
   const mios = useMyStickerPacks();
   const nombre = useNombreDeCara();
   const nombreDePack = useNombreDePack();
-  const descargados = (packs.data?.packs ?? []).filter((p) => mios.data?.includes(p.id));
+  const descargados = soloStickers(packs.data?.packs ?? []).filter((p) => mios.data?.includes(p.id));
   return (
     <>
       {onCrear || propios.stickers.length ? (
@@ -265,7 +265,8 @@ function Tienda() {
       </AppText>
     );
   }
-  const lista = packs.data?.packs ?? [];
+  // Los de papeles y más (T343c) se ven en "Papeles y más", no aquí.
+  const lista = soloStickers(packs.data?.packs ?? []);
   if (viendo) return <DetalleDePack pack={viendo} descargado={!!mios.data?.includes(viendo.id)} onVolver={() => setViendo(null)} />;
   return (
     <View style={styles.cuerpo}>
@@ -276,7 +277,8 @@ function Tienda() {
   );
 }
 
-function TarjetaDePack({ pack, descargado, onAbrir }: { pack: StickerPack; descargado: boolean; onAbrir: () => void }) {
+/** Una tarjeta de pack de la tienda con su muestra y su botón; también la usan los packs de papeles y más (T343c). */
+export function TarjetaDePack({ pack, descargado, onAbrir, meta }: { pack: StickerPack; descargado: boolean; onAbrir: () => void; meta?: string }) {
   const theme = useTheme();
   const t = useT().library.stickers;
   const nombreDePack = useNombreDePack();
@@ -287,14 +289,14 @@ function TarjetaDePack({ pack, descargado, onAbrir }: { pack: StickerPack; desca
         <Image source={{ uri: urlDeMuestra(pack) }} contentFit="cover" style={styles.muestra} accessible={false} />
       </Pressable>
       <View style={styles.info}>
-        <InfoDePack pack={pack} nombre={nombre} />
+        <InfoDePack pack={pack} nombre={nombre} meta={meta} />
         <BotonDePack pack={pack} descargado={descargado} nombre={nombre} />
       </View>
     </View>
   );
 }
 
-function InfoDePack({ pack, nombre }: { pack: StickerPack; nombre: string }) {
+function InfoDePack({ pack, nombre, meta }: { pack: StickerPack; nombre: string; meta?: string }) {
   const t = useT().library.stickers;
   const hex = pack.color ? COLOR_HEX.get(pack.color) : undefined;
   return (
@@ -306,7 +308,7 @@ function InfoDePack({ pack, nombre }: { pack: StickerPack; nombre: string }) {
         </AppText>
       </View>
       <AppText variant="caption" color="textSecondary" tabular>
-        {t.packMeta(pack.stickers.length, pesoDe(pack.bytes))}
+        {meta ?? t.packMeta(pack.stickers.length, pesoDe(pack.bytes))}
       </AppText>
     </View>
   );

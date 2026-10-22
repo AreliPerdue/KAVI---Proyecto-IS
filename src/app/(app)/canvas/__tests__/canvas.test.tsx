@@ -49,7 +49,13 @@ const mockVacio = new Map<string, string>();
 const mockSinPacks = { data: undefined };
 const mockSinStickers = { data: [] };
 jest.mock('@/hooks/use-annotations', () => ({ useLibraryImageUrls: () => mockVacio, useUploadAnnotationImage: () => mockSubir }));
-jest.mock('@/hooks/use-sticker-packs', () => ({ useStickerPacks: () => mockSinPacks, useStickerSources: () => mockVacio }));
+const mockMisPacks = { data: [] as string[] };
+jest.mock('@/hooks/use-sticker-packs', () => ({
+  useStickerPacks: () => mockSinPacks,
+  useStickerSources: () => mockVacio,
+  useMyStickerPacks: () => mockMisPacks,
+  useStickerPackActions: () => ({ descargar: { mutate: jest.fn(), isPending: false }, quitar: { mutate: jest.fn(), isPending: false } }),
+}));
 jest.mock('@/hooks/use-user-stickers', () => ({
   useUserStickers: () => mockSinStickers,
   useUserStickerImages: () => mockVacio,

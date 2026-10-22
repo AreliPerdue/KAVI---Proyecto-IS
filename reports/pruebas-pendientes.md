@@ -935,3 +935,10 @@ Automatizado: `canvas-templates.test.ts` (las 30, que quepan en la página, bing
 web: Bingo lector en crema y morado, Librero de leídos y Meta del año en dorado.
 - [ ] (manual, Areli) Repasar las 17 nuevas: ¿alguna se siente vacía o le falta algo?
 - [ ] (manual, Areli) Recolorear una página tuya con "Colores de la página" y deshacerlo.
+
+## Packs de papeles en la tienda (T343c)
+Automatizado: la migración en PGlite (5 casos), `asset-sheet.test.tsx` (obtener el pack y elegir sus piezas),
+`canvas.test.ts` (la pieza llega al motor con su dirección) y el demo. Visto en el demo web: obtener Papelería y pegar
+periódico, sello y una flor teñida.
+- [ ] (manual, teléfono) Obtener Papelería y pegar sus piezas sin red (se ven de la copia guardada).
+- [ ] (manual, Areli) ¿Las 17 piezas tienen la dirección visual que quieres? ¿Qué pack sigue?

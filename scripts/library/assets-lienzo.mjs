@@ -5,10 +5,14 @@
  * da los mismos archivos. Dirección visual (13h §5): papel realista con fibras y orillas orgánicas, línea delicada,
  * nada de cómic.
  *
- *   node scripts/library/assets-lienzo.mjs [carpeta de salida] [hoja de revisión.png]
+ *   node scripts/library/assets-lienzo.mjs [carpeta de salida] [hoja de revisión.png] [--pack papeleria]
  *
  * Salida: `public/reader/lienzo/basicos/<nombre>.png` (por omisión) y, si se pide, una hoja con todos en gris y con
  * tres colores de ejemplo, para revisarlos de un vistazo. Necesita `playwright-core` (o `PLAYWRIGHT_CORE=<ruta>`).
+ *
+ * `--pack papeleria` (T343c): el segundo pack, el primero de la tienda en la nube (periódico, perforado, clip, kraft,
+ * sobre, sello, esquina de foto, cintas de corazones, estrellas y zigzag, marco, burbuja, nube, flor, hoja, subrayado y
+ * espiral). Ese no va en la app: se sube al bucket `stickers` con su migración.
  */
 import { Buffer } from 'node:buffer';
 import { mkdirSync, writeFileSync } from 'node:fs';
@@ -25,8 +29,11 @@ const comprimir = (png) => {
   const im = UPNG.decode(png);
   return Buffer.from(UPNG.encode([UPNG.toRGBA8(im)[0]], im.width, im.height, 256));
 };
-const salida = resolve(process.argv[2] ?? join(raiz, 'public/reader/lienzo/basicos'));
-const hoja = process.argv[3] ? resolve(process.argv[3]) : null;
+const posicionales = process.argv.slice(2).filter((a, i, todos) => !a.startsWith('--') && todos[i - 1] !== '--pack');
+const iPack = process.argv.indexOf('--pack');
+const pack = iPack > 0 ? process.argv[iPack + 1] : 'basicos';
+const salida = resolve(posicionales[0] ?? join(raiz, 'public/reader/lienzo/basicos'));
+const hoja = posicionales[1] ? resolve(posicionales[1]) : null;
 
 /** Lo que corre dentro de Chrome: cada pieza es una función que dibuja en un canvas y devuelve su PNG. */
 const GENERADOR = String.raw`
@@ -174,6 +181,47 @@ function cinta(semilla, dibujo) {
 
 function doodle(w, h, dibujo) { const c = lienzo(w, h); dibujo(c.getContext('2d')); return c; }
 
+/** Un patrón repetido sobre una cinta: una figura en cada lugar de una rejilla escalonada. */
+const patron = (paso, figura) => (ctx, W, H) => { ctx.fillStyle = 'rgba(0,0,0,0.15)'; for (let y = 24, f = 0; y < H; y += paso, f++) for (let x = 22 + (f % 2) * (paso / 2); x < W; x += paso) figura(ctx, x, y); };
+const corazonito = (ctx, x, y, r = 10) => { ctx.beginPath(); ctx.moveTo(x, y + r * 0.9); ctx.bezierCurveTo(x - r * 1.6, y - r * 0.2, x - r * 0.6, y - r * 1.4, x, y - r * 0.4); ctx.bezierCurveTo(x + r * 0.6, y - r * 1.4, x + r * 1.6, y - r * 0.2, x, y + r * 0.9); ctx.fill(); };
+const estrellita = (ctx, x, y, r = 11) => { ctx.beginPath(); for (let i = 0; i < 10; i++) { const a = -Math.PI / 2 + (i * Math.PI) / 5; const rr = i % 2 ? r * 0.45 : r; i ? ctx.lineTo(x + Math.cos(a) * rr, y + Math.sin(a) * rr) : ctx.moveTo(x + Math.cos(a) * rr, y + Math.sin(a) * rr); } ctx.closePath(); ctx.fill(); };
+
+/** El segundo pack (T343c): "Papelería", para la tienda en la nube. */
+const PAPELERIA = {
+  'papel-periodico': () => { const W = 620, H = 760; const p = papel(W, H, { semilla: 201, base: 0.9 }); const ctx = p.getContext('2d'); const r = rnd(202);
+    ctx.fillStyle = 'rgba(0,0,0,0.55)'; ctx.fillRect(40, 44, W - 80, 26); ctx.fillStyle = 'rgba(0,0,0,0.25)'; ctx.fillRect(40, 84, W - 80, 4);
+    for (let col = 0; col < 3; col++) { const x0 = 40 + col * ((W - 80) / 3) + 6, ancho = (W - 80) / 3 - 18; for (let y = 108; y < H - 50; y += 15) { if (r() < 0.07) continue; ctx.fillStyle = 'rgba(0,0,0,' + (0.18 + r() * 0.08) + ')'; ctx.fillRect(x0, y, ancho * (y % 120 < 15 ? 0.6 : 0.82 + r() * 0.18), 6); } }
+    return recortar(p, rasgado(W, H, 203, 10)); },
+  'papel-perforado': () => { const W = 600, H = 780; const p = papel(W, H, { semilla: 211 }); const ctx = p.getContext('2d'); lineas(ctx, W, H, { arriba: 110, paso: 34, desde: 70 });
+    const c = recortar(p, [...orilla(rnd(212), ruido(213), 18, H - 18, 18, 18, 5, 160), [W - 18, 18], [W - 18, H - 18]]); const k = c.getContext('2d'); k.globalCompositeOperation = 'destination-out';
+    for (let y = 60; y < H - 40; y += 66) { k.beginPath(); k.arc(44, y, 11, 0, Math.PI * 2); k.fill(); } k.globalCompositeOperation = 'source-over'; return c; },
+  'papel-con-clip': () => { const W = 560, H = 700; const c = recortar(papel(W, H, { semilla: 221 }), rect(18, W, H)); const ctx = c.getContext('2d'); ctx.strokeStyle = '#5a5a5a'; ctx.lineWidth = 7; ctx.lineCap = 'round';
+    const clip = new Path2D('M410 140 V40 a26 26 0 0 1 52 0 V170 a40 40 0 0 1 -80 0 V60'); ctx.save(); ctx.translate(0, -8); ctx.stroke(clip); ctx.restore(); return c; },
+  'papel-kraft': () => recortar(papel(620, 720, { semilla: 231, fibras: 3.2, base: 0.8 }), rasgado(620, 720, 232, 11)),
+  'sobre': () => { const W = 700, H = 460; const c = recortar(papel(W, H, { semilla: 241 }), rect(18, W, H)); const ctx = c.getContext('2d'); ctx.strokeStyle = 'rgba(0,0,0,0.22)'; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.moveTo(20, 22); ctx.lineTo(W / 2, H * 0.58); ctx.lineTo(W - 20, 22); ctx.stroke(); ctx.beginPath(); ctx.moveTo(20, H - 22); ctx.lineTo(W * 0.4, H * 0.5); ctx.moveTo(W - 20, H - 22); ctx.lineTo(W * 0.6, H * 0.5); ctx.stroke(); return c; },
+  'sello-postal': () => { const W = 420, H = 500, m = 22, d = 16; const pts = []; const lado = (x0, y0, x1, y1) => { const n = Math.round(Math.hypot(x1 - x0, y1 - y0) / d); for (let i = 0; i < n; i++) { const t = i / n, t2 = (i + 0.5) / n; const nx = -(y1 - y0), ny = x1 - x0, l = Math.hypot(nx, ny); pts.push([x0 + (x1 - x0) * t, y0 + (y1 - y0) * t], [x0 + (x1 - x0) * t2 + (nx / l) * 7, y0 + (y1 - y0) * t2 + (ny / l) * 7]); } };
+    lado(m, m, W - m, m); lado(W - m, m, W - m, H - m); lado(W - m, H - m, m, H - m); lado(m, H - m, m, m); const c = recortar(papel(W, H, { semilla: 251 }), pts); const ctx = c.getContext('2d'); ctx.strokeStyle = 'rgba(0,0,0,0.3)'; ctx.lineWidth = 3; ctx.strokeRect(58, 58, W - 116, H - 116);
+    aMano(ctx, [[96, 360], [160, 250], [205, 305], [270, 200], [326, 360]], { ancho: 4, semilla: 252, temblor: 1.4 }); aMano(ctx, curva((t) => [300 + Math.cos(t * Math.PI * 2) * 28, 140 + Math.sin(t * Math.PI * 2) * 28], 40), { ancho: 4, semilla: 253 }); return c; },
+  'esquina-de-foto': () => { const W = 300, H = 300; return recortar(papel(W, H, { semilla: 261, base: 0.86 }), [[18, 18], [W - 18, 18], [18, H - 18]], { borde: 0.1 }); },
+  'cinta-corazones': () => cinta(271, patron(40, (ctx, x, y) => corazonito(ctx, x, y))),
+  'cinta-estrellas': () => cinta(281, patron(42, (ctx, x, y) => estrellita(ctx, x, y))),
+  'cinta-zigzag': () => cinta(291, (ctx, W, H) => { ctx.strokeStyle = 'rgba(0,0,0,0.18)'; ctx.lineWidth = 6; for (const y0 of [36, 82]) { ctx.beginPath(); for (let x = 0; x <= W; x += 24) ctx.lineTo(x, y0 + ((x / 24) % 2 ? 12 : -12)); ctx.stroke(); } }),
+  'marco-a-mano': () => doodle(560, 420, (ctx) => { aMano(ctx, [[30, 34], [530, 26], [536, 392], [26, 398], [30, 34], [60, 30]], { ancho: 5, semilla: 301, temblor: 3 }); }),
+  'burbuja': () => doodle(520, 420, (ctx) => { aMano(ctx, [...curva((t) => { const a = Math.PI * 0.62 + t * Math.PI * 1.86; return [260 + Math.cos(a) * 230, 170 + Math.sin(a) * 140]; }, 120), [150, 300], [110, 400], [212, 312]], { ancho: 5, semilla: 311, temblor: 2 }); }),
+  'nube-de-pensamiento': () => doodle(540, 440, (ctx) => { const bultos = [[150, 150, 80], [260, 110, 95], [380, 150, 85], [400, 250, 70], [270, 280, 90], [140, 250, 75]]; for (const [i, [x, y, r]] of bultos.entries()) aMano(ctx, curva((t) => [x + Math.cos(t * Math.PI * 2) * r, y + Math.sin(t * Math.PI * 2) * r * 0.8], 60), { ancho: 5, semilla: 321 + i, temblor: 1.6 });
+    ctx.globalCompositeOperation = 'destination-out'; ctx.beginPath(); ctx.ellipse(270, 195, 190, 110, 0, 0, Math.PI * 2); ctx.fill(); ctx.globalCompositeOperation = 'source-over';
+    for (const [x, y, r] of [[120, 360, 24], [80, 405, 13]]) aMano(ctx, curva((t) => [x + Math.cos(t * Math.PI * 2) * r, y + Math.sin(t * Math.PI * 2) * r], 30), { ancho: 4, semilla: 330 + r }); }),
+  'flor': () => doodle(420, 520, (ctx) => { for (let i = 0; i < 5; i++) { const a = (i * Math.PI * 2) / 5 - Math.PI / 2; const c = [210 + Math.cos(a) * 92, 190 + Math.sin(a) * 92];
+      // Cada pétalo: un óvalo que nace afuera del botón, a lo largo de su dirección.
+      aMano(ctx, curva((t) => { const b = t * Math.PI * 2; const u = Math.cos(b) * 62, v = Math.sin(b) * 34; return [c[0] + u * Math.cos(a) - v * Math.sin(a), c[1] + u * Math.sin(a) + v * Math.cos(a)]; }, 50), { ancho: 5, semilla: 341 + i, temblor: 1.6 }); }
+    aMano(ctx, curva((t) => [210 + Math.cos(t * Math.PI * 2) * 26, 190 + Math.sin(t * Math.PI * 2) * 26], 30), { ancho: 5, semilla: 347 }); aMano(ctx, curva((t) => [210 + Math.sin(t * 2) * 10, 216 + t * 290]), { ancho: 5, semilla: 348 }); }),
+  'hoja': () => doodle(320, 520, (ctx) => { aMano(ctx, [...curva((t) => [160 + Math.sin(t * Math.PI) * 120, 40 + t * 400], 50), ...curva((t) => [160 - Math.sin((1 - t) * Math.PI) * 120, 440 - t * 400], 50)], { ancho: 5, semilla: 351, temblor: 1.8 });
+    aMano(ctx, curva((t) => [160, 60 + t * 440]), { ancho: 4, semilla: 352 }); for (let i = 1; i < 5; i++) { const y = 80 + i * 70; aMano(ctx, [[160, y + 30], [160 + 70, y]], { ancho: 3, semilla: 353 + i }); aMano(ctx, [[160, y + 30], [160 - 70, y]], { ancho: 3, semilla: 363 + i }); } }),
+  'subrayado': () => doodle(640, 120, (ctx) => { aMano(ctx, curva((t) => [24 + t * 592, 60 + Math.sin(t * Math.PI * 7) * 18], 140), { ancho: 6, semilla: 371, temblor: 1.2 }); }),
+  'espiral': () => doodle(440, 440, (ctx) => { aMano(ctx, curva((t) => { const a = t * Math.PI * 7; const rr = 8 + t * 190; return [220 + Math.cos(a) * rr, 220 + Math.sin(a) * rr]; }, 220), { ancho: 5, semilla: 381, temblor: 1.5 }); }),
+};
+
 /** Pasa a gris (por si algo quedó con color) y deja la pieza a lo más de 'max' px de lado. */
 function final(c, max) {
   const k = Math.min(1, max / Math.max(c.width, c.height)); const out = lienzo(Math.round(c.width * k), Math.round(c.height * k)); const ctx = out.getContext('2d');
@@ -182,7 +230,7 @@ function final(c, max) {
   ctx.putImageData(img, 0, 0); return out;
 }
 
-window.generar = () => Object.fromEntries(Object.entries(PIEZAS).map(([nombre, f]) => { const c = final(f(), nombre.startsWith('cinta') || nombre === 'costura' || nombre === 'tira-rasgada' ? 640 : 560); return [nombre, { png: c.toDataURL('image/png'), w: c.width, h: c.height }]; }));
+window.generar = (pack) => Object.fromEntries(Object.entries(pack === 'papeleria' ? PAPELERIA : PIEZAS).map(([nombre, f]) => { const c = final(f(), nombre.startsWith('cinta') || nombre === 'costura' || nombre === 'tira-rasgada' || nombre === 'subrayado' ? 640 : 560); return [nombre, { png: c.toDataURL('image/png'), w: c.width, h: c.height }]; }));
 
 /** Hoja de revisión: cada pieza en gris y recoloreada como lo hará la app (multiplicar o trazo). */
 window.hoja = async (piezas, modos) => {
@@ -209,14 +257,14 @@ const { chromium } = await import(process.env.PLAYWRIGHT_CORE ? `file://${proces
 const navegador = await chromium.launch({ channel: 'chrome', headless: true });
 const pagina = await navegador.newPage();
 await pagina.setContent(`<!doctype html><html><body><script>${GENERADOR}</script></body></html>`);
-const piezas = await pagina.evaluate(() => window.generar());
+const piezas = await pagina.evaluate((p) => window.generar(p), pack);
 mkdirSync(salida, { recursive: true });
 for (const [nombre, { png, w, h }] of Object.entries(piezas)) {
   writeFileSync(join(salida, `${nombre}.png`), comprimir(Buffer.from(png.split(',')[1], 'base64')));
   console.log(`${nombre}: ${w} × ${h}, proporción ${(h / w).toFixed(3)}`);
 }
 if (hoja) {
-  const modos = Object.fromEntries(Object.keys(piezas).map((n) => [n, /^(destellos|flecha|rama|lazo|costura|.*-a-mano)/.test(n) ? 'trazo' : 'textura']));
+  const modos = Object.fromEntries(Object.keys(piezas).map((n) => [n, /^(destellos|flecha|rama|lazo|costura|.*-a-mano|burbuja|nube-de-pensamiento|flor|hoja|subrayado|espiral)$/.test(n) ? 'trazo' : 'textura']));
   const png = await pagina.evaluate(([p, m]) => window.hoja(p, m), [piezas, modos]);
   writeFileSync(hoja, Buffer.from(png.split(',')[1], 'base64'));
   console.log(`hoja de revisión: ${hoja}`);

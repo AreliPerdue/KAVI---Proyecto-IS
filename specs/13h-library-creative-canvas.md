@@ -216,6 +216,15 @@ llevar texto, pero nunca debe sentirse como un formulario ni como una nota grand
     - El libro del recorte se guarda como "este libro".
     - Se guarda en `library_canvas_templates` (migración `20261021110000`, solo del dueño).
     - Mantener presionada una plantilla propia la borra; los recortes hechos con ella no cambian.
+- **Hecho (C3, tienda de papeles y más, T343c, 22 oct 2026):** RF-CC17 completo.
+  - Los packs de papeles, notas, cintas y doodles viven en la tienda con los stickers: `sticker_packs.kind = 'assets'`
+    (migración `20261022110000`) y el mismo bucket público `stickers`. De cada pieza: nombre, proporción, categoría,
+    cómo se recolorea y su nombre en los dos idiomas.
+  - En "Papeles y más", abajo, **Más packs en la tienda**: obtener un pack mete sus piezas en sus categorías (en el
+    teléfono se guardan para verse sin red, como los stickers); se pegan y se recolorean igual que los básicos.
+  - El primero: **Papelería** (17 piezas: periódico, perforado, con clip, kraft, sobre, sello postal, esquina de foto,
+    cintas de corazones, estrellas y zigzag, marco a mano, burbuja, nube de pensamiento, flor, hoja, subrayado y
+    espiral), hecho por Claude con `scripts/library/assets-lienzo.mjs --pack papeleria`.
 - **Hecho (T368, 22 oct 2026, pedido de Areli: "todas las demás plantillas" y que sean personalizables):**
   - **Las que faltaban de RF-CC21:** Tablero de teorías, Predicciones, Soundtrack, El ADN del libro, Pasaporte del
     libro, Reporte de daños emocionales, ¿Sobreviviría? (recortes) y Mis eras lectoras (Journal).

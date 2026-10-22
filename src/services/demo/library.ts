@@ -227,7 +227,8 @@ const archivos = new Map<string, { body: LibraryFileBody; type: string }>();
  * mismas caras que los rosas incluidos). Las imágenes se piden al bucket público, como en la app de verdad.
  */
 const COLORES_DEMO = ['baby_blue', 'orange', 'lime_green', 'turquois', 'yellow', 'lilac', 'coral', 'gray', 'olive_green', 'white', 'magenta', 'light_purple', 'red', 'indigo', 'blue', 'deep_red', 'green', 'navy_blue', 'purple', 'black', 'gold', 'beige', 'brown', 'silver'];
-const PACKS_DEMO: StickerPack[] = COLORES_DEMO.map((color, i) => ({
+const PACKS_DEMO: StickerPack[] = [
+  ...COLORES_DEMO.map((color, i): StickerPack => ({
   id: `primer-rebote-${color.replace(/_/g, '-')}`,
   collection: 'primer-rebote',
   color,
@@ -237,7 +238,41 @@ const PACKS_DEMO: StickerPack[] = COLORES_DEMO.map((color, i) => ({
   stickers: [...STICKERS].sort((a, b) => a.nombre.localeCompare(b.nombre)).map((s) => ({ name: s.nombre, ar: s.ar })),
   bytes: 1_150_000,
   version: 1,
-}));
+  })),
+  // El primer pack de papeles y más de la tienda (T343c), como en la nube.
+  {
+    id: 'papeleria',
+    collection: 'lienzo',
+    color: null,
+    name_es: 'Papelería',
+    name_en: 'Stationery',
+    sort_order: 1,
+    kind: 'assets',
+    bytes: 821_140,
+    version: 3,
+    stickers: (
+      [
+        ['papel-periodico', 1.225, 'papel', 'Papel de periódico', 'Newspaper'],
+        ['papel-perforado', 1.299, 'papel', 'Papel perforado', 'Perforated paper'],
+        ['papel-con-clip', 1.25, 'papel', 'Papel con clip', 'Paper with a clip'],
+        ['papel-kraft', 1.162, 'papel', 'Papel kraft', 'Kraft paper'],
+        ['sobre', 0.657, 'papel', 'Sobre', 'Envelope'],
+        ['sello-postal', 1.19, 'nota', 'Sello postal', 'Postage stamp'],
+        ['esquina-de-foto', 1, 'nota', 'Esquina de foto', 'Photo corner'],
+        ['cinta-corazones', 0.21, 'cinta', 'Cinta de corazones', 'Hearts tape'],
+        ['cinta-estrellas', 0.21, 'cinta', 'Cinta de estrellas', 'Stars tape'],
+        ['cinta-zigzag', 0.21, 'cinta', 'Cinta zigzag', 'Zigzag tape'],
+        ['marco-a-mano', 0.75, 'doodle', 'Marco a mano', 'Hand-drawn frame'],
+        ['burbuja', 0.808, 'doodle', 'Burbuja de diálogo', 'Speech bubble'],
+        ['nube-de-pensamiento', 0.815, 'doodle', 'Nube de pensamiento', 'Thought cloud'],
+        ['flor', 1.238, 'doodle', 'Flor', 'Flower'],
+        ['hoja', 1.625, 'doodle', 'Hoja', 'Leaf'],
+        ['subrayado', 0.188, 'doodle', 'Subrayado', 'Underline'],
+        ['espiral', 1, 'doodle', 'Espiral', 'Spiral'],
+      ] as const
+    ).map(([name, ar, category, label_es, label_en]) => ({ name, ar, category, mode: category === 'doodle' ? ('trazo' as const) : ('textura' as const), label_es, label_en })),
+  },
+];
 
 const ahora = () => new Date().toISOString();
 const copia = <T>(x: T): T => JSON.parse(JSON.stringify(x)) as T;

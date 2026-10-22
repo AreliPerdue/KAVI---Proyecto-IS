@@ -31,6 +31,10 @@ export function ordenarPacks(packs: readonly StickerPack[]): StickerPack[] {
   return [...packs].sort((a, b) => a.collection.localeCompare(b.collection) || a.sort_order - b.sort_order);
 }
 
+/** Los packs de stickers y los de papeles y más (T343c), que viven en la misma tienda. */
+export const soloStickers = (packs: readonly StickerPack[]) => packs.filter((p) => p.kind !== 'assets');
+export const soloPapeles = (packs: readonly StickerPack[]) => packs.filter((p) => p.kind === 'assets');
+
 /** Los stickers propios (T335) se guardan como `mios/<id>`. */
 export const PREFIJO_PROPIO = 'mios/';
 

@@ -816,6 +816,9 @@ export const library = {
     assets: {
       title: 'Papeles y más',
       hint: 'Toma el color que elijas en Estilo y conserva su textura.',
+      // La tienda de packs de papeles (T343c).
+      store: 'Más packs en la tienda',
+      packMeta: (n: number, peso: string) => `${n} piezas · ${peso}`,
       categories: { papel: 'Papeles', nota: 'Notas', cinta: 'Cintas', doodle: 'Doodles' } as Record<'papel' | 'nota' | 'cinta' | 'doodle', string>,
       names: {
         'papel-rasgado': 'Papel rasgado',

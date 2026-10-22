@@ -17,7 +17,14 @@ export type FuentesDeLienzo = {
   /** Para las miniaturas que dibuja la app (`CanvasPreview`): los Nobi incluidos van como imagen del paquete. */
   miniatura: FuentesDeMiniatura;
   /** Para el motor (`aMotor`): solo direcciones; los Nobi incluidos los trae el motor. */
-  motor: { imagenes: ReadonlyMap<string, string>; stickers: ReadonlyMap<string, string>; libros: ReadonlyMap<string, LibroEnLienzo>; datos: ReadonlyMap<string, DatoEscrito>; idioma: string };
+  motor: {
+    imagenes: ReadonlyMap<string, string>;
+    stickers: ReadonlyMap<string, string>;
+    libros: ReadonlyMap<string, LibroEnLienzo>;
+    datos: ReadonlyMap<string, DatoEscrito>;
+    idioma: string;
+    assets: ReadonlyMap<string, string>;
+  };
 };
 
 /**
@@ -85,13 +92,18 @@ export function useFuentesDeLienzos(elementos: readonly ElementoDeLienzo[]): Fue
     if (deApp) deMiniatura.set(s, deApp as string);
   }
   const datos = useDatosDeBiblioteca(elementos);
+  // Las piezas de los packs de papeles (T343c): viven en el mismo bucket que los stickers y se ven igual.
+  const assets = useStickerSources(
+    elementos.flatMap((e) => (e.type === 'asset' && e.content.asset && !e.content.asset.startsWith('basicos/') ? [e.content.asset] : [])),
+    packs.data?.packs,
+  );
   const libros = new Map<string, LibroEnLienzo>();
   for (const p of librosPuestos) {
     const ruta = rutaDePortada(p);
     libros.set(p.id, { title: p.title, color: colorDePortada(p), ...(ruta && urls.get(ruta) ? { src: urls.get(ruta) } : {}) });
   }
   return {
-    miniatura: { imagenes: urls, stickers: deMiniatura as FuentesDeMiniatura['stickers'], libros, datos },
-    motor: { imagenes: urls, stickers: deMotor, libros, datos, idioma },
+    miniatura: { imagenes: urls, stickers: deMiniatura as FuentesDeMiniatura['stickers'], libros, datos, assets },
+    motor: { imagenes: urls, stickers: deMotor, libros, datos, idioma, assets },
   };
 }

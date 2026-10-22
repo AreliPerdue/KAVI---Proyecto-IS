@@ -353,3 +353,9 @@ describe('checklist, mood, canción, fecha y lugar, y timeline (T349b)', () => {
     expect(fechaLegible('2026-10-22', 'en')).toBe('Oct 22, 2026');
   });
 });
+
+it('una pieza de un pack de la tienda llega al motor con su dirección (T343c)', () => {
+  const doc = [el('a', { type: 'asset', content: { asset: 'papeleria/flor', label: 'Flor', mode: 'trazo' } })].reduce(agregar, DOCUMENTO_VACIO);
+  const [a] = aMotor(doc, { assets: new Map([['papeleria/flor', 'https://x/stickers/papeleria/flor.png?v=1']]) });
+  expect(a.content).toMatchObject({ asset: 'papeleria/flor', mode: 'trazo', src: 'https://x/stickers/papeleria/flor.png?v=1' });
+});

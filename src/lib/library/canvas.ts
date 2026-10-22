@@ -355,6 +355,8 @@ export function aMotor(
     datos?: ReadonlyMap<string, DatoEscrito>;
     /** El idioma de la app, para escribir las fechas (T349b). */
     idioma?: string;
+    /** Las piezas de los packs de papeles de la tienda (T343c): id → dirección (o su copia guardada). */
+    assets?: ReadonlyMap<string, string>;
   } = {},
   /** El color de las páginas del Journal, que se ve por lo recortado de una tapa (T348). */
   papel = '#F7F5EF',
@@ -428,7 +430,14 @@ export function aMotor(
                   : e.type === 'book'
                     ? libroParaMotor(e.content.itemId ? fuentes.libros?.get(e.content.itemId) : undefined, comun)
                     : e.type === 'asset'
-                      ? { asset: e.content.asset, label: e.content.label, mode: e.content.mode ?? 'textura', ...(e.style.color ? { color: e.style.color } : {}), ...comun }
+                      ? {
+                          asset: e.content.asset,
+                          label: e.content.label,
+                          mode: e.content.mode ?? 'textura',
+                          ...(e.content.asset && fuentes.assets?.get(e.content.asset) ? { src: fuentes.assets.get(e.content.asset) } : {}),
+                          ...(e.style.color ? { color: e.style.color } : {}),
+                          ...comun,
+                        }
                       : {
                 sticker: e.content.sticker,
                 label: e.content.label,

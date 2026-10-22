@@ -218,11 +218,15 @@ it('una imagen pegada se sube a la carpeta de su pieza y se puede ver (T289)', a
 });
 
 describe('tienda de stickers (13c, RF-BH13b; T338)', () => {
-  it('el catálogo trae Primer Rebote en los 24 colores, con las mismas caras que los incluidos', async () => {
+  it('el catálogo trae Primer Rebote en los 24 colores, con las mismas caras que los incluidos, y Papelería (T343c)', async () => {
     const api = fresh();
-    const packs = await api.listStickerPacks();
+    const todos = await api.listStickerPacks();
+    const packs = todos.filter((p) => p.kind !== 'assets');
     expect(packs).toHaveLength(24);
     expect(packs.every((p) => p.collection === 'primer-rebote' && p.stickers.length === 26)).toBe(true);
+    const papeleria = todos.find((p) => p.id === 'papeleria');
+    expect(papeleria?.kind).toBe('assets');
+    expect(papeleria?.stickers.every((s) => s.category && s.mode && s.label_es && s.label_en)).toBe(true);
     expect(packs.map((p) => p.id)).toContain('primer-rebote-navy-blue');
   });
 

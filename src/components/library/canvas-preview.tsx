@@ -19,6 +19,8 @@ export type FuentesDeMiniatura = {
   libros?: ReadonlyMap<string, LibroEnLienzo>;
   /** Los datos de la biblioteca ya contados y escritos (T349). */
   datos?: ReadonlyMap<string, DatoEscrito>;
+  /** Las piezas de los packs de papeles de la tienda (T343c): id → dirección. */
+  assets?: ReadonlyMap<string, string>;
 };
 
 /**
@@ -104,9 +106,12 @@ export const CanvasPreview = memo(function CanvasPreview({
           if (e.type === 'asset') {
             // Con color, el asset entero toma ese tono (en la página real, la textura se conserva).
             const asset = assetPorId(e.content.asset);
+            // Las de la tienda (T343c) llegan con su dirección.
+            const deTienda = !asset && e.content.asset ? fuentes.assets?.get(e.content.asset) : undefined;
+            const imagen = asset ? asset.imagen : deTienda ? { uri: deTienda } : null;
             return (
               <View key={e.id} style={caja}>
-                {asset ? <Image source={asset.imagen} style={styles.lleno} contentFit="fill" tintColor={color ?? undefined} /> : null}
+                {imagen ? <Image source={imagen} style={styles.lleno} contentFit="fill" tintColor={color ?? undefined} /> : null}
               </View>
             );
           }
