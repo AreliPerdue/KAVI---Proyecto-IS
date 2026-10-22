@@ -1607,27 +1607,30 @@ describe('un Journal se lee como un libro (13i; T364)', () => {
   it('abre con la portada, sus páginas y la contraportada, sin archivo y para leer (no para componer)', async () => {
     await render(<Lector />);
     expect(mockAbrirCopia).not.toHaveBeenCalled();
-    expect(mockEnviados.find((m) => m.type === 'openCanvas')).toEqual({ type: 'openCanvas', orientation: 'portrait', pages: 4, mode: 'scroll', canvas: false, position: undefined });
-    await responder({ type: 'opened', total: 4 });
+    // Portada · guarda · 2 páginas · guarda · contraportada (T367).
+    expect(mockEnviados.find((m) => m.type === 'openCanvas')).toEqual({ type: 'openCanvas', orientation: 'portrait', pages: 6, mode: 'scroll', canvas: false, position: undefined });
+    await responder({ type: 'opened', total: 6 });
     const base = mockEnviados.find((m) => m.type === 'baseLayer');
     expect(base && 'items' in base ? base.items.map((a) => [a.id, a.locator.page, a.locked]) : null).toEqual([
       ['t-tapa', 1, true],
-      ['t-p1', 2, true],
-      ['t-p2', 3, true],
+      ['t-p1', 3, true],
+      ['t-p2', 4, true],
     ]);
-    expect(mockEnviados).toContainEqual({ type: 'canvasBackground', color: null, pages: { '1': { color: '#3B2A20', material: 'linen' }, '4': { color: '#3B2A20', material: 'linen' } } });
+    const tapa = { color: '#3B2A20', material: 'linen' };
+    const guarda = { color: '#EDE3CF', material: 'parchment' };
+    expect(mockEnviados).toContainEqual({ type: 'canvasBackground', color: null, pages: { '1': tapa, '2': guarda, '5': guarda, '6': tapa } });
     expect(screen.queryByText(R.noFile)).toBeNull();
   });
 
   it('"Editar" lleva a editarlo, y "Páginas" lo ve en miniaturas: tocar una va a esa hoja', async () => {
     await render(<Lector />);
-    await responder({ type: 'opened', total: 4 });
+    await responder({ type: 'opened', total: 6 });
     await fireEvent.press(screen.getByRole('button', { name: es.library.journal.edit }));
     expect(globalThis.mockRouter.push).toHaveBeenCalledWith({ pathname: '/(app)/journal/[id]', params: { id: 'j1' } });
     await fireEvent.press(screen.getByRole('button', { name: R.mode }));
     await fireEvent.press(screen.getByRole('tab', { name: R.modePages }));
     await fireEvent.press(screen.getByRole('button', { name: es.library.journal.pageN(2) }));
-    expect(mockEnviados.at(-1)).toEqual({ type: 'goTo', page: 3 });
+    expect(mockEnviados.at(-1)).toEqual({ type: 'goTo', page: 4 });
     expect(screen.queryByRole('button', { name: es.library.journal.pageN(2) })).toBeNull();
   });
 });

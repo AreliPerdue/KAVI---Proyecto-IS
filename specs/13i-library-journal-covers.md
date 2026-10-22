@@ -118,6 +118,12 @@
     arriba y luz abajo; relieve, luz arriba, sombra abajo y una sombrita afuera; recortado, el canto oscuro y la
     sombra de la tapa sobre la hoja. Va dentro de la pieza porque al hojear cada hoja es su propio árbol.
   - En las miniaturas de la app se ve el color del acabado (y una sombra en el texto); la luz completa, en el motor.
+- **Guardas (T367, pedido de Areli del 22 oct 2026):** el papel o la tela que forra el interior de las tapas, para
+  saber que se está dentro del libro. Se eligen en "Editar Journal" (paso 4, Guardas) con los mismos materiales y su
+  color; empiezan en pergamino crema (como papel). Van en la portada (`journal.endpaper`), sin migración.
+  - Al leerlo: portada · guarda · páginas · (una hoja en blanco si son impares) · guarda · contraportada. En libro real
+    la guarda queda frente a la primera página y frente a la última, y la contraportada cierra sola; sin páginas, se
+    abre a las dos guardas y se cierra.
 - **Ajustes de Areli del 22 oct 2026 (T366):**
   - **Cada asa mueve solo su borde:** la del lado derecho ensancha hacia la derecha sin cambiar la altura; la de
     abajo alarga hacia abajo. El texto de un lienzo se estira de 0.05 a 20 (alto ÷ ancho), como un papel o una

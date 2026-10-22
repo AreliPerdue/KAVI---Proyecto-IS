@@ -36,7 +36,7 @@ const Ver = require('@/app/(app)/journal/[id]').default as () => React.ReactElem
 
 const J = es.library.journal;
 const C = es.library.canvas;
-const portada = { orientation: 'portrait', binding: 'sewn', material: 'linen', color: '#3B2A20', back: null, edges: '#F7F5EF', accent: '#B9B9B9' };
+const portada = { orientation: 'portrait', binding: 'sewn', material: 'linen', color: '#3B2A20', back: null, edges: '#F7F5EF', accent: '#B9B9B9', endpaper: { material: 'parchment', color: '#EDE3CF' } };
 
 beforeEach(() => {
   mockPieza = { data: undefined, isError: false, refetch: jest.fn() };
@@ -67,10 +67,20 @@ describe('crear', () => {
     );
   });
 
+  it('las guardas (el interior de las tapas) empiezan en papel crema y se eligen con su material y color (T367)', async () => {
+    await render(<Editar />);
+    await fireEvent.press(screen.getByRole('button', { name: `${J.endpaperFace}: ${J.materials.linen}` }));
+    await fireEvent.press(screen.getByRole('button', { name: J.endpaperColor }));
+    await fireEvent.changeText(screen.getByLabelText(C.color.hex), '#7a1e3a');
+    await fireEvent.press(screen.getByRole('button', { name: C.color.use }));
+    await fireEvent.press(screen.getByRole('button', { name: J.create }));
+    expect(mockCrear.mock.calls[0][0]).toMatchObject({ journal: { endpaper: { material: 'linen', color: '#7A1E3A' } } });
+  });
+
   it('sin nombre se llama "Mi Journal"; la contraportada puede tener su propio material', async () => {
     await render(<Editar />);
     await fireEvent.press(screen.getByRole('tab', { name: J.backOwn }));
-    await fireEvent.press(screen.getAllByRole('button', { name: J.materials.velvet }).at(-1)!);
+    await fireEvent.press(screen.getByRole('button', { name: `${J.back}: ${J.materials.velvet}` }));
     await fireEvent.press(screen.getByRole('button', { name: J.create }));
     expect(mockCrear.mock.calls[0][0]).toMatchObject({ title: J.defaultTitle, journal: { back: { material: 'velvet' } } });
   });

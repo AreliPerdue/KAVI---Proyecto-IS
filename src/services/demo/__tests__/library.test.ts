@@ -524,7 +524,7 @@ describe('Mis plantillas del lienzo (13h, RF-CC20; T344)', () => {
 describe('Journal (13i; T345)', () => {
   it('se crea con su portada (o la de omisión) y sus páginas; editarla la valida; un libro no la lleva', async () => {
     const api = fresh();
-    const j = await api.createItem(ANA, { family: 'creation', kind: 'journal', title: 'Mi año', page_count: 120, journal: { orientation: 'portrait', binding: 'sewn', material: 'linen', color: '#3b2a20', back: null, edges: '#F7F5EF', accent: '#B9B9B9' } });
+    const j = await api.createItem(ANA, { family: 'creation', kind: 'journal', title: 'Mi año', page_count: 120, journal: { orientation: 'portrait', binding: 'sewn', material: 'linen', color: '#3b2a20', back: null, edges: '#F7F5EF', accent: '#B9B9B9', endpaper: { material: 'parchment', color: '#EDE3CF' } } });
     expect(j.journal).toMatchObject({ binding: 'sewn', material: 'linen', color: '#3B2A20' });
     const sinPortada = await api.createItem(ANA, { family: 'creation', kind: 'journal', title: 'Otro' });
     expect(sinPortada.journal?.material).toBe('leather');

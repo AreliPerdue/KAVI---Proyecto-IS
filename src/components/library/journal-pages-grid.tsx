@@ -11,7 +11,8 @@ import type { DocumentoDeLienzo } from '@/lib/library/canvas';
 import type { PortadaDeJournal } from '@/lib/library/journal';
 import type { LibraryCanvas } from '@/types/domain';
 
-type Hoja = { clave: string; numero: number; tipo: 'front' | 'page' | 'back'; lienzo?: LibraryCanvas };
+type Hoja = { clave: string; numero: number; tipo: 'front' | 'page' | 'back'; lienzo?: LibraryCanvas; pagina?: number };
+const paginaDe = (h: Hoja) => h.pagina ?? 0;
 
 /**
  * "Páginas", otra forma de ver un Journal en el lector (13i; T364): la portada, cada página y la contraportada en
@@ -22,10 +23,15 @@ export function JournalPagesGrid({
   paginas,
   tapas,
   fuentes,
+  primeraPagina,
+  total,
   onIr,
 }: {
   portada: PortadaDeJournal;
   paginas: readonly LibraryCanvas[];
+  /** En qué hoja va la página 1 y cuántas hojas hay (con sus guardas; T367). */
+  primeraPagina: number;
+  total: number;
   tapas: { front?: { doc: DocumentoDeLienzo }; back?: { doc: DocumentoDeLienzo } };
   fuentes: FuentesDeMiniatura;
   onIr: (numero: number) => void;
@@ -37,8 +43,8 @@ export function JournalPagesGrid({
   const ancho = Math.max(60, Math.floor((contenido - Spacing.md * (columnas - 1)) / columnas));
   const hojas: Hoja[] = [
     { clave: 'front', numero: 1, tipo: 'front' },
-    ...paginas.map((lienzo, i) => ({ clave: lienzo.id, numero: i + 2, tipo: 'page' as const, lienzo })),
-    { clave: 'back', numero: paginas.length + 2, tipo: 'back' },
+    ...paginas.map((lienzo, i) => ({ clave: lienzo.id, numero: primeraPagina + i, tipo: 'page' as const, lienzo, pagina: i + 1 })),
+    { clave: 'back', numero: total, tipo: 'back' },
   ];
   return (
     <FlatList
@@ -71,7 +77,7 @@ const Miniatura = memo(function Miniatura({
 }) {
   const tx = useT();
   const j = tx.library.journal;
-  const nombre = hoja.tipo === 'front' ? j.faces.front : hoja.tipo === 'back' ? j.faces.back : j.pageN(hoja.numero - 1);
+  const nombre = hoja.tipo === 'front' ? j.faces.front : hoja.tipo === 'back' ? j.faces.back : j.pageN(paginaDe(hoja));
   const tapa = hoja.tipo === 'front' ? tapas.front : hoja.tipo === 'back' ? tapas.back : undefined;
   return (
     <Pressable accessibilityRole="button" accessibilityLabel={nombre} onPress={() => onIr(hoja.numero)} style={({ pressed }) => [styles.hoja, { width: ancho }, pressed ? styles.presionada : null]}>

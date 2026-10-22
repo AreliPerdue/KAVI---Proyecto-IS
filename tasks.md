@@ -1309,6 +1309,10 @@ Reemplazan L5 (13e). Un recorte es una página 1 : √2 del visor de PDF (decisi
   **Hecho (22 oct 2026):** `limitesDe` en el motor (texto del lienzo como lo del lienzo), `localizadorPegado` acepta
   0.05 – 20, `colorDeTratamiento(t, papel, color)`; el acabado conserva el color de la pieza y "Original" (en Color)
   lo quita; la sección de Office se llama "Colores".
+- [x] T367 Guardas del Journal: el interior de las tapas, con su material y color, al leerlo como libro. (13i; pedido
+  de Areli del 22 oct 2026) Dep: T364
+  **Hecho (22 oct 2026):** `endpaper` en la portada (pergamino crema por omisión), paso "Guardas" en Editar Journal,
+  `paraHojear` con guardas y hoja en blanco si las páginas son impares (`primeraPagina` para "Páginas").
 - [ ] T349b C6 · Más módulos (mood, canción, fecha/lugar, timeline, checklist…) y plantillas (Moodboard, Reading
   Stats, Reading Awards, Reading Eras, Character Analysis…). (RF-CC14, RF-CC21) Dep: T349
 - [ ] T350 J4 · Primera colección de motivos Fantasy / Dragon en la tienda. (RF-JC10) Dep: T346

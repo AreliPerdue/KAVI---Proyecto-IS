@@ -647,7 +647,11 @@ export const library = {
     edit: 'Editar Journal',
     defaultTitle: 'Mi Journal',
     hint: 'Primero eliges el cuaderno; luego lo decoras.',
-    steps: { shape: '1. Forma', binding: '2. Encuadernación', material: '3. Material y color', details: '4. Nombre y páginas' },
+    steps: { shape: '1. Forma', binding: '2. Encuadernación', material: '3. Material y color', endpaper: '4. Guardas', details: '5. Nombre y páginas' },
+    // Las guardas (T367): el interior de las tapas.
+    endpaperHint: 'El papel o la tela que forra el interior de las tapas: se ve al abrirlo, antes de la primera página.',
+    endpaperColor: 'Color de las guardas',
+    endpaperFace: 'Guarda',
     bindings: { hardcover: 'Tapa dura', paperback: 'Tapa blanda', spiral: 'Espiral', sewn: 'Cosida' } as Record<'hardcover' | 'paperback' | 'spiral' | 'sewn', string>,
     materials: { leather: 'Cuero', linen: 'Lino', velvet: 'Terciopelo', wood: 'Madera', fabric: 'Tela', parchment: 'Pergamino' } as Record<
       'leather' | 'linen' | 'velvet' | 'wood' | 'fabric' | 'parchment',

@@ -9,7 +9,18 @@ it('una portada rota vuelve a lo de omisión: A5 vertical, tapa dura, cuero gris
 
 it('se queda con lo que entiende, en mayúscula, y la contraportada propia o la de la portada', () => {
   const p = portadaValida({ orientation: 'landscape', binding: 'spiral', material: 'wood', color: '#3b2a20', back: { material: 'linen', color: '#112233' }, edges: '#ffeedd', accent: '#c0c0c0' });
-  expect(p).toEqual({ orientation: 'landscape', binding: 'spiral', material: 'wood', color: '#3B2A20', back: { material: 'linen', color: '#112233' }, edges: '#FFEEDD', accent: '#C0C0C0' });
+  expect(p).toEqual({
+    orientation: 'landscape',
+    binding: 'spiral',
+    material: 'wood',
+    color: '#3B2A20',
+    back: { material: 'linen', color: '#112233' },
+    edges: '#FFEEDD',
+    accent: '#C0C0C0',
+    // Sin guardas, papel crema (T367).
+    endpaper: { material: 'parchment', color: '#EDE3CF' },
+  });
+  expect(portadaValida({ endpaper: { material: 'velvet', color: '#7a1e3a' } }).endpaper).toEqual({ material: 'velvet', color: '#7A1E3A' });
   expect(contraportada(p)).toEqual({ material: 'linen', color: '#112233' });
   expect(contraportada({ ...p, back: null })).toEqual({ material: 'wood', color: '#3B2A20' });
 });
@@ -102,13 +113,21 @@ describe('tapas (T346)', () => {
     expect(fondoDeCara(portada, 'back')).toEqual({ material: 'linen', color: '#112233' });
   });
 
-  it('hojear abre con la portada y cierra con la contraportada, cada una con su material y lo decorado', () => {
-    const { doc, fondos } = paraHojear([{ doc: { pages: 1, elements: [el('a')] } }], { portada, front: { doc: { pages: 1, elements: [el('t')] } } });
-    expect(doc.pages).toBe(3);
-    expect(doc.elements.map((e) => [e.id, e.page])).toEqual([
+  it('hojear: portada, guarda, páginas, (hoja en blanco si son impares), guarda y contraportada (T346, T367)', () => {
+    const guarda = { material: 'parchment', color: '#EDE3CF' };
+    const una = paraHojear([{ doc: { pages: 1, elements: [el('a')] } }], { portada, front: { doc: { pages: 1, elements: [el('t')] } } });
+    // 1 portada · 2 guarda · 3 página 1 · 4 en blanco · 5 guarda · 6 contraportada: así cierra sola en libro real.
+    expect(una.doc.pages).toBe(6);
+    expect(una.primeraPagina).toBe(3);
+    expect(una.doc.elements.map((e) => [e.id, e.page])).toEqual([
       ['t', 1],
-      ['a', 2],
+      ['a', 3],
     ]);
-    expect(fondos).toEqual({ '1': { material: 'wood', color: '#6B3E26' }, '3': { material: 'linen', color: '#112233' } });
+    expect(una.fondos).toEqual({ '1': { material: 'wood', color: '#6B3E26' }, '2': guarda, '5': guarda, '6': { material: 'linen', color: '#112233' } });
+    const dos = paraHojear([{ doc: { pages: 1, elements: [] } }, { doc: { pages: 1, elements: [] } }], { portada });
+    expect(dos.doc.pages).toBe(6);
+    expect(Object.keys(dos.fondos)).toEqual(['1', '2', '5', '6']);
+    const ninguna = paraHojear([], { portada });
+    expect([ninguna.doc.pages, Object.keys(ninguna.fondos)]).toEqual([4, ['1', '2', '3', '4']]);
   });
 });

@@ -16,7 +16,7 @@ import { useDecoracionDeJournal } from '@/hooks/use-journal-covers';
 import { proporcionDeCara, ENCUADERNACIONES, nombreDeAutora, MATERIALES, PAGINAS, paginasValidas, PORTADA_POR_OMISION, type PortadaDeJournal, portadaValida } from '@/lib/library/journal';
 import { useSnackbar } from '@/providers';
 
-type ColorDe = 'material' | 'accent' | 'edges' | 'back';
+type ColorDe = 'material' | 'accent' | 'edges' | 'back' | 'endpaper';
 
 /**
  * Crear o editar un Journal (spec 13i, RF-JC1 – RF-JC9; T345): "primero eliges el cuaderno; luego lo decoras". Paso a
@@ -92,7 +92,7 @@ export default function JournalEditScreen() {
   const anchoPortada = portada.orientation === 'portrait' ? anchoVista : anchoVista * 1.25;
   const altoPortada = anchoPortada * (portada.orientation === 'portrait' ? Math.SQRT2 : 1 / Math.SQRT2);
   const muestra = (hex: string) => <View style={[styles.muestra, { backgroundColor: hex, borderColor: theme.border }]} />;
-  const colorActual = colorDe === 'material' ? portada.color : colorDe === 'accent' ? portada.accent : colorDe === 'edges' ? portada.edges : colorDe === 'back' ? (portada.back?.color ?? portada.color) : null;
+  const colorActual = colorDe === 'material' ? portada.color : colorDe === 'accent' ? portada.accent : colorDe === 'edges' ? portada.edges : colorDe === 'back' ? (portada.back?.color ?? portada.color) : colorDe === 'endpaper' ? portada.endpaper.color : null;
 
   return (
     <View style={[styles.pantalla, { backgroundColor: theme.background, paddingTop: insets.top }]}>
@@ -194,6 +194,7 @@ export default function JournalEditScreen() {
                   <Opcion
                     key={m}
                     etiqueta={j.materials[m]}
+                    nombre={`${j.back}: ${j.materials[m]}`}
                     elegida={portada.back?.material === m}
                     onPress={() => poner({ back: { material: m, color: portada.back?.color ?? portada.color } })}>
                     <JournalCover portada={{ ...portada, material: m, color: portada.back?.color ?? portada.color, binding: 'paperback' }} ancho={44} />
@@ -203,6 +204,26 @@ export default function JournalEditScreen() {
               <ActionRow icon={muestra(portada.back.color)} label={j.backColor} onPress={() => setColorDe('back')} />
             </>
           ) : null}
+        </Seccion>
+
+        {/* Las guardas (T367): el interior de las tapas, que se ve al abrirlo. */}
+        <Seccion titulo={j.steps.endpaper}>
+          <AppText variant="body" color="textSecondary">
+            {j.endpaperHint}
+          </AppText>
+          <View style={styles.opciones}>
+            {MATERIALES.map((m) => (
+              <Opcion
+                key={m}
+                etiqueta={j.materials[m]}
+                nombre={`${j.endpaperFace}: ${j.materials[m]}`}
+                elegida={portada.endpaper.material === m}
+                onPress={() => poner({ endpaper: { material: m, color: portada.endpaper.color } })}>
+                <JournalCover portada={{ ...portada, material: m, color: portada.endpaper.color, binding: 'paperback' }} ancho={44} />
+              </Opcion>
+            ))}
+          </View>
+          <ActionRow icon={muestra(portada.endpaper.color)} label={j.endpaperColor} onPress={() => setColorDe('endpaper')} />
         </Seccion>
 
         <Seccion titulo={j.steps.details}>
@@ -232,7 +253,7 @@ export default function JournalEditScreen() {
 
       <ColorPickerSheet
         visible={colorDe !== null}
-        titulo={colorDe === 'accent' ? (portada.binding === 'spiral' ? j.accentMetal : j.accentThread) : colorDe === 'edges' ? j.edges : colorDe === 'back' ? j.backColor : j.color}
+        titulo={colorDe === 'accent' ? (portada.binding === 'spiral' ? j.accentMetal : j.accentThread) : colorDe === 'edges' ? j.edges : colorDe === 'back' ? j.backColor : colorDe === 'endpaper' ? j.endpaperColor : j.color}
         valor={colorActual}
         onClose={() => setColorDe(null)}
         onElegir={(hex) => {
@@ -243,6 +264,7 @@ export default function JournalEditScreen() {
           else if (de === 'accent') poner({ accent: hex });
           else if (de === 'edges') poner({ edges: hex });
           else if (de === 'back') poner({ back: { material: portada.back?.material ?? portada.material, color: hex } });
+          else if (de === 'endpaper') poner({ endpaper: { material: portada.endpaper.material, color: hex } });
         }}
       />
     </View>
@@ -259,12 +281,25 @@ function Seccion({ titulo, children }: { titulo: string; children: React.ReactNo
 }
 
 /** Una opción con su muestra: el cuaderno tal como quedaría. */
-function Opcion({ etiqueta, elegida, onPress, children }: { etiqueta: string; elegida: boolean; onPress: () => void; children: React.ReactNode }) {
+function Opcion({
+  etiqueta,
+  nombre,
+  elegida,
+  onPress,
+  children,
+}: {
+  etiqueta: string;
+  /** El nombre para el lector de pantalla si se repite la etiqueta (la contraportada, las guardas). */
+  nombre?: string;
+  elegida: boolean;
+  onPress: () => void;
+  children: React.ReactNode;
+}) {
   const theme = useTheme();
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={etiqueta}
+      accessibilityLabel={nombre ?? etiqueta}
       accessibilityState={{ selected: elegida }}
       onPress={onPress}
       style={({ pressed }) => [

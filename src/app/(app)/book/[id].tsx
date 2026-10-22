@@ -1220,6 +1220,8 @@ function Lector({ id, irA, unirseEnVivo = false }: { id: string; irA?: LugarDeAp
               paginas={paginasJ}
               tapas={tapasJ}
               fuentes={fuentesJ.miniatura}
+              primeraPagina={hojasJ?.primeraPagina ?? 1}
+              total={hojasJ?.doc.pages ?? 1}
               onIr={(page) => {
                 setVerPaginas(false);
                 motor.current?.send({ type: 'goTo', page });

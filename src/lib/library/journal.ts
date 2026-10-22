@@ -27,11 +27,18 @@ export type PortadaDeJournal = {
   edges: string;
   /** El color del hilo (cosida) o del metal (espiral) (RF-JC4). */
   accent: string;
+  /**
+   * Las guardas (T367, pedido de Areli): el papel o la tela que forra el interior de las tapas. Al leerlo, se ven
+   * después de la portada y antes de la contraportada: así se sabe que se está dentro del libro.
+   */
+  endpaper: { material: Material; color: string };
 };
 
 export const COLOR_NEUTRO = '#8C8C8C';
 export const CANTO_BLANCO = '#F7F5EF';
 export const METAL = '#B9B9B9';
+/** Las guardas empiezan como papel color crema (pergamino). */
+export const GUARDA_POR_OMISION = { material: 'parchment' as Material, color: '#EDE3CF' };
 
 export const PORTADA_POR_OMISION: PortadaDeJournal = {
   orientation: 'portrait',
@@ -41,6 +48,7 @@ export const PORTADA_POR_OMISION: PortadaDeJournal = {
   back: null,
   edges: CANTO_BLANCO,
   accent: METAL,
+  endpaper: GUARDA_POR_OMISION,
 };
 
 /** Cuántas páginas puede tener un Journal y de cuánto en cuánto cambian. */
@@ -53,6 +61,7 @@ const deLista = <T extends string>(lista: readonly T[], v: unknown, porOmision: 
 export function portadaValida(raw: unknown): PortadaDeJournal {
   const p = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>;
   const atras = (p.back && typeof p.back === 'object' ? p.back : null) as Record<string, unknown> | null;
+  const guarda = (p.endpaper && typeof p.endpaper === 'object' ? p.endpaper : {}) as Record<string, unknown>;
   return {
     orientation: p.orientation === 'landscape' ? 'landscape' : 'portrait',
     binding: deLista(ENCUADERNACIONES, p.binding, PORTADA_POR_OMISION.binding),
@@ -61,6 +70,10 @@ export function portadaValida(raw: unknown): PortadaDeJournal {
     back: atras && esColor(atras.color) ? { material: deLista(MATERIALES, atras.material, PORTADA_POR_OMISION.material), color: atras.color.toUpperCase() } : null,
     edges: esColor(p.edges) ? p.edges.toUpperCase() : CANTO_BLANCO,
     accent: esColor(p.accent) ? p.accent.toUpperCase() : METAL,
+    endpaper: {
+      material: deLista(MATERIALES, guarda.material, GUARDA_POR_OMISION.material),
+      color: esColor(guarda.color) ? guarda.color.toUpperCase() : GUARDA_POR_OMISION.color,
+    },
   };
 }
 
@@ -117,21 +130,25 @@ export type FondoDeTapa = { color: string; material: Material };
 /**
  * El Journal entero para hojearlo en libro real: un solo documento con una página por cada lienzo, cada pieza en la
  * suya y bloqueada (se ve, no se edita), y el color de cada página que tenga uno. Con su `portada` (T346), abre y
- * cierra con sus tapas: la portada y la contraportada con su material y lo que tengan decorado.
+ * cierra con sus tapas: la portada y la contraportada con su material y lo que tengan decorado; y por dentro, sus
+ * guardas (T367), como un libro: portada · guarda · páginas · (una hoja en blanco si son impares, para que la
+ * contraportada cierre sola en libro real) · guarda · contraportada. `primeraPagina`: la hoja de la página 1.
  */
 export function paraHojear(
   lienzos: readonly { doc: DocumentoDeLienzo }[],
   tapas?: { portada: PortadaDeJournal; front?: { doc: DocumentoDeLienzo }; back?: { doc: DocumentoDeLienzo } },
-): { doc: DocumentoDeLienzo; fondos: Record<string, string | FondoDeTapa> } {
+): { doc: DocumentoDeLienzo; fondos: Record<string, string | FondoDeTapa>; primeraPagina: number } {
   const elements: ElementoDeLienzo[] = [];
   const fondos: Record<string, string | FondoDeTapa> = {};
   const poner = (doc: DocumentoDeLienzo | undefined, pagina: number) => {
     for (const e of doc?.elements ?? []) if (e.page === 1) elements.push({ ...e, page: pagina, locked: true });
   };
-  const antes = tapas ? 1 : 0;
+  // Con tapas: la portada y su guarda van antes de la página 1.
+  const antes = tapas ? 2 : 0;
   if (tapas) {
     fondos['1'] = fondoDeCara(tapas.portada, 'front');
     poner(tapas.front?.doc, 1);
+    fondos['2'] = tapas.portada.endpaper;
   }
   lienzos.forEach((l, i) => {
     const pagina = antes + i + 1;
@@ -140,11 +157,14 @@ export function paraHojear(
   });
   let pages = Math.max(1, antes + lienzos.length);
   if (tapas) {
-    pages = antes + lienzos.length + 1;
+    const enBlanco = lienzos.length % 2 === 1 ? 1 : 0;
+    const guarda = antes + lienzos.length + enBlanco + 1;
+    pages = guarda + 1;
+    fondos[String(guarda)] = tapas.portada.endpaper;
     fondos[String(pages)] = fondoDeCara(tapas.portada, 'back');
     poner(tapas.back?.doc, pages);
   }
-  return { doc: { pages, elements }, fondos };
+  return { doc: { pages, elements }, fondos, primeraPagina: antes + 1 };
 }
 
 // ─── Las tapas (13i, RF-JC10; T346) ───────────────────────────────────────────────

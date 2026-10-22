@@ -916,3 +916,8 @@ portada con su estrella en scroll, libro real con página y contraportada, y "P�
 Automatizado: `new-canvas-sheet.test.tsx` (borrar una propia con confirmación; las de KAVI no), `color-palettes.test.ts`
 y `canvas.test.tsx` (elegir básicos, Office y de las portadas). Visto en el demo web: el nombre al pasar el cursor.
 - [ ] (manual, Areli) "De tus portadas" con tu biblioteca real: ¿se reconoce cada libro por su nombre?
+
+## Guardas del Journal (T367)
+Automatizado: `journal.test.ts` (secuencia con guardas y hoja en blanco), `journal.test.tsx` (elegir guardas) y
+`reader.test.tsx` (hojas y fondos). Visto en el demo web: guarda de tela dorada frente a la página 1 en libro real.
+- [ ] (manual, Areli) Abrir un Journal que ya tenías: ¿la guarda crema se ve bien con tu material?
