@@ -603,7 +603,7 @@ export default function CanvasScreen() {
     const de = colorDe;
     setColorDe(null);
     if (de === 'fondo') aplicar((d) => conFondo(d, hex));
-    else if (de === 'elemento' && hex) aplicar((d) => conEstilo(d, juntos, { color: hex }));
+    else if (de === 'elemento') aplicar((d) => conEstilo(d, juntos, { color: hex ?? undefined }));
     else if (de === 'borde') aplicar((d) => conEstilo(d, juntos, { border: hex ? { width: elegido?.style.border?.width ?? 0.004, color: hex } : undefined }));
   };
   // El fondo sin color es el papel blanco: el selector empieza ahí.
@@ -989,7 +989,16 @@ export default function CanvasScreen() {
         visible={colorDe !== null}
         titulo={colorDe === 'fondo' ? c.backgroundTitle : colorDe === 'borde' ? c.style.borderColor : c.style.color}
         valor={colorActual}
-        ninguno={colorDe === 'fondo' ? c.paper : colorDe === 'borde' ? c.style.borderNone : undefined}
+        ninguno={
+          colorDe === 'fondo'
+            ? c.paper
+            : colorDe === 'borde'
+              ? c.style.borderNone
+              : // Hundido o en relieve (T366): sin color toma el tono del material.
+                colorDe === 'elemento' && (elegido?.style.treatment === 'debossed' || elegido?.style.treatment === 'embossed')
+                ? c.finish.original
+                : undefined
+        }
         onClose={() => setColorDe(null)}
         onElegir={elegirColor}
       />
@@ -1036,8 +1045,8 @@ export default function CanvasScreen() {
               label={actual ? `${c.finish[t]} · ${c.finish.current}` : c.finish[t]}
               onPress={() => {
                 setEligiendoAcabado(false);
-                // Hundido y relieve empiezan sin color (toman el tono del material); luego se pintan del que se quiera (T366).
-                aplicar((d) => conEstilo(d, juntos, { treatment: t === 'printed' ? undefined : t, ...(t === 'debossed' || t === 'embossed' ? { color: undefined } : {}) }));
+                // El color elegido se queda (T366): hundido y relieve lo toman; "Original" en Color vuelve al material.
+                aplicar((d) => conEstilo(d, juntos, { treatment: t === 'printed' ? undefined : t }));
               }}
             />
           );

@@ -122,8 +122,9 @@
   - **Cada asa mueve solo su borde:** la del lado derecho ensancha hacia la derecha sin cambiar la altura; la de
     abajo alarga hacia abajo. El texto de un lienzo se estira de 0.05 a 20 (alto ÷ ancho), como un papel o una
     cinta, así un título de lomo tiene el largo que se le dé. (La app descartaba al soltar lo que pasaba de ¼ – 4.)
-  - **Hundido y relieve toman el color que se elija** (un poco translúcido, para que se vea la textura); sin color,
-    toman el tono del material. Al ponerlos, la pieza empieza sin color.
+  - **Hundido y relieve toman el color que se elija** (un poco translúcido, para que se vea la textura) y conservan el
+    que ya tenía la pieza; en su Color, **"Original"** lo quita y vuelven al tono del material.
+  - En el selector, la sección del set de Office se llama **"Colores"**.
 - **El Journal se lee como un libro (T364, pedido de Areli del 22 oct 2026):**
   - Tocarlo en la librería lo abre en el **lector**, como un PDF: portada, sus páginas y contraportada (sin páginas,
     se cierra: de la portada a la contraportada). Tiene todas las formas de leer (scroll, de lado, libro real), zoom,

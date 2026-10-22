@@ -950,6 +950,7 @@ export const library = {
       debossed: 'Hundido',
       embossed: 'En relieve',
       cutout: 'Recortado',
+      original: 'Original (el tono del material)',
     },
     background: 'Fondo',
     backgroundTitle: 'Color del fondo',
@@ -973,7 +974,7 @@ export const library = {
       mineEmpty: 'Toca + para guardar el color de ahora y usarlo en cualquier recorte.',
       // Colores con nombre (T365): básicos, Office y los de tus portadas.
       basics: 'Básicos',
-      office: 'Office',
+      office: 'Colores',
       covers: 'De tus portadas',
       named: (nombre: string, hex: string) => `${nombre} · ${hex}`,
       names: {

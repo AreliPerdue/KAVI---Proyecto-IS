@@ -56,7 +56,7 @@ llevar texto, pero nunca debe sentirse como un formulario ni como una nota grand
   texto, bordes, papeles, formas y stickers recolorables.
 - **Decisión de Areli (22 oct 2026; T365):** el selector también trae **colores con nombre**: los básicos, el set de
   Office (los del tema y los estándar, como en Word) y **"De tus portadas"** (el color de cada portada de tu
-  biblioteca). Al pasar el cursor (o al elegir uno) se ve su nombre o el título del libro. No son paletas de KAVI:
+  biblioteca); la del set de Office se titula "Colores". Al pasar el cursor (o al elegir uno) se ve su nombre o el título del libro. No son paletas de KAVI:
   son referencias que la persona ya conoce; las piezas y plantillas siguen empezando en neutros.
 - **RF-CC13.** Las piezas recolorables están hechas en escala de grises con textura; el color se aplica
   encima conservando sombras y textura (no hay un archivo por color).

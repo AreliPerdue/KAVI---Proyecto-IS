@@ -912,6 +912,7 @@ export const library: Dictionary['library'] = {
       debossed: 'Debossed',
       embossed: 'Embossed',
       cutout: 'Cut out',
+      original: 'Original (the material tone)',
     },
     background: 'Background',
     backgroundTitle: 'Background color',
@@ -934,7 +935,7 @@ export const library: Dictionary['library'] = {
       mine: 'My colors',
       mineEmpty: 'Tap + to save the current color and use it on any page.',
       basics: 'Basics',
-      office: 'Office',
+      office: 'Colors',
       covers: 'From your covers',
       named: (nombre: string, hex: string) => `${nombre} · ${hex}`,
       names: {
