@@ -921,3 +921,10 @@ y `canvas.test.tsx` (elegir básicos, Office y de las portadas). Visto en el dem
 Automatizado: `journal.test.ts` (secuencia con guardas y hoja en blanco), `journal.test.tsx` (elegir guardas) y
 `reader.test.tsx` (hojas y fondos). Visto en el demo web: guarda de tela dorada frente a la página 1 en libro real.
 - [ ] (manual, Areli) Abrir un Journal que ya tenías: ¿la guarda crema se ve bien con tu material?
+
+## Más módulos y plantillas (T349b)
+Automatizado: `canvas.test.ts` (validar y llevar al motor los cinco), `canvas.test.tsx` (llenarlos, pegarlos, editar una
+checklist con doble toque) y `canvas-templates.test.ts` (las cuatro plantillas). Visto en el demo web: una página con
+los cinco módulos, Premios lectores y Mis números del año.
+- [ ] (manual, Areli) Moodboard y Análisis de personaje en un recorte de un libro tuyo.
+- [ ] (manual, Areli) Exportar como imagen un recorte con checklist, mood, canción, fecha y timeline.

@@ -671,3 +671,61 @@ describe('colores con nombre (T365)', () => {
     expect(screen.getByRole('button', { name: C.color.named(C.color.names.black, '#000000') })).toBeTruthy();
   });
 });
+
+describe('más módulos (T349b)', () => {
+  const M = C.more;
+
+  it('una checklist se llena, se pega y se edita con doble toque (marcar y quitar renglones)', async () => {
+    await montar();
+    await agregar(M.checklist);
+    await fireEvent.changeText(screen.getByLabelText(M.listTitle), 'Mi TBR');
+    await fireEvent.changeText(screen.getByLabelText(M.item(1)), 'Rayuela');
+    await fireEvent.press(screen.getByRole('button', { name: M.addItem }));
+    await fireEvent.changeText(screen.getByLabelText(M.item(2)), 'Ficciones');
+    await fireEvent.press(screen.getByRole('button', { name: C.save }));
+    expect(mockEnviados.at(-1)).toMatchObject({ type: 'tool', tool: 'checklist' });
+    await tocarPagina();
+    const lista = ultimas()[0];
+    expect(lista).toMatchObject({ kind: 'checklist', content: { text: 'Mi TBR', items: [{ text: 'Rayuela', done: false }, { text: 'Ficciones', done: false }] } });
+    await responder({ type: 'edit', id: lista.id });
+    await fireEvent.press(screen.getByRole('checkbox', { name: M.checkItem(1) }));
+    await fireEvent.press(screen.getByRole('button', { name: M.removeItem(2) }));
+    await fireEvent.press(screen.getByRole('button', { name: C.save }));
+    expect(ultimas()[0].content).toMatchObject({ items: [{ text: 'Rayuela', done: true }] });
+  });
+
+  it('mood, canción, fecha (hoy por omisión) y timeline', async () => {
+    await montar();
+    await agregar(M.mood);
+    await fireEvent.press(screen.getByRole('button', { name: M.moods.crying }));
+    await fireEvent.changeText(screen.getByLabelText(M.moodWord), 'Destrozada');
+    await fireEvent.press(screen.getByRole('button', { name: C.save }));
+    await tocarPagina(0.1, 0.1);
+    expect(ultimas().at(-1)).toMatchObject({ kind: 'mood', content: { mood: 'crying', text: 'Destrozada' } });
+    await responder({ type: 'select', id: null });
+
+    await agregar(M.song);
+    await fireEvent.press(screen.getByRole('button', { name: C.save }));
+    expect(screen.getByText(M.songRequired)).toBeTruthy();
+    await fireEvent.changeText(screen.getByLabelText(M.songTitle), 'Cardigan');
+    await fireEvent.press(screen.getByRole('button', { name: C.save }));
+    await tocarPagina(0.3, 0.3);
+    expect(ultimas().at(-1)).toMatchObject({ kind: 'song', content: { text: 'Cardigan', who: '' } });
+    await responder({ type: 'select', id: null });
+
+    await agregar(M.date);
+    await fireEvent.changeText(screen.getByLabelText(M.place), 'Mi cuarto');
+    await fireEvent.press(screen.getByRole('button', { name: C.save }));
+    await tocarPagina(0.5, 0.5);
+    const hoy = new Date();
+    expect(ultimas().at(-1)?.content.note).toBe('Mi cuarto');
+    expect(ultimas().at(-1)?.content.title).toContain(String(hoy.getFullYear()));
+    await responder({ type: 'select', id: null });
+
+    await agregar(M.timeline);
+    await fireEvent.changeText(screen.getByLabelText(M.item(1)), 'Empecé el libro');
+    await fireEvent.press(screen.getByRole('button', { name: C.save }));
+    await tocarPagina(0.6, 0.6);
+    expect(ultimas().at(-1)).toMatchObject({ kind: 'timeline', content: { items: [{ text: 'Empecé el libro' }] } });
+  });
+});

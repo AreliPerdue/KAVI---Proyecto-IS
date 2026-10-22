@@ -13,7 +13,7 @@ export const SIN_FOTO = '#D6D6D6';
 export const PELICULA = '#161616';
 const TINTA = '#1A1A1A';
 
-export const MODULOS = ['polaroid', 'quote', 'rating', 'book', 'stat', 'swatch'];
+export const MODULOS = ['polaroid', 'quote', 'rating', 'book', 'stat', 'swatch', 'checklist', 'mood', 'song', 'date', 'timeline'];
 
 // Con transparencia (`#RRGGBBAA`) para los acabados de una tapa del Journal (T348).
 const esColor = (c) => /^#[0-9a-fA-F]{6}([0-9a-fA-F]{2})?$/.test(c ?? '');
@@ -259,6 +259,136 @@ export function pintarModulo(el, a) {
   else if (a.kind === 'book') libro(el, a);
   else if (a.kind === 'stat') dato(el, a);
   else if (a.kind === 'swatch') muestra(el, a);
+  else if (a.kind === 'checklist') checklist(el, a);
+  else if (a.kind === 'mood') mood(el, a);
+  else if (a.kind === 'song') cancion(el, a);
+  else if (a.kind === 'date') fecha(el, a);
+  else if (a.kind === 'timeline') timeline(el, a);
+}
+
+// ─── T349b: checklist, mood, canción, fecha y lugar, y timeline ───────────────────
+
+const renglones = (c) => (Array.isArray(c.items) ? c.items.filter((r) => r && typeof r.text === 'string').slice(0, 12) : []);
+
+/** Una lista con casillas: su título y cada renglón con su casilla, marcada o no (tachado si se marcó). */
+function checklist(el, a) {
+  const c = a.content ?? {};
+  const color = esColor(c.color) ? c.color : TINTA;
+  const items = renglones(c);
+  el.setAttribute('role', 'list');
+  el.setAttribute('aria-label', [c.text, ...items.map((r) => `${r.done ? '✓ ' : ''}${r.text}`)].filter(Boolean).join(', ') || 'Lista');
+  const cuerpo = caja({ position: 'absolute', inset: '0', padding: '5cqw 6cqw', display: 'flex', flexDirection: 'column', gap: '3cqw', color, overflow: 'hidden', font: `7cqw/1.3 ${LETRA}` });
+  if (c.text) {
+    const titulo = caja({ font: `700 8.5cqw/1.2 ${LETRA}` });
+    titulo.textContent = c.text;
+    cuerpo.append(titulo);
+  }
+  for (const r of items) {
+    const fila = caja({ display: 'flex', alignItems: 'flex-start', gap: '3cqw' });
+    const casilla = caja({ width: '6.5cqw', height: '6.5cqw', marginTop: '1cqw', flexShrink: '0', border: `0.6cqw solid ${color}`, borderRadius: '1.2cqw', display: 'grid', placeItems: 'center' });
+    if (r.done) casilla.innerHTML = `<svg viewBox="0 0 24 24" width="100%" height="100%" fill="none" stroke="${color}" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg>`;
+    const texto = caja({ overflowWrap: 'anywhere', ...(r.done ? { textDecoration: 'line-through', opacity: '0.6' } : {}) });
+    texto.textContent = r.text;
+    fila.append(casilla, texto);
+    cuerpo.append(fila);
+  }
+  el.append(cuerpo);
+}
+
+const OJOS = 'M31 40a4 4 0 1 0 8 0a4 4 0 1 0-8 0M61 40a4 4 0 1 0 8 0a4 4 0 1 0-8 0';
+const corazonito = (x, y) => `M${x} ${y + 6}c-6-4-9-7-9-10a4.5 4.5 0 0 1 9-2a4.5 4.5 0 0 1 9 2c0 3-3 6-9 10z`;
+/** Las caritas del mood, como en la app (`canvas-shapes.ts`). */
+export const CARITAS = {
+  happy: { trazo: 'M30 60Q50 80 70 60', relleno: OJOS },
+  sad: { trazo: 'M30 72Q50 56 70 72', relleno: OJOS },
+  angry: { trazo: 'M26 30L42 37M74 30L58 37M32 72Q50 62 68 72', relleno: 'M31 44a4 4 0 1 0 8 0a4 4 0 1 0-8 0M61 44a4 4 0 1 0 8 0a4 4 0 1 0-8 0' },
+  surprised: { trazo: 'M41 68a9 9 0 1 0 18 0a9 9 0 1 0-18 0', relleno: OJOS },
+  inLove: { trazo: 'M30 60Q50 80 70 60', relleno: `${corazonito(35, 34)}${corazonito(65, 34)}` },
+  crying: { trazo: 'M28 42Q35 36 42 42M58 42Q65 36 72 42M32 72Q50 58 68 72', relleno: 'M34 48q-4 9 0 11q4-2 0-11zM66 48q-4 9 0 11q4-2 0-11z' },
+  calm: { trazo: 'M28 40Q35 46 42 40M58 40Q65 46 72 40M38 64Q50 71 62 64', relleno: '' },
+  scared: { trazo: 'M29 40a6 6 0 1 0 12 0a6 6 0 1 0-12 0M59 40a6 6 0 1 0 12 0a6 6 0 1 0-12 0M30 70q5-6 10 0t10 0t10 0t10 0', relleno: '' },
+};
+export const CARA = 'M50 4a46 46 0 1 0 0.01 0z';
+
+/** Un mood: la carita a lo ancho y, abajo, su palabra. */
+function mood(el, a) {
+  const c = a.content ?? {};
+  const color = esColor(c.color) ? c.color : TINTA;
+  const carita = CARITAS[c.mood] ?? CARITAS.happy;
+  el.setAttribute('role', 'img');
+  el.setAttribute('aria-label', c.text ? `Mood: ${c.text}` : 'Mood');
+  const cuerpo = caja({ position: 'absolute', inset: '0', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3cqw', color });
+  const dibujo = caja({ width: '100%', aspectRatio: '1 / 1' });
+  dibujo.innerHTML = `<svg viewBox="0 0 100 100" width="100%" height="100%" fill="none" stroke="${color}" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="${CARA}"/><path d="${carita.trazo}"/>${carita.relleno ? `<path d="${carita.relleno}" fill="${color}" stroke="none"/>` : ''}</svg>`;
+  cuerpo.append(dibujo);
+  if (c.text) {
+    const palabra = caja({ font: `600 11cqw/1.1 ${LETRA}`, textAlign: 'center', overflowWrap: 'anywhere' });
+    palabra.textContent = c.text;
+    cuerpo.append(palabra);
+  }
+  el.append(cuerpo);
+}
+
+/** Una canción: un reproductor dibujado (sin sonido) con su título y artista, su barra y sus botones. */
+function cancion(el, a) {
+  const c = a.content ?? {};
+  const color = esColor(c.color) ? c.color : TINTA;
+  el.setAttribute('role', 'img');
+  el.setAttribute('aria-label', `Canción: ${c.text ?? ''}${c.who ? `, de ${c.who}` : ''}`);
+  const tarjeta = caja({ position: 'absolute', inset: '0', background: MARCO_POLAROID, borderRadius: '4cqw', padding: '4cqw 5cqw', display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '2cqw', color, boxShadow: '0 0.6cqw 1.8cqw rgb(0 0 0 / 0.18)', overflow: 'hidden' });
+  const arriba = caja({ display: 'flex', alignItems: 'center', gap: '4cqw' });
+  const disco = caja({ width: '14cqw', height: '14cqw', flexShrink: '0', borderRadius: '2cqw', background: SIN_FOTO });
+  const textos = caja({ display: 'flex', flexDirection: 'column', minWidth: '0' });
+  const titulo = caja({ font: `700 6.5cqw/1.2 ${LETRA}`, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' });
+  titulo.textContent = c.text ?? '';
+  const quien = caja({ font: `5cqw/1.2 ${LETRA}`, opacity: '0.7', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' });
+  quien.textContent = c.who ?? '';
+  textos.append(titulo, quien);
+  arriba.append(disco, textos);
+  const barra = caja({ height: '1.2cqw', borderRadius: '1cqw', background: `color-mix(in srgb, ${color} 25%, transparent)`, overflow: 'hidden' });
+  barra.append(caja({ width: '38%', height: '100%', background: color }));
+  const botones = caja({ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8cqw', height: '9cqw' });
+  botones.innerHTML = `<svg viewBox="0 0 24 24" height="70%" fill="${color}"><path d="M19 20L9 12l10-8zM5 19V5h2v14z"/></svg><svg viewBox="0 0 24 24" height="100%" fill="${color}"><path d="M8 5v14l11-7z"/></svg><svg viewBox="0 0 24 24" height="70%" fill="${color}"><path d="M5 4l10 8-10 8zM17 5h2v14h-2z"/></svg>`;
+  tarjeta.append(arriba, barra, botones);
+  el.append(tarjeta);
+}
+
+/** Fecha y lugar: una etiqueta con la fecha (ya escrita en el idioma de la app) y el lugar. */
+function fecha(el, a) {
+  const c = a.content ?? {};
+  const color = esColor(c.color) ? c.color : TINTA;
+  el.setAttribute('role', 'img');
+  el.setAttribute('aria-label', [c.title, c.note].filter(Boolean).join(', ') || 'Fecha');
+  const etiqueta = caja({ position: 'absolute', inset: '0', border: `0.6cqw dashed ${color}`, borderRadius: '2cqw', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '1cqw', color, padding: '2cqw 4cqw', overflow: 'hidden' });
+  const dia = caja({ font: `700 9cqw/1.15 ${LETRA}`, whiteSpace: 'nowrap', letterSpacing: '0.03em', textTransform: 'uppercase' });
+  dia.textContent = c.title ?? '';
+  etiqueta.append(dia);
+  if (c.note) {
+    const lugar = caja({ font: `6cqw/1.2 ${LETRA}`, opacity: '0.8', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '100%' });
+    lugar.textContent = c.note;
+    etiqueta.append(lugar);
+  }
+  el.append(etiqueta);
+}
+
+/** Un timeline: una línea de arriba abajo con un punto por suceso y su texto al lado. */
+function timeline(el, a) {
+  const c = a.content ?? {};
+  const color = esColor(c.color) ? c.color : TINTA;
+  const items = renglones(c);
+  el.setAttribute('role', 'list');
+  el.setAttribute('aria-label', items.map((r) => r.text).join(', ') || 'Timeline');
+  const cuerpo = caja({ position: 'absolute', inset: '0', padding: '4cqw 4cqw 4cqw 12cqw', display: 'flex', flexDirection: 'column', justifyContent: 'space-around', color, overflow: 'hidden' });
+  cuerpo.append(caja({ position: 'absolute', left: '6cqw', top: '4cqw', bottom: '4cqw', width: '0.8cqw', background: color, opacity: '0.5' }));
+  for (const r of items) {
+    const fila = caja({ position: 'relative', font: `6.5cqw/1.3 ${LETRA}`, overflowWrap: 'anywhere' });
+    fila.append(caja({ position: 'absolute', left: '-8.4cqw', top: '1.4cqw', width: '5cqw', height: '5cqw', borderRadius: '50%', background: color }));
+    const texto = caja({});
+    texto.textContent = r.text;
+    fila.append(texto);
+    cuerpo.append(fila);
+  }
+  el.append(cuerpo);
 }
 
 /** Un dato de la biblioteca (13h, RF-CC22; T349): el número grande, qué es y de cuándo. Ya viene escrito. */

@@ -14,6 +14,7 @@ import {
   conSuGrupo,
   desagrupar,
   documentoValido,
+  fechaLegible,
   DOCUMENTO_VACIO,
   duplicar,
   type ElementoDeLienzo,
@@ -317,4 +318,38 @@ it('sin color, hundido y relieve toman el tono del material; recortado siempre e
   expect(colorDeTratamiento('debossed', '#EEEEEE')).toBe('#0000004D');
   expect(colorDeTratamiento('embossed', '#EEEEEE', '#7a1e3a')).toBe('#7A1E3AA6');
   expect(colorDeTratamiento('cutout', '#EEEEEE', '#7A1E3A')).toBe('#EEEEEE');
+});
+
+describe('checklist, mood, canción, fecha y lugar, y timeline (T349b)', () => {
+  it('cada uno guarda lo suyo y lo raro se arregla', () => {
+    const doc = documentoValido({
+      pages: 1,
+      elements: [
+        { ...el('c', { type: 'checklist' }), z: 1, content: { text: 'TBR', items: [{ text: 'Rayuela', done: true }, { text: 'Ficciones', done: 'sí' }, 'roto'] } },
+        { ...el('m', { type: 'mood' }), z: 2, content: { mood: 'furioso', text: 'Destrozada' } },
+        { ...el('s', { type: 'song' }), z: 3, content: { text: 'Cardigan', who: 'Taylor Swift' } },
+        { ...el('d', { type: 'date' }), z: 4, content: { date: '2026-02-30', place: 'Mi cuarto' } },
+        { ...el('t', { type: 'timeline' }), z: 5, content: { items: Array.from({ length: 20 }, (_, i) => ({ text: `${i}`, done: true })) } },
+      ],
+    });
+    const [c, m, s, d, t] = doc.elements.map((e) => e.content);
+    expect(c).toEqual({ text: 'TBR', items: [{ text: 'Rayuela', done: true }, { text: 'Ficciones', done: false }] });
+    expect(m).toEqual({ mood: 'happy', text: 'Destrozada' });
+    expect(s).toEqual({ text: 'Cardigan', who: 'Taylor Swift' });
+    // El 30 de febrero no existe: la fecha queda vacía.
+    expect(d).toEqual({ date: '', place: 'Mi cuarto' });
+    expect(t.items).toHaveLength(12);
+    expect(t.items?.[0]).toEqual({ text: '0' });
+  });
+
+  it('al motor: la fecha ya escrita en el idioma de la app, y los renglones', () => {
+    const doc = [
+      el('d', { type: 'date', content: { date: '2026-10-22', place: 'Mi cuarto' } }),
+      el('c', { type: 'checklist', content: { text: 'TBR', items: [{ text: 'Rayuela', done: true }] } }),
+    ].reduce(agregar, DOCUMENTO_VACIO);
+    const [d, c] = aMotor(doc, { idioma: 'es' });
+    expect(d.content).toMatchObject({ title: '22 oct 2026', note: 'Mi cuarto' });
+    expect(c.content).toMatchObject({ text: 'TBR', items: [{ text: 'Rayuela', done: true }] });
+    expect(fechaLegible('2026-10-22', 'en')).toBe('Oct 22, 2026');
+  });
 });

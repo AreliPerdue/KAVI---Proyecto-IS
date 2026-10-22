@@ -37,10 +37,18 @@ it('usar una plantilla da ids nuevos (también a sus grupos) y pone el libro don
 });
 
 describe('plantillas de KAVI', () => {
-  it('son cinco, con nombre en los dos idiomas y todo lo que traen es válido', () => {
+  it('son siete, con nombre en los dos idiomas y todo lo que traen es válido (T344, T349b)', () => {
     for (const idioma of [es, en]) {
       const lista = plantillasDeKavi(idioma.library.canvas.templates);
-      expect(lista.map((p) => p.id)).toEqual(['kavi/book-review', 'kavi/character-collage', 'kavi/favorite-quotes', 'kavi/reading-experience', 'kavi/dnf-graveyard']);
+      expect(lista.map((p) => p.id)).toEqual([
+        'kavi/book-review',
+        'kavi/character-collage',
+        'kavi/favorite-quotes',
+        'kavi/reading-experience',
+        'kavi/dnf-graveyard',
+        'kavi/moodboard',
+        'kavi/character-analysis',
+      ]);
       for (const p of lista) {
         expect(p.nombre).toBeTruthy();
         expect(p.doc.elements.length).toBeGreaterThan(5);
@@ -64,10 +72,10 @@ describe('plantillas de KAVI', () => {
 });
 
 describe('plantillas del Journal (T347, T349)', () => {
-  it('Conoce a quien lee y Mi año lector: en los dos idiomas, verticales, en neutros, sin Nobi', () => {
+  it('Conoce a quien lee, Mi año lector, Mis números y Premios: en los dos idiomas, verticales, en neutros, sin Nobi', () => {
     for (const idioma of [es, en]) {
       const lista = plantillasDeJournal(idioma.library.canvas.templates, 2026);
-      expect(lista.map((p) => p.id)).toEqual(['kavi/get-to-know', 'kavi/reading-year']);
+      expect(lista.map((p) => p.id)).toEqual(['kavi/get-to-know', 'kavi/reading-year', 'kavi/reading-stats', 'kavi/reading-awards']);
       for (const p of lista) {
         expect(p.orientacion).toBe('portrait');
         expect(p.doc.elements.length).toBeGreaterThan(5);
@@ -81,7 +89,7 @@ describe('plantillas del Journal (T347, T349)', () => {
         }
       }
     }
-    expect(plantillasDeJournal(en.library.canvas.templates, 2026).map((p) => p.nombre)).toEqual(['Get to Know the Reader', 'My Reading Year']);
+    expect(plantillasDeJournal(en.library.canvas.templates, 2026).map((p) => p.nombre)).toEqual(['Get to Know the Reader', 'My Reading Year', 'Reading Stats', 'Reading Awards']);
   });
 
   it('Mi año lector trae los tres datos del año en que se usa (RF-CC22)', () => {
@@ -93,4 +101,15 @@ describe('plantillas del Journal (T347, T349)', () => {
     ]);
     expect(anio.doc.elements.find((e) => e.type === 'textbox')?.content.text).toBe('Mi año lector 2027');
   });
+});
+
+it('las nuevas traen sus módulos: Moodboard (muestras, mood, canción), Análisis (checklist, mood) y Premios (seis libros por elegir) (T349b)', () => {
+  const kavi = plantillasDeKavi(es.library.canvas.templates);
+  const tipos = (id: string) => kavi.find((p) => p.id === id)?.doc.elements.map((e) => e.type) ?? [];
+  expect(tipos('kavi/moodboard')).toEqual(expect.arrayContaining(['swatch', 'mood', 'song', 'polaroid']));
+  expect(tipos('kavi/character-analysis')).toEqual(expect.arrayContaining(['checklist', 'mood', 'quote', 'rating']));
+  const premios = plantillasDeJournal(es.library.canvas.templates, 2026).find((p) => p.id === 'kavi/reading-awards');
+  expect(premios?.doc.elements.filter((e) => e.type === 'book')).toHaveLength(6);
+  const numeros = plantillasDeJournal(es.library.canvas.templates, 2026).find((p) => p.id === 'kavi/reading-stats');
+  expect(numeros?.doc.elements.filter((e) => e.type === 'stat').map((e) => e.content.year)).toEqual([2026, 2026, 2026]);
 });

@@ -216,6 +216,14 @@ llevar texto, pero nunca debe sentirse como un formulario ni como una nota grand
     - El libro del recorte se guarda como "este libro".
     - Se guarda en `library_canvas_templates` (migración `20261021110000`, solo del dueño).
     - Mantener presionada una plantilla propia la borra; los recortes hechos con ella no cambian.
+- **Hecho (C6, segunda parte, T349b, 22 oct 2026; Areli eligió todo):**
+  - **Módulos nuevos** (RF-CC14, "después"): **checklist** (título y renglones con casilla; los marcados se tachan),
+    **mood** (ocho caritas dibujadas —no emojis— y una palabra), **canción** (un reproductor dibujado, sin sonido, con
+    título y artista), **fecha y lugar** (empieza en la fecha de hoy; se escribe en el idioma de la app) y
+    **timeline** (sucesos en una línea con puntos). Se llenan en su hoja antes de pegarlos y se editan con doble toque
+    o con el lápiz; se exportan en la imagen del recorte.
+  - **Plantillas nuevas:** Moodboard y Análisis de personaje (recortes); Mis números del año (datos grandes,
+    trimestres y metas) y Premios lectores (seis premios con su libro por elegir) para el Journal.
 - **Hecho (C6, primera parte, T349, 22 oct 2026):**
   - **Fragmentos pegados** (RF-CC24): "+ Agregar → Fragmento" muestra Mis fragmentos, primero los del libro del
     recorte. Uno de texto se pega como **cita** con su página (y el libro, si es de otro); uno de imagen, como

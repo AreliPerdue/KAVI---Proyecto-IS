@@ -1,4 +1,12 @@
-import { type DocumentoDeLienzo, documentoValido, type ElementoDeLienzo, PROPORCION_DE_DATO, PROPORCION_DE_POLAROID } from '@/lib/library/canvas';
+import {
+  type DocumentoDeLienzo,
+  documentoValido,
+  type ElementoDeLienzo,
+  PROPORCION_DE_DATO,
+  PROPORCION_DE_MUESTRA,
+  PROPORCION_DE_POLAROID,
+  PROPORCION_NUEVA,
+} from '@/lib/library/canvas';
 import type { DatoDeBiblioteca } from '@/lib/library/journal-stats';
 import { ESTE_LIBRO, type PlantillaDeLienzo } from '@/lib/library/canvas-templates';
 import { ASSETS_DE_LIENZO, type NombreDeAsset } from '@/constants/canvas-assets';
@@ -45,7 +53,9 @@ export function plantillasDeJournal(t: Textos, anio: number): PlantillaDeLienzo[
   const n = t.assetLabels;
   const g = t.getToKnow;
   const y = t.readingYear;
-  const dato = (stat: DatoDeBiblioteca, x: number): Pieza => ({ type: 'stat', x, y: 0.12, w: 0.27, ar: PROPORCION_DE_DATO, content: { stat, year: anio } });
+  const dato = (stat: DatoDeBiblioteca, x: number, alto = 0.12, w = 0.27): Pieza => ({ type: 'stat', x, y: alto, w, ar: PROPORCION_DE_DATO, content: { stat, year: anio } });
+  const st = t.stats;
+  const aw = t.awards;
   return [
     {
       id: 'kavi/get-to-know',
@@ -84,6 +94,36 @@ export function plantillasDeJournal(t: Textos, anio: number): PlantillaDeLienzo[
         texto(y.rating, 0.28, 0.82, 0.44, 1, 0.12),
         { type: 'rating', x: 0.3, y: 0.87, w: 0.4, ar: 0.2, content: { scale: 'hearts', value: 0 } },
         asset('destellos', n.sparkles, 0.82, 0.84, 0.12),
+      ]),
+    },
+    {
+      // T349b: los números del año más grandes, por trimestre, y las metas del siguiente.
+      id: 'kavi/reading-stats',
+      nombre: t.names.readingStats,
+      orientacion: 'portrait',
+      doc: documento([
+        texto(st.title(anio), 0.08, 0.04, 0.84, 1.8, 0.12),
+        dato('booksFinished', 0.08, 0.12, 0.38),
+        dato('pagesRead', 0.54, 0.12, 0.38),
+        dato('hoursRead', 0.31, 0.3, 0.38),
+        { type: 'timeline', x: 0.06, y: 0.5, w: 0.44, ar: PROPORCION_NUEVA.timeline, content: { items: st.quarters.map((text) => ({ text })) } },
+        { type: 'checklist', x: 0.54, y: 0.52, w: 0.4, ar: PROPORCION_NUEVA.checklist, content: { text: st.goals, items: [{ text: '' }, { text: '' }, { text: '' }] } },
+        asset('destellos', n.sparkles, 0.82, 0.86, 0.12),
+      ]),
+    },
+    {
+      // T349b: seis premios, cada uno con su libro por elegir.
+      id: 'kavi/reading-awards',
+      nombre: t.names.readingAwards,
+      orientacion: 'portrait',
+      doc: documento([
+        texto(aw.title(anio), 0.08, 0.04, 0.84, 1.8, 0.12),
+        ...aw.list.flatMap((premio, i): Pieza[] => {
+          const x = i % 2 === 0 ? 0.08 : 0.54;
+          const alto = 0.13 + Math.floor(i / 2) * 0.29;
+          return [texto(premio, x, alto, 0.38, 1, 0.16), { type: 'book', x: x + 0.1, y: alto + 0.05, w: 0.17, ar: 1.5, rot: i % 2 ? 3 : -3, content: { itemId: ESTE_LIBRO } }];
+        }),
+        asset('estrella-a-mano', n.star, 0.86, 0.05, 0.1),
       ]),
     },
   ];
@@ -169,6 +209,42 @@ export function plantillasDeKavi(t: Textos): PlantillaDeLienzo[] {
         texto(t.dnf.rest, 0.2, 0.79, 0.6, 1.4, 0.12),
         asset('rama', n.branch, 0.1, 0.76, 0.12),
         asset('rama', n.branch, 0.78, 0.76, 0.12, 8),
+      ]),
+    },
+    {
+      // T349b: la estética del libro: fotos, sus colores, el mood, palabras y su canción.
+      id: 'kavi/moodboard',
+      nombre: t.names.moodboard,
+      orientacion: 'portrait',
+      doc: documento([
+        texto(t.moodboard.title, 0.08, 0.04, 0.84, 1.8, 0.12),
+        { type: 'polaroid', x: 0.05, y: 0.12, w: 0.3, ar: PROPORCION_DE_POLAROID.classic, rot: -4, content: { variant: 'classic', paths: [''], text: '' } },
+        asset('cinta-lisa', n.tape, 0.11, 0.11, 0.16, -8),
+        { type: 'polaroid', x: 0.39, y: 0.11, w: 0.24, ar: PROPORCION_DE_POLAROID.mini, rot: 3, content: { variant: 'mini', paths: [''], text: '' } },
+        { type: 'polaroid', x: 0.67, y: 0.13, w: 0.28, ar: PROPORCION_DE_POLAROID.classic, rot: 5, content: { variant: 'classic', paths: [''], text: '' } },
+        { type: 'swatch', x: 0.06, y: 0.45, w: 0.16, ar: PROPORCION_DE_MUESTRA, content: { text: '' } },
+        { type: 'swatch', x: 0.25, y: 0.45, w: 0.16, ar: PROPORCION_DE_MUESTRA, content: { text: '' } },
+        { type: 'swatch', x: 0.44, y: 0.45, w: 0.16, ar: PROPORCION_DE_MUESTRA, content: { text: '' } },
+        { type: 'mood', x: 0.7, y: 0.45, w: 0.22, ar: PROPORCION_NUEVA.mood, content: { mood: 'calm', text: '' } },
+        texto(t.moodboard.words, 0.08, 0.66, 0.4, 1.1, 0.7),
+        { type: 'song', x: 0.54, y: 0.68, w: 0.4, ar: PROPORCION_NUEVA.song, content: { text: t.moodboard.song, who: '' } },
+        asset('destellos', n.sparkles, 0.82, 0.88, 0.12),
+      ]),
+    },
+    {
+      // T349b: un personaje a fondo: su foto, quién es, sus rasgos, su frase y lo que se siente por él.
+      id: 'kavi/character-analysis',
+      nombre: t.names.characterAnalysis,
+      orientacion: 'portrait',
+      doc: documento([
+        texto(t.analysis.title, 0.08, 0.04, 0.84, 1.8, 0.12),
+        { type: 'polaroid', x: 0.06, y: 0.12, w: 0.38, ar: PROPORCION_DE_POLAROID.caption, rot: -3, content: { variant: 'caption', paths: [''], text: t.analysis.caption } },
+        texto(t.analysis.about, 0.5, 0.13, 0.44, 0.9, 0.7),
+        { type: 'checklist', x: 0.5, y: 0.36, w: 0.42, ar: PROPORCION_NUEVA.checklist, content: { text: t.analysis.traits, items: [{ text: '' }, { text: '' }, { text: '' }] } },
+        { type: 'quote', x: 0.06, y: 0.6, w: 0.5, ar: 0.42, content: { text: t.analysis.quote, who: '', chapter: '', note: '' } },
+        { type: 'mood', x: 0.66, y: 0.66, w: 0.22, ar: PROPORCION_NUEVA.mood, content: { mood: 'inLove', text: '' } },
+        texto(t.analysis.loves, 0.06, 0.8, 0.5, 0.9, 0.35),
+        { type: 'rating', x: 0.6, y: 0.88, w: 0.34, ar: 0.2, content: { scale: 'hearts', value: 0 } },
       ]),
     },
   ];

@@ -6,8 +6,9 @@ import Svg, { ClipPath, Defs, Path, Rect } from 'react-native-svg';
 import { assetPorId } from '@/constants/canvas-assets';
 import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import { colorDeTratamiento, type DatoEscrito, type DocumentoDeLienzo, MUESTRA_SIN_COLOR, type ElementoDeLienzo, type LibroEnLienzo, type OrientacionDeLienzo, RAIZ_DE_DOS } from '@/lib/library/canvas';
-import { FORMA_GRIS, MARCO_POLAROID, PAPEL_DE_LIENZO, PELICULA, SIMBOLOS_DE_RATING, SIN_FOTO, TINTA_DE_TEXTO, TRAZOS_DE_FORMA } from '@/lib/library/canvas-shapes';
+import { colorDeTratamiento, type DatoEscrito, type DocumentoDeLienzo, fechaLegible, MUESTRA_SIN_COLOR, type ElementoDeLienzo, type LibroEnLienzo, type OrientacionDeLienzo, RAIZ_DE_DOS } from '@/lib/library/canvas';
+import { useLanguage } from '@/i18n';
+import { CARA, CARITAS, FORMA_GRIS, MARCO_POLAROID, PAPEL_DE_LIENZO, PELICULA, SIMBOLOS_DE_RATING, SIN_FOTO, TINTA_DE_TEXTO, TRAZOS_DE_FORMA } from '@/lib/library/canvas-shapes';
 import { luminance } from '@/lib/color';
 import { claveDeDato } from '@/lib/library/journal-stats';
 
@@ -26,6 +27,9 @@ export type FuentesDeMiniatura = {
  * igual a ese tamaño y no hace falta guardar una imagen aparte. El texto que hay dentro es parte del dibujo: no lo lee
  * el lector de pantalla (la tarjeta dice el nombre del recorte) y por eso puede quedar por debajo de 12 px.
  */
+/** Lo que se dibuja como módulo (con su contenido) en la miniatura. */
+const MODULOS_DE_MINIATURA: readonly string[] = ['polaroid', 'quote', 'rating', 'book', 'stat', 'swatch', 'checklist', 'mood', 'song', 'date', 'timeline'];
+
 export const CanvasPreview = memo(function CanvasPreview({
   doc,
   orientacion,
@@ -90,7 +94,7 @@ export const CanvasPreview = memo(function CanvasPreview({
               </View>
             );
           }
-          if (e.type === 'polaroid' || e.type === 'quote' || e.type === 'rating' || e.type === 'book' || e.type === 'stat' || e.type === 'swatch') {
+          if (MODULOS_DE_MINIATURA.includes(e.type)) {
             return (
               <View key={e.id} style={caja}>
                 <Modulo e={e} w={w} h={h} fuentes={fuentes} />
@@ -171,6 +175,70 @@ function Modulo({ e, w, h, fuentes }: { e: ElementoDeLienzo; w: number; h: numbe
   const u = w / 100;
   const id = useId();
   const c = e.content;
+  const idioma = useLanguage();
+  const tinta = e.style.color ?? TINTA_DE_TEXTO;
+  // T349b: checklist, mood, canción, fecha y lugar, y timeline, como los pinta el motor.
+  if (e.type === 'checklist') {
+    return (
+      <View style={[styles.lleno, { padding: 5 * u, gap: 3 * u, overflow: 'hidden' }]}>
+        {c.text ? <Text style={{ color: tinta, fontSize: 8.5 * u, fontWeight: '700' }}>{c.text}</Text> : null}
+        {(c.items ?? []).map((r, i) => (
+          <View key={i} style={{ flexDirection: 'row', gap: 3 * u, alignItems: 'flex-start' }}>
+            <View style={{ width: 6.5 * u, height: 6.5 * u, marginTop: u, borderWidth: Math.max(0.5, 0.6 * u), borderColor: tinta, borderRadius: 1.2 * u, backgroundColor: r.done ? tinta : 'transparent' }} />
+            <Text style={{ flex: 1, color: tinta, fontSize: 7 * u, textDecorationLine: r.done ? 'line-through' : 'none', opacity: r.done ? 0.6 : 1 }}>{r.text}</Text>
+          </View>
+        ))}
+      </View>
+    );
+  }
+  if (e.type === 'timeline') {
+    return (
+      <View style={[styles.lleno, { paddingVertical: 4 * u, paddingLeft: 12 * u, paddingRight: 4 * u, justifyContent: 'space-around', overflow: 'hidden' }]}>
+        <View style={{ position: 'absolute', left: 6 * u, top: 4 * u, bottom: 4 * u, width: 0.8 * u, backgroundColor: tinta, opacity: 0.5 }} />
+        {(c.items ?? []).map((r, i) => (
+          <View key={i}>
+            <View style={{ position: 'absolute', left: -8.4 * u, top: 1.4 * u, width: 5 * u, height: 5 * u, borderRadius: 2.5 * u, backgroundColor: tinta }} />
+            <Text style={{ color: tinta, fontSize: 6.5 * u }}>{r.text}</Text>
+          </View>
+        ))}
+      </View>
+    );
+  }
+  if (e.type === 'mood') {
+    const carita = CARITAS[c.mood ?? 'happy'];
+    return (
+      <View style={[styles.lleno, { alignItems: 'center', gap: 3 * u }]}>
+        <Svg width={w} height={w} viewBox="0 0 100 100">
+          <Path d={CARA} stroke={tinta} strokeWidth={4} fill="none" />
+          <Path d={carita.trazo} stroke={tinta} strokeWidth={4} fill="none" strokeLinecap="round" strokeLinejoin="round" />
+          {carita.relleno ? <Path d={carita.relleno} fill={tinta} /> : null}
+        </Svg>
+        {c.text ? <Text style={{ color: tinta, fontSize: 11 * u, fontWeight: '600', textAlign: 'center' }}>{c.text}</Text> : null}
+      </View>
+    );
+  }
+  if (e.type === 'song') {
+    return (
+      <View style={[styles.lleno, { backgroundColor: MARCO_POLAROID, borderRadius: 4 * u, padding: 5 * u, justifyContent: 'center', gap: 2 * u }]}>
+        <View style={{ flexDirection: 'row', gap: 4 * u, alignItems: 'center' }}>
+          <View style={{ width: 14 * u, height: 14 * u, borderRadius: 2 * u, backgroundColor: SIN_FOTO }} />
+          <View style={{ flex: 1 }}>
+            <Text numberOfLines={1} style={{ color: tinta, fontSize: 6.5 * u, fontWeight: '700' }}>{c.text}</Text>
+            <Text numberOfLines={1} style={{ color: tinta, fontSize: 5 * u, opacity: 0.7 }}>{c.who}</Text>
+          </View>
+        </View>
+        <View style={{ height: 1.2 * u, backgroundColor: tinta, opacity: 0.4, width: '38%' }} />
+      </View>
+    );
+  }
+  if (e.type === 'date') {
+    return (
+      <View style={[styles.lleno, styles.centrado, { borderWidth: Math.max(0.5, 0.6 * u), borderStyle: 'dashed', borderColor: tinta, borderRadius: 2 * u, gap: u }]}>
+        <Text numberOfLines={1} style={{ color: tinta, fontSize: 9 * u, fontWeight: '700' }}>{fechaLegible(c.date ?? '', idioma).toUpperCase()}</Text>
+        {c.place ? <Text numberOfLines={1} style={{ color: tinta, fontSize: 6 * u, opacity: 0.8 }}>{c.place}</Text> : null}
+      </View>
+    );
+  }
   if (e.type === 'stat') {
     const d = fuentes.datos?.get(claveDeDato(c.stat ?? 'booksFinished', c.year ?? null));
     const tinta = e.style.color ?? TINTA_DE_TEXTO;

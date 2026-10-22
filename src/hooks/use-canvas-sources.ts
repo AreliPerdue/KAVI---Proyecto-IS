@@ -17,7 +17,7 @@ export type FuentesDeLienzo = {
   /** Para las miniaturas que dibuja la app (`CanvasPreview`): los Nobi incluidos van como imagen del paquete. */
   miniatura: FuentesDeMiniatura;
   /** Para el motor (`aMotor`): solo direcciones; los Nobi incluidos los trae el motor. */
-  motor: { imagenes: ReadonlyMap<string, string>; stickers: ReadonlyMap<string, string>; libros: ReadonlyMap<string, LibroEnLienzo>; datos: ReadonlyMap<string, DatoEscrito> };
+  motor: { imagenes: ReadonlyMap<string, string>; stickers: ReadonlyMap<string, string>; libros: ReadonlyMap<string, LibroEnLienzo>; datos: ReadonlyMap<string, DatoEscrito>; idioma: string };
 };
 
 /**
@@ -57,6 +57,7 @@ const SIN_DATOS: ReadonlyMap<string, DatoEscrito> = new Map();
  * El React Compiler memoriza las listas: las miniaturas no se rehacen si nada cambió.
  */
 export function useFuentesDeLienzos(elementos: readonly ElementoDeLienzo[]): FuentesDeLienzo {
+  const idioma = useLanguage();
   const piezas = useLibraryItems();
   const claveIdsDeLibros = [...new Set(elementos.flatMap((e) => (e.type === 'book' && e.content.itemId ? [e.content.itemId] : [])))].sort().join('|');
   const idsDeLibros = new Set(claveIdsDeLibros ? claveIdsDeLibros.split('|') : []);
@@ -91,6 +92,6 @@ export function useFuentesDeLienzos(elementos: readonly ElementoDeLienzo[]): Fue
   }
   return {
     miniatura: { imagenes: urls, stickers: deMiniatura as FuentesDeMiniatura['stickers'], libros, datos },
-    motor: { imagenes: urls, stickers: deMotor, libros, datos },
+    motor: { imagenes: urls, stickers: deMotor, libros, datos, idioma },
   };
 }

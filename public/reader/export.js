@@ -4,7 +4,7 @@
  * guardada como PNG. Se dibuja a mano (y no copiando la página) para que salga igual en la web y en el teléfono.
  */
 import { fuenteDeSticker } from './annotations.js';
-import { fuenteDeAsset, MARCO_POLAROID, PELICULA, SIMBOLOS, SIN_FOTO } from './modules.js';
+import { CARA, CARITAS, fuenteDeAsset, MARCO_POLAROID, PELICULA, SIMBOLOS, SIN_FOTO } from './modules.js';
 
 /** Las formas en una caja de 100 × 100, como trazos (las mismas que pinta `annotations.js`). */
 const TRAZOS = {
@@ -18,7 +18,7 @@ const FORMA_GRIS = '#BDBDBD';
 const LETRA = '-apple-system, system-ui, "Segoe UI", Roboto, sans-serif';
 const esColor = (c) => /^#[0-9a-fA-F]{6}$/.test(c ?? '');
 const SERIFA = 'Georgia, "Times New Roman", serif';
-const TIPOS = ['shape', 'textbox', 'image', 'sticker', 'polaroid', 'quote', 'rating', 'book', 'asset'];
+const TIPOS = ['shape', 'textbox', 'image', 'sticker', 'polaroid', 'quote', 'rating', 'book', 'asset', 'stat', 'swatch', 'checklist', 'mood', 'song', 'date', 'timeline'];
 const claroSobre = (hex) => {
   const n = parseInt(hex.slice(1), 16);
   return 0.299 * ((n >> 16) & 255) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255) < 140;
@@ -152,6 +152,145 @@ const MODULOS_DE_EXPORTACION = {
       ctx.font = `${4.5 * s * u}px ${LETRA}`;
       parrafo(ctx, c.note, px, y, ancho, h - y, 4.5 * s * u * 1.35);
     }
+  },
+
+  // ─── T349b ──────────────────────────────────────────────────────────────────
+  checklist(ctx, c, w, h) {
+    const u = w / 100;
+    const color = esColor(c.color) ? c.color : '#1A1A1A';
+    ctx.beginPath();
+    ctx.rect(0, 0, w, h);
+    ctx.clip();
+    ctx.fillStyle = color;
+    ctx.strokeStyle = color;
+    ctx.textBaseline = 'top';
+    let y = 5 * u;
+    if (c.text) {
+      ctx.font = `700 ${8.5 * u}px ${LETRA}`;
+      y = parrafo(ctx, c.text, 6 * u, y, w - 12 * u, h - y, 10.2 * u) + 3 * u;
+    }
+    ctx.font = `${7 * u}px ${LETRA}`;
+    for (const r of (Array.isArray(c.items) ? c.items : []).slice(0, 12)) {
+      if (y > h) break;
+      ctx.lineWidth = 0.6 * u;
+      ctx.strokeRect(6 * u, y + u, 6.5 * u, 6.5 * u);
+      if (r.done) {
+        ctx.beginPath();
+        ctx.moveTo(7.5 * u, y + 4.5 * u);
+        ctx.lineTo(9 * u, y + 6 * u);
+        ctx.lineTo(11.5 * u, y + 2.5 * u);
+        ctx.stroke();
+      }
+      ctx.save();
+      if (r.done) ctx.globalAlpha *= 0.6;
+      const fin = parrafo(ctx, r.text ?? '', 15.5 * u, y, w - 21.5 * u, h - y, 9.1 * u);
+      ctx.restore();
+      y = Math.max(fin, y + 9.1 * u) + 3 * u;
+    }
+  },
+
+  mood(ctx, c, w, h) {
+    const color = esColor(c.color) ? c.color : '#1A1A1A';
+    const carita = CARITAS[c.mood] ?? CARITAS.happy;
+    const k = w / 100;
+    ctx.save();
+    ctx.scale(k, k);
+    ctx.strokeStyle = color;
+    ctx.fillStyle = color;
+    ctx.lineWidth = 4;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.stroke(new Path2D(CARA));
+    ctx.stroke(new Path2D(carita.trazo));
+    if (carita.relleno) ctx.fill(new Path2D(carita.relleno));
+    ctx.restore();
+    if (c.text) {
+      ctx.fillStyle = color;
+      ctx.textBaseline = 'top';
+      ctx.font = `600 ${11 * k}px ${LETRA}`;
+      parrafo(ctx, c.text, 0, w + 3 * k, w, Math.max(0, h - w - 3 * k), 12.1 * k, true);
+    }
+  },
+
+  song(ctx, c, w, h) {
+    const u = w / 100;
+    const color = esColor(c.color) ? c.color : '#1A1A1A';
+    ctx.save();
+    sombra(ctx, u, 0.18);
+    ctx.fillStyle = MARCO_POLAROID;
+    ctx.beginPath();
+    ctx.roundRect(0, 0, w, h, 4 * u);
+    ctx.fill();
+    ctx.restore();
+    const alto = 14 * u + 2 * u + 1.2 * u + 2 * u + 9 * u;
+    let y = (h - alto) / 2;
+    ctx.fillStyle = SIN_FOTO;
+    ctx.fillRect(5 * u, y, 14 * u, 14 * u);
+    ctx.fillStyle = color;
+    ctx.textBaseline = 'top';
+    ctx.font = `700 ${6.5 * u}px ${LETRA}`;
+    ctx.fillText(c.text ?? '', 23 * u, y + 1.5 * u, w - 28 * u);
+    ctx.save();
+    ctx.globalAlpha *= 0.7;
+    ctx.font = `${5 * u}px ${LETRA}`;
+    ctx.fillText(c.who ?? '', 23 * u, y + 8.5 * u, w - 28 * u);
+    ctx.restore();
+    y += 16 * u;
+    ctx.save();
+    ctx.globalAlpha *= 0.25;
+    ctx.fillRect(5 * u, y, w - 10 * u, 1.2 * u);
+    ctx.restore();
+    ctx.fillRect(5 * u, y, (w - 10 * u) * 0.38, 1.2 * u);
+    y += 3.2 * u;
+    const centro = w / 2;
+    ctx.beginPath();
+    ctx.moveTo(centro - 3 * u, y);
+    ctx.lineTo(centro + 4 * u, y + 4.5 * u);
+    ctx.lineTo(centro - 3 * u, y + 9 * u);
+    ctx.fill();
+  },
+
+  date(ctx, c, w, h) {
+    const u = w / 100;
+    const color = esColor(c.color) ? c.color : '#1A1A1A';
+    ctx.strokeStyle = color;
+    ctx.fillStyle = color;
+    ctx.lineWidth = 0.6 * u;
+    ctx.setLineDash([2 * u, 1.5 * u]);
+    ctx.strokeRect(0.3 * u, 0.3 * u, w - 0.6 * u, h - 0.6 * u);
+    ctx.setLineDash([]);
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.font = `700 ${9 * u}px ${LETRA}`;
+    const conLugar = !!c.note;
+    ctx.fillText((c.title ?? '').toUpperCase(), w / 2, conLugar ? h / 2 - 4 * u : h / 2, w - 8 * u);
+    if (conLugar) {
+      ctx.globalAlpha *= 0.8;
+      ctx.font = `${6 * u}px ${LETRA}`;
+      ctx.fillText(c.note, w / 2, h / 2 + 5 * u, w - 8 * u);
+    }
+    ctx.textAlign = 'left';
+  },
+
+  timeline(ctx, c, w, h) {
+    const u = w / 100;
+    const color = esColor(c.color) ? c.color : '#1A1A1A';
+    const items = (Array.isArray(c.items) ? c.items : []).slice(0, 12);
+    ctx.fillStyle = color;
+    ctx.save();
+    ctx.globalAlpha *= 0.5;
+    ctx.fillRect(6 * u, 4 * u, 0.8 * u, h - 8 * u);
+    ctx.restore();
+    const paso = (h - 8 * u) / Math.max(1, items.length);
+    ctx.textBaseline = 'top';
+    ctx.font = `${6.5 * u}px ${LETRA}`;
+    items.forEach((r, i) => {
+      const y = 4 * u + paso * i + paso / 2 - 4 * u;
+      ctx.beginPath();
+      ctx.arc(6.4 * u, y + 3.9 * u, 2.5 * u, 0, Math.PI * 2);
+      ctx.fill();
+      parrafo(ctx, r.text ?? '', 12 * u, y, w - 16 * u, paso, 8.45 * u);
+    });
   },
 
   stat(ctx, c, w, h) {

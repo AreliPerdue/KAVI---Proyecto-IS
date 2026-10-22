@@ -13,7 +13,25 @@ import type { LibraryLocator } from '@/types/domain';
  * solo y usarlo igual en Supabase, el demo y la cola sin red.
  */
 
-export const TIPOS_DE_ELEMENTO = ['textbox', 'image', 'sticker', 'shape', 'polaroid', 'quote', 'rating', 'book', 'asset', 'stat', 'swatch'] as const;
+export const TIPOS_DE_ELEMENTO = [
+  'textbox',
+  'image',
+  'sticker',
+  'shape',
+  'polaroid',
+  'quote',
+  'rating',
+  'book',
+  'asset',
+  'stat',
+  'swatch',
+  // T349b: checklist, mood, canción, fecha y lugar, y timeline.
+  'checklist',
+  'mood',
+  'song',
+  'date',
+  'timeline',
+] as const;
 export type TipoDeElemento = (typeof TIPOS_DE_ELEMENTO)[number];
 export type OrientacionDeLienzo = 'portrait' | 'landscape';
 
@@ -33,6 +51,15 @@ export const PROPORCION_DE_RATING: Record<EscalaDeRating, number> = { stars: 0.2
 /** Un dato de la biblioteca (T349): el número grande y lo que es. Una muestra de color: el color y su nombre. */
 export const PROPORCION_DE_DATO = 0.6;
 export const PROPORCION_DE_MUESTRA = 1.3;
+
+/** Los moods (T349b): una carita y, si se quiere, una palabra. */
+export const ANIMOS = ['happy', 'sad', 'angry', 'surprised', 'inLove', 'crying', 'calm', 'scared'] as const;
+export type Animo = (typeof ANIMOS)[number];
+/** Lo que cabe en una lista (checklist) y en un timeline. */
+export const MAX_RENGLONES = 12;
+/** La forma con que nace cada módulo nuevo de T349b (alto ÷ ancho). */
+export const PROPORCION_NUEVA: Record<'checklist' | 'mood' | 'song' | 'date' | 'timeline', number> = { checklist: 1, mood: 1.2, song: 0.42, date: 0.32, timeline: 1.3 };
+export type Renglon = { text: string; done?: boolean };
 
 /**
  * Acabados de lo decorado en una tapa del Journal (13i, RF-JC11 – RF-JC12; T348): impreso (a color, como siempre),
@@ -139,6 +166,15 @@ export type ElementoDeLienzo = {
     /** Dato de la biblioteca (RF-CC22; T349): cuál y de qué año (`null`: de siempre). Su valor se lee en vivo. */
     stat?: DatoDeBiblioteca;
     year?: number | null;
+    /**
+     * T349b. Checklist: su título en `text` y sus renglones con su casilla. Timeline: sus sucesos en orden. Mood: la
+     * carita y su palabra en `text`. Canción: título en `text` y artista en `who`. Fecha y lugar: `YYYY-MM-DD` y el
+     * lugar.
+     */
+    items?: Renglon[];
+    mood?: Animo;
+    date?: string;
+    place?: string;
   };
 };
 
@@ -210,6 +246,11 @@ export function elementoValido(raw: unknown, paginas = MAX_PAGINAS): ElementoDeL
       ...(tipo === 'book' && typeof contenido.itemId === 'string' ? { itemId: contenido.itemId.slice(0, 64) } : {}),
       ...(tipo === 'stat' ? datoValido(contenido) : {}),
       ...(tipo === 'swatch' ? { text: texto(contenido.text, 40) ?? '' } : {}),
+      ...(tipo === 'checklist' ? { text: texto(contenido.text, 80) ?? '', items: renglonesValidos(contenido.items, true) } : {}),
+      ...(tipo === 'timeline' ? { items: renglonesValidos(contenido.items, false) } : {}),
+      ...(tipo === 'mood' ? { mood: ANIMOS.includes(contenido.mood as Animo) ? (contenido.mood as Animo) : 'happy', text: texto(contenido.text, 40) ?? '' } : {}),
+      ...(tipo === 'song' ? { text: texto(contenido.text, 80) ?? '', who: texto(contenido.who, 80) ?? '' } : {}),
+      ...(tipo === 'date' ? { date: fechaValida(contenido.date), place: texto(contenido.place, 60) ?? '' } : {}),
       ...(tipo === 'asset' && typeof contenido.asset === 'string' ? { asset: contenido.asset.slice(0, 120), mode: contenido.mode === 'trazo' ? ('trazo' as const) : ('textura' as const) } : {}),
       ...(tipo === 'asset' && typeof contenido.label === 'string' ? { label: contenido.label.slice(0, 80) } : {}),
     },
@@ -225,6 +266,31 @@ function polaroidValida(c: Record<string, unknown>) {
 
 function quoteValida(c: Record<string, unknown>) {
   return { text: texto(c.text, 600) ?? '', who: texto(c.who, 80) ?? '', chapter: texto(c.chapter, 40) ?? '', note: texto(c.note, 300) ?? '' };
+}
+
+/** Los renglones de una lista o un timeline: texto (hasta 120) y, en una lista, si ya se marcó. */
+function renglonesValidos(raw: unknown, conCasilla: boolean): Renglon[] {
+  if (!Array.isArray(raw)) return [];
+  return raw.slice(0, MAX_RENGLONES).flatMap((r) => {
+    if (!r || typeof r !== 'object') return [];
+    const x = r as Record<string, unknown>;
+    const text = texto(x.text, 120) ?? '';
+    return [conCasilla ? { text, done: x.done === true } : { text }];
+  });
+}
+
+/** Una fecha `YYYY-MM-DD` que existe; si no, vacía (la hoja pone la de hoy al agregarla). */
+export function fechaValida(v: unknown): string {
+  if (typeof v !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(v)) return '';
+  const d = new Date(`${v}T12:00:00Z`);
+  return Number.isNaN(d.getTime()) || d.toISOString().slice(0, 10) !== v ? '' : v;
+}
+
+/** Una fecha `YYYY-MM-DD` como se lee en el idioma de la app ("22 oct 2026"). */
+export function fechaLegible(iso: string, idioma = 'es'): string {
+  if (!iso) return '';
+  const d = new Date(`${iso}T12:00:00Z`);
+  return new Intl.DateTimeFormat(idioma === 'es' ? 'es-MX' : idioma, { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' }).format(d).replace('.', '');
 }
 
 function datoValido(c: Record<string, unknown>) {
@@ -287,6 +353,8 @@ export function aMotor(
     libros?: ReadonlyMap<string, LibroEnLienzo>;
     /** Los datos de la biblioteca ya contados y escritos, por su clave (T349). */
     datos?: ReadonlyMap<string, DatoEscrito>;
+    /** El idioma de la app, para escribir las fechas (T349b). */
+    idioma?: string;
   } = {},
   /** El color de las páginas del Journal, que se ve por lo recortado de una tapa (T348). */
   papel = '#F7F5EF',
@@ -347,6 +415,16 @@ export function aMotor(
                     ? { ...datoParaMotor(fuentes.datos?.get(claveDeDato(e.content.stat ?? 'booksFinished', e.content.year ?? null))), ...(e.style.color ? { color: e.style.color } : {}), ...comun }
                   : e.type === 'swatch'
                     ? { text: e.content.text ?? '', color: e.style.color ?? MUESTRA_SIN_COLOR, ...comun }
+                  : e.type === 'checklist'
+                    ? { text: e.content.text ?? '', items: e.content.items ?? [], ...(e.style.color ? { color: e.style.color } : {}), ...comun }
+                  : e.type === 'timeline'
+                    ? { items: e.content.items ?? [], ...(e.style.color ? { color: e.style.color } : {}), ...comun }
+                  : e.type === 'mood'
+                    ? { mood: e.content.mood ?? 'happy', text: e.content.text ?? '', ...(e.style.color ? { color: e.style.color } : {}), ...comun }
+                  : e.type === 'song'
+                    ? { text: e.content.text ?? '', who: e.content.who ?? '', ...(e.style.color ? { color: e.style.color } : {}), ...comun }
+                  : e.type === 'date'
+                    ? { title: fechaLegible(e.content.date ?? '', fuentes.idioma), note: e.content.place ?? '', ...(e.style.color ? { color: e.style.color } : {}), ...comun }
                   : e.type === 'book'
                     ? libroParaMotor(e.content.itemId ? fuentes.libros?.get(e.content.itemId) : undefined, comun)
                     : e.type === 'asset'

@@ -1313,8 +1313,11 @@ Reemplazan L5 (13e). Un recorte es una página 1 : √2 del visor de PDF (decisi
   de Areli del 22 oct 2026) Dep: T364
   **Hecho (22 oct 2026):** `endpaper` en la portada (pergamino crema por omisión), paso "Guardas" en Editar Journal,
   `paraHojear` con guardas y hoja en blanco si las páginas son impares (`primeraPagina` para "Páginas").
-- [ ] T349b C6 · Más módulos (mood, canción, fecha/lugar, timeline, checklist…) y plantillas (Moodboard, Reading
+- [x] T349b C6 · Más módulos (mood, canción, fecha/lugar, timeline, checklist…) y plantillas (Moodboard, Reading
   Stats, Reading Awards, Reading Eras, Character Analysis…). (RF-CC14, RF-CC21) Dep: T349
+  **Hecho (22 oct 2026):** módulos `checklist`, `mood`, `song`, `date`, `timeline` (modelo, motor, exportación,
+  miniatura, `canvas-more-sheets.tsx`) y plantillas Moodboard, Análisis de personaje, Mis números del año y Premios
+  lectores. Reading Eras quedó fuera (Areli eligió las cuatro de la lista).
 - [ ] T350 J4 · Primera colección de motivos Fantasy / Dragon en la tienda. (RF-JC10) Dep: T346
 
 ### L5 · Creaciones y plantillas por capas — reemplazada por LK (14 oct 2026)

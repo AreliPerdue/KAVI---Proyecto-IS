@@ -38,7 +38,7 @@ const redondear = (v) => Math.round(v * 10000) / 10000;
 /** Lo más chico que puede quedar un post-it al cambiarle el tamaño (T329). */
 const LADO_MIN_PX = 48;
 /** Alto entre ancho del post-it: 1 es cuadrado. */
-const DEL_LIENZO = ['shape', 'asset', 'polaroid', 'quote', 'rating', 'book', 'stat', 'swatch'];
+const DEL_LIENZO = ['shape', 'asset', 'polaroid', 'quote', 'rating', 'book', 'stat', 'swatch', 'checklist', 'mood', 'song', 'date', 'timeline'];
 /** Si lo abierto es un lienzo creativo (T363): aquí también, para medir lo que se puede estirar. */
 let lienzoAbierto = false;
 /**

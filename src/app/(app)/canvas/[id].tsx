@@ -4,18 +4,22 @@ import {
   BringToFront,
   Camera,
   ArrowDownUp,
+  CalendarDays,
   ChartNoAxesColumn,
   Check,
   ChevronLeft,
   Copy,
   Frame,
+  GitCommitVertical,
   Group,
   Layers,
+  ListChecks,
   LayoutTemplate,
   LibraryBig,
   ImagePlus,
   Lock,
   LockOpen,
+  Music,
   PaintBucket,
   Palette,
   Pencil,
@@ -26,6 +30,7 @@ import {
   SendToBack,
   Shapes,
   Share,
+  Smile,
   SquareDashedMousePointer,
   Star,
   Stamp,
@@ -47,6 +52,7 @@ import { BookList } from '@/components/library/book-list';
 import { type Cita, PolaroidSheet, QuoteSheet, RatingSheet } from '@/components/library/canvas-module-sheets';
 import { CanvasStyleSheet } from '@/components/library/canvas-style-sheet';
 import { ColorPickerSheet } from '@/components/library/color-picker-sheet';
+import { DateSheet, ListSheet, MoodSheet, SongSheet } from '@/components/library/canvas-more-sheets';
 import { FragmentSheet } from '@/components/library/fragment-sheet';
 import { ReaderEngine, type ReaderEngineHandle } from '@/components/library/reader-engine';
 import { type StickerElegible, StickerSheet } from '@/components/library/sticker-sheet';
@@ -61,7 +67,7 @@ import { useLibraryItem, useLibraryItems } from '@/hooks/use-library';
 import { useStickerPacks, useStickerSources } from '@/hooks/use-sticker-packs';
 import { useTheme } from '@/hooks/use-theme';
 import { useUserStickerImages, useUserStickers, useUserStickerSources } from '@/hooks/use-user-stickers';
-import { useT } from '@/i18n';
+import { useLanguage, useT } from '@/i18n';
 import { uuidv4 } from '@/lib/gym/ids';
 import {
   agregar,
@@ -85,6 +91,7 @@ import {
   MUESTRA_SIN_COLOR,
   PROPORCION_DE_DATO,
   PROPORCION_DE_MUESTRA,
+  PROPORCION_NUEVA,
   PROPORCION_DE_POLAROID,
   PROPORCION_DE_RATING,
   proporcionDePagina,
@@ -120,7 +127,12 @@ type PorPegar = {
   libro?: string;
   /** Un dato de la biblioteca (T349). */
   dato?: { stat: DatoDeBiblioteca; year: number | null };
+  /** Lo de un módulo de T349b (checklist, mood, canción, fecha, timeline), ya llenado en su hoja. */
+  modulo?: ElementoDeLienzo['content'];
 };
+/** Los módulos de T349b: se llenan en su hoja antes de pegarlos y se editan con doble toque. */
+type ModuloMas = 'checklist' | 'timeline' | 'mood' | 'song' | 'date';
+const MODULOS_MAS: readonly string[] = ['checklist', 'timeline', 'mood', 'song', 'date'];
 /** Una imagen elegida va a pegarse sola o a un hueco de una polaroid. */
 type DestinoDeImagen = { polaroid: string; hueco: number } | null;
 
@@ -191,6 +203,8 @@ export default function CanvasScreen() {
   const [eligiendoFragmento, setEligiendoFragmento] = useState(false);
   // El sentido del texto elegido en una tapa (T363).
   const [eligiendoSentido, setEligiendoSentido] = useState(false);
+  // La hoja de un módulo de T349b: para uno nuevo o para editar el elegido.
+  const [masPara, setMasPara] = useState<{ tipo: ModuloMas; modo: 'nuevo' | 'editar' } | null>(null);
   const guardarPlantilla = useSaveCanvasTemplate();
   const destinoDeImagen = useRef<DestinoDeImagen>(null);
   const piezas = useLibraryItems();
@@ -222,6 +236,8 @@ export default function CanvasScreen() {
   );
   // Los datos de la biblioteca puestos, contados en vivo (RF-CC22; T349).
   const datos = useDatosDeBiblioteca(doc.elements);
+  // El idioma de la app, para escribir las fechas (T349b).
+  const idioma = useLanguage();
   const fuentes = useMemo(() => {
     const imagenes = new Map(urls);
     for (const [ruta, vista] of vistasPrevias) if (!imagenes.has(ruta)) imagenes.set(ruta, vista);
@@ -235,8 +251,8 @@ export default function CanvasScreen() {
       const ruta = rutaDePortada(p);
       libros.set(p.id, { title: p.title, color: colorDePortada(p), ...(ruta && urls.get(ruta) ? { src: urls.get(ruta) } : {}) });
     }
-    return { imagenes, stickers: deStickers, libros, datos };
-  }, [urls, vistasPrevias, claveStickers, librosDelRecorte, fuentesTienda, fuentesPropias, losPacks, datos]);
+    return { imagenes, stickers: deStickers, libros, datos, idioma };
+  }, [urls, vistasPrevias, claveStickers, librosDelRecorte, fuentesTienda, fuentesPropias, losPacks, datos, idioma]);
 
   // Abrir la página en blanco con su forma (RF-CC4), una vez por lienzo. El lomo de un Journal, con la suya (T346).
   // Una tapa sigue la forma del Journal aunque se haya cambiado después de decorarla.
@@ -385,6 +401,14 @@ export default function CanvasScreen() {
       setColorDe('elemento');
       return;
     }
+    if ((tipo === 'checklist' || tipo === 'timeline' || tipo === 'mood' || tipo === 'song' || tipo === 'date') && pendiente.modulo) {
+      const contenido = pendiente.modulo;
+      // Cada uno nace de un tamaño que se lee: la fecha a lo ancho, la carita más chica.
+      const w = tipo === 'date' ? 0.42 : tipo === 'mood' ? 0.2 : Math.max(base.w, 0.32);
+      aplicar((d) => agregar(d, { ...base, type: tipo, w, ar: PROPORCION_NUEVA[tipo], content: contenido }));
+      elegir(nuevoId);
+      return;
+    }
     if (tipo === 'book' && pendiente.libro) {
       const libro = pendiente.libro;
       aplicar((d) => agregar(d, { ...base, type: 'book', ar: 1.5, content: { itemId: libro } }));
@@ -449,6 +473,7 @@ export default function CanvasScreen() {
         else if (e?.type === 'rating') setCalificando(true);
         else if (e?.type === 'book') setLibroPara('cambiar');
         else if (e?.type === 'stat') setDatoPara('cambiar');
+        else if (e && MODULOS_MAS.includes(e.type)) setMasPara({ tipo: e.type as ModuloMas, modo: 'editar' });
         else if (e?.type === 'swatch') setNombreDeMuestra({ id: e.id, texto: e.content.text ?? '' });
         else motor.current?.send({ type: 'write', id: m.id });
         return;
@@ -463,6 +488,19 @@ export default function CanvasScreen() {
       default:
         return;
     }
+  };
+
+  /** Lo llenado en la hoja de un módulo de T349b: cambia el elegido o espera el toque en la página para pegarse. */
+  const guardarMas = (contenido: ElementoDeLienzo['content']) => {
+    const para = masPara;
+    setMasPara(null);
+    if (!para) return;
+    if (para.modo === 'editar' && elegido) {
+      aplicar((d) => cambiar(d, elegido.id, { content: contenido }));
+      return;
+    }
+    porPegar.current = { modulo: contenido };
+    ponerHerramienta(para.tipo, PROPORCION_NUEVA[para.tipo]);
   };
 
   /**
@@ -723,6 +761,11 @@ export default function CanvasScreen() {
                   ) : null}
                 </>
               ) : null}
+              {!varios && !elegido.locked && MODULOS_MAS.includes(elegido.type) ? (
+                <IconButton label={c.more.edit} onPress={() => setMasPara({ tipo: elegido.type as ModuloMas, modo: 'editar' })}>
+                  {icono(Pencil)}
+                </IconButton>
+              ) : null}
               {!varios && !elegido.locked && elegido.type === 'stat' ? (
                 <IconButton label={c.stats.change} onPress={() => setDatoPara('cambiar')}>
                   {icono(ChartNoAxesColumn)}
@@ -908,7 +951,51 @@ export default function CanvasScreen() {
             ponerHerramienta('swatch', PROPORCION_DE_MUESTRA);
           }}
         />
+        {(
+          [
+            ['checklist', ListChecks],
+            ['mood', Smile],
+            ['song', Music],
+            ['date', CalendarDays],
+            ['timeline', GitCommitVertical],
+          ] as const
+        ).map(([tipo, Icono]) => (
+          <ActionRow
+            key={tipo}
+            icon={icono(Icono)}
+            label={c.more[tipo]}
+            onPress={() => {
+              setAgregando(false);
+              setMasPara({ tipo, modo: 'nuevo' });
+            }}
+          />
+        ))}
       </Sheet>
+      <ListSheet
+        visible={masPara?.tipo === 'checklist' || masPara?.tipo === 'timeline'}
+        conCasillas={masPara?.tipo === 'checklist'}
+        valor={masPara?.modo === 'editar' && elegido ? { text: elegido.content.text ?? '', items: elegido.content.items ?? [] } : null}
+        onClose={() => setMasPara(null)}
+        onGuardar={(l) => guardarMas(masPara?.tipo === 'checklist' ? { text: l.text, items: l.items } : { items: l.items })}
+      />
+      <MoodSheet
+        visible={masPara?.tipo === 'mood'}
+        valor={masPara?.modo === 'editar' && elegido?.type === 'mood' ? { mood: elegido.content.mood ?? 'happy', text: elegido.content.text ?? '' } : null}
+        onClose={() => setMasPara(null)}
+        onGuardar={(m) => guardarMas(m)}
+      />
+      <SongSheet
+        visible={masPara?.tipo === 'song'}
+        valor={masPara?.modo === 'editar' && elegido?.type === 'song' ? { text: elegido.content.text ?? '', who: elegido.content.who ?? '' } : null}
+        onClose={() => setMasPara(null)}
+        onGuardar={(x) => guardarMas(x)}
+      />
+      <DateSheet
+        visible={masPara?.tipo === 'date'}
+        valor={masPara?.modo === 'editar' && elegido?.type === 'date' ? { date: elegido.content.date ?? '', place: elegido.content.place ?? '' } : null}
+        onClose={() => setMasPara(null)}
+        onGuardar={(x) => guardarMas(x)}
+      />
       <Sheet visible={datoPara !== null} onClose={() => setDatoPara(null)} title={c.stats.title}>
         <View style={styles.renombrar}>
           <AppText variant="body" color="textSecondary">
