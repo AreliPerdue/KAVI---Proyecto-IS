@@ -54,6 +54,10 @@ llevar texto, pero nunca debe sentirse como un formulario ni como una nota grand
 - **RF-CC12. Selector de color:** rueda/cuadro de color, **campo HEX**, **colores recientes** y **mis
   colores** (paleta que la persona guarda y reutiliza en cualquier recorte o página). Se aplica a fondo,
   texto, bordes, papeles, formas y stickers recolorables.
+- **Decisión de Areli (22 oct 2026; T365):** el selector también trae **colores con nombre**: los básicos, el set de
+  Office (los del tema y los estándar, como en Word) y **"De tus portadas"** (el color de cada portada de tu
+  biblioteca). Al pasar el cursor (o al elegir uno) se ve su nombre o el título del libro. No son paletas de KAVI:
+  son referencias que la persona ya conoce; las piezas y plantillas siguen empezando en neutros.
 - **RF-CC13.** Las piezas recolorables están hechas en escala de grises con textura; el color se aplica
   encima conservando sombras y textura (no hay un archivo por color).
 
@@ -82,6 +86,8 @@ llevar texto, pero nunca debe sentirse como un formulario ni como una nota grand
   Al usarla se copia al recorte; después todo se mueve, se borra o se cambia. No hay una plantilla por cada
   variación pequeña.
 - **RF-CC19. Lienzo en blanco** siempre disponible, con **+ Agregar**.
+- **RF-CC20.** (T365) Una plantilla propia se borra con su botón de borrar, a la vista en "Mis plantillas" (y
+  manteniéndola presionada), con confirmación; las de KAVI no se borran.
 - **RF-CC20. Guardar como plantilla:** un recorte o página personalizado se guarda en **Mis plantillas**
   (con nombre y miniatura) y se reutiliza para otros personajes, libros o páginas.
 - **RF-CC21. Plantillas de inicio (MVP):**

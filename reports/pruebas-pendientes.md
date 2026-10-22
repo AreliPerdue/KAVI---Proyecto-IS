@@ -911,3 +911,8 @@ Automatizado: `reader.test.tsx` (abre portada, páginas y contraportada sin arch
 portada con su estrella en scroll, libro real con página y contraportada, y "Páginas" en miniatura.
 - [ ] (manual, teléfono) Leerlo en libro real deslizando, anotar un post-it en una página y que se quede al volver.
 - [ ] (manual, Areli) ¿Se siente como abrir un libro? (portada primero, luego páginas, y se cierra en la contraportada)
+
+## Borrar plantillas y colores con nombre (T365)
+Automatizado: `new-canvas-sheet.test.tsx` (borrar una propia con confirmación; las de KAVI no), `color-palettes.test.ts`
+y `canvas.test.tsx` (elegir básicos, Office y de las portadas). Visto en el demo web: el nombre al pasar el cursor.
+- [ ] (manual, Areli) "De tus portadas" con tu biblioteca real: ¿se reconoce cada libro por su nombre?

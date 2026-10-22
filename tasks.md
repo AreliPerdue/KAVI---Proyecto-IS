@@ -1300,6 +1300,10 @@ Reemplazan L5 (13e). Un recorte es una página 1 : √2 del visor de PDF (decisi
   lector y en su ⋯). (13i; pedido de Areli del 22 oct 2026) Dep: T347, T346
   **Hecho (22 oct 2026):** `openCanvas` con `canvas: false` y `position`, capa `baseLayer` del motor (debajo de lo
   anotado, sin tocarse), `JournalPagesGrid`, "Editar Journal" en `ItemSheet` y en el lector; se quitó `journal/flip`.
+- [x] T365 Borrar plantillas propias con un botón a la vista; colores con nombre en el selector: básicos, Office y
+  "De tus portadas" (nombre o título al pasar el cursor). (13h RF-CC12, RF-CC20; pedido de Areli del 22 oct 2026)
+  **Hecho (22 oct 2026):** `constants/color-palettes.ts` (básicos, Office, `coloresDePortadas`), `PaletaConNombres`
+  en el selector y el botón de borrar en `NewCanvasSheet`.
 - [ ] T349b C6 · Más módulos (mood, canción, fecha/lugar, timeline, checklist…) y plantillas (Moodboard, Reading
   Stats, Reading Awards, Reading Eras, Character Analysis…). (RF-CC14, RF-CC21) Dep: T349
 - [ ] T350 J4 · Primera colección de motivos Fantasy / Dragon en la tienda. (RF-JC10) Dep: T346

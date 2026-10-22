@@ -5,11 +5,14 @@ import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg';
 
 import { AppText, Button, ColorSwatch, Sheet, TextField } from '@/components/ui';
+import { COLORES_BASICOS, COLORES_DE_OFFICE, coloresDePortadas } from '@/constants/color-palettes';
 import { IconSize, IconStroke, Radius, Spacing } from '@/constants/theme';
+import { useLibraryItems } from '@/hooks/use-library';
 import { useSaveColors, useSavedColors } from '@/hooks/use-saved-colors';
 import { useTheme } from '@/hooks/use-theme';
 import { useT } from '@/i18n';
 import { type Hsv, hexAHsv, hsvAHex, luminance, normalizarHex } from '@/lib/color';
+import { colorDePortada } from '@/lib/library/shelf';
 import { usePreferencesStore } from '@/store/preferences-store';
 
 const MAX_MIS_COLORES = 30;
@@ -24,6 +27,8 @@ const GRIS_INICIAL = '#BDBDBD';
  * Elegir un color en el lienzo creativo (spec 13h, RF-CC12; T342). KAVI no trae paletas (RF-CC11): el color se
  * busca en el cuadro (saturación y brillo) y la barra de tono, o se escribe en HEX. Abajo, los recientes de este
  * dispositivo y "Mis colores", la paleta de la cuenta: "+" guarda el de ahora y mantener presionado uno lo quita.
+ * Después, colores con nombre (T365, pedido de Areli): los básicos, el set de Office y los de las portadas de tu
+ * biblioteca; su nombre (o el título del libro) se ve al pasar el cursor o al elegirlo.
  * `ninguno`: la opción de no poner color (papel blanco, sin borde), con su nombre.
  */
 export function ColorPickerSheet({
@@ -61,6 +66,11 @@ function Selector({ valor, ninguno, onElegir }: { valor: string | null; ninguno?
   const guardar = useSaveColors();
   const misColores = mios.data ?? [];
   const actual = hsvAHex(hsv);
+  const nombres = t.names;
+  const basicos = COLORES_BASICOS.map((c) => ({ hex: c.hex, nombre: nombres[c.clave] ?? c.clave }));
+  const deOffice = COLORES_DE_OFFICE.map((c) => ({ hex: c.hex, nombre: nombres[c.clave] ?? c.clave }));
+  const piezas = useLibraryItems();
+  const dePortadas = coloresDePortadas((piezas.data ?? []).filter((p) => p.kind !== 'journal').map((p) => ({ title: p.title, color: colorDePortada(p) })));
 
   const poner = (nuevo: Hsv) => {
     setHsv(nuevo);
@@ -168,8 +178,52 @@ function Selector({ valor, ninguno, onElegir }: { valor: string | null; ninguno?
         ) : null}
       </View>
 
+      <PaletaConNombres titulo={t.basics} colores={basicos} actual={actual} onElegir={ponerHex} />
+      <PaletaConNombres titulo={t.office} colores={deOffice} actual={actual} onElegir={ponerHex} />
+      {dePortadas.length ? <PaletaConNombres titulo={t.covers} colores={dePortadas} actual={actual} onElegir={ponerHex} /> : null}
+
       <Button title={t.use} onPress={() => usar(actual)} />
       {ninguno ? <Button title={ninguno} variant="secondary" onPress={() => onElegir(null)} /> : null}
+    </View>
+  );
+}
+
+/**
+ * Unos colores con nombre (T365): cada muestra dice el suyo al pasar el cursor (en la computadora) o al elegirla, en
+ * el renglón de abajo; el lector de pantalla lo lee siempre.
+ */
+function PaletaConNombres({ titulo, colores, actual, onElegir }: { titulo: string; colores: readonly { hex: string; nombre: string }[]; actual: string; onElegir: (hex: string) => void }) {
+  const theme = useTheme();
+  const t = useT().library.canvas.color;
+  const [encima, setEncima] = useState<number | null>(null);
+  const elegido = colores.find((c) => c.hex === actual);
+  const visto = encima !== null ? colores[encima] : elegido;
+  return (
+    <View style={styles.seccion}>
+      <AppText variant="label" color="textSecondary">
+        {titulo}
+      </AppText>
+      <View style={styles.rejilla}>
+        {colores.map((c, i) => {
+          const esElegido = c.hex === actual;
+          return (
+            <Pressable
+              key={`${c.hex}-${i}`}
+              accessibilityRole="button"
+              accessibilityLabel={t.named(c.nombre, c.hex)}
+              accessibilityState={{ selected: esElegido }}
+              onPress={() => onElegir(c.hex)}
+              onHoverIn={() => setEncima(i)}
+              onHoverOut={() => setEncima((x) => (x === i ? null : x))}
+              hitSlop={6}
+              style={[styles.conNombre, { backgroundColor: c.hex, borderColor: esElegido ? theme.ink : theme.border, borderWidth: esElegido ? 3 : 1 }]}
+            />
+          );
+        })}
+      </View>
+      <AppText variant="caption" color="textSecondary" numberOfLines={1} style={styles.nombre}>
+        {visto ? t.named(visto.nombre, visto.hex) : ' '}
+      </AppText>
     </View>
   );
 }
@@ -276,6 +330,9 @@ function BarraDeTono({ hsv, onCambiar, etiqueta }: { hsv: Hsv; onCambiar: (h: Hs
 }
 
 const styles = StyleSheet.create({
+  rejilla: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm },
+  conNombre: { width: 32, height: 32, borderRadius: 16, borderCurve: 'continuous' },
+  nombre: { minHeight: 16 },
   cuerpo: { gap: Spacing.lg, paddingBottom: Spacing.md },
   fila: { flexDirection: 'row', alignItems: 'flex-end', gap: Spacing.md },
   flex: { flex: 1 },

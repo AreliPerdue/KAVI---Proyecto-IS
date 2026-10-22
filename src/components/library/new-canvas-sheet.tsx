@@ -1,10 +1,11 @@
+import { Trash2 } from 'lucide-react-native';
 import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import { CanvasPreview, type FuentesDeMiniatura } from '@/components/library/canvas-preview';
-import { AppText, Button, Segmented, Sheet } from '@/components/ui';
+import { AppText, Button, IconButton, Segmented, Sheet } from '@/components/ui';
 import { plantillasDeJournal, plantillasDeKavi } from '@/constants/canvas-templates';
-import { PAPER, Radius, Spacing } from '@/constants/theme';
+import { IconSize, IconStroke, PAPER, Radius, Spacing } from '@/constants/theme';
 import { useLibraryImageUrls } from '@/hooks/use-annotations';
 import { useDatosDeBiblioteca } from '@/hooks/use-canvas-sources';
 import { useCanvasTemplates, useRemoveCanvasTemplate } from '@/hooks/use-canvas-templates';
@@ -91,6 +92,15 @@ export function NewCanvasSheet({
       </AppText>
     </Pressable>
   );
+  // Una propia también se borra con su botón, a la vista (T365): mantener presionado no se descubre en la computadora.
+  const propiaConBorrar = (p: PlantillaDeLienzo) => (
+    <View key={p.id} style={styles.conBorrar}>
+      {tarjeta(p, true)}
+      <IconButton label={t.remove(p.nombre)} onPress={() => void quitar(p.id)}>
+        <Trash2 size={IconSize.inline} strokeWidth={IconStroke} color={theme.danger} />
+      </IconButton>
+    </View>
+  );
 
   const propias: PlantillaDeLienzo[] = (mias.data ?? [])
     .filter((p) => !journal || p.orientation === orientacion)
@@ -150,7 +160,7 @@ export function NewCanvasSheet({
         </AppText>
         {propias.length ? (
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.fila}>
-            {propias.map((p) => tarjeta(p, true))}
+            {propias.map(propiaConBorrar)}
           </ScrollView>
         ) : (
           <AppText variant="caption" color="textSecondary">
@@ -168,6 +178,7 @@ const styles = StyleSheet.create({
   pagina: { borderWidth: 1, borderRadius: Radius.sm / 2, borderCurve: 'continuous', boxShadow: '0 4px 16px rgba(22,23,26,0.08)' },
   fila: { flexDirection: 'row', gap: Spacing.md, paddingVertical: Spacing.xs },
   tarjeta: { width: ANCHO_MINIATURA, gap: Spacing.xs },
+  conBorrar: { alignItems: 'center' },
   presionada: { opacity: 0.85 },
   nombre: { textAlign: 'center' },
 });

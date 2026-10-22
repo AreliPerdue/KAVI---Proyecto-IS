@@ -636,3 +636,16 @@ describe('texto: girar, sentido y tamaño (T363)', () => {
     expect(ultimas()[0].locator.ar).toBeCloseTo(4);
   });
 });
+
+describe('colores con nombre (T365)', () => {
+  it('básicos, Office y los de tus portadas, cada uno con su nombre; elegir uno lo pone en HEX', async () => {
+    await montar();
+    await fireEvent.press(screen.getByRole('button', { name: C.background }));
+    await fireEvent.press(screen.getByRole('button', { name: C.color.named(C.color.names.darkRed, '#C00000') }));
+    expect(screen.getByDisplayValue('#C00000')).toBeTruthy();
+    expect(screen.getByText(C.color.named(C.color.names.darkRed, '#C00000'))).toBeTruthy();
+    await fireEvent.press(screen.getByRole('button', { name: C.color.named('Rayuela', '#2E7D32') }));
+    expect(screen.getByDisplayValue('#2E7D32')).toBeTruthy();
+    expect(screen.getByRole('button', { name: C.color.named(C.color.names.black, '#000000') })).toBeTruthy();
+  });
+});

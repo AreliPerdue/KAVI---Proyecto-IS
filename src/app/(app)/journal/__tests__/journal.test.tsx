@@ -1,14 +1,14 @@
 /** Crear, editar y ver un Journal (spec 13i, RF-JC1 – RF-JC9; T345) y sus páginas (13h, RF-CC2; T347). */
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react-native';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 
 import { es } from '@/i18n/es';
-import type { MensajeAlMotor, MensajeDelMotor } from '@/lib/library/reader-protocol';
 
 let mockPieza: { data?: Record<string, unknown>; isError: boolean; refetch: jest.Mock };
 const mockCrear = jest.fn();
 const mockActualizar = jest.fn();
 jest.mock('@/hooks/use-library', () => ({
   useLibraryItem: () => mockPieza,
+  useLibraryItems: () => ({ data: [] }),
   useCreateJournal: () => ({ mutate: mockCrear, isPending: false }),
   useUpdateLibraryItem: () => ({ mutate: mockActualizar }),
 }));
@@ -27,19 +27,6 @@ jest.mock('@/hooks/use-canvas-sources', () => ({ useFuentesDeLienzos: () => mock
 const mockMisPlantillas = { data: [] };
 jest.mock('@/hooks/use-canvas-templates', () => ({ useCanvasTemplates: () => mockMisPlantillas, useRemoveCanvasTemplate: () => ({ mutate: jest.fn() }) }));
 jest.mock('@/hooks/use-annotations', () => ({ useLibraryImageUrls: () => mockVacio }));
-const mockEnviados: MensajeAlMotor[] = [];
-let mockResponder: (m: MensajeDelMotor) => void = () => undefined;
-jest.mock('@/components/library/reader-engine', () => {
-  /* eslint-disable-next-line @typescript-eslint/no-require-imports -- dentro de la fábrica del mock */
-  const React = require('react') as typeof import('react');
-  const Motor = React.forwardRef(function Motor({ onMessage }: { onMessage: (m: MensajeDelMotor) => void }, ref) {
-    mockResponder = onMessage;
-    React.useImperativeHandle(ref, () => ({ send: (m: MensajeAlMotor) => mockEnviados.push(m) }));
-    return null;
-  });
-  Motor.displayName = 'MotorDeLectura';
-  return { ReaderEngine: Motor };
-});
 jest.mock('@/hooks/use-saved-colors', () => ({ useSavedColors: () => ({ data: [] }), useSaveColors: () => ({ mutate: jest.fn() }) }));
 
 /* eslint-disable @typescript-eslint/no-require-imports -- tras los mocks */
@@ -56,7 +43,6 @@ beforeEach(() => {
   mockLienzos = { data: [], isPending: false, isError: false, refetch: jest.fn() };
   for (const m of [mockCrear, mockActualizar, mockAvisar, mockBorrarLienzo]) m.mockReset();
   mockCrearLienzo.mockClear();
-  mockEnviados.length = 0;
 });
 
 describe('crear', () => {
