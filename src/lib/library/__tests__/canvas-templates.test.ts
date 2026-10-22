@@ -1,5 +1,5 @@
 /** Plantillas del lienzo creativo (13h, RF-CC18 – RF-CC21; T344): usarlas copia; guardarlas quita lo personal. */
-import { plantillasDeKavi } from '@/constants/canvas-templates';
+import { plantillasDeJournal, plantillasDeKavi } from '@/constants/canvas-templates';
 import { en } from '@/i18n/en';
 import { es } from '@/i18n/es';
 import { documentoValido } from '@/lib/library/canvas';
@@ -60,5 +60,24 @@ describe('plantillas de KAVI', () => {
         expect(e.x + e.w).toBeLessThanOrEqual(1.01);
       }
     }
+  });
+});
+
+describe('plantillas del Journal (T347)', () => {
+  it('Conoce a quien lee: en los dos idiomas, vertical, en neutros y sin libro que apunte a otro lado', () => {
+    for (const idioma of [es, en]) {
+      const [p, ...resto] = plantillasDeJournal(idioma.library.canvas.templates);
+      expect(resto).toEqual([]);
+      expect(p.id).toBe('kavi/get-to-know');
+      expect(p.orientacion).toBe('portrait');
+      expect(p.doc.elements.length).toBeGreaterThan(5);
+      expect(p.doc.background).toBeUndefined();
+      for (const e of p.doc.elements) {
+        expect(e.style.color).toBeUndefined();
+        expect(['sticker', 'book']).not.toContain(e.type);
+        expect(e.x + e.w).toBeLessThanOrEqual(1.01);
+      }
+    }
+    expect(plantillasDeJournal(en.library.canvas.templates)[0].nombre).toBe('Get to Know the Reader');
   });
 });

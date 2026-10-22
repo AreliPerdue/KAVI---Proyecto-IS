@@ -868,3 +868,11 @@ uno en espiral de madera con 240 páginas, girarlo y verlo en la cuadrícula y e
 - [ ] (manual, iOS y Android) Las texturas se repiten sin costuras y el `soft-light` se ve igual que en web.
 - [ ] (manual, Areli) ¿Los seis materiales y las cuatro encuadernaciones se sienten como el cuaderno que imaginaste?
 - [ ] (manual, dos aparatos) Un Journal creado en la compu aparece igual en el teléfono.
+
+## Páginas del Journal (T347)
+Automatizado: `journal/__tests__/journal.test.tsx` (página en blanco, Conoce a quien lee, orden, abrir, borrar, lleno y
+hojear con color por página), `lib/library/__tests__/journal.test.ts` y `canvas-templates.test.ts`. Visto en el demo
+web a 375 px y en escritorio: una página con Conoce a quien lee, otra en blanco amarilla, y hojear las dos.
+- [ ] (manual, Areli) ¿"Conoce a quien lee" se siente como un buen punto de partida?
+- [ ] (manual, teléfono) Hojear un Journal con varias páginas en libro real: deslizar, fotos de polaroid y stickers.
+- [ ] (manual, dos aparatos) Una página hecha en la compu aparece igual en el teléfono.

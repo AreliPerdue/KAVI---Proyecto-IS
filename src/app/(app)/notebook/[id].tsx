@@ -7,21 +7,15 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CanvasPreview, type FuentesDeMiniatura } from '@/components/library/canvas-preview';
 import { NewCanvasSheet } from '@/components/library/new-canvas-sheet';
 import { ActionRow, AppText, Button, ErrorState, IconButton, LoadingState, Sheet } from '@/components/ui';
-import { stickerPorId } from '@/constants/stickers';
 import { IconSize, IconStroke, MaxContentWidth, Radius, Spacing } from '@/constants/theme';
-import { useLibraryImageUrls } from '@/hooks/use-annotations';
 import { useCanvases, useCreateCanvas, useRemoveCanvas } from '@/hooks/use-canvases';
 import { useClips } from '@/hooks/use-clips';
-import { useLibraryItem, useLibraryItems } from '@/hooks/use-library';
-import { useStickerPacks, useStickerSources } from '@/hooks/use-sticker-packs';
+import { useFuentesDeLienzos } from '@/hooks/use-canvas-sources';
+import { useLibraryItem } from '@/hooks/use-library';
 import { useTheme } from '@/hooks/use-theme';
-import { useUserStickerImages, useUserStickers, useUserStickerSources } from '@/hooks/use-user-stickers';
 import { useT } from '@/i18n';
 import { uuidv4 } from '@/lib/gym/ids';
-import { type LibroEnLienzo, rutasDeImagenes } from '@/lib/library/canvas';
 import { usarPlantilla } from '@/lib/library/canvas-templates';
-import { colorDePortada, rutaDePortada } from '@/lib/library/shelf';
-import { fuenteDeSticker } from '@/lib/library/sticker-packs';
 import { useConfirm, useSnackbar } from '@/providers';
 import type { LibraryCanvas } from '@/types/domain';
 
@@ -39,7 +33,6 @@ export default function NotebookScreen() {
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const libro = useLibraryItem(id);
-  const piezas = useLibraryItems();
   const recortes = useCanvases(id);
   const crear = useCreateCanvas();
   const borrar = useRemoveCanvas();
@@ -55,38 +48,7 @@ export default function NotebookScreen() {
   const anchoMiniatura = Math.floor((Math.min(MaxContentWidth, width) - Spacing.lg * 2 - Spacing.md * (columnas - 1)) / columnas);
 
   // Lo que hace falta para ver las imágenes y stickers de todas las miniaturas, de una vez.
-  const elementos = lista.flatMap((c) => c.doc.elements);
-  // Los libros puestos en los recortes (T343): su título, color y portada.
-  const claveIdsDeLibros = [...new Set(elementos.flatMap((e) => (e.type === 'book' && e.content.itemId ? [e.content.itemId] : [])))].sort().join('|');
-  // El React Compiler memoriza estas listas y `fuentes`: las miniaturas no se rehacen si nada cambió.
-  const idsDeLibros = new Set(claveIdsDeLibros ? claveIdsDeLibros.split('|') : []);
-  const librosPuestos = (piezas.data ?? []).filter((p) => idsDeLibros.has(p.id));
-  const urls = useLibraryImageUrls([...rutasDeImagenes(elementos), ...librosPuestos.flatMap((p) => (rutaDePortada(p) ? [rutaDePortada(p) as string] : []))]);
-  const stickers = elementos.flatMap((e) => (e.type === 'sticker' && e.content.sticker ? [e.content.sticker] : []));
-  const claveStickers = [...new Set(stickers)].sort().join('|');
-  const packs = useStickerPacks();
-  const losPacks = packs.data?.packs;
-  const misStickers = useUserStickers();
-  const imagenesPropias = useUserStickerImages(misStickers.data);
-  const propias = useUserStickerSources(stickers, imagenesPropias);
-  const tienda = useStickerSources(
-    stickers.filter((s) => !s.startsWith('nobi-pink/')),
-    packs.data?.packs,
-  );
-  const fuentes: FuentesDeMiniatura = (() => {
-    const deStickers = new Map<string, string | number | { uri: string }>();
-    for (const s of claveStickers ? claveStickers.split('|') : []) {
-      const incluido = stickerPorId(s);
-      const src = incluido ? incluido.imagen : fuenteDeSticker(s, tienda, losPacks, propias);
-      if (src) deStickers.set(s, src as string);
-    }
-    const libros = new Map<string, LibroEnLienzo>();
-    for (const p of librosPuestos) {
-      const ruta = rutaDePortada(p);
-      libros.set(p.id, { title: p.title, color: colorDePortada(p), ...(ruta && urls.get(ruta) ? { src: urls.get(ruta) } : {}) });
-    }
-    return { imagenes: urls, stickers: deStickers as FuentesDeMiniatura['stickers'], libros };
-  })();
+  const fuentes = useFuentesDeLienzos(lista.flatMap((c) => c.doc.elements)).miniatura;
 
   const volver = () => (router.canGoBack() ? router.back() : router.replace('/(app)/library'));
   const abrir = (c: LibraryCanvas) => router.push({ pathname: '/(app)/canvas/[id]', params: { id: c.id, item: id } });

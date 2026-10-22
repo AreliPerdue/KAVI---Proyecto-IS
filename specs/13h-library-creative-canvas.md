@@ -210,6 +210,19 @@ llevar texto, pero nunca debe sentirse como un formulario ni como una nota grand
     - El libro del recorte se guarda como "este libro".
     - Se guarda en `library_canvas_templates` (migración `20261021110000`, solo del dueño).
     - Mantener presionada una plantilla propia la borra; los recortes hechos con ella no cambian.
+- **Hecho (C5, páginas del Journal, T347, 22 oct 2026):**
+  - **Cada página es un lienzo** de `library_canvases` con contexto `journal` y el Journal como `item_id`; no hizo
+    falta migración. Van en el orden en que se hicieron y tienen la forma del Journal (no se elige).
+  - **En el Journal** (`journal/[id]`): "N de M páginas", miniaturas de cada página ("Página n" y, si lo tiene, su
+    nombre), tocar abre el lienzo creativo de siempre y su ⋯ la borra. "Nueva página" se apaga cuando ya se usaron
+    todas las páginas del Journal y dice que se le agregan en "Editar Journal".
+  - **Nueva página:** en blanco, **Conoce a quien lee** (`plantillasDeJournal`, en neutros, en los dos idiomas) o
+    una de Mis plantillas de la misma forma. El "este libro" de una plantilla queda como un libro por elegir.
+  - **Hojear** (`journal/flip`): el motor arma una página en blanco por cada lienzo y los pinta en libro real,
+    bloqueados (solo se ven) y con el color de cada página (`canvasBackground` acepta `pages`). El motor llega a 400
+    páginas, lo más que tiene un Journal.
+  - Pendiente para después: reordenar páginas (pide una columna de orden) y el espiral o la tapa en libro real
+    (llega con la portada decorada, J2).
 
 ## 11. Qué cambia en otras specs
 

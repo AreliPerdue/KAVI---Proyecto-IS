@@ -1270,8 +1270,14 @@ Reemplazan L5 (13e). Un recorte es una página 1 : √2 del visor de PDF (decisi
   "Nuevo Journal" y el Journal en cuadrícula y librero; Supabase y demo. Libro real pasa a T347 (aún no hay páginas).
   Ajuste de Areli (22 oct): en la cuadrícula se ve como los demás libros (misma portada 2:3, sin canto) y su autora
   es la dueña (nombre visible o usuario), guardada al crear y mostrada en los que ya existían.
-- [ ] T346 J2 · Decorar la portada, lomo y contraportada con el lienzo; tratamiento impreso. (RF-JC10, RF-JC11) Dep: T345
-- [ ] T347 C5 · Páginas del Journal y Get to Know the Reader. (RF-CC2, RF-CC22) Dep: T344, T345
+- [ ] T346 J2 · Decorar la portada, lomo y contraportada con el lienzo; tratamiento impreso. Incluye verlas en libro
+  real al hojear (tapas y espiral en el borde, 13i §8). (RF-JC10, RF-JC11) Dep: T345, T347
+- [x] T347 C5 · Páginas del Journal y Get to Know the Reader. (RF-CC2, RF-CC22) Dep: T344, T345
+  **Hecho (22 oct 2026, adelantada a T346 a pedido de Areli):** cada página es un lienzo con contexto `journal` (sin
+  migración); el Journal las muestra en miniatura con "N de M páginas", Nueva página (en blanco, Conoce a quien lee o
+  Mis plantillas de su forma; se apaga cuando está lleno), borrar, y Hojear en libro real (`journal/flip`, bloqueado,
+  color por página). `useFuentesDeLienzos` junta imágenes, stickers y libros de varias páginas (también Mi libreta).
+  Los datos de Library en plantillas (año lector, estadísticas) siguen en C6 (T349).
 - [ ] T348 J3 · Tratamientos hundido, relieve y recortado. (RF-JC11, RF-JC12) Dep: T346
 - [ ] T349 C6 · Módulos y plantillas avanzados, Journal con datos de Library, fragmentos pegados. (RF-CC14, RF-CC22,
   RF-CC24) Dep: T347, T317

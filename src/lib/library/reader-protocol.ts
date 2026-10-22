@@ -92,7 +92,7 @@ export type MensajeAlMotor =
   /** El lienzo creativo (13h, RF-CC4; T351): páginas en blanco 1 : √2 que arma el motor. */
   | { type: 'openCanvas'; orientation: 'portrait' | 'landscape'; pages: number; mode?: FormaDeLeer }
   /** El color de las páginas del lienzo (RF-CC12; T342); `null`, papel blanco. */
-  | { type: 'canvasBackground'; color: string | null }
+  | { type: 'canvasBackground'; color: string | null; /** El color de cada página que tenga uno propio (hojear un Journal; T347). */ pages?: Record<string, string> }
   /** Exportar una página del lienzo como PNG de `width` px (RF-CC25; T342). Contesta `exported`. */
   | { type: 'export'; width?: number; page?: number }
   | { type: 'openEnd' }

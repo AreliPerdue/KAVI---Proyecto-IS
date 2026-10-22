@@ -10,7 +10,8 @@ const A5 = { corto: 419.53, largo: 595.28 };
 
 /** Los bytes de un PDF de `paginas` hojas en blanco, verticales u horizontales. */
 export function pdfEnBlanco(orientacion = 'portrait', paginas = 1) {
-  const n = Math.min(Math.max(1, Math.floor(paginas) || 1), 200);
+  // Hasta 400: lo más que puede tener un Journal (13i; T347).
+  const n = Math.min(Math.max(1, Math.floor(paginas) || 1), 400);
   const [ancho, alto] = orientacion === 'landscape' ? [A5.largo, A5.corto] : [A5.corto, A5.largo];
   const objetos = [
     '<< /Type /Catalog /Pages 2 0 R >>',

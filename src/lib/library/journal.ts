@@ -1,4 +1,4 @@
-import type { OrientacionDeLienzo } from '@/lib/library/canvas';
+import type { DocumentoDeLienzo, ElementoDeLienzo, OrientacionDeLienzo } from '@/lib/library/canvas';
 import { grosorDeLomo } from '@/lib/library/spines';
 
 /**
@@ -94,4 +94,34 @@ export function nombreDeAutora(perfil: { display_name: string | null; username: 
 export function conAutora<T extends { kind?: string; authors: string[] }>(piezas: T[], nombre: string | null): T[] {
   if (!nombre || !piezas.some((p) => p.kind === 'journal' && !p.authors.length)) return piezas;
   return piezas.map((p) => (p.kind === 'journal' && !p.authors.length ? { ...p, authors: [nombre] } : p));
+}
+
+// ─── Las páginas (13h, RF-CC2; T347) ──────────────────────────────────────────────
+
+/**
+ * Las páginas de un Journal son lienzos (`library_canvases`, contexto `journal`) de una página cada uno, en el orden
+ * en que se hicieron.
+ */
+export function paginasEnOrden<T extends { created_at: string; id: string }>(lienzos: readonly T[]): T[] {
+  return [...lienzos].sort((a, b) => a.created_at.localeCompare(b.created_at) || a.id.localeCompare(b.id));
+}
+
+/** Si aún cabe otra página: un Journal tiene las páginas que se le pusieron (RF-JC5). */
+export function cabeOtraPagina(hechas: number, paginas: number | null | undefined): boolean {
+  return hechas < paginasValidas(paginas ?? PAGINAS.porOmision);
+}
+
+/**
+ * El Journal entero para hojearlo en libro real: un solo documento con una página por cada lienzo, cada pieza en la
+ * suya y bloqueada (se ve, no se edita), y el color de cada página que tenga uno.
+ */
+export function paraHojear(lienzos: readonly { doc: DocumentoDeLienzo }[]): { doc: DocumentoDeLienzo; fondos: Record<string, string> } {
+  const elements: ElementoDeLienzo[] = [];
+  const fondos: Record<string, string> = {};
+  lienzos.forEach((l, i) => {
+    const pagina = i + 1;
+    if (l.doc.background) fondos[String(pagina)] = l.doc.background;
+    for (const e of l.doc.elements) if (e.page === 1) elements.push({ ...e, page: pagina, locked: true });
+  });
+  return { doc: { pages: Math.max(1, lienzos.length), elements }, fondos };
 }

@@ -1,5 +1,5 @@
 /** El Journal como objeto (spec 13i, RF-JC1 – RF-JC9; T345). */
-import { conAutora, contraportada, lomoDeJournal, nombreDeAutora, PAGINAS, paginasValidas, PORTADA_POR_OMISION, portadaValida } from '@/lib/library/journal';
+import { cabeOtraPagina, conAutora, contraportada, lomoDeJournal, nombreDeAutora, paginasEnOrden, paraHojear, PAGINAS, paginasValidas, PORTADA_POR_OMISION, portadaValida } from '@/lib/library/journal';
 import { grosorDeLomo } from '@/lib/library/spines';
 
 it('una portada rota vuelve a lo de omisión: A5 vertical, tapa dura, cuero gris y cantos blancos', () => {
@@ -42,4 +42,36 @@ it('los Journals sin autor llevan el nombre de su dueña; los libros y los que y
   expect(conAutora(piezas, null)).toBe(piezas);
   const sinCambio = [piezas[1], piezas[2]];
   expect(conAutora(sinCambio, 'Areli')).toBe(sinCambio);
+});
+
+describe('páginas (T347)', () => {
+  const el = (id: string, page = 1) => ({ id, type: 'textbox' as const, page, x: 0, y: 0, w: 0.5, ar: 0.3, rot: 0, z: 1, locked: false, group: null, style: {}, content: { text: id } });
+
+  it('van en el orden en que se hicieron', () => {
+    const lista = [
+      { id: 'b', created_at: '2026-10-22T00:00:00Z' },
+      { id: 'a', created_at: '2026-10-21T00:00:00Z' },
+    ];
+    expect(paginasEnOrden(lista).map((p) => p.id)).toEqual(['a', 'b']);
+  });
+
+  it('cabe otra mientras no se usen todas las del Journal', () => {
+    expect(cabeOtraPagina(119, 120)).toBe(true);
+    expect(cabeOtraPagina(120, 120)).toBe(false);
+    expect(cabeOtraPagina(0, null)).toBe(true);
+  });
+
+  it('para hojear, cada página va en la suya, bloqueada y con su color; solo su primera hoja', () => {
+    const { doc, fondos } = paraHojear([
+      { doc: { pages: 1, elements: [el('a')] } },
+      { doc: { pages: 2, background: '#112233', elements: [el('b'), el('c', 2)] } },
+    ]);
+    expect(doc.pages).toBe(2);
+    expect(doc.elements.map((e) => [e.id, e.page, e.locked])).toEqual([
+      ['a', 1, true],
+      ['b', 2, true],
+    ]);
+    expect(fondos).toEqual({ '2': '#112233' });
+    expect(paraHojear([]).doc.pages).toBe(1);
+  });
 });

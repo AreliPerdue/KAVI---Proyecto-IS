@@ -116,7 +116,7 @@ async function atender(m) {
       // El lienzo creativo (13h, RF-CC4; T351): páginas en blanco 1 : √2 que se abren como un PDF.
       return abrir({ format: 'pdf', mode: m.mode, position: { page: 1 } }, { datos: pdfEnBlanco(m.orientation, m.pages) });
     case 'canvasBackground':
-      return anotaciones.fondo(m.color);
+      return anotaciones.fondo(m.color, m.pages);
     case 'export':
       return exportar(m);
     case 'goTo':

@@ -195,6 +195,8 @@ export function crearCapa(ctx, enviar) {
   let ademas = new Set();
   /** El color de las páginas de un lienzo creativo (T342); `null`: papel blanco. */
   let fondo = null;
+  /** El color propio de cada página, si lo tiene (las páginas de un Journal al hojearlo; T347). */
+  let fondoDePagina = new Map();
   let arrastre = null; // { id, el, x0, y0, movido }
   let repintarAlSoltar = false;
   let ultimoToque = { id: null, t: 0 };
@@ -1538,10 +1540,11 @@ export function crearCapa(ctx, enviar) {
     div.querySelector(':scope > .capa-subrayados')?.remove();
     div.querySelector(':scope > .capa-fondo')?.remove();
     // El color de la página de un lienzo (T342), encima del blanco del PDF y debajo de todo lo demás.
-    if (fondo) {
+    const suFondo = fondoDePagina.get(n) ?? fondo;
+    if (suFondo) {
       const capaFondo = document.createElement('div');
       capaFondo.className = 'capa-fondo';
-      Object.assign(capaFondo.style, { position: 'absolute', inset: '0', background: fondo, pointerEvents: 'none' });
+      Object.assign(capaFondo.style, { position: 'absolute', inset: '0', background: suFondo, pointerEvents: 'none' });
       div.append(capaFondo);
     }
     pintarSubrayadosPdf(n, div);
@@ -1708,9 +1711,15 @@ export function crearCapa(ctx, enviar) {
     /** `tambien`: lo que va elegido junto (lienzo creativo, para agrupar; T351). */
     elegir: (id, tambien) => elegir(typeof id === 'string' ? id : null, false, Array.isArray(tambien) ? tambien : []),
     destello,
-    /** El color de las páginas de un lienzo creativo (T342). */
-    fondo(color) {
-      fondo = /^#[0-9a-fA-F]{6}$/.test(color ?? '') ? color : null;
+    /** El color de las páginas de un lienzo creativo (T342) y, si se da, el de cada página (`{ "3": "#RRGGBB" }`; T347). */
+    fondo(color, paginas) {
+      const valido = (c) => /^#[0-9a-fA-F]{6}$/.test(c ?? '');
+      fondo = valido(color) ? color : null;
+      fondoDePagina = new Map(
+        Object.entries(paginas && typeof paginas === 'object' ? paginas : {})
+          .filter(([n, c]) => Number.isInteger(Number(n)) && valido(c))
+          .map(([n, c]) => [Number(n), c]),
+      );
       repintar();
     },
     /** Lo que hay en la página, en orden de capa, para exportarla (T342). */

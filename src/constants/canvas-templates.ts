@@ -35,6 +35,36 @@ const asset = (nombre: NombreDeAsset, label: string, x: number, y: number, w: nu
   content: { asset: `basicos/${nombre}`, label, mode: /destellos|flecha|rama|lazo|costura|a-mano/.test(nombre) ? 'trazo' : 'textura' },
 });
 
+/**
+ * Las plantillas de página del Journal (13h, RF-CC21; T347): "yo como lector". Por ahora, Conoce a quien lee; el año
+ * lector, las estadísticas y los premios llegan con los datos (C6).
+ */
+export function plantillasDeJournal(t: Textos): PlantillaDeLienzo[] {
+  const n = t.assetLabels;
+  const g = t.getToKnow;
+  return [
+    {
+      id: 'kavi/get-to-know',
+      nombre: t.names.getToKnow,
+      orientacion: 'portrait',
+      doc: documento([
+        texto(g.title, 0.08, 0.04, 0.84, 1.8, 0.12),
+        { type: 'polaroid', x: 0.07, y: 0.13, w: 0.4, ar: PROPORCION_DE_POLAROID.caption, rot: -3, content: { variant: 'caption', paths: [''], text: g.caption } },
+        asset('cinta-lisa', n.tape, 0.17, 0.115, 0.2, -6),
+        asset('hoja-de-libreta', n.notebook, 0.52, 0.12, 0.42, 2),
+        texto(g.me, 0.58, 0.16, 0.32, 0.9, 1.1),
+        asset('memo', n.memo, 0.07, 0.5, 0.44, -1),
+        texto(g.book, 0.12, 0.55, 0.34, 0.9, 0.8),
+        texto(g.how, 0.56, 0.52, 0.38, 0.9, 1),
+        texto(g.love, 0.3, 0.83, 0.4, 1, 0.12),
+        { type: 'rating', x: 0.3, y: 0.88, w: 0.4, ar: 0.2, content: { scale: 'hearts', value: 0 } },
+        asset('corazon-a-mano', n.heart, 0.08, 0.85, 0.13),
+        asset('destellos', n.sparkles, 0.8, 0.85, 0.13),
+      ]),
+    },
+  ];
+}
+
 export function plantillasDeKavi(t: Textos): PlantillaDeLienzo[] {
   const n = t.assetLabels;
   return [

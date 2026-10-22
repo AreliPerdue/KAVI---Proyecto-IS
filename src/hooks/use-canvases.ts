@@ -80,14 +80,17 @@ function useGuardarLienzo() {
   );
 }
 
-/** Crear un recorte de un libro, en blanco (RF-CC19) o con una plantilla (RF-CC18): devuelve su id para abrirlo. */
+/**
+ * Crear un recorte de un libro, en blanco (RF-CC19) o con una plantilla (RF-CC18), o una página de un Journal
+ * (`context: 'journal'`, T347): devuelve su id para abrirlo.
+ */
 export function useCreateCanvas() {
   const guardar = useGuardarLienzo();
   const queryClient = useQueryClient();
   return useCallback(
-    (itemId: string, orientation: OrientacionDeLienzo, title = '', doc: DocumentoDeLienzo = DOCUMENTO_VACIO) => {
+    (itemId: string, orientation: OrientacionDeLienzo, title = '', doc: DocumentoDeLienzo = DOCUMENTO_VACIO, context: LibraryCanvas['context'] = 'book') => {
       // Con plantilla (T344), el recorte nace con su acomodo (ya copiado con ids nuevos) y su nombre.
-      const canvas: LibraryCanvasInput = { id: uuidv4(), context: 'book', item_id: itemId, title, orientation, doc, version: 1 };
+      const canvas: LibraryCanvasInput = { id: uuidv4(), context, item_id: itemId, title, orientation, doc, version: 1 };
       guardar(canvas);
       queryClient.setQueryData(libraryKeys.canvas(canvas.id), queryClient.getQueryData<LibraryCanvas[]>(libraryKeys.canvases(itemId))?.find((c) => c.id === canvas.id));
       return canvas.id;
