@@ -28,20 +28,30 @@ export const CanvasPreview = memo(function CanvasPreview({
   orientacion,
   ancho,
   fuentes,
+  proporcion,
+  sinPapel = false,
 }: {
   doc: DocumentoDeLienzo;
   orientacion: OrientacionDeLienzo;
   ancho: number;
   fuentes: FuentesDeMiniatura;
+  /** Alto ÷ ancho de una página de otra forma: el lomo de un Journal (T346). */
+  proporcion?: number;
+  /** Solo lo pegado, sin el papel ni su borde: la decoración encima del material de una tapa (T346). */
+  sinPapel?: boolean;
 }) {
   const theme = useTheme();
-  const alto = ancho * (orientacion === 'landscape' ? 1 / RAIZ_DE_DOS : RAIZ_DE_DOS);
+  const alto = ancho * (proporcion ?? (orientacion === 'landscape' ? 1 / RAIZ_DE_DOS : RAIZ_DE_DOS));
   const W = ancho;
   return (
     <View
       accessible={false}
       importantForAccessibility="no-hide-descendants"
-      style={[styles.pagina, { width: ancho, height: alto, backgroundColor: doc.background ?? PAPEL_DE_LIENZO, borderColor: theme.border }]}>
+      style={[
+        sinPapel ? styles.sinPapel : styles.pagina,
+        { width: ancho, height: alto },
+        sinPapel ? null : { backgroundColor: doc.background ?? PAPEL_DE_LIENZO, borderColor: theme.border },
+      ]}>
       {doc.elements
         .filter((e) => e.page === 1)
         .map((e) => {
@@ -111,6 +121,7 @@ export const CanvasPreview = memo(function CanvasPreview({
 
 const styles = StyleSheet.create({
   pagina: { overflow: 'hidden', borderWidth: StyleSheet.hairlineWidth, borderRadius: Radius.sm / 2, borderCurve: 'continuous' },
+  sinPapel: { overflow: 'hidden' },
   texto: { overflow: 'hidden' },
   lleno: { width: '100%', height: '100%' },
   pie: { flex: 1, alignItems: 'center', justifyContent: 'center' },

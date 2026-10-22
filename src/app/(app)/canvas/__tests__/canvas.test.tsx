@@ -9,6 +9,7 @@ import { act, fireEvent, render, screen, waitFor } from '@testing-library/react-
 import { es } from '@/i18n/es';
 import type { AnotacionEnMotor, MensajeAlMotor, MensajeDelMotor } from '@/lib/library/reader-protocol';
 import { usePreferencesStore } from '@/store/preferences-store';
+import { proporcionDeCara } from '@/lib/library/journal';
 
 const mockEnviados: MensajeAlMotor[] = [];
 let mockResponder: (m: MensajeDelMotor) => void = () => undefined;
@@ -62,7 +63,20 @@ const mockPiezas = {
   isError: false,
   refetch: jest.fn(),
 };
-jest.mock('@/hooks/use-library', () => ({ ...jest.requireActual('@/hooks/use-library'), useLibraryItems: () => mockPiezas }));
+// Un Journal, para decorar sus tapas (T346).
+const mockJournal = {
+  id: 'j1',
+  title: 'Mi año',
+  kind: 'journal',
+  family: 'creation',
+  page_count: 240,
+  journal: { orientation: 'portrait', binding: 'spiral', material: 'wood', color: '#6B3E26', back: { material: 'linen', color: '#112233' }, edges: '#F7F5EF', accent: '#B9B9B9' },
+};
+jest.mock('@/hooks/use-library', () => ({
+  ...jest.requireActual('@/hooks/use-library'),
+  useLibraryItems: () => mockPiezas,
+  useLibraryItem: (id: string) => ({ data: id === 'j1' ? mockJournal : undefined }),
+}));
 jest.mock('@/components/library/book-cover', () => ({ BookCover: () => null }));
 // Elegir una foto de la galería (T343): siempre la misma, ya lista para subir.
 jest.mock('@/lib/library/cover/sources', () => ({ PUEDE_TOMAR_FOTO: true, desdeGaleria: async () => 'file:///foto.jpg', desdeCamara: async () => null }));
@@ -456,4 +470,42 @@ it('guardar como plantilla: con nombre, sin fotos y con el libro como "este libr
   expect(plantilla.orientation).toBe('landscape');
   expect(plantilla.doc.elements.find((e) => e.type === 'polaroid')?.content.paths).toEqual(['']);
   expect(plantilla.doc.elements.find((e) => e.type === 'book')?.content.itemId).toBe('este-libro');
+});
+
+describe('tapas del Journal (T346)', () => {
+  const tapa = (face: 'front' | 'spine' | 'back') => {
+    globalThis.setParametrosDeRuta({ id: 't1', item: 'j1' });
+    mockLienzo = { ...mockLienzo, id: 't1', context: 'cover', face, item_id: 'j1', orientation: 'portrait' };
+  };
+
+  it('la portada se decora sobre el material del Journal, con el nombre de la cara y sin fondo, plantilla ni exportar', async () => {
+    tapa('front');
+    await montar();
+    expect(mockEnviados[0]).toEqual({ type: 'openCanvas', orientation: 'portrait', pages: 1, mode: 'paged' });
+    expect(mockEnviados).toContainEqual({ type: 'canvasBackground', color: { color: '#6B3E26', material: 'wood' } });
+    expect(screen.getByText(`${es.library.journal.faces.front} · Mi año`)).toBeTruthy();
+    for (const nombre of [C.background, C.templates.save, C.export]) expect(screen.queryByRole('button', { name: nombre })).toBeNull();
+    expect(screen.getByRole('button', { name: C.add })).toBeTruthy();
+  });
+
+  it('el lomo es alto y angosto, como en el librero, y la contraportada usa su propio material', async () => {
+    tapa('spine');
+    await montar();
+    const abrir = mockEnviados[0] as { aspect?: number };
+    expect(abrir.aspect).toBeCloseTo(proporcionDeCara('portrait', 'spine', 240));
+    mockEnviados.length = 0;
+    tapa('back');
+    await montar();
+    expect(mockEnviados).toContainEqual({ type: 'canvasBackground', color: { color: '#112233', material: 'linen' } });
+  });
+
+  it('lo que se pega en una tapa se guarda con su cara', async () => {
+    tapa('front');
+    await montar();
+    await agregar(C.text);
+    await tocarPagina();
+    await responder({ type: 'text', id: (ultimas()[0] as AnotacionEnMotor).id, text: 'Mi año' });
+    await waitFor(() => expect(mockEncolar).toHaveBeenCalled(), { timeout: 2000 });
+    expect((mockEncolar.mock.calls.at(-1) as unknown[] | undefined)?.[0]).toMatchObject({ op: 'canvas', canvas: { context: 'cover', face: 'front', item_id: 'j1' } });
+  });
 });

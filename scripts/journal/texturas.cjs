@@ -5,7 +5,7 @@
  * para mezclarse con `soft-light` sobre el color elegido) y arma con síntesis por parches (image quilting,
  * Efros & Freeman) sobre un toro una textura que se repite sin costuras por los cuatro lados.
  *
- *   node scripts/journal/texturas.cjs "<muestrario>.png" assets/library/materials [material]
+ *   node scripts/journal/texturas.cjs "<muestrario>.png" public/reader/lienzo/materiales [material]
  */
 /* global __dirname */
 const path = require('path');

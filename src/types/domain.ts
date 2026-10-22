@@ -840,14 +840,17 @@ export type LibraryCardTemplate = {
 export type CardPlacement = 'front' | 'back' | 'first_page' | 'last_page';
 
 /**
- * Un lienzo creativo (spec 13h; T351): un recorte de un libro o, en C5, una página del Journal. Su documento lleva
- * los elementos (ver `lib/library/canvas.ts`); `version` sube con cada guardado.
+ * Un lienzo creativo (spec 13h; T351): un recorte de un libro, una página del Journal (C5, T347) o una de sus tapas
+ * (`cover`, con su cara; 13i, T346). Su documento lleva los elementos (ver `lib/library/canvas.ts`); `version` sube
+ * con cada guardado.
  */
 export type LibraryCanvas = {
   id: string;
   owner_id: string;
-  context: 'book' | 'journal';
+  context: 'book' | 'journal' | 'cover';
   item_id: string | null;
+  /** La cara de una tapa del Journal; `null` en lo demás. */
+  face?: 'front' | 'spine' | 'back' | null;
   title: string;
   orientation: OrientacionDeLienzo;
   doc: DocumentoDeLienzo;
@@ -869,7 +872,7 @@ export type LibraryCanvasTemplate = {
 };
 
 /** Lo que se guarda de un lienzo (crear o reemplazar por id: el id lo pone el cliente, como las anotaciones). */
-export type LibraryCanvasInput = Pick<LibraryCanvas, 'id' | 'context' | 'item_id' | 'title' | 'orientation' | 'doc' | 'version'>;
+export type LibraryCanvasInput = Pick<LibraryCanvas, 'id' | 'context' | 'item_id' | 'title' | 'orientation' | 'doc' | 'version' | 'face'>;
 
 export type LibraryCard = {
   id: string;

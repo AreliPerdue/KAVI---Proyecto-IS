@@ -28,3 +28,9 @@ it('en la librería se ve como un libro: llena su caja y no asoma el canto de la
   expect(screen.getByLabelText('libro')).toHaveStyle({ width: 120, height: 180 });
   expect(JSON.stringify(screen.toJSON())).not.toContain('#ABCDEF');
 });
+
+it('lo decorado se ve encima del material (T346)', async () => {
+  const doc = { pages: 1, elements: [{ id: 't', type: 'textbox' as const, page: 1, x: 0.1, y: 0.1, w: 0.5, ar: 0.2, rot: 0, z: 1, locked: false, group: null, style: {}, content: { text: 'Mi año lector' } }] };
+  await render(<JournalCover portada={PORTADA_POR_OMISION} ancho={160} decoracion={{ doc, fuentes: { imagenes: new Map(), stickers: new Map() } }} />);
+  expect(screen.getByText('Mi año lector', { includeHiddenElements: true })).toBeTruthy();
+});

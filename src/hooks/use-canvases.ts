@@ -81,16 +81,23 @@ function useGuardarLienzo() {
 }
 
 /**
- * Crear un recorte de un libro, en blanco (RF-CC19) o con una plantilla (RF-CC18), o una página de un Journal
- * (`context: 'journal'`, T347): devuelve su id para abrirlo.
+ * Crear un recorte de un libro, en blanco (RF-CC19) o con una plantilla (RF-CC18), una página de un Journal
+ * (`context: 'journal'`, T347) o una de sus tapas (`context: 'cover'` con su cara, T346): devuelve su id para abrirlo.
  */
 export function useCreateCanvas() {
   const guardar = useGuardarLienzo();
   const queryClient = useQueryClient();
   return useCallback(
-    (itemId: string, orientation: OrientacionDeLienzo, title = '', doc: DocumentoDeLienzo = DOCUMENTO_VACIO, context: LibraryCanvas['context'] = 'book') => {
+    (
+      itemId: string,
+      orientation: OrientacionDeLienzo,
+      title = '',
+      doc: DocumentoDeLienzo = DOCUMENTO_VACIO,
+      context: LibraryCanvas['context'] = 'book',
+      face: LibraryCanvas['face'] = null,
+    ) => {
       // Con plantilla (T344), el recorte nace con su acomodo (ya copiado con ids nuevos) y su nombre.
-      const canvas: LibraryCanvasInput = { id: uuidv4(), context, item_id: itemId, title, orientation, doc, version: 1 };
+      const canvas: LibraryCanvasInput = { id: uuidv4(), context, item_id: itemId, face, title, orientation, doc, version: 1 };
       guardar(canvas);
       queryClient.setQueryData(libraryKeys.canvas(canvas.id), queryClient.getQueryData<LibraryCanvas[]>(libraryKeys.canvases(itemId))?.find((c) => c.id === canvas.id));
       return canvas.id;
@@ -168,7 +175,8 @@ export function useCanvasEditor(canvas: LibraryCanvas | undefined) {
     if (!b || !sucio.current) return;
     sucio.current = false;
     version.current += 1;
-    guardar({ id: b.id, context: b.context, item_id: b.item_id, title: b.title, orientation: b.orientation, doc: actual.current, version: version.current });
+    // La cara va siempre: una tapa sin cara no se puede guardar (T346).
+    guardar({ id: b.id, context: b.context, item_id: b.item_id, face: b.face ?? null, title: b.title, orientation: b.orientation, doc: actual.current, version: version.current });
   }, [guardar]);
 
   const poner = useCallback(

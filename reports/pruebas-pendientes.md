@@ -876,3 +876,12 @@ web a 375 px y en escritorio: una página con Conoce a quien lee, otra en blanco
 - [ ] (manual, Areli) ¿"Conoce a quien lee" se siente como un buen punto de partida?
 - [ ] (manual, teléfono) Hojear un Journal con varias páginas en libro real: deslizar, fotos de polaroid y stickers.
 - [ ] (manual, dos aparatos) Una página hecha en la compu aparece igual en el teléfono.
+
+## Decorar el Journal (T346)
+Automatizado: las tapas en PGlite (10 casos: una por cara, solo del dueño, se van con el Journal), `canvas.test.tsx`
+(material de fondo, forma del lomo, sin fondo/plantilla/exportar, se guarda con su cara), `journal.test.tsx` (decorar
+crea o abre su tapa, hojear con tapas), `journal-cover.test.tsx` y `lib/library/__tests__/journal.test.ts`. Visto en el
+demo web: portada de terciopelo con texto y destellos, en la pantalla del Journal, la cuadrícula y al hojear.
+- [ ] (manual, teléfono) El material se ve en el lienzo de la tapa (textura empaquetada en el motor) y al hojear.
+- [ ] (manual, Areli) Decorar el lomo de un Journal de tapa dura y verlo en el librero.
+- [ ] (manual, Areli) ¿Se siente como "encuadernar un cuaderno"? Cambiar el material después de decorar.

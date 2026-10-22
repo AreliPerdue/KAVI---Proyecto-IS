@@ -48,7 +48,7 @@ import { IconSize, IconStroke, Spacing } from '@/constants/theme';
 import { useLibraryImageUrls, useUploadAnnotationImage } from '@/hooks/use-annotations';
 import { useSaveCanvasTemplate } from '@/hooks/use-canvas-templates';
 import { useCanvas, useCanvasEditor, useLimpiarImagenesDeLienzo } from '@/hooks/use-canvases';
-import { useLibraryItems } from '@/hooks/use-library';
+import { useLibraryItem, useLibraryItems } from '@/hooks/use-library';
 import { useStickerPacks, useStickerSources } from '@/hooks/use-sticker-packs';
 import { useTheme } from '@/hooks/use-theme';
 import { useUserStickerImages, useUserStickers, useUserStickerSources } from '@/hooks/use-user-stickers';
@@ -79,7 +79,9 @@ import {
 } from '@/lib/library/canvas';
 import { archivoDeExportacion, nombreDeExportacion } from '@/lib/library/canvas-export';
 import { comoPlantilla } from '@/lib/library/canvas-templates';
-import { PAPEL_DE_LIENZO } from '@/lib/library/canvas-shapes';
+import { fondoDeCara, portadaValida, proporcionDeCara } from '@/lib/library/journal';
+import { PAPEL_DE_LIENZO, TINTA_DE_TEXTO } from '@/lib/library/canvas-shapes';
+import { luminance } from '@/lib/color';
 import { prepararImagenPegada } from '@/lib/library/cover/prepare';
 import { desdeCamara, desdeGaleria, PUEDE_TOMAR_FOTO } from '@/lib/library/cover/sources';
 import { FORMAS_DE_LIENZO, type FormaDeLienzo, type Herramienta, type MensajeDelMotor } from '@/lib/library/reader-protocol';
@@ -109,6 +111,10 @@ type DestinoDeImagen = { polaroid: string; hueco: number } | null;
  * duplica, se agrupa y se quita (RF-CC8, RF-CC9), con deshacer y rehacer, y se guarda solo, también sin red
  * (RF-CC10). En C2 (T342): "+ Agregar" (RF-CC19), el color del fondo y de cada pieza con su opacidad, borde y
  * sombra (RF-CC12), cambiar el nombre y exportar la página como imagen (RF-CC25).
+ *
+ * También decora las tapas de un Journal (13i, RF-JC10; T346): la página tiene la forma de esa cara (el lomo es alto y
+ * angosto) y su fondo es el material del Journal. Ahí no se cambia el fondo (es el material, que se elige en "Editar
+ * Journal"), ni se guarda como plantilla o se exporta; su nombre es el de la cara.
  */
 export default function CanvasScreen() {
   const { id, item } = useLocalSearchParams<{ id: string; item: string }>();
@@ -156,6 +162,11 @@ export default function CanvasScreen() {
   const guardarPlantilla = useSaveCanvasTemplate();
   const destinoDeImagen = useRef<DestinoDeImagen>(null);
   const piezas = useLibraryItems();
+  // Una tapa del Journal (T346): su cara y el Journal, que da su forma y su material.
+  const cara = lienzo.data?.context === 'cover' ? (lienzo.data.face ?? null) : null;
+  const journal = useLibraryItem(cara ? item : '');
+  const portada = cara && journal.data ? portadaValida(journal.data.journal) : null;
+  const tj = tx.library.journal;
 
   // Las direcciones de lo que se ve: imágenes subidas (o su vista previa mientras suben) y stickers.
   // Los libros que hay en el recorte (RF-CC22): su título, color y portada.
@@ -193,16 +204,19 @@ export default function CanvasScreen() {
     return { imagenes, stickers: deStickers, libros };
   }, [urls, vistasPrevias, claveStickers, librosDelRecorte, fuentesTienda, fuentesPropias, losPacks]);
 
-  // Abrir la página en blanco con su forma (RF-CC4), una vez por lienzo.
-  const orientacion = lienzo.data?.orientation;
+  // Abrir la página en blanco con su forma (RF-CC4), una vez por lienzo. El lomo de un Journal, con la suya (T346).
+  // Una tapa sigue la forma del Journal aunque se haya cambiado después de decorarla.
+  const orientacion = cara ? portada?.orientation : lienzo.data?.orientation;
   const paginas = lienzo.data?.doc.pages ?? 1;
+  const esperaJournal = !!cara && !portada;
+  const aspecto = cara === 'spine' && portada && journal.data ? proporcionDeCara(portada.orientation, 'spine', journal.data.page_count) : null;
   useEffect(() => {
-    if (!orientacion) return;
+    if (!orientacion || esperaJournal) return;
     // La página entera a la vista, para componer (RF-CC4): como "páginas de lado" del lector.
-    motor.current?.send({ type: 'openCanvas', orientation: orientacion, pages: paginas, mode: 'paged' });
+    motor.current?.send({ type: 'openCanvas', orientation: orientacion, pages: paginas, mode: 'paged', ...(aspecto ? { aspect: aspecto } : {}) });
     // Solo al llegar el lienzo: agregar páginas es de una fase posterior.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id, orientacion]);
+  }, [id, orientacion, esperaJournal, aspecto]);
 
   // Lo que se pinta encima: cada vez que cambia el documento o llega una dirección.
   const enMotor = useMemo(() => aMotor(doc, fuentes), [doc, fuentes]);
@@ -210,11 +224,15 @@ export default function CanvasScreen() {
     if (abierto) motor.current?.send({ type: 'annotations', items: enMotor });
   }, [abierto, enMotor]);
 
-  // El color de la página (RF-CC12).
+  // El color de la página (RF-CC12); en una tapa, el material del Journal con su color (T346).
   const fondo = doc.background ?? null;
+  const material = cara && portada ? fondoDeCara(portada, cara) : null;
+  const colorDeMaterial = material?.color;
+  const nombreDeMaterial = material?.material;
   useEffect(() => {
-    if (abierto) motor.current?.send({ type: 'canvasBackground', color: fondo });
-  }, [abierto, fondo]);
+    if (!abierto) return;
+    motor.current?.send({ type: 'canvasBackground', color: colorDeMaterial && nombreDeMaterial ? { color: colorDeMaterial, material: nombreDeMaterial } : fondo });
+  }, [abierto, fondo, colorDeMaterial, nombreDeMaterial]);
 
   /** Quitar del documento y dejar que el archivo de sus imágenes se borre en una hora, si no se deshace (T342). */
   const quitarElementos = (ids: string[]) => {
@@ -265,7 +283,9 @@ export default function CanvasScreen() {
       content: {},
     };
     if (tipo === 'textbox') {
-      aplicar((d) => agregar(d, { ...base, type: 'textbox', style: { color: '#1A1A1A' }, content: { text: '' } }));
+      // En una tapa (T346), claro u oscuro según el material para que se lea, y un poco más grande.
+      const tinta = colorDeMaterial && luminance(colorDeMaterial) < 0.3 ? PAPEL_DE_LIENZO : TINTA_DE_TEXTO;
+      aplicar((d) => agregar(d, { ...base, type: 'textbox', style: { color: tinta, ...(cara ? { size: 1.6 } : {}) }, content: { text: '' } }));
       elegir(nuevoId);
       motor.current?.send({ type: 'write', id: nuevoId });
       return;
@@ -522,6 +542,7 @@ export default function CanvasScreen() {
     );
   }
 
+  const tituloVisible = cara ? `${tj.faces[cara]} · ${journal.data?.title ?? ''}` : editor.titulo || c.untitled;
   const aviso = exportando ? c.exporting : herramienta === 'textbox' ? a.textboxOn : herramienta === 'image' ? a.imageOn : herramienta === 'sticker' ? a.stickerOn : herramienta === 'shape' ? c.shapeOn : herramienta ? c.placeOn : null;
 
   return (
@@ -530,15 +551,23 @@ export default function CanvasScreen() {
         <IconButton label={tx.common.back} onPress={volver}>
           {icono(ChevronLeft)}
         </IconButton>
-        <Pressable
-          style={styles.titulo}
-          onPress={() => setRenombrando(editor.titulo)}
-          accessibilityRole="button"
-          accessibilityLabel={`${editor.titulo || c.untitled}. ${c.rename}`}>
-          <AppText variant="bodyStrong" numberOfLines={1} style={styles.centro} accessibilityRole="header">
-            {editor.titulo || c.untitled}
-          </AppText>
-        </Pressable>
+        {cara ? (
+          <View style={styles.titulo}>
+            <AppText variant="bodyStrong" numberOfLines={1} style={styles.centro} accessibilityRole="header">
+              {tituloVisible}
+            </AppText>
+          </View>
+        ) : (
+          <Pressable
+            style={styles.titulo}
+            onPress={() => setRenombrando(editor.titulo)}
+            accessibilityRole="button"
+            accessibilityLabel={`${tituloVisible}. ${c.rename}`}>
+            <AppText variant="bodyStrong" numberOfLines={1} style={styles.centro} accessibilityRole="header">
+              {tituloVisible}
+            </AppText>
+          </Pressable>
+        )}
         <IconButton label={a.undo} onPress={editor.deshacer} disabled={!editor.puedeDeshacer}>
           {icono(Undo2, editor.puedeDeshacer ? theme.text : theme.textTertiary)}
         </IconButton>
@@ -649,15 +678,19 @@ export default function CanvasScreen() {
         ) : (
           <View style={styles.fila} accessibilityLabel={c.tools}>
             <Button title={c.add} icon={icono(Plus, theme.onInk)} onPress={() => setAgregando(true)} />
-            <IconButton label={c.background} onPress={() => setColorDe('fondo')}>
-              {icono(PaintBucket)}
-            </IconButton>
-            <IconButton label={c.templates.save} onPress={() => setNombrePlantilla(editor.titulo)} disabled={!doc.elements.length}>
-              {icono(LayoutTemplate, doc.elements.length ? theme.text : theme.textTertiary)}
-            </IconButton>
-            <IconButton label={c.export} onPress={exportar} disabled={exportando || !abierto}>
-              {icono(Share, exportando ? theme.textTertiary : theme.text)}
-            </IconButton>
+            {cara ? null : (
+              <>
+                <IconButton label={c.background} onPress={() => setColorDe('fondo')}>
+                  {icono(PaintBucket)}
+                </IconButton>
+                <IconButton label={c.templates.save} onPress={() => setNombrePlantilla(editor.titulo)} disabled={!doc.elements.length}>
+                  {icono(LayoutTemplate, doc.elements.length ? theme.text : theme.textTertiary)}
+                </IconButton>
+                <IconButton label={c.export} onPress={exportar} disabled={exportando || !abierto}>
+                  {icono(Share, exportando ? theme.textTertiary : theme.text)}
+                </IconButton>
+              </>
+            )}
           </View>
         )}
       </View>

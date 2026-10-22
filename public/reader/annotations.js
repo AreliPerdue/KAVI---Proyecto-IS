@@ -25,7 +25,7 @@
  * en EPUB lo dibuja foliate con su capa de dibujo. Tocar uno lo elige.
  */
 import { pintarTrazos } from './ink.js';
-import { MODULOS, pintarAsset, pintarModulo } from './modules.js';
+import { fuenteDeAsset, MODULOS, pintarAsset, pintarModulo } from './modules.js';
 import { pellizcando as pellizcandoAhora } from './zoom.js';
 
 /** El ancho de un post-it nuevo, relativo a la página (igual que `ANCHO_DE_POSTIT` en la app). */
@@ -1544,7 +1544,7 @@ export function crearCapa(ctx, enviar) {
     if (suFondo) {
       const capaFondo = document.createElement('div');
       capaFondo.className = 'capa-fondo';
-      Object.assign(capaFondo.style, { position: 'absolute', inset: '0', background: suFondo, pointerEvents: 'none' });
+      Object.assign(capaFondo.style, { position: 'absolute', inset: '0', pointerEvents: 'none' }, estiloDeFondo(suFondo));
       div.append(capaFondo);
     }
     pintarSubrayadosPdf(n, div);
@@ -1711,14 +1711,16 @@ export function crearCapa(ctx, enviar) {
     /** `tambien`: lo que va elegido junto (lienzo creativo, para agrupar; T351). */
     elegir: (id, tambien) => elegir(typeof id === 'string' ? id : null, false, Array.isArray(tambien) ? tambien : []),
     destello,
-    /** El color de las páginas de un lienzo creativo (T342) y, si se da, el de cada página (`{ "3": "#RRGGBB" }`; T347). */
+    /**
+     * El fondo de las páginas de un lienzo creativo (T342) y, si se da, el de cada página (`{ "3": … }`; T347). Un
+     * fondo es un color `#RRGGBB` o un material del Journal `{ color, material }` (sus tapas; T346).
+     */
     fondo(color, paginas) {
-      const valido = (c) => /^#[0-9a-fA-F]{6}$/.test(c ?? '');
-      fondo = valido(color) ? color : null;
+      fondo = fondoValido(color);
       fondoDePagina = new Map(
         Object.entries(paginas && typeof paginas === 'object' ? paginas : {})
-          .filter(([n, c]) => Number.isInteger(Number(n)) && valido(c))
-          .map(([n, c]) => [Number(n), c]),
+          .filter(([n, c]) => Number.isInteger(Number(n)) && fondoValido(c))
+          .map(([n, c]) => [Number(n), fondoValido(c)]),
       );
       repintar();
     },
@@ -1755,5 +1757,33 @@ export function crearCapa(ctx, enviar) {
       seleccion = null;
       ademas = new Set();
     },
+  };
+}
+
+// ─── Fondos de página (T342, T346) ────────────────────────────────────────────────
+
+const esHex = (c) => typeof c === 'string' && /^#[0-9a-fA-F]{6}$/.test(c);
+const MATERIALES = ['leather', 'linen', 'velvet', 'wood', 'fabric', 'parchment'];
+
+/** Un color, un material del Journal con su color, o `null`. */
+function fondoValido(f) {
+  if (esHex(f)) return f;
+  if (f && typeof f === 'object' && esHex(f.color) && MATERIALES.includes(f.material)) return { color: f.color, material: f.material };
+  return null;
+}
+
+/**
+ * Cómo se ve un fondo: el color, o el material como en la app (13i, RF-JC8): su textura en grises repetida y mezclada
+ * con `soft-light` sobre el color, con un poco de luz arriba y sombra abajo.
+ */
+function estiloDeFondo(f) {
+  if (typeof f === 'string') return { background: f };
+  const textura = fuenteDeAsset(`materiales/${f.material}`);
+  return {
+    backgroundColor: f.color,
+    backgroundImage: `linear-gradient(to bottom, rgba(255,255,255,0.08), rgba(0,0,0,0.12)), url("${textura}")`,
+    backgroundSize: '100% 100%, auto 150%',
+    backgroundRepeat: 'no-repeat, repeat',
+    backgroundBlendMode: 'normal, soft-light',
   };
 }

@@ -980,6 +980,11 @@ export const demoLibrary: LibraryApi = {
     if (canvas.item_id && !items.some((i) => i.id === canvas.item_id && i.owner_id === userId)) throw new AuthUiError(t().errors.noPermission);
     const antes = lienzos.find((c) => c.id === canvas.id);
     if (antes && antes.owner_id !== userId) throw new AuthUiError(t().errors.noPermission);
+    // Como la base (T346): una tapa dice su cara y hay una sola de cada cara por Journal.
+    if ((canvas.context === 'cover') !== !!canvas.face) throw new AuthUiError(t().errors.noPermission);
+    if (canvas.context === 'cover' && lienzos.some((c) => c.id !== canvas.id && c.context === 'cover' && c.item_id === canvas.item_id && c.face === canvas.face)) {
+      throw new AuthUiError(t().errors.noPermission);
+    }
     const t0 = ahora();
     const nuevo: LibraryCanvas = { thumb_path: null, created_at: t0, ...antes, ...canvas, doc: documentoValido(canvas.doc), owner_id: userId, updated_at: t0 };
     quitarDe(lienzos, (c) => c.id === canvas.id);

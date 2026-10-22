@@ -1,5 +1,5 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { BookOpen, ChevronLeft, ChevronRight, MoreHorizontal, Pencil, Plus, Trash2 } from 'lucide-react-native';
+import { BookOpen, Brush, ChevronLeft, ChevronRight, MoreHorizontal, Pencil, Plus, Trash2 } from 'lucide-react-native';
 import { memo, useState } from 'react';
 import { FlatList, Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -11,12 +11,13 @@ import { ActionRow, AppText, Button, ErrorState, IconButton, LoadingState, Segme
 import { IconSize, IconStroke, MaxContentWidth, Spacing } from '@/constants/theme';
 import { useFuentesDeLienzos } from '@/hooks/use-canvas-sources';
 import { useCanvases, useCreateCanvas, useRemoveCanvas } from '@/hooks/use-canvases';
+import { useDecoracionDeJournal, useTapaParaDecorar } from '@/hooks/use-journal-covers';
 import { useLibraryItem } from '@/hooks/use-library';
 import { useTheme } from '@/hooks/use-theme';
 import { useT } from '@/i18n';
 import { uuidv4 } from '@/lib/gym/ids';
 import { usarPlantilla } from '@/lib/library/canvas-templates';
-import { cabeOtraPagina, lomoDeJournal, paginasEnOrden, paginasValidas, portadaValida } from '@/lib/library/journal';
+import { cabeOtraPagina, paginasEnOrden, paginasValidas, portadaValida, proporcionDeCara } from '@/lib/library/journal';
 import { useConfirm, useSnackbar } from '@/providers';
 import type { LibraryCanvas } from '@/types/domain';
 
@@ -29,6 +30,9 @@ type Pagina = { lienzo: LibraryCanvas; numero: number };
  * Sus páginas (13h, RF-CC2; T347): cada una es un lienzo con la forma del Journal, en el orden en que se hicieron. Se
  * ven en miniatura; tocar una la abre en el lienzo creativo, su ⋯ la borra, "Nueva página" empieza una en blanco o con
  * una plantilla (Conoce a quien lee, Mis plantillas) mientras quepa, y "Hojear" lo abre entero en libro real.
+ *
+ * Sus tapas (13i, RF-JC10; T346): cada cara se ve con lo decorado y "Decorar …" abre su lienzo (la primera vez, en
+ * blanco). Decorar es opcional (RF-JC2).
  */
 export default function JournalScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -47,6 +51,8 @@ export default function JournalScreen() {
   const [cara, setCara] = useState<CaraDeJournal>('front');
   const [creando, setCreando] = useState(false);
   const [menuDe, setMenuDe] = useState<Pagina | null>(null);
+  const decoracion = useDecoracionDeJournal(id);
+  const tapaParaDecorar = useTapaParaDecorar();
   const volver = () => (router.canGoBack() ? router.back() : router.replace('/(app)/library'));
 
   const paginas: Pagina[] = paginasEnOrden(lienzos.data ?? []).map((lienzo, i) => ({ lienzo, numero: i + 1 }));
@@ -104,9 +110,23 @@ export default function JournalScreen() {
       </View>
       <View style={[styles.vista, { height: alto + Spacing.xl }]}>
         {cara === 'spine' ? (
-          <JournalCover portada={portada} cara="spine" ancho={lomoDeJournal(total)} alto={alto} etiqueta={j.faces.spine} />
+          // Con la proporción del lomo en el librero, para que lo decorado se vea igual en los dos (RF-JC5).
+          <JournalCover
+            portada={portada}
+            cara="spine"
+            ancho={alto / proporcionDeCara(portada.orientation, 'spine', total)}
+            alto={alto}
+            etiqueta={j.faces.spine}
+            decoracion={decoracion.spine}
+          />
         ) : (
-          <JournalCover portada={portada} cara={cara} ancho={ancho} etiqueta={j.a11y(journal.title, j.bindings[portada.binding], j.materials[portada.material])} />
+          <JournalCover
+            portada={portada}
+            cara={cara}
+            ancho={ancho}
+            etiqueta={j.a11y(journal.title, j.bindings[portada.binding], j.materials[portada.material])}
+            decoracion={decoracion[cara]}
+          />
         )}
       </View>
       <Segmented
@@ -116,12 +136,21 @@ export default function JournalScreen() {
         onChange={setCara}
         fullWidth
       />
-      <Button
-        title={j.edit}
-        variant="secondary"
-        icon={icono(Pencil)}
-        onPress={() => router.push({ pathname: '/(app)/journal/edit', params: { id } })}
-      />
+      <View style={styles.acciones}>
+        {/* El espiral no tiene lomo que decorar: su borde es el espiral (RF-JC4). */}
+        {cara === 'spine' && portada.binding === 'spiral' ? null : (
+          <View style={styles.flex}>
+            <Button
+              title={j.decorate[cara]}
+              icon={icono(Brush, theme.onInk)}
+              onPress={() => router.push({ pathname: '/(app)/canvas/[id]', params: { id: tapaParaDecorar(journal, lienzos.data ?? [], cara), item: id } })}
+            />
+          </View>
+        )}
+        <View style={styles.flex}>
+          <Button title={j.edit} variant="secondary" icon={icono(Pencil)} onPress={() => router.push({ pathname: '/(app)/journal/edit', params: { id } })} />
+        </View>
+      </View>
 
       <View style={styles.seccion}>
         <View style={styles.flex}>
@@ -254,6 +283,7 @@ const styles = StyleSheet.create({
   contenido: { paddingHorizontal: Spacing.lg, gap: Spacing.md, width: '100%', maxWidth: MaxContentWidth, alignSelf: 'center' },
   encabezado: { gap: Spacing.lg, paddingBottom: Spacing.sm },
   vista: { alignItems: 'center', justifyContent: 'center' },
+  acciones: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm },
   seccion: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm, paddingTop: Spacing.md },
   fila: { gap: Spacing.md },
   flex: { flex: 1 },

@@ -85,6 +85,8 @@ jest.mock('@/components/lists/draggable-rows', () => ({
 jest.mock('@/providers', () => ({ useSnackbar: () => mockSnackbar, useConfirm: () => mockConfirm }));
 let mockPerfil: Record<string, unknown> | undefined = { display_name: 'Areli Perdue', username: 'areli' };
 jest.mock('@/hooks/use-profile', () => ({ useMyProfile: () => ({ data: mockPerfil }) }));
+// Las tapas decoradas de un Journal (T346): aquí, sin decorar.
+jest.mock('@/hooks/use-journal-covers', () => ({ useDecoracionDeJournal: () => ({ front: null, spine: null, back: null }) }));
 // El generador de portadas tiene su propia prueba; aquí solo estorba (abre un motor web).
 jest.mock('@/components/library/pdf-cover-worker', () => ({ PdfCoverWorker: () => null }));
 jest.mock('@/lib/library/import', () => ({ elegirLibro: () => mockElegir(), leerLibro: (a: unknown) => mockLeer(a) }));

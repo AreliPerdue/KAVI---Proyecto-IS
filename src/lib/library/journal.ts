@@ -1,5 +1,5 @@
-import type { DocumentoDeLienzo, ElementoDeLienzo, OrientacionDeLienzo } from '@/lib/library/canvas';
-import { grosorDeLomo } from '@/lib/library/spines';
+import { type DocumentoDeLienzo, type ElementoDeLienzo, type OrientacionDeLienzo, RAIZ_DE_DOS } from '@/lib/library/canvas';
+import { grosorDeLomo, LOMO_ALTO_IGUAL } from '@/lib/library/spines';
 
 /**
  * El Journal como objeto (spec 13i, RF-JC1 – RF-JC9; T345): "the user chooses the object before they decorate the
@@ -100,10 +100,10 @@ export function conAutora<T extends { kind?: string; authors: string[] }>(piezas
 
 /**
  * Las páginas de un Journal son lienzos (`library_canvases`, contexto `journal`) de una página cada uno, en el orden
- * en que se hicieron.
+ * en que se hicieron. Sus tapas (contexto `cover`) no son páginas.
  */
-export function paginasEnOrden<T extends { created_at: string; id: string }>(lienzos: readonly T[]): T[] {
-  return [...lienzos].sort((a, b) => a.created_at.localeCompare(b.created_at) || a.id.localeCompare(b.id));
+export function paginasEnOrden<T extends { created_at: string; id: string; context?: string }>(lienzos: readonly T[]): T[] {
+  return lienzos.filter((l) => l.context !== 'cover').sort((a, b) => a.created_at.localeCompare(b.created_at) || a.id.localeCompare(b.id));
 }
 
 /** Si aún cabe otra página: un Journal tiene las páginas que se le pusieron (RF-JC5). */
@@ -111,17 +111,64 @@ export function cabeOtraPagina(hechas: number, paginas: number | null | undefine
   return hechas < paginasValidas(paginas ?? PAGINAS.porOmision);
 }
 
+/** El fondo de una tapa en el motor: su material con su color (13i, RF-JC8). */
+export type FondoDeTapa = { color: string; material: Material };
+
 /**
  * El Journal entero para hojearlo en libro real: un solo documento con una página por cada lienzo, cada pieza en la
- * suya y bloqueada (se ve, no se edita), y el color de cada página que tenga uno.
+ * suya y bloqueada (se ve, no se edita), y el color de cada página que tenga uno. Con su `portada` (T346), abre y
+ * cierra con sus tapas: la portada y la contraportada con su material y lo que tengan decorado.
  */
-export function paraHojear(lienzos: readonly { doc: DocumentoDeLienzo }[]): { doc: DocumentoDeLienzo; fondos: Record<string, string> } {
+export function paraHojear(
+  lienzos: readonly { doc: DocumentoDeLienzo }[],
+  tapas?: { portada: PortadaDeJournal; front?: { doc: DocumentoDeLienzo }; back?: { doc: DocumentoDeLienzo } },
+): { doc: DocumentoDeLienzo; fondos: Record<string, string | FondoDeTapa> } {
   const elements: ElementoDeLienzo[] = [];
-  const fondos: Record<string, string> = {};
+  const fondos: Record<string, string | FondoDeTapa> = {};
+  const poner = (doc: DocumentoDeLienzo | undefined, pagina: number) => {
+    for (const e of doc?.elements ?? []) if (e.page === 1) elements.push({ ...e, page: pagina, locked: true });
+  };
+  const antes = tapas ? 1 : 0;
+  if (tapas) {
+    fondos['1'] = fondoDeCara(tapas.portada, 'front');
+    poner(tapas.front?.doc, 1);
+  }
   lienzos.forEach((l, i) => {
-    const pagina = i + 1;
+    const pagina = antes + i + 1;
     if (l.doc.background) fondos[String(pagina)] = l.doc.background;
-    for (const e of l.doc.elements) if (e.page === 1) elements.push({ ...e, page: pagina, locked: true });
+    poner(l.doc, pagina);
   });
-  return { doc: { pages: Math.max(1, lienzos.length), elements }, fondos };
+  let pages = Math.max(1, antes + lienzos.length);
+  if (tapas) {
+    pages = antes + lienzos.length + 1;
+    fondos[String(pages)] = fondoDeCara(tapas.portada, 'back');
+    poner(tapas.back?.doc, pages);
+  }
+  return { doc: { pages, elements }, fondos };
+}
+
+// ─── Las tapas (13i, RF-JC10; T346) ───────────────────────────────────────────────
+
+export const CARAS = ['front', 'spine', 'back'] as const;
+export type Cara = (typeof CARAS)[number];
+
+/** La tapa decorada de cada cara (lienzos con contexto `cover`); la que no se ha decorado no está. */
+export function tapasDe<T extends { context?: string; face?: string | null }>(lienzos: readonly T[]): Partial<Record<Cara, T>> {
+  const tapas: Partial<Record<Cara, T>> = {};
+  for (const l of lienzos) if (l.context === 'cover' && CARAS.includes(l.face as Cara)) tapas[l.face as Cara] = l;
+  return tapas;
+}
+
+/**
+ * Alto ÷ ancho de una cara: la portada y la contraportada son A5 (vertical u horizontal); el lomo es alto y angosto,
+ * con la proporción del lomo en el librero, que engorda con las páginas (RF-JC5).
+ */
+export function proporcionDeCara(orientacion: OrientacionDeLienzo, cara: Cara, paginas: number | null | undefined): number {
+  if (cara === 'spine') return LOMO_ALTO_IGUAL / lomoDeJournal(paginas);
+  return orientacion === 'landscape' ? 1 / RAIZ_DE_DOS : RAIZ_DE_DOS;
+}
+
+/** El material y el color sobre el que se decora una cara: la contraportada puede tener los suyos (RF-JC9). */
+export function fondoDeCara(portada: PortadaDeJournal, cara: Cara): FondoDeTapa {
+  return cara === 'back' ? contraportada(portada) : { material: portada.material, color: portada.color };
 }

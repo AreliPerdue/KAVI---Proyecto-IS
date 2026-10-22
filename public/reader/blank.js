@@ -8,11 +8,16 @@
 /** A5 en puntos de PDF (148 × 210 mm). */
 const A5 = { corto: 419.53, largo: 595.28 };
 
-/** Los bytes de un PDF de `paginas` hojas en blanco, verticales u horizontales. */
-export function pdfEnBlanco(orientacion = 'portrait', paginas = 1) {
+/**
+ * Los bytes de un PDF de `paginas` hojas en blanco, verticales u horizontales. Con `proporcion` (alto ÷ ancho), una
+ * hoja de otra forma con el alto de A5: el lomo de un Journal, alto y angosto (13i; T346).
+ */
+export function pdfEnBlanco(orientacion = 'portrait', paginas = 1, proporcion = null) {
   // Hasta 400: lo más que puede tener un Journal (13i; T347).
   const n = Math.min(Math.max(1, Math.floor(paginas) || 1), 400);
-  const [ancho, alto] = orientacion === 'landscape' ? [A5.largo, A5.corto] : [A5.corto, A5.largo];
+  const altoA5 = orientacion === 'landscape' ? A5.corto : A5.largo;
+  const propia = Number.isFinite(proporcion) && proporcion >= 0.2 && proporcion <= 40;
+  const [ancho, alto] = propia ? [altoA5 / proporcion, altoA5] : orientacion === 'landscape' ? [A5.largo, A5.corto] : [A5.corto, A5.largo];
   const objetos = [
     '<< /Type /Catalog /Pages 2 0 R >>',
     `<< /Type /Pages /Kids [${Array.from({ length: n }, (_, i) => `${i + 3} 0 R`).join(' ')}] /Count ${n} >>`,

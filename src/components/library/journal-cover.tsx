@@ -2,9 +2,10 @@ import { memo } from 'react';
 import { Image, StyleSheet, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 
+import { CanvasPreview, type FuentesDeMiniatura } from '@/components/library/canvas-preview';
 import { TEXTURAS } from '@/constants/journal-materials';
 import { Radius } from '@/constants/theme';
-import { RAIZ_DE_DOS } from '@/lib/library/canvas';
+import { type DocumentoDeLienzo, RAIZ_DE_DOS } from '@/lib/library/canvas';
 import { contraportada, type Material, type PortadaDeJournal } from '@/lib/library/journal';
 
 export type CaraDeJournal = 'front' | 'spine' | 'back';
@@ -26,6 +27,7 @@ export const JournalCover = memo(function JournalCover({
   alto,
   etiqueta,
   comoLibro = false,
+  decoracion,
 }: {
   portada: PortadaDeJournal;
   cara?: CaraDeJournal;
@@ -39,6 +41,8 @@ export const JournalCover = memo(function JournalCover({
    * las páginas asomando. El espiral se recorta en el borde.
    */
   comoLibro?: boolean;
+  /** Lo decorado en esta cara (13i, RF-JC10; T346): va sobre el material y debajo del espiral o el hilo. */
+  decoracion?: { doc: DocumentoDeLienzo; fuentes: FuentesDeMiniatura } | null;
 }) {
   // Una medida que aún no llega (0 o negativa) no debe dibujar nada al revés.
   ancho = Math.max(1, ancho);
@@ -62,6 +66,19 @@ export const JournalCover = memo(function JournalCover({
         </View>
       ) : null}
       <CapaDeMaterial material={material} color={color} radio={radio} />
+      {decoracion?.doc.elements.length ? (
+        // La cara mide A5; en la librería, la caja de un libro es un poco más alta: va al centro.
+        <View pointerEvents="none" style={[styles.lleno, styles.centro]}>
+          <CanvasPreview
+            doc={decoracion.doc}
+            orientacion={portada.orientation}
+            ancho={ancho}
+            fuentes={decoracion.fuentes}
+            proporcion={cara === 'spine' ? altoTapa / ancho : vertical ? RAIZ_DE_DOS : 1 / RAIZ_DE_DOS}
+            sinPapel
+          />
+        </View>
+      ) : null}
       {cara === 'spine' ? <Lomo portada={portada} alto={altoTapa} ancho={ancho} /> : <Borde portada={portada} ancho={ancho} alto={altoTapa} atras={atras} />}
     </View>
   );
@@ -166,6 +183,7 @@ function Puntadas({ color, alto, x, lado }: { color: string; alto: number; x: nu
 
 const styles = StyleSheet.create({
   comoLibro: { overflow: 'hidden', borderCurve: 'continuous' },
+  centro: { justifyContent: 'center', alignItems: 'center' },
   lleno: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0 },
   textura: { width: '100%', height: '100%', mixBlendMode: 'soft-light' },
   volumen: { experimental_backgroundImage: 'linear-gradient(to bottom, rgba(255,255,255,0.08), rgba(0,0,0,0.12))' },

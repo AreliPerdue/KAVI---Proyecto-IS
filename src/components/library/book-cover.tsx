@@ -2,7 +2,7 @@ import { Image } from 'expo-image';
 import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
-import { JournalCover } from '@/components/library/journal-cover';
+import { JournalEnLibreria } from '@/components/library/journal-in-library';
 import { Radius, Spacing, Typography } from '@/constants/theme';
 import { useLibraryFileUrl } from '@/hooks/use-library';
 import { useTheme } from '@/hooks/use-theme';
@@ -38,7 +38,7 @@ export function BookCover({ item, width, thumb = false, uri }: Props) {
   if (item.kind === 'journal' && item.journal) {
     return (
       <View accessible={false} importantForAccessibility="no-hide-descendants" pointerEvents="none">
-        <JournalCover portada={item.journal} ancho={width} alto={Math.round(width * 1.5)} comoLibro />
+        <JournalEnLibreria id={item.id} portada={item.journal} cara="front" ancho={width} alto={Math.round(width * 1.5)} />
       </View>
     );
   }

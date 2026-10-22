@@ -81,6 +81,9 @@ export type Herramienta = 'postit' | 'textbox' | 'image' | 'sticker' | 'shape' |
 export const FORMAS_DE_LIENZO = ['rect', 'ellipse', 'heart', 'star', 'blob'] as const;
 export type FormaDeLienzo = (typeof FORMAS_DE_LIENZO)[number];
 
+/** El fondo de una página del lienzo: un color o el material de una tapa del Journal con su color (T342, T346). */
+export type FondoDePagina = string | { color: string; material: 'leather' | 'linen' | 'velvet' | 'wood' | 'fabric' | 'parchment' };
+
 export type MensajeAlMotor =
   | { type: 'open'; format: 'pdf' | 'epub'; url: string; position?: Posicion; mode?: FormaDeLeer }
   /**
@@ -90,9 +93,21 @@ export type MensajeAlMotor =
   | { type: 'openBegin'; format: 'pdf' | 'epub'; size: number; position?: Posicion; mode?: FormaDeLeer }
   | { type: 'openChunk'; data: string }
   /** El lienzo creativo (13h, RF-CC4; T351): páginas en blanco 1 : √2 que arma el motor. */
-  | { type: 'openCanvas'; orientation: 'portrait' | 'landscape'; pages: number; mode?: FormaDeLeer }
+  | {
+      type: 'openCanvas';
+      orientation: 'portrait' | 'landscape';
+      pages: number;
+      mode?: FormaDeLeer;
+      /** Alto ÷ ancho de una hoja de otra forma, con el alto de A5: el lomo de un Journal (T346). */
+      aspect?: number;
+    }
   /** El color de las páginas del lienzo (RF-CC12; T342); `null`, papel blanco. */
-  | { type: 'canvasBackground'; color: string | null; /** El color de cada página que tenga uno propio (hojear un Journal; T347). */ pages?: Record<string, string> }
+  | {
+      type: 'canvasBackground';
+      color: FondoDePagina | null;
+      /** El fondo de cada página que tenga uno propio (hojear un Journal; T347). */
+      pages?: Record<string, FondoDePagina>;
+    }
   /** Exportar una página del lienzo como PNG de `width` px (RF-CC25; T342). Contesta `exported`. */
   | { type: 'export'; width?: number; page?: number }
   | { type: 'openEnd' }

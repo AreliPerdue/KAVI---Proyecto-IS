@@ -12,7 +12,8 @@ import { useCreateJournal, useLibraryItem, useUpdateLibraryItem } from '@/hooks/
 import { useMyProfile } from '@/hooks/use-profile';
 import { useTheme } from '@/hooks/use-theme';
 import { useT } from '@/i18n';
-import { lomoDeJournal, ENCUADERNACIONES, nombreDeAutora, MATERIALES, PAGINAS, paginasValidas, PORTADA_POR_OMISION, type PortadaDeJournal, portadaValida } from '@/lib/library/journal';
+import { useDecoracionDeJournal } from '@/hooks/use-journal-covers';
+import { proporcionDeCara, ENCUADERNACIONES, nombreDeAutora, MATERIALES, PAGINAS, paginasValidas, PORTADA_POR_OMISION, type PortadaDeJournal, portadaValida } from '@/lib/library/journal';
 import { useSnackbar } from '@/providers';
 
 type ColorDe = 'material' | 'accent' | 'edges' | 'back';
@@ -35,6 +36,8 @@ export default function JournalEditScreen() {
   const avisar = useSnackbar();
   const existente = useLibraryItem(id ?? '');
   const crear = useCreateJournal();
+  // Lo decorado se queda al cambiar forma, encuadernación o material (RF-JC1): se ve en la vista previa (T346).
+  const decoracion = useDecoracionDeJournal(id ?? null);
   const autora = nombreDeAutora(useMyProfile().data);
   const actualizar = useUpdateLibraryItem();
 
@@ -106,9 +109,22 @@ export default function JournalEditScreen() {
         {/* La vista previa: el cuaderno, que se gira para ver su portada, su lomo o su contraportada. */}
         <View style={[styles.vista, { height: altoPortada + Spacing.xl }]}>
           {cara === 'spine' ? (
-            <JournalCover portada={portada} cara="spine" ancho={lomoDeJournal(paginas)} alto={altoPortada} etiqueta={j.faces.spine} />
+            <JournalCover
+              portada={portada}
+              cara="spine"
+              ancho={altoPortada / proporcionDeCara(portada.orientation, 'spine', paginas)}
+              alto={altoPortada}
+              etiqueta={j.faces.spine}
+              decoracion={decoracion.spine}
+            />
           ) : (
-            <JournalCover portada={portada} cara={cara} ancho={anchoPortada} etiqueta={j.a11y(titulo || j.defaultTitle, j.bindings[portada.binding], j.materials[portada.material])} />
+            <JournalCover
+              portada={portada}
+              cara={cara}
+              ancho={anchoPortada}
+              etiqueta={j.a11y(titulo || j.defaultTitle, j.bindings[portada.binding], j.materials[portada.material])}
+              decoracion={decoracion[cara]}
+            />
           )}
         </View>
         <Segmented

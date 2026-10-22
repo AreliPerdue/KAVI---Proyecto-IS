@@ -79,7 +79,7 @@
   incluidas en la app (6 materiales, unos pocos cientos de KB en total) para que el Journal se vea sin red.
 - Las texturas finales salen del muestrario de Areli: Claude las limpia, las pasa a grises, las hace tileables
   (sin costuras ni repetición evidente) y las prueba sobre un A5 completo antes de incluirlas.
-- **Hecho T352 (14 oct 2026):** las seis texturas están en `assets/library/materials/` (gris, media 0.5, repetibles
+- **Hecho T352 (14 oct 2026):** las seis texturas están en `public/reader/lienzo/materiales/` (desde T346; antes en `assets/library/materials/`; gris, media 0.5, repetibles
   por los cuatro lados) y se pintan con `background-blend-mode: soft-light` sobre el color del material; las genera
   `scripts/journal/texturas.cjs` desde el muestrario.
 - Una persona puede tener **varios Journals**; cada uno es su propia pieza con su portada.
@@ -91,6 +91,23 @@
   del acento); `journal/edit` crea y edita por pasos y `journal/[id]` gira el objeto. En la librería, "Nuevo Journal"
   y el Journal en la cuadrícula y en el librero. **Libro real** queda para T347, cuando el Journal tenga páginas que
   hojear.
+- **Hecho J2 (T346, 22 oct 2026):** cada cara decorada es un lienzo de `library_canvases` con contexto `cover` y su
+  cara en `face` (migración `20261022100000`: una por cara y Journal; probada en PGlite), en vez de documentos dentro
+  de `journal`: así se decora con el mismo editor, deshacer y cola sin red que las páginas (13h, RF-CC3).
+  - En la pantalla del Journal, "Decorar portada / lomo / contraportada" abre esa cara (la primera vez, en blanco).
+    Decorar es opcional (RF-JC2); el paso 4 de RF-JC1 vive ahí, después de crear el Journal.
+  - El lienzo de una tapa tiene la forma de su cara (el lomo, alto y angosto con la proporción del librero, que
+    engorda con las páginas) y su fondo es el material del Journal: el motor pinta la textura con `soft-light` sobre
+    el color. No se cambia el fondo ni se guarda como plantilla o se exporta. Un texto nuevo sale claro u oscuro según
+    el material.
+  - Lo decorado se ve encima del material y debajo del espiral o el hilo: en la librería, el librero, la pantalla del
+    Journal y la vista previa de "Editar Journal". Cambiar material, color o encuadernación no lo toca (RF-JC1).
+  - **Impreso** (RF-JC11) es como se ven hoy las piezas, a color encima; hundido, relieve y recortado son T348.
+  - **El espiral no tiene lomo que decorar** (RF-JC4: su borde es el espiral): ahí no aparece "Decorar lomo".
+  - **Al hojear** abre con la portada y cierra con la contraportada, con su material y lo decorado. El espiral o el
+    hilo en el borde de las hojas al hojear queda pendiente (criterio de §8).
+  - Las texturas se mudaron a `public/reader/lienzo/materiales/` para que la app y el motor usen las mismas (en el
+    teléfono van empaquetadas con el motor, como los assets del lienzo).
 
 ## 7. Fases propuestas
 

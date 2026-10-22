@@ -1,5 +1,5 @@
 /** El Journal como objeto (spec 13i, RF-JC1 – RF-JC9; T345). */
-import { cabeOtraPagina, conAutora, contraportada, lomoDeJournal, nombreDeAutora, paginasEnOrden, paraHojear, PAGINAS, paginasValidas, PORTADA_POR_OMISION, portadaValida } from '@/lib/library/journal';
+import { cabeOtraPagina, conAutora, contraportada, fondoDeCara, lomoDeJournal, nombreDeAutora, paginasEnOrden, paraHojear, proporcionDeCara, tapasDe, PAGINAS, paginasValidas, PORTADA_POR_OMISION, portadaValida } from '@/lib/library/journal';
 import { grosorDeLomo } from '@/lib/library/spines';
 
 it('una portada rota vuelve a lo de omisión: A5 vertical, tapa dura, cuero gris y cantos blancos', () => {
@@ -73,5 +73,42 @@ describe('páginas (T347)', () => {
     ]);
     expect(fondos).toEqual({ '2': '#112233' });
     expect(paraHojear([]).doc.pages).toBe(1);
+  });
+});
+
+describe('tapas (T346)', () => {
+  const el = (id: string) => ({ id, type: 'textbox' as const, page: 1, x: 0, y: 0, w: 0.5, ar: 0.3, rot: 0, z: 1, locked: false, group: null, style: {}, content: { text: id } });
+  const portada = portadaValida({ material: 'wood', color: '#6B3E26', back: { material: 'linen', color: '#112233' } });
+
+  it('cada cara tiene a lo más una tapa, y las tapas no son páginas', () => {
+    const lienzos = [
+      { id: 'p', context: 'journal', face: null, created_at: '1' },
+      { id: 'f', context: 'cover', face: 'front', created_at: '2' },
+      { id: 's', context: 'cover', face: 'spine', created_at: '3' },
+    ];
+    expect(Object.fromEntries(Object.entries(tapasDe(lienzos)).map(([k, v]) => [k, v?.id]))).toEqual({ front: 'f', spine: 's' });
+    expect(paginasEnOrden(lienzos).map((l) => l.id)).toEqual(['p']);
+  });
+
+  it('la portada es A5; el lomo, alto y angosto como en el librero, y engorda con las páginas', () => {
+    expect(proporcionDeCara('portrait', 'front', 120)).toBeCloseTo(Math.SQRT2);
+    expect(proporcionDeCara('landscape', 'back', 120)).toBeCloseTo(1 / Math.SQRT2);
+    expect(proporcionDeCara('portrait', 'spine', 400)).toBeLessThan(proporcionDeCara('portrait', 'spine', 40));
+  });
+
+  it('se decora sobre su material: la contraportada, el suyo si lo tiene', () => {
+    expect(fondoDeCara(portada, 'front')).toEqual({ material: 'wood', color: '#6B3E26' });
+    expect(fondoDeCara(portada, 'spine')).toEqual({ material: 'wood', color: '#6B3E26' });
+    expect(fondoDeCara(portada, 'back')).toEqual({ material: 'linen', color: '#112233' });
+  });
+
+  it('hojear abre con la portada y cierra con la contraportada, cada una con su material y lo decorado', () => {
+    const { doc, fondos } = paraHojear([{ doc: { pages: 1, elements: [el('a')] } }], { portada, front: { doc: { pages: 1, elements: [el('t')] } } });
+    expect(doc.pages).toBe(3);
+    expect(doc.elements.map((e) => [e.id, e.page])).toEqual([
+      ['t', 1],
+      ['a', 2],
+    ]);
+    expect(fondos).toEqual({ '1': { material: 'wood', color: '#6B3E26' }, '3': { material: 'linen', color: '#112233' } });
   });
 });

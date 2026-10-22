@@ -662,6 +662,7 @@ export const library: Dictionary['library'] = {
     removePageConfirm: 'Delete',
     pageRemoved: 'Page deleted.',
     flip: 'Flip through',
+    decorate: { front: 'Decorate front cover', spine: 'Decorate spine', back: 'Decorate back cover' } as Record<'front' | 'spine' | 'back', string>,
     flipLoading: 'Opening your journal…',
     previous: 'Previous page',
     next: 'Next page',

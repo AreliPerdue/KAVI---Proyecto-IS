@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withTiming } from 'react-native-reanimated';
 
-import { JournalCover } from './journal-cover';
+import { JournalEnLibreria } from './journal-in-library';
 import { etiqueta, type LibraryItemProps, RETARDO_MS } from './library-item';
 
 import { AppText } from '@/components/ui';
@@ -55,7 +55,7 @@ export function BookSpine({ item }: { item: PiezaDeLomo }) {
   if (item.kind === 'journal' && item.journal) {
     return (
       <View accessible={false} importantForAccessibility="no-hide-descendants" pointerEvents="none" testID="lomo" style={{ width: grosor, height: alto }}>
-        <JournalCover portada={item.journal} cara="spine" ancho={grosor} alto={alto} />
+        <JournalEnLibreria id={item.id} portada={item.journal} cara="spine" ancho={grosor} alto={alto} />
       </View>
     );
   }

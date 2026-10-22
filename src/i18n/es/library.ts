@@ -693,6 +693,8 @@ export const library = {
     removePageConfirm: 'Borrar',
     pageRemoved: 'Página borrada.',
     flip: 'Hojear',
+    // Decorar sus tapas (13i, RF-JC10; T346).
+    decorate: { front: 'Decorar portada', spine: 'Decorar lomo', back: 'Decorar contraportada' } as Record<'front' | 'spine' | 'back', string>,
     flipLoading: 'Abriendo tu Journal…',
     previous: 'Página anterior',
     next: 'Página siguiente',
