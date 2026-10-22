@@ -245,6 +245,39 @@ describe('apariencia (NFR-18)', () => {
 });
 
 
+/** Colores para daltonismo (spec 05, RF-T7): del dispositivo y apagado por omisión. */
+describe('colores para daltonismo (RF-T7)', () => {
+  it('arranca apagado', () => {
+    const { store: { usePreferencesStore } } = fresh();
+    expect(usePreferencesStore.getState().colorblind).toBe(false);
+  });
+
+  it('se recuerda para la proxima sesion sin perder lo demas', async () => {
+    const { store: { usePreferencesStore } } = fresh();
+    usePreferencesStore.getState().setAppearance('light');
+    usePreferencesStore.getState().setColorblind(true);
+
+    const otra = fresh();
+    await otra.store.usePreferencesStore.getState().hydrate();
+
+    expect(otra.store.usePreferencesStore.getState().colorblind).toBe(true);
+    expect(otra.store.usePreferencesStore.getState().appearance).toBe('light');
+  });
+
+  it('no se pierde si se enciende mientras se leen las preferencias', async () => {
+    mockAlmacen.set('kavi.preferences', JSON.stringify({ timeFormat: '24h', colorblind: false }));
+    mockLecturaLenta = true;
+    const { store: { usePreferencesStore } } = fresh();
+
+    const hidratando = usePreferencesStore.getState().hydrate();
+    usePreferencesStore.getState().setColorblind(true);
+    mockSoltarLectura?.();
+    await hidratando;
+
+    expect(usePreferencesStore.getState().colorblind).toBe(true);
+  });
+});
+
 /**
  * Leer las preferencias del disco es asincrono y en un telefono tarda lo suficiente
  * para que de tiempo a tocar un ajuste antes de que la lectura vuelva. Si `hydrate`

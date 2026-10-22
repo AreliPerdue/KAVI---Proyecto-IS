@@ -5,7 +5,9 @@ import { Pressable, StyleSheet, View } from 'react-native';
 
 import { AppText, Button, LoadingState, Sheet, TextField, ThemeIcon } from '@/components/ui';
 import { IconSize, IconStroke, Radius, Spacing } from '@/constants/theme';
-import { useTheme } from '@/hooks/use-theme';
+import { dimensionColor } from '@/constants/dimensions';
+import { useColorblind, useTheme } from '@/hooks/use-theme';
+import { themeColor } from '@/lib/color-vision';
 import { useThemes, useThemesByDimension } from '@/hooks/use-themes';
 import type { Theme } from '@/types/domain';
 import { useLanguage, useT } from '@/i18n';
@@ -28,6 +30,7 @@ export function ThemePicker({
   onSelect: (theme: Theme | null) => void;
 }) {
   const theme = useTheme();
+  const colorblind = useColorblind();
   const router = useRouter();
   const themes = useThemes();
   const tx = useT();
@@ -65,7 +68,7 @@ export function ThemePicker({
       {filtered.map(({ dimension, themes: list }) => (
         <View key={dimension.key} style={styles.group}>
           <View style={styles.groupHeader}>
-            <View style={[styles.dimensionDot, { backgroundColor: dimension.color }]} />
+            <View style={[styles.dimensionDot, { backgroundColor: dimensionColor(dimension.key, colorblind) }]} />
             <AppText variant="label" color="textSecondary">
               {dimensionName(dimension.key, lang)}
             </AppText>
@@ -73,6 +76,7 @@ export function ThemePicker({
           <View style={styles.grid}>
             {list.map((t) => {
               const selected = t.id === value;
+              const color = themeColor(t, colorblind);
               return (
                 <Pressable
                   key={t.id}
@@ -82,10 +86,10 @@ export function ThemePicker({
                   onPress={() => onSelect(t)}
                   style={({ pressed }) => [
                     styles.tile,
-                    { borderColor: selected ? t.color : theme.border, backgroundColor: selected ? `${t.color}22` : theme.surface },
+                    { borderColor: selected ? color : theme.border, backgroundColor: selected ? `${color}22` : theme.surface },
                     pressed ? styles.pressed : null,
                   ]}>
-                  <ThemeIcon name={t.icon} color={t.color} size={IconSize.action} />
+                  <ThemeIcon name={t.icon} color={color} size={IconSize.action} />
                   <AppText variant="caption" numberOfLines={2} style={styles.tileLabel}>
                     {themeName(t, lang)}
                   </AppText>

@@ -67,3 +67,8 @@ export function hexAHsv(hex: string): Hsv {
   }
   return { h: (h + 360) % 360, s: max ? d / max : 0, v: max };
 }
+
+/** La letra (o el icono) que se lee mejor sobre un color: blanco o tinta, el de más contraste (RF-T8). */
+export function textOn(hex: string): string {
+  return contrastRatio(hex, '#FFFFFF') >= contrastRatio(hex, '#131313') ? '#FFFFFF' : '#131313';
+}

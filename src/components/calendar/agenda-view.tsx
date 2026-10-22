@@ -3,11 +3,12 @@ import { FlatList, type NativeScrollEvent, type NativeSyntheticEvent, Pressable,
 
 import { activityColor, tint } from './activity-style';
 import { groupByDay } from './group-by-day';
+import { PersonInitial } from './person-initial';
 
 import { useLanguage } from '@/i18n';
 import { AppText, ThemeIcon } from '@/components/ui';
 import { Radius, Spacing } from '@/constants/theme';
-import { useTheme } from '@/hooks/use-theme';
+import { useColorblind, useTheme } from '@/hooks/use-theme';
 import { formatTimeRange, fromDayKey, isToday, toDayKey } from '@/lib/dates';
 import type { Activity } from '@/types/domain';
 
@@ -33,6 +34,7 @@ type Dia = { key: string; date: Date; activities: Activity[] };
 export function AgendaView({ from, to, activities, onPressActivity, isSharedActivity, onScroll }: AgendaViewProps) {
   const lang = useLanguage(); // fechas en el idioma activo (spec 12, RF-I2)
   const theme = useTheme();
+  const colorblind = useColorblind();
 
   const dias = useMemo<Dia[]>(() => {
     const byDay = groupByDay(activities);
@@ -78,6 +80,7 @@ export function AgendaView({ from, to, activities, onPressActivity, isSharedActi
                   pressed ? styles.pressed : null,
                 ]}>
                 <ThemeIcon name={a.icon} color={color} size={14} />
+                {colorblind && compartida ? <PersonInitial name={a.owner_name} color={color} /> : null}
                 <AppText variant="caption" numberOfLines={1} style={styles.titulo}>
                   {a.title}
                 </AppText>

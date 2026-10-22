@@ -35,7 +35,8 @@ import { usePreferencesStore } from '@/store/preferences-store';
 import { useListItemsByDate, useListMutations, useLists, useListRunsByDate, useOverdueListItems } from '@/hooks/use-lists';
 import { rutinasEnRango } from '@/lib/list-runs';
 import { useShrinkOnScroll } from '@/hooks/use-shrink-on-scroll';
-import { useTheme } from '@/hooks/use-theme';
+import { useColorblind, useTheme } from '@/hooks/use-theme';
+import { withSafeColor } from '@/lib/color-vision';
 import { fromDayKey, rangeForView, shiftAnchor, toDayKey } from '@/lib/dates';
 import { useAuth, useSnackbar } from '@/providers';
 import { extendRecurrenceHorizon } from '@/services/activities';
@@ -46,6 +47,7 @@ import { useLanguage, useT } from '@/i18n';
 /** Calendario: la estrella (P1). Vistas mes/semana/día, personas superpuestas, FAB (spec 04). */
 export default function CalendarScreen() {
   const theme = useTheme();
+  const colorblind = useColorblind();
   const tx = useT();
   const lang = useLanguage();
   const router = useRouter();
@@ -280,10 +282,12 @@ export default function CalendarScreen() {
     if (filters.onlyListItems) {
       return derivadas.filter(isListDerived);
     }
-    const propias = [...(activities.data ?? []), ...derivadas];
+    const todas = [...(activities.data ?? []), ...derivadas];
+    // Con el modo daltonismo, cada actividad toma el color de su dimensión (RF-T8); "por persona" manda encima.
+    const propias = colorblind ? todas.map(withSafeColor) : todas;
     const all = [...applyFilters(propias, filters), ...overlayActivities];
     return byPerson ? all.map((a) => ({ ...a, color: colorOf(a.owner_id) })) : all;
-  }, [activities.data, filters, derivadas, overlayActivities, byPerson, colorOf]);
+  }, [activities.data, filters, derivadas, overlayActivities, byPerson, colorOf, colorblind]);
   const isShared = (a: Activity) => a.owner_id !== userId;
   const activeFilterCount = filters.dimensions.length + filters.themeIds.length;
   const showEmpty = activities.isSuccess && data.length === 0;

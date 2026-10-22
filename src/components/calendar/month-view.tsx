@@ -9,7 +9,8 @@ import { isOverlayActivity } from './overlay';
 import { useLanguage, useT } from '@/i18n';
 import { AppText, ThemeIcon } from '@/components/ui';
 import { Radius, Spacing, type ThemeColors } from '@/constants/theme';
-import { useTheme } from '@/hooks/use-theme';
+import { useColorblind, useTheme } from '@/hooks/use-theme';
+import { initialOf } from '@/lib/color-vision';
 import { formatDayTitle, formatTime, fromIso, isSameMonth, isToday, monthGridDays, toDayKey, weekdayLabels } from '@/lib/dates';
 import type { Activity } from '@/types/domain';
 
@@ -102,6 +103,7 @@ export function cellLayout(
 const DayCell = memo(function DayCell({ date, inMonth, weekend, activities, theme, metrics, onPress }: DayCellProps) {
   // Las fechas y horas siguen el idioma activo (spec 12, RF-I2).
   const lang = useLanguage();
+  const colorblind = useColorblind();
   const tx = useT();
   const today = isToday(date);
   const count = activities.length;
@@ -169,6 +171,9 @@ const DayCell = memo(function DayCell({ date, inMonth, weekend, activities, them
             // Un pendiente de lista no lleva hora: lleva su círculo, que de un vistazo dice
             // que eso no es una cita sino algo por hacer (RF-L12).
             const esPendiente = isListDerived(activity);
+            // Con el modo daltonismo, el icono del tema y la inicial de otra persona (RF-T8, RF-T10).
+            const conIcono = esPendiente || (colorblind && !!activity.icon);
+            const inicial = colorblind && foreign ? initialOf(activity.owner_name) : null;
             return (
               <View
                 key={activity.id}
@@ -178,8 +183,13 @@ const DayCell = memo(function DayCell({ date, inMonth, weekend, activities, them
                   foreign ? { borderStyle: 'dashed', borderWidth: 1, borderColor: color, borderLeftWidth: 2 } : null,
                 ]}>
                 <AppText variant="caption" numberOfLines={1} color={inMonth ? 'text' : 'textSecondary'}>
-                  {esPendiente ? <ThemeIcon name={activity.icon} color={color} size={11} /> : null}
-                  {esPendiente ? ' ' : null}
+                  {conIcono ? <ThemeIcon name={activity.icon} color={color} size={11} /> : null}
+                  {conIcono ? ' ' : null}
+                  {inicial ? (
+                    <AppText variant="micro" style={styles.inicial}>
+                      {inicial}{' '}
+                    </AppText>
+                  ) : null}
                   {showTime && !activity.all_day ? (
                     // La hora cede un punto frente al título: es el dato de apoyo, y
                     // cada píxel que suelta es una letra más de título que se alcanza
@@ -323,6 +333,7 @@ export function MonthView({ anchor, activities, onSelectDay }: MonthViewProps) {
 }
 
 const styles = StyleSheet.create({
+  inicial: { fontWeight: '700' },
   container: { flex: 1 },
   weekHeader: { flexDirection: 'row', borderBottomWidth: StyleSheet.hairlineWidth, paddingBottom: Spacing.xs },
   weekHeaderText: { flex: 1, textAlign: 'center' },

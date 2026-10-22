@@ -91,6 +91,8 @@ describe('variante micro (kavi-design §2)', () => {
     '/components/calendar/month-view.tsx',
     '/components/calendar/agenda-view.tsx',
     '/components/calendar/activity-block.tsx',
+    // La inicial de otra persona sobre su bloque (spec 05, RF-T10): pegada al título, como la hora.
+    '/components/calendar/person-initial.tsx',
     '/components/lists/day-items-strip.tsx',
     // Fuera del calendario, pendientes de decidir (ver reports/pruebas-pendientes.md):
     '/app/(app)/progress.tsx',

@@ -5,7 +5,9 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { ModalHeader } from '@/components/modal-header';
 import { AppText, Button, EmptyState, ErrorState, LoadingState, Screen, ThemeIcon } from '@/components/ui';
 import { IconSize, IconStroke, Radius, Spacing } from '@/constants/theme';
-import { useTheme } from '@/hooks/use-theme';
+import { useColorblind, useTheme } from '@/hooks/use-theme';
+import { textOn } from '@/lib/color';
+import { themeColor } from '@/lib/color-vision';
 import { useThemeMutations, useThemes } from '@/hooks/use-themes';
 import { useConfirm, useSnackbar } from '@/providers';
 import type { Theme } from '@/types/domain';
@@ -19,6 +21,7 @@ export default function ThemesScreen() {
   const tx = useT();
   const lang = useLanguage();
   const theme = useTheme();
+  const colorblind = useColorblind();
   const router = useRouter();
   const confirm = useConfirm();
   const showSnackbar = useSnackbar();
@@ -33,8 +36,8 @@ export default function ThemesScreen() {
       accessibilityLabel={`${themeName(item, lang)}, ${dimensionName(item.dimension, lang)}`}
       onPress={() => router.push({ pathname: '/(app)/theme/new', params: { id: item.id } })}
       style={({ pressed }) => [styles.row, { borderColor: theme.border }, pressed ? { backgroundColor: theme.surfaceAlt } : null]}>
-      <View style={[styles.swatch, { backgroundColor: item.color }]}>
-        <ThemeIcon name={item.icon} color="#FFFFFF" size={IconSize.inline} />
+      <View style={[styles.swatch, { backgroundColor: themeColor(item, colorblind) }]}>
+        <ThemeIcon name={item.icon} color={colorblind ? textOn(themeColor(item, colorblind)) : '#FFFFFF'} size={IconSize.inline} />
       </View>
       <View style={styles.rowText}>
         <AppText variant="bodyStrong">{themeName(item, lang)}</AppText>

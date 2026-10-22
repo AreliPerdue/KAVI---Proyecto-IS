@@ -8,7 +8,8 @@ import { AppText, Avatar, Chip, EmptyState, ErrorState, IconButton, LoadingState
 import { IconSize, IconStroke, Radius, Spacing } from '@/constants/theme';
 import { useAvailability } from '@/hooks/use-availability';
 import { useContacts } from '@/hooks/use-connections';
-import { useTheme } from '@/hooks/use-theme';
+import { useColorblind, useTheme } from '@/hooks/use-theme';
+import { PEOPLE_PALETTE, SAFE_PEOPLE_PALETTE } from '@/lib/color-vision';
 import { clampToDay, findFreeSlots, formatHourLabel, formatShortDate, formatTime, formatWeekTitle, fromIso, isToday, minutesSinceMidnight, rangeForView, shiftAnchor, toDayKey, weekdayShort, weekDays } from '@/lib/dates';
 import { useAuth } from '@/providers';
 import { useLanguage, useT } from '@/i18n';
@@ -30,6 +31,7 @@ const DURATIONS: readonly SegmentedOption<'30' | '60' | '90' | '120'>[] = [
 /** Disponibilidad de contactos + Encontrar horario (RF-S8, RF-S9). */
 export default function AvailabilityScreen() {
   const theme = useTheme();
+  const colorblind = useColorblind();
   const tx = useT();
   const lang = useLanguage();
   const router = useRouter();
@@ -56,7 +58,7 @@ export default function AvailabilityScreen() {
 
   const colorFor = (id: string) => {
     if (id === userId) return theme.ink;
-    const palette = ['#2196F3', '#9C27B0', '#FF9800', '#009688', '#E91E63'];
+    const palette = colorblind ? SAFE_PEOPLE_PALETTE : PEOPLE_PALETTE;
     const index = selected.indexOf(id);
     return palette[index % palette.length] ?? theme.neutralActivity;
   };

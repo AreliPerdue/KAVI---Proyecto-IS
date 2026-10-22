@@ -13,7 +13,9 @@ import { useActivityReminders, useReminderMutations } from '@/hooks/use-reminder
 import { useLibraryItem } from '@/hooks/use-library';
 import { useActivityShares, useShareMutations } from '@/hooks/use-shares';
 import { useWorkoutByActivity, useWorkoutMutations } from '@/hooks/use-workouts';
-import { useTheme } from '@/hooks/use-theme';
+import { useColorblind, useTheme } from '@/hooks/use-theme';
+import { textOn } from '@/lib/color';
+import { withSafeColor } from '@/lib/color-vision';
 import { formatDayTitle, formatTimeRange, fromIso } from '@/lib/dates';
 import { describeRecurrence, parseRRule } from '@/lib/recurrence';
 import { useAuth, useConfirm, useSnackbar } from '@/providers';
@@ -36,6 +38,7 @@ type PendingAction = 'edit' | 'delete';
 /** Hoja de detalle de actividad: editar y eliminar, con "solo esta / toda la serie" (RF-C7, RF-C8). */
 export default function ActivityDetailScreen() {
   const theme = useTheme();
+  const colorblind = useColorblind();
   const tx = useT();
   const lang = useLanguage();
   const router = useRouter();
@@ -78,7 +81,7 @@ export default function ActivityDetailScreen() {
   }
 
   const data = activity.data;
-  const color = activityColor(data, theme);
+  const color = activityColor(colorblind ? withSafeColor(data) : data, theme);
   const invitados = shares.data ?? [];
   const porRespuesta = {
     accepted: invitados.filter((s) => s.status === 'accepted'),
@@ -141,7 +144,7 @@ export default function ActivityDetailScreen() {
       <ModalHeader title={tx.calendar.detail.title} />
       <View style={styles.hero}>
         <View style={[styles.iconBadge, { backgroundColor: color }]}>
-          <ThemeIcon name={data.icon} color="#FFFFFF" size={IconSize.action} />
+          <ThemeIcon name={data.icon} color={colorblind ? textOn(color) : '#FFFFFF'} size={IconSize.action} />
         </View>
         <View style={styles.heroText}>
           <AppText variant="title">{data.title}</AppText>

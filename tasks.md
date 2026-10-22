@@ -1199,10 +1199,14 @@ Decisiones B1–B9 aprobadas el 12 oct 2026 (T274); ver la tabla de la spec 13 �
   por escala, opción o año, orden y portada); en la librería, "Mis reseñas" en lugar de "Fichas" (los diseños,
   desde su encabezado).
 
-### Modo daltonismo (spec 05 RF-T7 – RF-T11, propuesta del 19 oct 2026; falta aprobarla)
-- [ ] T357 Interruptor "Colores para daltonismo" en Presentación; paleta de Paul Tol por dimensión en calendario,
+### Modo daltonismo (spec 05 RF-T7 – RF-T11, aprobada el 22 oct 2026)
+- [x] T357 Interruptor "Colores para daltonismo" en Presentación; paleta de Paul Tol por dimensión en calendario,
   filtros, leyendas y Fitness; éxito en azul y estados con icono; inicial en bloques de otras personas.
   (RF-T7 – RF-T11, NFR de accesibilidad) Dep: —
+  **Hecho (22 oct 2026):** `colorblind` en `preferences-store` y en el contexto del tema (`useColorblind`,
+  `ColorblindColors`); `dimensionColor`, `lib/color-vision.ts` (`withSafeColor`, `themeColor`, `initialOf`) y
+  `textOn` en `lib/color.ts`; `PersonInitial` en los bloques, la agenda y los chips del mes; el interruptor en
+  Perfil → Presentación. Éxito en `#004488` / `#77AADD` por contraste (ver spec 05, RF-T9).
 
 ### Atajos del calendario (spec 04 RF-C19 – RF-C21, propuesta del 14 oct 2026; falta aprobarla)
 - [ ] T353 Fila de atajos personalizable arriba del calendario: agregar, quitar, reordenar y ocultar; Seguir leyendo,

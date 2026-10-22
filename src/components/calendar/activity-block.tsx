@@ -2,11 +2,12 @@ import { memo } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { activityColor, tint } from './activity-style';
+import { PersonInitial } from './person-initial';
 
 import { useLanguage, useT } from '@/i18n';
 import { AppText, ThemeIcon } from '@/components/ui';
 import { Radius, Spacing } from '@/constants/theme';
-import { useTheme } from '@/hooks/use-theme';
+import { useColorblind, useTheme } from '@/hooks/use-theme';
 import { formatTimeRange } from '@/lib/dates';
 import type { Activity } from '@/types/domain';
 
@@ -29,6 +30,7 @@ export const ActivityBlock = memo(function ActivityBlock({ activity, onPress, co
   const lang = useLanguage();
   const tx = useT();
   const theme = useTheme();
+  const colorblind = useColorblind();
   const color = activityColor(activity, theme);
   const time = formatTimeRange(activity.start_at, activity.end_at, activity.all_day, lang);
 
@@ -45,7 +47,9 @@ export const ActivityBlock = memo(function ActivityBlock({ activity, onPress, co
         pressed ? styles.pressed : null,
       ]}>
       <View style={styles.row}>
-        {!compact ? <ThemeIcon name={activity.icon} color={color} size={12} /> : null}
+        {/* Con el modo daltonismo el icono va siempre: los temas de una dimensión comparten color (RF-T8). */}
+        {!compact || colorblind ? <ThemeIcon name={activity.icon} color={color} size={compact ? 10 : 12} /> : null}
+        {colorblind && shared ? <PersonInitial name={activity.owner_name} color={color} /> : null}
         {/*
           Título en `caption` y no en `label`: a 14 px un bloque de media hora cabía
           apenas una línea y "Gimnasio · pierna" se cortaba a la mitad. Calendar y

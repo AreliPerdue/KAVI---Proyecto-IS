@@ -4,7 +4,8 @@ import { ThemePicker } from './theme-picker';
 
 import { FieldButton, ThemeIcon } from '@/components/ui';
 import { IconSize } from '@/constants/theme';
-import { useTheme } from '@/hooks/use-theme';
+import { useColorblind, useTheme } from '@/hooks/use-theme';
+import { themeColor } from '@/lib/color-vision';
 import { useThemes } from '@/hooks/use-themes';
 import type { Theme } from '@/types/domain';
 import { useLanguage, useT } from '@/i18n';
@@ -13,6 +14,7 @@ import { themeName } from '@/lib/theme-name';
 /** Campo "Tema" del formulario: muestra icono+color y abre el picker. */
 export function ThemeField({ value, onChange }: { value: string | null; onChange: (theme: Theme | null) => void }) {
   const theme = useTheme();
+  const colorblind = useColorblind();
   const tx = useT();
   const lang = useLanguage();
   const [open, setOpen] = useState(false);
@@ -26,7 +28,7 @@ export function ThemeField({ value, onChange }: { value: string | null; onChange
         value={selected ? themeName(selected, lang) : null}
         placeholder={tx.themes.picker.fieldPlaceholder}
         onPress={() => setOpen(true)}
-        leading={<ThemeIcon name={selected?.icon ?? 'tag'} color={selected?.color ?? theme.neutralActivity} size={IconSize.inline} />}
+        leading={<ThemeIcon name={selected?.icon ?? 'tag'} color={selected ? themeColor(selected, colorblind) : theme.neutralActivity} size={IconSize.inline} />}
       />
       <ThemePicker
         visible={open}

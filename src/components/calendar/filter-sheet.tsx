@@ -1,9 +1,12 @@
 import { StyleSheet, View } from 'react-native';
 
 import { AppText, Button, Chip, Sheet, SwitchRow, ThemeIcon } from '@/components/ui';
-import { DIMENSIONS } from '@/constants/dimensions';
+import { DIMENSIONS, dimensionColor } from '@/constants/dimensions';
 import { Spacing } from '@/constants/theme';
+import { useColorblind } from '@/hooks/use-theme';
 import { useThemes } from '@/hooks/use-themes';
+import { textOn } from '@/lib/color';
+import { themeColor } from '@/lib/color-vision';
 import { type CalendarFilters, hasActiveFilters } from '@/store/calendar-store';
 import { useLanguage, useT } from '@/i18n';
 import { dimensionName, themeName } from '@/lib/theme-name';
@@ -23,6 +26,7 @@ export function FilterSheet({
   onClear: () => void;
 }) {
   const themes = useThemes();
+  const colorblind = useColorblind();
   const tx = useT();
   const lang = useLanguage();
   const toggle = <T,>(list: T[], item: T) => (list.includes(item) ? list.filter((x) => x !== item) : [...list, item]);
@@ -38,7 +42,7 @@ export function FilterSheet({
             <Chip
               key={d.key}
               label={dimensionName(d.key, lang)}
-              color={d.color}
+              color={dimensionColor(d.key, colorblind)}
               selected={filters.dimensions.includes(d.key)}
               onPress={() => onChange({ ...filters, dimensions: toggle(filters.dimensions, d.key) })}
             />
@@ -53,13 +57,14 @@ export function FilterSheet({
         <View style={styles.chips}>
           {(themes.data ?? []).map((t) => {
             const selected = filters.themeIds.includes(t.id);
+            const color = themeColor(t, colorblind);
             return (
               <Chip
                 key={t.id}
                 label={themeName(t, lang)}
-                color={t.color}
+                color={color}
                 selected={selected}
-                icon={<ThemeIcon name={t.icon} color={selected ? '#FFFFFF' : t.color} size={14} />}
+                icon={<ThemeIcon name={t.icon} color={selected ? (colorblind ? textOn(color) : '#FFFFFF') : color} size={14} />}
                 onPress={() => onChange({ ...filters, themeIds: toggle(filters.themeIds, t.id) })}
               />
             );

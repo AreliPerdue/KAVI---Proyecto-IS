@@ -65,7 +65,7 @@ Clasificar actividades en un toque mediante temas predefinidos, cada uno ligado 
 - RF-T5. Los filtros del calendario usan dimensión y tema (ver RF-C11).
 - RF-T6. Si se elimina un tema propio, sus actividades conservan color/icono copiados y quedan sin tema (FK `on delete set null` + copia de estilo al guardar).
 
-### Modo daltonismo — propuesta del 19 oct 2026, falta aprobarla
+### Modo daltonismo — propuesto el 19 oct 2026, aprobado e implementado el 22 oct 2026 (T357)
 Pedido de Areli: que toda la app tenga colores amigables para personas con daltonismo.
 
 - RF-T7. **Interruptor "Colores para daltonismo"** en Perfil → Presentación, junto a claro/oscuro. Es del
@@ -86,8 +86,10 @@ Pedido de Areli: que toda la app tenga colores amigables para personas con dalto
   Con el modo encendido, **cada actividad se pinta con el color de su dimensión** (los temas de una misma
   dimensión comparten color y se distinguen por su icono), en todas las vistas, filtros, leyendas y gráficas de
   Fitness. Una actividad sin dimensión sigue en el neutro (RF-T4). La letra sobre cada color se elige por contraste.
-- RF-T9. **Colores de estado:** éxito en azul (`#4477AA`) en lugar de verde; peligro y aviso conservan rojo y
-  ámbar pero **siempre con icono o texto** (✓, ⚠, ✕), nunca solo el color.
+- RF-T9. **Colores de estado:** éxito en azul en lugar de verde; peligro y aviso conservan rojo y
+  ámbar pero **siempre con icono o texto** (✓, ⚠, ✕), nunca solo el color. El azul es `#004488` en claro y
+  `#77AADD` en oscuro (azules de Paul Tol): `#4477AA` no llega a 4.5:1 como texto (4.3:1 sobre el claro y 3.9:1
+  sobre el oscuro).
 - RF-T10. **Personas en el calendario compartido:** sus colores (los 24 de los Nobi) no alcanzan a distinguirse;
   con el modo encendido, cada bloque de otra persona lleva además **su inicial** y la leyenda de personas muestra
   nombre y color juntos.
@@ -96,6 +98,20 @@ Pedido de Areli: que toda la app tenga colores amigables para personas con dalto
 - **Criterio.** *Dado* el modo encendido, *cuando* veo una semana con actividades física y emocional, *entonces*
   se pintan `#228833` y `#EE6677` y cada bloque lleva el icono de su tema; *y cuando* lo apago, *entonces* vuelven
   a los colores de su tema.
+- **Implementación (T357, 22 oct 2026):**
+  - La preferencia `colorblind` vive en el dispositivo (`preferences-store`) y viaja por contexto junto al esquema
+    (`ThemeSchemeProvider`, `useColorblind()`), así cambia toda la pantalla a la vez; `useTheme()` entrega los
+    tokens con el éxito en azul (`ColorblindColors`).
+  - El color de cada dimensión en el modo está en `constants/dimensions.ts` (`colorblind`, `dimensionColor`);
+    `lib/color-vision.ts` pinta las actividades (`withSafeColor`) y los temas (`themeColor`) con él.
+  - Se aplica en día, tres días, semana, mes y agenda; el detalle de una actividad; los filtros; el selector y la
+    lista de temas; los puntos de las 7 dimensiones; y los colores de personas al buscar un hueco juntos.
+  - Con el modo, el icono del tema va también en el bloque angosto de la semana y en los chips del mes.
+  - La letra o el icono sobre un color se elige por contraste (`textOn`): tinta sobre ocre, cian y gris.
+  - Los bloques de otra persona llevan su inicial (`PersonInitial`). La barra de personas ya mostraba nombre y
+    color juntos.
+  - Las gráficas de Fitness ya eran monocromas (tinta), así que no cambian. Lo que la persona eligió tampoco
+    cambia (RF-T11): las listas, sus pendientes y la biblioteca conservan sus colores.
 
 ## Criterios de aceptación
 - Given el formulario de actividad, When elijo "Gimnasio", Then la actividad queda con dimensión física, color/icono del tema e `is_gym=true`.

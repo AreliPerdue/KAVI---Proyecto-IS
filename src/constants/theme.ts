@@ -54,7 +54,18 @@ export const Colors = {
 } as const;
 
 export type ColorScheme = keyof typeof Colors;
-export type ThemeColors = (typeof Colors)[ColorScheme];
+export type ThemeColors = { readonly [K in keyof typeof Colors.light]: string };
+
+/**
+ * Los tokens con el modo daltonismo encendido (spec 05, RF-T9): éxito en azul en lugar de verde, que con
+ * rojo-verde se confunde con peligro. Son los azules de Paul Tol con contraste ≥ 4.5:1 sobre cada fondo
+ * (`#4477AA` de la propuesta se queda en 4.3:1 sobre el claro y 3.9:1 sobre el oscuro). Peligro y aviso
+ * conservan su color: siempre van con icono o texto.
+ */
+export const ColorblindColors: Record<ColorScheme, ThemeColors> = {
+  light: { ...Colors.light, success: '#004488' },
+  dark: { ...Colors.dark, success: '#77AADD' },
+};
 export type ThemeColor = keyof ThemeColors;
 
 /** Familia tipográfica de la interfaz: la del sistema. */

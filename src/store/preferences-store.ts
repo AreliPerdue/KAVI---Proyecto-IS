@@ -53,6 +53,7 @@ type Prefs = {
   /** Falso solo hasta la primera vez que se abre la app. */
   visto: boolean;
   appearance: Appearance;
+  colorblind: boolean;
   selfColor: string | null;
   pinnedViews: CalendarView[];
   accesos: Accesos;
@@ -92,6 +93,8 @@ type PreferencesState = {
   visto: boolean;
   /** Apariencia elegida: seguir al sistema, clara u oscura (NFR-18). */
   appearance: Appearance;
+  /** Colores para daltonismo (spec 05, RF-T7): del dispositivo, apagado por omisión. */
+  colorblind: boolean;
   /**
    * Mi color en el calendario superpuesto (RF-S15). `null` = automático, que es el
    * color de mi Nobi y, si no tengo, el azul. Va en el dispositivo y no en el perfil
@@ -142,6 +145,7 @@ type PreferencesState = {
   setShowBirthdays: (mostrar: boolean) => void;
   marcarVisto: () => void;
   setAppearance: (valor: Appearance) => void;
+  setColorblind: (encendido: boolean) => void;
   setSelfColor: (hex: string | null) => void;
   togglePinnedView: (view: CalendarView) => void;
   setAccesos: (accesos: Accesos) => void;
@@ -186,6 +190,7 @@ export const usePreferencesStore = create<PreferencesState>((set, get) => ({
   showBirthdays: true,
   visto: false,
   appearance: DEFAULT_APPEARANCE,
+  colorblind: false,
   pinnedViews: DEFAULT_PINNED_VIEWS,
   selfColor: null,
   accesos: DEFAULT_ACCESOS,
@@ -244,6 +249,12 @@ export const usePreferencesStore = create<PreferencesState>((set, get) => ({
     elegidoEnEstaSesion.add('appearance');
     set({ appearance: valor });
     persistir({ ...get(), appearance: valor });
+  },
+
+  setColorblind: (encendido) => {
+    elegidoEnEstaSesion.add('colorblind');
+    set({ colorblind: encendido });
+    persistir({ ...get(), colorblind: encendido });
   },
 
   setSelfColor: (hex) => {
@@ -391,6 +402,7 @@ export const usePreferencesStore = create<PreferencesState>((set, get) => ({
       pinnedViews: guardado('pinnedViews', prefs?.pinnedViews ?? DEFAULT_PINNED_VIEWS),
       visto: guardado('visto', prefs?.visto ?? false),
       appearance: guardado('appearance', prefs?.appearance ?? DEFAULT_APPEARANCE),
+      colorblind: guardado('colorblind', prefs?.colorblind === true),
       selfColor: guardado('selfColor', prefs?.selfColor ?? null),
       accesos: guardado('accesos', accesosValidos(prefs?.accesos)),
       overlayRecientes: guardado('overlayRecientes', prefs?.overlayRecientes ?? {}),
@@ -414,7 +426,7 @@ export const usePreferencesStore = create<PreferencesState>((set, get) => ({
 
 /** Se guarda el conjunto entero: son dos claves y así no pueden desincronizarse. */
 function persistir(
-  estado: Pick<PreferencesState, 'timeFormat' | 'timeFormatChosen' | 'language' | 'lastWorkoutTitle' | 'showWorkouts' | 'showBirthdays' | 'visto' | 'appearance' | 'selfColor' | 'pinnedViews' | 'accesos' | 'overlayRecientes' | 'libraryView' | 'libraryOrder' | 'librarySeriesView' | 'librarySpineHeights' | 'readingModes' | 'readerTheme' | 'readerText' | 'readingLanguages' | 'readerPen' | 'recentColors'>,
+  estado: Pick<PreferencesState, 'timeFormat' | 'timeFormatChosen' | 'language' | 'lastWorkoutTitle' | 'showWorkouts' | 'showBirthdays' | 'visto' | 'appearance' | 'colorblind' | 'selfColor' | 'pinnedViews' | 'accesos' | 'overlayRecientes' | 'libraryView' | 'libraryOrder' | 'librarySeriesView' | 'librarySpineHeights' | 'readingModes' | 'readerTheme' | 'readerText' | 'readingLanguages' | 'readerPen' | 'recentColors'>,
 ): void {
   void setJson(PREFS_KEY, {
     timeFormat: estado.timeFormat,
@@ -426,6 +438,7 @@ function persistir(
     pinnedViews: estado.pinnedViews,
     visto: estado.visto,
     appearance: estado.appearance,
+    colorblind: estado.colorblind,
     selfColor: estado.selfColor,
     accesos: estado.accesos,
     overlayRecientes: estado.overlayRecientes,

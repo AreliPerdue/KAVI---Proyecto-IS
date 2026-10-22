@@ -15,6 +15,7 @@ import {
   Clock,
   Cake,
   Dumbbell,
+  Eye,
   Palette,
   Pencil,
   Repeat2,
@@ -116,6 +117,8 @@ export default function ProfileScreen() {
   const setTimeFormat = usePreferencesStore((s) => s.setTimeFormat);
   const appearance = usePreferencesStore((s) => s.appearance);
   const setAppearance = usePreferencesStore((s) => s.setAppearance);
+  const colorblind = usePreferencesStore((s) => s.colorblind);
+  const setColorblind = usePreferencesStore((s) => s.setColorblind);
   const language = usePreferencesStore((s) => s.language);
   const setLanguage = usePreferencesStore((s) => s.setLanguage);
   const readingLanguages = usePreferencesStore((s) => s.readingLanguages);
@@ -405,6 +408,12 @@ export default function ProfileScreen() {
               onChange={setAppearance}
             />
           }
+        />
+        <SettingsRow
+          icon={<Eye size={IconSize.inline} strokeWidth={IconStroke} color={theme.textSecondary} />}
+          label={tx.profile.colorblind}
+          hint={tx.profile.colorblindHint}
+          right={<Toggle label={tx.profile.colorblindToggle} value={colorblind} onValueChange={setColorblind} />}
         />
         <SettingsRow
           icon={<Clock size={IconSize.inline} strokeWidth={IconStroke} color={theme.textSecondary} />}

@@ -1,7 +1,7 @@
 import { createContext, useContext } from 'react';
 import { useColorScheme } from 'react-native';
 
-import { Colors, type ColorScheme, type ThemeColors } from '@/constants/theme';
+import { ColorblindColors, Colors, type ColorScheme, type ThemeColors } from '@/constants/theme';
 import { usePreferencesStore } from '@/store/preferences-store';
 
 /** Punto de partida cuando no hay preferencia guardada: KAVI nació en oscuro. */
@@ -36,9 +36,15 @@ export function useSchemeFromPreference(): ColorScheme {
  * respaldo sea deliberado y no un valor por omisión que tape un árbol mal montado.
  */
 const SchemeContext = createContext<ColorScheme | null>(null);
+/** El modo daltonismo (spec 05, RF-T7) viaja igual que el esquema, por la misma razón. */
+const ColorblindContext = createContext<boolean | null>(null);
 
-export function ThemeSchemeProvider({ scheme, children }: { scheme: ColorScheme; children: React.ReactNode }) {
-  return <SchemeContext.Provider value={scheme}>{children}</SchemeContext.Provider>;
+export function ThemeSchemeProvider({ scheme, colorblind = false, children }: { scheme: ColorScheme; colorblind?: boolean; children: React.ReactNode }) {
+  return (
+    <SchemeContext.Provider value={scheme}>
+      <ColorblindContext.Provider value={colorblind}>{children}</ColorblindContext.Provider>
+    </SchemeContext.Provider>
+  );
 }
 
 /**
@@ -51,6 +57,14 @@ export function useResolvedScheme(): ColorScheme {
   return delContexto ?? propio;
 }
 
+/** ¿Está encendido "Colores para daltonismo"? Fuera del proveedor se lee de la preferencia. */
+export function useColorblind(): boolean {
+  const delContexto = useContext(ColorblindContext);
+  const propio = usePreferencesStore((s) => s.colorblind);
+  return delContexto ?? propio;
+}
+
 export function useTheme(): ThemeColors {
-  return Colors[useResolvedScheme()];
+  const scheme = useResolvedScheme();
+  return useColorblind() ? ColorblindColors[scheme] : Colors[scheme];
 }

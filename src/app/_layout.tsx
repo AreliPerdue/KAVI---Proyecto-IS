@@ -93,6 +93,7 @@ export function ErrorBoundary(props: ErrorBoundaryProps) {
 export default function RootLayout() {
   const appearance = usePreferencesStore((s) => s.appearance);
   const scheme = useSchemeFromPreference();
+  const colorblind = usePreferencesStore((s) => s.colorblind);
   const language = useLanguage();
 
   /*
@@ -152,7 +153,7 @@ export default function RootLayout() {
     <GestureHandlerRootView style={styles.root}>
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
-          <ThemeSchemeProvider scheme={scheme}>
+          <ThemeSchemeProvider scheme={scheme} colorblind={colorblind}>
             <ThemeProvider value={navigationThemes[scheme]}>
               <SnackbarProvider>
                 <ConfirmProvider>

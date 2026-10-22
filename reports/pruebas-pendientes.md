@@ -949,3 +949,16 @@ recolorea cada uno en 3 colores. Papelería v4 subida y verificada (200).
 - [ ] (manual, Areli) ¿Te gustan ahora? Destellos, flecha, rama, lazo, costura, corazón, estrella, círculo, marco,
   burbuja, nube, flor, hoja, subrayado y espiral.
 - [ ] (manual, web) Recargar con ⌘⇧R y ver que los doodles ya pegados cambian al dibujo nuevo.
+
+## Colores para daltonismo (T357)
+Automatizado: `color-vision.test.ts` (los colores de las 7 dimensiones, sin dimensión, temas, letra por contraste,
+éxito ≥ 4.5:1 en los dos esquemas y la inicial), `preferences-store.test.ts` (apagado por omisión, se recuerda y
+no se pierde al hidratar) y `colorblind.test.tsx` (inicial en el bloque, en el bloque angosto, en la agenda y en
+el mes, y el éxito por contexto). En el demo web, en claro y oscuro: el mes con los colores de Tol y los iconos,
+la semana con Ana superpuesta y su "A", y los filtros.
+- [ ] (manual, Areli) En modo claro, el ocre (social), el cian (financiera) y el gris (ocupacional) se ven pálidos
+  como icono sobre blanco. ¿Así está bien o los oscurecemos solo en claro?
+- [ ] (manual, teléfono) Encender el modo con la app abierta en Calendario y ver que cambian todas las pestañas a
+  la vez (Android con la barra nativa).
+- [ ] (manual) Probarlo con un simulador de daltonismo (p. ej. las herramientas de Chrome → Rendering → Emulate
+  vision deficiencies) en deuteranopía, protanopía y tritanopía.
