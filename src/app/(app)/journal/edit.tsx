@@ -9,9 +9,10 @@ import { type CaraDeJournal, JournalCover } from '@/components/library/journal-c
 import { ActionRow, AppText, Button, ErrorState, IconButton, Segmented, TextField } from '@/components/ui';
 import { IconSize, IconStroke, MaxContentWidth, Radius, Spacing } from '@/constants/theme';
 import { useCreateJournal, useLibraryItem, useUpdateLibraryItem } from '@/hooks/use-library';
+import { useMyProfile } from '@/hooks/use-profile';
 import { useTheme } from '@/hooks/use-theme';
 import { useT } from '@/i18n';
-import { lomoDeJournal, ENCUADERNACIONES, MATERIALES, PAGINAS, paginasValidas, PORTADA_POR_OMISION, type PortadaDeJournal, portadaValida } from '@/lib/library/journal';
+import { lomoDeJournal, ENCUADERNACIONES, nombreDeAutora, MATERIALES, PAGINAS, paginasValidas, PORTADA_POR_OMISION, type PortadaDeJournal, portadaValida } from '@/lib/library/journal';
 import { useSnackbar } from '@/providers';
 
 type ColorDe = 'material' | 'accent' | 'edges' | 'back';
@@ -34,6 +35,7 @@ export default function JournalEditScreen() {
   const avisar = useSnackbar();
   const existente = useLibraryItem(id ?? '');
   const crear = useCreateJournal();
+  const autora = nombreDeAutora(useMyProfile().data);
   const actualizar = useUpdateLibraryItem();
 
   const editando = !!id;
@@ -63,7 +65,7 @@ export default function JournalEditScreen() {
       return;
     }
     crear.mutate(
-      { title: nombre, pages: paginas, journal: portada },
+      { title: nombre, pages: paginas, journal: portada, author: autora },
       {
         onSuccess: (nuevo) => {
           avisar({ message: j.created });

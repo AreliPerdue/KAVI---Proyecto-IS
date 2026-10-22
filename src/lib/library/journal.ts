@@ -81,3 +81,17 @@ export function contraportada(p: PortadaDeJournal): { material: Material; color:
 export function lomoDeJournal(paginas: number | null | undefined): number {
   return grosorDeLomo(paginasValidas(paginas ?? PAGINAS.porOmision));
 }
+
+/** Quien escribe un Journal es su dueña: su nombre visible o, si no tiene, su usuario. */
+export function nombreDeAutora(perfil: { display_name: string | null; username: string | null } | null | undefined): string | null {
+  return perfil?.display_name?.trim() || perfil?.username?.trim() || null;
+}
+
+/**
+ * Los Journals sin autor llevan el nombre de su dueña, como un libro lleva el de quien lo escribió. Los que se crean
+ * ya lo guardan; esto cubre los hechos antes. Si nada cambia, devuelve la misma lista.
+ */
+export function conAutora<T extends { kind?: string; authors: string[] }>(piezas: T[], nombre: string | null): T[] {
+  if (!nombre || !piezas.some((p) => p.kind === 'journal' && !p.authors.length)) return piezas;
+  return piezas.map((p) => (p.kind === 'journal' && !p.authors.length ? { ...p, authors: [nombre] } : p));
+}

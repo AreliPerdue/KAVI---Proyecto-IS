@@ -34,11 +34,11 @@ export function BookCover({ item, width, thumb = false, uri }: Props) {
   const fondo = colorDePortada(item);
   const tinta = textoSobre(fondo);
 
-  // Un Journal (13i; T345) se ve como objeto: su material, su encuadernación y sus cantos.
+  // Un Journal (13i; T345) se ve como los demás libros: su material y su encuadernación llenan la misma portada.
   if (item.kind === 'journal' && item.journal) {
     return (
-      <View accessible={false} importantForAccessibility="no-hide-descendants" pointerEvents="none" style={[styles.journal, { width, height: Math.round(width * 1.5) }]}>
-        <JournalCover portada={item.journal} ancho={item.journal.orientation === 'portrait' ? width * 0.96 : width} />
+      <View accessible={false} importantForAccessibility="no-hide-descendants" pointerEvents="none">
+        <JournalCover portada={item.journal} ancho={width} alto={Math.round(width * 1.5)} comoLibro />
       </View>
     );
   }
@@ -77,7 +77,6 @@ export function BookCover({ item, width, thumb = false, uri }: Props) {
 const styles = StyleSheet.create({
   portada: { borderRadius: Radius.sm, borderCurve: 'continuous', borderWidth: StyleSheet.hairlineWidth, overflow: 'hidden' },
   portadaChica: { borderRadius: 4 },
-  journal: { alignItems: 'center', justifyContent: 'flex-end', paddingBottom: 3 },
   generada: { flex: 1, padding: Spacing.md, justifyContent: 'space-between' },
   titulo: { ...Typography.bodyStrong, lineHeight: undefined },
   autor: { ...Typography.caption, opacity: 0.85 },

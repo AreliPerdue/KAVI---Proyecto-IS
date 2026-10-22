@@ -19,3 +19,12 @@ it('la portada tiene la proporción A5: vertical o acostada', async () => {
   await render(<JournalCover portada={{ ...PORTADA_POR_OMISION, orientation: 'landscape' }} ancho={100} etiqueta="horizontal" />);
   expect(screen.getByLabelText('horizontal')).toHaveStyle({ width: 100, height: 100 / Math.SQRT2 });
 });
+
+it('en la librería se ve como un libro: llena su caja y no asoma el canto de las páginas', async () => {
+  const portada = { ...PORTADA_POR_OMISION, edges: '#ABCDEF' };
+  await render(<JournalCover portada={portada} ancho={120} etiqueta="objeto" />);
+  expect(JSON.stringify(screen.toJSON())).toContain('#ABCDEF');
+  await render(<JournalCover portada={{ ...portada, orientation: 'landscape' }} ancho={120} alto={180} comoLibro etiqueta="libro" />);
+  expect(screen.getByLabelText('libro')).toHaveStyle({ width: 120, height: 180 });
+  expect(JSON.stringify(screen.toJSON())).not.toContain('#ABCDEF');
+});

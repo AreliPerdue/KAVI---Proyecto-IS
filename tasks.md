@@ -1268,6 +1268,8 @@ Reemplazan L5 (13e). Un recorte es una página 1 : √2 del visor de PDF (decisi
   `lib/library/journal.ts` (portada válida, páginas de 20 en 20, lomo como un libro), `JournalCover` (portada, lomo y
   contraportada), `journal/edit` (crear y editar por pasos) y `journal/[id]` (girar el objeto); en la librería,
   "Nuevo Journal" y el Journal en cuadrícula y librero; Supabase y demo. Libro real pasa a T347 (aún no hay páginas).
+  Ajuste de Areli (22 oct): en la cuadrícula se ve como los demás libros (misma portada 2:3, sin canto) y su autora
+  es la dueña (nombre visible o usuario), guardada al crear y mostrada en los que ya existían.
 - [ ] T346 J2 · Decorar la portada, lomo y contraportada con el lienzo; tratamiento impreso. (RF-JC10, RF-JC11) Dep: T345
 - [ ] T347 C5 · Páginas del Journal y Get to Know the Reader. (RF-CC2, RF-CC22) Dep: T344, T345
 - [ ] T348 J3 · Tratamientos hundido, relieve y recortado. (RF-JC11, RF-JC12) Dep: T346

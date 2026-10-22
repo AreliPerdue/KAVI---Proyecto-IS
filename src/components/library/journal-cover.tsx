@@ -3,6 +3,7 @@ import { Image, StyleSheet, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 
 import { TEXTURAS } from '@/constants/journal-materials';
+import { Radius } from '@/constants/theme';
 import { RAIZ_DE_DOS } from '@/lib/library/canvas';
 import { contraportada, type Material, type PortadaDeJournal } from '@/lib/library/journal';
 
@@ -24,6 +25,7 @@ export const JournalCover = memo(function JournalCover({
   ancho,
   alto,
   etiqueta,
+  comoLibro = false,
 }: {
   portada: PortadaDeJournal;
   cara?: CaraDeJournal;
@@ -32,14 +34,19 @@ export const JournalCover = memo(function JournalCover({
   /** Alto del lomo (en la portada sale de la forma A5). */
   alto?: number;
   etiqueta?: string;
+  /**
+   * En la librería se ve como los demás libros: llena su caja (`ancho` × `alto`), con sus esquinas y sin el canto de
+   * las páginas asomando. El espiral se recorta en el borde.
+   */
+  comoLibro?: boolean;
 }) {
   // Una medida que aún no llega (0 o negativa) no debe dibujar nada al revés.
   ancho = Math.max(1, ancho);
   const vertical = portada.orientation === 'portrait';
-  const altoTapa = cara === 'spine' ? (alto ?? ancho * 4) : ancho * (vertical ? RAIZ_DE_DOS : 1 / RAIZ_DE_DOS);
+  const altoTapa = cara === 'spine' ? (alto ?? ancho * 4) : comoLibro && alto ? Math.max(1, alto) : ancho * (vertical ? RAIZ_DE_DOS : 1 / RAIZ_DE_DOS);
   const { material, color } = cara === 'back' ? contraportada(portada) : portada;
   const dura = portada.binding === 'hardcover';
-  const radio = dura ? 3 : 1.5;
+  const radio = comoLibro ? Radius.sm : dura ? 3 : 1.5;
   const atras = cara === 'back';
 
   return (
@@ -47,9 +54,9 @@ export const JournalCover = memo(function JournalCover({
       accessible={!!etiqueta}
       accessibilityRole={etiqueta ? 'image' : undefined}
       accessibilityLabel={etiqueta}
-      style={{ width: ancho, height: altoTapa }}>
-      {/* Tapa dura: el bloque de páginas asoma con su canto. */}
-      {dura && cara !== 'spine' ? (
+      style={[{ width: ancho, height: altoTapa }, comoLibro ? [styles.comoLibro, { borderRadius: radio }] : null]}>
+      {/* Tapa dura: el bloque de páginas asoma con su canto (no en la librería, donde se ve como un libro). */}
+      {dura && cara !== 'spine' && !comoLibro ? (
         <View style={[styles.lleno, { top: 3, bottom: -3, [atras ? 'left' : 'right']: -3, [atras ? 'right' : 'left']: 3, backgroundColor: portada.edges, borderRadius: 1 }]}>
           <View style={[styles.lleno, styles.lineasDeCanto]} />
         </View>
@@ -158,6 +165,7 @@ function Puntadas({ color, alto, x, lado }: { color: string; alto: number; x: nu
 }
 
 const styles = StyleSheet.create({
+  comoLibro: { overflow: 'hidden', borderCurve: 'continuous' },
   lleno: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0 },
   textura: { width: '100%', height: '100%', mixBlendMode: 'soft-light' },
   volumen: { experimental_backgroundImage: 'linear-gradient(to bottom, rgba(255,255,255,0.08), rgba(0,0,0,0.12))' },

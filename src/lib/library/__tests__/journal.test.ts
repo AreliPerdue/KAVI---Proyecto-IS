@@ -1,5 +1,5 @@
 /** El Journal como objeto (spec 13i, RF-JC1 – RF-JC9; T345). */
-import { contraportada, lomoDeJournal, PAGINAS, paginasValidas, PORTADA_POR_OMISION, portadaValida } from '@/lib/library/journal';
+import { conAutora, contraportada, lomoDeJournal, nombreDeAutora, PAGINAS, paginasValidas, PORTADA_POR_OMISION, portadaValida } from '@/lib/library/journal';
 import { grosorDeLomo } from '@/lib/library/spines';
 
 it('una portada rota vuelve a lo de omisión: A5 vertical, tapa dura, cuero gris y cantos blancos', () => {
@@ -24,4 +24,22 @@ it('las páginas van de 20 en 20, de 20 a 400', () => {
 it('el lomo engorda con las páginas como el de un libro con esas páginas (RF-JC5)', () => {
   expect(lomoDeJournal(240)).toBe(grosorDeLomo(240));
   expect(lomoDeJournal(240)).toBeGreaterThan(lomoDeJournal(120));
+});
+
+it('quien escribe un Journal es su dueña: su nombre visible o su usuario', () => {
+  expect(nombreDeAutora({ display_name: ' Areli Perdue ', username: 'areli' })).toBe('Areli Perdue');
+  expect(nombreDeAutora({ display_name: '', username: 'areli' })).toBe('areli');
+  expect(nombreDeAutora(null)).toBeNull();
+});
+
+it('los Journals sin autor llevan el nombre de su dueña; los libros y los que ya tienen, no cambian', () => {
+  const piezas = [
+    { kind: 'journal', authors: [] as string[] },
+    { kind: 'journal', authors: ['Otra'] },
+    { kind: 'pdf', authors: [] as string[] },
+  ];
+  expect(conAutora(piezas, 'Areli').map((p) => p.authors)).toEqual([['Areli'], ['Otra'], []]);
+  expect(conAutora(piezas, null)).toBe(piezas);
+  const sinCambio = [piezas[1], piezas[2]];
+  expect(conAutora(sinCambio, 'Areli')).toBe(sinCambio);
 });

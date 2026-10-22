@@ -1,11 +1,13 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { subirPendientes } from '@/hooks/use-library-sync';
+import { useMyProfile } from '@/hooks/use-profile';
 import { useAuth } from '@/providers';
 import { isOfflineError } from '@/lib/auth-errors';
 import { borrarCopias } from '@/lib/library/offline/copies';
 import { aplicarPendientes, encolar, type PatchDeAvance, pendientes } from '@/lib/library/offline/outbox';
 import { guardarLista, listaGuardada } from '@/lib/library/offline/snapshot';
+import { conAutora, nombreDeAutora } from '@/lib/library/journal';
 import { LIBRARY_URL_SECONDS } from '@/constants/library';
 import { cambioDeColor, COLUMNAS_DE_PARTE, type ParteDeTapa } from '@/lib/library/cover/parts';
 import {
@@ -75,6 +77,8 @@ export const libraryKeys = {
  */
 export function useLibraryItems() {
   const { userId } = useAuth();
+  // Los Journals sin autor muestran el nombre de su dueña (13i; T345).
+  const autora = nombreDeAutora(useMyProfile().data);
   return useQuery<LibraryItem[]>({
     queryKey: libraryKeys.items(userId),
     queryFn: async () => {
@@ -90,6 +94,7 @@ export function useLibraryItems() {
       }
     },
     enabled: !!userId,
+    select: (piezas) => conAutora(piezas, autora),
   });
 }
 
@@ -127,6 +132,7 @@ export function useImportBook() {
 export function useLibraryItem(id: string) {
   const { userId } = useAuth();
   const queryClient = useQueryClient();
+  const autora = nombreDeAutora(useMyProfile().data);
   return useQuery<LibraryItem>({
     queryKey: libraryKeys.item(id),
     // Sin red, la pieza de la copia guardada de la librería (RF-BR3, T285).
@@ -143,6 +149,7 @@ export function useLibraryItem(id: string) {
     },
     enabled: !!userId && !!id,
     initialData: () => queryClient.getQueryData<LibraryItem[]>(libraryKeys.items(userId))?.find((i) => i.id === id),
+    select: (pieza) => conAutora([pieza], autora)[0],
   });
 }
 
@@ -182,8 +189,8 @@ export function useCreateJournal() {
   const { userId } = useAuth();
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ title, pages, journal }: { title: string; pages: number; journal: NonNullable<LibraryItem['journal']> }) =>
-      createLibraryItem(userId as string, { family: 'creation', kind: 'journal', title, page_count: pages, journal }),
+    mutationFn: ({ title, pages, journal, author }: { title: string; pages: number; journal: NonNullable<LibraryItem['journal']>; author: string | null }) =>
+      createLibraryItem(userId as string, { family: 'creation', kind: 'journal', title, page_count: pages, journal, authors: author ? [author] : [] }),
     onSettled: () => queryClient.invalidateQueries({ queryKey: libraryKeys.all }),
   });
 }
