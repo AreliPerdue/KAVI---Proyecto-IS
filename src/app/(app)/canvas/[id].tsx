@@ -53,6 +53,7 @@ import { type Cita, PolaroidSheet, QuoteSheet, RatingSheet } from '@/components/
 import { CanvasStyleSheet } from '@/components/library/canvas-style-sheet';
 import { ColorPickerSheet } from '@/components/library/color-picker-sheet';
 import { DateSheet, ListSheet, MoodSheet, SongSheet } from '@/components/library/canvas-more-sheets';
+import { PageColorRows, type RolDeColor } from '@/components/library/page-colors';
 import { FragmentSheet } from '@/components/library/fragment-sheet';
 import { ReaderEngine, type ReaderEngineHandle } from '@/components/library/reader-engine';
 import { type StickerElegible, StickerSheet } from '@/components/library/sticker-sheet';
@@ -79,6 +80,8 @@ import {
   cambiar,
   capa,
   conEstilo,
+  coloresDe,
+  conColores,
   conFondo,
   conSentido,
   conSuGrupo,
@@ -205,6 +208,9 @@ export default function CanvasScreen() {
   const [eligiendoSentido, setEligiendoSentido] = useState(false);
   // La hoja de un módulo de T349b: para uno nuevo o para editar el elegido.
   const [masPara, setMasPara] = useState<{ tipo: ModuloMas; modo: 'nuevo' | 'editar' } | null>(null);
+  // Colores de la página (T368): recolorear todo por su papel, su tinta y su acento.
+  const [verColoresDePagina, setVerColoresDePagina] = useState(false);
+  const [rolDePagina, setRolDePagina] = useState<RolDeColor | null>(null);
   const guardarPlantilla = useSaveCanvasTemplate();
   const destinoDeImagen = useRef<DestinoDeImagen>(null);
   const piezas = useLibraryItems();
@@ -840,7 +846,10 @@ export default function CanvasScreen() {
                 <IconButton label={c.background} onPress={() => setColorDe('fondo')}>
                   {icono(PaintBucket)}
                 </IconButton>
-                <IconButton label={c.templates.save} onPress={() => setNombrePlantilla(editor.titulo)} disabled={!doc.elements.length}>
+                <IconButton label={c.pageColors.title} onPress={() => setVerColoresDePagina(true)} disabled={!doc.elements.length}>
+              {icono(Palette, doc.elements.length ? theme.text : theme.textTertiary)}
+            </IconButton>
+            <IconButton label={c.templates.save} onPress={() => setNombrePlantilla(editor.titulo)} disabled={!doc.elements.length}>
                   {icono(LayoutTemplate, doc.elements.length ? theme.text : theme.textTertiary)}
                 </IconButton>
                 <IconButton label={c.export} onPress={exportar} disabled={exportando || !abierto}>
@@ -1101,6 +1110,26 @@ export default function CanvasScreen() {
           />
         </View>
       </Sheet>
+      <Sheet visible={verColoresDePagina && rolDePagina === null} onClose={() => setVerColoresDePagina(false)} title={c.pageColors.title}>
+        <View style={styles.renombrar}>
+          {/* En una tapa el papel es el material del Journal: solo tinta y acento. */}
+          <PageColorRows valores={coloresDe(doc)} sinPapel={!!cara} onElegir={setRolDePagina} />
+        </View>
+      </Sheet>
+      <ColorPickerSheet
+        visible={rolDePagina !== null}
+        titulo={rolDePagina === 'papel' ? c.pageColors.paper : rolDePagina === 'tinta' ? c.pageColors.ink : c.pageColors.accent}
+        valor={rolDePagina ? coloresDe(doc)[rolDePagina] : null}
+        ninguno={rolDePagina === 'papel' ? c.paper : undefined}
+        onClose={() => setRolDePagina(null)}
+        onElegir={(hex) => {
+          const rol = rolDePagina;
+          setRolDePagina(null);
+          if (!rol) return;
+          if (rol === 'papel') aplicar((d) => conColores(d, { papel: hex }));
+          else if (hex) aplicar((d) => conColores(d, { [rol]: hex }));
+        }}
+      />
       <Sheet visible={eligiendoSentido} onClose={() => setEligiendoSentido(false)} title={c.direction.title}>
         {SENTIDOS.map((sentido) => {
           const actual = (elegido?.style.direction ?? 'horizontal') === sentido;

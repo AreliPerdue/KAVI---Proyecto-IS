@@ -1,5 +1,6 @@
 /** Plantillas del lienzo creativo (13h, RF-CC18 – RF-CC21; T344): usarlas copia; guardarlas quita lo personal. */
 import { plantillasDeJournal, plantillasDeKavi } from '@/constants/canvas-templates';
+import { coloresDe, conColores } from '@/lib/library/canvas';
 import { en } from '@/i18n/en';
 import { es } from '@/i18n/es';
 import { documentoValido } from '@/lib/library/canvas';
@@ -37,7 +38,7 @@ it('usar una plantilla da ids nuevos (también a sus grupos) y pone el libro don
 });
 
 describe('plantillas de KAVI', () => {
-  it('son siete, con nombre en los dos idiomas y todo lo que traen es válido (T344, T349b)', () => {
+  it('las de recortes: con nombre en los dos idiomas y todo lo que traen es válido (T344, T349b, T368)', () => {
     for (const idioma of [es, en]) {
       const lista = plantillasDeKavi(idioma.library.canvas.templates);
       expect(lista.map((p) => p.id)).toEqual([
@@ -48,6 +49,14 @@ describe('plantillas de KAVI', () => {
         'kavi/dnf-graveyard',
         'kavi/moodboard',
         'kavi/character-analysis',
+        'kavi/theory-board',
+        'kavi/predictions',
+        'kavi/soundtrack',
+        'kavi/book-dna',
+        'kavi/book-passport',
+        'kavi/emotional-damage',
+        'kavi/would-i-survive',
+        'kavi/book-club',
       ]);
       for (const p of lista) {
         expect(p.nombre).toBeTruthy();
@@ -75,7 +84,21 @@ describe('plantillas del Journal (T347, T349)', () => {
   it('Conoce a quien lee, Mi año lector, Mis números y Premios: en los dos idiomas, verticales, en neutros, sin Nobi', () => {
     for (const idioma of [es, en]) {
       const lista = plantillasDeJournal(idioma.library.canvas.templates, 2026);
-      expect(lista.map((p) => p.id)).toEqual(['kavi/get-to-know', 'kavi/reading-year', 'kavi/reading-stats', 'kavi/reading-awards']);
+      expect(lista.map((p) => p.id)).toEqual([
+        'kavi/get-to-know',
+        'kavi/reading-year',
+        'kavi/reading-stats',
+        'kavi/reading-awards',
+        'kavi/reading-eras',
+        'kavi/monthly-tbr',
+        'kavi/bookshelf',
+        'kavi/bingo',
+        'kavi/series-tracker',
+        'kavi/tropes',
+        'kavi/alphabet',
+        'kavi/year-goal',
+        'kavi/month-wrap-up',
+      ]);
       for (const p of lista) {
         expect(p.orientacion).toBe('portrait');
         expect(p.doc.elements.length).toBeGreaterThan(5);
@@ -89,7 +112,7 @@ describe('plantillas del Journal (T347, T349)', () => {
         }
       }
     }
-    expect(plantillasDeJournal(en.library.canvas.templates, 2026).map((p) => p.nombre)).toEqual(['Get to Know the Reader', 'My Reading Year', 'Reading Stats', 'Reading Awards']);
+    expect(plantillasDeJournal(en.library.canvas.templates, 2026).map((p) => p.nombre).slice(0, 4)).toEqual(['Get to Know the Reader', 'My Reading Year', 'Reading Stats', 'Reading Awards']);
   });
 
   it('Mi año lector trae los tres datos del año en que se usa (RF-CC22)', () => {
@@ -112,4 +135,30 @@ it('las nuevas traen sus módulos: Moodboard (muestras, mood, canción), Anális
   expect(premios?.doc.elements.filter((e) => e.type === 'book')).toHaveLength(6);
   const numeros = plantillasDeJournal(es.library.canvas.templates, 2026).find((p) => p.id === 'kavi/reading-stats');
   expect(numeros?.doc.elements.filter((e) => e.type === 'stat').map((e) => e.content.year)).toEqual([2026, 2026, 2026]);
+});
+
+describe('más plantillas y sus colores (T368)', () => {
+  it('cada una cabe en la página y no repite id; el bingo trae sus 25 casillas y el A–Z sus 26 letras', () => {
+    const todas = [...plantillasDeKavi(es.library.canvas.templates), ...plantillasDeJournal(es.library.canvas.templates, 2026)];
+    expect(new Set(todas.map((p) => p.id)).size).toBe(todas.length);
+    for (const p of todas) for (const e of p.doc.elements) expect(e.y + (e.w * e.ar) / Math.SQRT2).toBeLessThanOrEqual(1.02);
+    const bingo = todas.find((p) => p.id === 'kavi/bingo');
+    expect(bingo?.doc.elements.filter((e) => e.type === 'shape')).toHaveLength(25);
+    const az = todas.find((p) => p.id === 'kavi/alphabet');
+    expect(az?.doc.elements.filter((e) => e.type === 'textbox').map((e) => e.content.text?.[0]).slice(1).join('')).toBe('ABCDEFGHIJKLMNOPQRSTUVWXYZ');
+  });
+
+  it('se personalizan: papel de fondo, tinta en textos y módulos, acento en papeles y formas; las muestras no cambian', () => {
+    const p = plantillasDeKavi(es.library.canvas.templates).find((x) => x.id === 'kavi/moodboard');
+    const doc = conColores(p!.doc, { papel: '#FDF2E9', tinta: '#3a2a5c', acento: '#C9A227' });
+    expect(doc.background).toBe('#FDF2E9');
+    const de = (tipo: string) => doc.elements.filter((e) => e.type === tipo).map((e) => e.style.color);
+    expect(new Set(de('textbox'))).toEqual(new Set(['#3A2A5C']));
+    expect(new Set(de('mood'))).toEqual(new Set(['#3A2A5C']));
+    expect(new Set(de('asset'))).toEqual(new Set(['#C9A227']));
+    expect(new Set(de('swatch'))).toEqual(new Set([undefined]));
+    expect(coloresDe(doc)).toEqual({ papel: '#FDF2E9', tinta: '#3A2A5C', acento: '#C9A227' });
+    // Lo que no se da, no cambia.
+    expect(conColores(p!.doc, {})).toEqual(p!.doc);
+  });
 });

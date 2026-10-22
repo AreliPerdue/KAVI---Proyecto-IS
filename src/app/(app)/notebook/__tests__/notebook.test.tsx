@@ -106,6 +106,8 @@ it('una plantilla de KAVI empieza el recorte con su acomodo, su nombre y este li
   await render(<Pantalla />);
   await fireEvent.press(screen.getByRole('button', { name: C.newCanvas }));
   await fireEvent.press(screen.getByRole('button', { name: T.use(T.names.bookReview) }));
+  // Antes de usarla se pueden elegir sus colores (T368); sin elegir, va como viene.
+  await fireEvent.press(screen.getByRole('button', { name: C.pageColors.use }));
   const [itemId, orientacion, titulo, doc] = mockCrear.mock.calls[0] as unknown as [string, string, string, { elements: { id: string; type: string; content: { itemId?: string } }[] }];
   expect([itemId, orientacion, titulo]).toEqual(['l1', 'portrait', T.names.bookReview]);
   expect(doc.elements.find((e) => e.type === 'book')?.content.itemId).toBe('l1');

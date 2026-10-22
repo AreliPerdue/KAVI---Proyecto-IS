@@ -928,3 +928,10 @@ checklist con doble toque) y `canvas-templates.test.ts` (las cuatro plantillas).
 los cinco módulos, Premios lectores y Mis números del año.
 - [ ] (manual, Areli) Moodboard y Análisis de personaje en un recorte de un libro tuyo.
 - [ ] (manual, Areli) Exportar como imagen un recorte con checklist, mood, canción, fecha y timeline.
+
+## Todas las plantillas y sus colores (T368)
+Automatizado: `canvas-templates.test.ts` (las 30, que quepan en la página, bingo y A–Z completos, colores por su papel),
+`new-canvas-sheet.test.tsx` (personalizar antes de usar) y `canvas.test.tsx` (Colores de la página). Visto en el demo
+web: Bingo lector en crema y morado, Librero de leídos y Meta del año en dorado.
+- [ ] (manual, Areli) Repasar las 17 nuevas: ¿alguna se siente vacía o le falta algo?
+- [ ] (manual, Areli) Recolorear una página tuya con "Colores de la página" y deshacerlo.

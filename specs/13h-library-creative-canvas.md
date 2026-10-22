@@ -216,6 +216,16 @@ llevar texto, pero nunca debe sentirse como un formulario ni como una nota grand
     - El libro del recorte se guarda como "este libro".
     - Se guarda en `library_canvas_templates` (migración `20261021110000`, solo del dueño).
     - Mantener presionada una plantilla propia la borra; los recortes hechos con ella no cambian.
+- **Hecho (T368, 22 oct 2026, pedido de Areli: "todas las demás plantillas" y que sean personalizables):**
+  - **Las que faltaban de RF-CC21:** Tablero de teorías, Predicciones, Soundtrack, El ADN del libro, Pasaporte del
+    libro, Reporte de daños emocionales, ¿Sobreviviría? (recortes) y Mis eras lectoras (Journal).
+  - **Las más comunes de los journals lectores** (Book Riot, Archer & Olive y otros): Notas del club (recorte); TBR del
+    mes, Librero de leídos (lomos para colorear), Bingo lector (25 casillas), Tracker de sagas, Tropes que amo y que
+    no, Reto A–Z, Meta del año (termómetro y el dato de libros terminados) y Mi mes en libros (Journal).
+  - **Personalizables (decisión de Areli; RF-CC11 sigue: empiezan en neutros):** al elegir una plantilla se ve en
+    grande con sus **Colores de la página** —papel (el fondo), tinta (textos y módulos) y acento (papeles, cintas,
+    doodles y formas)— antes de usarla. En el editor, "Colores de la página" recolorea una página ya hecha (en una
+    tapa, sin papel: es el material). Las muestras de color, las fotos y los libros no cambian.
 - **Hecho (C6, segunda parte, T349b, 22 oct 2026; Areli eligió todo):**
   - **Módulos nuevos** (RF-CC14, "después"): **checklist** (título y renglones con casilla; los marcados se tachan),
     **mood** (ocho caritas dibujadas —no emojis— y una palabra), **canción** (un reproductor dibujado, sin sonido, con

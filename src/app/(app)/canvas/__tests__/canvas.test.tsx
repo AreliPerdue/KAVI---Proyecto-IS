@@ -729,3 +729,24 @@ describe('más módulos (T349b)', () => {
     expect(ultimas().at(-1)).toMatchObject({ kind: 'timeline', content: { items: [{ text: 'Empecé el libro' }] } });
   });
 });
+
+it('"Colores de la página" recolorea todo por su papel: la tinta, los textos (T368)', async () => {
+  mockLienzo = {
+    ...mockLienzo,
+    doc: {
+      pages: 1,
+      elements: [
+        { id: 't', type: 'textbox', page: 1, x: 0.1, y: 0.1, w: 0.4, ar: 0.3, rot: 0, z: 1, locked: false, group: null, style: {}, content: { text: 'Hola' } },
+        { id: 'f', type: 'shape', page: 1, x: 0.5, y: 0.5, w: 0.2, ar: 1, rot: 0, z: 2, locked: false, group: null, style: {}, content: { shape: 'star' } },
+      ],
+    },
+  };
+  await montar();
+  await fireEvent.press(screen.getByRole('button', { name: C.pageColors.title }));
+  await fireEvent.press(screen.getByRole('button', { name: `${C.pageColors.ink} · ${C.pageColors.asIs}` }));
+  await fireEvent.press(screen.getByRole('button', { name: C.color.named(C.color.names.darkRed, '#C00000') }));
+  await fireEvent.press(screen.getByRole('button', { name: C.color.use }));
+  const [t, f] = ultimas();
+  expect(t.content.color).toBe('#C00000');
+  expect(f.content.color).toBeUndefined();
+});

@@ -556,3 +556,32 @@ export function conFondo(doc: DocumentoDeLienzo, color: string | null): Document
 export function conEstilo(doc: DocumentoDeLienzo, ids: readonly string[], estilo: Partial<ElementoDeLienzo['style']>): DocumentoDeLienzo {
   return conSuGrupo(doc, ids).reduce((d, id) => cambiar(d, id, { style: estilo }), doc);
 }
+
+// ─── Colores de la página (T368) ──────────────────────────────────────────────────
+
+/**
+ * Los colores de una página, por su papel (T368, pedido de Areli: plantillas que se puedan personalizar): el **papel**
+ * (el fondo), la **tinta** (los textos y los módulos que se leen) y el **acento** (papeles, cintas, doodles y formas).
+ * Las muestras de color, las fotos y los libros se quedan como están.
+ */
+export type ColoresDePagina = { papel?: string | null; tinta?: string; acento?: string };
+const CON_TINTA: readonly TipoDeElemento[] = ['textbox', 'quote', 'checklist', 'timeline', 'date', 'stat', 'mood', 'song', 'rating'];
+const CON_ACENTO: readonly TipoDeElemento[] = ['asset', 'shape'];
+
+/** Una página con esos colores: lo que no se da, no cambia. */
+export function conColores(doc: DocumentoDeLienzo, colores: ColoresDePagina): DocumentoDeLienzo {
+  const conPapel = colores.papel === undefined ? doc : conFondo(doc, colores.papel);
+  return {
+    ...conPapel,
+    elements: conPapel.elements.map((e) => {
+      const color = CON_TINTA.includes(e.type) ? colores.tinta : CON_ACENTO.includes(e.type) ? colores.acento : undefined;
+      return color && esColor(color) ? { ...e, style: { ...e.style, color: color.toUpperCase() } } : e;
+    }),
+  };
+}
+
+/** Los colores que tiene una página ahora, para empezar a elegir desde ahí (el primero de cada papel). */
+export function coloresDe(doc: DocumentoDeLienzo): { papel: string | null; tinta: string | null; acento: string | null } {
+  const primero = (tipos: readonly TipoDeElemento[]) => doc.elements.find((e) => tipos.includes(e.type) && e.style.color)?.style.color ?? null;
+  return { papel: doc.background ?? null, tinta: primero(CON_TINTA), acento: primero(CON_ACENTO) };
+}

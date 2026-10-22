@@ -1249,6 +1249,11 @@ Reemplazan L5 (13e). Un recorte es una página 1 : √2 del visor de PDF (decisi
   **Hecho (21 oct 2026):** el arte lo genera Claude (decisión de Areli): `scripts/library/assets-lienzo.mjs` →
   `public/reader/lienzo/basicos/*.png` (24, 1,4 MB); catálogo `constants/canvas-assets.ts`; tipo `asset` en el
   motor (`pintarAsset`), la exportación, la miniatura y `asset-sheet.tsx`.
+- [x] T368 Todas las plantillas que faltaban (RF-CC21) y las más comunes de los journals lectores (17), y plantillas
+  personalizables: papel, tinta y acento al usarlas y "Colores de la página" en el editor. (13h; pedido de Areli del 22
+  oct 2026) Dep: T349b
+  **Hecho (22 oct 2026):** `constants/canvas-templates-more.ts` y `canvas-template-kit.ts`, `conColores`/`coloresDe`,
+  `PageColorRows`, paso de personalizar en `NewCanvasSheet` y botón en el editor.
 - [ ] T343c C3 · Más packs de assets por la tienda en la nube, como los stickers (T337): `sticker_packs` con su tipo,
   descargar y ver sin red. (RF-CC17) Dep: T343b, T337
 - [x] T344 C4 · Plantillas de Recortes (Book Review, Character Collage, Favorite Quotes, Reading Experience, DNF

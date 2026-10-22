@@ -155,6 +155,7 @@ describe('páginas (T347)', () => {
     await render(<Ver />);
     await fireEvent.press(screen.getByRole('button', { name: J.newPage }));
     await fireEvent.press(screen.getByRole('button', { name: C.templates.use(C.templates.names.getToKnow) }));
+    await fireEvent.press(screen.getByRole('button', { name: C.pageColors.use }));
     const [item, forma, titulo, doc, contexto] = mockCrearLienzo.mock.calls[0] as unknown as [string, string, string, { elements: unknown[] }, string];
     expect([item, forma, titulo, contexto]).toEqual(['j1', 'portrait', C.templates.names.getToKnow, 'journal']);
     expect(doc.elements.length).toBeGreaterThan(5);

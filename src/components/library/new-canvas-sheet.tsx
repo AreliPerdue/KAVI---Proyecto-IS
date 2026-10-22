@@ -3,6 +3,8 @@ import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import { CanvasPreview, type FuentesDeMiniatura } from '@/components/library/canvas-preview';
+import { ColorPickerSheet } from '@/components/library/color-picker-sheet';
+import { type ColoresElegidos, PageColorRows, type RolDeColor } from '@/components/library/page-colors';
 import { AppText, Button, IconButton, Segmented, Sheet } from '@/components/ui';
 import { plantillasDeJournal, plantillasDeKavi } from '@/constants/canvas-templates';
 import { IconSize, IconStroke, PAPER, Radius, Spacing } from '@/constants/theme';
@@ -11,7 +13,7 @@ import { useDatosDeBiblioteca } from '@/hooks/use-canvas-sources';
 import { useCanvasTemplates, useRemoveCanvasTemplate } from '@/hooks/use-canvas-templates';
 import { useTheme } from '@/hooks/use-theme';
 import { useT } from '@/i18n';
-import { type DocumentoDeLienzo, type OrientacionDeLienzo, RAIZ_DE_DOS } from '@/lib/library/canvas';
+import { coloresDe, conColores, type DocumentoDeLienzo, type OrientacionDeLienzo, RAIZ_DE_DOS } from '@/lib/library/canvas';
 import { ESTE_LIBRO, type PlantillaDeLienzo } from '@/lib/library/canvas-templates';
 import { colorDePortada, rutaDePortada } from '@/lib/library/shelf';
 import { useConfirm, useSnackbar } from '@/providers';
@@ -69,7 +71,23 @@ export function NewCanvasSheet({
     libros: new Map(item && !journal ? [[ESTE_LIBRO, { title: item.title, color: colorDePortada(item), ...(ruta && urls.get(ruta) ? { src: urls.get(ruta) } : {}) }]] : []),
   };
 
-  const usar = (p: PlantillaDeLienzo) => item && onCrear(item, { orientacion: p.orientacion, doc: p.doc, titulo: p.nombre });
+  // Personalizar una plantilla antes de usarla (T368): su papel, su tinta y su acento.
+  const [personalizando, setPersonalizando] = useState<PlantillaDeLienzo | null>(null);
+  const [colores, setColores] = useState<ColoresElegidos>({});
+  const [colorDe, setColorDe] = useState<RolDeColor | null>(null);
+  const pintada = (p: PlantillaDeLienzo) => conColores(p.doc, { papel: colores.papel, tinta: colores.tinta ?? undefined, acento: colores.acento ?? undefined });
+  const usar = (p: PlantillaDeLienzo) => {
+    setPersonalizando(p);
+    setColores({});
+  };
+  const crearCon = (p: PlantillaDeLienzo) => {
+    setPersonalizando(null);
+    if (item) onCrear(item, { orientacion: p.orientacion, doc: pintada(p), titulo: p.nombre });
+  };
+  const cerrar = () => {
+    setPersonalizando(null);
+    onClose();
+  };
   const quitar = async (id: string) => {
     const ok = await confirmar({ title: t.removeTitle, message: t.removeMessage, confirmLabel: t.removeConfirm, destructive: true });
     if (!ok) return;
@@ -106,69 +124,100 @@ export function NewCanvasSheet({
     .filter((p) => !journal || p.orientation === orientacion)
     .map((p) => ({ id: p.id, nombre: p.name, orientacion: p.orientation, doc: p.doc }));
 
+  const actuales = personalizando ? coloresDe(personalizando.doc) : null;
   return (
-    <Sheet visible={item !== null} onClose={onClose} title={journal ? j.newPage : c.newCanvas}>
-      <View style={styles.cuerpo}>
-        <AppText variant="label" color="textSecondary">
-          {t.blank}
-        </AppText>
-        <AppText variant="body" color="textSecondary">
-          {journal ? j.newPageHint : c.newHint}
-        </AppText>
-        {journal ? null : (
-          <Segmented
-            options={[
-              { value: 'portrait', label: c.portrait },
-              { value: 'landscape', label: c.landscape },
-            ]}
-            value={orientacion}
-            onChange={setOrientacion}
-            fullWidth
-          />
-        )}
-        <View style={styles.muestra} accessible={false}>
-          <View
-            style={[
-              styles.pagina,
-              // La página del recorte es papel en los dos temas, como la de un libro.
-              { borderColor: theme.border, backgroundColor: PAPER },
-              vertical ? { width: lado / RAIZ_DE_DOS, height: lado } : { width: lado, height: lado / RAIZ_DE_DOS },
-            ]}
-          />
-        </View>
-        <Button
-          title={journal ? j.createPage : c.create}
-          onPress={() => {
-            if (!item) return;
-            onCrear(item, { orientacion });
-          }}
-        />
-
-        {deKavi.length ? (
-          <>
+    <>
+      <ColorPickerSheet
+        visible={colorDe !== null}
+        titulo={colorDe === 'papel' ? c.pageColors.paper : colorDe === 'tinta' ? c.pageColors.ink : c.pageColors.accent}
+        valor={colorDe ? (colores[colorDe] ?? actuales?.[colorDe] ?? null) : null}
+        ninguno={colorDe === 'papel' ? c.paper : c.pageColors.asIs}
+        onClose={() => setColorDe(null)}
+        onElegir={(hex) => {
+          const rol = colorDe;
+          setColorDe(null);
+          if (!rol) return;
+          // Sin color: el papel vuelve a blanco; la tinta y el acento, a como vienen.
+          setColores((x) => ({ ...x, [rol]: hex ?? (rol === 'papel' ? null : undefined) }));
+        }}
+      />
+      <Sheet visible={item !== null && colorDe === null} onClose={cerrar} title={personalizando ? personalizando.nombre : journal ? j.newPage : c.newCanvas}>
+        {personalizando ? (
+          <View style={styles.cuerpo}>
+            <View style={styles.muestraGrande}>
+              <CanvasPreview doc={pintada(personalizando)} orientacion={personalizando.orientacion} ancho={personalizando.orientacion === 'portrait' ? 180 : 250} fuentes={fuentes} />
+            </View>
             <AppText variant="label" color="textSecondary">
-              {t.kavi}
+              {c.pageColors.title}
             </AppText>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.fila}>
-              {deKavi.map((p) => tarjeta(p, false))}
-            </ScrollView>
-          </>
-        ) : null}
-
-        <AppText variant="label" color="textSecondary">
-          {t.mine}
-        </AppText>
-        {propias.length ? (
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.fila}>
-            {propias.map(propiaConBorrar)}
-          </ScrollView>
+            <PageColorRows valores={colores} onElegir={setColorDe} />
+            <Button title={c.pageColors.use} onPress={() => crearCon(personalizando)} />
+            <Button title={c.pageColors.other} variant="secondary" onPress={() => setPersonalizando(null)} />
+          </View>
         ) : (
-          <AppText variant="caption" color="textSecondary">
-            {journal ? j.mineEmpty : t.mineEmpty}
-          </AppText>
+          <View style={styles.cuerpo}>
+            <AppText variant="label" color="textSecondary">
+              {t.blank}
+            </AppText>
+            <AppText variant="body" color="textSecondary">
+              {journal ? j.newPageHint : c.newHint}
+            </AppText>
+            {journal ? null : (
+              <Segmented
+                options={[
+                  { value: 'portrait', label: c.portrait },
+                  { value: 'landscape', label: c.landscape },
+                ]}
+                value={orientacion}
+                onChange={setOrientacion}
+                fullWidth
+              />
+            )}
+            <View style={styles.muestra} accessible={false}>
+              <View
+                style={[
+                  styles.pagina,
+                  // La página del recorte es papel en los dos temas, como la de un libro.
+                  { borderColor: theme.border, backgroundColor: PAPER },
+                  vertical ? { width: lado / RAIZ_DE_DOS, height: lado } : { width: lado, height: lado / RAIZ_DE_DOS },
+                ]}
+              />
+            </View>
+            <Button
+              title={journal ? j.createPage : c.create}
+              onPress={() => {
+                if (!item) return;
+                onCrear(item, { orientacion });
+              }}
+            />
+
+            {deKavi.length ? (
+              <>
+                <AppText variant="label" color="textSecondary">
+                  {t.kavi}
+                </AppText>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.fila}>
+                  {deKavi.map((p) => tarjeta(p, false))}
+                </ScrollView>
+              </>
+            ) : null}
+
+            <AppText variant="label" color="textSecondary">
+              {t.mine}
+            </AppText>
+            {propias.length ? (
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.fila}>
+                {propias.map(propiaConBorrar)}
+              </ScrollView>
+            ) : (
+              <AppText variant="caption" color="textSecondary">
+                {journal ? j.mineEmpty : t.mineEmpty}
+              </AppText>
+            )}
+          </View>
         )}
-      </View>
-    </Sheet>
+      </Sheet>
+    </>
   );
 }
 
@@ -179,6 +228,7 @@ const styles = StyleSheet.create({
   fila: { flexDirection: 'row', gap: Spacing.md, paddingVertical: Spacing.xs },
   tarjeta: { width: ANCHO_MINIATURA, gap: Spacing.xs },
   conBorrar: { alignItems: 'center' },
+  muestraGrande: { alignItems: 'center' },
   presionada: { opacity: 0.85 },
   nombre: { textAlign: 'center' },
 });

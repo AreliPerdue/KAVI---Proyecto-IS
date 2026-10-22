@@ -1,7 +1,4 @@
 import {
-  type DocumentoDeLienzo,
-  documentoValido,
-  type ElementoDeLienzo,
   PROPORCION_DE_DATO,
   PROPORCION_DE_MUESTRA,
   PROPORCION_DE_POLAROID,
@@ -9,8 +6,8 @@ import {
 } from '@/lib/library/canvas';
 import type { DatoDeBiblioteca } from '@/lib/library/journal-stats';
 import { ESTE_LIBRO, type PlantillaDeLienzo } from '@/lib/library/canvas-templates';
-import { ASSETS_DE_LIENZO, type NombreDeAsset } from '@/constants/canvas-assets';
-import type { Dictionary } from '@/i18n/types';
+import { asset, documento, type Pieza, texto, type Textos } from '@/constants/canvas-template-kit';
+import { plantillasDeJournalMas, plantillasDeRecorteMas } from '@/constants/canvas-templates-more';
 
 /**
  * Las plantillas de Recortes de KAVI (spec 13h, RF-CC21; T344): Reseña del libro, Collage de personaje, Citas
@@ -20,29 +17,6 @@ import type { Dictionary } from '@/i18n/types';
  * Viven en el cliente, como el catálogo de ejercicios: crecen sin migraciones (13h §10). Las medidas van en 0–1 de la
  * página (vertical, 1 : √2): `y` y la altura cuentan sobre el alto de la página.
  */
-
-type Textos = Dictionary['library']['canvas']['templates'];
-type Pieza = Partial<Omit<ElementoDeLienzo, 'id' | 'type' | 'z'>> & Pick<ElementoDeLienzo, 'type'>;
-
-const proporcion = (nombre: NombreDeAsset) => ASSETS_DE_LIENZO.find((a) => a.id === `basicos/${nombre}`)?.ar ?? 1;
-
-function documento(piezas: Pieza[]): DocumentoDeLienzo {
-  return documentoValido({
-    pages: 1,
-    elements: piezas.map((p, i) => ({ id: `k${i + 1}`, z: i + 1, page: 1, rot: 0, locked: false, group: null, style: {}, content: {}, ...p })),
-  });
-}
-
-const texto = (text: string, x: number, y: number, w: number, size = 1, ar = 0.3): Pieza => ({ type: 'textbox', x, y, w, ar, style: { size }, content: { text } });
-const asset = (nombre: NombreDeAsset, label: string, x: number, y: number, w: number, rot = 0): Pieza => ({
-  type: 'asset',
-  x,
-  y,
-  w,
-  ar: proporcion(nombre),
-  rot,
-  content: { asset: `basicos/${nombre}`, label, mode: /destellos|flecha|rama|lazo|costura|a-mano/.test(nombre) ? 'trazo' : 'textura' },
-});
 
 /**
  * Las plantillas de página del Journal (13h, RF-CC21; T347, T349): "yo como lector". Conoce a quien lee y Mi año
@@ -56,7 +30,7 @@ export function plantillasDeJournal(t: Textos, anio: number): PlantillaDeLienzo[
   const dato = (stat: DatoDeBiblioteca, x: number, alto = 0.12, w = 0.27): Pieza => ({ type: 'stat', x, y: alto, w, ar: PROPORCION_DE_DATO, content: { stat, year: anio } });
   const st = t.stats;
   const aw = t.awards;
-  return [
+  const propias: PlantillaDeLienzo[] = [
     {
       id: 'kavi/get-to-know',
       nombre: t.names.getToKnow,
@@ -127,11 +101,12 @@ export function plantillasDeJournal(t: Textos, anio: number): PlantillaDeLienzo[
       ]),
     },
   ];
+  return [...propias, ...plantillasDeJournalMas(t, anio)];
 }
 
 export function plantillasDeKavi(t: Textos): PlantillaDeLienzo[] {
   const n = t.assetLabels;
-  return [
+  const propias: PlantillaDeLienzo[] = [
     {
       id: 'kavi/book-review',
       nombre: t.names.bookReview,
@@ -248,4 +223,5 @@ export function plantillasDeKavi(t: Textos): PlantillaDeLienzo[] {
       ]),
     },
   ];
+  return [...propias, ...plantillasDeRecorteMas(t)];
 }
