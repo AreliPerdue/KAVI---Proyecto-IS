@@ -313,6 +313,8 @@ export const library: Dictionary['library'] = {
     zoomLevel: (n) => `${n}%`,
     zoomFit: 'Fit to page',
     themeLowContrast: 'These colors are hard to read. Try lighter text or a darker page (or the other way around).',
+    modePages: 'Pages',
+    modePagesHint: 'Every sheet of the journal as a thumbnail: tap one to go there.',
     modeBookHint: 'Full screen, with the page that curls. One page with the phone upright and two sideways. Tap the edges, swipe or drag the corner; tap the center to see the controls.',
     modeScrollHint: 'Pages one below the other, like a PDF.',
     modePagedHint: 'One page at a time. Tap the edges or swipe to turn the page, and tap the center to show or hide the controls.',
@@ -661,11 +663,8 @@ export const library: Dictionary['library'] = {
     removePageMessage: "It's deleted with everything on it, images included. This can't be undone.",
     removePageConfirm: 'Delete',
     pageRemoved: 'Page deleted.',
-    flip: 'Flip through',
+    read: 'Read',
     decorate: { front: 'Decorate front cover', spine: 'Decorate spine', back: 'Decorate back cover' } as Record<'front' | 'spine' | 'back', string>,
-    flipLoading: 'Opening your journal…',
-    previous: 'Previous page',
-    next: 'Next page',
   },
   /** My notebook for a book (spec 13h, RF-CC23; T342). */
   notebook: {

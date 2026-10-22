@@ -104,7 +104,12 @@ export type MensajeAlMotor =
       mode?: FormaDeLeer;
       /** Alto ÷ ancho de una hoja de otra forma, con el alto de A5: el lomo de un Journal (T346). */
       aspect?: number;
+      /** Leer un Journal (T364): `false` (no se compone) y dónde abrirlo. */
+      canvas?: boolean;
+      position?: Posicion;
     }
+  /** Lo que ya trae cada página de un Journal al leerlo (T364): debajo de lo anotado y sin tocarse. */
+  | { type: 'baseLayer'; items: AnotacionEnMotor[] }
   /** El color de las páginas del lienzo (RF-CC12; T342); `null`, papel blanco. */
   | {
       type: 'canvasBackground';

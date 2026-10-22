@@ -198,6 +198,11 @@ export function crearCapa(ctx, enviar) {
   let fondo = null;
   /** Si lo abierto es un lienzo creativo (T363): su texto se gira y se mide también contra el alto de la página. */
   let enLienzo = false;
+  /**
+   * Lo que ya trae cada página al leer un Journal (13i; T364): sus tapas y sus páginas hechas en el lienzo. Va en
+   * su propia capa, debajo de lo anotado, y no se toca (para cambiarlo se edita el Journal).
+   */
+  let base = [];
   /** El color propio de cada página, si lo tiene (las páginas de un Journal al hojearlo; T347). */
   let fondoDePagina = new Map();
   let arrastre = null; // { id, el, x0, y0, movido }
@@ -1559,6 +1564,7 @@ export function crearCapa(ctx, enviar) {
       Object.assign(capaFondo.style, { position: 'absolute', inset: '0', pointerEvents: 'none' }, estiloDeFondo(suFondo));
       div.append(capaFondo);
     }
+    pintarBase(n, div);
     pintarSubrayadosPdf(n, div);
     const enPaginaN = encima().filter((a) => a.locator.page === n);
     const susSeparadores = separadores().filter((a) => a.locator.page === n);
@@ -1570,6 +1576,26 @@ export function crearCapa(ctx, enviar) {
       const el = deEncima(a, { ancho: `${a.locator.w * 100}%`, enLibro });
       el.style.left = `${a.locator.x * 100}%`;
       el.style.top = `${a.locator.y * 100}%`;
+      capa.append(el);
+    }
+    div.append(capa);
+  }
+
+  /** Lo que ya trae la página `n` de un Journal (T364): como se hizo, debajo de todo lo demás y sin tocarse. */
+  function pintarBase(n, div) {
+    div.querySelector(':scope > .capa-base')?.remove();
+    const suyos = base.filter((a) => a.locator?.page === n);
+    if (!suyos.length) return;
+    const capa = document.createElement('div');
+    capa.className = 'capa-base';
+    Object.assign(capa.style, { position: 'absolute', inset: '0', zIndex: '1', pointerEvents: 'none', containerType: 'size' });
+    for (const a of [...suyos].sort((x, y) => (x.z ?? 0) - (y.z ?? 0))) {
+      const el = deEncima(a, { ancho: `${a.locator.w * 100}%`, enLibro: true });
+      el.style.left = `${a.locator.x * 100}%`;
+      el.style.top = `${a.locator.y * 100}%`;
+      el.style.pointerEvents = 'none';
+      for (const asa of el.querySelectorAll('.asa, .candado')) asa.remove();
+      el.removeAttribute('tabindex');
       capa.append(el);
     }
     div.append(capa);
@@ -1739,6 +1765,11 @@ export function crearCapa(ctx, enviar) {
     /** Si lo abierto es un lienzo creativo (T363). */
     lienzo(v) {
       enLienzo = v === true;
+    },
+    /** Lo que ya trae cada página al leer un Journal (T364). */
+    base(items) {
+      base = Array.isArray(items) ? items.filter((a) => a && a.locator && Number.isFinite(a.locator.page)) : [];
+      repintar();
     },
     /** Lo que hay en la página, en orden de capa, para exportarla (T342). */
     lista: () => lista,

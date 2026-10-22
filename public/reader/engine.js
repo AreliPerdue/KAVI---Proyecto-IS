@@ -116,8 +116,11 @@ async function atender(m) {
     }
     case 'openCanvas':
       // El lienzo creativo (13h, RF-CC4; T351): páginas en blanco 1 : √2 que se abren como un PDF.
-      anotaciones.lienzo(true);
-      return abrir({ format: 'pdf', mode: m.mode, position: { page: 1 } }, { datos: pdfEnBlanco(m.orientation, m.pages, m.aspect ?? null) });
+      // Al leer un Journal (T364) no es para componer: se abre donde se quedó y lo pegado es lo anotado al leer.
+      anotaciones.lienzo(m.canvas !== false);
+      return abrir({ format: 'pdf', mode: m.mode, position: m.position ?? { page: 1 } }, { datos: pdfEnBlanco(m.orientation, m.pages, m.aspect ?? null) });
+    case 'baseLayer':
+      return anotaciones.base(m.items);
     case 'canvasBackground':
       return anotaciones.fondo(m.color, m.pages);
     case 'export':

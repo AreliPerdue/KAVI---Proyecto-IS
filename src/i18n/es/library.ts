@@ -320,6 +320,8 @@ export const library = {
     zoomLevel: (n: number) => `${n} %`,
     zoomFit: 'Ajustar a la página',
     themeLowContrast: 'Con estos colores cuesta leer. Prueba una letra más clara o una página más oscura (o al revés).',
+    modePages: 'Páginas',
+    modePagesHint: 'Todas las hojas del Journal en miniatura: toca una para ir a ella.',
     modeBookHint: 'A pantalla completa, con la hoja que se dobla. Una página con el teléfono vertical y dos en horizontal. Toca los bordes, desliza o arrastra la esquina; toca el centro para ver los controles.',
     modeScrollHint: 'Las páginas una debajo de otra, como un PDF.',
     modePagedHint: 'Una página a la vez. Toca los bordes o desliza para pasar de página, y toca el centro para ver u ocultar los controles.',
@@ -692,12 +694,9 @@ export const library = {
     removePageMessage: 'Se borra con todo lo que tiene, también sus imágenes. No se puede deshacer.',
     removePageConfirm: 'Borrar',
     pageRemoved: 'Página borrada.',
-    flip: 'Hojear',
+    read: 'Leer',
     // Decorar sus tapas (13i, RF-JC10; T346).
     decorate: { front: 'Decorar portada', spine: 'Decorar lomo', back: 'Decorar contraportada' } as Record<'front' | 'spine' | 'back', string>,
-    flipLoading: 'Abriendo tu Journal…',
-    previous: 'Página anterior',
-    next: 'Página siguiente',
   },
   /** Mi libreta de un libro (spec 13h, RF-CC23; T342). */
   notebook: {

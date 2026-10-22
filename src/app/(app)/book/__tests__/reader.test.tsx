@@ -54,6 +54,11 @@ jest.mock('@/hooks/use-library', () => ({
   useSeries: () => ({ data: mockSagas }),
 }));
 
+// Las hojas de un Journal (T364).
+let mockLienzos: Record<string, unknown>[] | undefined;
+jest.mock('@/hooks/use-canvases', () => ({ useCanvases: (id: string) => ({ data: id ? mockLienzos : undefined }) }));
+const mockSinFuentes = { miniatura: { imagenes: new Map(), stickers: new Map() }, motor: { imagenes: new Map(), stickers: new Map(), libros: new Map(), datos: new Map() } };
+jest.mock('@/hooks/use-canvas-sources', () => ({ useFuentesDeLienzos: () => mockSinFuentes }));
 const mockAvisar = jest.fn();
 const mockConfirmar = jest.fn(async () => true);
 jest.mock('@/providers', () => ({ useSnackbar: () => mockAvisar, useAuth: () => ({ userId: 'u1' }), useConfirm: () => mockConfirmar }));
@@ -195,6 +200,7 @@ beforeEach(() => {
   mockSagas = [];
   mockPieza = pdf;
   mockUrl = { data: 'https://r2/firmada', isError: false, refetch: jest.fn() };
+  mockLienzos = [];
   usePreferencesStore.setState({ readingModes: {} });
   mockPantallaCompleta.mockReset();
   mockAbrirCopia.mockReset();
@@ -1584,5 +1590,44 @@ describe('club de lectura: leer en vivo (spec 13f, RF-BC10 – RF-BC14; T309)', 
     const { rerender } = await render(<Lector />);
     await rerender(<Lector />);
     expect(mockVivo.unirme).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('un Journal se lee como un libro (13i; T364)', () => {
+  const texto = (id: string, extra: Record<string, unknown> = {}) => ({ id, type: 'textbox', page: 1, x: 0.1, y: 0.1, w: 0.4, ar: 0.3, rot: 0, z: 1, locked: false, group: null, style: {}, content: { text: id }, ...extra });
+  const lienzo = (id: string, created_at: string, extra: Record<string, unknown> = {}) => ({ id, context: 'journal', face: null, item_id: 'j1', title: '', orientation: 'portrait', doc: { pages: 1, elements: [texto(`t-${id}`)] }, version: 1, created_at, updated_at: created_at, ...extra });
+  const journal = { id: 'j1', kind: 'journal', family: 'creation', title: 'Mi año', file_path: null, pdf_path: null, last_position: null, progress: 0, page_count: 120, journal: { orientation: 'portrait', binding: 'hardcover', material: 'linen', color: '#3B2A20', back: null, edges: '#F7F5EF', accent: '#B9B9B9' } };
+
+  beforeEach(() => {
+    globalThis.setParametrosDeRuta({ id: 'j1' });
+    mockPieza = journal;
+    mockLienzos = [lienzo('p2', '2026-10-22T10:00:00Z'), lienzo('p1', '2026-10-21T10:00:00Z'), lienzo('tapa', '2026-10-20T10:00:00Z', { context: 'cover', face: 'front' })];
+  });
+
+  it('abre con la portada, sus páginas y la contraportada, sin archivo y para leer (no para componer)', async () => {
+    await render(<Lector />);
+    expect(mockAbrirCopia).not.toHaveBeenCalled();
+    expect(mockEnviados.find((m) => m.type === 'openCanvas')).toEqual({ type: 'openCanvas', orientation: 'portrait', pages: 4, mode: 'scroll', canvas: false, position: undefined });
+    await responder({ type: 'opened', total: 4 });
+    const base = mockEnviados.find((m) => m.type === 'baseLayer');
+    expect(base && 'items' in base ? base.items.map((a) => [a.id, a.locator.page, a.locked]) : null).toEqual([
+      ['t-tapa', 1, true],
+      ['t-p1', 2, true],
+      ['t-p2', 3, true],
+    ]);
+    expect(mockEnviados).toContainEqual({ type: 'canvasBackground', color: null, pages: { '1': { color: '#3B2A20', material: 'linen' }, '4': { color: '#3B2A20', material: 'linen' } } });
+    expect(screen.queryByText(R.noFile)).toBeNull();
+  });
+
+  it('"Editar" lleva a editarlo, y "Páginas" lo ve en miniaturas: tocar una va a esa hoja', async () => {
+    await render(<Lector />);
+    await responder({ type: 'opened', total: 4 });
+    await fireEvent.press(screen.getByRole('button', { name: es.library.journal.edit }));
+    expect(globalThis.mockRouter.push).toHaveBeenCalledWith({ pathname: '/(app)/journal/[id]', params: { id: 'j1' } });
+    await fireEvent.press(screen.getByRole('button', { name: R.mode }));
+    await fireEvent.press(screen.getByRole('tab', { name: R.modePages }));
+    await fireEvent.press(screen.getByRole('button', { name: es.library.journal.pageN(2) }));
+    expect(mockEnviados.at(-1)).toEqual({ type: 'goTo', page: 3 });
+    expect(screen.queryByRole('button', { name: es.library.journal.pageN(2) })).toBeNull();
   });
 });

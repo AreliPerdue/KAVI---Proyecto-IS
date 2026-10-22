@@ -45,7 +45,6 @@ jest.mock('@/hooks/use-saved-colors', () => ({ useSavedColors: () => ({ data: []
 /* eslint-disable @typescript-eslint/no-require-imports -- tras los mocks */
 const Editar = require('@/app/(app)/journal/edit').default as () => React.ReactElement;
 const Ver = require('@/app/(app)/journal/[id]').default as () => React.ReactElement;
-const Hojear = require('@/app/(app)/journal/flip').default as () => React.ReactElement;
 /* eslint-enable @typescript-eslint/no-require-imports */
 
 const J = es.library.journal;
@@ -147,7 +146,7 @@ describe('páginas (T347)', () => {
     await render(<Ver />);
     expect(screen.getByText(J.pagesEmpty)).toBeTruthy();
     expect(screen.getByText(J.used(0, 120))).toBeTruthy();
-    expect(screen.queryByRole('button', { name: J.flip })).toBeNull();
+    expect(screen.queryByRole('button', { name: J.read })).toBeNull();
     await fireEvent.press(screen.getByRole('button', { name: J.newPage }));
     // La forma no se elige: es la del Journal.
     expect(screen.queryByRole('tab', { name: C.landscape })).toBeNull();
@@ -175,8 +174,9 @@ describe('páginas (T347)', () => {
     await fireEvent.press(screen.getByRole('button', { name: J.pageActions(J.pageN(2)) }));
     await fireEvent.press(screen.getByRole('button', { name: J.removePage }));
     await waitFor(() => expect(mockBorrarLienzo).toHaveBeenCalledWith(expect.objectContaining({ id: 'p2' })));
-    await fireEvent.press(screen.getByRole('button', { name: J.flip }));
-    expect(globalThis.mockRouter.push).toHaveBeenCalledWith({ pathname: '/(app)/journal/flip', params: { id: 'j1' } });
+    // Leerlo es como un libro, en el lector (T364).
+    await fireEvent.press(screen.getByRole('button', { name: J.read }));
+    expect(globalThis.mockRouter.push).toHaveBeenCalledWith({ pathname: '/(app)/book/[id]', params: { id: 'j1' } });
   });
 
   it('un Journal lleno no deja agregar más y dice cómo', async () => {
@@ -185,27 +185,6 @@ describe('páginas (T347)', () => {
     await render(<Ver />);
     expect(screen.getByText(J.full)).toBeTruthy();
     expect(screen.getByRole('button', { name: J.newPage })).toBeDisabled();
-  });
-
-  it('hojear abre con la portada, sigue con cada página (bloqueada y con su color) y cierra con la contraportada', async () => {
-    const texto = (id: string) => ({ id, type: 'textbox', page: 1, x: 0.1, y: 0.1, w: 0.3, ar: 0.3, rot: 0, z: 1, locked: false, group: null, style: {}, content: { text: id } });
-    mockLienzos.data = [
-      pagina('p2', '2026-10-22T10:00:00Z', { doc: { pages: 1, background: '#112233', elements: [texto('b')] } }),
-      pagina('p1', '2026-10-21T10:00:00Z', { doc: { pages: 1, elements: [texto('a')] } }),
-      pagina('tapa', '2026-10-23T10:00:00Z', { context: 'cover', face: 'front', doc: { pages: 1, elements: [texto('titulo')] } }),
-    ];
-    await render(<Hojear />);
-    expect(mockEnviados[0]).toEqual({ type: 'openCanvas', orientation: 'portrait', pages: 4, mode: 'book' });
-    await act(async () => mockResponder({ type: 'opened', total: 4 }));
-    const anotaciones = mockEnviados.find((m) => m.type === 'annotations');
-    expect(anotaciones && 'items' in anotaciones ? anotaciones.items.map((a) => [a.id, a.locator.page, a.locked]) : null).toEqual([
-      ['titulo', 1, true],
-      ['a', 2, true],
-      ['b', 3, true],
-    ]);
-    // Las tapas con su material: la contraportada, la de la portada (no tiene propia).
-    const tapa = { color: '#3B2A20', material: 'linen' };
-    expect(mockEnviados).toContainEqual({ type: 'canvasBackground', color: null, pages: { '1': tapa, '3': '#112233', '4': tapa } });
   });
 
   it('cada cara se decora en su lienzo: la primera vez se crea su tapa en blanco', async () => {

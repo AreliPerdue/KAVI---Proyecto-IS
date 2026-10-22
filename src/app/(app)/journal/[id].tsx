@@ -29,7 +29,8 @@ type Pagina = { lienzo: LibraryCanvas; numero: number };
  *
  * Sus páginas (13h, RF-CC2; T347): cada una es un lienzo con la forma del Journal, en el orden en que se hicieron. Se
  * ven en miniatura; tocar una la abre en el lienzo creativo, su ⋯ la borra, "Nueva página" empieza una en blanco o con
- * una plantilla (Conoce a quien lee, Mis plantillas) mientras quepa, y "Hojear" lo abre entero en libro real.
+ * una plantilla (Conoce a quien lee, Mis plantillas) mientras quepa, y "Leer" lo abre en el lector, como un libro
+ * (T364): esta pantalla es para editarlo.
  *
  * Sus tapas (13i, RF-JC10; T346): cada cara se ve con lo decorado y "Decorar …" abre su lienzo (la primera vez, en
  * blanco). Decorar es opcional (RF-JC2).
@@ -160,7 +161,7 @@ export default function JournalScreen() {
           </AppText>
         </View>
         {paginas.length ? (
-          <IconButton label={j.flip} onPress={() => router.push({ pathname: '/(app)/journal/flip', params: { id } })}>
+          <IconButton label={j.read} onPress={() => router.push({ pathname: '/(app)/book/[id]', params: { id } })}>
             <BookOpen size={IconSize.action} strokeWidth={IconStroke} color={theme.text} />
           </IconButton>
         ) : null}

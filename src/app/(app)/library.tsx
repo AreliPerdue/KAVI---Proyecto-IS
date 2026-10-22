@@ -114,10 +114,8 @@ export default function LibraryScreen() {
   const hayPiezas = piezas.isSuccess && piezas.data.length > 0;
   const router = useRouter();
   // Un Journal (13i; T345) no se lee: abre su ficha de cuaderno.
-  const abrir = (id: string) =>
-    piezas.data?.find((p) => p.id === id)?.kind === 'journal'
-      ? router.push({ pathname: '/(app)/journal/[id]', params: { id } })
-      : router.push({ pathname: '/(app)/book/[id]', params: { id } });
+  // Un Journal también se abre para leerlo, como un libro (T364); se edita desde su ⋯ o desde el lector.
+  const abrir = (id: string) => router.push({ pathname: '/(app)/book/[id]', params: { id } });
   const confirm = useConfirm();
   const showSnackbar = useSnackbar();
   const eliminar = useRemoveLibraryItems();
@@ -724,6 +722,7 @@ export default function LibraryScreen() {
         onCards={(p) => router.push({ pathname: '/(app)/book-cards/[id]', params: { id: p.id } })}
         onClub={(p) => (p.club_id ? router.push({ pathname: '/(app)/club/[id]', params: { id: p.club_id } }) : setClubDe(p))}
         onNotebook={(p) => router.push({ pathname: '/(app)/notebook/[id]', params: { id: p.id } })}
+        onJournal={(p) => router.push({ pathname: '/(app)/journal/[id]', params: { id: p.id } })}
         onAddToShelf={(p) => setAgregandoA([p.id])}
         shelfName={libreroActual?.name}
         onRemoveFromShelf={libreroActual ? (p) => quitarDelLibrero([p.id]) : undefined}

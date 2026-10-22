@@ -1295,6 +1295,11 @@ Reemplazan L5 (13e). Un recorte es una página 1 : √2 del visor de PDF (decisi
   800 %. (13i RF-JC10; pedido de Areli del 22 oct 2026) Dep: T346
   **Hecho (22 oct 2026):** `style.direction` y `conSentido` (voltea la caja), asa de giro y "Girar 90°" para texto en
   el lienzo, tamaño en Estilo, letra medida con `max(1cqw, 0.7071cqh)` en el lienzo; en el lomo nace vertical ↑.
+- [x] T364 El Journal se lee como un libro: en el lector (portada → páginas → contraportada) con las formas de leer,
+  zoom, separadores, tiempo y anotar encima; "Páginas" en miniatura como otra forma de leer; editar aparte (en el
+  lector y en su ⋯). (13i; pedido de Areli del 22 oct 2026) Dep: T347, T346
+  **Hecho (22 oct 2026):** `openCanvas` con `canvas: false` y `position`, capa `baseLayer` del motor (debajo de lo
+  anotado, sin tocarse), `JournalPagesGrid`, "Editar Journal" en `ItemSheet` y en el lector; se quitó `journal/flip`.
 - [ ] T349b C6 · Más módulos (mood, canción, fecha/lugar, timeline, checklist…) y plantillas (Moodboard, Reading
   Stats, Reading Awards, Reading Eras, Character Analysis…). (RF-CC14, RF-CC21) Dep: T349
 - [ ] T350 J4 · Primera colección de motivos Fantasy / Dragon en la tienda. (RF-JC10) Dep: T346

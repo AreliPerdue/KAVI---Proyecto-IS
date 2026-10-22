@@ -118,6 +118,16 @@
     arriba y luz abajo; relieve, luz arriba, sombra abajo y una sombrita afuera; recortado, el canto oscuro y la
     sombra de la tapa sobre la hoja. Va dentro de la pieza porque al hojear cada hoja es su propio árbol.
   - En las miniaturas de la app se ve el color del acabado (y una sombra en el texto); la luz completa, en el motor.
+- **El Journal se lee como un libro (T364, pedido de Areli del 22 oct 2026):**
+  - Tocarlo en la librería lo abre en el **lector**, como un PDF: portada, sus páginas y contraportada (sin páginas,
+    se cierra: de la portada a la contraportada). Tiene todas las formas de leer (scroll, de lado, libro real), zoom,
+    tema, separadores, tiempo de lectura, el panel de lo anotado y **anotar encima** (post-its, texto, stickers,
+    lápiz), como en un libro; su avance y lo anotado se guardan como los de un libro.
+  - Lo que ya trae cada hoja (lo hecho en el lienzo) va en una capa de abajo que no se toca (`baseLayer` del motor);
+    para cambiarlo se **edita** el Journal: botón "Editar" en el lector y "Editar Journal" en su ⋯ de la librería
+    (decisión de Areli: en los dos lugares). La pantalla del Journal es la de edición; su "Leer" abre el lector.
+  - **"Páginas"** es otra forma de leer, solo del Journal: todas sus hojas en miniatura; tocar una va a ella.
+  - Un Journal no lleva ficha ni otra portada (su portada es su material): no aparecen en su ⋯ ni al terminarlo.
 - **Texto en las tapas (T363, pedido de Areli del 22 oct 2026):**
   - **Girar:** el texto de un lienzo tiene asa de giro (se pega a 0/90/180/270°) y "Girar 90°" (también en recortes).
   - **Sentido** (en las tapas): horizontal, vertical de arriba abajo, vertical de abajo arriba (como los lomos en

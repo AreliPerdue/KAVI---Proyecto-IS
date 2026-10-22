@@ -904,3 +904,10 @@ el demo web: una página con Mi año lector y una muestra "Vino".
 Automatizado: `canvas.test.ts` (voltear la caja, sentido solo en texto, letra hasta 8×) y `canvas.test.tsx` (girar 90°,
 tamaño en Estilo, sentido solo en tapas). Visto en el demo web: "MI AÑO LECTOR" vertical de abajo arriba en el lomo.
 - [ ] (manual, iPhone y Android) El texto vertical y apilado se escribe y se ve igual que en la computadora.
+
+## El Journal se lee como un libro (T364)
+Automatizado: `reader.test.tsx` (abre portada, páginas y contraportada sin archivo; capa de abajo; Editar; Páginas),
+`library.test.tsx` (tocarlo abre el lector; Editar Journal en su ⋯) y `journal.test.tsx` ("Leer"). Visto en el demo web:
+portada con su estrella en scroll, libro real con página y contraportada, y "Páginas" en miniatura.
+- [ ] (manual, teléfono) Leerlo en libro real deslizando, anotar un post-it en una página y que se quede al volver.
+- [ ] (manual, Areli) ¿Se siente como abrir un libro? (portada primero, luego páginas, y se cierra en la contraportada)

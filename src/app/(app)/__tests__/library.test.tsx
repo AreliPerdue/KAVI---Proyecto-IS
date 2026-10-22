@@ -372,7 +372,7 @@ describe('menú y selección', () => {
     expect(globalThis.mockRouter.push).toHaveBeenCalledWith({ pathname: '/(app)/book/[id]', params: { id: 'l1' } });
   });
 
-  it('"Nuevo Journal" lleva a crearlo; tocar un Journal abre su ficha y no el lector (13i; T345)', async () => {
+  it('"Nuevo Journal" lleva a crearlo; un Journal se lee en el lector y se edita desde su ⋯ (13i; T345, T364)', async () => {
     mockPiezas = ok([
       ...libros(),
       pieza('j1', { title: 'Mi año', family: 'creation', kind: 'journal', page_count: 120, journal: { orientation: 'portrait', binding: 'spiral', material: 'wood', color: '#6B3E26', back: null, edges: '#F7F5EF', accent: '#B9B9B9' } }),
@@ -381,7 +381,12 @@ describe('menú y selección', () => {
     await fireEvent.press(screen.getByRole('button', { name: L.journal.new }));
     expect(globalThis.mockRouter.push).toHaveBeenCalledWith('/(app)/journal/edit');
     await fireEvent.press(screen.getByRole('button', { name: L.actionsFor('Mi año') }));
+    // Sin ficha ni otra portada: su portada es su material.
+    expect(screen.queryByRole('button', { name: L.cover.change })).toBeNull();
     await fireEvent.press(screen.getByRole('button', { name: L.item.open }));
+    expect(globalThis.mockRouter.push).toHaveBeenCalledWith({ pathname: '/(app)/book/[id]', params: { id: 'j1' } });
+    await fireEvent.press(screen.getByRole('button', { name: L.actionsFor('Mi año') }));
+    await fireEvent.press(screen.getByRole('button', { name: L.journal.edit }));
     expect(globalThis.mockRouter.push).toHaveBeenCalledWith({ pathname: '/(app)/journal/[id]', params: { id: 'j1' } });
   });
 

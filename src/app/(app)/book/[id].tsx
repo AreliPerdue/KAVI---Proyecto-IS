@@ -1,7 +1,7 @@
 import * as Clipboard from 'expo-clipboard';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { BookOpen, ChevronDown, ChevronLeft, ChevronUp, GalleryHorizontal, NotebookText, Radio, Rows3, Search, Shrink, X } from 'lucide-react-native';
+import { BookOpen, ChevronDown, ChevronLeft, ChevronUp, GalleryHorizontal, LayoutGrid, NotebookText, Pencil, Radio, Rows3, Search, Shrink, X } from 'lucide-react-native';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Platform, Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -13,6 +13,7 @@ import { BookmarkSheet, type CambioDeSeparador } from '@/components/library/book
 import { DefineSheet } from '@/components/library/define-sheet';
 import { HighlightSheet, type CambioDeSubrayado } from '@/components/library/highlight-sheet';
 import { type CambioDeEstilo, PegadoStyleSheet } from '@/components/library/pegado-style-sheet';
+import { JournalPagesGrid } from '@/components/library/journal-pages-grid';
 import { ReaderEngine, type ReaderEngineHandle } from '@/components/library/reader-engine';
 import { ReaderProgress } from '@/components/library/reader-progress';
 import { useDuracion } from '@/components/library/reading-summary';
@@ -30,6 +31,8 @@ import { type NombreDeSticker } from '@/constants/stickers';
 import { Fonts, IconSize, IconStroke, Radius, Spacing, Typography } from '@/constants/theme';
 import { useAnnotationEditor, useAnnotationImageUrls, useAnnotations, useClubAnnotationsLive, useUploadAnnotationImage } from '@/hooks/use-annotations';
 import { useReadingSessions, useReadingTimer } from '@/hooks/use-reading-sessions';
+import { useFuentesDeLienzos } from '@/hooks/use-canvas-sources';
+import { useCanvases } from '@/hooks/use-canvases';
 import { useStickerPacks, useStickerSources } from '@/hooks/use-sticker-packs';
 import { idPropio, useCreateUserSticker, useRemoveUserSticker, useStickersDeOtros, useUserStickerImages, useUserStickers, useUserStickerSources } from '@/hooks/use-user-stickers';
 import { usePantallaCompleta } from '@/hooks/use-full-screen';
@@ -45,6 +48,8 @@ import { useLibraryFileUrl, useLibraryItem, useLibraryItems, useSaveReadingPosit
 import { useTheme } from '@/hooks/use-theme';
 import { useT } from '@/i18n';
 import { uuidv4 } from '@/lib/gym/ids';
+import { aMotor } from '@/lib/library/canvas';
+import { paginasEnOrden, paraHojear, portadaValida, tapasDe } from '@/lib/library/journal';
 import { colorDeParte } from '@/lib/library/cover/parts';
 import { prepararImagenPegada } from '@/lib/library/cover/prepare';
 import { desdeCamara, desdeGaleria, PUEDE_TOMAR_FOTO } from '@/lib/library/cover/sources';
@@ -76,6 +81,7 @@ import {
   type AnotacionEnMotor,
   cambioDePosicion,
   type CodigoDeError,
+  type FondoDePagina,
   type Herramienta,
   type MensajeDelMotor,
   type Posicion as LugarDeApertura,
@@ -142,7 +148,9 @@ function Lector({ id, irA, unirseEnVivo = false }: { id: string; irA?: LugarDeAp
   const r = l.reader;
 
   const item = useLibraryItem(id);
-  const ruta = item.data ? (item.data.pdf_path ?? item.data.file_path) : null;
+  // Un Journal (13i; T364) se lee como un libro: portada, sus páginas y contraportada, sin archivo.
+  const esJournal = item.data?.kind === 'journal';
+  const ruta = item.data && !esJournal ? (item.data.pdf_path ?? item.data.file_path) : null;
   // En el teléfono el libro sale de su copia local; la dirección firmada solo la usa la web.
   const nativo = Platform.OS !== 'web';
   const url = useLibraryFileUrl(nativo ? null : ruta);
@@ -161,6 +169,14 @@ function Lector({ id, irA, unirseEnVivo = false }: { id: string; irA?: LugarDeAp
 
   const motor = useRef<ReaderEngineHandle>(null);
   const [abierto, setAbierto] = useState(false);
+  // Las hojas de un Journal (T364): lo que ya trae cada una va debajo de lo anotado. "Páginas" las ve en miniatura.
+  const lienzos = useCanvases(esJournal ? id : '');
+  const portadaJ = esJournal && item.data ? portadaValida(item.data.journal) : null;
+  const paginasJ = paginasEnOrden(lienzos.data ?? []);
+  const tapasJ = tapasDe(lienzos.data ?? []);
+  const hojasJ = portadaJ ? paraHojear(paginasJ, { portada: portadaJ, front: tapasJ.front, back: tapasJ.back }) : null;
+  const fuentesJ = useFuentesDeLienzos(hojasJ?.doc.elements ?? []);
+  const [verPaginas, setVerPaginas] = useState(false);
   const [error, setError] = useState<CodigoDeError | 'offline' | null>(null);
   const [posicion, setPosicion] = useState<Posicion | null>(null);
   const [buscando, setBuscando] = useState(false);
@@ -301,6 +317,29 @@ function Lector({ id, irA, unirseEnVivo = false }: { id: string; irA?: LugarDeAp
     // La forma con que se abre es la de ese momento; los cambios después van por `mode` (abajo).
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [item.data, url.data, ruta, intento]);
+
+  // Un Journal (T364): se abre con tantas hojas como tenga, donde se quedó, como un libro (no para componer).
+  const hojasDelJournal = lienzos.data && portadaJ ? (hojasJ?.doc.pages ?? null) : null;
+  const orientacionJ = portadaJ?.orientation;
+  useEffect(() => {
+    const pieza = item.data;
+    if (!pieza || !hojasDelJournal || !orientacionJ) return;
+    const clave = `journal:${hojasDelJournal}:${orientacionJ}`;
+    if (abiertoCon.current === clave) return;
+    abiertoCon.current = clave;
+    motor.current?.send({ type: 'openCanvas', orientation: orientacionJ, pages: hojasDelJournal, mode: forma, canvas: false, position: irA ?? posicionGuardada(pieza) });
+    // La forma con que se abre es la de ese momento; los cambios después van por `mode`.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [item.data, hojasDelJournal, orientacionJ, intento]);
+  // Y lo que trae cada hoja, con sus tapas y el color de cada página, cada vez que abre o cambia.
+  const baseJ = hojasJ && portadaJ ? aMotor(hojasJ.doc, fuentesJ.motor, portadaJ.edges) : null;
+  const claveBase = baseJ ? JSON.stringify(baseJ) : '';
+  const claveFondos = hojasJ ? JSON.stringify(hojasJ.fondos) : '';
+  useEffect(() => {
+    if (!abierto || !claveBase) return;
+    motor.current?.send({ type: 'baseLayer', items: JSON.parse(claveBase) as AnotacionEnMotor[] });
+    motor.current?.send({ type: 'canvasBackground', color: null, pages: JSON.parse(claveFondos) as Record<string, FondoDePagina> });
+  }, [abierto, claveBase, claveFondos]);
 
   // El tema del lector (RF-BH5): al abrir y cada vez que cambia. Si el motor aún no está listo, espera en
   // su cola.
@@ -465,7 +504,8 @@ function Lector({ id, irA, unirseEnVivo = false }: { id: string; irA?: LugarDeAp
         };
         pendiente.current = { timer: setTimeout(hacer, GUARDAR_MS), guardar: hacer };
         if (cambioDePosicion(m).progress >= 1 && ofrecerSiguiente === 'pendiente') setOfrecerSiguiente('visible');
-        if (cambioDePosicion(m).progress >= 1 && ofrecerFicha === 'pendiente') setOfrecerFicha('visible');
+        // Un Journal no lleva ficha (T364).
+        if (cambioDePosicion(m).progress >= 1 && ofrecerFicha === 'pendiente' && !esJournal) setOfrecerFicha('visible');
         return;
       }
       case 'search':
@@ -948,7 +988,7 @@ function Lector({ id, irA, unirseEnVivo = false }: { id: string; irA?: LugarDeAp
         return p && ((alEmpezar && alInicio(f.placement)) || (alTerminarlo && alFinal(f.placement))) ? [{ f, p }] : [];
       })
     : [];
-  const ofrecerLlenar = abierto && ofrecerFicha === 'visible' && !fichasDelLibro.length && vigentesDeFicha.length > 0 && fichas.isSuccess;
+  const ofrecerLlenar = abierto && !esJournal && ofrecerFicha === 'visible' && !fichasDelLibro.length && vigentesDeFicha.length > 0 && fichas.isSuccess;
   const abrirFicha = (plantilla: string) => router.push({ pathname: '/(app)/card/[itemId]', params: { itemId: id, plantilla } });
   const llenarFicha = () => {
     setOfrecerFicha('cerrado');
@@ -957,7 +997,7 @@ function Lector({ id, irA, unirseEnVivo = false }: { id: string; irA?: LugarDeAp
   };
   const nombreSaga = siguiente?.series_id ? (sagas.data ?? []).find((x) => x.id === siguiente.series_id)?.name : undefined;
 
-  const sinArchivo = item.isSuccess && !ruta;
+  const sinArchivo = item.isSuccess && !ruta && !esJournal;
   const mensajeError = sinArchivo
     ? r.noFile
     : error === 'offline'
@@ -1023,11 +1063,19 @@ function Lector({ id, irA, unirseEnVivo = false }: { id: string; irA?: LugarDeAp
           <AppText variant="bodyStrong" numberOfLines={1} style={styles.titulo}>
             {item.data?.title ?? ''}
           </AppText>
+          {esJournal ? (
+            // Editar el Journal (T364): sus tapas, su material y sus páginas, aparte de leerlo.
+            <IconButton label={tx.library.journal.edit} onPress={() => router.push({ pathname: '/(app)/journal/[id]', params: { id } })}>
+              <Pencil size={IconSize.action} strokeWidth={IconStroke} color={theme.text} />
+            </IconButton>
+          ) : null}
           <IconButton label={tx.library.annotations.panelA11y} onPress={() => setVerPanel(true)} disabled={!abierto}>
             <NotebookText size={IconSize.action} strokeWidth={IconStroke} color={abierto ? theme.text : theme.textTertiary} />
           </IconButton>
           <IconButton label={r.mode} onPress={() => setEligiendoForma(true)} disabled={!abierto}>
-            {forma === 'book' ? (
+            {verPaginas ? (
+              <LayoutGrid size={IconSize.action} strokeWidth={IconStroke} color={abierto ? theme.text : theme.textTertiary} />
+            ) : forma === 'book' ? (
               <BookOpen size={IconSize.action} strokeWidth={IconStroke} color={abierto ? theme.text : theme.textTertiary} />
             ) : forma === 'paged' ? (
               <GalleryHorizontal size={IconSize.action} strokeWidth={IconStroke} color={abierto ? theme.text : theme.textTertiary} />
@@ -1063,7 +1111,8 @@ function Lector({ id, irA, unirseEnVivo = false }: { id: string; irA?: LugarDeAp
       </View>
     ) : null;
 
-  const barraAbajo = abierto && controles ? (
+  // En "Páginas" (Journal, T364) no se anota: no hay barra de abajo.
+  const barraAbajo = abierto && controles && !verPaginas ? (
         <View style={[styles.abajo, superpuestos ? { backgroundColor: theme.background } : null, { paddingBottom: (superpuestos ? 0 : insets.bottom) + Spacing.xs }]}>
           {!mensajeError && seleccionTexto ? (
             <SelectionBar
@@ -1164,6 +1213,20 @@ function Lector({ id, irA, unirseEnVivo = false }: { id: string; irA?: LugarDeAp
       {superpuestos ? null : barraArriba}
       <View style={styles.libro}>
         {!sinArchivo ? <ReaderEngine ref={motor} onMessage={alMensaje} /> : null}
+        {verPaginas && portadaJ ? (
+          <View style={[styles.capa, styles.paginas, { paddingTop: superpuestos ? barras.arriba : 0 }]}>
+            <JournalPagesGrid
+              portada={portadaJ}
+              paginas={paginasJ}
+              tapas={tapasJ}
+              fuentes={fuentesJ.miniatura}
+              onIr={(page) => {
+                setVerPaginas(false);
+                motor.current?.send({ type: 'goTo', page });
+              }}
+            />
+          </View>
+        ) : null}
         {!abierto && !mensajeError ? (
           <View style={[styles.capa, { backgroundColor: theme.background }]}>
             <ActivityIndicator color={theme.textSecondary} />
@@ -1247,19 +1310,29 @@ function Lector({ id, irA, unirseEnVivo = false }: { id: string; irA?: LugarDeAp
       <Sheet visible={eligiendoForma} onClose={() => setEligiendoForma(false)} title={r.readingSettings}>
         <View style={styles.formas}>
           <AppText variant="label">{r.mode}</AppText>
-          <Segmented<FormaDeLeer>
+          <Segmented<FormaDeLeer | 'pages'>
             fullWidth
             label={r.mode}
             options={[
               { value: 'scroll', label: r.modeScroll },
               { value: 'paged', label: r.modePaged },
               { value: 'book', label: r.modeBook },
+              // Un Journal también se ve en miniaturas (T364).
+              ...(esJournal ? [{ value: 'pages' as const, label: r.modePages }] : []),
             ]}
-            value={forma}
-            onChange={elegirForma}
+            value={verPaginas ? 'pages' : forma}
+            onChange={(v) => {
+              if (v === 'pages') {
+                setVerPaginas(true);
+                setEligiendoForma(false);
+                return;
+              }
+              setVerPaginas(false);
+              elegirForma(v);
+            }}
           />
           <AppText variant="caption" color="textSecondary">
-            {forma === 'scroll' ? r.modeScrollHint : forma === 'book' ? r.modeBookHint : Platform.OS === 'web' ? r.modePagedHintWeb : r.modePagedHint}
+            {verPaginas ? r.modePagesHint : forma === 'scroll' ? r.modeScrollHint : forma === 'book' ? r.modeBookHint : Platform.OS === 'web' ? r.modePagedHintWeb : r.modePagedHint}
           </AppText>
           <ReaderTextPicker esPdf={!esEpub} />
           <ReaderThemePicker />
@@ -1368,6 +1441,7 @@ const styles = StyleSheet.create({
   contador: { flexShrink: 0 },
   libro: { flex: 1 },
   capa: { ...StyleSheet.absoluteFill, alignItems: 'center', justifyContent: 'center', gap: Spacing.md, padding: Spacing.xl },
+  paginas: { alignItems: 'stretch', justifyContent: 'flex-start', padding: 0, zIndex: 1 },
   centrado: { textAlign: 'center' },
   arriba: { position: 'absolute', top: 0, left: 0, right: 0 },
   abajoEncima: { position: 'absolute', bottom: 0, left: 0, right: 0 },
