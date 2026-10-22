@@ -94,8 +94,10 @@ async function abrir(m, fuente) {
 async function atender(m) {
   switch (m.type) {
     case 'open':
+      anotaciones.lienzo(false);
       return abrir(m, { url: m.url });
     case 'openBegin':
+      anotaciones.lienzo(false);
       llegando = { m, datos: new Uint8Array(Math.max(0, m.size | 0)), lleno: 0 };
       return;
     case 'openChunk': {
@@ -114,6 +116,7 @@ async function atender(m) {
     }
     case 'openCanvas':
       // El lienzo creativo (13h, RF-CC4; T351): páginas en blanco 1 : √2 que se abren como un PDF.
+      anotaciones.lienzo(true);
       return abrir({ format: 'pdf', mode: m.mode, position: { page: 1 } }, { datos: pdfEnBlanco(m.orientation, m.pages, m.aspect ?? null) });
     case 'canvasBackground':
       return anotaciones.fondo(m.color, m.pages);

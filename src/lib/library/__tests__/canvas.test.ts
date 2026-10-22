@@ -9,6 +9,7 @@ import {
   capa,
   conEstilo,
   conFondo,
+  conSentido,
   conSuGrupo,
   desagrupar,
   documentoValido,
@@ -59,7 +60,7 @@ describe('el documento', () => {
     const [a, b] = d.elements;
     expect(a.content).toEqual({ shape: 'rect' });
     expect(a.rot).toBe(270);
-    expect(b).toMatchObject({ page: 2, x: 1.5, w: 0.02, style: { size: 3 }, content: { text: 'hola' } });
+    expect(b).toMatchObject({ page: 2, x: 1.5, w: 0.02, style: { size: 8 }, content: { text: 'hola' } });
     expect(b.style.color).toBeUndefined();
   });
 });
@@ -274,5 +275,38 @@ describe('dato de la biblioteca y muestra de color (RF-CC14, RF-CC22; T349)', ()
     expect(d.content).toMatchObject({ title: '12', text: 'libros terminados', note: 'en 2026' });
     expect(m.content).toMatchObject({ color: '#7A1E3A', text: 'Vino' });
     expect(aMotor(doc)[0].content).toMatchObject({ title: '—' });
+  });
+});
+
+describe('texto en las tapas: sentido y tamaño (T363)', () => {
+  const texto = (extra: Partial<ElementoDeLienzo> = {}) => el('t', { type: 'textbox', x: 0.1, y: 0.2, w: 0.6, ar: 0.25, content: { text: 'Mi año' }, ...extra });
+
+  it('a vertical, la caja se voltea sobre su centro; entre verticales, solo cambia el sentido', () => {
+    const doc = [texto()].reduce(agregar, DOCUMENTO_VACIO);
+    const vertical = conSentido(doc, 't', 'down', Math.SQRT2).elements[0];
+    expect(vertical.style.direction).toBe('down');
+    expect(vertical.w).toBeCloseTo(0.15);
+    expect(vertical.ar).toBeCloseTo(4);
+    // El centro se queda: x + w/2 y y + alto/2 iguales.
+    expect(vertical.x + vertical.w / 2).toBeCloseTo(0.1 + 0.3);
+    expect(vertical.y + (vertical.w * vertical.ar) / Math.SQRT2 / 2).toBeCloseTo(0.2 + 0.15 / Math.SQRT2 / 2);
+    const arriba = conSentido({ ...doc, elements: [vertical] }, 't', 'up', Math.SQRT2).elements[0];
+    expect([arriba.w, arriba.ar, arriba.style.direction]).toEqual([vertical.w, vertical.ar, 'up']);
+    const otraVez = conSentido({ ...doc, elements: [arriba] }, 't', 'horizontal', Math.SQRT2).elements[0];
+    expect(otraVez.style.direction).toBeUndefined();
+    expect(otraVez.w).toBeCloseTo(0.6);
+  });
+
+  it('el sentido solo en el texto; la letra llega a 8 veces y va al motor', () => {
+    const doc = documentoValido({
+      pages: 1,
+      elements: [
+        { ...texto(), z: 1, style: { direction: 'stacked', size: 12 } },
+        { ...el('f'), z: 2, style: { direction: 'down' } },
+      ],
+    });
+    expect(doc.elements[0].style).toEqual({ direction: 'stacked', size: 8 });
+    expect(doc.elements[1].style.direction).toBeUndefined();
+    expect(aMotor(doc)[0].content).toMatchObject({ direction: 'stacked', size: 8 });
   });
 });

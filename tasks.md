@@ -1291,6 +1291,10 @@ Reemplazan L5 (13e). Un recorte es una página 1 : √2 del visor de PDF (decisi
   **Hecho (22 oct 2026), primera parte:** pegar fragmentos (texto → cita con página; imagen → copiada al recorte),
   módulo `stat` (libros terminados, páginas, horas; del año o de siempre; en vivo, `journal-stats.ts`), plantilla
   del Journal "Mi año lector" y módulo `swatch` (muestra de color). Sin migración.
+- [x] T363 Texto en las tapas del Journal: girar, sentido (horizontal, vertical ↓/↑, apilado) y tamaño de letra hasta
+  800 %. (13i RF-JC10; pedido de Areli del 22 oct 2026) Dep: T346
+  **Hecho (22 oct 2026):** `style.direction` y `conSentido` (voltea la caja), asa de giro y "Girar 90°" para texto en
+  el lienzo, tamaño en Estilo, letra medida con `max(1cqw, 0.7071cqh)` en el lienzo; en el lomo nace vertical ↑.
 - [ ] T349b C6 · Más módulos (mood, canción, fecha/lugar, timeline, checklist…) y plantillas (Moodboard, Reading
   Stats, Reading Awards, Reading Eras, Character Analysis…). (RF-CC14, RF-CC21) Dep: T349
 - [ ] T350 J4 · Primera colección de motivos Fantasy / Dragon en la tienda. (RF-JC10) Dep: T346

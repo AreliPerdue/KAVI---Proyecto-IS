@@ -54,6 +54,33 @@ export function colorDeTratamiento(t: Exclude<Tratamiento, 'printed'>, papel: st
   return papel;
 }
 
+/**
+ * El sentido de un texto (13i; T363), para lomos y tapas: horizontal; vertical de arriba abajo (como los lomos en
+ * inglés) o de abajo arriba (como en español); o las letras apiladas una sobre otra. La caja se queda derecha.
+ */
+export const SENTIDOS = ['horizontal', 'down', 'up', 'stacked'] as const;
+export type SentidoDeTexto = (typeof SENTIDOS)[number];
+/** Lo más grande que puede ser la letra (8 veces la normal): un título en una portada. */
+export const TAMANO_MAXIMO = 8;
+
+/**
+ * Cambiar el sentido de un texto: entre horizontal y vertical, la caja se voltea (lo ancho se vuelve alto) sobre su
+ * centro, para que el texto quepa igual. `paginaAlto` es el alto de la página entre su ancho.
+ */
+export function conSentido(doc: DocumentoDeLienzo, id: string, sentido: SentidoDeTexto, paginaAlto: number): DocumentoDeLienzo {
+  const e = doc.elements.find((x) => x.id === id);
+  if (!e || e.type !== 'textbox') return doc;
+  const vertical = (s: SentidoDeTexto | undefined) => !!s && s !== 'horizontal';
+  const direction = sentido === 'horizontal' ? undefined : sentido;
+  if (vertical(e.style.direction) === vertical(sentido)) return cambiar(doc, id, { style: { direction } });
+  const alto = e.w * e.ar;
+  const w = Math.min(2, alto);
+  const ar = alto > 0 ? e.w / alto : 1;
+  const x = e.x + (e.w - w) / 2;
+  const y = e.y + (alto - w * ar) / 2 / paginaAlto;
+  return cambiar(doc, id, { x, y, w, ar, style: { direction } });
+}
+
 export type ElementoDeLienzo = {
   id: string;
   type: TipoDeElemento;
@@ -82,6 +109,8 @@ export type ElementoDeLienzo = {
     shadow?: boolean;
     /** Acabado en una tapa del Journal (T348); sin él, impreso. */
     treatment?: Exclude<Tratamiento, 'printed'>;
+    /** Sentido de un texto (T363): vertical o con las letras apiladas; sin él, horizontal. */
+    direction?: Exclude<SentidoDeTexto, 'horizontal'>;
   };
   /**
    * Texto; forma; ruta de la imagen en R2; sticker (`<paquete>/<nombre>`) y su nombre. Polaroid: variante, rutas de
@@ -157,7 +186,10 @@ export function elementoValido(raw: unknown, paginas = MAX_PAGINAS): ElementoDeL
     group: typeof e.group === 'string' && e.group ? e.group.slice(0, 64) : null,
     style: {
       ...(esColor(estilo.color) ? { color: estilo.color } : {}),
-      ...(numero(estilo.size) ? { size: entre(estilo.size, 0.5, 3) } : {}),
+      ...(numero(estilo.size) ? { size: entre(estilo.size, 0.5, TAMANO_MAXIMO) } : {}),
+      ...(tipo === 'textbox' && SENTIDOS.includes(estilo.direction as SentidoDeTexto) && estilo.direction !== 'horizontal'
+        ? { direction: estilo.direction as Exclude<SentidoDeTexto, 'horizontal'> }
+        : {}),
       ...(numero(estilo.opacity) && estilo.opacity < 1 ? { opacity: entre(estilo.opacity, 0.1, 1) } : {}),
       ...(bordeValido(estilo.border) ? { border: bordeValido(estilo.border) as { width: number; color: string } } : {}),
       ...(estilo.shadow === true ? { shadow: true } : {}),
@@ -275,7 +307,13 @@ export function aMotor(
     };
     const content: AnotacionEnMotor['content'] =
       e.type === 'textbox'
-        ? { text: e.content.text ?? '', ...(e.style.color ? { color: e.style.color } : {}), ...(e.style.size ? { size: e.style.size } : {}), ...comun }
+        ? {
+            text: e.content.text ?? '',
+            ...(e.style.color ? { color: e.style.color } : {}),
+            ...(e.style.size ? { size: e.style.size } : {}),
+            ...(e.style.direction ? { direction: e.style.direction } : {}),
+            ...comun,
+          }
         : e.type === 'shape'
           ? { shape: e.content.shape ?? 'rect', ...(e.style.color ? { color: e.style.color } : {}), ...comun }
           : e.type === 'image'

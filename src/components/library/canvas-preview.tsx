@@ -107,16 +107,25 @@ export const CanvasPreview = memo(function CanvasPreview({
             );
           }
           if (e.type === 'textbox') {
-            const tamano = 0.021 * W * (e.style.size ?? 1);
+            // Como en el motor (T363): contra lo mayor entre el ancho y el alto de una A5, así el lomo no la achica.
+            const tamano = 0.021 * Math.max(W, alto * 0.7071) * (e.style.size ?? 1);
+            const sentido = e.style.direction;
+            const estiloDeTexto = [
+              { fontSize: tamano, lineHeight: tamano * 1.35, color: color ?? TINTA_DE_TEXTO, paddingHorizontal: tamano * 0.35, paddingVertical: tamano * 0.25 },
+              e.style.treatment === 'debossed' ? styles.hundido : e.style.treatment === 'embossed' ? styles.relieve : null,
+            ];
             return (
               <View key={e.id} style={[caja, styles.texto, borde ? { borderWidth: borde.width, borderColor: borde.color } : null]}>
-                <Text
-                  style={[
-                    { fontSize: tamano, lineHeight: tamano * 1.35, color: color ?? TINTA_DE_TEXTO, paddingHorizontal: tamano * 0.35, paddingVertical: tamano * 0.25 },
-                    e.style.treatment === 'debossed' ? styles.hundido : e.style.treatment === 'embossed' ? styles.relieve : null,
-                  ]}>
-                  {e.content.text}
-                </Text>
+                {sentido === 'down' || sentido === 'up' ? (
+                  // Vertical: el texto acostado en una caja del largo de la suya, girado un cuarto de vuelta.
+                  <View style={{ position: 'absolute', width: h, height: w, left: (w - h) / 2, top: (h - w) / 2, transform: [{ rotate: sentido === 'down' ? '90deg' : '-90deg' }] }}>
+                    <Text style={estiloDeTexto}>{e.content.text}</Text>
+                  </View>
+                ) : (
+                  <Text style={[estiloDeTexto, sentido === 'stacked' ? styles.apilado : null]}>
+                    {sentido === 'stacked' ? [...(e.content.text ?? '')].join('\n') : e.content.text}
+                  </Text>
+                )}
               </View>
             );
           }
@@ -134,6 +143,7 @@ export const CanvasPreview = memo(function CanvasPreview({
 const styles = StyleSheet.create({
   pagina: { overflow: 'hidden', borderWidth: StyleSheet.hairlineWidth, borderRadius: Radius.sm / 2, borderCurve: 'continuous' },
   sinPapel: { overflow: 'hidden' },
+  apilado: { textAlign: 'center' },
   centrado: { alignItems: 'center', justifyContent: 'center' },
   hundido: { textShadowColor: 'rgba(255,255,255,0.3)', textShadowOffset: { width: 0, height: 0.5 }, textShadowRadius: 0 },
   relieve: { textShadowColor: 'rgba(0,0,0,0.5)', textShadowOffset: { width: 0, height: 0.8 }, textShadowRadius: 0.6 },

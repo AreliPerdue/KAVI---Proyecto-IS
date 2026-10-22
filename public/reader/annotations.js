@@ -55,7 +55,8 @@ const LETRA_POSTIT_PX = 15;
 const LETRA_MINIMA_PX = 6;
 
 /** El tamaño de letra elegido (1 = normal), de 50 % a 300 %. */
-const escalaDe = (a) => (Number.isFinite(a.content?.size) ? Math.min(3, Math.max(0.5, a.content.size)) : 1);
+// Hasta 8: un título en la tapa de un Journal (T363).
+const escalaDe = (a) => (Number.isFinite(a.content?.size) ? Math.min(8, Math.max(0.5, a.content.size)) : 1);
 
 const desborda = (caja) => caja.scrollHeight > caja.clientHeight || caja.scrollWidth > caja.clientWidth;
 
@@ -195,6 +196,8 @@ export function crearCapa(ctx, enviar) {
   let ademas = new Set();
   /** El color de las páginas de un lienzo creativo (T342); `null`: papel blanco. */
   let fondo = null;
+  /** Si lo abierto es un lienzo creativo (T363): su texto se gira y se mide también contra el alto de la página. */
+  let enLienzo = false;
   /** El color propio de cada página, si lo tiene (las páginas de un Journal al hojearlo; T347). */
   let fondoDePagina = new Map();
   let arrastre = null; // { id, el, x0, y0, movido }
@@ -323,16 +326,22 @@ export function crearCapa(ctx, enviar) {
           if (!texto) el.setAttribute('aria-label', 'Post-it con dibujo');
         }
       } else if (a.kind !== 'postit') {
-        // Cuadro de texto: la letra no depende del ancho (estirarlo reacomoda los renglones).
+        // Cuadro de texto: la letra no depende del ancho (estirarlo reacomoda los renglones). En un lienzo se mide
+        // contra lo mayor entre el ancho y el alto de una A5 (T363): en el lomo, alto y angosto, no queda diminuta.
         const escala = escalaDe(a);
         el.setAttribute('aria-label', texto ? `Cuadro de texto: ${texto}` : 'Cuadro de texto');
         Object.assign(el.style, {
           color: /^#[0-9a-fA-F]{6}([0-9a-fA-F]{2})?$/.test(a.content?.color ?? '') ? a.content.color : '#1A1A1A',
           padding: '0.25em 0.35em',
           fontFamily: '-apple-system, system-ui, "Segoe UI", Roboto, sans-serif',
-          fontSize: px ? `${Math.round(16 * escala)}px` : `calc(${escala} * 2.1cqw)`,
+          fontSize: px ? `${Math.round(16 * escala)}px` : enLienzo ? `calc(${escala} * 2.1 * max(1cqw, 0.7071cqh))` : `calc(${escala} * 2.1cqw)`,
           lineHeight: '1.35',
         });
+        // Su sentido (T363): vertical de arriba abajo, de abajo arriba (volteado) o con las letras apiladas.
+        const sentido = a.content?.direction;
+        if (sentido === 'down' || sentido === 'up' || sentido === 'stacked') {
+          Object.assign(el.style, { writingMode: 'vertical-rl', textOrientation: sentido === 'stacked' ? 'upright' : 'mixed', transform: sentido === 'up' ? 'scale(-1, -1)' : '' });
+        }
         if (!texto) el.classList.add('vacio');
       }
     }
@@ -848,7 +857,8 @@ export function crearCapa(ctx, enviar) {
    * agrandan o achican sin deformarlo y las de los lados lo estiran (pedido de Areli, 14 oct).
    */
   function ponerAsas(el, a) {
-    if (esImagen(a) || a.kind === 'postit' || a.kind === 'shape' || a.kind === 'asset' || MODULOS.includes(a.kind)) ponerGiro(el, a);
+    // El texto de un lienzo también se gira (T363); el de un libro, no.
+    if (esImagen(a) || a.kind === 'postit' || a.kind === 'shape' || a.kind === 'asset' || MODULOS.includes(a.kind) || (a.kind === 'textbox' && enLienzo)) ponerGiro(el, a);
     for (const lado of LADOS) {
       // Un sticker y los módulos que se ven como objeto (polaroid, libro, rating) no se deforman desde las esquinas.
       const proporcional = (a.kind === 'sticker' || ['polaroid', 'book', 'rating', 'asset'].includes(a.kind)) && lado.length === 2;
@@ -1725,6 +1735,10 @@ export function crearCapa(ctx, enviar) {
           .map(([n, c]) => [Number(n), fondoValido(c)]),
       );
       repintar();
+    },
+    /** Si lo abierto es un lienzo creativo (T363). */
+    lienzo(v) {
+      enLienzo = v === true;
     },
     /** Lo que hay en la página, en orden de capa, para exportarla (T342). */
     lista: () => lista,

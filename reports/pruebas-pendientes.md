@@ -899,3 +899,8 @@ Automatizado: `journal-stats.test.ts` (libros, páginas y horas por año), `canv
 el demo web: una página con Mi año lector y una muestra "Vino".
 - [ ] (manual, Areli, en producción) Pegar un fragmento de imagen en un recorte (la copia baja de R2) y uno de texto.
 - [ ] (manual, Areli) ¿Los números de Mi año lector cuadran con lo que leíste este año?
+
+## Texto en las tapas (T363)
+Automatizado: `canvas.test.ts` (voltear la caja, sentido solo en texto, letra hasta 8×) y `canvas.test.tsx` (girar 90°,
+tamaño en Estilo, sentido solo en tapas). Visto en el demo web: "MI AÑO LECTOR" vertical de abajo arriba en el lomo.
+- [ ] (manual, iPhone y Android) El texto vertical y apilado se escribe y se ve igual que en la computadora.

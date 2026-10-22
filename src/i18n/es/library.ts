@@ -744,9 +744,22 @@ export const library = {
     selectManyOn: 'Toca otros elementos para elegirlos también.',
     chosen: (n: number) => `${n} ${n === 1 ? 'elegido' : 'elegidos'}`,
     grouped: 'En grupo: se mueven juntos. Desagrupa para cambiar uno solo.',
+    // Texto en las tapas (T363): girar, sentido y tamaño de letra.
+    rotate90: 'Girar 90°',
+    direction: {
+      title: 'Sentido del texto',
+      horizontal: 'Horizontal',
+      down: 'Vertical, de arriba abajo',
+      up: 'Vertical, de abajo arriba',
+      stacked: 'Letras apiladas',
+      current: 'actual',
+    },
     style: {
       title: 'Estilo',
       open: 'Estilo',
+      size: 'Tamaño de letra',
+      smaller: 'Letra más chica',
+      bigger: 'Letra más grande',
       color: 'Color',
       opacity: 'Opacidad',
       border: 'Borde',

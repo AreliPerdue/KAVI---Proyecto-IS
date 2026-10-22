@@ -595,3 +595,44 @@ describe('dato, muestra y fragmentos (T349)', () => {
     }
   });
 });
+
+describe('texto: girar, sentido y tamaño (T363)', () => {
+  const conTexto = (extra: Record<string, unknown> = {}) => {
+    mockLienzo = {
+      ...mockLienzo,
+      doc: { pages: 1, elements: [{ id: 't', type: 'textbox', page: 1, x: 0.1, y: 0.1, w: 0.6, ar: 0.25, rot: 0, z: 1, locked: false, group: null, style: {}, content: { text: 'Mi año' } }] },
+      ...extra,
+    };
+  };
+
+  it('el texto se gira de 90 en 90 y su letra crece hasta 8 veces desde Estilo', async () => {
+    conTexto();
+    await montar();
+    await responder({ type: 'select', id: 't' });
+    await fireEvent.press(screen.getByRole('button', { name: C.rotate90 }));
+    expect(ultimas()[0].content.rot).toBe(90);
+    await fireEvent.press(screen.getByRole('button', { name: C.style.open }));
+    await fireEvent.press(screen.getByRole('button', { name: C.style.bigger }));
+    expect(screen.getByText('125 %')).toBeTruthy();
+    for (let i = 0; i < 20; i++) await fireEvent.press(screen.getByRole('button', { name: C.style.bigger }));
+    expect(ultimas()[0].content.size).toBe(8);
+    expect(screen.getByRole('button', { name: C.style.bigger })).toBeDisabled();
+  });
+
+  it('en una tapa, el texto cambia de sentido; en un recorte no hay sentido', async () => {
+    conTexto();
+    await montar();
+    await responder({ type: 'select', id: 't' });
+    expect(screen.queryByRole('button', { name: C.direction.title })).toBeNull();
+    globalThis.setParametrosDeRuta({ id: 't1', item: 'j1' });
+    conTexto({ id: 't1', context: 'cover', face: 'spine', item_id: 'j1', orientation: 'portrait' });
+    mockEnviados.length = 0;
+    await montar();
+    await responder({ type: 'select', id: 't' });
+    await fireEvent.press(screen.getByRole('button', { name: C.direction.title }));
+    await fireEvent.press(screen.getByRole('button', { name: C.direction.up }));
+    expect(ultimas()[0].content).toMatchObject({ direction: 'up' });
+    // La caja se volteó: ahora es alta.
+    expect(ultimas()[0].locator.ar).toBeCloseTo(4);
+  });
+});

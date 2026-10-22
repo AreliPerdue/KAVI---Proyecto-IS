@@ -3,6 +3,7 @@ import {
   BookOpen,
   BringToFront,
   Camera,
+  ArrowDownUp,
   ChartNoAxesColumn,
   Check,
   ChevronLeft,
@@ -20,6 +21,7 @@ import {
   Pencil,
   Plus,
   Redo2,
+  RotateCw,
   Scissors,
   SendToBack,
   Shapes,
@@ -72,6 +74,7 @@ import {
   capa,
   conEstilo,
   conFondo,
+  conSentido,
   conSuGrupo,
   desagrupar,
   duplicar,
@@ -84,7 +87,9 @@ import {
   PROPORCION_DE_MUESTRA,
   PROPORCION_DE_POLAROID,
   PROPORCION_DE_RATING,
+  proporcionDePagina,
   quitar,
+  SENTIDOS,
   rutasDeImagenes,
   TRATAMIENTOS,
   type VarianteDePolaroid,
@@ -184,6 +189,8 @@ export default function CanvasScreen() {
   const [anioDelDato, setAnioDelDato] = useState<'year' | 'all'>('year');
   const [nombreDeMuestra, setNombreDeMuestra] = useState<{ id: string; texto: string } | null>(null);
   const [eligiendoFragmento, setEligiendoFragmento] = useState(false);
+  // El sentido del texto elegido en una tapa (T363).
+  const [eligiendoSentido, setEligiendoSentido] = useState(false);
   const guardarPlantilla = useSaveCanvasTemplate();
   const destinoDeImagen = useRef<DestinoDeImagen>(null);
   const piezas = useLibraryItems();
@@ -314,7 +321,17 @@ export default function CanvasScreen() {
     if (tipo === 'textbox') {
       // En una tapa (T346), claro u oscuro según el material para que se lea, y un poco más grande.
       const tinta = colorDeMaterial && luminance(colorDeMaterial) < 0.3 ? PAPEL_DE_LIENZO : TINTA_DE_TEXTO;
-      aplicar((d) => agregar(d, { ...base, type: 'textbox', style: { color: tinta, ...(cara ? { size: 1.6 } : {}) }, content: { text: '' } }));
+      // En el lomo (T363), como en los libros en español: vertical de abajo arriba, a lo ancho del lomo y de buen largo.
+      const enLomo = cara === 'spine' && aspecto ? { x: 0.1, w: 0.8, ar: (0.6 * aspecto) / 0.8, y: Math.min(0.38, Math.max(0.02, base.y - 0.3)) } : null;
+      aplicar((d) =>
+        agregar(d, {
+          ...base,
+          ...enLomo,
+          type: 'textbox',
+          style: { color: tinta, ...(cara ? { size: 1.6 } : {}), ...(enLomo ? { direction: 'up' as const } : {}) },
+          content: { text: '' },
+        }),
+      );
       elegir(nuevoId);
       motor.current?.send({ type: 'write', id: nuevoId });
       return;
@@ -717,6 +734,18 @@ export default function CanvasScreen() {
                 </IconButton>
               ) : null}
               {elegido.type === 'textbox' && !varios && !elegido.locked ? (
+                <>
+                  <IconButton label={c.rotate90} onPress={() => aplicar((d) => cambiar(d, elegido.id, { rot: (elegido.rot + 90) % 360 }))}>
+                    {icono(RotateCw)}
+                  </IconButton>
+                  {cara ? (
+                    <IconButton label={c.direction.title} onPress={() => setEligiendoSentido(true)}>
+                      {icono(ArrowDownUp)}
+                    </IconButton>
+                  ) : null}
+                </>
+              ) : null}
+              {elegido.type === 'textbox' && !varios && !elegido.locked ? (
                 <IconButton label={a.write} onPress={() => motor.current?.send({ type: 'write', id: elegido.id })}>
                   {icono(Pencil)}
                 </IconButton>
@@ -975,6 +1004,24 @@ export default function CanvasScreen() {
             }}
           />
         </View>
+      </Sheet>
+      <Sheet visible={eligiendoSentido} onClose={() => setEligiendoSentido(false)} title={c.direction.title}>
+        {SENTIDOS.map((sentido) => {
+          const actual = (elegido?.style.direction ?? 'horizontal') === sentido;
+          return (
+            <ActionRow
+              key={sentido}
+              icon={icono(actual ? Check : ArrowDownUp, actual ? theme.text : theme.textTertiary)}
+              label={actual ? `${c.direction[sentido]} · ${c.direction.current}` : c.direction[sentido]}
+              onPress={() => {
+                setEligiendoSentido(false);
+                if (!elegido) return;
+                const alto = aspecto ?? proporcionDePagina(orientacion ?? 'portrait');
+                aplicar((d) => conSentido(d, elegido.id, sentido, alto));
+              }}
+            />
+          );
+        })}
       </Sheet>
       <Sheet visible={eligiendoAcabado} onClose={() => setEligiendoAcabado(false)} title={c.finish.title}>
         <AppText variant="body" color="textSecondary" style={styles.pista}>

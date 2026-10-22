@@ -118,6 +118,15 @@
     arriba y luz abajo; relieve, luz arriba, sombra abajo y una sombrita afuera; recortado, el canto oscuro y la
     sombra de la tapa sobre la hoja. Va dentro de la pieza porque al hojear cada hoja es su propio árbol.
   - En las miniaturas de la app se ve el color del acabado (y una sombra en el texto); la luz completa, en el motor.
+- **Texto en las tapas (T363, pedido de Areli del 22 oct 2026):**
+  - **Girar:** el texto de un lienzo tiene asa de giro (se pega a 0/90/180/270°) y "Girar 90°" (también en recortes).
+  - **Sentido** (en las tapas): horizontal, vertical de arriba abajo, vertical de abajo arriba (como los lomos en
+    español) o letras apiladas. Es el modo de escritura, no un giro: la caja queda derecha y, al pasar entre horizontal
+    y vertical, se voltea sobre su centro para que el texto quepa. En el lomo, el texto nuevo nace vertical de abajo
+    arriba, a lo ancho del lomo.
+  - **Tamaño de letra** en Estilo (− / +), de 50 % a 800 %, para texto y citas.
+  - En un lienzo la letra se mide contra lo mayor entre el ancho y el alto de una A5: en el lomo, alto y angosto, no
+    queda diminuta.
 
 ## 7. Fases propuestas
 
