@@ -107,3 +107,34 @@ OAuth social, verificación en dos pasos.
   **Criterio.** *Dado* que elijo el Nobi turquesa, *cuando* un contacto abre mi
   perfil, *entonces* ve el mismo Nobi turquesa; y *cuando* cambio la apariencia a
   clara, *entonces* el mismo Nobi se ve sobre fondo claro, sin recuadro oscuro.
+
+- RF-A12. **Disfraces de Nobi** *(propuesta del 22 oct 2026; falta aprobarla).* El Nobi del
+  avatar se puede "vestir": un disfraz (p. ej. arbolito de Navidad) se pinta **por capas
+  encima del Nobi**, como si se dibujara sobre él, y queda en la foto de perfil. Los
+  disfraces los dibuja Areli y KAVI los trae incluidos.
+  - **Capas.** Cada disfraz tiene una capa **delante** (lo que tapa al Nobi: gorro, estrella,
+    ramas) y, si hace falta, una capa **detrás** (lo que asoma por atrás: capa, cola, copa
+    del árbol). Las dos son PNG transparentes del mismo tamaño y encuadre que el Nobi
+    (512 × 512), así que se alinean solas y sirven para los veinticinco colores.
+  - **Orden de pintado:** fondo del esquema → capa detrás → Nobi → capa delante. Hoy el
+    fondo va pintado dentro del PNG del Nobi (RF-A11); para la capa detrás, el Nobi
+    necesita una versión sin fondo y el fondo pasa a pintarse aparte. Un disfraz que solo
+    tiene capa delante funciona con las imágenes actuales.
+  - **Se guarda en el perfil**, junto al color y no en el dispositivo (los contactos ven el
+    mismo Nobi disfrazado): una columna `profiles.avatar_costume` con el id del disfraz o
+    nula. Un id que deje de existir se lee como "sin disfraz", sin errores; las versiones
+    anteriores de la app, que no conocen la columna, siguen viendo el Nobi sin disfraz.
+  - **Dónde se elige:** en Perfil, debajo de los colores de Nobi, una fila de disfraces
+    con "Ninguno" primero; se ve en vivo sobre el color elegido. Sin Nobi elegido no hay
+    disfraz (las iniciales no se visten).
+  - Se pinta igual en todos los lugares donde sale el avatar (perfil, contactos,
+    compartidos, club de lectura), en un solo componente.
+
+  **Criterio.** *Dado* que mi avatar es el Nobi verde, *cuando* le pongo el disfraz de
+  arbolito, *entonces* veo el arbolito encima del Nobi verde en mi perfil y un contacto
+  ve lo mismo; y *cuando* cambio a Nobi rosa, *entonces* el arbolito se queda y cambia
+  solo el color del Nobi.
+
+  **Por decidir con Areli:** si los disfraces de temporada (Navidad, Halloween) están
+  siempre o solo en sus fechas; si también visten a los stickers Nobi de Library; y si
+  más adelante se venden en la tienda como los packs de stickers.

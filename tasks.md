@@ -1213,6 +1213,13 @@ Decisiones B1–B9 aprobadas el 12 oct 2026 (T274); ver la tabla de la spec 13 �
 - [ ] T356 Widget de la pantalla de inicio en iOS con `expo-widgets`. Bloqueado por la cuenta de Apple Developer.
   (RF-C21) Dep: T353
 
+### Disfraces de Nobi (spec 03 RF-A12, propuesta del 22 oct 2026; falta aprobarla)
+- [ ] T361 Nobi por capas: versión sin fondo de los 25 colores y fondo del esquema pintado aparte, en un solo
+  componente de avatar, sin cambiar cómo se ve hoy. (RF-A11, RF-A12) Dep: —
+- [ ] T362 Disfraces: capas delante/detrás incluidas, `profiles.avatar_costume` con RLS (migración), Supabase y
+  demo, fila de disfraces en Perfil con vista en vivo, y el avatar disfrazado en contactos, compartidos y club.
+  Primer disfraz: arbolito de Navidad, dibujado por Areli. (RF-A12) Dep: T361
+
 ### LK · Lienzo creativo: Recortes y Journal (specs 13h y 13i, aprobadas el 14 oct 2026)
 Reemplazan L5 (13e). Un recorte es una página 1 : √2 del visor de PDF (decisión 3 de Areli).
 - [x] T341 Specs 13h y 13i: propuesta, decisiones de Areli (Fragmentos, reemplazo de 13e, página del visor de PDF,
