@@ -65,7 +65,7 @@ export const CanvasPreview = memo(function CanvasPreview({
           const h = w * e.ar;
           const borde = e.style.border ? { width: e.style.border.width * W, color: e.style.border.color } : null;
           // Un acabado de una tapa (T348) pinta con su color; su luz y su sombra son del motor (aquí, solo en el texto).
-          const color = e.style.treatment ? colorDeTratamiento(e.style.treatment, papel) : e.style.color;
+          const color = e.style.treatment ? colorDeTratamiento(e.style.treatment, papel, e.style.color) : e.style.color;
           const caja = {
             position: 'absolute' as const,
             left: e.x * W,

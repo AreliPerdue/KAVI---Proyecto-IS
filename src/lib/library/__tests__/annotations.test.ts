@@ -120,7 +120,9 @@ describe('posición que llega del motor (spec 13 §5)', () => {
   it('un post-it estirado guarda su proporción (alto entre ancho, T329); fuera de rango se ignora', () => {
     expect(localizadorPegado({ page: 3, x: 0.2, y: 0.4, w: 0.3, ar: 1.5 })).toEqual({ page: 3, x: 0.2, y: 0.4, w: 0.3, ar: 1.5 });
     expect(localizadorPegado({ cfi: 'epubcfi(/6/4)', x: 0.5, w: 0.2, ar: 0.5 })).toEqual({ cfi: 'epubcfi(/6/4)', x: 0.5, w: 0.2, ar: 0.5 });
-    expect(localizadorPegado({ page: 3, x: 0.2, y: 0.4, w: 0.3, ar: 9 })).toEqual({ page: 3, x: 0.2, y: 0.4, w: 0.3 });
+    // Lo del lienzo llega a 0.05 – 20 (un texto de lomo, una cinta; T366): el motor limita lo de un libro.
+    expect(localizadorPegado({ page: 3, x: 0.2, y: 0.4, w: 0.3, ar: 9 })).toEqual({ page: 3, x: 0.2, y: 0.4, w: 0.3, ar: 9 });
+    expect(localizadorPegado({ page: 3, x: 0.2, y: 0.4, w: 0.3, ar: 30 })).toEqual({ page: 3, x: 0.2, y: 0.4, w: 0.3 });
   });
 
   it('rechaza lo que no tiene esa forma', () => {

@@ -46,12 +46,13 @@ export const CON_TRATAMIENTO: readonly TipoDeElemento[] = ['textbox', 'shape', '
 /**
  * El color de un acabado, el mismo para cualquier silueta (RF-JC12): hundido oscurece el material y relieve lo aclara
  * —translúcidos, así conservan su textura y toman su tono aunque se cambie el color—; recortado deja ver la hoja de
- * abajo, del color de las páginas (`papel`).
+ * abajo, del color de las páginas (`papel`). Con un color elegido (T366, pedido de Areli), hundido y relieve toman ese
+ * color, un poco translúcido para que se siga viendo la textura.
  */
-export function colorDeTratamiento(t: Exclude<Tratamiento, 'printed'>, papel: string): string {
-  if (t === 'debossed') return '#0000004D';
-  if (t === 'embossed') return '#FFFFFF2E';
-  return papel;
+export function colorDeTratamiento(t: Exclude<Tratamiento, 'printed'>, papel: string, color?: string): string {
+  if (t === 'cutout') return papel;
+  if (color && /^#[0-9a-fA-F]{6}$/.test(color)) return `${color.toUpperCase()}A6`;
+  return t === 'debossed' ? '#0000004D' : '#FFFFFF2E';
 }
 
 /**
@@ -295,7 +296,11 @@ export function aMotor(
     // un asset, solo su silueta.
     const t = original.style.treatment;
     const e: ElementoDeLienzo = t
-      ? { ...original, style: { ...original.style, color: colorDeTratamiento(t, papel), shadow: undefined }, content: original.type === 'asset' ? { ...original.content, mode: 'trazo' } : original.content }
+      ? {
+          ...original,
+          style: { ...original.style, color: colorDeTratamiento(t, papel, original.style.color), shadow: undefined },
+          content: original.type === 'asset' ? { ...original.content, mode: 'trazo' } : original.content,
+        }
       : original;
     const locator: LibraryLocator = { page: e.page, x: e.x, y: e.y, w: e.w, ar: e.ar };
     const comun = {

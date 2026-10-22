@@ -256,8 +256,9 @@ export function localizadorPegado(crudo: unknown): LibraryLocator | null {
   if (!crudo || typeof crudo !== 'object') return null;
   const l = crudo as Record<string, unknown>;
   if (!fraccion(l.x) || !fraccion(l.w) || l.w === 0) return null;
-  // La proporción (alto entre ancho) de algo estirado; fuera de rango, cuadrado.
-  const ar = typeof l.ar === 'number' && Number.isFinite(l.ar) && l.ar >= 0.25 && l.ar <= 4 ? { ar: l.ar } : {};
+  // La proporción (alto entre ancho) de algo estirado; fuera de rango, cuadrado. El motor ya la limita a lo de cada
+  // cosa (lo de un libro, de ¼ a 4); en un lienzo, una cinta o un texto de lomo llegan a 0.05 – 20 (T343b, T366).
+  const ar = typeof l.ar === 'number' && Number.isFinite(l.ar) && l.ar >= 0.05 && l.ar <= 20 ? { ar: l.ar } : {};
   if (typeof l.page === 'number' && Number.isInteger(l.page) && l.page >= 1) {
     return fraccion(l.y) ? { page: l.page, x: l.x, y: l.y, w: l.w, ...ar } : null;
   }

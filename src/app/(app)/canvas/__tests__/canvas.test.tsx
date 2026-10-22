@@ -531,6 +531,24 @@ describe('tapas del Journal (T346)', () => {
     expect(ultimas()[0].content).toMatchObject({ color: '#F7F5EF', treatment: 'cutout' });
   });
 
+  it('un acabado hundido se pinta del color que se elija, y empieza sin color (T366)', async () => {
+    tapa('front');
+    mockLienzo = {
+      ...mockLienzo,
+      doc: { pages: 1, elements: [{ id: 't', type: 'textbox', page: 1, x: 0.1, y: 0.1, w: 0.4, ar: 0.3, rot: 0, z: 1, locked: false, group: null, style: { color: '#F2F2F2' }, content: { text: 'Hola' } }] },
+    };
+    await montar();
+    await responder({ type: 'select', id: 't' });
+    await fireEvent.press(screen.getByRole('button', { name: C.finish.title }));
+    await fireEvent.press(screen.getByRole('button', { name: C.finish.debossed }));
+    expect(ultimas()[0].content).toMatchObject({ color: '#0000004D', treatment: 'debossed' });
+    await fireEvent.press(screen.getByRole('button', { name: C.style.open }));
+    await fireEvent.press(screen.getByRole('button', { name: C.style.color }));
+    await fireEvent.press(screen.getByRole('button', { name: C.color.named(C.color.names.darkRed, '#C00000') }));
+    await fireEvent.press(screen.getByRole('button', { name: C.color.use }));
+    expect(ultimas()[0].content).toMatchObject({ color: '#C00000A6', treatment: 'debossed' });
+  });
+
   it('en un recorte de un libro no hay acabado', async () => {
     mockLienzo = {
       ...mockLienzo,

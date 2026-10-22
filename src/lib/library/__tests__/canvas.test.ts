@@ -9,6 +9,7 @@ import {
   capa,
   conEstilo,
   conFondo,
+  colorDeTratamiento,
   conSentido,
   conSuGrupo,
   desagrupar,
@@ -239,7 +240,8 @@ describe('acabados de una tapa (13i, RF-JC11 – RF-JC12; T348)', () => {
       el('i', { style: { color: '#00FF00' } }),
     ].reduce(agregar, DOCUMENTO_VACIO);
     const [h, r, c, i] = aMotor(doc, {}, '#EEDDCC');
-    expect(h.content).toMatchObject({ color: '#0000004D', treatment: 'debossed' });
+    // Con un color elegido, el acabado lo toma, un poco translúcido (T366).
+    expect(h.content).toMatchObject({ color: '#FF0000A6', treatment: 'debossed' });
     expect(h.content.shadow).toBeUndefined();
     expect(r.content).toMatchObject({ color: '#FFFFFF2E', treatment: 'embossed' });
     expect(c.content).toMatchObject({ color: '#EEDDCC', treatment: 'cutout', mode: 'trazo' });
@@ -309,4 +311,10 @@ describe('texto en las tapas: sentido y tamaño (T363)', () => {
     expect(doc.elements[1].style.direction).toBeUndefined();
     expect(aMotor(doc)[0].content).toMatchObject({ direction: 'stacked', size: 8 });
   });
+});
+
+it('sin color, hundido y relieve toman el tono del material; recortado siempre es del color de las hojas (T366)', () => {
+  expect(colorDeTratamiento('debossed', '#EEEEEE')).toBe('#0000004D');
+  expect(colorDeTratamiento('embossed', '#EEEEEE', '#7a1e3a')).toBe('#7A1E3AA6');
+  expect(colorDeTratamiento('cutout', '#EEEEEE', '#7A1E3A')).toBe('#EEEEEE');
 });

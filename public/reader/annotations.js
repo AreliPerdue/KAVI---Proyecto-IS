@@ -39,9 +39,16 @@ const redondear = (v) => Math.round(v * 10000) / 10000;
 const LADO_MIN_PX = 48;
 /** Alto entre ancho del post-it: 1 es cuadrado. */
 const DEL_LIENZO = ['shape', 'asset', 'polaroid', 'quote', 'rating', 'book', 'stat', 'swatch'];
+/** Si lo abierto es un lienzo creativo (T363): aquí también, para medir lo que se puede estirar. */
+let lienzoAbierto = false;
+/**
+ * Cuánto puede estirarse algo (alto ÷ ancho). Lo del lienzo creativo (T343) puede ser muy angosto o muy alto (una
+ * cinta, un marcapáginas), como en su modelo; el texto de un lienzo también (T366): un renglón largo o el título de un
+ * lomo, y así cada asa mueve solo su borde sin que el alto o el ancho se corrijan al soltar.
+ */
+const limitesDe = (a) => (DEL_LIENZO.includes(a.kind) || (lienzoAbierto && a.kind === 'textbox') ? [0.05, 20] : [0.25, 4]);
 const proporcionDe = (a) => {
-  // Lo del lienzo creativo (T343) puede ser muy angosto o muy alto (una cinta, un marcapáginas), como en su modelo.
-  const [min, max] = DEL_LIENZO.includes(a.kind) ? [0.05, 20] : [0.25, 4];
+  const [min, max] = limitesDe(a);
   return Number.isFinite(a.locator?.ar) && a.locator.ar >= min && a.locator.ar <= max ? a.locator.ar : 1;
 };
 const entre = (v, min, max) => Math.min(Math.max(v, min), max);
@@ -1002,7 +1009,8 @@ export function crearCapa(ctx, enviar) {
   /** Al soltar un asa: la caja nueva como posición, ancho y proporción. */
   function redimensionado(el, a, rot = null) {
     const caja = cajaSinGiro(el);
-    const ar = entre(caja.height / caja.width, 0.25, 4);
+    const [min, max] = limitesDe(a);
+    const ar = entre(caja.height / caja.width, min, max);
     let locator = null;
     if (ctx.pdf()) {
       const pagina = el.closest('.pagina');
@@ -1765,6 +1773,7 @@ export function crearCapa(ctx, enviar) {
     /** Si lo abierto es un lienzo creativo (T363). */
     lienzo(v) {
       enLienzo = v === true;
+      lienzoAbierto = enLienzo;
     },
     /** Lo que ya trae cada página al leer un Journal (T364). */
     base(items) {

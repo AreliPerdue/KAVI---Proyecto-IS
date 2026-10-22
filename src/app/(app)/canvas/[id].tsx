@@ -1036,7 +1036,8 @@ export default function CanvasScreen() {
               label={actual ? `${c.finish[t]} · ${c.finish.current}` : c.finish[t]}
               onPress={() => {
                 setEligiendoAcabado(false);
-                aplicar((d) => conEstilo(d, juntos, { treatment: t === 'printed' ? undefined : t }));
+                // Hundido y relieve empiezan sin color (toman el tono del material); luego se pintan del que se quiera (T366).
+                aplicar((d) => conEstilo(d, juntos, { treatment: t === 'printed' ? undefined : t, ...(t === 'debossed' || t === 'embossed' ? { color: undefined } : {}) }));
               }}
             />
           );

@@ -118,6 +118,12 @@
     arriba y luz abajo; relieve, luz arriba, sombra abajo y una sombrita afuera; recortado, el canto oscuro y la
     sombra de la tapa sobre la hoja. Va dentro de la pieza porque al hojear cada hoja es su propio árbol.
   - En las miniaturas de la app se ve el color del acabado (y una sombra en el texto); la luz completa, en el motor.
+- **Ajustes de Areli del 22 oct 2026 (T366):**
+  - **Cada asa mueve solo su borde:** la del lado derecho ensancha hacia la derecha sin cambiar la altura; la de
+    abajo alarga hacia abajo. El texto de un lienzo se estira de 0.05 a 20 (alto ÷ ancho), como un papel o una
+    cinta, así un título de lomo tiene el largo que se le dé. (La app descartaba al soltar lo que pasaba de ¼ – 4.)
+  - **Hundido y relieve toman el color que se elija** (un poco translúcido, para que se vea la textura); sin color,
+    toman el tono del material. Al ponerlos, la pieza empieza sin color.
 - **El Journal se lee como un libro (T364, pedido de Areli del 22 oct 2026):**
   - Tocarlo en la librería lo abre en el **lector**, como un PDF: portada, sus páginas y contraportada (sin páginas,
     se cierra: de la portada a la contraportada). Tiene todas las formas de leer (scroll, de lado, libro real), zoom,

@@ -1304,6 +1304,10 @@ Reemplazan L5 (13e). Un recorte es una página 1 : √2 del visor de PDF (decisi
   "De tus portadas" (nombre o título al pasar el cursor). (13h RF-CC12, RF-CC20; pedido de Areli del 22 oct 2026)
   **Hecho (22 oct 2026):** `constants/color-palettes.ts` (básicos, Office, `coloresDePortadas`), `PaletaConNombres`
   en el selector y el botón de borrar en `NewCanvasSheet`.
+- [x] T366 Ajustes del lienzo: cada asa mueve solo su borde (texto de 0.05 a 20 en un lienzo) y hundido/relieve toman
+  el color elegido. (13i; pedido de Areli del 22 oct 2026) Dep: T363, T348
+  **Hecho (22 oct 2026):** `limitesDe` en el motor (texto del lienzo como lo del lienzo), `localizadorPegado` acepta
+  0.05 – 20, `colorDeTratamiento(t, papel, color)` y Acabado quita el color al ponerse.
 - [ ] T349b C6 · Más módulos (mood, canción, fecha/lugar, timeline, checklist…) y plantillas (Moodboard, Reading
   Stats, Reading Awards, Reading Eras, Character Analysis…). (RF-CC14, RF-CC21) Dep: T349
 - [ ] T350 J4 · Primera colección de motivos Fantasy / Dragon en la tienda. (RF-JC10) Dep: T346
