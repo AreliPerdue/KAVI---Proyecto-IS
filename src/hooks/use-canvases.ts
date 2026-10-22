@@ -69,11 +69,14 @@ function useGuardarLienzo() {
     (canvas: LibraryCanvasInput) => {
       const itemId = canvas.item_id ?? '';
       const fecha = new Date().toISOString();
+      let guardado: LibraryCanvas | undefined;
       queryClient.setQueryData<LibraryCanvas[]>(libraryKeys.canvases(itemId), (lista = []) => {
         const previo = lista.find((c) => c.id === canvas.id);
-        const nuevo: LibraryCanvas = { owner_id: userId as string, thumb_path: null, created_at: fecha, ...previo, ...canvas, updated_at: fecha };
-        return [nuevo, ...lista.filter((c) => c.id !== canvas.id)].sort((a, b) => b.created_at.localeCompare(a.created_at));
+        guardado = { owner_id: userId as string, thumb_path: null, created_at: fecha, ...previo, ...canvas, updated_at: fecha };
+        return [guardado, ...lista.filter((c) => c.id !== canvas.id)].sort((a, b) => b.created_at.localeCompare(a.created_at));
       });
+      // El lienzo solo también: si se vuelve a abrir en esta sesión, se abre como quedó y no como se creó.
+      if (guardado) queryClient.setQueryData(libraryKeys.canvas(canvas.id), guardado);
       void encolar({ op: 'canvas', itemId, userId: userId as string, canvas, at: Date.now() }).then(subirPendientes);
     },
     [queryClient, userId],
