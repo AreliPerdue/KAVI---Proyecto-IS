@@ -195,6 +195,22 @@ llevar texto, pero nunca debe sentirse como un formulario ni como una nota grand
     - Exportar hace lo mismo en el `<canvas>`. La miniatura de Mi libreta los tiñe enteros.
   - **Pendiente (T343c):** que más packs de assets lleguen por la tienda en la nube, como los stickers (T337).
 
+- **Hecho (C4, plantillas, T344, 21 oct 2026):**
+  - **Nuevo recorte** ofrece tres formas de empezar: en blanco (vertical u horizontal), una de las **plantillas de
+    KAVI** o una de **Mis plantillas**. Cada plantilla se ve en miniatura, con el libro del recorte puesto.
+  - **Plantillas de KAVI** (`constants/canvas-templates.ts`, en la app): Reseña del libro, Collage de personaje, Citas
+    favoritas, Experiencia de lectura y Cementerio DNF.
+    - Van en neutros, sin colores ni Nobi, y con texto de ejemplo en el idioma de la app.
+    - Están hechas con las piezas de C1–C3.
+    - El recorte nace con el nombre de la plantilla.
+  - **Usar una plantilla** la copia con ids nuevos (también de sus grupos). Su libro, "este libro", se vuelve el libro
+    donde se hace el recorte.
+  - **Guardar como plantilla** (RF-CC20), en la barra del recorte: pide un nombre.
+    - Guarda el acomodo y el texto, pero no las fotos ni las imágenes propias: las polaroids quedan con sus huecos.
+    - El libro del recorte se guarda como "este libro".
+    - Se guarda en `library_canvas_templates` (migración `20261021110000`, solo del dueño).
+    - Mantener presionada una plantilla propia la borra; los recortes hechos con ella no cambian.
+
 ## 11. Qué cambia en otras specs
 
 - **13e (cuadernos, diarios, álbumes por capas) se reemplaza:** el cuaderno pasa a ser el **Journal** con

@@ -37,6 +37,8 @@ jest.mock('@/providers', () => ({ useAuth: () => ({ userId: 'u1' }), useSnackbar
 // "Mis colores" (T342): una paleta guardada.
 const mockGuardarColores = jest.fn();
 jest.mock('@/hooks/use-saved-colors', () => ({ useSavedColors: () => ({ data: ['#F2C14E'] }), useSaveColors: () => ({ mutate: mockGuardarColores }) }));
+const mockGuardarPlantilla = jest.fn();
+jest.mock('@/hooks/use-canvas-templates', () => ({ useSaveCanvasTemplate: () => ({ mutate: mockGuardarPlantilla, isPending: false }) }));
 const mockCompartir = jest.fn(async () => 'shared');
 jest.mock('@/lib/share', () => ({ shareImage: (...a: unknown[]) => mockCompartir(...(a as [])) }));
 jest.mock('@/lib/library/canvas-export', () => ({ ...jest.requireActual('@/lib/library/canvas-export'), archivoDeExportacion: (_d: string, nombre: string) => `file:///cache/${nombre}` }));
@@ -429,4 +431,29 @@ describe('papeles y más (T343b)', () => {
     await tocarPagina();
     expect(ultimas()[0].content).toMatchObject({ asset: 'basicos/destellos', mode: 'trazo' });
   });
+});
+
+it('guardar como plantilla: con nombre, sin fotos y con el libro como "este libro" (T344)', async () => {
+  const T = C.templates;
+  mockLienzo = {
+    ...mockLienzo,
+    title: 'Personajes',
+    doc: {
+      pages: 1,
+      elements: [
+        { id: 'p', type: 'polaroid', page: 1, x: 0.1, y: 0.1, w: 0.3, ar: 1.19, rot: 0, z: 1, locked: false, group: null, style: {}, content: { variant: 'classic', paths: ['u1/l1/anotaciones/f.jpg'], text: 'París' } },
+        { id: 'b', type: 'book', page: 1, x: 0.5, y: 0.1, w: 0.3, ar: 1.5, rot: 0, z: 2, locked: false, group: null, style: {}, content: { itemId: 'l1' } },
+      ],
+    },
+  };
+  await montar();
+  await fireEvent.press(screen.getByRole('button', { name: T.save }));
+  expect(screen.getByDisplayValue('Personajes')).toBeTruthy();
+  await fireEvent.changeText(screen.getByLabelText(T.nameLabel), 'Mi collage');
+  await fireEvent.press(screen.getByRole('button', { name: C.save }));
+  const [plantilla] = mockGuardarPlantilla.mock.calls[0] as [{ name: string; orientation: string; doc: { elements: { type: string; content: Record<string, unknown> }[] } }];
+  expect(plantilla.name).toBe('Mi collage');
+  expect(plantilla.orientation).toBe('landscape');
+  expect(plantilla.doc.elements.find((e) => e.type === 'polaroid')?.content.paths).toEqual(['']);
+  expect(plantilla.doc.elements.find((e) => e.type === 'book')?.content.itemId).toBe('este-libro');
 });

@@ -20,6 +20,7 @@ import type {
   LibraryClubBook,
   LibraryClubProgress,
   LibraryCanvas,
+  LibraryCanvasTemplate,
   LibraryCard,
   LibraryCardTemplate,
   LibraryFileBody,
@@ -516,6 +517,26 @@ export const supabaseLibrary: LibraryApi = {
 
   async removeCanvas(canvasId) {
     sinError(await db().from('library_canvases').delete().eq('id', canvasId));
+  },
+
+  async listCanvasTemplates(userId) {
+    const filas = unwrap(await db().from('library_canvas_templates').select('*').eq('owner_id', userId).order('created_at', { ascending: false })) as LibraryCanvasTemplate[];
+    return filas.map((p) => ({ ...p, doc: documentoValido(p.doc) }));
+  },
+
+  async saveCanvasTemplate(userId, template) {
+    const p = unwrap(
+      await db()
+        .from('library_canvas_templates')
+        .insert({ ...template, name: template.name.trim(), owner_id: userId })
+        .select('*')
+        .single(),
+    ) as LibraryCanvasTemplate;
+    return { ...p, doc: documentoValido(p.doc) };
+  },
+
+  async removeCanvasTemplate(templateId) {
+    sinError(await db().from('library_canvas_templates').delete().eq('id', templateId));
   },
 
   async getSavedColors(userId) {

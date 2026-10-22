@@ -8,6 +8,7 @@ import {
   Frame,
   Group,
   Layers,
+  LayoutTemplate,
   LibraryBig,
   ImagePlus,
   Lock,
@@ -45,6 +46,7 @@ import { ActionRow, AppText, Button, ErrorState, IconButton, LoadingState, Sheet
 import type { AssetDeLienzo } from '@/constants/canvas-assets';
 import { IconSize, IconStroke, Spacing } from '@/constants/theme';
 import { useLibraryImageUrls, useUploadAnnotationImage } from '@/hooks/use-annotations';
+import { useSaveCanvasTemplate } from '@/hooks/use-canvas-templates';
 import { useCanvas, useCanvasEditor, useLimpiarImagenesDeLienzo } from '@/hooks/use-canvases';
 import { useLibraryItems } from '@/hooks/use-library';
 import { useStickerPacks, useStickerSources } from '@/hooks/use-sticker-packs';
@@ -76,6 +78,7 @@ import {
   type VarianteDePolaroid,
 } from '@/lib/library/canvas';
 import { archivoDeExportacion, nombreDeExportacion } from '@/lib/library/canvas-export';
+import { comoPlantilla } from '@/lib/library/canvas-templates';
 import { PAPEL_DE_LIENZO } from '@/lib/library/canvas-shapes';
 import { prepararImagenPegada } from '@/lib/library/cover/prepare';
 import { desdeCamara, desdeGaleria, PUEDE_TOMAR_FOTO } from '@/lib/library/cover/sources';
@@ -148,6 +151,9 @@ export default function CanvasScreen() {
   const [huecoPara, setHuecoPara] = useState<string | null>(null);
   const [pieDe, setPieDe] = useState<{ id: string; texto: string } | null>(null);
   const [eligiendoAsset, setEligiendoAsset] = useState(false);
+  // Guardar como plantilla (T344): el nombre que se está escribiendo, o `null` con la hoja cerrada.
+  const [nombrePlantilla, setNombrePlantilla] = useState<string | null>(null);
+  const guardarPlantilla = useSaveCanvasTemplate();
   const destinoDeImagen = useRef<DestinoDeImagen>(null);
   const piezas = useLibraryItems();
 
@@ -646,6 +652,9 @@ export default function CanvasScreen() {
             <IconButton label={c.background} onPress={() => setColorDe('fondo')}>
               {icono(PaintBucket)}
             </IconButton>
+            <IconButton label={c.templates.save} onPress={() => setNombrePlantilla(editor.titulo)} disabled={!doc.elements.length}>
+              {icono(LayoutTemplate, doc.elements.length ? theme.text : theme.textTertiary)}
+            </IconButton>
             <IconButton label={c.export} onPress={exportar} disabled={exportando || !abierto}>
               {icono(Share, exportando ? theme.textTertiary : theme.text)}
             </IconButton>
@@ -772,6 +781,38 @@ export default function CanvasScreen() {
       <Sheet visible={eligiendoImagen} onClose={() => setEligiendoImagen(false)} title={c.image}>
         <ActionRow icon={icono(ImagePlus)} label={a.imageGallery} onPress={() => void elegirImagen('galeria')} />
         {PUEDE_TOMAR_FOTO ? <ActionRow icon={icono(ImagePlus)} label={a.imageCamera} onPress={() => void elegirImagen('camara')} /> : null}
+      </Sheet>
+      <Sheet visible={nombrePlantilla !== null} onClose={() => setNombrePlantilla(null)} title={c.templates.save}>
+        <View style={styles.renombrar}>
+          <TextField
+            label={c.templates.nameLabel}
+            value={nombrePlantilla ?? ''}
+            onChangeText={setNombrePlantilla}
+            placeholder={c.templates.namePlaceholder}
+            maxLength={80}
+            autoFocus
+            returnKeyType="done"
+          />
+          <Button
+            title={c.save}
+            disabled={!nombrePlantilla?.trim() || guardarPlantilla.isPending}
+            onPress={() => {
+              const nombre = (nombrePlantilla ?? '').trim();
+              if (!nombre || !lienzo.data) return;
+              // Sin fotos ni imágenes propias; el libro del recorte queda como "este libro" (RF-CC20).
+              guardarPlantilla.mutate(
+                { name: nombre, orientation: lienzo.data.orientation, doc: comoPlantilla(doc, item) },
+                {
+                  onSuccess: () => {
+                    setNombrePlantilla(null);
+                    avisar({ message: c.templates.saved });
+                  },
+                  onError: (e) => avisar({ message: e.message }),
+                },
+              );
+            }}
+          />
+        </View>
       </Sheet>
       <AssetSheet
         visible={eligiendoAsset}

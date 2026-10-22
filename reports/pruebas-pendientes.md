@@ -853,3 +853,10 @@ exportada igual, con la textura bajo el color.
 - [ ] (manual, Areli) Revisar el estilo de las 24 piezas: ¿se sienten como papel real y línea delicada? (hoja de
   revisión: `node scripts/library/assets-lienzo.mjs <carpeta> <hoja.png>`).
 - [ ] (manual, iPhone) El color sobre un papel conserva la textura (máscara y multiplicar en WebKit).
+
+## Recortes: plantillas (T344)
+Automatizado: RLS de Mis plantillas en PGlite (8 casos), `lib/library/__tests__/canvas-templates.test.ts` (usar, guardar y
+las 5 de KAVI sin colores ni Nobi), `notebook.test.tsx`, `canvas.test.tsx` y el demo. Visto en el demo web: un recorte
+con cada plantilla de KAVI, guardar uno como "Mi reseña favorita" y verla en Mis plantillas.
+- [ ] (manual, Areli) ¿Las cinco plantillas de KAVI se sienten como un buen punto de partida? (acomodo y textos)
+- [ ] (manual, dos aparatos) Una plantilla guardada en la compu aparece en el teléfono.

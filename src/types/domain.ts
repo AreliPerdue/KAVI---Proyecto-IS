@@ -853,6 +853,17 @@ export type LibraryCanvas = {
   updated_at: string;
 };
 
+/** Una plantilla propia del lienzo (13h, RF-CC20; T344): "Mis plantillas". */
+export type LibraryCanvasTemplate = {
+  id: string;
+  owner_id: string;
+  name: string;
+  orientation: OrientacionDeLienzo;
+  doc: DocumentoDeLienzo;
+  created_at: string;
+  updated_at: string;
+};
+
 /** Lo que se guarda de un lienzo (crear o reemplazar por id: el id lo pone el cliente, como las anotaciones). */
 export type LibraryCanvasInput = Pick<LibraryCanvas, 'id' | 'context' | 'item_id' | 'title' | 'orientation' | 'doc' | 'version'>;
 

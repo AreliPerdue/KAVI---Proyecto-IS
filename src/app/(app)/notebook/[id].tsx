@@ -17,7 +17,9 @@ import { useStickerPacks, useStickerSources } from '@/hooks/use-sticker-packs';
 import { useTheme } from '@/hooks/use-theme';
 import { useUserStickerImages, useUserStickers, useUserStickerSources } from '@/hooks/use-user-stickers';
 import { useT } from '@/i18n';
+import { uuidv4 } from '@/lib/gym/ids';
 import { type LibroEnLienzo, rutasDeImagenes } from '@/lib/library/canvas';
+import { usarPlantilla } from '@/lib/library/canvas-templates';
 import { colorDePortada, rutaDePortada } from '@/lib/library/shelf';
 import { fuenteDeSticker } from '@/lib/library/sticker-packs';
 import { useConfirm, useSnackbar } from '@/providers';
@@ -160,9 +162,11 @@ export default function NotebookScreen() {
       <NewCanvasSheet
         item={creando && libro.data ? libro.data : null}
         onClose={() => setCreando(false)}
-        onCrear={(p, orientacion) => {
+        onCrear={(p, como) => {
           setCreando(false);
-          router.push({ pathname: '/(app)/canvas/[id]', params: { id: crear(p.id, orientacion), item: p.id } });
+          // Con plantilla, el recorte se copia con ids nuevos y "este libro" se vuelve este (T344).
+          const doc = como.doc ? usarPlantilla(como.doc, p.id, uuidv4) : undefined;
+          router.push({ pathname: '/(app)/canvas/[id]', params: { id: crear(p.id, como.orientacion, como.titulo ?? '', doc), item: p.id } });
         }}
       />
       <Sheet visible={menuDe !== null} onClose={() => setMenuDe(null)} title={menuDe?.title || tx.library.canvas.untitled}>

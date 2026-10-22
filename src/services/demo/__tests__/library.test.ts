@@ -503,3 +503,20 @@ describe('"Mis colores" (13h, RF-CC12; T342)', () => {
     await expect(api.saveSavedColors(ANA, Array.from({ length: 31 }, () => '#000000'))).rejects.toThrow();
   });
 });
+
+describe('Mis plantillas del lienzo (13h, RF-CC20; T344)', () => {
+  it('se guardan con nombre, se listan de la más nueva a la más vieja y solo las ve su dueño', async () => {
+    /* eslint-disable-next-line @typescript-eslint/no-require-imports -- el mismo estado que `fresh()` */
+    const store = () => require('@/services/demo/store') as typeof import('@/services/demo/store');
+    const api = fresh();
+    store().setCurrentUser({ id: ANA, email: 'ana@kavi.app' });
+    const doc = { pages: 1, elements: [] };
+    const a = await api.saveCanvasTemplate(ANA, { name: '  Mi reseña ', orientation: 'portrait', doc });
+    expect(a).toMatchObject({ name: 'Mi reseña', owner_id: ANA });
+    await expect(api.saveCanvasTemplate(ANA, { name: '  ', orientation: 'portrait', doc })).rejects.toThrow();
+    expect((await api.listCanvasTemplates(ANA)).map((p) => p.name)).toEqual(['Mi reseña']);
+    expect(await api.listCanvasTemplates('otra')).toEqual([]);
+    await api.removeCanvasTemplate(a.id);
+    expect(await api.listCanvasTemplates(ANA)).toEqual([]);
+  });
+});

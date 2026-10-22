@@ -11,6 +11,7 @@ import { nombreSeguro } from '@/lib/library/files';
 import type {
   LibraryAnnotation,
   LibraryCanvas,
+  LibraryCanvasTemplate,
   LibraryCard,
   LibraryLayout,
   LibraryReadingSession,
@@ -51,6 +52,8 @@ const cards: LibraryCard[] = [];
 const lienzos: LibraryCanvas[] = [];
 /** "Mis colores" de cada quien (T342). */
 const coloresGuardados = new Map<string, string[]>();
+/** Mis plantillas (T344). */
+const plantillasDeLienzo: LibraryCanvasTemplate[] = [];
 const pages: LibraryPage[] = [];
 const fonts: LibraryFont[] = [];
 const layouts: LibraryLayout[] = [];
@@ -978,6 +981,28 @@ export const demoLibrary: LibraryApi = {
   async removeCanvas(canvasId) {
     await delay();
     quitarDe(lienzos, (c) => c.id === canvasId);
+    emitDataChange();
+  },
+
+  async listCanvasTemplates(userId) {
+    await delay();
+    return copia(plantillasDeLienzo.filter((p) => p.owner_id === userId).sort((a, b) => b.created_at.localeCompare(a.created_at)));
+  },
+
+  async saveCanvasTemplate(userId, template) {
+    await delay();
+    const nombre = template.name.trim();
+    if (!nombre) throw new AuthUiError(t().errors.noPermission);
+    const t0 = ahora();
+    const nueva: LibraryCanvasTemplate = { id: nextId('plantilla'), owner_id: userId, name: nombre.slice(0, 80), orientation: template.orientation, doc: documentoValido(template.doc), created_at: t0, updated_at: t0 };
+    plantillasDeLienzo.push(nueva);
+    emitDataChange();
+    return copia(nueva);
+  },
+
+  async removeCanvasTemplate(templateId) {
+    await delay();
+    quitarDe(plantillasDeLienzo, (p) => p.id === templateId && p.owner_id === demoState.currentUser?.id);
     emitDataChange();
   },
 

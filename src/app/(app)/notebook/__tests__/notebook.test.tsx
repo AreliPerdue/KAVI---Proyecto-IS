@@ -18,6 +18,7 @@ const mockVacio = new Map<string, string>();
 jest.mock('@/hooks/use-annotations', () => ({ useLibraryImageUrls: () => mockVacio }));
 jest.mock('@/hooks/use-sticker-packs', () => ({ useStickerPacks: () => ({ data: undefined }), useStickerSources: () => mockVacio }));
 jest.mock('@/hooks/use-user-stickers', () => ({ useUserStickers: () => ({ data: [] }), useUserStickerImages: () => mockVacio, useUserStickerSources: () => mockVacio }));
+jest.mock('@/hooks/use-canvas-templates', () => ({ useCanvasTemplates: () => ({ data: [] }), useRemoveCanvasTemplate: () => ({ mutate: jest.fn() }) }));
 const mockConfirmar = jest.fn(async () => true);
 const mockAvisar = jest.fn();
 jest.mock('@/providers', () => ({ useConfirm: () => mockConfirmar, useSnackbar: () => mockAvisar }));
@@ -64,7 +65,7 @@ it('sin recortes invita a hacer uno; "Nuevo recorte" pregunta la forma, lo crea 
   await fireEvent.press(screen.getByRole('button', { name: C.newCanvas }));
   await fireEvent.press(screen.getByRole('tab', { name: C.landscape }));
   await fireEvent.press(screen.getByRole('button', { name: C.create }));
-  expect(mockCrear).toHaveBeenCalledWith('l1', 'landscape');
+  expect(mockCrear).toHaveBeenCalledWith('l1', 'landscape', '', undefined);
   expect(globalThis.mockRouter.push).toHaveBeenCalledWith({ pathname: '/(app)/canvas/[id]', params: { id: 'r-nuevo', item: 'l1' } });
 });
 
@@ -97,4 +98,15 @@ it('los fragmentos de este libro se cuentan y se abren filtrados; las fichas, en
   expect(globalThis.mockRouter.push).toHaveBeenCalledWith({ pathname: '/(app)/fragments', params: { libro: 'l1' } });
   await fireEvent.press(screen.getByRole('button', { name: N.cards }));
   expect(globalThis.mockRouter.push).toHaveBeenCalledWith({ pathname: '/(app)/book-cards/[id]', params: { id: 'l1' } });
+});
+
+it('una plantilla de KAVI empieza el recorte con su acomodo, su nombre y este libro puesto (T344)', async () => {
+  const T = C.templates;
+  await render(<Pantalla />);
+  await fireEvent.press(screen.getByRole('button', { name: C.newCanvas }));
+  await fireEvent.press(screen.getByRole('button', { name: T.use(T.names.bookReview) }));
+  const [itemId, orientacion, titulo, doc] = mockCrear.mock.calls[0] as unknown as [string, string, string, { elements: { id: string; type: string; content: { itemId?: string } }[] }];
+  expect([itemId, orientacion, titulo]).toEqual(['l1', 'portrait', T.names.bookReview]);
+  expect(doc.elements.find((e) => e.type === 'book')?.content.itemId).toBe('l1');
+  expect(doc.elements.every((e) => !e.id.startsWith('k'))).toBe(true);
 });
