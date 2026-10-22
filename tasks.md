@@ -1282,7 +1282,10 @@ Reemplazan L5 (13e). Un recorte es una página 1 : √2 del visor de PDF (decisi
   Mis plantillas de su forma; se apaga cuando está lleno), borrar, y Hojear en libro real (`journal/flip`, bloqueado,
   color por página). `useFuentesDeLienzos` junta imágenes, stickers y libros de varias páginas (también Mi libreta).
   Los datos de Library en plantillas (año lector, estadísticas) siguen en C6 (T349).
-- [ ] T348 J3 · Tratamientos hundido, relieve y recortado. (RF-JC11, RF-JC12) Dep: T346
+- [x] T348 J3 · Tratamientos hundido, relieve y recortado. (RF-JC11, RF-JC12) Dep: T346
+  **Hecho (22 oct 2026):** "Acabado" en lo elegido de una tapa (texto, forma, papel o doodle), `style.treatment`,
+  `colorDeTratamiento` (translúcido para conservar textura y tono del material; recortado del color de las hojas) y
+  filtros SVG de sombra interior en el motor, uno por pieza. Sin migración.
 - [ ] T349 C6 · Módulos y plantillas avanzados, Journal con datos de Library, fragmentos pegados. (RF-CC14, RF-CC22,
   RF-CC24) Dep: T347, T317
 - [ ] T350 J4 · Primera colección de motivos Fantasy / Dragon en la tienda. (RF-JC10) Dep: T346

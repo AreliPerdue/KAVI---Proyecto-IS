@@ -69,6 +69,8 @@ export type AnotacionEnMotor = {
     opacity?: number;
     border?: { width: number; color: string };
     shadow?: boolean;
+    /** Acabado en una tapa del Journal (T348): el motor le pone su luz y su sombra. */
+    treatment?: 'debossed' | 'embossed' | 'cutout';
     /** De otro miembro del club (13f, T307): su inicial y su color, para su marca en la página. */
     author?: { initial: string; color: string; name: string };
   };

@@ -40,7 +40,8 @@ export default function JournalFlipScreen() {
   const portada = pieza.data ? portadaValida(pieza.data.journal) : null;
   const { doc, fondos } = paraHojear(paginas, portada ? { portada, front: tapas.front, back: tapas.back } : undefined);
   const fuentes = useFuentesDeLienzos(doc.elements).motor;
-  const enMotor = aMotor(doc, fuentes);
+  // Lo recortado de las tapas deja ver las hojas, de su color (T348).
+  const enMotor = aMotor(doc, fuentes, portada?.edges);
 
   // Abrir el Journal una vez que se sabe su forma y cuántas páginas tiene.
   const orientacion = portada?.orientation ?? null;

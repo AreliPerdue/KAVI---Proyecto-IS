@@ -6,7 +6,7 @@ import Svg, { ClipPath, Defs, Path, Rect } from 'react-native-svg';
 import { assetPorId } from '@/constants/canvas-assets';
 import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import { type DocumentoDeLienzo, type ElementoDeLienzo, type LibroEnLienzo, type OrientacionDeLienzo, RAIZ_DE_DOS } from '@/lib/library/canvas';
+import { colorDeTratamiento, type DocumentoDeLienzo, type ElementoDeLienzo, type LibroEnLienzo, type OrientacionDeLienzo, RAIZ_DE_DOS } from '@/lib/library/canvas';
 import { FORMA_GRIS, MARCO_POLAROID, PAPEL_DE_LIENZO, PELICULA, SIMBOLOS_DE_RATING, SIN_FOTO, TINTA_DE_TEXTO, TRAZOS_DE_FORMA } from '@/lib/library/canvas-shapes';
 import { luminance } from '@/lib/color';
 
@@ -30,6 +30,7 @@ export const CanvasPreview = memo(function CanvasPreview({
   fuentes,
   proporcion,
   sinPapel = false,
+  papel = '#F7F5EF',
 }: {
   doc: DocumentoDeLienzo;
   orientacion: OrientacionDeLienzo;
@@ -39,6 +40,8 @@ export const CanvasPreview = memo(function CanvasPreview({
   proporcion?: number;
   /** Solo lo pegado, sin el papel ni su borde: la decoración encima del material de una tapa (T346). */
   sinPapel?: boolean;
+  /** El color de las páginas del Journal, que se ve por lo recortado de una tapa (T348). */
+  papel?: string;
 }) {
   const theme = useTheme();
   const alto = ancho * (proporcion ?? (orientacion === 'landscape' ? 1 / RAIZ_DE_DOS : RAIZ_DE_DOS));
@@ -58,6 +61,8 @@ export const CanvasPreview = memo(function CanvasPreview({
           const w = e.w * W;
           const h = w * e.ar;
           const borde = e.style.border ? { width: e.style.border.width * W, color: e.style.border.color } : null;
+          // Un acabado de una tapa (T348) pinta con su color; su luz y su sombra son del motor (aquí, solo en el texto).
+          const color = e.style.treatment ? colorDeTratamiento(e.style.treatment, papel) : e.style.color;
           const caja = {
             position: 'absolute' as const,
             left: e.x * W,
@@ -73,7 +78,7 @@ export const CanvasPreview = memo(function CanvasPreview({
                 <Svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none">
                   <Path
                     d={TRAZOS_DE_FORMA[e.content.shape ?? 'rect']}
-                    fill={e.style.color ?? FORMA_GRIS}
+                    fill={color ?? FORMA_GRIS}
                     stroke={borde?.color}
                     strokeWidth={borde ? borde.width : 0}
                     vectorEffect="non-scaling-stroke"
@@ -94,7 +99,7 @@ export const CanvasPreview = memo(function CanvasPreview({
             const asset = assetPorId(e.content.asset);
             return (
               <View key={e.id} style={caja}>
-                {asset ? <Image source={asset.imagen} style={styles.lleno} contentFit="fill" tintColor={e.style.color ?? undefined} /> : null}
+                {asset ? <Image source={asset.imagen} style={styles.lleno} contentFit="fill" tintColor={color ?? undefined} /> : null}
               </View>
             );
           }
@@ -102,7 +107,11 @@ export const CanvasPreview = memo(function CanvasPreview({
             const tamano = 0.021 * W * (e.style.size ?? 1);
             return (
               <View key={e.id} style={[caja, styles.texto, borde ? { borderWidth: borde.width, borderColor: borde.color } : null]}>
-                <Text style={{ fontSize: tamano, lineHeight: tamano * 1.35, color: e.style.color ?? TINTA_DE_TEXTO, paddingHorizontal: tamano * 0.35, paddingVertical: tamano * 0.25 }}>
+                <Text
+                  style={[
+                    { fontSize: tamano, lineHeight: tamano * 1.35, color: color ?? TINTA_DE_TEXTO, paddingHorizontal: tamano * 0.35, paddingVertical: tamano * 0.25 },
+                    e.style.treatment === 'debossed' ? styles.hundido : e.style.treatment === 'embossed' ? styles.relieve : null,
+                  ]}>
                   {e.content.text}
                 </Text>
               </View>
@@ -122,6 +131,8 @@ export const CanvasPreview = memo(function CanvasPreview({
 const styles = StyleSheet.create({
   pagina: { overflow: 'hidden', borderWidth: StyleSheet.hairlineWidth, borderRadius: Radius.sm / 2, borderCurve: 'continuous' },
   sinPapel: { overflow: 'hidden' },
+  hundido: { textShadowColor: 'rgba(255,255,255,0.3)', textShadowOffset: { width: 0, height: 0.5 }, textShadowRadius: 0 },
+  relieve: { textShadowColor: 'rgba(0,0,0,0.5)', textShadowOffset: { width: 0, height: 0.8 }, textShadowRadius: 0.6 },
   texto: { overflow: 'hidden' },
   lleno: { width: '100%', height: '100%' },
   pie: { flex: 1, alignItems: 'center', justifyContent: 'center' },

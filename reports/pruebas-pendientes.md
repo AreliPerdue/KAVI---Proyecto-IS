@@ -885,3 +885,10 @@ demo web: portada de terciopelo con texto y destellos, en la pantalla del Journa
 - [ ] (manual, teléfono) El material se ve en el lienzo de la tapa (textura empaquetada en el motor) y al hojear.
 - [ ] (manual, Areli) Decorar el lomo de un Journal de tapa dura y verlo en el librero.
 - [ ] (manual, Areli) ¿Se siente como "encuadernar un cuaderno"? Cambiar el material después de decorar.
+
+## Acabados de las tapas (T348)
+Automatizado: `lib/library/__tests__/canvas.test.ts` (qué lleva acabado, su color al motor, volver a impreso) y
+`canvas.test.tsx` (Acabado solo en tapas; hundido y recortado llegan al motor). Visto en el demo web: estrella hundida,
+corazón en relieve y círculo recortado sobre cuero.
+- [ ] (manual, iPhone y Android) Los filtros de sombra interior se ven igual que en la computadora, también al hojear.
+- [ ] (manual, Areli) ¿El hundido y el relieve se sienten como cuero prensado? Cambiar el color del material después.

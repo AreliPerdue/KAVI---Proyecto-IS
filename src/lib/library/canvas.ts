@@ -30,6 +30,26 @@ export const ESCALAS_DE_RATING = ['stars', 'hearts', 'number'] as const;
 export type EscalaDeRating = (typeof ESCALAS_DE_RATING)[number];
 export const PROPORCION_DE_RATING: Record<EscalaDeRating, number> = { stars: 0.2, hearts: 0.2, number: 0.42 };
 
+/**
+ * Acabados de lo decorado en una tapa del Journal (13i, RF-JC11 – RF-JC12; T348): impreso (a color, como siempre),
+ * hundido, en relieve o recortado. Se guarda solo el que no es impreso.
+ */
+export const TRATAMIENTOS = ['printed', 'debossed', 'embossed', 'cutout'] as const;
+export type Tratamiento = (typeof TRATAMIENTOS)[number];
+/** Lo que puede llevar acabado: los motivos (papeles y doodles), las formas y el texto. */
+export const CON_TRATAMIENTO: readonly TipoDeElemento[] = ['textbox', 'shape', 'asset'];
+
+/**
+ * El color de un acabado, el mismo para cualquier silueta (RF-JC12): hundido oscurece el material y relieve lo aclara
+ * —translúcidos, así conservan su textura y toman su tono aunque se cambie el color—; recortado deja ver la hoja de
+ * abajo, del color de las páginas (`papel`).
+ */
+export function colorDeTratamiento(t: Exclude<Tratamiento, 'printed'>, papel: string): string {
+  if (t === 'debossed') return '#0000004D';
+  if (t === 'embossed') return '#FFFFFF2E';
+  return papel;
+}
+
 export type ElementoDeLienzo = {
   id: string;
   type: TipoDeElemento;
@@ -50,7 +70,15 @@ export type ElementoDeLienzo = {
    * Color (texto, forma) y tamaño de la letra (1 = normal); opacidad (0.1–1), borde (grosor en fracción del ancho de
    * la página y su color) y sombra (RF-CC9, T342).
    */
-  style: { color?: string; size?: number; opacity?: number; border?: { width: number; color: string }; shadow?: boolean };
+  style: {
+    color?: string;
+    size?: number;
+    opacity?: number;
+    border?: { width: number; color: string };
+    shadow?: boolean;
+    /** Acabado en una tapa del Journal (T348); sin él, impreso. */
+    treatment?: Exclude<Tratamiento, 'printed'>;
+  };
   /**
    * Texto; forma; ruta de la imagen en R2; sticker (`<paquete>/<nombre>`) y su nombre. Polaroid: variante, rutas de
    * sus fotos (vacía = sin foto aún) y su pie en `text`. Quote: la cita en `text`, quién la dijo, el capítulo y un
@@ -126,6 +154,9 @@ export function elementoValido(raw: unknown, paginas = MAX_PAGINAS): ElementoDeL
       ...(numero(estilo.opacity) && estilo.opacity < 1 ? { opacity: entre(estilo.opacity, 0.1, 1) } : {}),
       ...(bordeValido(estilo.border) ? { border: bordeValido(estilo.border) as { width: number; color: string } } : {}),
       ...(estilo.shadow === true ? { shadow: true } : {}),
+      ...(CON_TRATAMIENTO.includes(tipo) && TRATAMIENTOS.includes(estilo.treatment as Tratamiento) && estilo.treatment !== 'printed'
+        ? { treatment: estilo.treatment as Exclude<Tratamiento, 'printed'> }
+        : {}),
     },
     content: {
       ...(tipo === 'textbox' ? { text: texto(contenido.text, MAX_TEXTO) ?? '' } : {}),
@@ -203,8 +234,16 @@ export type LibroEnLienzo = { title: string; src?: string; color: string };
 export function aMotor(
   doc: DocumentoDeLienzo,
   fuentes: { imagenes?: ReadonlyMap<string, string>; stickers?: ReadonlyMap<string, string>; libros?: ReadonlyMap<string, LibroEnLienzo> } = {},
+  /** El color de las páginas del Journal, que se ve por lo recortado de una tapa (T348). */
+  papel = '#F7F5EF',
 ): AnotacionEnMotor[] {
-  return doc.elements.map((e) => {
+  return doc.elements.map((original) => {
+    // Con acabado (T348): el color del acabado en vez del suyo, sin sombra propia (el acabado trae la suya) y, si es
+    // un asset, solo su silueta.
+    const t = original.style.treatment;
+    const e: ElementoDeLienzo = t
+      ? { ...original, style: { ...original.style, color: colorDeTratamiento(t, papel), shadow: undefined }, content: original.type === 'asset' ? { ...original.content, mode: 'trazo' } : original.content }
+      : original;
     const locator: LibraryLocator = { page: e.page, x: e.x, y: e.y, w: e.w, ar: e.ar };
     const comun = {
       ...(e.rot ? { rot: e.rot } : {}),
@@ -250,7 +289,7 @@ export function aMotor(
                 ...(e.content.sticker && fuentes.stickers?.get(e.content.sticker) ? { src: fuentes.stickers.get(e.content.sticker) } : {}),
                 ...comun,
               };
-    return { id: e.id, kind: e.type, locator, z: e.z, locked: e.locked, content };
+    return { id: e.id, kind: e.type, locator, z: e.z, locked: e.locked, content: t ? { ...content, treatment: t } : content };
   });
 }
 

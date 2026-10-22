@@ -15,7 +15,8 @@ const TINTA = '#1A1A1A';
 
 export const MODULOS = ['polaroid', 'quote', 'rating', 'book'];
 
-const esColor = (c) => /^#[0-9a-fA-F]{6}$/.test(c ?? '');
+// Con transparencia (`#RRGGBBAA`) para los acabados de una tapa del Journal (T348).
+const esColor = (c) => /^#[0-9a-fA-F]{6}([0-9a-fA-F]{2})?$/.test(c ?? '');
 const claroSobre = (hex) => {
   const n = parseInt(hex.slice(1), 16);
   const [r, g, b] = [(n >> 16) & 255, (n >> 8) & 255, n & 255];

@@ -3,6 +3,7 @@ import {
   BookOpen,
   BringToFront,
   Camera,
+  Check,
   ChevronLeft,
   Copy,
   Frame,
@@ -23,6 +24,7 @@ import {
   Share,
   SquareDashedMousePointer,
   Star,
+  Stamp,
   Sticker,
   Trash2,
   Type,
@@ -60,6 +62,7 @@ import {
   aMotor,
   archivosDeImagenes,
   bloquear,
+  CON_TRATAMIENTO,
   cambiar,
   capa,
   conEstilo,
@@ -75,6 +78,7 @@ import {
   PROPORCION_DE_RATING,
   quitar,
   rutasDeImagenes,
+  TRATAMIENTOS,
   type VarianteDePolaroid,
 } from '@/lib/library/canvas';
 import { archivoDeExportacion, nombreDeExportacion } from '@/lib/library/canvas-export';
@@ -159,6 +163,8 @@ export default function CanvasScreen() {
   const [eligiendoAsset, setEligiendoAsset] = useState(false);
   // Guardar como plantilla (T344): el nombre que se está escribiendo, o `null` con la hoja cerrada.
   const [nombrePlantilla, setNombrePlantilla] = useState<string | null>(null);
+  // El acabado de lo elegido en una tapa (T348).
+  const [eligiendoAcabado, setEligiendoAcabado] = useState(false);
   const guardarPlantilla = useSaveCanvasTemplate();
   const destinoDeImagen = useRef<DestinoDeImagen>(null);
   const piezas = useLibraryItems();
@@ -219,7 +225,9 @@ export default function CanvasScreen() {
   }, [id, orientacion, esperaJournal, aspecto]);
 
   // Lo que se pinta encima: cada vez que cambia el documento o llega una dirección.
-  const enMotor = useMemo(() => aMotor(doc, fuentes), [doc, fuentes]);
+  // En una tapa, lo recortado deja ver las hojas del Journal, de su color (T348).
+  const papel = cara && journal.data ? portadaValida(journal.data.journal).edges : undefined;
+  const enMotor = useMemo(() => aMotor(doc, fuentes, papel), [doc, fuentes, papel]);
   useEffect(() => {
     if (abierto) motor.current?.send({ type: 'annotations', items: enMotor });
   }, [abierto, enMotor]);
@@ -641,6 +649,11 @@ export default function CanvasScreen() {
                   {icono(Pencil)}
                 </IconButton>
               ) : null}
+              {cara && !elegido.locked && juntos.every((x) => CON_TRATAMIENTO.includes(doc.elements.find((e) => e.id === x)?.type ?? 'image')) ? (
+                <IconButton label={c.finish.title} onPress={() => setEligiendoAcabado(true)}>
+                  {icono(Stamp)}
+                </IconButton>
+              ) : null}
               <IconButton label={c.style.open} onPress={() => setConEstiloAbierto(true)}>
                 {icono(Palette)}
               </IconButton>
@@ -796,6 +809,25 @@ export default function CanvasScreen() {
             }}
           />
         </View>
+      </Sheet>
+      <Sheet visible={eligiendoAcabado} onClose={() => setEligiendoAcabado(false)} title={c.finish.title}>
+        <AppText variant="body" color="textSecondary" style={styles.pista}>
+          {c.finish.hint}
+        </AppText>
+        {TRATAMIENTOS.map((t) => {
+          const actual = (elegido?.style.treatment ?? 'printed') === t;
+          return (
+            <ActionRow
+              key={t}
+              icon={icono(actual ? Check : Stamp, actual ? theme.text : theme.textTertiary)}
+              label={actual ? `${c.finish[t]} · ${c.finish.current}` : c.finish[t]}
+              onPress={() => {
+                setEligiendoAcabado(false);
+                aplicar((d) => conEstilo(d, juntos, { treatment: t === 'printed' ? undefined : t }));
+              }}
+            />
+          );
+        })}
       </Sheet>
       <Sheet visible={eligiendoForma} onClose={() => setEligiendoForma(false)} title={c.shapeTitle}>
         {FORMAS_DE_LIENZO.map((f) => (
@@ -974,6 +1006,7 @@ const styles = StyleSheet.create({
   titulo: { flex: 1, minHeight: 44, justifyContent: 'center' },
   centro: { textAlign: 'center' },
   renombrar: { gap: Spacing.lg, paddingBottom: Spacing.md },
+  pista: { paddingBottom: Spacing.sm },
   lienzo: { flex: 1 },
   cubre: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, justifyContent: 'center' },
   abajo: { borderTopWidth: StyleSheet.hairlineWidth, paddingTop: Spacing.xs, paddingHorizontal: Spacing.sm },

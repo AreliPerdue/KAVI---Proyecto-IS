@@ -260,7 +260,7 @@ export function crearCapa(ctx, enviar) {
       pintarAsset(el, a);
     } else if (a.kind === 'shape') {
       const forma = FORMAS[a.content?.shape] ? a.content.shape : 'rect';
-      const color = /^#[0-9a-fA-F]{6}$/.test(a.content?.color ?? '') ? a.content.color : FORMA_GRIS;
+      const color = /^#[0-9a-fA-F]{6}([0-9a-fA-F]{2})?$/.test(a.content?.color ?? '') ? a.content.color : FORMA_GRIS;
       el.setAttribute('role', 'img');
       el.setAttribute('aria-label', 'Forma');
       el.innerHTML = `<svg viewBox="0 0 100 100" preserveAspectRatio="none" width="100%" height="100%" fill="${color}" style="display:block;pointer-events:none;overflow:visible">${FORMAS[forma]}</svg>`;
@@ -327,7 +327,7 @@ export function crearCapa(ctx, enviar) {
         const escala = escalaDe(a);
         el.setAttribute('aria-label', texto ? `Cuadro de texto: ${texto}` : 'Cuadro de texto');
         Object.assign(el.style, {
-          color: /^#[0-9a-fA-F]{6}$/.test(a.content?.color ?? '') ? a.content.color : '#1A1A1A',
+          color: /^#[0-9a-fA-F]{6}([0-9a-fA-F]{2})?$/.test(a.content?.color ?? '') ? a.content.color : '#1A1A1A',
           padding: '0.25em 0.35em',
           fontFamily: '-apple-system, system-ui, "Segoe UI", Roboto, sans-serif',
           fontSize: px ? `${Math.round(16 * escala)}px` : `calc(${escala} * 2.1cqw)`,
@@ -356,6 +356,8 @@ export function crearCapa(ctx, enviar) {
     const c = a.content ?? {};
     if (Number.isFinite(c.opacity) && c.opacity < 1) el.style.opacity = String(Math.max(0.1, c.opacity));
     if (c.shadow) el.style.filter = 'drop-shadow(0 0.5cqw 0.9cqw rgb(0 0 0 / 0.35))';
+    // El acabado de una tapa del Journal (13i, RF-JC12; T348): su color ya viene; aquí, su luz y su sombra.
+    if (ACABADOS[c.treatment]) ponerAcabado(el, a.id, c.treatment);
     const borde = c.border && Number.isFinite(c.border.width) && /^#[0-9a-fA-F]{6}$/.test(c.border.color ?? '') ? c.border : null;
     if (!borde) return;
     const ancho = `${(Math.min(0.05, borde.width) * 100).toFixed(2)}cqw`;
@@ -1758,6 +1760,56 @@ export function crearCapa(ctx, enviar) {
       ademas = new Set();
     },
   };
+}
+
+// ─── Acabados de una tapa (T348) ──────────────────────────────────────────────────
+
+/**
+ * La luz y la sombra de cada acabado, iguales para cualquier silueta (13i, RF-JC12). Son filtros SVG porque las
+ * sombras van **por dentro** de la silueta (que es translúcida, para que se vea la textura del material): una sombra
+ * normal se vería a través de ella.
+ * - Hundido: sombra por dentro arriba y luz por dentro abajo, como si se hubiera prensado.
+ * - Relieve: lo contrario, luz arriba y sombra abajo, y una sombrita afuera, como si sobresaliera.
+ * - Recortado: el canto oscuro del corte y la sombra de la tapa sobre la hoja que se ve.
+ * `a` es la silueta opaca; `borde(dy, desenfoque)` es la franja de adentro del lado contrario al desplazamiento.
+ */
+const borde = (nombre, dy, desenfoque) =>
+  `<feOffset in="a" dy="${dy}" result="${nombre}-d"/><feGaussianBlur in="${nombre}-d" stdDeviation="${desenfoque}" result="${nombre}-b"/>` +
+  `<feComposite in="a" in2="${nombre}-b" operator="out" result="${nombre}"/>`;
+const pintar = (nombre, color, opacidad) =>
+  `<feFlood flood-color="${color}" flood-opacity="${opacidad}"/><feComposite in2="${nombre}" operator="in" result="${nombre}-c"/>`;
+const ACABADOS = {
+  debossed: borde('arriba', 2.5, 1.2) + pintar('arriba', '#000', 0.6) + borde('abajo', -1.5, 0.6) + pintar('abajo', '#fff', 0.35) + '<feMerge><feMergeNode in="SourceGraphic"/><feMergeNode in="arriba-c"/><feMergeNode in="abajo-c"/></feMerge>',
+  embossed:
+    borde('arriba', 2, 0.8) +
+    pintar('arriba', '#fff', 0.55) +
+    borde('abajo', -2, 1) +
+    pintar('abajo', '#000', 0.45) +
+    '<feOffset in="a" dy="1.5" result="f-d"/><feGaussianBlur in="f-d" stdDeviation="1.2" result="f-b"/><feComposite in="f-b" in2="a" operator="out" result="fuera"/>' +
+    pintar('fuera', '#000', 0.4) +
+    '<feMerge><feMergeNode in="fuera-c"/><feMergeNode in="SourceGraphic"/><feMergeNode in="arriba-c"/><feMergeNode in="abajo-c"/></feMerge>',
+  cutout:
+    '<feMorphology in="a" operator="erode" radius="0.8" result="adentro"/><feComposite in="a" in2="adentro" operator="out" result="canto"/>' +
+    pintar('canto', '#000', 0.6) +
+    borde('hondo', 3, 2) +
+    pintar('hondo', '#000', 0.45) +
+    '<feMerge><feMergeNode in="SourceGraphic"/><feMergeNode in="hondo-c"/><feMergeNode in="canto-c"/></feMerge>',
+};
+
+/** Le pone su acabado a una pieza: su propio filtro, dentro de ella (al hojear, cada hoja es su propio árbol). */
+function ponerAcabado(el, id, tipo) {
+  const fid = `acabado-${String(id).replace(/[^a-zA-Z0-9-]/g, '')}`;
+  const defs = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  defs.setAttribute('width', '0');
+  defs.setAttribute('height', '0');
+  defs.setAttribute('aria-hidden', 'true');
+  Object.assign(defs.style, { position: 'absolute', overflow: 'hidden' });
+  defs.innerHTML =
+    `<filter id="${fid}" x="-10%" y="-10%" width="120%" height="120%" color-interpolation-filters="sRGB">` +
+    '<feComponentTransfer in="SourceAlpha" result="a"><feFuncA type="linear" slope="8"/></feComponentTransfer>' +
+    `${ACABADOS[tipo]}</filter>`;
+  el.append(defs);
+  el.style.filter = `url(#${fid})`;
 }
 
 // ─── Fondos de página (T342, T346) ────────────────────────────────────────────────

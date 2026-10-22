@@ -893,6 +893,16 @@ export const library = {
     },
     add: 'Agregar',
     addTitle: 'Agregar al recorte',
+    // Acabados en una tapa del Journal (13i, RF-JC11; T348).
+    finish: {
+      title: 'Acabado',
+      hint: 'Cómo queda marcado en el material de la tapa.',
+      current: 'actual',
+      printed: 'Impreso',
+      debossed: 'Hundido',
+      embossed: 'En relieve',
+      cutout: 'Recortado',
+    },
     background: 'Fondo',
     backgroundTitle: 'Color del fondo',
     paper: 'Papel blanco',

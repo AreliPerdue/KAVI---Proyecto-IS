@@ -499,6 +499,34 @@ describe('tapas del Journal (T346)', () => {
     expect(mockEnviados).toContainEqual({ type: 'canvasBackground', color: { color: '#112233', material: 'linen' } });
   });
 
+  it('lo elegido en una tapa se puede hundir, y se pinta con su acabado; en un recorte no hay acabado (T348)', async () => {
+    tapa('front');
+    mockLienzo = {
+      ...mockLienzo,
+      doc: { pages: 1, elements: [{ id: 'f', type: 'shape', page: 1, x: 0.1, y: 0.1, w: 0.3, ar: 1, rot: 0, z: 1, locked: false, group: null, style: {}, content: { shape: 'star' } }] },
+    };
+    await montar();
+    await responder({ type: 'select', id: 'f' });
+    await fireEvent.press(screen.getByRole('button', { name: C.finish.title }));
+    await fireEvent.press(screen.getByRole('button', { name: C.finish.debossed }));
+    // Recortado deja ver las hojas, del color de los cantos del Journal.
+    expect(ultimas()[0].content).toMatchObject({ color: '#0000004D', treatment: 'debossed' });
+    await fireEvent.press(screen.getByRole('button', { name: C.finish.title }));
+    expect(screen.getByRole('button', { name: `${C.finish.debossed} · ${C.finish.current}` })).toBeTruthy();
+    await fireEvent.press(screen.getByRole('button', { name: C.finish.cutout }));
+    expect(ultimas()[0].content).toMatchObject({ color: '#F7F5EF', treatment: 'cutout' });
+  });
+
+  it('en un recorte de un libro no hay acabado', async () => {
+    mockLienzo = {
+      ...mockLienzo,
+      doc: { pages: 1, elements: [{ id: 'f', type: 'shape', page: 1, x: 0.1, y: 0.1, w: 0.3, ar: 1, rot: 0, z: 1, locked: false, group: null, style: {}, content: { shape: 'star' } }] },
+    };
+    await montar();
+    await responder({ type: 'select', id: 'f' });
+    expect(screen.queryByRole('button', { name: C.finish.title })).toBeNull();
+  });
+
   it('lo que se pega en una tapa se guarda con su cara', async () => {
     tapa('front');
     await montar();

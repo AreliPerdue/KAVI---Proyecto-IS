@@ -76,6 +76,7 @@ export const JournalCover = memo(function JournalCover({
             fuentes={decoracion.fuentes}
             proporcion={cara === 'spine' ? altoTapa / ancho : vertical ? RAIZ_DE_DOS : 1 / RAIZ_DE_DOS}
             sinPapel
+            papel={portada.edges}
           />
         </View>
       ) : null}

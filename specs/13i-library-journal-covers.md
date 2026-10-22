@@ -108,6 +108,16 @@
     hilo en el borde de las hojas al hojear queda pendiente (criterio de §8).
   - Las texturas se mudaron a `public/reader/lienzo/materiales/` para que la app y el motor usen las mismas (en el
     teléfono van empaquetadas con el motor, como los assets del lienzo).
+- **Hecho J3 (T348, 22 oct 2026):** en una tapa, lo elegido (texto, forma, papel o doodle) tiene **Acabado**:
+  impreso, hundido, en relieve o recortado. Se guarda en `style.treatment` (impreso no se guarda) y vale igual para
+  cualquier silueta (RF-JC12):
+  - **El color** del acabado lo pone `colorDeTratamiento`: hundido es negro translúcido y relieve blanco translúcido,
+    así se ve la textura y toma el tono del material aunque se cambie su color; recortado es del color de las hojas
+    (`edges`). Un papel o doodle con acabado se pinta como silueta.
+  - **La luz y la sombra** las pone el motor con un filtro SVG por pieza, por dentro de la silueta: hundido, sombra
+    arriba y luz abajo; relieve, luz arriba, sombra abajo y una sombrita afuera; recortado, el canto oscuro y la
+    sombra de la tapa sobre la hoja. Va dentro de la pieza porque al hojear cada hoja es su propio árbol.
+  - En las miniaturas de la app se ve el color del acabado (y una sombra en el texto); la luz completa, en el motor.
 
 ## 7. Fases propuestas
 

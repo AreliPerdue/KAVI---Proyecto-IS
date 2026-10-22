@@ -215,3 +215,41 @@ describe('assets (RF-CC13, RF-CC15; T343b)', () => {
     expect(m).toMatchObject({ kind: 'asset', content: { asset: 'basicos/papel-rasgado', mode: 'textura', color: '#7A1E3A', label: 'Papel rasgado' } });
   });
 });
+
+describe('acabados de una tapa (13i, RF-JC11 – RF-JC12; T348)', () => {
+  it('solo los motivos, las formas y el texto llevan acabado; impreso no se guarda', () => {
+    const doc = documentoValido({
+      pages: 1,
+      elements: [
+        { ...el('forma'), z: 1, style: { treatment: 'debossed' } },
+        { ...el('foto', { type: 'image', content: { path: 'x.jpg' } }), z: 2, style: { treatment: 'embossed' } },
+        { ...el('texto', { type: 'textbox', content: { text: 'Hola' } }), z: 3, style: { treatment: 'printed' } },
+        { ...el('raro'), z: 4, style: { treatment: 'dorado' } },
+      ],
+    });
+    expect(doc.elements.map((e) => e.style.treatment)).toEqual(['debossed', undefined, undefined, undefined]);
+  });
+
+  it('al motor va el color del acabado (el mismo para cualquier silueta) y un asset va como silueta', () => {
+    const doc = [
+      el('h', { style: { color: '#FF0000', treatment: 'debossed', shadow: true } }),
+      el('r', { type: 'textbox', style: { treatment: 'embossed' }, content: { text: 'Mi año' } }),
+      el('c', { type: 'asset', style: { treatment: 'cutout' }, content: { asset: 'basicos/destellos', mode: 'textura' } }),
+      el('i', { style: { color: '#00FF00' } }),
+    ].reduce(agregar, DOCUMENTO_VACIO);
+    const [h, r, c, i] = aMotor(doc, {}, '#EEDDCC');
+    expect(h.content).toMatchObject({ color: '#0000004D', treatment: 'debossed' });
+    expect(h.content.shadow).toBeUndefined();
+    expect(r.content).toMatchObject({ color: '#FFFFFF2E', treatment: 'embossed' });
+    expect(c.content).toMatchObject({ color: '#EEDDCC', treatment: 'cutout', mode: 'trazo' });
+    expect(i.content).toEqual(expect.objectContaining({ color: '#00FF00' }));
+    expect(i.content.treatment).toBeUndefined();
+  });
+
+  it('cambiar el acabado deja todo lo demás; volver a impreso lo quita', () => {
+    const doc = [el('a', { style: { color: '#123456' } })].reduce(agregar, DOCUMENTO_VACIO);
+    const hundido = conEstilo(doc, ['a'], { treatment: 'debossed' });
+    expect(hundido.elements[0].style).toEqual({ color: '#123456', treatment: 'debossed' });
+    expect(conEstilo(hundido, ['a'], { treatment: undefined }).elements[0].style).toEqual({ color: '#123456' });
+  });
+});
