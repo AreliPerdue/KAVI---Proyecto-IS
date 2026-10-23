@@ -48,3 +48,13 @@ it('sin obtenerlo, el pack está en la tienda y sus piezas no; al obtenerlo, ent
   await fireEvent.press(screen.getByRole('button', { name: 'Flor' }));
   expect(onElegir).toHaveBeenLastCalledWith({ id: 'papeleria/flor', ar: 1.238, modo: 'trazo', label: 'Flor' });
 });
+
+it('tocar la tarjeta del pack muestra sus piezas con su nombre, y se vuelve a la tienda', async () => {
+  mockMios = [];
+  await render(<AssetSheet visible onClose={jest.fn()} onElegir={jest.fn()} />);
+  await fireEvent.press(screen.getByRole('button', { name: es.library.stickers.openPack('Papelería') }));
+  await fireEvent.press(screen.getByRole('button', { name: es.library.stickers.previewA11y('Flor') }));
+  expect(screen.getByLabelText('Flor')).toBeTruthy();
+  await fireEvent.press(screen.getByRole('button', { name: es.library.stickers.backToStore }));
+  expect(screen.getByText(T.store)).toBeTruthy();
+});

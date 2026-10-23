@@ -2,15 +2,16 @@ import { Image } from 'expo-image';
 import { useState } from 'react';
 import { type ImageSourcePropType, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
-import { TarjetaDePack } from '@/components/library/sticker-sheet';
+import { DetalleDePack, TarjetaDePack } from '@/components/library/sticker-sheet';
 import { AppText, Segmented, Sheet } from '@/components/ui';
-import { ASSETS_DE_LIENZO, CATEGORIAS_DE_ASSET, type CategoriaDeAsset, type ModoDeAsset } from '@/constants/canvas-assets';
+import { ASSETS_DE_LIENZO, CATEGORIAS_DE_ASSET, type CategoriaDeAsset, FONDO_DE_VISTA_PREVIA, type ModoDeAsset } from '@/constants/canvas-assets';
 import { Radius, Spacing } from '@/constants/theme';
 import { useMyStickerPacks, useStickerPacks } from '@/hooks/use-sticker-packs';
 import { useTheme } from '@/hooks/use-theme';
 import { useLanguage, useT } from '@/i18n';
 import { uriLocal } from '@/lib/library/offline/sticker-packs';
 import { idDeSticker, pesoDe, soloPapeles, urlDeSticker } from '@/lib/library/sticker-packs';
+import type { StickerPack } from '@/types/domain';
 
 /** Lo que se pega: su id (`<pack>/<nombre>`), su proporción, cómo se recolorea y su nombre en el idioma de la app. */
 export type AssetElegible = { id: string; ar: number; modo: ModoDeAsset; label: string };
@@ -28,6 +29,7 @@ export function AssetSheet({ visible, onClose, onElegir }: { visible: boolean; o
   const t = tx.library.canvas.assets;
   const idioma = useLanguage();
   const [categoria, setCategoria] = useState<CategoriaDeAsset>('papel');
+  const [viendo, setViendo] = useState<StickerPack | null>(null);
   const packs = useStickerPacks();
   const mios = useMyStickerPacks();
   const papeles = soloPapeles(packs.data?.packs ?? []);
@@ -52,6 +54,22 @@ export function AssetSheet({ visible, onClose, onElegir }: { visible: boolean; o
   );
   const lista = [...basicos, ...deLaTienda].filter((a) => a.categoria === categoria);
 
+  if (viendo) {
+    const etiquetas = new Map(viendo.stickers.map((s) => [s.name, (idioma === 'en' ? s.label_en : s.label_es) ?? s.name]));
+    return (
+      <Sheet visible={visible} onClose={onClose} title={t.title}>
+        <DetalleDePack
+          pack={viendo}
+          descargado={!!mios.data?.includes(viendo.id)}
+          onVolver={() => setViendo(null)}
+          nombreDe={(n) => etiquetas.get(n) ?? n}
+          meta={t.packMeta(viendo.stickers.length, pesoDe(viendo.bytes))}
+          fondo={FONDO_DE_VISTA_PREVIA}
+        />
+      </Sheet>
+    );
+  }
+
   return (
     <Sheet visible={visible} onClose={onClose} title={t.title}>
       <View style={styles.cuerpo}>
@@ -66,8 +84,9 @@ export function AssetSheet({ visible, onClose, onElegir }: { visible: boolean; o
               accessibilityRole="button"
               accessibilityLabel={a.label}
               onPress={() => onElegir({ id: a.id, ar: a.ar, modo: a.modo, label: a.label })}
-              style={({ pressed }) => [styles.celda, { backgroundColor: pressed ? theme.surfaceAlt : theme.background, borderColor: theme.border }]}>
-              <Image source={a.imagen} style={styles.imagen} contentFit="contain" tintColor={a.modo === 'trazo' ? theme.text : undefined} />
+              style={({ pressed }) => [styles.celda, { backgroundColor: FONDO_DE_VISTA_PREVIA, borderColor: theme.border }, pressed ? styles.presionado : null]}>
+              {/* Sobre la mesa clara se ven igual los doodles (trazo negro) que los papeles (casi blancos). */}
+              <Image source={a.imagen} style={styles.imagen} contentFit="contain" />
             </Pressable>
           ))}
         </ScrollView>
@@ -81,7 +100,7 @@ export function AssetSheet({ visible, onClose, onElegir }: { visible: boolean; o
                 {tx.library.stickers.storeOffline}
               </AppText>
             ) : (
-              papeles.map((p) => <TarjetaDePack key={p.id} pack={p} descargado={!!mios.data?.includes(p.id)} onAbrir={() => undefined} meta={t.packMeta(p.stickers.length, pesoDe(p.bytes))} />)
+              papeles.map((p) => <TarjetaDePack key={p.id} pack={p} descargado={!!mios.data?.includes(p.id)} onAbrir={() => setViendo(p)} meta={t.packMeta(p.stickers.length, pesoDe(p.bytes))} />)
             )}
           </View>
         ) : null}
@@ -95,5 +114,6 @@ const styles = StyleSheet.create({
   rejilla: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm },
   celda: { width: 96, height: 96, padding: Spacing.sm, borderRadius: Radius.md, borderCurve: 'continuous', borderWidth: 1 },
   imagen: { width: '100%', height: '100%' },
+  presionado: { opacity: 0.85 },
   tienda: { gap: Spacing.sm, paddingTop: Spacing.sm },
 });

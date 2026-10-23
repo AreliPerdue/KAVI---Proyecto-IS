@@ -249,7 +249,7 @@ export const supabaseLibrary: LibraryApi = {
     return unwrap(
       await db()
         .from('sticker_packs')
-        .select('id, collection, color, name_es, name_en, sort_order, stickers, bytes, version')
+        .select('id, collection, color, name_es, name_en, sort_order, stickers, bytes, version, kind')
         .order('collection')
         .order('sort_order'),
     ) as StickerPack[];

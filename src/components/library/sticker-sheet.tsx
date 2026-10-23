@@ -341,10 +341,29 @@ function BotonDePack({ pack, descargado, nombre }: { pack: StickerPack; descarga
   );
 }
 
-function DetalleDePack({ pack, descargado, onVolver }: { pack: StickerPack; descargado: boolean; onVolver: () => void }) {
+/**
+ * Las piezas de un pack antes de obtenerlo. Los de papeles y más (T343c) pasan sus nombres (`nombreDe`), su
+ * línea de datos (`meta`) y un fondo de mesa (`fondo`) para que se vean los doodles y los papeles.
+ */
+export function DetalleDePack({
+  pack,
+  descargado,
+  onVolver,
+  nombreDe,
+  meta,
+  fondo,
+}: {
+  pack: StickerPack;
+  descargado: boolean;
+  onVolver: () => void;
+  nombreDe?: (nombre: string) => string;
+  meta?: string;
+  fondo?: string;
+}) {
   const theme = useTheme();
   const t = useT().library.stickers;
-  const nombre = useNombreDeCara();
+  const nombreDeCara = useNombreDeCara();
+  const nombre = nombreDe ?? nombreDeCara;
   const nombreDePack = useNombreDePack();
   const [viendo, setViendo] = useState<number | null>(null);
   return (
@@ -353,9 +372,9 @@ function DetalleDePack({ pack, descargado, onVolver }: { pack: StickerPack; desc
         <IconButton label={t.backToStore} onPress={onVolver}>
           <ChevronLeft size={IconSize.action} strokeWidth={IconStroke} color={theme.text} />
         </IconButton>
-        <InfoDePack pack={pack} nombre={nombreDePack(pack)} />
+        <InfoDePack pack={pack} nombre={nombreDePack(pack)} meta={meta} />
       </View>
-      {viendo !== null ? <VistaPrevia pack={pack} indice={viendo} onCambiar={setViendo} onCerrar={() => setViendo(null)} /> : null}
+      {viendo !== null ? <VistaPrevia pack={pack} indice={viendo} onCambiar={setViendo} onCerrar={() => setViendo(null)} nombre={nombre} fondo={fondo} /> : null}
       <View style={styles.rejilla}>
         {pack.stickers.map((s, i) => (
           <Celda
@@ -363,6 +382,7 @@ function DetalleDePack({ pack, descargado, onVolver }: { pack: StickerPack; desc
             imagen={{ uri: urlDeSticker(pack, s.name) }}
             etiqueta={t.previewA11y(nombre(s.name))}
             elegida={viendo === i}
+            fondo={fondo}
             onPress={() => setViendo(viendo === i ? null : i)}
           />
         ))}
@@ -376,22 +396,38 @@ function DetalleDePack({ pack, descargado, onVolver }: { pack: StickerPack; desc
  * Un sticker de la tienda en grande, para verlo de cerca antes de descargar el pack (pedido de Areli, 19 oct):
  * su nombre, el anterior y el siguiente, y cerrar.
  */
-function VistaPrevia({ pack, indice, onCambiar, onCerrar }: { pack: StickerPack; indice: number; onCambiar: (i: number) => void; onCerrar: () => void }) {
+function VistaPrevia({
+  pack,
+  indice,
+  onCambiar,
+  onCerrar,
+  nombre,
+  fondo,
+}: {
+  pack: StickerPack;
+  indice: number;
+  onCambiar: (i: number) => void;
+  onCerrar: () => void;
+  nombre: (nombre: string) => string;
+  fondo?: string;
+}) {
   const theme = useTheme();
   const t = useT().library.stickers;
-  const nombre = useNombreDeCara();
   const s = pack.stickers[indice];
   const total = pack.stickers.length;
   const icono = { size: IconSize.action, strokeWidth: IconStroke, color: theme.text };
   if (!s) return null;
   return (
     <View style={[styles.previa, { backgroundColor: theme.surfaceAlt }]} accessibilityLiveRegion="polite">
-      <Image
-        source={{ uri: urlDeSticker(pack, s.name) }}
-        contentFit="contain"
-        style={[styles.previaImagen, { aspectRatio: 1 / s.ar }]}
-        accessibilityLabel={nombre(s.name)}
-      />
+      {/* El fondo de mesa va solo detrás de la pieza: el nombre y los botones siguen sobre el color de la app. */}
+      <View style={[styles.previaMesa, fondo ? { backgroundColor: fondo } : null]}>
+        <Image
+          source={{ uri: urlDeSticker(pack, s.name) }}
+          contentFit="contain"
+          style={[styles.previaImagen, { aspectRatio: 1 / s.ar }]}
+          accessibilityLabel={nombre(s.name)}
+        />
+      </View>
       <View style={styles.previaFila}>
         <IconButton label={t.previous} onPress={() => onCambiar((indice - 1 + total) % total)}>
           <ChevronLeft {...icono} />
@@ -422,6 +458,7 @@ function Celda({
   onPress,
   tirar,
   elegida = false,
+  fondo,
 }: {
   imagen: ImageSource | number;
   giro?: number;
@@ -429,6 +466,7 @@ function Celda({
   onPress: () => void;
   tirar?: { etiqueta: string; onPress: () => void };
   elegida?: boolean;
+  fondo?: string;
 }) {
   const theme = useTheme();
   return (
@@ -440,7 +478,8 @@ function Celda({
         onPress={onPress}
         style={({ pressed, hovered }: { pressed: boolean; hovered?: boolean }) => [
           styles.botonCelda,
-          { backgroundColor: pressed || hovered || elegida ? theme.surfaceAlt : 'transparent' },
+          { backgroundColor: fondo ?? (pressed || hovered || elegida ? theme.surfaceAlt : 'transparent') },
+          fondo && (pressed || hovered) ? styles.presionado : null,
           elegida ? { borderWidth: 2, borderColor: theme.ink } : null,
         ]}>
         <Image source={imagen} contentFit="contain" style={[styles.imagen, giro ? { transform: [{ rotate: `${giro}deg` }] } : null]} accessible={false} />
@@ -467,6 +506,7 @@ const styles = StyleSheet.create({
   celda: { width: 76, height: 68 },
   crear: { borderWidth: 1, borderStyle: 'dashed' },
   previa: { borderRadius: Radius.lg, borderCurve: 'continuous', padding: Spacing.md, gap: Spacing.sm, alignItems: 'center' },
+  previaMesa: { alignSelf: 'stretch', alignItems: 'center', padding: Spacing.sm, borderRadius: Radius.md, borderCurve: 'continuous' },
   previaImagen: { width: '100%', maxWidth: 320, maxHeight: 260 },
   previaFila: { flexDirection: 'row', alignItems: 'center', gap: Spacing.xs, alignSelf: 'stretch' },
   previaTexto: { flex: 1, alignItems: 'center' },

@@ -92,3 +92,10 @@ const POR_ID = new Map(ASSETS_DE_LIENZO.map((a) => [a.id, a]));
 export function assetPorId(id: unknown): AssetDeLienzo | null {
   return typeof id === 'string' ? (POR_ID.get(id) ?? null) : null;
 }
+
+/**
+ * Fondo de mesa para ver las piezas antes de pegarlas (pedido de Areli, 22 oct): los doodles son trazo negro y los
+ * papeles casi blancos, y sobre el fondo oscuro o el claro de la app uno de los dos se pierde. Es solo para mostrarlas;
+ * las piezas siguen sin fondo al pegarlas.
+ */
+export const FONDO_DE_VISTA_PREVIA = '#DCD6CC';

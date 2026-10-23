@@ -962,3 +962,10 @@ la semana con Ana superpuesta y su "A", y los filtros.
   la vez (Android con la barra nativa).
 - [ ] (manual) Probarlo con un simulador de daltonismo (p. ej. las herramientas de Chrome → Rendering → Emulate
   vision deficiencies) en deuteranopía, protanopía y tritanopía.
+
+## Papelería en su tienda y vista previa con fondo (arreglo de T343c, 22 oct 2026)
+La consulta real a `sticker_packs` no pedía `kind`: en producción Papelería salía en la tienda de Stickers y no en
+"Papeles y más". Ahora la pide (prueba `services/supabase/__tests__/sticker-packs.test.ts`). En "Papeles y más",
+las piezas y el detalle del pack (nuevo: tocar su tarjeta lo abre) se muestran sobre un fondo de mesa claro, solo
+para verlas; al pegarlas siguen sin fondo. Visto en el demo web en oscuro.
+- [ ] (manual, web) Recargar con ⌘⇧R: Papelería ya no está en Stickers → Tienda y sí en Papeles y más.
