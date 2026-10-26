@@ -6,7 +6,7 @@ import Svg, { ClipPath, Defs, Path, Rect } from 'react-native-svg';
 import { assetPorId } from '@/constants/canvas-assets';
 import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import { colorDeTratamiento, type DatoEscrito, type DocumentoDeLienzo, fechaLegible, MUESTRA_SIN_COLOR, type ElementoDeLienzo, type LibroEnLienzo, type OrientacionDeLienzo, RAIZ_DE_DOS } from '@/lib/library/canvas';
+import { colorDeTratamiento, type DatoEscrito, type DocumentoDeLienzo, fechaLegible, LIBRO_POR_ELEGIR, MUESTRA_SIN_COLOR, type ElementoDeLienzo, type LibroEnLienzo, type OrientacionDeLienzo, RAIZ_DE_DOS } from '@/lib/library/canvas';
 import { useLanguage } from '@/i18n';
 import { CARA, CARITAS, FORMA_GRIS, MARCO_POLAROID, PAPEL_DE_LIENZO, PELICULA, SIMBOLOS_DE_RATING, SIN_FOTO, TINTA_DE_TEXTO, TRAZOS_DE_FORMA } from '@/lib/library/canvas-shapes';
 import { luminance } from '@/lib/color';
@@ -364,7 +364,7 @@ function Modulo({ e, w, h, fuentes }: { e: ElementoDeLienzo; w: number; h: numbe
     );
   }
   const libro = c.itemId ? fuentes.libros?.get(c.itemId) : undefined;
-  const color = libro?.color ?? '#8C8C8C';
+  const color = libro?.color ?? LIBRO_POR_ELEGIR;
   return (
     <View style={[styles.lleno, { backgroundColor: color, borderRadius: 1.5 * u, overflow: 'hidden', padding: libro?.src ? 0 : 8 * u }]}>
       {libro?.src ? (

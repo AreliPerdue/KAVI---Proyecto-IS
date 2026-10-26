@@ -1,6 +1,7 @@
 /** El lienzo creativo (spec 13h, RF-CC4 – RF-CC10; T351): el documento y lo que se le hace. */
 import {
   aMotor,
+  LIBRO_POR_ELEGIR,
   agregar,
   archivosDeImagenes,
   agrupar,
@@ -192,7 +193,7 @@ describe('C3: módulos (RF-CC14; T343)', () => {
     });
     expect(p.content).toMatchObject({ variant: 'double', srcs: ['https://r2/f1', ''] });
     expect(l.content).toEqual({ title: 'Rayuela', coverColor: '#2E7D32', src: 'https://r2/portada' });
-    expect(x.content).toEqual({ title: '', coverColor: '#8C8C8C' });
+    expect(x.content).toEqual({ title: '', coverColor: LIBRO_POR_ELEGIR });
   });
 
   it('los archivos de imagen de unos elementos: las imágenes y las fotos de las polaroids', () => {

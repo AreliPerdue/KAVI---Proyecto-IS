@@ -200,11 +200,9 @@ describe('yo como lector (T374)', () => {
     expect(plantillasDeLector(en.library.canvas.templates, 2026).find((p) => p.id === 'kavi/why-i-read')?.nombre).toBe('Why I Read');
   });
 
-  it('caben en la página, en neutros, sin Nobi, y sus libros son por elegir (no "este libro", también en un recorte)', () => {
+  it('caben en la página, sin Nobi, y sus libros son por elegir (no "este libro", también en un recorte)', () => {
     for (const p of plantillasDeLector(es.library.canvas.templates, 2026)) {
-      expect(p.doc.background).toBeUndefined();
       for (const e of p.doc.elements) {
-        expect(e.style.color).toBeUndefined();
         expect(e.type).not.toBe('sticker');
         if (e.type === 'book') expect(e.content.itemId).toBeUndefined();
         expect(e.x).toBeGreaterThanOrEqual(0);
@@ -212,6 +210,31 @@ describe('yo como lector (T374)', () => {
         expect(e.y + (e.w * e.ar) / Math.SQRT2).toBeLessThanOrEqual(1.02);
       }
     }
+  });
+
+  it('como las de Pinterest (T376): su papel de color, el título en manuscrita y los textos con su letra y su tinta', () => {
+    for (const p of plantillasDeLector(es.library.canvas.templates, 2026)) {
+      expect(p.doc.background).toMatch(/^#[0-9A-F]{6}$/);
+      const textos = p.doc.elements.filter((e) => e.type === 'textbox');
+      const titulo = textos.reduce((m, e) => (e.y < m.y ? e : m));
+      expect(titulo.style.font).toBe('hand');
+      expect(titulo.style.size).toBeGreaterThanOrEqual(2.6);
+      for (const e of textos) expect(e.style.color).toMatch(/^#[0-9A-F]{6}$/);
+    }
+    // Las trece nuevas traen su mancha de fondo (el blob de los Nobi) y papeles teñidos.
+    const nuevas = plantillasDeLector(es.library.canvas.templates, 2026).filter((p) => !(DEL_JOURNAL_A_LECTOR as readonly string[]).includes(p.id));
+    expect(nuevas).toHaveLength(13);
+    for (const p of nuevas) {
+      expect(p.doc.elements.some((e) => e.type === 'shape' && e.content.shape === 'blob')).toBe(true);
+      expect(p.doc.elements.some((e) => e.type === 'asset' && e.style.color)).toBe(true);
+    }
+  });
+
+  it('se siguen personalizando: "Colores de la página" cambia su papel y su tinta', () => {
+    const favoritos = plantillasDeLector(es.library.canvas.templates, 2026).find((p) => p.id === 'kavi/why-i-read');
+    const otra = conColores(favoritos?.doc ?? documentoValido({}), { papel: '#101010', tinta: '#ABCDEF' });
+    expect(otra.background).toBe('#101010');
+    for (const e of otra.elements.filter((x) => x.type === 'textbox')) expect(e.style.color).toBe('#ABCDEF');
   });
 
   it('usar una en un recorte no pone el libro del recorte en "Mis libros favoritos"', () => {

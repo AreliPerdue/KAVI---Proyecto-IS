@@ -259,7 +259,14 @@ llevar texto, pero nunca debe sentirse como un formulario ni como una nota grand
     cambiaron (antes y después de tres libros) y Mi relación con la lectura (cómo me hace sentir, lo que disfruto, lo
     que me cuesta, mi mejor experiencia y lo que quiero cambiar).
   - Hablan de quien lee, no de un libro: sus libros son **por elegir** también en un recorte (no se vuelven "este
-    libro"). Como las demás, en neutros y personalizables.
+    libro").
+  - **Como las de Pinterest (T376, decisión de Areli del 26 oct 2026: "más bonitas, más KAVI"; reemplaza para estas el
+    criterio de empezar en neutros de §13):** cada una trae su paleta suave (rosa polvo, salvia, lavanda, café con
+    leche o cielo: papel de fondo, tinta y tres acentos), papeles encimados y girados (hoja de libreta, memo, ticket,
+    tira rasgada, cuadriculado) teñidos, cintas en las esquinas, una mancha suave de fondo (el blob de los Nobi), el
+    título en manuscrita del tamaño que quepa en un renglón, etiquetas con serifa y doodles en tinta. Las seis del
+    Journal se visten igual en esta fila. Siguen personalizables con "Colores de la página".
+  - Un libro por elegir se ve en un tono claro y cálido (`#DCD3C8`), no en un bloque gris (en todas las plantillas).
 - **Hecho (C6, segunda parte, T349b, 22 oct 2026; Areli eligió todo):**
   - **Módulos nuevos** (RF-CC14, "después"): **checklist** (título y renglones con casilla; los marcados se tachan),
     **mood** (ocho caritas dibujadas —no emojis— y una palabra), **canción** (un reproductor dibujado, sin sonido, con

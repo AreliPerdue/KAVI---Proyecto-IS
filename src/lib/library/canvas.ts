@@ -459,6 +459,9 @@ export function aMotor(
   });
 }
 
+/** Un libro aún por elegir (T376): un tono claro y cálido, no un bloque gris que pese en la página. */
+export const LIBRO_POR_ELEGIR = '#DCD3C8';
+
 /** Un dato de la biblioteca listo para verse (T349): el número, qué es y de cuándo. */
 export type DatoEscrito = { valor: string; etiqueta: string; periodo: string };
 /** Una muestra de color recién puesta, antes de elegirle uno. */
@@ -470,7 +473,7 @@ function datoParaMotor(d: DatoEscrito | undefined): AnotacionEnMotor['content'] 
 
 /** Un libro del lienzo: su portada (o su color y título si no tiene, o si ya no existe). */
 function libroParaMotor(libro: LibroEnLienzo | undefined, comun: AnotacionEnMotor['content']): AnotacionEnMotor['content'] {
-  return { title: libro?.title ?? '', coverColor: libro?.color ?? '#8C8C8C', ...(libro?.src ? { src: libro.src } : {}), ...comun };
+  return { title: libro?.title ?? '', coverColor: libro?.color ?? LIBRO_POR_ELEGIR, ...(libro?.src ? { src: libro.src } : {}), ...comun };
 }
 
 // ─── Lo que se le hace a un documento ─────────────────────────────────────────────

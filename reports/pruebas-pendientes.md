@@ -1001,3 +1001,11 @@ recorte, y los datos del año en Hábitos). En el demo web: las 13 nuevas en la 
 - [ ] (manual, Areli) Repasar las 13 nuevas: ¿les falta o les sobra algo? ¿Algún texto que cambiarías?
 - [ ] (manual, web) En "Nuevo recorte" de un libro, que salga la fila "Yo como lector" y que sus libros queden por
   elegir.
+
+## Letra de los textos y "Yo como lector" estilo Pinterest (T375, T376)
+Automatizado: `canvas.test.ts` (la letra solo en textos y al motor), `canvas-style-sheet.test.tsx` (elegir letra) y
+`canvas-templates.test.ts` (papel de color, título manuscrito, mancha y papeles teñidos; se siguen personalizando).
+En el demo web: las 19 miniaturas y "Mi personalidad lectora" ya creada, con la manuscrita y la serifa del motor.
+- [ ] (manual, Areli) ¿Ya tienen el look que buscabas? ¿Alguna paleta o pieza que cambiarías?
+- [ ] (manual, web) Exportar como imagen una página con título manuscrito: que salga con la misma letra.
+- [ ] (manual, teléfono) En las miniaturas, la manuscrita usa Noteworthy (iOS) o casual (Android).
