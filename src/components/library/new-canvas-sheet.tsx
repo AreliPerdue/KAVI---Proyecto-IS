@@ -1,6 +1,6 @@
 import { Trash2 } from 'lucide-react-native';
 import { useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { CanvasPreview, type FuentesDeMiniatura } from '@/components/library/canvas-preview';
 import { ColorPickerSheet } from '@/components/library/color-picker-sheet';
@@ -202,9 +202,9 @@ export function NewCanvasSheet({
                 <AppText variant="label" color="textSecondary">
                   {t.kavi}
                 </AppText>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.fila}>
+                <View style={styles.fila}>
                   {deKavi.map((p) => tarjeta(p, false))}
-                </ScrollView>
+                </View>
               </>
             ) : null}
 
@@ -213,9 +213,9 @@ export function NewCanvasSheet({
                 <AppText variant="label" color="textSecondary">
                   {t.reader}
                 </AppText>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.fila}>
+                <View style={styles.fila}>
                   {deLector.map((p) => tarjeta(p, false))}
-                </ScrollView>
+                </View>
               </>
             ) : null}
 
@@ -223,9 +223,9 @@ export function NewCanvasSheet({
               {t.mine}
             </AppText>
             {propias.length ? (
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.fila}>
+              <View style={styles.fila}>
                 {propias.map(propiaConBorrar)}
-              </ScrollView>
+              </View>
             ) : (
               <AppText variant="caption" color="textSecondary">
                 {journal ? j.mineEmpty : t.mineEmpty}
@@ -242,7 +242,9 @@ const styles = StyleSheet.create({
   cuerpo: { gap: Spacing.md, paddingBottom: Spacing.md },
   muestra: { alignItems: 'center', justifyContent: 'center', height: 136 },
   pagina: { borderWidth: 1, borderRadius: Radius.sm / 2, borderCurve: 'continuous', boxShadow: '0 4px 16px rgba(22,23,26,0.08)' },
-  fila: { flexDirection: 'row', gap: Spacing.md, paddingVertical: Spacing.xs },
+  // En cuadrícula (pedido de Areli, 26 oct): en una fila deslizable solo se veían las primeras cuatro y las demás
+  // parecían haber desaparecido.
+  fila: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.md, paddingVertical: Spacing.xs },
   tarjeta: { width: ANCHO_MINIATURA, gap: Spacing.xs },
   conBorrar: { alignItems: 'center' },
   muestraGrande: { alignItems: 'center' },

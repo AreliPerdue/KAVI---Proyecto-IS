@@ -1016,3 +1016,8 @@ la fila, sombras duras en bloques) y `canvas.test.ts` (las letras KAVI y Fina). 
 de cada estilo en grande.
 - [ ] (manual, Areli) ¿Así sí? ¿Algún estilo o color de dimensión que cambiarías en alguna?
 - [ ] (manual, teléfono) Los títulos con la letra del logo en las miniaturas (la app ya la trae).
+
+## Plantillas en cuadrícula (arreglo de T374, 26 oct 2026)
+En "Nuevo recorte" y "Nueva página", las plantillas iban en filas que se deslizan de lado: en la computadora solo se
+veían las primeras cuatro y las demás parecían no estar. Ahora van en cuadrícula. Visto en el demo web.
+- [ ] (manual, teléfono) Que la hoja se deje bajar hasta "Mis plantillas" con todas las miniaturas.
