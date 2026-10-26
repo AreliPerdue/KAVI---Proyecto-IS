@@ -28,6 +28,7 @@ import { pintarTrazos } from './ink.js';
 import { fuenteDeAsset, MODULOS, pintarAsset, pintarModulo } from './modules.js';
 import { pellizcando as pellizcandoAhora } from './zoom.js';
 import { conRespaldo } from './safe.js';
+import { familiaDeLienzo } from './canvas-fonts.js';
 
 /** El ancho de un post-it nuevo, relativo a la página (igual que `ANCHO_DE_POSTIT` en la app). */
 const ANCHO = 0.24;
@@ -364,7 +365,8 @@ export function crearCapa(ctx, enviar) {
         Object.assign(el.style, {
           color: /^#[0-9a-fA-F]{6}([0-9a-fA-F]{2})?$/.test(a.content?.color ?? '') ? a.content.color : '#1A1A1A',
           padding: '0.25em 0.35em',
-          fontFamily: '-apple-system, system-ui, "Segoe UI", Roboto, sans-serif',
+          // Su letra (T375): serifa o manuscrita, las que ya trae el motor; sin ella, la del sistema.
+          fontFamily: familiaDeLienzo(a.content?.font),
           fontSize: px ? `${Math.round(16 * escala)}px` : enLienzo ? `calc(${escala} * 2.1 * max(1cqw, 0.7071cqh))` : `calc(${escala} * 2.1cqw)`,
           lineHeight: '1.35',
         });

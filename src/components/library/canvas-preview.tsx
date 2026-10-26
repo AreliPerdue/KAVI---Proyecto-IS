@@ -121,6 +121,7 @@ export const CanvasPreview = memo(function CanvasPreview({
             const sentido = e.style.direction;
             const estiloDeTexto = [
               { fontSize: tamano, lineHeight: tamano * 1.35, color: color ?? TINTA_DE_TEXTO, paddingHorizontal: tamano * 0.35, paddingVertical: tamano * 0.25 },
+              e.style.font ? { fontFamily: LETRA_DE_TEXTO[e.style.font] } : null,
               e.style.treatment === 'debossed' ? styles.hundido : e.style.treatment === 'embossed' ? styles.relieve : null,
             ];
             return (
@@ -164,6 +165,11 @@ const styles = StyleSheet.create({
 });
 
 const SERIFA = Platform.select({ ios: 'Georgia', android: 'serif', default: 'Georgia, serif' });
+/** La letra de un texto del lienzo (T375): en la web, las del motor; en el teléfono, las parecidas del sistema. */
+const LETRA_DE_TEXTO = {
+  serif: Platform.select({ ios: 'Georgia', android: 'serif', default: '"KAVI Serif", Georgia, serif' }),
+  hand: Platform.select({ ios: 'Noteworthy', android: 'casual', default: '"KAVI Manuscrita", "Patrick Hand", cursive' }),
+} as const;
 const sobre = (fondo: string) => (luminance(fondo) < 0.3 ? PAPEL_DE_LIENZO : TINTA_DE_TEXTO);
 
 /** Un hueco de foto: la imagen recortada para llenarlo, o el gris de "sin foto". */

@@ -312,6 +312,20 @@ describe('texto en las tapas: sentido y tamaño (T363)', () => {
     expect(doc.elements[1].style.direction).toBeUndefined();
     expect(aMotor(doc)[0].content).toMatchObject({ direction: 'stacked', size: 8 });
   });
+
+  it('la letra (T375): serifa o manuscrita, solo en el texto, y va al motor; otra cosa se ignora', () => {
+    const doc = documentoValido({
+      pages: 1,
+      elements: [
+        { ...texto(), z: 1, style: { font: 'hand' } },
+        { ...texto({ id: 't2' }), z: 2, style: { font: 'comic' } },
+        { ...el('f'), z: 3, style: { font: 'serif' } },
+      ],
+    });
+    expect(doc.elements.map((e) => e.style.font)).toEqual(['hand', undefined, undefined]);
+    expect(aMotor(doc)[0].content).toMatchObject({ font: 'hand' });
+    expect(aMotor(doc)[1].content).not.toHaveProperty('font');
+  });
 });
 
 it('sin color, hundido y relieve toman el tono del material; recortado siempre es del color de las hojas (T366)', () => {

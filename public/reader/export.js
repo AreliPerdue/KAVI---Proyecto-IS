@@ -5,6 +5,7 @@
  */
 import { fuenteDeSticker } from './annotations.js';
 import { CARA, CARITAS, fuenteDeAsset, MARCO_POLAROID, PELICULA, SIMBOLOS, SIN_FOTO } from './modules.js';
+import { familiaDeLienzo, letrasListas } from './canvas-fonts.js';
 
 /** Las formas en una caja de 100 × 100, como trazos (las mismas que pinta `annotations.js`). */
 const TRAZOS = {
@@ -483,6 +484,8 @@ export async function exportarPagina({ items, pagina = 1, ancho = 1600, proporci
   }
 
   const lista = [...items].filter((a) => a.locator?.page === pagina && TIPOS.includes(a.kind)).sort((a, b) => a.z - b.z);
+  // Las letras de los textos (T375) listas antes de dibujar: si no, el canvas usa la del sistema.
+  await letrasListas(lista.filter((a) => a.kind === 'textbox').map((a) => a.content?.font));
   // Las imágenes primero, todas juntas: así el dibujo sale en su orden aunque una tarde más. Una polaroid trae varias.
   const imagenes = await Promise.all(
     lista.map((a) => {
@@ -545,7 +548,7 @@ export async function exportarPagina({ items, pagina = 1, ancho = 1600, proporci
       }
     } else if (a.kind === 'textbox') {
       const tamano = 0.021 * W * (Number.isFinite(c.size) ? c.size : 1);
-      ctx.font = `${tamano}px ${LETRA}`;
+      ctx.font = `${tamano}px ${c.font === 'serif' || c.font === 'hand' ? familiaDeLienzo(c.font) : LETRA}`;
       ctx.fillStyle = esColor(c.color) ? c.color : '#1A1A1A';
       ctx.textBaseline = 'top';
       const [px, py] = [0.35 * tamano, 0.25 * tamano];

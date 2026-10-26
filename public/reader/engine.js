@@ -36,11 +36,14 @@ import { crearRecortador } from './clip.js';
 import { crearLapiz } from './ink.js';
 import { buscarEnPedazos } from './text-search.js';
 import { caraDeLetra, estilosDeTexto, familiaDe, letraValida, tamanoValido } from './text.js';
+import { cargarLetrasDeLienzo } from './canvas-fonts.js';
 import { escucharPellizco, escucharRuedaConCtrl, pellizcando } from './zoom.js';
 
 // Las librerías van junto al motor. Empaquetado en la app (T285), la página no tiene dirección propia: los
 // archivos de apoyo de pdf.js (mapas de caracteres, fuentes) se piden a la web, si hay red.
 const VENDOR = new URL('./vendor/', globalThis.KAVI_BASE ?? import.meta.url).href;
+// Las letras de los textos del lienzo (T375), declaradas desde el principio para que no parpadeen al abrir.
+void cargarLetrasDeLienzo(VENDOR);
 
 // ─── Mensajes ────────────────────────────────────────────────────────────────
 

@@ -240,6 +240,10 @@ llevar texto, pero nunca debe sentirse como un formulario ni como una nota grand
     grande con sus **Colores de la página** —papel (el fondo), tinta (textos y módulos) y acento (papeles, cintas,
     doodles y formas)— antes de usarla. En el editor, "Colores de la página" recolorea una página ya hecha (en una
     tapa, sin papel: es el material). Las muestras de color, las fotos y los libros no cambian.
+- **Letra de los textos (T375, 26 oct 2026, para las plantillas "como las de Pinterest"):** en Estilo, un texto elige
+  su letra: **Normal** (la del sistema), **Serifa** (Literata) o **Manuscrita** (Patrick Hand), las dos OFL que el
+  motor ya trae para leer. Se ve igual en el lienzo, al leer el Journal y en la imagen exportada; en las miniaturas de
+  la web, con las mismas letras; en el teléfono, con las parecidas del sistema (Georgia o serif; Noteworthy o casual).
 - **Hecho (T374, 26 oct 2026, pedido de Areli: las 18 de "yo como lector" también para recortes):** una fila aparte,
   **Yo como lector**, en "Nuevo recorte" y en "Nueva página" del Journal, con:
   - Las seis que ya había en el Journal: Conoce a quien lee, Mis eras lectoras, Mi año lector, Mis números del año,

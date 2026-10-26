@@ -731,6 +731,8 @@ export const library: Dictionary['library'] = {
       title: 'Style',
       size: 'Text size',
       smaller: 'Smaller text',
+      font: 'Font',
+      fonts: { sans: 'Regular', serif: 'Serif', hand: 'Handwritten' },
       bigger: 'Bigger text',
       open: 'Style',
       color: 'Color',

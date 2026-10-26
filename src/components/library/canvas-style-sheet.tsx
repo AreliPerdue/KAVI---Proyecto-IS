@@ -5,7 +5,7 @@ import { ActionRow, AppText, IconButton, Segmented, Sheet, SwitchRow } from '@/c
 import { IconSize, IconStroke, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useT } from '@/i18n';
-import { BORDES, type ElementoDeLienzo, TAMANO_MAXIMO } from '@/lib/library/canvas';
+import { BORDES, type ElementoDeLienzo, LETRAS_DE_LIENZO, type LetraDeLienzo, TAMANO_MAXIMO } from '@/lib/library/canvas';
 
 /** Los pasos del tamaño de letra (T363): finos al principio, más grandes para los títulos. */
 const TAMANOS = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2, 2.5, 3, 4, 5, 6, TAMANO_MAXIMO];
@@ -64,6 +64,21 @@ export function CanvasStyleSheet({
             <IconButton label={s.bigger} onPress={() => paso(1)} disabled={tamano >= TAMANO_MAXIMO}>
               <Plus size={IconSize.inline} strokeWidth={IconStroke} color={tamano >= TAMANO_MAXIMO ? theme.textTertiary : theme.text} />
             </IconButton>
+          </View>
+        ) : null}
+        {elemento?.type === 'textbox' ? (
+          // La letra de un texto (T375): la del sistema, serifa o manuscrita.
+          <View style={styles.grupo}>
+            <AppText variant="label" color="textSecondary">
+              {s.font}
+            </AppText>
+            <Segmented
+              label={s.font}
+              options={LETRAS_DE_LIENZO.map((v) => ({ value: v, label: s.fonts[v] }))}
+              value={estilo.font ?? 'sans'}
+              onChange={(v: LetraDeLienzo) => onCambiar({ font: v === 'sans' ? undefined : v })}
+              fullWidth
+            />
           </View>
         ) : null}
         <View style={styles.grupo}>

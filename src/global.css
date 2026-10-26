@@ -18,6 +18,20 @@
   font-display: swap;
 }
 
+/* La serifa de los textos del lienzo en sus miniaturas (T375): Literata (OFL), la misma del lector. */
+@font-face {
+  font-family: 'KAVI Serif';
+  src: url('/reader/vendor/fonts/serif-400.woff2') format('woff2');
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'KAVI Serif';
+  src: url('/reader/vendor/fonts/serif-700.woff2') format('woff2');
+  font-weight: 700;
+  font-display: swap;
+}
+
 /**
  * Autofill del navegador (web).
  *

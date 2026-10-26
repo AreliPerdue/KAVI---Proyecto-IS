@@ -86,6 +86,13 @@ export function colorDeTratamiento(t: Exclude<Tratamiento, 'printed'>, papel: st
  * El sentido de un texto (13i; T363), para lomos y tapas: horizontal; vertical de arriba abajo (como los lomos en
  * inglés) o de abajo arriba (como en español); o las letras apiladas una sobre otra. La caja se queda derecha.
  */
+/**
+ * La letra de un texto del lienzo (T375): la del sistema, serifa (Literata) o manuscrita (Patrick Hand), las dos OFL
+ * que ya trae el motor para leer. Sin ella, la del sistema.
+ */
+export const LETRAS_DE_LIENZO = ['sans', 'serif', 'hand'] as const;
+export type LetraDeLienzo = (typeof LETRAS_DE_LIENZO)[number];
+
 export const SENTIDOS = ['horizontal', 'down', 'up', 'stacked'] as const;
 export type SentidoDeTexto = (typeof SENTIDOS)[number];
 /** Lo más grande que puede ser la letra (8 veces la normal): un título en una portada. */
@@ -139,6 +146,8 @@ export type ElementoDeLienzo = {
     treatment?: Exclude<Tratamiento, 'printed'>;
     /** Sentido de un texto (T363): vertical o con las letras apiladas; sin él, horizontal. */
     direction?: Exclude<SentidoDeTexto, 'horizontal'>;
+    /** Letra de un texto (T375); sin ella, la del sistema. */
+    font?: Exclude<LetraDeLienzo, 'sans'>;
   };
   /**
    * Texto; forma; ruta de la imagen en R2; sticker (`<paquete>/<nombre>`) y su nombre. Polaroid: variante, rutas de
@@ -227,6 +236,7 @@ export function elementoValido(raw: unknown, paginas = MAX_PAGINAS): ElementoDeL
       ...(tipo === 'textbox' && SENTIDOS.includes(estilo.direction as SentidoDeTexto) && estilo.direction !== 'horizontal'
         ? { direction: estilo.direction as Exclude<SentidoDeTexto, 'horizontal'> }
         : {}),
+      ...(tipo === 'textbox' && (estilo.font === 'serif' || estilo.font === 'hand') ? { font: estilo.font } : {}),
       ...(numero(estilo.opacity) && estilo.opacity < 1 ? { opacity: entre(estilo.opacity, 0.1, 1) } : {}),
       ...(bordeValido(estilo.border) ? { border: bordeValido(estilo.border) as { width: number; color: string } } : {}),
       ...(estilo.shadow === true ? { shadow: true } : {}),
@@ -387,6 +397,7 @@ export function aMotor(
             ...(e.style.color ? { color: e.style.color } : {}),
             ...(e.style.size ? { size: e.style.size } : {}),
             ...(e.style.direction ? { direction: e.style.direction } : {}),
+            ...(e.style.font ? { font: e.style.font } : {}),
             ...comun,
           }
         : e.type === 'shape'

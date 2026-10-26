@@ -1258,6 +1258,10 @@ Reemplazan L5 (13e). Un recorte es una página 1 : √2 del visor de PDF (decisi
   oct 2026) Dep: T349b
   **Hecho (22 oct 2026):** `constants/canvas-templates-more.ts` y `canvas-template-kit.ts`, `conColores`/`coloresDe`,
   `PageColorRows`, paso de personalizar en `NewCanvasSheet` y botón en el editor.
+- [x] T375 Letra de los textos del lienzo: Normal, Serifa o Manuscrita (13h; para las plantillas estilo Pinterest,
+  pedido de Areli del 26 oct 2026) Dep: T351
+  **Hecho (26 oct 2026):** `style.font` en `canvas.ts`, `public/reader/canvas-fonts.js` (las declara en el motor y las
+  espera al exportar), miniaturas y la opción en `CanvasStyleSheet`.
 - [x] T374 "Yo como lector": las 18 páginas sobre quien lee también en recortes (las 6 del Journal y 13 nuevas, con
   research), en su propia fila. (13h RF-CC21; pedido de Areli del 26 oct 2026) Dep: T368
   **Hecho (26 oct 2026):** `constants/canvas-templates-reader.ts` (`plantillasDeLector`, libros por elegir), la fila
