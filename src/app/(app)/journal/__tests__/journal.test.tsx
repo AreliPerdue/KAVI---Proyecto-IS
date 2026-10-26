@@ -113,6 +113,15 @@ describe('editar y ver', () => {
     expect(globalThis.mockRouter.push).toHaveBeenCalledWith({ pathname: '/(app)/journal/edit', params: { id: 'j1' } });
   });
 
+  it('"Interior" muestra la tapa por dentro con su guarda y "Cambiar guardas" abre editar en ese paso (T372)', async () => {
+    await render(<Ver />);
+    await fireEvent.press(screen.getByRole('tab', { name: J.inside }));
+    expect(screen.getByRole('image', { name: J.insideA11y })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: J.decorate.front })).toBeNull();
+    await fireEvent.press(screen.getByRole('button', { name: J.changeEndpapers }));
+    expect(globalThis.mockRouter.push).toHaveBeenCalledWith({ pathname: '/(app)/journal/edit', params: { id: 'j1', seccion: 'guardas' } });
+  });
+
   it('si ya no existe, lo dice', async () => {
     mockPieza = { data: undefined, isError: true, refetch: jest.fn() };
     await render(<Ver />);

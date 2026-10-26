@@ -985,3 +985,8 @@ libro real (anillos cruzando el centro) y en scroll (la portada como cuaderno de
 doblez).
 - [ ] (manual, Areli) ¿Te gustan los anillos y la costura? ¿Más grandes, más juntos?
 - [ ] (manual, teléfono) Que se vea igual en la app (libro real y scroll).
+
+## Pestaña Interior (T372)
+Automatizado: `journal.test.tsx` (la pestaña muestra el interior y el botón abre editar en las guardas). Visto en el
+demo web.
+- [ ] (manual, teléfono) Que "Cambiar guardas" baje hasta el paso 4 también en la app.

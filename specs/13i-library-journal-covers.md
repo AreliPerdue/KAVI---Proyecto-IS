@@ -136,6 +136,9 @@
     ancho por fuera y 3.2 % del alto arriba y abajo (`BORDE_DE_GUARDA`), con una sombra leve de papel. El papel se
     sigue eligiendo igual (material y color); el paso Guardas muestra cómo queda. En el motor, el fondo de la hoja
     lleva `inner` con la guarda y su lomo.
+  - **Pestaña Interior (T372, pedido de Areli del 26 oct 2026: no encontraba dónde cambiarlas):** en la pantalla del
+    Journal, junto a Portada · Lomo · Contraportada, "Interior" muestra la tapa por dentro con su guarda; su botón
+    "Cambiar guardas" abre Editar Journal ya en el paso 4.
 - **Ajustes de Areli del 22 oct 2026 (T366):**
   - **Cada asa mueve solo su borde:** la del lado derecho ensancha hacia la derecha sin cambiar la altura; la de
     abajo alarga hacia abajo. El texto de un lienzo se estira de 0.05 a 20 (alto ÷ ancho), como un papel o una

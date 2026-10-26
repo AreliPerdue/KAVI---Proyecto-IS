@@ -674,6 +674,10 @@ export const library = {
     fewer: 'Menos páginas',
     more: 'Más páginas',
     faces: { front: 'Portada', spine: 'Lomo', back: 'Contraportada' } as Record<'front' | 'spine' | 'back', string>,
+    /** La pestaña con la tapa por dentro y su guarda (T372). */
+    inside: 'Interior',
+    insideA11y: 'El interior de la tapa con la guarda pegada',
+    changeEndpapers: 'Cambiar guardas',
     view: 'Ver',
     create: 'Crear Journal',
     save: 'Guardar cambios',

@@ -5,7 +5,7 @@ import { FlatList, Pressable, StyleSheet, useWindowDimensions, View } from 'reac
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { CanvasPreview, type FuentesDeMiniatura } from '@/components/library/canvas-preview';
-import { type CaraDeJournal, JournalCover } from '@/components/library/journal-cover';
+import { type CaraDeJournal, InteriorDeTapa, JournalCover } from '@/components/library/journal-cover';
 import { NewCanvasSheet } from '@/components/library/new-canvas-sheet';
 import { ActionRow, AppText, Button, ErrorState, IconButton, LoadingState, Segmented, Sheet } from '@/components/ui';
 import { IconSize, IconStroke, MaxContentWidth, Spacing } from '@/constants/theme';
@@ -49,7 +49,8 @@ export default function JournalScreen() {
   const borrar = useRemoveCanvas();
   const confirmar = useConfirm();
   const avisar = useSnackbar();
-  const [cara, setCara] = useState<CaraDeJournal>('front');
+  // Las tres caras y, en "Interior", la tapa por dentro con su guarda (T372).
+  const [cara, setCara] = useState<CaraDeJournal | 'inside'>('front');
   const [creando, setCreando] = useState(false);
   const [menuDe, setMenuDe] = useState<Pagina | null>(null);
   const decoracion = useDecoracionDeJournal(id);
@@ -110,7 +111,11 @@ export default function JournalScreen() {
         </AppText>
       </View>
       <View style={[styles.vista, { height: alto + Spacing.xl }]}>
-        {cara === 'spine' ? (
+        {cara === 'inside' ? (
+          <View accessible accessibilityRole="image" accessibilityLabel={j.insideA11y}>
+            <InteriorDeTapa portada={portada} ancho={ancho} />
+          </View>
+        ) : cara === 'spine' ? (
           // Con la proporción del lomo en el librero, para que lo decorado se vea igual en los dos (RF-JC5).
           <JournalCover
             portada={portada}
@@ -132,14 +137,22 @@ export default function JournalScreen() {
       </View>
       <Segmented
         label={j.view}
-        options={(['front', 'spine', 'back'] as const).map((v) => ({ value: v, label: j.faces[v] }))}
+        options={[...(['front', 'spine', 'back'] as const).map((v) => ({ value: v, label: j.faces[v] })), { value: 'inside' as const, label: j.inside }]}
         value={cara}
         onChange={setCara}
         fullWidth
       />
       <View style={styles.acciones}>
-        {/* El espiral no tiene lomo que decorar: su borde es el espiral (RF-JC4). */}
-        {cara === 'spine' && portada.binding === 'spiral' ? null : (
+        {/* El espiral no tiene lomo que decorar: su borde es el espiral (RF-JC4). El interior se cambia en sus guardas. */}
+        {cara === 'inside' ? (
+          <View style={styles.flex}>
+            <Button
+              title={j.changeEndpapers}
+              icon={icono(Brush, theme.onInk)}
+              onPress={() => router.push({ pathname: '/(app)/journal/edit', params: { id, seccion: 'guardas' } })}
+            />
+          </View>
+        ) : cara === 'spine' && portada.binding === 'spiral' ? null : (
           <View style={styles.flex}>
             <Button
               title={j.decorate[cara]}

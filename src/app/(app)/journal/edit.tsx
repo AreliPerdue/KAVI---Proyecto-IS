@@ -1,7 +1,7 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Minus, Plus, X } from 'lucide-react-native';
-import { useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { useRef, useState } from 'react';
+import { type LayoutChangeEvent, Pressable, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ColorPickerSheet } from '@/components/library/color-picker-sheet';
@@ -25,7 +25,15 @@ type ColorDe = 'material' | 'accent' | 'edges' | 'back' | 'endpaper';
  * llega en J2). Con `?id=` edita uno que ya existe.
  */
 export default function JournalEditScreen() {
-  const { id } = useLocalSearchParams<{ id?: string }>();
+  // `seccion=guardas`: desde la pestaña Interior del Journal (T372), abre ya en el paso de las guardas.
+  const { id, seccion } = useLocalSearchParams<{ id?: string; seccion?: string }>();
+  const desplazable = useRef<ScrollView>(null);
+  const yaBajo = useRef(false);
+  const irAGuardas = (e: LayoutChangeEvent) => {
+    if (seccion !== 'guardas' || yaBajo.current) return;
+    yaBajo.current = true;
+    desplazable.current?.scrollTo({ y: Math.max(0, e.nativeEvent.layout.y - Spacing.md), animated: false });
+  };
   const theme = useTheme();
   const tx = useT();
   const j = tx.library.journal;
@@ -105,7 +113,7 @@ export default function JournalEditScreen() {
         </AppText>
         <View style={styles.hueco} />
       </View>
-      <ScrollView contentContainerStyle={[styles.contenido, { paddingBottom: insets.bottom + Spacing.xl }]} keyboardShouldPersistTaps="handled">
+      <ScrollView ref={desplazable} contentContainerStyle={[styles.contenido, { paddingBottom: insets.bottom + Spacing.xl }]} keyboardShouldPersistTaps="handled">
         {/* La vista previa: el cuaderno, que se gira para ver su portada, su lomo o su contraportada. */}
         <View style={[styles.vista, { height: altoPortada + Spacing.xl }]}>
           {cara === 'spine' ? (
@@ -207,7 +215,7 @@ export default function JournalEditScreen() {
         </Seccion>
 
         {/* Las guardas (T367): el interior de las tapas, que se ve al abrirlo. */}
-        <Seccion titulo={j.steps.endpaper}>
+        <Seccion titulo={j.steps.endpaper} onLayout={irAGuardas}>
           <AppText variant="body" color="textSecondary">
             {j.endpaperHint}
           </AppText>
@@ -275,9 +283,9 @@ export default function JournalEditScreen() {
   );
 }
 
-function Seccion({ titulo, children }: { titulo: string; children: React.ReactNode }) {
+function Seccion({ titulo, children, onLayout }: { titulo: string; children: React.ReactNode; onLayout?: (e: LayoutChangeEvent) => void }) {
   return (
-    <View style={styles.seccion}>
+    <View style={styles.seccion} onLayout={onLayout}>
       <AppText variant="heading">{titulo}</AppText>
       {children}
     </View>
