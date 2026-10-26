@@ -100,6 +100,9 @@ Es grande a propósito, y por eso se construye **por capas** (§8): primero un n
     el tope de 500 MB) y una portada, como mucho 5 MB.
   - El archivo se descarga y se guarda en el dispositivo para leer sin conexión.
   - En el modo demo los archivos siguen en memoria.
+- **Una pieza que no se puede dibujar no se lleva a las demás (T373, 26 oct 2026):** el motor dibuja cada pieza
+  (anotación, lo pegado, lo de un lienzo o un Journal) por su cuenta; si una falla, deja un hueco invisible en su
+  lugar y el aviso en la consola, y el resto de la hoja se ve. Antes, una sola dejaba la hoja entera en blanco.
 - **Las anotaciones se guardan por posición estable:** en PDF, página y coordenadas relativas (0–1); en
   EPUB, su CFI. Así sobreviven a cambiar el tamaño de letra o la pantalla.
 - **Formatos de oficina** (Word, PowerPoint, Excel y sus equivalentes de Apple) no se pueden pintar fiel en

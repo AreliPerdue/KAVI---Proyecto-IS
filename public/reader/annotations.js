@@ -27,6 +27,7 @@
 import { pintarTrazos } from './ink.js';
 import { fuenteDeAsset, MODULOS, pintarAsset, pintarModulo } from './modules.js';
 import { pellizcando as pellizcandoAhora } from './zoom.js';
+import { conRespaldo } from './safe.js';
 
 /** El ancho de un post-it nuevo, relativo a la página (igual que `ANCHO_DE_POSTIT` en la app). */
 const ANCHO = 0.24;
@@ -230,7 +231,23 @@ export function crearCapa(ctx, enviar) {
   const anchoEnEpub = (a, area) => (a.kind === 'ink' ? a.locator.w * area.width : anchoEpub(a.locator.w, area));
   const proporcionDeAlgo = (a) => (a.kind === 'ink' ? proporcionDeDibujo(a) : proporcionDe(a));
   /** Pinta algo de lo de encima: un dibujo o algo pegado. */
-  const deEncima = (a, opciones) => (a.kind === 'ink' ? dibujo(a, opciones) : pegado(a, opciones));
+  /**
+   * Cada pieza se dibuja por su cuenta (T373): si una falla (un dato raro, una versión vieja de la pieza), queda un hueco
+   * invisible en su lugar y el aviso en la consola, y las demás de la hoja se ven igual. Antes, una sola dejaba la hoja
+   * entera sin nada.
+   */
+  const deEncima = (a, opciones) =>
+    conRespaldo(
+      () => (a.kind === 'ink' ? dibujo(a, opciones) : pegado(a, opciones)),
+      () => {
+        const hueco = document.createElement('div');
+        hueco.className = 'anotacion rota';
+        if (a?.id) hueco.dataset.id = a.id;
+        Object.assign(hueco.style, { position: 'absolute', width: '0', height: '0', pointerEvents: 'none' });
+        return hueco;
+      },
+      (e) => console.error('[KAVI] no se pudo dibujar una pieza', a?.kind, a?.id, e),
+    );
   let provisionales = 0;
   const separadores = () => lista.filter((a) => a.kind === 'bookmark');
   const colorDe = (a) => (/^#[0-9a-fA-F]{6}$/.test(a.content?.color ?? '') ? a.content.color : '#F1D35D');

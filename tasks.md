@@ -1340,6 +1340,10 @@ Reemplazan L5 (13e). Un recorte es una página 1 : √2 del visor de PDF (decisi
 - [x] T372 Pestaña Interior en la pantalla del Journal: la tapa por dentro con su guarda y "Cambiar guardas", que abre
   Editar Journal en el paso 4. (13i; pedido de Areli del 26 oct 2026) Dep: T370
   **Hecho (26 oct 2026):** `InteriorDeTapa` en `journal/[id].tsx` y `seccion=guardas` en `journal/edit.tsx`.
+- [x] T373 Una pieza que no se puede dibujar no deja la hoja en blanco: el motor la salta y dibuja las demás.
+  (spec 13 §5; pedido de Areli del 26 oct 2026) Dep: T364
+  **Hecho (26 oct 2026):** `conRespaldo` en `public/reader/safe.js` y `deEncima` lo usa (hueco invisible y aviso en la
+  consola).
 - [x] T349b C6 · Más módulos (mood, canción, fecha/lugar, timeline, checklist…) y plantillas (Moodboard, Reading
   Stats, Reading Awards, Reading Eras, Character Analysis…). (RF-CC14, RF-CC21) Dep: T349
   **Hecho (22 oct 2026):** módulos `checklist`, `mood`, `song`, `date`, `timeline` (modelo, motor, exportación,

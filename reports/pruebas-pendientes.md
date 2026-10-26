@@ -990,3 +990,7 @@ doblez).
 Automatizado: `journal.test.tsx` (la pestaña muestra el interior y el botón abre editar en las guardas). Visto en el
 demo web.
 - [ ] (manual, teléfono) Que "Cambiar guardas" baje hasta el paso 4 también en la app.
+
+## Una pieza rota no deja la hoja en blanco (T373)
+Automatizado: `engine-safe.test.ts` (si una truena, avisa y las demás siguen). En el demo web, forzando que una forma
+falle: queda su hueco y la cita de al lado se ve, con el aviso en la consola.
