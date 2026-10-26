@@ -769,7 +769,7 @@ export const library = {
       smaller: 'Letra más chica',
       // T375: la letra de un texto.
       font: 'Letra',
-      fonts: { sans: 'Normal', serif: 'Serifa', hand: 'Manuscrita' } as Record<'sans' | 'serif' | 'hand', string>,
+      fonts: { sans: 'Normal', serif: 'Serifa', hand: 'Manuscrita', brand: 'KAVI', slogan: 'Fina' } as Record<'sans' | 'serif' | 'hand' | 'brand' | 'slogan', string>,
       bigger: 'Letra más grande',
       color: 'Color',
       opacity: 'Opacidad',

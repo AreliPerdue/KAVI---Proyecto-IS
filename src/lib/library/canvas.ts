@@ -87,10 +87,10 @@ export function colorDeTratamiento(t: Exclude<Tratamiento, 'printed'>, papel: st
  * inglés) o de abajo arriba (como en español); o las letras apiladas una sobre otra. La caja se queda derecha.
  */
 /**
- * La letra de un texto del lienzo (T375): la del sistema, serifa (Literata) o manuscrita (Patrick Hand), las dos OFL
- * que ya trae el motor para leer. Sin ella, la del sistema.
+ * La letra de un texto del lienzo (T375, T377): la del sistema, serifa (Literata), manuscrita (Patrick Hand), la del logo
+ * de KAVI (Moirai One) o la de su eslogan (Poiret One), todas OFL. Sin ella, la del sistema.
  */
-export const LETRAS_DE_LIENZO = ['sans', 'serif', 'hand'] as const;
+export const LETRAS_DE_LIENZO = ['sans', 'serif', 'hand', 'brand', 'slogan'] as const;
 export type LetraDeLienzo = (typeof LETRAS_DE_LIENZO)[number];
 
 export const SENTIDOS = ['horizontal', 'down', 'up', 'stacked'] as const;
@@ -236,7 +236,7 @@ export function elementoValido(raw: unknown, paginas = MAX_PAGINAS): ElementoDeL
       ...(tipo === 'textbox' && SENTIDOS.includes(estilo.direction as SentidoDeTexto) && estilo.direction !== 'horizontal'
         ? { direction: estilo.direction as Exclude<SentidoDeTexto, 'horizontal'> }
         : {}),
-      ...(tipo === 'textbox' && (estilo.font === 'serif' || estilo.font === 'hand') ? { font: estilo.font } : {}),
+      ...(tipo === 'textbox' && LETRAS_DE_LIENZO.includes(estilo.font as LetraDeLienzo) && estilo.font !== 'sans' ? { font: estilo.font as Exclude<LetraDeLienzo, 'sans'> } : {}),
       ...(numero(estilo.opacity) && estilo.opacity < 1 ? { opacity: entre(estilo.opacity, 0.1, 1) } : {}),
       ...(bordeValido(estilo.border) ? { border: bordeValido(estilo.border) as { width: number; color: string } } : {}),
       ...(estilo.shadow === true ? { shadow: true } : {}),

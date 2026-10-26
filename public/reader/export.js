@@ -413,7 +413,7 @@ const MODULOS_DE_EXPORTACION = {
 
   book(ctx, c, w, h, imgs) {
     const u = w / 100;
-    const color = esColor(c.coverColor) ? c.coverColor : '#8C8C8C';
+    const color = esColor(c.coverColor) ? c.coverColor : '#DCD3C8';
     ctx.save();
     ctx.shadowColor = 'rgba(0,0,0,0.25)';
     ctx.shadowOffsetY = 0.8 * u;
@@ -548,7 +548,7 @@ export async function exportarPagina({ items, pagina = 1, ancho = 1600, proporci
       }
     } else if (a.kind === 'textbox') {
       const tamano = 0.021 * W * (Number.isFinite(c.size) ? c.size : 1);
-      ctx.font = `${tamano}px ${c.font === 'serif' || c.font === 'hand' ? familiaDeLienzo(c.font) : LETRA}`;
+      ctx.font = `${tamano}px ${c.font ? familiaDeLienzo(c.font) : LETRA}`;
       ctx.fillStyle = esColor(c.color) ? c.color : '#1A1A1A';
       ctx.textBaseline = 'top';
       const [px, py] = [0.35 * tamano, 0.25 * tamano];

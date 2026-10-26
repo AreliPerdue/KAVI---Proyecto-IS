@@ -1258,6 +1258,10 @@ Reemplazan L5 (13e). Un recorte es una página 1 : √2 del visor de PDF (decisi
   oct 2026) Dep: T349b
   **Hecho (22 oct 2026):** `constants/canvas-templates-more.ts` y `canvas-template-kit.ts`, `conColores`/`coloresDe`,
   `PageColorRows`, paso de personalizar en `NewCanvasSheet` y botón en el editor.
+- [x] T377 "Yo como lector" con estilo KAVI (Zine, Bloques y Noche, con los colores de las dimensiones) y las letras
+  de la marca en el lienzo (KAVI y Fina). (13h; Areli eligió los tres estilos el 26 oct 2026) Dep: T376
+  **Hecho (26 oct 2026):** `kit`, `ESTILO_DE_LECTOR`, `medidaDeTitulo` y `vertical` (encoge lo de abajo) en
+  `constants/canvas-templates-reader.ts`; `@fontsource/moirai-one` y `poiret-one` (`brand-400`, `slogan-400`).
 - [x] T376 "Yo como lector" como las de Pinterest: paleta suave, papeles encimados con cintas, mancha de fondo, título
   manuscrito y doodles; las seis del Journal vestidas igual. (13h; pedido de Areli del 26 oct 2026) Dep: T374, T375
   **Hecho (26 oct 2026):** `PALETAS_DE_LECTOR`, `piezasCon`, `tituloManuscrito` y `vestir` en

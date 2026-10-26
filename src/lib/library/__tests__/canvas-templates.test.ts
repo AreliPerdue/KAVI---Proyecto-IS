@@ -1,6 +1,6 @@
 /** Plantillas del lienzo creativo (13h, RF-CC18 – RF-CC21; T344): usarlas copia; guardarlas quita lo personal. */
 import { plantillasDeJournal, plantillasDeKavi } from '@/constants/canvas-templates';
-import { DEL_JOURNAL_A_LECTOR, plantillasDeLector } from '@/constants/canvas-templates-reader';
+import { DEL_JOURNAL_A_LECTOR, ESTILO_DE_LECTOR, plantillasDeLector } from '@/constants/canvas-templates-reader';
 import { coloresDe, conColores } from '@/lib/library/canvas';
 import { en } from '@/i18n/en';
 import { es } from '@/i18n/es';
@@ -212,22 +212,33 @@ describe('yo como lector (T374)', () => {
     }
   });
 
-  it('como las de Pinterest (T376): su papel de color, el título en manuscrita y los textos con su letra y su tinta', () => {
-    for (const p of plantillasDeLector(es.library.canvas.templates, 2026)) {
-      expect(p.doc.background).toMatch(/^#[0-9A-F]{6}$/);
+  it('con estilo KAVI (T377): zine y bloques en papel claro, noche en tinta; el título con la letra del logo', () => {
+    const lista = plantillasDeLector(es.library.canvas.templates, 2026);
+    for (const p of lista) {
+      const estilo = ESTILO_DE_LECTOR[p.id];
+      expect(estilo).toBeDefined();
+      expect(p.doc.background).toBe(estilo.tipo === 'noche' ? '#131313' : '#F2F2F2');
       const textos = p.doc.elements.filter((e) => e.type === 'textbox');
       const titulo = textos.reduce((m, e) => (e.y < m.y ? e : m));
-      expect(titulo.style.font).toBe('hand');
-      expect(titulo.style.size).toBeGreaterThanOrEqual(2.6);
-      for (const e of textos) expect(e.style.color).toMatch(/^#[0-9A-F]{6}$/);
+      expect(titulo.style.font).toBe('brand');
+      // Las letras se ven sobre su fondo: claras de noche, tinta de día.
+      expect(titulo.style.color).toBe(estilo.tipo === 'noche' ? '#F2F2F2' : '#131313');
     }
-    // Las trece nuevas traen su mancha de fondo (el blob de los Nobi) y papeles teñidos.
-    const nuevas = plantillasDeLector(es.library.canvas.templates, 2026).filter((p) => !(DEL_JOURNAL_A_LECTOR as readonly string[]).includes(p.id));
-    expect(nuevas).toHaveLength(13);
-    for (const p of nuevas) {
-      expect(p.doc.elements.some((e) => e.type === 'shape' && e.content.shape === 'blob')).toBe(true);
-      expect(p.doc.elements.some((e) => e.type === 'asset' && e.style.color)).toBe(true);
-    }
+    // Los tres estilos están en la fila y cada uno con más de una plantilla.
+    const porEstilo = lista.reduce<Record<string, number>>((m, p) => ({ ...m, [ESTILO_DE_LECTOR[p.id].tipo]: (m[ESTILO_DE_LECTOR[p.id].tipo] ?? 0) + 1 }), {});
+    expect(Object.keys(porEstilo).sort()).toEqual(['bloques', 'noche', 'zine']);
+    for (const n of Object.values(porEstilo)) expect(n).toBeGreaterThanOrEqual(5);
+    // Las trece nuevas traen su mancha (el blob de los Nobi).
+    for (const p of lista.filter((x) => !(DEL_JOURNAL_A_LECTOR as readonly string[]).includes(x.id))) expect(p.doc.elements.some((e) => e.type === 'shape' && e.content.shape === 'blob')).toBe(true);
+  });
+
+  it('en bloques, cada tarjeta lleva su sombra dura detrás (un rectángulo de tinta desplazado)', () => {
+    const favoritos = plantillasDeLector(es.library.canvas.templates, 2026).find((p) => p.id === 'kavi/favorite-things');
+    const rects = favoritos?.doc.elements.filter((e) => e.type === 'shape' && e.content.shape === 'rect') ?? [];
+    const sombras = rects.filter((e) => e.style.color === '#131313');
+    const tarjetas = rects.filter((e) => e.style.border);
+    expect(sombras.length).toBeGreaterThanOrEqual(8);
+    expect(tarjetas.length).toBeGreaterThanOrEqual(8);
   });
 
   it('se siguen personalizando: "Colores de la página" cambia su papel y su tinta', () => {

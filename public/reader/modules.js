@@ -186,7 +186,7 @@ function libro(el, a) {
   const c = a.content ?? {};
   el.setAttribute('role', 'img');
   el.setAttribute('aria-label', c.title ? `Libro: ${c.title}` : 'Libro');
-  const color = esColor(c.coverColor) ? c.coverColor : '#8C8C8C';
+  const color = esColor(c.coverColor) ? c.coverColor : '#DCD3C8';
   const portada = caja({ position: 'absolute', inset: '0', background: color, overflow: 'hidden', borderRadius: '1.5cqw', boxShadow: '0 0.8cqw 2.4cqw rgb(0 0 0 / 0.25)' });
   if (c.src) {
     const img = document.createElement('img');

@@ -732,7 +732,7 @@ export const library: Dictionary['library'] = {
       size: 'Text size',
       smaller: 'Smaller text',
       font: 'Font',
-      fonts: { sans: 'Regular', serif: 'Serif', hand: 'Handwritten' },
+      fonts: { sans: 'Regular', serif: 'Serif', hand: 'Handwritten', brand: 'KAVI', slogan: 'Thin' },
       bigger: 'Bigger text',
       open: 'Style',
       color: 'Color',

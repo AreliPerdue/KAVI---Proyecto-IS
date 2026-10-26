@@ -200,10 +200,16 @@ importers:
       '@fontsource/literata':
         specifier: 5.3.0
         version: 5.3.0
+      '@fontsource/moirai-one':
+        specifier: 5.3.0
+        version: 5.3.0
       '@fontsource/opendyslexic':
         specifier: 5.3.0
         version: 5.3.0
       '@fontsource/patrick-hand':
+        specifier: 5.3.0
+        version: 5.3.0
+      '@fontsource/poiret-one':
         specifier: 5.3.0
         version: 5.3.0
       '@testing-library/react-native':
@@ -1120,11 +1126,17 @@ packages:
   '@fontsource/literata@5.3.0':
     resolution: {integrity: sha512-9JGMT5+YfBK49thoMq9ASaMRJErHT4V4QuMhAEwKHRLreOsIMP2xP6ZRLhPJ0e6YlET+kjWTJuN7LAxt9/gWGQ==}
 
+  '@fontsource/moirai-one@5.3.0':
+    resolution: {integrity: sha512-0Xd9UkVMUecSaWw0ze76W8jASmnQTqMALxzsp5rwRBjo4K75X7eHcQIi6nAMZ17hLTmouMpoPRRY9G72QcJySA==}
+
   '@fontsource/opendyslexic@5.3.0':
     resolution: {integrity: sha512-BVYIW/ghc1U2iAghhYTN+GFWiZ3lnCy8Jf2KkZC23aHQHBNcMqKT718zckfqVxRx4qsXJmIMPWvczirRuhmtsg==}
 
   '@fontsource/patrick-hand@5.3.0':
     resolution: {integrity: sha512-V8C38IlIFfdWg0Xtri3F7sLCVpm069rUwn6w4n+oyn38gt7H4arOJmuReg3tAw1Q6jHqZp89wTnAAJagq4Atxw==}
+
+  '@fontsource/poiret-one@5.3.0':
+    resolution: {integrity: sha512-nCAUIB6f5805lUG7t0ES0W0YhJHcKa2EPlafb7/0AU1W/V4tQvmoSbwNNUnt6nVIagvyStxLG5nzqMptQ3FCgQ==}
 
   '@hookform/resolvers@5.9.1':
     resolution: {integrity: sha512-7b7vsbraJxKgjVSA1Nur9tLwj539WGJUBLA7QNvXnFoT2pM5Z7G+6rlukk4B2/QrTZy6huRtH6wKeESPKuIr6w==}
@@ -6915,9 +6927,13 @@ snapshots:
 
   '@fontsource/literata@5.3.0': {}
 
+  '@fontsource/moirai-one@5.3.0': {}
+
   '@fontsource/opendyslexic@5.3.0': {}
 
   '@fontsource/patrick-hand@5.3.0': {}
+
+  '@fontsource/poiret-one@5.3.0': {}
 
   '@hookform/resolvers@5.9.1(@sinclair/typebox@0.34.52)(react-hook-form@7.87.0(react@19.2.3))(zod@4.5.4)':
     dependencies:

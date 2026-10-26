@@ -321,9 +321,12 @@ describe('texto en las tapas: sentido y tamaño (T363)', () => {
         { ...texto(), z: 1, style: { font: 'hand' } },
         { ...texto({ id: 't2' }), z: 2, style: { font: 'comic' } },
         { ...el('f'), z: 3, style: { font: 'serif' } },
+        { ...texto({ id: 't3' }), z: 4, style: { font: 'brand' } },
+        { ...texto({ id: 't4' }), z: 5, style: { font: 'slogan' } },
       ],
     });
-    expect(doc.elements.map((e) => e.style.font)).toEqual(['hand', undefined, undefined]);
+    // Las de la marca (T377) también: la del logo y la del eslogan.
+    expect(doc.elements.map((e) => e.style.font)).toEqual(['hand', undefined, undefined, 'brand', 'slogan']);
     expect(aMotor(doc)[0].content).toMatchObject({ font: 'hand' });
     expect(aMotor(doc)[1].content).not.toHaveProperty('font');
   });

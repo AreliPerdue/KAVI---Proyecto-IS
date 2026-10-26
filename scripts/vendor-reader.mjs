@@ -56,6 +56,9 @@ const LETRAS = {
   'dyslexic-400': ['@fontsource/opendyslexic', 'opendyslexic-latin-400-normal.woff2'],
   'dyslexic-700': ['@fontsource/opendyslexic', 'opendyslexic-latin-700-normal.woff2'],
   'hand-400': ['@fontsource/patrick-hand', 'patrick-hand-latin-400-normal.woff2'],
+  // Las de la marca, para los títulos del lienzo (T377): la del logo y la del eslogan.
+  'brand-400': ['@fontsource/moirai-one', 'moirai-one-latin-400-normal.woff2'],
+  'slogan-400': ['@fontsource/poiret-one', 'poiret-one-latin-400-normal.woff2'],
 };
 mkdirSync(join(destino, 'fonts'), { recursive: true });
 for (const [nombre, [paquete, archivo]] of Object.entries(LETRAS)) {

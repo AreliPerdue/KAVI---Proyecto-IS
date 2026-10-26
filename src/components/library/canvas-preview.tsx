@@ -4,7 +4,7 @@ import { type ImageSourcePropType, Platform, StyleSheet, Text, View } from 'reac
 import Svg, { ClipPath, Defs, Path, Rect } from 'react-native-svg';
 
 import { assetPorId } from '@/constants/canvas-assets';
-import { Radius } from '@/constants/theme';
+import { BrandFonts, Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { colorDeTratamiento, type DatoEscrito, type DocumentoDeLienzo, fechaLegible, LIBRO_POR_ELEGIR, MUESTRA_SIN_COLOR, type ElementoDeLienzo, type LibroEnLienzo, type OrientacionDeLienzo, RAIZ_DE_DOS } from '@/lib/library/canvas';
 import { useLanguage } from '@/i18n';
@@ -169,6 +169,9 @@ const SERIFA = Platform.select({ ios: 'Georgia', android: 'serif', default: 'Geo
 const LETRA_DE_TEXTO = {
   serif: Platform.select({ ios: 'Georgia', android: 'serif', default: '"KAVI Serif", Georgia, serif' }),
   hand: Platform.select({ ios: 'Noteworthy', android: 'casual', default: '"KAVI Manuscrita", "Patrick Hand", cursive' }),
+  // Las de la marca (T377): las mismas que el logo y el eslogan, ya cargadas en la app.
+  brand: BrandFonts.wordmark,
+  slogan: BrandFonts.slogan,
 } as const;
 const sobre = (fondo: string) => (luminance(fondo) < 0.3 ? PAPEL_DE_LIENZO : TINTA_DE_TEXTO);
 

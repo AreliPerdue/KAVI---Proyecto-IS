@@ -16,6 +16,9 @@ export const LETRAS = {
   sans: { familia: 'KAVI Sans', archivos: [['sans-400', 400], ['sans-700', 700]], respaldo: 'system-ui, -apple-system, Roboto, sans-serif' },
   dyslexic: { familia: 'KAVI Dislexia', archivos: [['dyslexic-400', 400], ['dyslexic-700', 700]], respaldo: 'sans-serif' },
   hand: { familia: 'KAVI Manuscrita', archivos: [['hand-400', 400]], respaldo: 'cursive' },
+  // Solo para los textos del lienzo (T377): la letra del logo y la del eslogan de KAVI. El lector no las ofrece.
+  brand: { familia: 'KAVI Marca', archivos: [['brand-400', 400]], respaldo: 'system-ui, sans-serif' },
+  slogan: { familia: 'KAVI Eslogan', archivos: [['slogan-400', 400]], respaldo: 'system-ui, sans-serif' },
 };
 
 export const TAMANO_MIN = 70;

@@ -75,7 +75,7 @@ export type AnotacionEnMotor = {
     /** Sentido de un cuadro de texto del lienzo (T363); sin él, horizontal. */
     direction?: 'down' | 'up' | 'stacked';
     /** Letra de un texto del lienzo (T375): serifa o manuscrita; sin ella, la del sistema. */
-    font?: 'serif' | 'hand';
+    font?: 'serif' | 'hand' | 'brand' | 'slogan';
     /** Acabado en una tapa del Journal (T348): el motor le pone su luz y su sombra. */
     treatment?: 'debossed' | 'embossed' | 'cutout';
     /** De otro miembro del club (13f, T307): su inicial y su color, para su marca en la página. */

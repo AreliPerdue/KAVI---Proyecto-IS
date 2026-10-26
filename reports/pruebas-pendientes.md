@@ -1009,3 +1009,10 @@ En el demo web: las 19 miniaturas y "Mi personalidad lectora" ya creada, con la 
 - [ ] (manual, Areli) ¿Ya tienen el look que buscabas? ¿Alguna paleta o pieza que cambiarías?
 - [ ] (manual, web) Exportar como imagen una página con título manuscrito: que salga con la misma letra.
 - [ ] (manual, teléfono) En las miniaturas, la manuscrita usa Noteworthy (iOS) o casual (Android).
+
+## "Yo como lector" con estilo KAVI y letras de la marca (T377)
+Automatizado: `canvas-templates.test.ts` (estilo y fondo de cada una, título con la letra del logo, los tres estilos en
+la fila, sombras duras en bloques) y `canvas.test.ts` (las letras KAVI y Fina). En el demo web: las 19 miniaturas y una
+de cada estilo en grande.
+- [ ] (manual, Areli) ¿Así sí? ¿Algún estilo o color de dimensión que cambiarías en alguna?
+- [ ] (manual, teléfono) Los títulos con la letra del logo en las miniaturas (la app ya la trae).

@@ -267,6 +267,20 @@ llevar texto, pero nunca debe sentirse como un formulario ni como una nota grand
     título en manuscrita del tamaño que quepa en un renglón, etiquetas con serifa y doodles en tinta. Las seis del
     Journal se visten igual en esta fila. Siguen personalizables con "Colores de la página".
   - Un libro por elegir se ve en un tono claro y cálido (`#DCD3C8`), no en un bloque gris (en todas las plantillas).
+  - **Con estilo KAVI (T377, 26 oct 2026; Areli las vio "muy genéricas" y eligió los tres estilos de una comparación;
+    reemplaza la paleta Pinterest de T376):** cada una tiene uno de tres estilos y el color de una dimensión:
+    - **Zine:** papel `#F2F2F2` y tinta, título con la letra del logo, barra del color y subtítulo con la del eslogan,
+      tarjetas blancas con borde negro, cintas negras y una mancha sólida.
+    - **Bloques:** el título en un bloque de color con borde y sombra dura; tarjetas de los colores claros de las
+      dimensiones (y amarillo) con borde grueso y sombra dura; manchas con borde, como un Nobi.
+    - **Noche:** fondo tinta y letras claras, "plan more. read more." con la del eslogan, halos de color y tarjetas
+      oscuras con contorno fino.
+    - El título se mide para caber en uno o dos renglones y lo de abajo se encoge lo justo para empezar debajo; las
+      manchas no van detrás del título.
+  - **Letras de la marca en el lienzo (T377):** a Normal, Serifa y Manuscrita se suman **KAVI** (Moirai One, la del
+    logo) y **Fina** (Poiret One, la del eslogan), OFL, en el motor (de `@fontsource`) y en las miniaturas (las de la
+    app). Es contenido de quien lo crea, no texto de interfaz: la regla de kavi-design de usarlas solo en el wordmark
+    sigue para la app.
 - **Hecho (C6, segunda parte, T349b, 22 oct 2026; Areli eligió todo):**
   - **Módulos nuevos** (RF-CC14, "después"): **checklist** (título y renglones con casilla; los marcados se tachan),
     **mood** (ocho caritas dibujadas —no emojis— y una palabra), **canción** (un reproductor dibujado, sin sonido, con
