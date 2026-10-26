@@ -994,3 +994,10 @@ demo web.
 ## Una pieza rota no deja la hoja en blanco (T373)
 Automatizado: `engine-safe.test.ts` (si una truena, avisa y las demás siguen). En el demo web, forzando que una forma
 falle: queda su hueco y la cita de al lado se ve, con el aviso en la consola.
+
+## Yo como lector (T374)
+Automatizado: `canvas-templates.test.ts` (las 19 en los dos idiomas, caben, en neutros, libros por elegir también en un
+recorte, y los datos del año en Hábitos). En el demo web: las 13 nuevas en la fila del Journal.
+- [ ] (manual, Areli) Repasar las 13 nuevas: ¿les falta o les sobra algo? ¿Algún texto que cambiarías?
+- [ ] (manual, web) En "Nuevo recorte" de un libro, que salga la fila "Yo como lector" y que sus libros queden por
+  elegir.

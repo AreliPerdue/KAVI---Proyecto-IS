@@ -7,6 +7,7 @@ import { ColorPickerSheet } from '@/components/library/color-picker-sheet';
 import { type ColoresElegidos, PageColorRows, type RolDeColor } from '@/components/library/page-colors';
 import { AppText, Button, IconButton, Segmented, Sheet } from '@/components/ui';
 import { plantillasDeJournal, plantillasDeKavi } from '@/constants/canvas-templates';
+import { DEL_JOURNAL_A_LECTOR, plantillasDeLector } from '@/constants/canvas-templates-reader';
 import { IconSize, IconStroke, PAPER, Radius, Spacing } from '@/constants/theme';
 import { useLibraryImageUrls } from '@/hooks/use-annotations';
 import { useDatosDeBiblioteca } from '@/hooks/use-canvas-sources';
@@ -61,9 +62,14 @@ export function NewCanvasSheet({
   // En las miniaturas, "este libro" se ve como el libro del recorte.
   const ruta = item && !journal ? rutaDePortada(item) : null;
   const urls = useLibraryImageUrls(ruta ? [ruta] : []);
-  const deKavi = journal ? plantillasDeJournal(t, new Date().getFullYear()).filter((p) => p.orientacion === orientacion) : plantillasDeKavi(t);
+  const anio = new Date().getFullYear();
+  // "Yo como lector" (T374) va en su propia fila, en recortes y en el Journal; en el Journal sale de la de KAVI.
+  const deKavi = journal
+    ? plantillasDeJournal(t, anio).filter((p) => p.orientacion === orientacion && !(DEL_JOURNAL_A_LECTOR as readonly string[]).includes(p.id))
+    : plantillasDeKavi(t);
+  const deLector = plantillasDeLector(t, anio).filter((p) => !journal || p.orientacion === orientacion);
   // Los datos de la biblioteca de las plantillas (Mi año lector, T349), con los de verdad.
-  const datos = useDatosDeBiblioteca(deKavi.flatMap((p) => p.doc.elements));
+  const datos = useDatosDeBiblioteca([...deKavi, ...deLector].flatMap((p) => p.doc.elements));
   const fuentes: FuentesDeMiniatura = {
     datos,
     imagenes: SIN_IMAGENES,
@@ -198,6 +204,17 @@ export function NewCanvasSheet({
                 </AppText>
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.fila}>
                   {deKavi.map((p) => tarjeta(p, false))}
+                </ScrollView>
+              </>
+            ) : null}
+
+            {deLector.length ? (
+              <>
+                <AppText variant="label" color="textSecondary">
+                  {t.reader}
+                </AppText>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.fila}>
+                  {deLector.map((p) => tarjeta(p, false))}
                 </ScrollView>
               </>
             ) : null}

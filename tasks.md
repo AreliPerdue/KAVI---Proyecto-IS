@@ -1258,6 +1258,10 @@ Reemplazan L5 (13e). Un recorte es una página 1 : √2 del visor de PDF (decisi
   oct 2026) Dep: T349b
   **Hecho (22 oct 2026):** `constants/canvas-templates-more.ts` y `canvas-template-kit.ts`, `conColores`/`coloresDe`,
   `PageColorRows`, paso de personalizar en `NewCanvasSheet` y botón en el editor.
+- [x] T374 "Yo como lector": las 18 páginas sobre quien lee también en recortes (las 6 del Journal y 13 nuevas, con
+  research), en su propia fila. (13h RF-CC21; pedido de Areli del 26 oct 2026) Dep: T368
+  **Hecho (26 oct 2026):** `constants/canvas-templates-reader.ts` (`plantillasDeLector`, libros por elegir), la fila
+  en `NewCanvasSheet` y los textos en los dos idiomas.
 - [x] T343c C3 · Más packs de assets por la tienda en la nube, como los stickers (T337): `sticker_packs` con su tipo,
   descargar y ver sin red. (RF-CC17) Dep: T343b, T337
   **Hecho (22 oct 2026):** `kind` en `sticker_packs` (migraciones `20261022110000` y las de versión), tienda en

@@ -240,6 +240,22 @@ llevar texto, pero nunca debe sentirse como un formulario ni como una nota grand
     grande con sus **Colores de la página** —papel (el fondo), tinta (textos y módulos) y acento (papeles, cintas,
     doodles y formas)— antes de usarla. En el editor, "Colores de la página" recolorea una página ya hecha (en una
     tapa, sin papel: es el material). Las muestras de color, las fotos y los libros no cambian.
+- **Hecho (T374, 26 oct 2026, pedido de Areli: las 18 de "yo como lector" también para recortes):** una fila aparte,
+  **Yo como lector**, en "Nuevo recorte" y en "Nueva página" del Journal, con:
+  - Las seis que ya había en el Journal: Conoce a quien lee, Mis eras lectoras, Mi año lector, Mis números del año,
+    Premios lectores y Meta del año (en el Journal salen de la fila de KAVI para no repetirse).
+  - Trece nuevas, a partir de los journals lectores más comunes (Book Riot, Bibliolifestyle, Erin Condren y otros):
+    Mi personalidad lectora (cómo leo, en casillas; mood; si fuera un personaje; mi superpoder), Mis favoritos (ocho
+    cajitas: personaje, pareja, villano, escena, frase, portada, saga, mundo), Mis libros favoritos (top 5 con
+    corazones y por qué), Mis autores favoritos (cuatro polaroids y su mejor libro), Mis géneros favoritos (diez para
+    marcar, su color y el de confort), Mis hábitos de lectura (cuándo, cómo y con qué; horas y páginas del año en
+    vivo), Mis recuerdos lectores (timeline, polaroid y fecha), Mis metas lectoras (libros del año en vivo, seis metas
+    y la palabra del año), Mi estética lectora (fotos, paleta, tres palabras y la canción), Mi rincón de lectura (foto,
+    lo que nunca falta y lo que suena), Por qué leo (motivos, una cita y "un libro me salvó cuando…"), Libros que me
+    cambiaron (antes y después de tres libros) y Mi relación con la lectura (cómo me hace sentir, lo que disfruto, lo
+    que me cuesta, mi mejor experiencia y lo que quiero cambiar).
+  - Hablan de quien lee, no de un libro: sus libros son **por elegir** también en un recorte (no se vuelven "este
+    libro"). Como las demás, en neutros y personalizables.
 - **Hecho (C6, segunda parte, T349b, 22 oct 2026; Areli eligió todo):**
   - **Módulos nuevos** (RF-CC14, "después"): **checklist** (título y renglones con casilla; los marcados se tachan),
     **mood** (ocho caritas dibujadas —no emojis— y una palabra), **canción** (un reproductor dibujado, sin sonido, con

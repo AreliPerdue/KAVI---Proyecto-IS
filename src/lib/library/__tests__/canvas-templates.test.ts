@@ -1,5 +1,6 @@
 /** Plantillas del lienzo creativo (13h, RF-CC18 – RF-CC21; T344): usarlas copia; guardarlas quita lo personal. */
 import { plantillasDeJournal, plantillasDeKavi } from '@/constants/canvas-templates';
+import { DEL_JOURNAL_A_LECTOR, plantillasDeLector } from '@/constants/canvas-templates-reader';
 import { coloresDe, conColores } from '@/lib/library/canvas';
 import { en } from '@/i18n/en';
 import { es } from '@/i18n/es';
@@ -160,5 +161,77 @@ describe('más plantillas y sus colores (T368)', () => {
     expect(coloresDe(doc)).toEqual({ papel: '#FDF2E9', tinta: '#3A2A5C', acento: '#C9A227' });
     // Lo que no se da, no cambia.
     expect(conColores(p!.doc, {})).toEqual(p!.doc);
+  });
+});
+
+describe('yo como lector (T374)', () => {
+  const IDS = [
+    'kavi/get-to-know',
+    'kavi/reading-year',
+    'kavi/reading-stats',
+    'kavi/reading-awards',
+    'kavi/reading-eras',
+    'kavi/year-goal',
+    'kavi/reading-personality',
+    'kavi/favorite-things',
+    'kavi/favorite-books',
+    'kavi/favorite-authors',
+    'kavi/favorite-genres',
+    'kavi/reading-habits',
+    'kavi/reading-memories',
+    'kavi/reading-goals',
+    'kavi/reader-aesthetic',
+    'kavi/reading-space',
+    'kavi/why-i-read',
+    'kavi/books-that-changed-me',
+    'kavi/relationship-with-reading',
+  ];
+
+  it('las 18 de la lista de Areli (y Meta del año), en los dos idiomas, verticales y sin repetir', () => {
+    for (const idioma of [es, en]) {
+      const lista = plantillasDeLector(idioma.library.canvas.templates, 2026);
+      expect([...lista.map((p) => p.id)].sort()).toEqual([...IDS].sort());
+      for (const p of lista) {
+        expect(p.nombre).toBeTruthy();
+        expect(p.orientacion).toBe('portrait');
+        expect(p.doc.elements.length).toBeGreaterThan(4);
+      }
+    }
+    expect(plantillasDeLector(en.library.canvas.templates, 2026).find((p) => p.id === 'kavi/why-i-read')?.nombre).toBe('Why I Read');
+  });
+
+  it('caben en la página, en neutros, sin Nobi, y sus libros son por elegir (no "este libro", también en un recorte)', () => {
+    for (const p of plantillasDeLector(es.library.canvas.templates, 2026)) {
+      expect(p.doc.background).toBeUndefined();
+      for (const e of p.doc.elements) {
+        expect(e.style.color).toBeUndefined();
+        expect(e.type).not.toBe('sticker');
+        if (e.type === 'book') expect(e.content.itemId).toBeUndefined();
+        expect(e.x).toBeGreaterThanOrEqual(0);
+        expect(e.x + e.w).toBeLessThanOrEqual(1.01);
+        expect(e.y + (e.w * e.ar) / Math.SQRT2).toBeLessThanOrEqual(1.02);
+      }
+    }
+  });
+
+  it('usar una en un recorte no pone el libro del recorte en "Mis libros favoritos"', () => {
+    const favoritos = plantillasDeLector(es.library.canvas.templates, 2026).find((p) => p.id === 'kavi/favorite-books');
+    let i = 0;
+    const usado = usarPlantilla(favoritos?.doc ?? documentoValido({}), 'l1', () => `n${i++}`);
+    const libros = usado.elements.filter((e) => e.type === 'book');
+    expect(libros).toHaveLength(5);
+    for (const l of libros) expect(l.content.itemId).toBeUndefined();
+  });
+
+  it('las seis que ya estaban en el Journal salen de su fila de KAVI y viven aquí', () => {
+    expect(DEL_JOURNAL_A_LECTOR).toEqual(expect.arrayContaining(['kavi/get-to-know', 'kavi/reading-eras', 'kavi/year-goal']));
+    const deLector = plantillasDeLector(es.library.canvas.templates, 2026).map((p) => p.id);
+    for (const id of DEL_JOURNAL_A_LECTOR) expect(deLector).toContain(id);
+    // Hábitos y metas cuentan con los datos de la biblioteca de ese año (RF-CC22).
+    const habitos = plantillasDeLector(es.library.canvas.templates, 2026).find((p) => p.id === 'kavi/reading-habits');
+    expect(habitos?.doc.elements.filter((e) => e.type === 'stat').map((e) => [e.content.stat, e.content.year])).toEqual([
+      ['hoursRead', 2026],
+      ['pagesRead', 2026],
+    ]);
   });
 });
