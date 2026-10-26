@@ -1604,6 +1604,19 @@ describe('un Journal se lee como un libro (13i; T364)', () => {
     mockLienzos = [lienzo('p2', '2026-10-22T10:00:00Z'), lienzo('p1', '2026-10-21T10:00:00Z'), lienzo('tapa', '2026-10-20T10:00:00Z', { context: 'cover', face: 'front' })];
   });
 
+  it('el espiral o el hilo van al motor con su color; tapa dura no lleva nada (13i §8; T371)', async () => {
+    await render(<Lector />);
+    await responder({ type: 'opened', total: 6 });
+    expect(mockEnviados).toContainEqual({ type: 'binding', kind: null, color: '#B9B9B9', orientation: 'portrait' });
+  });
+
+  it('un Journal en espiral manda su espiral con el color del metal (T371)', async () => {
+    mockPieza = { ...journal, journal: { ...journal.journal, binding: 'spiral', accent: '#C9A227' } };
+    await render(<Lector />);
+    await responder({ type: 'opened', total: 6 });
+    expect(mockEnviados).toContainEqual({ type: 'binding', kind: 'spiral', color: '#C9A227', orientation: 'portrait' });
+  });
+
   it('abre con la portada, sus páginas y la contraportada, sin archivo y para leer (no para componer)', async () => {
     await render(<Lector />);
     expect(mockAbrirCopia).not.toHaveBeenCalled();

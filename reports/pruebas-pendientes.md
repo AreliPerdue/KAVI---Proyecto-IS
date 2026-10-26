@@ -978,3 +978,10 @@ vino por dentro con el papel crema pegado).
   arriba y abajo)?
 - [ ] (manual, web) En libro real, la guarda de la portada frente a la página 1 y la de la contraportada frente a la
   última, cada una con el papel hacia el lomo.
+
+## Espiral o hilo al hojear (T371)
+Automatizado: `reader.test.tsx` (tapa dura no manda nada; espiral con el color del metal). En el demo web: espiral en
+libro real (anillos cruzando el centro) y en scroll (la portada como cuaderno de espiral), y cosida (la costura en el
+doblez).
+- [ ] (manual, Areli) ¿Te gustan los anillos y la costura? ¿Más grandes, más juntos?
+- [ ] (manual, teléfono) Que se vea igual en la app (libro real y scroll).

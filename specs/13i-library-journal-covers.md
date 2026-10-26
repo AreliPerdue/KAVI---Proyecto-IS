@@ -104,8 +104,13 @@
     Journal y la vista previa de "Editar Journal". Cambiar material, color o encuadernación no lo toca (RF-JC1).
   - **Impreso** (RF-JC11) es como se ven hoy las piezas, a color encima; hundido, relieve y recortado son T348.
   - **El espiral no tiene lomo que decorar** (RF-JC4: su borde es el espiral): ahí no aparece "Decorar lomo".
-  - **Al hojear** abre con la portada y cierra con la contraportada, con su material y lo decorado. El espiral o el
-    hilo en el borde de las hojas al hojear queda pendiente (criterio de §8).
+  - **Al hojear** abre con la portada y cierra con la contraportada, con su material y lo decorado.
+  - **El espiral o el hilo al hojear (T371, 26 oct 2026):** cada hoja lleva su mitad de la encuadernación en el borde
+    del lomo: las impares a la izquierda, las pares a la derecha. En libro real las dos mitades se juntan en el centro:
+    el espiral forma anillos de metal (con su agujero en cada hoja, el alambre de frente con brillo y el de atrás más
+    tenue) y el hilo corre por el doblez como una sola costura. En scroll y de lado, cada hoja se ve como la de un
+    cuaderno (el espiral o las puntadas en su borde). El color es el del metal o el hilo (`accent`); tapa dura y blanda
+    no llevan nada. El motor lo recibe con el mensaje `binding`.
   - Las texturas se mudaron a `public/reader/lienzo/materiales/` para que la app y el motor usen las mismas (en el
     teléfono van empaquetadas con el motor, como los assets del lienzo).
 - **Hecho J3 (T348, 22 oct 2026):** en una tapa, lo elegido (texto, forma, papel o doodle) tiene **Acabado**:

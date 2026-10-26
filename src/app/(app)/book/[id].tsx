@@ -335,11 +335,15 @@ function Lector({ id, irA, unirseEnVivo = false }: { id: string; irA?: LugarDeAp
   const baseJ = hojasJ && portadaJ ? aMotor(hojasJ.doc, fuentesJ.motor, portadaJ.edges) : null;
   const claveBase = baseJ ? JSON.stringify(baseJ) : '';
   const claveFondos = hojasJ ? JSON.stringify(hojasJ.fondos) : '';
+  // El espiral o el hilo en el borde del lomo de cada hoja (13i §8; T371); tapa dura y blanda no llevan nada.
+  const encuadernacionJ = portadaJ && (portadaJ.binding === 'spiral' || portadaJ.binding === 'sewn') ? portadaJ.binding : null;
+  const colorDeEncuadernacion = portadaJ?.accent;
   useEffect(() => {
     if (!abierto || !claveBase) return;
     motor.current?.send({ type: 'baseLayer', items: JSON.parse(claveBase) as AnotacionEnMotor[] });
     motor.current?.send({ type: 'canvasBackground', color: null, pages: JSON.parse(claveFondos) as Record<string, FondoDePagina> });
-  }, [abierto, claveBase, claveFondos]);
+    motor.current?.send({ type: 'binding', kind: encuadernacionJ, color: colorDeEncuadernacion, orientation: orientacionJ });
+  }, [abierto, claveBase, claveFondos, encuadernacionJ, colorDeEncuadernacion, orientacionJ]);
 
   // El tema del lector (RF-BH5): al abrir y cada vez que cambia. Si el motor aún no está listo, espera en
   // su cola.

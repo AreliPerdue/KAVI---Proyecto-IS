@@ -210,6 +210,8 @@ export function crearCapa(ctx, enviar) {
    * su propia capa, debajo de lo anotado, y no se toca (para cambiarlo se edita el Journal).
    */
   let base = [];
+  /** La encuadernación del Journal al leerlo (T371): espiral o hilo en el borde del lomo de cada hoja, o nada. */
+  let encuadernacion = null;
   /** El color propio de cada página, si lo tiene (las páginas de un Journal al hojearlo; T347). */
   let fondoDePagina = new Map();
   let arrastre = null; // { id, el, x0, y0, movido }
@@ -1574,6 +1576,7 @@ export function crearCapa(ctx, enviar) {
       div.append(capaFondo);
     }
     pintarBase(n, div);
+    pintarEncuadernacion(n, div);
     pintarSubrayadosPdf(n, div);
     const enPaginaN = encima().filter((a) => a.locator.page === n);
     const susSeparadores = separadores().filter((a) => a.locator.page === n);
@@ -1608,6 +1611,74 @@ export function crearCapa(ctx, enviar) {
       capa.append(el);
     }
     div.append(capa);
+  }
+
+  /**
+   * El espiral o el hilo de un Journal (13i §8; T371), en el borde del lomo de cada hoja: las impares lo tienen a la
+   * izquierda y las pares a la derecha, así en libro real las dos mitades se juntan en el centro y forman el espiral
+   * (o la costura) entero; en scroll y de lado cada hoja se ve como la de un cuaderno. Encima de lo pegado, sin tocarse.
+   */
+  function pintarEncuadernacion(n, div) {
+    div.querySelector(':scope > .capa-encuadernacion')?.remove();
+    if (!encuadernacion) return;
+    const lado = n % 2 === 1 ? 'left' : 'right';
+    const capa = document.createElement('div');
+    capa.className = 'capa-encuadernacion';
+    capa.setAttribute('aria-hidden', 'true');
+    const espiral = encuadernacion.kind === 'spiral';
+    Object.assign(capa.style, {
+      position: 'absolute',
+      top: '0',
+      bottom: '0',
+      [lado]: '0',
+      width: espiral ? '7%' : '4%',
+      zIndex: '2',
+      pointerEvents: 'none',
+      display: 'flex',
+      flexDirection: 'column',
+      justifyContent: 'space-evenly',
+      alignItems: lado === 'left' ? 'flex-start' : 'flex-end',
+      // Del lado derecho se dibuja igual que del izquierdo, en espejo.
+      transform: lado === 'right' ? 'scaleX(-1)' : '',
+    });
+    const vueltas = encuadernacion.orientation === 'landscape' ? 11 : 18;
+    // En libro real el hilo corre por el doblez: cada hoja pone media puntada pegada al borde y las dos forman una.
+    const enDoblez = ctx.forma() === 'book';
+    if (!espiral && enDoblez) capa.style.width = '0.7%';
+    for (let i = 0; i < (espiral ? vueltas : vueltas - 4); i++) capa.append(espiral ? vueltaDeEspiral(encuadernacion.color) : puntada(encuadernacion.color, enDoblez));
+    div.append(capa);
+  }
+
+  /**
+   * Media vuelta del espiral: el agujero en la hoja y el alambre que sale de él hacia el lomo. Con la otra mitad (en la
+   * hoja de enfrente) forma un anillo: el arco de arriba es el alambre de frente, con su sombra y su brillo; el de abajo,
+   * más tenue, el que pasa por detrás.
+   */
+  function vueltaDeEspiral(color) {
+    const v = document.createElement('div');
+    Object.assign(v.style, { width: '100%', aspectRatio: '20 / 13' });
+    const arriba = 'M13 7.4 C 11.6 1.2, 4.5 0.4, 0 1.6';
+    v.innerHTML =
+      `<svg viewBox="0 0 20 13" width="100%" height="100%" style="display:block;overflow:visible">` +
+      `<circle cx="13" cy="7.4" r="1.9" fill="rgba(0,0,0,0.5)"/>` +
+      `<path d="M13 7.4 C 11.8 11.8, 5 12.6, 0 11.4" fill="none" stroke="${color}" stroke-opacity="0.45" stroke-width="1.1" stroke-linecap="round"/>` +
+      `<path d="${arriba}" fill="none" stroke="rgba(0,0,0,0.3)" stroke-width="2.1" stroke-linecap="round" transform="translate(0.35 0.6)"/>` +
+      `<path d="${arriba}" fill="none" stroke="${color}" stroke-width="1.7" stroke-linecap="round"/>` +
+      `<path d="M11.2 3.6 C 9.4 1.6, 5.5 1.1, 2.4 1.6" fill="none" stroke="rgba(255,255,255,0.6)" stroke-width="0.5" stroke-linecap="round"/>` +
+      `</svg>`;
+    return v;
+  }
+
+  /** Una puntada del hilo: cerca del lomo, o media puntada en el doblez (`enDoblez`), plana del lado que toca a la otra. */
+  function puntada(color, enDoblez) {
+    const p = document.createElement('div');
+    Object.assign(
+      p.style,
+      enDoblez
+        ? { width: '100%', height: '2.4%', borderRadius: '0 999px 999px 0', background: color, boxShadow: '0 0.5px 1px rgba(0,0,0,0.3)' }
+        : { width: '22%', aspectRatio: '1 / 5', marginLeft: '45%', borderRadius: '999px', background: color, boxShadow: '0 0.5px 1px rgba(0,0,0,0.35)' },
+    );
+    return p;
   }
 
   /** Los subrayados de una página del PDF, en su propia capa debajo de lo pegado. */
@@ -1779,6 +1850,12 @@ export function crearCapa(ctx, enviar) {
     /** Lo que ya trae cada página al leer un Journal (T364). */
     base(items) {
       base = Array.isArray(items) ? items.filter((a) => a && a.locator && Number.isFinite(a.locator.page)) : [];
+      repintar();
+    },
+    /** El espiral o el hilo del Journal al leerlo (T371); `null` lo quita. */
+    encuadernacion(e) {
+      const valida = e && (e.kind === 'spiral' || e.kind === 'sewn') && esHex(e.color);
+      encuadernacion = valida ? { kind: e.kind, color: e.color, orientation: e.orientation === 'landscape' ? 'landscape' : 'portrait' } : null;
       repintar();
     },
     /** Lo que hay en la página, en orden de capa, para exportarla (T342). */

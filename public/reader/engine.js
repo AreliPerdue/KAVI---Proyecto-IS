@@ -121,6 +121,8 @@ async function atender(m) {
       return abrir({ format: 'pdf', mode: m.mode, position: m.position ?? { page: 1 } }, { datos: pdfEnBlanco(m.orientation, m.pages, m.aspect ?? null) });
     case 'baseLayer':
       return anotaciones.base(m.items);
+    case 'binding':
+      return anotaciones.encuadernacion(m);
     case 'canvasBackground':
       return anotaciones.fondo(m.color, m.pages);
     case 'export':

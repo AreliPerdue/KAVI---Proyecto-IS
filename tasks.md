@@ -1334,6 +1334,9 @@ Reemplazan L5 (13e). Un recorte es una página 1 : √2 del visor de PDF (decisi
   **Hecho (26 oct 2026):** `GuardaPegada` y `BORDE_DE_GUARDA` en `lib/library/journal.ts`, `inner` en el fondo de la
   hoja (`FondoDePagina`, `fondoValido` y `guardaPegada` en el motor), `InteriorDeTapa` en `journal-cover.tsx` y la
   vista previa en el paso Guardas.
+- [x] T371 El espiral o el hilo en el borde al hojear el Journal (lo pendiente de T346; criterio 13i §8). Dep: T370
+  **Hecho (26 oct 2026):** mensaje `binding` (`reader-protocol.ts`), `pintarEncuadernacion` en el motor (vueltas de
+  espiral en SVG y puntadas; en libro real, la costura en el doblez) y el lector lo manda con el color del Journal.
 - [x] T349b C6 · Más módulos (mood, canción, fecha/lugar, timeline, checklist…) y plantillas (Moodboard, Reading
   Stats, Reading Awards, Reading Eras, Character Analysis…). (RF-CC14, RF-CC21) Dep: T349
   **Hecho (22 oct 2026):** módulos `checklist`, `mood`, `song`, `date`, `timeline` (modelo, motor, exportación,

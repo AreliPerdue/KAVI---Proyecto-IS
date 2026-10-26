@@ -142,6 +142,8 @@ export type MensajeAlMotor =
       /** El fondo de cada página que tenga uno propio (hojear un Journal; T347). */
       pages?: Record<string, FondoDePagina>;
     }
+  /** El espiral o el hilo de un Journal al leerlo, en el borde del lomo de cada hoja (13i §8; T371). */
+  | { type: 'binding'; kind: 'spiral' | 'sewn' | null; color?: string; orientation?: 'portrait' | 'landscape' }
   /** Exportar una página del lienzo como PNG de `width` px (RF-CC25; T342). Contesta `exported`. */
   | { type: 'export'; width?: number; page?: number }
   | { type: 'openEnd' }
