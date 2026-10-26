@@ -969,3 +969,12 @@ La consulta real a `sticker_packs` no pedía `kind`: en producción Papelería s
 las piezas y el detalle del pack (nuevo: tocar su tarjeta lo abre) se muestran sobre un fondo de mesa claro, solo
 para verlas; al pegarlas siguen sin fondo. Visto en el demo web en oscuro.
 - [ ] (manual, web) Recargar con ⌘⇧R: Papelería ya no está en Stickers → Tienda y sí en Papeles y más.
+
+## Guardas como papel pegado (T370)
+Automatizado: `journal.test.ts` (cada guarda es el interior de su tapa con el papel y su lomo) y `reader.test.tsx`
+(el fondo que recibe el motor). En el demo web: el paso Guardas con la vista previa y la hoja 2 en el lector (cuero
+vino por dentro con el papel crema pegado).
+- [ ] (manual, Areli) ¿El borde de tapa que queda a la vista tiene el grosor que quieres (4.5 % por fuera, 3.2 %
+  arriba y abajo)?
+- [ ] (manual, web) En libro real, la guarda de la portada frente a la página 1 y la de la contraportada frente a la
+  última, cada una con el papel hacia el lomo.

@@ -114,7 +114,10 @@ describe('tapas (T346)', () => {
   });
 
   it('hojear: portada, guarda, páginas, (hoja en blanco si son impares), guarda y contraportada (T346, T367)', () => {
-    const guarda = { material: 'parchment', color: '#EDE3CF' };
+    // Cada guarda es el interior de su tapa con el papel pegado, que llega al lomo (T370).
+    const papel = { material: 'parchment', color: '#EDE3CF' };
+    const adentroDeLaPortada = { material: 'wood', color: '#6B3E26', inner: { ...papel, hinge: 'right' } };
+    const adentroDeLaContraportada = { material: 'linen', color: '#112233', inner: { ...papel, hinge: 'left' } };
     const una = paraHojear([{ doc: { pages: 1, elements: [el('a')] } }], { portada, front: { doc: { pages: 1, elements: [el('t')] } } });
     // 1 portada · 2 guarda · 3 página 1 · 4 en blanco · 5 guarda · 6 contraportada: así cierra sola en libro real.
     expect(una.doc.pages).toBe(6);
@@ -123,7 +126,7 @@ describe('tapas (T346)', () => {
       ['t', 1],
       ['a', 3],
     ]);
-    expect(una.fondos).toEqual({ '1': { material: 'wood', color: '#6B3E26' }, '2': guarda, '5': guarda, '6': { material: 'linen', color: '#112233' } });
+    expect(una.fondos).toEqual({ '1': { material: 'wood', color: '#6B3E26' }, '2': adentroDeLaPortada, '5': adentroDeLaContraportada, '6': { material: 'linen', color: '#112233' } });
     const dos = paraHojear([{ doc: { pages: 1, elements: [] } }, { doc: { pages: 1, elements: [] } }], { portada });
     expect(dos.doc.pages).toBe(6);
     expect(Object.keys(dos.fondos)).toEqual(['1', '2', '5', '6']);

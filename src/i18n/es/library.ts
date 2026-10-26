@@ -649,7 +649,8 @@ export const library = {
     hint: 'Primero eliges el cuaderno; luego lo decoras.',
     steps: { shape: '1. Forma', binding: '2. Encuadernación', material: '3. Material y color', endpaper: '4. Guardas', details: '5. Nombre y páginas' },
     // Las guardas (T367): el interior de las tapas.
-    endpaperHint: 'El papel o la tela que forra el interior de las tapas: se ve al abrirlo, antes de la primera página.',
+    endpaperHint: 'El papel que va pegado por dentro de las tapas, dejando ver su borde: se ve al abrirlo, antes de la primera página.',
+    endpaperPreview: 'Así se ve el interior de la tapa con la guarda pegada',
     endpaperColor: 'Color de las guardas',
     endpaperFace: 'Guarda',
     bindings: { hardcover: 'Tapa dura', paperback: 'Tapa blanda', spiral: 'Espiral', sewn: 'Cosida' } as Record<'hardcover' | 'paperback' | 'spiral' | 'sewn', string>,

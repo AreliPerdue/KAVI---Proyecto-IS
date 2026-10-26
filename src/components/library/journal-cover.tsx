@@ -6,7 +6,7 @@ import { CanvasPreview, type FuentesDeMiniatura } from '@/components/library/can
 import { TEXTURAS } from '@/constants/journal-materials';
 import { Radius } from '@/constants/theme';
 import { type DocumentoDeLienzo, RAIZ_DE_DOS } from '@/lib/library/canvas';
-import { contraportada, type Material, type PortadaDeJournal } from '@/lib/library/journal';
+import { BORDE_DE_GUARDA, contraportada, type Material, type PortadaDeJournal } from '@/lib/library/journal';
 
 export type CaraDeJournal = 'front' | 'spine' | 'back';
 
@@ -81,6 +81,42 @@ export const JournalCover = memo(function JournalCover({
         </View>
       ) : null}
       {cara === 'spine' ? <Lomo portada={portada} alto={altoTapa} ancho={ancho} /> : <Borde portada={portada} ancho={ancho} alto={altoTapa} atras={atras} />}
+    </View>
+  );
+});
+
+/**
+ * El interior de una tapa con su guarda pegada (T370), como se ve al abrir el Journal: el material de la tapa y, encima,
+ * el papel de la guarda, que llega hasta el lomo y deja ver el borde de la tapa en los otros tres lados. La guarda se
+ * puede cambiar sin tocar la tapa (`guarda`), para mostrar cada opción.
+ */
+export const InteriorDeTapa = memo(function InteriorDeTapa({
+  portada,
+  ancho,
+  cara = 'front',
+  guarda = portada.endpaper,
+}: {
+  portada: PortadaDeJournal;
+  ancho: number;
+  cara?: 'front' | 'back';
+  guarda?: { material: Material; color: string };
+}) {
+  ancho = Math.max(1, ancho);
+  const alto = ancho * (portada.orientation === 'portrait' ? RAIZ_DE_DOS : 1 / RAIZ_DE_DOS);
+  const tapa = cara === 'back' ? contraportada(portada) : portada;
+  // Por dentro, el lomo de la portada queda a la derecha y el de la contraportada a la izquierda.
+  const lomo = cara === 'back' ? 'left' : 'right';
+  const fuera = cara === 'back' ? 'right' : 'left';
+  return (
+    <View style={{ width: ancho, height: alto }}>
+      <CapaDeMaterial material={tapa.material} color={tapa.color} radio={2} />
+      <View
+        style={[
+          styles.guarda,
+          { top: alto * BORDE_DE_GUARDA.arriba, bottom: alto * BORDE_DE_GUARDA.arriba, [lomo]: 0, [fuera]: ancho * BORDE_DE_GUARDA.lado },
+        ]}>
+        <CapaDeMaterial material={guarda.material} color={guarda.color} radio={0} />
+      </View>
     </View>
   );
 });
@@ -183,6 +219,7 @@ function Puntadas({ color, alto, x, lado }: { color: string; alto: number; x: nu
 }
 
 const styles = StyleSheet.create({
+  guarda: { position: 'absolute', boxShadow: '0 0 1.5px rgba(0,0,0,0.35), 0 1px 4px rgba(0,0,0,0.18)' },
   comoLibro: { overflow: 'hidden', borderCurve: 'continuous' },
   centro: { justifyContent: 'center', alignItems: 'center' },
   lleno: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0 },

@@ -28,8 +28,9 @@ export type PortadaDeJournal = {
   /** El color del hilo (cosida) o del metal (espiral) (RF-JC4). */
   accent: string;
   /**
-   * Las guardas (T367, pedido de Areli): el papel o la tela que forra el interior de las tapas. Al leerlo, se ven
-   * después de la portada y antes de la contraportada: así se sabe que se está dentro del libro.
+   * Las guardas (T367, pedido de Areli): el papel o la tela que va pegado por dentro de las tapas. Al leerlo, se ven
+   * después de la portada y antes de la contraportada: así se sabe que se está dentro del libro. Desde T370 el papel
+   * es un rectángulo sobre el interior de la tapa, que deja ver su borde (ver `GuardaPegada`).
    */
   endpaper: { material: Material; color: string };
 };
@@ -125,7 +126,16 @@ export function cabeOtraPagina(hechas: number, paginas: number | null | undefine
 }
 
 /** El fondo de una tapa en el motor: su material con su color (13i, RF-JC8). */
-export type FondoDeTapa = { color: string; material: Material };
+/**
+ * El papel de la guarda pegado sobre el interior de la tapa (T370, pedido de Areli: "un papel pegado a la cover por
+ * la parte de adentro"): llega hasta el lomo (`hinge`) y en los otros tres lados deja ver el borde de la tapa, como en
+ * un libro de pasta dura.
+ */
+export type GuardaPegada = { color: string; material: Material; hinge: 'left' | 'right' };
+/** El borde de tapa que queda a la vista alrededor de la guarda, en fracción del ancho (lados) y del alto (arriba y abajo). */
+export const BORDE_DE_GUARDA = { lado: 0.045, arriba: 0.032 } as const;
+
+export type FondoDeTapa = { color: string; material: Material; inner?: GuardaPegada };
 
 /**
  * El Journal entero para hojearlo en libro real: un solo documento con una página por cada lienzo, cada pieza en la
@@ -148,7 +158,8 @@ export function paraHojear(
   if (tapas) {
     fondos['1'] = fondoDeCara(tapas.portada, 'front');
     poner(tapas.front?.doc, 1);
-    fondos['2'] = tapas.portada.endpaper;
+    // El interior de la portada: la tapa por dentro con la guarda pegada, que llega al lomo (a la derecha).
+    fondos['2'] = { ...fondoDeCara(tapas.portada, 'front'), inner: { ...tapas.portada.endpaper, hinge: 'right' } };
   }
   lienzos.forEach((l, i) => {
     const pagina = antes + i + 1;
@@ -160,7 +171,7 @@ export function paraHojear(
     const enBlanco = lienzos.length % 2 === 1 ? 1 : 0;
     const guarda = antes + lienzos.length + enBlanco + 1;
     pages = guarda + 1;
-    fondos[String(guarda)] = tapas.portada.endpaper;
+    fondos[String(guarda)] = { ...fondoDeCara(tapas.portada, 'back'), inner: { ...tapas.portada.endpaper, hinge: 'left' } };
     fondos[String(pages)] = fondoDeCara(tapas.portada, 'back');
     poner(tapas.back?.doc, pages);
   }

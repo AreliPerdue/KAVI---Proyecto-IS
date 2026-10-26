@@ -124,6 +124,13 @@
   - Al leerlo: portada · guarda · páginas · (una hoja en blanco si son impares) · guarda · contraportada. En libro real
     la guarda queda frente a la primera página y frente a la última, y la contraportada cierra sola; sin páginas, se
     abre a las dos guardas y se cierra.
+  - **Papel pegado por dentro de la tapa (T370, pedido de Areli del 26 oct 2026, con un mockup de libro de pasta
+    dura):** la hoja de la guarda es el interior de la tapa (el material y el color de la portada o la contraportada)
+    con el papel de la guarda pegado encima, como un rectángulo un poco más chico. Llega hasta el lomo (a la derecha en
+    la portada, a la izquierda en la contraportada) y en los otros tres lados deja ver el borde de la tapa: 4.5 % del
+    ancho por fuera y 3.2 % del alto arriba y abajo (`BORDE_DE_GUARDA`), con una sombra leve de papel. El papel se
+    sigue eligiendo igual (material y color); el paso Guardas muestra cómo queda. En el motor, el fondo de la hoja
+    lleva `inner` con la guarda y su lomo.
 - **Ajustes de Areli del 22 oct 2026 (T366):**
   - **Cada asa mueve solo su borde:** la del lado derecho ensancha hacia la derecha sin cambiar la altura; la de
     abajo alarga hacia abajo. El texto de un lienzo se estira de 0.05 a 20 (alto ÷ ancho), como un papel o una

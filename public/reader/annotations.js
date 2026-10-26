@@ -1570,6 +1570,7 @@ export function crearCapa(ctx, enviar) {
       const capaFondo = document.createElement('div');
       capaFondo.className = 'capa-fondo';
       Object.assign(capaFondo.style, { position: 'absolute', inset: '0', pointerEvents: 'none' }, estiloDeFondo(suFondo));
+      if (typeof suFondo === 'object' && suFondo.inner) capaFondo.append(guardaPegada(suFondo.inner));
       div.append(capaFondo);
     }
     pintarBase(n, div);
@@ -1871,11 +1872,27 @@ function ponerAcabado(el, id, tipo) {
 const esHex = (c) => typeof c === 'string' && /^#[0-9a-fA-F]{6}$/.test(c);
 const MATERIALES = ['leather', 'linen', 'velvet', 'wood', 'fabric', 'parchment'];
 
-/** Un color, un material del Journal con su color, o `null`. */
+/** Un color, un material del Journal con su color (y, en el interior de una tapa, su guarda pegada), o `null`. */
 function fondoValido(f) {
   if (esHex(f)) return f;
-  if (f && typeof f === 'object' && esHex(f.color) && MATERIALES.includes(f.material)) return { color: f.color, material: f.material };
+  if (f && typeof f === 'object' && esHex(f.color) && MATERIALES.includes(f.material)) {
+    const g = f.inner;
+    const inner = g && typeof g === 'object' && esHex(g.color) && MATERIALES.includes(g.material) ? { color: g.color, material: g.material, hinge: g.hinge === 'left' ? 'left' : 'right' } : null;
+    return inner ? { color: f.color, material: f.material, inner } : { color: f.color, material: f.material };
+  }
   return null;
+}
+
+/**
+ * La guarda pegada por dentro de la tapa (T370): un rectángulo de su papel sobre el material de la tapa, que llega
+ * hasta el lomo y deja ver el borde de la tapa en los otros tres lados (las medidas son las de `BORDE_DE_GUARDA`).
+ */
+function guardaPegada(g) {
+  const papel = document.createElement('div');
+  papel.className = 'guarda';
+  const fuera = g.hinge === 'left' ? 'right' : 'left';
+  Object.assign(papel.style, { position: 'absolute', top: '3.2%', bottom: '3.2%', [g.hinge]: '0', [fuera]: '4.5%', boxShadow: '0 0 1.5px rgba(0,0,0,0.35), 0 1px 5px rgba(0,0,0,0.18)' }, estiloDeFondo(g));
+  return papel;
 }
 
 /**

@@ -5,7 +5,7 @@ import { Pressable, ScrollView, StyleSheet, useWindowDimensions, View } from 're
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ColorPickerSheet } from '@/components/library/color-picker-sheet';
-import { type CaraDeJournal, JournalCover } from '@/components/library/journal-cover';
+import { type CaraDeJournal, InteriorDeTapa, JournalCover } from '@/components/library/journal-cover';
 import { ActionRow, AppText, Button, ErrorState, IconButton, Segmented, TextField } from '@/components/ui';
 import { IconSize, IconStroke, MaxContentWidth, Radius, Spacing } from '@/constants/theme';
 import { useCreateJournal, useLibraryItem, useUpdateLibraryItem } from '@/hooks/use-library';
@@ -211,6 +211,10 @@ export default function JournalEditScreen() {
           <AppText variant="body" color="textSecondary">
             {j.endpaperHint}
           </AppText>
+          {/* Cómo se ve al abrirlo: la tapa por dentro con la guarda pegada (T370). */}
+          <View style={styles.guarda} accessible accessibilityRole="image" accessibilityLabel={j.endpaperPreview}>
+            <InteriorDeTapa portada={portada} ancho={120} />
+          </View>
           <View style={styles.opciones}>
             {MATERIALES.map((m) => (
               <Opcion
@@ -219,7 +223,7 @@ export default function JournalEditScreen() {
                 nombre={`${j.endpaperFace}: ${j.materials[m]}`}
                 elegida={portada.endpaper.material === m}
                 onPress={() => poner({ endpaper: { material: m, color: portada.endpaper.color } })}>
-                <JournalCover portada={{ ...portada, material: m, color: portada.endpaper.color, binding: 'paperback' }} ancho={44} />
+                <InteriorDeTapa portada={portada} guarda={{ material: m, color: portada.endpaper.color }} ancho={44} />
               </Opcion>
             ))}
           </View>
@@ -315,6 +319,7 @@ function Opcion({
 }
 
 const styles = StyleSheet.create({
+  guarda: { alignItems: 'center', paddingVertical: Spacing.sm },
   pantalla: { flex: 1 },
   barra: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: Spacing.sm, paddingVertical: Spacing.xs },
   titulo: { flex: 1, textAlign: 'center' },

@@ -1329,6 +1329,11 @@ Reemplazan L5 (13e). Un recorte es una página 1 : √2 del visor de PDF (decisi
   de Areli del 22 oct 2026) Dep: T364
   **Hecho (22 oct 2026):** `endpaper` en la portada (pergamino crema por omisión), paso "Guardas" en Editar Journal,
   `paraHojear` con guardas y hoja en blanco si las páginas son impares (`primeraPagina` para "Páginas").
+- [x] T370 Guardas como papel pegado por dentro de la tapa: la tapa por dentro con su material y, encima, el papel de
+  la guarda más chico, que deja ver el borde y llega al lomo. (13i; pedido de Areli del 26 oct 2026) Dep: T367
+  **Hecho (26 oct 2026):** `GuardaPegada` y `BORDE_DE_GUARDA` en `lib/library/journal.ts`, `inner` en el fondo de la
+  hoja (`FondoDePagina`, `fondoValido` y `guardaPegada` en el motor), `InteriorDeTapa` en `journal-cover.tsx` y la
+  vista previa en el paso Guardas.
 - [x] T349b C6 · Más módulos (mood, canción, fecha/lugar, timeline, checklist…) y plantillas (Moodboard, Reading
   Stats, Reading Awards, Reading Eras, Character Analysis…). (RF-CC14, RF-CC21) Dep: T349
   **Hecho (22 oct 2026):** módulos `checklist`, `mood`, `song`, `date`, `timeline` (modelo, motor, exportación,

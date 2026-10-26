@@ -1617,8 +1617,13 @@ describe('un Journal se lee como un libro (13i; T364)', () => {
       ['t-p2', 4, true],
     ]);
     const tapa = { color: '#3B2A20', material: 'linen' };
-    const guarda = { color: '#EDE3CF', material: 'parchment' };
-    expect(mockEnviados).toContainEqual({ type: 'canvasBackground', color: null, pages: { '1': tapa, '2': guarda, '5': guarda, '6': tapa } });
+    // Las guardas: el interior de la tapa con su papel pegado, que llega al lomo (T370).
+    const papel = { color: '#EDE3CF', material: 'parchment' };
+    expect(mockEnviados).toContainEqual({
+      type: 'canvasBackground',
+      color: null,
+      pages: { '1': tapa, '2': { ...tapa, inner: { ...papel, hinge: 'right' } }, '5': { ...tapa, inner: { ...papel, hinge: 'left' } }, '6': tapa },
+    });
     expect(screen.queryByText(R.noFile)).toBeNull();
   });
 

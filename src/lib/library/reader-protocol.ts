@@ -107,7 +107,11 @@ export const FORMAS_DE_LIENZO = ['rect', 'ellipse', 'heart', 'star', 'blob'] as 
 export type FormaDeLienzo = (typeof FORMAS_DE_LIENZO)[number];
 
 /** El fondo de una página del lienzo: un color o el material de una tapa del Journal con su color (T342, T346). */
-export type FondoDePagina = string | { color: string; material: 'leather' | 'linen' | 'velvet' | 'wood' | 'fabric' | 'parchment' };
+type MaterialDeFondo = 'leather' | 'linen' | 'velvet' | 'wood' | 'fabric' | 'parchment';
+/** Un color, o un material con su color; `inner` es la guarda pegada encima, que llega al lomo (`hinge`; T370). */
+export type FondoDePagina =
+  | string
+  | { color: string; material: MaterialDeFondo; inner?: { color: string; material: MaterialDeFondo; hinge: 'left' | 'right' } };
 
 export type MensajeAlMotor =
   | { type: 'open'; format: 'pdf' | 'epub'; url: string; position?: Posicion; mode?: FormaDeLeer }
