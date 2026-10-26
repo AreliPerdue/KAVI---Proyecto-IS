@@ -28,6 +28,11 @@ minimumReleaseAgeExclude:
   - expo-notifications@57.0.16
   - expo-secure-store@57.0.3
 
+# Una sola copia de expo-constants (expo-doctor, 26 oct 2026): el proyecto, expo-asset y expo-notifications pedían
+# 57.0.17, 57.0.21 y 57.0.19, y un build nativo solo puede llevar una versión de cada módulo nativo.
+overrides:
+  expo-constants: ~57.0.21
+
 # Permitir el postinstall que descarga el binario de la CLI de Supabase
 onlyBuiltDependencies:
   - supabase
